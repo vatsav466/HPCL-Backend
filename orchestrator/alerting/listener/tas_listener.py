@@ -278,55 +278,55 @@ def fix_additional_info(additional_info):
     return additional_info
 
 
-async def tas_listener(rmsg):
-    """
-    Process a message from the ThingsBoard Rule Engine.
+# async def tas_listener(rmsg):
+#     """
+#     Process a message from the ThingsBoard Rule Engine.
 
-    Process a message from the ThingsBoard Rule Engine. The message is expected to be a dictionary
-    containing details about the alarm. The 'status' key in the message is used to determine if the
-    alarm is being created or cleared. If the 'status' key is 'ACTIVE_UNACK', then the alarm is being
-    created and the function calls the create_alert function with the details from the message. If
-    the 'status' key is 'CLEARED_UNACK', then the alarm is being cleared and the function calls the
-    close_alert function with the details from the message. If the 'status' key is anything else, the
-    function prints an error message and returns False.
+#     Process a message from the ThingsBoard Rule Engine. The message is expected to be a dictionary
+#     containing details about the alarm. The 'status' key in the message is used to determine if the
+#     alarm is being created or cleared. If the 'status' key is 'ACTIVE_UNACK', then the alarm is being
+#     created and the function calls the create_alert function with the details from the message. If
+#     the 'status' key is 'CLEARED_UNACK', then the alarm is being cleared and the function calls the
+#     close_alert function with the details from the message. If the 'status' key is anything else, the
+#     function prints an error message and returns False.
 
-    Args:
-        rmsg (dict): A dictionary containing details about the alarm. The dictionary should contain
-            the following keys: 'status', 'details', 'id', 'type', 'severity'.
+#     Args:
+#         rmsg (dict): A dictionary containing details about the alarm. The dictionary should contain
+#             the following keys: 'status', 'details', 'id', 'type', 'severity'.
 
-    Returns:
-        bool: True if the message was processed successfully, False otherwise.
-    """
-    print(rmsg)
-    try:
-        if rmsg.get("details") and rmsg["details"].get("additionalInfo"):
-            rmsg["details"]["additionalInfo"] = fix_additional_info(rmsg["details"]["additionalInfo"])
-        print('-' * 12)
-        if rmsg['status'] == 'ACTIVE_UNACK':
-            alertdata = rmsg['details']['additionalInfo']
+#     Returns:
+#         bool: True if the message was processed successfully, False otherwise.
+#     """
+#     print(rmsg)
+#     try:
+#         if rmsg.get("details") and rmsg["details"].get("additionalInfo"):
+#             rmsg["details"]["additionalInfo"] = fix_additional_info(rmsg["details"]["additionalInfo"])
+#         print('-' * 12)
+#         if rmsg['status'] == 'ACTIVE_UNACK':
+#             alertdata = rmsg['details']['additionalInfo']
 
-            # First, check if it's a duplicate
-            is_duplicate = await duplicates_check.duplicate_check(alertdata)
+#             # First, check if it's a duplicate
+#             is_duplicate = await duplicates_check.duplicate_check(alertdata)
             
-            if is_duplicate:
-                print(f"Alert already exists (duplicate) for: {alertdata}")
-            else:
-                # Only check maintenance if not a duplicate
-                is_maintenance_alert = await maintenance_check.maintenance_alert_check(alertdata)
+#             if is_duplicate:
+#                 print(f"Alert already exists (duplicate) for: {alertdata}")
+#             else:
+#                 # Only check maintenance if not a duplicate
+#                 is_maintenance_alert = await maintenance_check.maintenance_alert_check(alertdata)
                 
-                if is_maintenance_alert:
-                    print(f"Maintenance alert already exists for: {alertdata}")
-                else:
-                    # Valid new alert, proceed to create it
-                    alertdata['severity'] = rmsg['severity']
-                    alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
-                    alertdata['alert_id'] = rmsg['id']['id']
-                    custom_data = rmsg['details']['additionalInfo'].get("customData", {})
+#                 if is_maintenance_alert:
+#                     print(f"Maintenance alert already exists for: {alertdata}")
+#                 else:
+#                     # Valid new alert, proceed to create it
+#                     alertdata['severity'] = rmsg['severity']
+#                     alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
+#                     alertdata['alert_id'] = rmsg['id']['id']
+#                     custom_data = rmsg['details']['additionalInfo'].get("customData", {})
                     
-                    alertdata['message'] = ", ".join([f"{key}={value}" for key, value in custom_data.items()])
-                    print("Create Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
-                                                                rmsg['type']))
-                    await create_alert(alertdata)
+#                     alertdata['message'] = ", ".join([f"{key}={value}" for key, value in custom_data.items()])
+#                     print("Create Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
+#                                                                 rmsg['type']))
+#                     await create_alert(alertdata)
 
         # if rmsg['status'] == 'ACTIVE_UNACK':
         #     alertdata = rmsg['details']['additionalInfo']
@@ -363,6 +363,83 @@ async def tas_listener(rmsg):
             #     await create_alert(alertdata)
             # else:
             #     print(f"Alert already exists for: {alertdata}")
+    #     elif rmsg['status'] == 'CLEARED_UNACK':
+    #         alertdata = rmsg['details']['additionalInfo']
+    #         alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
+    #         alertdata['alert_id'] = rmsg['id']['id']
+    #         print("Close Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
+    #                                                     rmsg['type']))
+    #         await close_alert(alertdata)
+    #     else:
+    #         print("Invalid message received:%s" % rmsg)
+    #     return True
+    # except Exception as e:
+    #     print(traceback.format_exc())
+    #     print("Exception in processing RQ message:%s" % e)
+
+
+# async def RabbitConsume():
+#     qname = 'AlertManager'
+#     credentials = pika.PlainCredentials(config.rabbitMqUsername, config.rabbitMqPassword)
+#     parameters = pika.ConnectionParameters(config.rabbitMqIp, 5672, '/', credentials)
+#     connection = pika.BlockingConnection(parameters)
+#     channel = connection.channel()
+#     channel.queue_declare(queue=qname)
+#     channel.basic_consume(queue=qname, on_message_callback=callback)
+#     channel.start_consuming()
+
+async def tas_listener(rmsg):
+    """
+    Process a message from the ThingsBoard Rule Engine.
+
+    Process a message from the ThingsBoard Rule Engine. The message is expected to be a dictionary
+    containing details about the alarm. The 'status' key in the message is used to determine if the
+    alarm is being created or cleared. If the 'status' key is 'ACTIVE_UNACK', then the alarm is being
+    created and the function calls the create_alert function with the details from the message. If
+    the 'status' key is 'CLEARED_UNACK', then the alarm is being cleared and the function calls the
+    close_alert function with the details from the message. If the 'status' key is anything else, the
+    function prints an error message and returns False.
+
+    Args:
+        rmsg (dict): A dictionary containing details about the alarm. The dictionary should contain
+            the following keys: 'status', 'details', 'id', 'type', 'severity'.
+
+    Returns:
+        bool: True if the message was processed successfully, False otherwise.
+    """
+    print(rmsg)
+    try:
+        if rmsg.get("details") and rmsg["details"].get("additionalInfo"):
+            rmsg["details"]["additionalInfo"] = fix_additional_info(rmsg["details"]["additionalInfo"])
+        print('-' * 12)
+        if rmsg['status'] == 'ACTIVE_UNACK':
+            alertdata = rmsg['details']['additionalInfo']
+
+            # First, check if it's a duplicate
+            is_duplicate = await duplicates_check.duplicate_check(alertdata)
+            
+            if is_duplicate:
+                print(f"Alert already exists (duplicate) for: {alertdata}")
+            else:
+                if alertdata['interlock_name'] in [
+                    "VFT_UnderMaintenance", "RADAR", "ROSOV", "MOV", "RIMSEAL", "Tank_UnderMaintenance"]:
+                    await maintenance_check.create_under_maintenance_alert(alertdata)
+                else:
+                    is_maintenance_alert = await maintenance_check.maintenance_alert_check(alertdata)
+                    if is_maintenance_alert:
+                        print(f"Maintenance alert already exists for: {alertdata}")
+                    else:
+                        alertdata['severity'] = rmsg['severity']
+                        alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
+                        alertdata['alert_id'] = rmsg['id']['id']
+                        custom_data = rmsg['details']['additionalInfo'].get("customData", {})
+                        
+                        alertdata['message'] = ", ".join([f"{key}={value}" for key, value in custom_data.items()])
+                        print("Create Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
+                                                                    rmsg['type']))
+                        await create_alert(alertdata)
+
+
         elif rmsg['status'] == 'CLEARED_UNACK':
             alertdata = rmsg['details']['additionalInfo']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
@@ -377,111 +454,99 @@ async def tas_listener(rmsg):
         print(traceback.format_exc())
         print("Exception in processing RQ message:%s" % e)
 
-
-# async def RabbitConsume():
-#     qname = 'AlertManager'
-#     credentials = pika.PlainCredentials(config.rabbitMqUsername, config.rabbitMqPassword)
-#     parameters = pika.ConnectionParameters(config.rabbitMqIp, 5672, '/', credentials)
-#     connection = pika.BlockingConnection(parameters)
-#     channel = connection.channel()
-#     channel.queue_declare(queue=qname)
-#     channel.basic_consume(queue=qname, on_message_callback=callback)
-#     channel.start_consuming()
-
-
 # if __name__ == "__main__":
-    rmsg = {
-    "tenantId": {
-        "entityType": "TENANT",
-        "id": "92026430-bab2-11ef-a2e1-e9d5c168f7f6"
-    },
-    "type": "Tankoverfill Alarm",
-    "originator": {
-        "entityType": "DEVICE",
-        "id": "11484100-f7f9-11ef-a29d-95c64d391b7c"
-    },
-    "severity": "CRITICAL",
-    "status": "ACTIVE_UNACK",
-    "startTs": 1744627317655,
-    "endTs": 1744627317655,
-    "ackTs": 0,
-    "clearTs": 0,
-    "details": {
-        "additionalInfo": {
-            "location_id": "1919",
-            "location_name": "Secunderabad",
-            "plantlocationid": "1919",
-            "plantlocation": "Secunderabad",
-            "bu_id": "79980420-bab4-11ef-89d8-8bef67f22d63",
-            "SAPID": "1919",
-            "BU": "TAS",
-            "MOV_BIO HSD@Secunderabad": 1,
-            "Primary Gauge Level": "0",
-            "TANK LEAKAGE STATUS": "0",
-            "Primary Gauge HIGH": "0",
-            "Primary Gauge HIGH HIGH": "0",
-            "LEVEL SWITCH": "0",
-            "LEVEL SWITCH PROOF OK": "0",
-            "LEVEL SWITCH PROOF FAILED": "0",
-            "RADAR HHH": "0",
-            "RADAR PROOF OK": "0",
-            "RADAR PROOF FAILED": "0",
-            "ROSOV OPEN STATUS IL1": "0",
-            "ROSOV FAIL TO CLOSE STATUS IL1": "0",
-            "ROSOV OPEN STATUS IL2": "0",
-            "ROSOV FAIL TO CLOSE STATUS IL2": "0",
-            "ROSOV OPEN STATUS OL": "0",
-            "ROSOV FAIL TO CLOSE STATUS OL": "0",
-            "ROSOV OPEN STATUS RCL": "0",
-            "ROSOV FAIL TO CLOSE STATUS RCL": "0",
-            "MOV STATUS IL1": "1",
-            "MOV STATUS IL2": "0",
-            "MOV STATUS OL": "0",
-            "MOV STATUS RCL": "0",
-            "RIMSEAL FIRE ALARM": "0",
-            "RIMSEAL FAULT ALARM": "0",
-            "deviceType": "Tank",
-            "deviceName": "51-TT-FR-001C_GASOHOL@Secunderabad",
-            "sap_id": "1919",
-            "interlockName": "HHH alarm from VFT",
-            "unitName": "51-TT-FR-001C_GASOHOL@Secunderabad",
-            "deviceId": "11484100-f7f9-11ef-a29d-95c64d391b7c",
-            "sopid": "SOP001",
-            "alert_category": "Safety",
-            "Sensor_Type": "VFT",
-            "severity": "Critical",
-            "customData": {
-                "LEVEL SWITCH": "1",
-                "MOV STATUS IL1": "0",
-                "ROSOV OPEN STATUS IL1": "1",
-                "RADAR HHH": "0",
-                "MOV STATUS IL2": "1",
-                "ROSOV OPEN STATUS IL2": "0",
-                "LEVEL SWITCH PROOF FAILED": "0",
-                "LEVEL SWITCH PROOF OK": "0",
-                "ROSOV FAIL TO CLOSE STATUS IL1": "0",
-                "ROSOV FAIL TO CLOSE STATUS IL2": "0",
-                "ROSOV FAIL TO CLOSE STATUS OL": "0",
-                "ROSOV FAIL TO CLOSE STATUS RCL": "0",
-                "Primary Gauge HIGH": "0",
-                "Primary Gauge HIGH HIGH": "0",
-                "RADAR PROOF FAILED": "0",
-                "RADAR PROOF OK": "0",
-                "TANK LEAKAGE STATUS": "0"
-            },
-            "Sensor_Name": "VFT",
-            "Cause_Effect": "Cause",
-            "effect_sop_id": ["SOP01A"]
-        }
-    },
-    "propagate": False,
-    "propagateRelationTypes": [],
-    "id": {
-        "entityType": "ALARM",
-        "id": "16d8fa72-191d-11f0-82ca-03bdbba508c1"
-    },
-    "createdTime": 1744627317655,
-    "name": "Tankoverfill Alarm"
-}
-    asyncio.run(tas_listener(rmsg))
-    # asyncio.run(tas_listener())
+#     rmsg = {
+#     "tenantId": {
+#         "entityType": "TENANT",
+#         "id": "92026430-bab2-11ef-a2e1-e9d5c168f7f6"
+#     },
+#     "type": "Tankoverfill Alarm",
+#     "originator": {
+#         "entityType": "DEVICE",
+#         "id": "11484100-f7f9-11ef-a29d-95c64d391b7c"
+#     },
+#     "severity": "CRITICAL",
+#     "status": "ACTIVE_UNACK",
+#     "startTs": 1744627317655,
+#     "endTs": 1744627317655,
+#     "ackTs": 0,
+#     "clearTs": 0,
+#     "details": {
+#         "additionalInfo": {
+#             "location_id": "1919",
+#             "location_name": "Secunderabad",
+#             "plantlocationid": "1919",
+#             "plantlocation": "Secunderabad",
+#             "bu_id": "79980420-bab4-11ef-89d8-8bef67f22d63",
+#             "SAPID": "1919",
+#             "BU": "TAS",
+#             "MOV_BIO HSD@Secunderabad": 1,
+#             "Primary Gauge Level": "0",
+#             "TANK LEAKAGE STATUS": "0",
+#             "Primary Gauge HIGH": "0",
+#             "Primary Gauge HIGH HIGH": "0",
+#             "LEVEL SWITCH": "0",
+#             "LEVEL SWITCH PROOF OK": "0",
+#             "LEVEL SWITCH PROOF FAILED": "0",
+#             "RADAR HHH": "0",
+#             "RADAR PROOF OK": "0",
+#             "RADAR PROOF FAILED": "0",
+#             "ROSOV OPEN STATUS IL1": "0",
+#             "ROSOV FAIL TO CLOSE STATUS IL1": "0",
+#             "ROSOV OPEN STATUS IL2": "0",
+#             "ROSOV FAIL TO CLOSE STATUS IL2": "0",
+#             "ROSOV OPEN STATUS OL": "0",
+#             "ROSOV FAIL TO CLOSE STATUS OL": "0",
+#             "ROSOV OPEN STATUS RCL": "0",
+#             "ROSOV FAIL TO CLOSE STATUS RCL": "0",
+#             "MOV STATUS IL1": "1",
+#             "MOV STATUS IL2": "0",
+#             "MOV STATUS OL": "0",
+#             "MOV STATUS RCL": "0",
+#             "RIMSEAL FIRE ALARM": "0",
+#             "RIMSEAL FAULT ALARM": "0",
+#             "deviceType": "Tank",
+#             "deviceName": "51-TT-FR-001C_GASOHOL@Secunderabad",
+#             "sap_id": "1919",
+#             "interlockName": "HHH alarm from VFT",
+#             "unitName": "51-TT-FR-001C_GASOHOL@Secunderabad",
+#             "deviceId": "11484100-f7f9-11ef-a29d-95c64d391b7c",
+#             "sopid": "SOP001",
+#             "alert_category": "Safety",
+#             "Sensor_Type": "VFT",
+#             "severity": "Critical",
+#             "customData": {
+#                 "LEVEL SWITCH": "1",
+#                 "MOV STATUS IL1": "0",
+#                 "ROSOV OPEN STATUS IL1": "1",
+#                 "RADAR HHH": "0",
+#                 "MOV STATUS IL2": "1",
+#                 "ROSOV OPEN STATUS IL2": "0",
+#                 "LEVEL SWITCH PROOF FAILED": "0",
+#                 "LEVEL SWITCH PROOF OK": "0",
+#                 "ROSOV FAIL TO CLOSE STATUS IL1": "0",
+#                 "ROSOV FAIL TO CLOSE STATUS IL2": "0",
+#                 "ROSOV FAIL TO CLOSE STATUS OL": "0",
+#                 "ROSOV FAIL TO CLOSE STATUS RCL": "0",
+#                 "Primary Gauge HIGH": "0",
+#                 "Primary Gauge HIGH HIGH": "0",
+#                 "RADAR PROOF FAILED": "0",
+#                 "RADAR PROOF OK": "0",
+#                 "TANK LEAKAGE STATUS": "0"
+#             },
+#             "Sensor_Name": "VFT",
+#             "Cause_Effect": "Cause",
+#             "effect_sop_id": ["SOP01A"]
+#         }
+#     },
+#     "propagate": False,
+#     "propagateRelationTypes": [],
+#     "id": {
+#         "entityType": "ALARM",
+#         "id": "16d8fa72-191d-11f0-82ca-03bdbba508c1"
+#     },
+#     "createdTime": 1744627317655,
+#     "name": "Tankoverfill Alarm"
+# }
+#     asyncio.run(tas_listener(rmsg))
+#     # asyncio.run(tas_listener())

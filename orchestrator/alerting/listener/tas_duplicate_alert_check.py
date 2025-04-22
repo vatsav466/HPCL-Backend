@@ -6,6 +6,7 @@ import hpcl_ceg_model
 async def duplicate_check(alertdata):
     query = (
         f"""bu = 'TAS' and """
+        f"""sap_id = '{alertdata.get('sap_id', '')}' and """
         f"""alert_section = 'TAS' and """
         f"""device_id = '{alertdata.get('device_id', '')}' and """
         f"""device_name = '{alertdata.get('device_name', '')}' and """
