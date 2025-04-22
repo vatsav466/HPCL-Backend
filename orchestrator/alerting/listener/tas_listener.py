@@ -414,6 +414,14 @@ async def tas_listener(rmsg):
         print('-' * 12)
         if rmsg['status'] == 'ACTIVE_UNACK':
             alertdata = rmsg['details']['additionalInfo']
+            alertdata['severity'] = rmsg['severity']
+            alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
+            alertdata['alert_id'] = rmsg['id']['id']
+            custom_data = rmsg['details']['additionalInfo'].get("customData", {})
+            
+            alertdata['message'] = ", ".join([f"{key}={value}" for key, value in custom_data.items()])
+            print("Create Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
+                                                        rmsg['type']))
 
             # First, check if it's a duplicate
             is_duplicate = await duplicates_check.duplicate_check(alertdata)
@@ -434,14 +442,6 @@ async def tas_listener(rmsg):
                         print(f"Maintenance alert already exists for: {alertdata}")
                     else:
                         print("not maintenance alert")
-                        alertdata['severity'] = rmsg['severity']
-                        alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
-                        alertdata['alert_id'] = rmsg['id']['id']
-                        custom_data = rmsg['details']['additionalInfo'].get("customData", {})
-                        
-                        alertdata['message'] = ", ".join([f"{key}={value}" for key, value in custom_data.items()])
-                        print("Create Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
-                                                                    rmsg['type']))
                         await create_alert(alertdata)
 
 
