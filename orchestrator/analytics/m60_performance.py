@@ -37,7 +37,7 @@ productOrders = {
 
 AllProducts = {
     "Lubes": ["Industrial Greases", "DEF/Diesel Exhaust Fluid", "Automotive Greases", "Automotive Specialities",
-              "Industrial oils", "Alprol", "Base Oil", "LUBES RETAIL", "Automotive Oils", "Industrial Specialities",
+              "Industrial oils", "ALPROL", "Base Oil", "LUBES RETAIL", "Automotive Oils", "Industrial Specialities",
               "Solvent 2445", "Miscellaneous/Minor", "Marine Lubes"],
     "Aviation": ["ATF"],
     "Retail": ["LPG BLK", "MS", "Industrial Greases", "DEF/Diesel Exhaust Fluid", "HSD", "Automotive Greases",
