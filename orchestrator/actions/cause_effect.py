@@ -144,8 +144,6 @@ class CauseEffect:
             f"""sap_id = '{params.get("sap_id")}' and """
             f"""sop_id in ({effect_sop_id}) and """
             f"""device_id = '{params.get("device_id")}' and """ 
-            # f"""device_type = '{params.get("device_type")}' and """ 
-            # f"""device_name like '%{params.get("device_name")}%' and """ 
             f"""cause_effect = 'Effect'"""
         )
 
@@ -160,7 +158,7 @@ class CauseEffect:
         related_effect_interlock_names = []
         
         if effect_alerts['data']:
-            # Found effect alerts - update their history
+            # Found effect alerts - update their history only if it doesn't already exist
             for effect_alert in effect_alerts['data']:
                 effect_alert_id = effect_alert['id']
                 effect_interlock_name = effect_alert.get('interlock_name', "Unknown Effect")
@@ -168,23 +166,29 @@ class CauseEffect:
                 
                 existing_effect_history = effect_alert.get('alert_history', [])
                 last_processed_time = processed_time
-
-                for entry in reversed(existing_effect_history):
+                
+                # Check if the related cause alert entry already exists in history
+                cause_exists = False
+                for entry in existing_effect_history:
+                    if entry.get("action_type") == "Cause" and interlock_name in entry.get("action_msg", ""):
+                        cause_exists = True
+                        break
                     if entry.get("action_type") == "InterlockCreated" and entry.get("processed_time"):
                         last_processed_time = entry.get("processed_time")
-                        break
                 
-                new_entry = {
-                    "processed_time": processed_time.isoformat(),
-                    "allocated_time": last_processed_time,
-                    "action_msg": f"Related Cause alert {interlock_name}",
-                    "action_type": "Cause"
-                }
+                # Only add if it doesn't exist already
+                if not cause_exists:
+                    new_entry = {
+                        "processed_time": processed_time.isoformat(),
+                        "allocated_time": last_processed_time,
+                        "action_msg": f"Related Cause alert {interlock_name}",
+                        "action_type": "Cause"
+                    }
 
-                updated_effect_history = existing_effect_history + [new_entry]
-                print("updated_effect_history  ---> ", updated_effect_history)
-                effect_data_obj = hpcl_ceg_model.Alerts(id=effect_alert_id, alert_history=updated_effect_history)
-                await effect_data_obj.modify()
+                    updated_effect_history = existing_effect_history + [new_entry]
+                    print("updated_effect_history  ---> ", updated_effect_history)
+                    effect_data_obj = hpcl_ceg_model.Alerts(id=effect_alert_id, alert_history=updated_effect_history)
+                    await effect_data_obj.modify()
         
         # Now update the current cause alert history with the effect alert info
         if cause_alert_id:
@@ -193,14 +197,17 @@ class CauseEffect:
                 existing_cause_history = getattr(cause_alert, 'alert_history', []) or []
                 last_processed_time = processed_time
 
-                for entry in reversed(existing_cause_history):
+                # Check if the related effect alert entry already exists in history
+                effect_exists = False
+                for entry in existing_cause_history:
+                    if entry.get("action_type") == "Effect" and any(name in entry.get("action_msg", "") for name in related_effect_interlock_names):
+                        effect_exists = True
+                        break
                     if entry.get("action_type") == "InterlockCreated" and entry.get("processed_time"):
                         last_processed_time = entry.get("processed_time")
-                        break
                 
-                # Create a new entry for the cause alert history
-                if related_effect_interlock_names:
-                    # If we found effect alerts, list them
+                # Only add if it doesn't exist already and we found effect alerts
+                if not effect_exists and related_effect_interlock_names:
                     effect_names = ", ".join(related_effect_interlock_names)
                     new_cause_entry = {
                         "processed_time": last_processed_time,
@@ -230,8 +237,6 @@ class CauseEffect:
             f"""sap_id = '{params.get("sap_id")}' and """
             f"""sop_id = '{cause_sop_id}' and """
             f"""device_id = '{params.get("device_id")}' and """ 
-            # f"""device_type = '{params.get("device_type")}' and """ 
-            # f"""device_name like '%{params.get("device_name")}%' and """ 
             f"""cause_effect = 'Cause'"""
         )
 
@@ -257,27 +262,33 @@ class CauseEffect:
                 last_processed_time = processed_time
 
                 print("existing_cause_history  ---> ", existing_cause_history)
-
+                
+                # Check if the related effect alert entry already exists in history
+                effect_exists = False
                 for entry in reversed(existing_cause_history):
                     print("entry --> ", entry)
+                    if entry.get("action_type") == "Effect" and interlock_name in entry.get("action_msg", ""):
+                        effect_exists = True
+                        break
                     if entry.get("action_type") == "InterlockCreated" and entry.get("processed_time"):
                         last_processed_time = entry.get("processed_time")
-                        break
                 
-                new_entry = {
-                    "processed_time": last_processed_time,
-                    "allocated_time": last_processed_time,
-                    "action_msg": f"Related Effect alert {interlock_name}",
-                    "action_type": "Effect"
-                }
+                # Only add if it doesn't exist already
+                if not effect_exists:
+                    new_entry = {
+                        "processed_time": last_processed_time,
+                        "allocated_time": last_processed_time,
+                        "action_msg": f"Related Effect alert {interlock_name}",
+                        "action_type": "Effect"
+                    }
 
-                print("new_entry  ---> ", new_entry)
+                    print("new_entry  ---> ", new_entry)
 
-                updated_cause_history = existing_cause_history + [new_entry]
-                print("updated_cause_history  ---> ", updated_cause_history)
+                    updated_cause_history = existing_cause_history + [new_entry]
+                    print("updated_cause_history  ---> ", updated_cause_history)
 
-                cause_data_obj = hpcl_ceg_model.Alerts(id=cause_alert_id, alert_history=updated_cause_history)
-                await cause_data_obj.modify()
+                    cause_data_obj = hpcl_ceg_model.Alerts(id=cause_alert_id, alert_history=updated_cause_history)
+                    await cause_data_obj.modify()
         
         # Now update the current effect alert history with the cause alert info
         if effect_alert_id:
@@ -287,27 +298,32 @@ class CauseEffect:
                 existing_effect_history = getattr(effect_alert, 'alert_history', []) or []
                 last_processed_time = processed_time
 
+                # Check if the related cause alert entry already exists in history
+                cause_exists = False
                 for entry in reversed(existing_effect_history):
+                    if entry.get("action_type") == "Cause" and related_cause_interlock_name and related_cause_interlock_name in entry.get("action_msg", ""):
+                        cause_exists = True
+                        break
                     if entry.get("action_type") == "InterlockCreated" and entry.get("processed_time"):
                         last_processed_time = entry.get("processed_time")
-                        break
                 
-                # Create a new entry for the effect alert history
-                cause_info = related_cause_interlock_name or "Unknown Cause"
-                new_effect_entry = {
-                    "processed_time": last_processed_time,
-                    "allocated_time": last_processed_time,
-                    "action_msg": f"Related to Cause alert {cause_info}",
-                    "action_type": "Cause"
-                }
-                
-                updated_effect_history = existing_effect_history + [new_effect_entry]
-                
-                effect_data_obj = hpcl_ceg_model.Alerts(id=effect_alert_id, alert_history=updated_effect_history)
-                await effect_data_obj.modify()
+                # Only add if it doesn't exist already
+                if not cause_exists:
+                    # Create a new entry for the effect alert history
+                    cause_info = related_cause_interlock_name or "Unknown Cause"
+                    new_effect_entry = {
+                        "processed_time": last_processed_time,
+                        "allocated_time": last_processed_time,
+                        "action_msg": f"Related to Cause alert {cause_info}",
+                        "action_type": "Cause"
+                    }
+                    
+                    updated_effect_history = existing_effect_history + [new_effect_entry]
+                    
+                    effect_data_obj = hpcl_ceg_model.Alerts(id=effect_alert_id, alert_history=updated_effect_history)
+                    await effect_data_obj.modify()
         
         return True, {"Message": "Alert History updated"}
-
 
     async def cause_effect_alert(self, params):
         print("params --> ", params)
