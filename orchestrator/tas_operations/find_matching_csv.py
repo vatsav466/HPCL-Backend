@@ -20,7 +20,8 @@ async def find_matching_row(csv_file_path, match_criteria):
             reader = csv.DictReader(await file.read().splitlines())
             for row in reader:
                 # Check if the row matches the criteria
-                if all(row[key] == value for key, value in match_criteria.items()):
+                if all(row.get(key,'').strip().lower() == value.strip().lower() for key, value in match_criteria.items()):
+                    print(f"found matching row : {row}")
                     return row
             return None
     except Exception as e:

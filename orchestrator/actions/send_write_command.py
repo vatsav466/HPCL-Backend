@@ -63,7 +63,11 @@ class SendWriteCommand:
             }
 
             # handle this message playload to publish to rabbit mq
-            await send_rabbitmq.send_command_rabbitmq(message, sap_id, queue_name=f'command_write_{sap_id}')
+            status, message = await send_rabbitmq.send_command_rabbitmq(message, queue_name=f'command_write_{sap_id}')
+            if status:
+                return True, message
+            else:
+                return False
         
         except Exception as e:
             print(f"Error in handle write command: {e}")

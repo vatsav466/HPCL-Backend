@@ -5,7 +5,7 @@ import json
 import asyncio
 
 
-async def send_command_rabbitmq(self, message, queue_name):
+async def send_command_rabbitmq(message, queue_name):
         """
         Sends a command to RabbitMQ.
         This function connects to RabbitMQ, declares a queue, and sends a message to that queue.
