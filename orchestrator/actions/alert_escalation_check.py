@@ -14,57 +14,67 @@ class AlertEscalationCheck:
                 "interlock_name"]
 
     async def alert_escalation_check(self, params):
+        """
+        Check if a maintenance alert is already present for the given device.
+
+        Args:
+        - params (dict): A dictionary containing the following required keys:
+            - 'interlock_name' (str): The name of the interlock.
+            - 'device_name' (str): The name of the device.
+            - 'alert_id' (str): The ID of the current alert.
+
+        Returns:
+        - A tuple of (success, data), where:
+            - success (bool): True if the action was successful, False otherwise.
+            - data (dict): A dictionary containing the following key:
+                - 'escalate' (bool): True if escalation is needed, False otherwise.
+
+        Raises:
+        - No exceptions are raised. If an error occurs, the function will return
+          success=False and the error will be logged.
+        """
         try:
             interlock_name = params.get('interlock_name', '')
             device_name = params.get('device_name', '')
             current_alert_id = params.get('alert_id', '')
-            
+
             # Clean interlock name for query
             if interlock_name.endswith('_M'):
-                interlock_name_for_query = interlock_name[:-2]  # remove last 2 characters
+                interlock_name_for_query = interlock_name[:-2]
             else:
                 interlock_name_for_query = interlock_name
-            
-            # Check if this is a non-maintenance alert
-            if not interlock_name.endswith("Maintenance"):
-                print(f"This is a non-maintenance alert for device: {device_name}")
-                logger.debug(f"Processing non-maintenance alert for device: {device_name}")
-                current_time_str = current_datetime.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-                time_24h_after = current_datetime - datetime.timedelta(hours=24)
-                time_24h_after_str = time_24h_after.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
-                #   Query for maintenance alerts for the same device in the 24h after the current alert
-                maintenance_query = (
-                    f"""bu = 'TAS' and """
-                    f"""alert_section = 'TAS' and """
-                    f"""regexp_replace(tas_device_name, '_M$', '') = '{interlock_name_for_query}' and """
-                    f"""interlock_name LIKE '%Maintenance%' and """
-                    f"""created_at >= '{current_time_str}' and """
-                    f"""created_at <= '{time_24h_after_str}' and """
-                    f"""alert_id != '{current_alert_id}'"""  # Exclude current alert
-                )
-                
-                print(f"Post-alert maintenance check query: {maintenance_query}")
-                logger.debug(f"Post-alert maintenance check query: {maintenance_query}")
-                
-                maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
-                maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
-                
-                if maintenance_resp["data"]:
-                    # Found maintenance alerts within 24h after this non-maintenance alert
-                    print(f"Found maintenance alerts within 24h after this alert - Escalation is cancelled")
-                    logger.info(f"Found maintenance alerts within 24h after this alert - Escalation is cancelled")
-                    return None
-                
-                print(f"No maintenance alerts found within 24h after this alert - Proceeding with escalation")
-                logger.info(f"No maintenance alerts found within 24h after this alert - Proceeding with escalation")
-            
-            # If we got here, no reason to skip the escalation
-            logger.info(f"No blocking conditions found - alert will be escalated")
-            return True, {"Status": "Escalating to LEVEL-1"}
-            
+            print(f"Checking maintenance alerts for device: {device_name}")
+            logger.debug(f"Checking maintenance alerts for device: {device_name}")
+
+            # Query for *any* maintenance alerts for the same device (not time-based)
+            maintenance_query = (
+                f"""bu = 'TAS' and """
+                f"""alert_section = 'TAS' and """
+                f"""regexp_replace(tas_device_name, '_M$', '') = '{interlock_name_for_query}' and """
+                f"""interlock_name LIKE '%Maintenance%' and """
+                f"""alert_id != '{current_alert_id}'"""  # Exclude the current alert
+            )
+
+            print(f"Maintenance alert check query: {maintenance_query}")
+            logger.debug(f"Maintenance alert check query: {maintenance_query}")
+
+            maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
+            maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
+
+            if maintenance_resp.get("data"):
+                # Maintenance alert exists for the same device
+                print(f"Found maintenance alert for device - escalation allowed.")
+                logger.info(f"Found maintenance alert for device - escalation allowed.")
+                return True, {"escalate": False}
+            else:
+                # No maintenance alert, escalate
+                print(f"No maintenance alert found for device - escalation needed.")
+                logger.info(f"No maintenance alert found for device - escalation needed.")
+                return True, {"escalate": True}
+
         except Exception as e:
             logger.error(f"Error in alert escalation check: {e}")
             logger.error(traceback.format_exc())
             # In case of error, let the escalation through by default
-            return True, {"Status": "Escalating to LEVEL-1"}
+            return True, {"escalate": True}

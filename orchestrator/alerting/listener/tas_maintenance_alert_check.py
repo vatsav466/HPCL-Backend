@@ -3,6 +3,7 @@ import re
 import datetime
 import traceback
 import hpcl_ceg_model
+import utilities.helpers as helpers
 from orchestrator.alerting.alert_manager import create_alert, close_alert
 
 logger = urdhva_base.logger.Logger.getInstance("maintenance_alert_processing_log")
@@ -26,34 +27,6 @@ async def maintenance_alert_check(alert_data):
         else:
             tas_device_name = original_device_name
 
-        # Always check Tank_Under Maintenance first
-        # maintenance_query = (
-        #     f"""bu = 'TAS' and """
-        #     f"""sap_id != '{alert_data.get('sap_id', '')}' and """
-        #     f"""alert_section = 'TAS' and """
-        #     f"""device_id = '{alert_data.get('device_id', '')}' and """
-        #     f"""tas_device_name = '{tas_device_name}' and """
-        #     f"""device_type = '{alert_data.get('device_type', '')}' and """
-        #     f"""interlock_name = 'Tank_Under Maintenance' and """
-        #     f"""alert_status != 'Close'"""
-        # )
-        # print(f"Checking if tank is under maintenance with query: {maintenance_query}")
-        # logger.debug(f"Checking if tank is under maintenance with query: {maintenance_query}")
-        # maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
-        # maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
-
-        # if maintenance_resp["data"]:
-        #     print(f"Tank under maintenance - skipping alert for {current_equipment_name}")
-        #     logger.info(f"Tank under maintenance - skipping alert for {current_equipment_name}")
-        #     return True  # Skip alert creation if tank is under maintenance
-
-        # # Now, if equipment is in related list and tank is not under maintenance, allow the alert
-        # if current_equipment_name in related_equipment_names:
-        #     print(f"Skipping Alert creation - for {current_equipment_name} as Tank is under Maintenance")
-        #     logger.info(f"Skipping Alert creation - for {current_equipment_name} as Tank is under Maintenance")
-        #     return True  # Allow alert creation
-
-        # New logic: Check for alerts with maintenance interlock for the same equipment_name
         interlock_name = alert_data.get('interlock_name', '')
         if tas_device_name.endswith('_M'):
             tas_device_name_for_query = tas_device_name[:-2]  # remove last 2 characters
@@ -94,6 +67,8 @@ async def maintenance_alert_check(alert_data):
         return False
 
 async def close_tas_workflow(alert_data):
+    alert_data['alert_type'] = 'TAS'
+    alert_data['alert_id'] = alert_data.get('external_id', '')
     print(f"Closing camunda workflow for alert_id: {alert_data['id']}")
     data = {
         "messageName": "Message",
@@ -125,7 +100,7 @@ async def create_under_maintenance_alert(alert_data):
                 f"""alert_section = 'TAS' and """
                 f"""device_id = '{alert_data.get('device_id', '')}' and """
                 f"""created_at >= NOW() - INTERVAL '5 minutes' and """
-                # f"""tas_device_name = '{tas_device_name}' and """
+                # f"""tas_device_name = '{alert_data.get('tas_device_name')}' and """
                 # f"""device_type = '{alert_data.get('device_type', '')}' and """
                 # f"""interlock_name = 'Tank_Under Maintenance' and """
                 f"""alert_status != 'Close'"""
@@ -143,7 +118,7 @@ async def create_under_maintenance_alert(alert_data):
                 print("into close_tas_workflow")
                 await close_tas_workflow(data)
             
-            await create_alert(alert_data=alert_data)
+        await create_alert(alert_data=alert_data)
         return
     
     if alert_data['interlock_name'] != 'Tank_Under Maintenance':
@@ -153,7 +128,7 @@ async def create_under_maintenance_alert(alert_data):
                 f"""sap_id = '{alert_data.get('sap_id', '')}' and """
                 f"""alert_section = 'TAS' and """
                 f"""device_id = '{alert_data.get('device_id', '')}' and """
-                # f"""tas_device_name = '{tas_device_name}' and """
+                # f"""tas_device_name = '{alert_data.get('tas_device_name')}' and """
                 # f"""device_type = '{alert_data.get('device_type', '')}' and """
                 f"""interlock_name = 'Tank_Under Maintenance' and """
                 f"""alert_status != 'Close'"""
