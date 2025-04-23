@@ -30,15 +30,15 @@ productOrders = {
     "LPG": ["LPG PKD - Domestic", "LPG PKD - Non Domestic", "LPG BLK", "BULK PROPANE", "BULK BUTANE"],
     "PETCHEM": ["PETCHEM"],
     "Lubes": ["LUBES RETAIL", "Automotive Oils", "Automotive Greases", "Automotive Specialities", "Industrial oils",
-              "Industrial Greases", "Industrial Specialities", "Base Oil"],
+              "Industrial Greases", "Industrial Specialities", "Base Oil","ALPROL","Lubes-Exports","HP DEF-Retail"],
     "GAS":['CNG','LNG','CBG']
     
 }
 
 AllProducts = {
     "Lubes": ["Industrial Greases", "DEF/Diesel Exhaust Fluid", "Automotive Greases", "Automotive Specialities",
-              "Industrial oils", "ALPROL", "Base Oil", "LUBES RETAIL", "Automotive Oils", "Industrial Specialities",
-              "Solvent 2445", "Miscellaneous/Minor", "Marine Lubes"],
+              "Industrial oils", "Alprol", "Base Oil", "LUBES RETAIL", "Automotive Oils", "Industrial Specialities",
+              "Solvent 2445", "Miscellaneous/Minor", "Marine Lubes","ALPROL","Lubes-Exports","HP DEF-Retail"],
     "Aviation": ["ATF"],
     "Retail": ["LPG BLK", "MS", "Industrial Greases", "DEF/Diesel Exhaust Fluid", "HSD", "Automotive Greases",
                "Automotive Specialities", "Compressed Bio Gas ", "Industrial oils", "Automotive Oils",
