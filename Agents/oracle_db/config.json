@@ -17,7 +17,7 @@
         "HOST_UNAUTHORIZEDFLOW",
         "HOST_OVERLOADEDTTS",
         "HOST_MFMKFACTOR",
-        "MASTER_STATUS"
+        "HOST_MASTERSTATUS"
     ],
     "conn_host": "10.90.38.167",
     "conn_port": "5672",
@@ -44,7 +44,7 @@
         "HOST_MANUALBAYASSIGNED": "HostManualBayAssigned",
         "HOST_SICKTTS": "HostSickTts",
         "HOST_MFMKFACTOR": "HostMFMFactor",
-        "MASTER_STATUS": "MasterStatus"
+        "HOST_MASTERSTATUS": "MasterStatus"
     },
 
     "interlock_name": {
