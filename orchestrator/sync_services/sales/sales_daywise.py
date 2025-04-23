@@ -357,8 +357,8 @@ def get_and_insert_data(cursor, query, params=None):
     data = pl.from_pandas(data)
     '''
     data.loc[(data['ORGSBUCD'] == '4000')&(data['MATERIAL_GROUP_CD'] =='031'),'ProductName'] = 'ALPROL'
-    data.loc[(data['ORGSBUCD'] == '4000')&(~(data['MATERIAL_GROUP_CD'].isin(['031','038'])))&(data['DISTRIBUTION_CHANNEL_CD'] == '014'),'ProductName'] = 'Lubes-Exports'
-    data.loc[(data['ORGSBUCD'] == '4000')&(data['MATERIAL_GROUP_CD'] =='038')&(data['DISTRIBUTION_CHANNEL_CD'].isin(['011','012'])),'ProductName'] = 'HP DEF-Retail'
+    data.loc[(data['ORGSBUCD'] == '4000')&(~(data['MATERIAL_GROUP_CD'].isin(['031','038'])))&(data['DISTRIBUTION_CHANNEL_CD'].isin(['014','14'])),'ProductName'] = 'Lubes-Exports'
+    data.loc[(data['ORGSBUCD'] == '4000')&(data['MATERIAL_GROUP_CD'] =='038')&(data['DISTRIBUTION_CHANNEL_CD'].isin(['011','11','012','12'])),'ProductName'] = 'HP DEF-Retail'
     data = pl.from_pandas(data)
     
     insertToDB(data, params["table_name"])
