@@ -53,7 +53,7 @@ async def tas_bcu_listener(rmsg):
             await create_alert(alertdata)
         elif rmsg['status'] == 'CLEARED_UNACK':
             alertdata = rmsg['details']['additionalInfo']
-            alert_history = await duplicates_check.duplicate_check(alertdata)
+            alert_history = await alert_history_check(alertdata)
             if alert_history:
                 print(f"Device already initiated for the day : {alertdata}")
                 return
