@@ -21,7 +21,7 @@ async def alert_history_check(alertdata):
         f"""device_id = '{alertdata.get('device_id', '')}' and """
         f"""device_name = '{alertdata.get('device_name', '')}' and """
         f"""interlock_name = '{alertdata.get('interlock_name', '')}' and """
-        f"""DATE(created_at) = '{date_check}'"""
+        f"""DATE(created_at) = '{date_check}' and alert_status='Close' """
     )
     params = urdhva_base.queryparams.QueryParams(q=query)
     resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
@@ -33,7 +33,7 @@ async def alert_history_check(alertdata):
 async def tas_bcu_listener(rmsg):
     try:
         if rmsg.get("details") and rmsg["details"].get("additionalInfo"):
-            rmsg["details"]["additionalInfo"] = fix_additional_info(rmsg["details"]["additionalInfo"])
+            rmsg["details"]["additionalInfo"] = fix_additional_info(rmsg["details"]["additionalInfo"])            
         if rmsg['status'] == 'ACTIVE_UNACK':
             alertdata = rmsg['details']['additionalInfo']
             # First, check if it's a duplicate
@@ -45,6 +45,12 @@ async def tas_bcu_listener(rmsg):
             alertdata['severity'] = rmsg['severity']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
+            alert_history = await alert_history_check(alertdata)
+            if alert_history:
+                # Closing the alert as for same device, already the alert has been created for the current date
+                await close_alert(alertdata)
+                print(f"Device already initiated for the day, Closing the alert : {alertdata}")
+                return
             custom_data = rmsg['details']['additionalInfo'].get("customData", {})
             
             alertdata['message'] = ", ".join([f"{key}={value}" for key, value in custom_data.items()])
@@ -53,10 +59,10 @@ async def tas_bcu_listener(rmsg):
             await create_alert(alertdata)
         elif rmsg['status'] == 'CLEARED_UNACK':
             alertdata = rmsg['details']['additionalInfo']
-            alert_history = await alert_history_check(alertdata)
-            if alert_history:
-                print(f"Device already initiated for the day : {alertdata}")
-                return
+            # alert_history = await alert_history_check(alertdata)
+            # if alert_history:
+            #     print(f"Device already initiated for the day : {alertdata}")
+            #     return
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
             print("Close Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
