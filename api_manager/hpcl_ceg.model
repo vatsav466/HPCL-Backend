@@ -1945,8 +1945,9 @@ Model ArchitectureData{
     device_type optional unique_field str
     count optional unique_field str
     zone optional str
-    system optional unique_field str
-    equipment_name optional unique_field str
+    system optional str
+    equipment_name optional str
+    total_tank_count optional unique_field int
 
     Action=> architecture_details {
 
