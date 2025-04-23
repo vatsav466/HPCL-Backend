@@ -4578,8 +4578,10 @@ class GlobalAnalytics:
             gd_df = pd.DataFrame(gd_resp)
             combined_df = pd.concat([cs_df, pt_df, gd_df], ignore_index=True)
             combined_df = combined_df.groupby(["rejection_type"], as_index=False).agg({
-                    "Rejections": "mean"
+                    "total": "sum",
+                    "sortout": "sum",
                 })
+            combined_df["Rejections"] = combined_df["sortout"] / combined_df["total"]
             combined_df["Rejections"] = combined_df["Rejections"].round(1)
 
             combined_df["Rejections"] = combined_df["Rejections"].fillna(0.0)
@@ -4613,7 +4615,8 @@ class GlobalAnalytics:
         if rejection_filter:
             combined_df = combined_df[combined_df['rejection_type'] == rejection_filter.value[0]]
         # Fill missing values
-        combined_df["Rejections"] = combined_df["Rejections"].fillna(0.0)
+        for col in ["total", "sortout"]:
+            combined_df[col] = combined_df[col].fillna(0.0)
         for each_str_col in ["zone", "plant", "rejection_type"]:
             if each_str_col in combined_df.columns:
                 combined_df[each_str_col] = combined_df[each_str_col].fillna('').astype(str)
@@ -4623,12 +4626,16 @@ class GlobalAnalytics:
             filter_keys = [rec.key.strip('"') for rec in filters]
             if "rejection_type" in filter_keys and "zone" not in filter_keys:
                 grouped_resp = combined_df.groupby(["rejection_type","zone"], as_index=False).agg({
-                    "Rejections": "mean"
+                    "total": "sum",
+                    "sortout": "sum",
                 })
+                grouped_resp["Rejections"] = grouped_resp["sortout"] / grouped_resp["total"]
             elif "rejection_type" in filter_keys and "zone"  in filter_keys and "plant" not in filter_keys:
                 grouped_resp = combined_df.groupby(["rejection_type","zone", "plant"], as_index=False).agg({
-                    "Rejections": "mean"
+                    "total": "sum",
+                    "sortout": "sum",
                 })
+                grouped_resp["Rejections"] = grouped_resp["sortout"] / grouped_resp["total"]
             if grouped_resp is not None:
                 grouped_resp["Rejections"] = grouped_resp["Rejections"].round(1)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
