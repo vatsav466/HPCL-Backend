@@ -562,10 +562,12 @@ alert_action = {
         "RO": {
             "alert_section": "RO",
             "close_alert_func": "",
+            "create_workflow_func": "execute_workflow_ro",
             "actions": {
                 "Raise Request": {
-                    "name": "Raise Request",
+                    "name": "Raised",
                     "close_alert": False,
+                    "create_workflow": True,
                     "roles": ["Admin", "RO Dealer"]
                 },
                 "Approve": {

@@ -209,6 +209,7 @@ Model Users {
     Action=> login {
         username str regex="^[a-zA-Z0-9_.-]+$"
         password str
+        login_type optional default='employee' str
     }
 
     // API for user logout

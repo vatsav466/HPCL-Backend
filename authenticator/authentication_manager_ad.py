@@ -4,6 +4,7 @@ import ldap
 import json
 import fastapi
 import base64
+import requests
 import hpcl_ceg_model
 import urdhva_base.settings
 import urdhva_base.redispool
@@ -41,13 +42,32 @@ class AuthenticationManager:
             return False
 
     @classmethod
-    async def login(cls, username, password):
+    async def validate_open_ldap_auth(cls, username, password):
+        """
+
+        Args:
+            username:
+            password:
+
+        Returns:
+
+        """
+        url = urdhva_base.settings.open_ldap_url
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(url, data=json.dumps({"user_id": username, "password": password}), headers=headers, timeout=15)
+        if response.status_code == 204:
+            return True
+        return False
+
+    @classmethod
+    async def login(cls, username, password, login_type):
         """
         Authenticates a user based on their username and password(LDAP or Local Authentication)
 
         Args:
             username (str): The username of the user.
             password (str): The password of the user.
+            login_type (str): Login Type Employee / Dealer
 
         Returns:
             bool: True if authentication is successful, False otherwise.
@@ -67,15 +87,26 @@ class AuthenticationManager:
 
         # If ldap authentication enabled allow user to validate with LDAP, else check local login
         if user_info.get('is_ad_user'): #urdhva_base.settings.ldap_auth_enabled:
-            # Validating user in with LDAP.
-            try:
-                status = await cls.validate_ldap_auth(username, password)
-            except Exception as e:
-                print(f"Exception while validating ldap auth for user {username}")
-                status = False
-            if not status:
-                await cls.update_login_failure_attempts(username)
-                return False, "Invalid Login Credentials"
+            if login_type == 'dealer':
+                # Validating user in with Open LDAP.
+                try:
+                    status = await cls.validate_open_ldap_auth(username, password)
+                except Exception as e:
+                    print(f"Exception while validating ldap auth for user {username}")
+                    status = False
+                if not status:
+                    await cls.update_login_failure_attempts(username)
+                    return False, "Invalid Login Credentials"
+            else:
+                # Validating user in with LDAP.
+                try:
+                    status = await cls.validate_ldap_auth(username, password)
+                except Exception as e:
+                    print(f"Exception while validating ldap auth for user {username}")
+                    status = False
+                if not status:
+                    await cls.update_login_failure_attempts(username)
+                    return False, "Invalid Login Credentials"
         else:
             # If provided password not equals to db password, skip authentication
             if urdhva_base.types.Secret(user_info["password"]).get_secret() != password:
