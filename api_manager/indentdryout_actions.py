@@ -622,6 +622,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     count_50_klm = await dry_out_analysis.get_ro_count_less_50(conditions)
     tar_analysis = await dry_out_analysis.get_tar_analysis(conditions)
     dealer_truck_count = await dry_out_analysis.get_tt_counts(conditions)
+    closed_outlet = await dry_out_analysis.get_closed_outlet(dry_out_in_days=1)
 
     stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
               "group": top_x_axis[key - 1]['group']}
@@ -644,7 +645,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "Nozzle Sales Not Started", "value": 0, "serial": 20,
             "condition": "=", "group": "indent"
         }, {
-            "section": "Closed Outlets", "value": 0, "serial": 21,
+            "section": "Closed Outlets", "value": closed_outlet, "serial": 21,
             "condition": "=", "group": "indent"
         }, {
             "section": "Low Volume(<50KLPM)", "value": count_50_klm, "serial": 22,
