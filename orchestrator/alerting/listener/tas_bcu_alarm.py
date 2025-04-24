@@ -24,7 +24,7 @@ async def tas_bcu_listener(rmsg):
             alertdata['severity'] = rmsg['severity']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
-            alert_history = await duplicates_check.alert_history_check(alertdata)
+            alert_history = await duplicates_check.alert_history_check(alertdata, month_check=False)
             if alert_history:
                 # Closing the alert as for same device, already the alert has been created for the current date
                 alertdata["sop_id"] = f"{alertdata['sop_id']}_C"
