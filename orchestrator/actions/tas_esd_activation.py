@@ -166,9 +166,9 @@ class TasEsdActivation:
                 # Close the alert workflow
                 await alert_close.close_tas_workflow(alert_data=alert_data)
                 
-                return {"status": "success", "message": alert_message, "count": total_count, 
+                return True, {"status": "success", "message": alert_message, "count": total_count, 
                         "alert_id": alert_id, "unique_id": alert_unique_id}
             else:
-                return {"status": "alert creation failed", "message": "Could not get alert ID"}
+                return True, {"status": "alert creation failed", "message": "Could not get alert ID"}
         else:
-            return {"status": "counts don't match", "total_count": total_count, "tank_count": total_tank_count}
+            return True, {"status": "counts don't match", "total_count": total_count, "tank_count": total_tank_count}
