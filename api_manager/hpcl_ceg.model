@@ -2145,7 +2145,7 @@ Model RoMasterData {
     zonal_head_instance int
 
     Action=> update_ro_master_data {
-        id str
+        record_id str
         interlock str
         threshold str
         threshold_value int
