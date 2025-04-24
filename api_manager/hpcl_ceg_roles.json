@@ -4440,6 +4440,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "update_ro_master_data"
                 }
             ]
         },
@@ -4479,6 +4482,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "update_ro_master_data"
                 }
             ]
         }
@@ -4878,6 +4884,10 @@
         {
             "name": "get_pi_score",
             "displayName": "get_pi_score"
+        },
+        {
+            "name": "update_ro_master_data",
+            "displayName": "update_ro_master_data"
         }
     ]
 }

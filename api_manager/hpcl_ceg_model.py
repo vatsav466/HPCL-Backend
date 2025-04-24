@@ -6241,3 +6241,21 @@ class RoMasterDataGetResp(pydantic.BaseModel):
     data: typing.List[RoMasterData]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class Romasterdata_Update_Ro_Master_DataParams(pydantic.BaseModel):
+    
+    interlock: str
+    threshold: str
+    threshold_value: int
+    monthly_quota: str
+    sales_officer_quota: int
+    sales_officer_instance: int
+    regional_manager_quota: int
+    regional_manager_instance: int
+    zonal_head_quota: int
+    zonal_head_instance: int
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
