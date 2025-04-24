@@ -10,4 +10,6 @@ router = fastapi.APIRouter(prefix='/romasterdata')
 async def romasterdata_update_ro_master_data(data: Romasterdata_Update_Ro_Master_DataParams):
     if not isinstance(data, dict):
         data = data.dict()
+    data['id'] = data['record_id']
+    del data['record_id']
     return await Users(**data).modify()

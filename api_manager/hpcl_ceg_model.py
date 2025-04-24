@@ -6244,7 +6244,7 @@ class RoMasterDataGetResp(pydantic.BaseModel):
 
 
 class Romasterdata_Update_Ro_Master_DataParams(pydantic.BaseModel):
-    
+    record_id: str
     interlock: str
     threshold: str
     threshold_value: int
