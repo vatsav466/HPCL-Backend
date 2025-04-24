@@ -2131,3 +2131,16 @@ Model DryOutRoLoss {
     sales_area optional str
     location_name optional str
 }
+
+Model RoMasterData {
+    interlock str
+    threshold str
+    threshold_value int
+    monthly_quota str
+    sales_officer_quota int
+    sales_officer_instance int
+    regional_manager_quota int
+    regional_manager_instance int
+    zonal_head_quota int
+    zonal_head_instance int
+}

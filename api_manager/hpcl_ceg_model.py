@@ -6176,3 +6176,68 @@ class DryOutRoLossGetResp(pydantic.BaseModel):
     data: typing.List[DryOutRoLoss]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class RoMasterDataSchema(UrdhvaPostgresBase):
+    __tablename__ = 'ro_master_data'
+    
+    interlock: Mapped[str] = mapped_column("interlock", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    threshold: Mapped[str] = mapped_column("threshold", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    threshold_value: Mapped[int] = mapped_column("threshold_value", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    monthly_quota: Mapped[str] = mapped_column("monthly_quota", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sales_officer_quota: Mapped[int] = mapped_column("sales_officer_quota", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sales_officer_instance: Mapped[int] = mapped_column("sales_officer_instance", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    regional_manager_quota: Mapped[int] = mapped_column("regional_manager_quota", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    regional_manager_instance: Mapped[int] = mapped_column("regional_manager_instance", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zonal_head_quota: Mapped[int] = mapped_column("zonal_head_quota", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zonal_head_instance: Mapped[int] = mapped_column("zonal_head_instance", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class RoMasterDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'ro_master_data'
+    
+    interlock: str
+    threshold: str
+    threshold_value: int
+    monthly_quota: str
+    sales_officer_quota: int
+    sales_officer_instance: int
+    regional_manager_quota: int
+    regional_manager_instance: int
+    zonal_head_quota: int
+    zonal_head_instance: int
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = RoMasterDataSchema
+        upsert_keys = []
+
+
+class RoMasterData(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'ro_master_data'
+    
+    interlock: typing.Optional[str] | None = None
+    threshold: typing.Optional[str] | None = None
+    threshold_value: typing.Optional[int] | None = None
+    monthly_quota: typing.Optional[str] | None = None
+    sales_officer_quota: typing.Optional[int] | None = None
+    sales_officer_instance: typing.Optional[int] | None = None
+    regional_manager_quota: typing.Optional[int] | None = None
+    regional_manager_instance: typing.Optional[int] | None = None
+    zonal_head_quota: typing.Optional[int] | None = None
+    zonal_head_instance: typing.Optional[int] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = RoMasterDataSchema
+        upsert_keys = []
+
+
+class RoMasterDataGetResp(pydantic.BaseModel):
+    data: typing.List[RoMasterData]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
