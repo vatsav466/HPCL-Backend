@@ -4,41 +4,9 @@ import json
 import asyncio
 import traceback
 from datetime import datetime
-import api_manager.hpcl_ceg_model as hpcl_ceg_model
 import tas_duplicate_alert_check as duplicates_check
-import tas_maintenance_alert_check as maintenance_check
 from orchestrator.alerting.alert_manager import create_alert, close_alert
 from orchestrator.alerting.listener.tas_listener import fix_additional_info
-
-
-async def alert_history_check(alertdata, month_check=None):
-    date_check = datetime.now().strftime("%Y-%m-%d")
-    if month_check:
-        month = datetime.now().strftime("%Y-%b")
-        query = (
-            f"""bu = 'TAS' and """
-            f"""sap_id = '{alertdata.get('sap_id', '')}' and """
-            f"""alert_section = 'TAS' and """
-            f"""device_id = '{alertdata.get('device_id', '')}' and """
-            f"""device_name = '{alertdata.get('device_name', '')}' and """
-            f"""interlock_name = '{alertdata.get('interlock_name', '')}' and """
-            f"""TO_CHAR(created_at, 'YYYY-Mon') = '{month}' and alert_status='Close'"""
-        )
-    else:
-        query = (
-            f"""bu = 'TAS' and """
-            f"""sap_id = '{alertdata.get('sap_id', '')}' and """
-            f"""alert_section = 'TAS' and """
-            f"""device_id = '{alertdata.get('device_id', '')}' and """
-            f"""device_name = '{alertdata.get('device_name', '')}' and """
-            f"""interlock_name = '{alertdata.get('interlock_name', '')}' and """
-            f"""DATE(created_at) = '{date_check}' and alert_status='Close' """
-        )
-    params = urdhva_base.queryparams.QueryParams(q=query)
-    resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
-    if resp["data"]:
-        return True
-    return False
 
 
 async def tas_bcu_listener(rmsg):
@@ -56,7 +24,7 @@ async def tas_bcu_listener(rmsg):
             alertdata['severity'] = rmsg['severity']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
-            alert_history = await alert_history_check(alertdata)
+            alert_history = await duplicates_check.alert_history_check(alertdata)
             if alert_history:
                 # Closing the alert as for same device, already the alert has been created for the current date
                 alertdata["sop_id"] = f"{alertdata['sop_id']}_C"
@@ -71,10 +39,6 @@ async def tas_bcu_listener(rmsg):
             await create_alert(alertdata)
         elif rmsg['status'] == 'CLEARED_UNACK':
             alertdata = rmsg['details']['additionalInfo']
-            # alert_history = await alert_history_check(alertdata)
-            # if alert_history:
-            #     print(f"Device already initiated for the day : {alertdata}")
-            #     return
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
             print("Close Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
