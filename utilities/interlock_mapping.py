@@ -195,6 +195,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP028", "interlock_name": "Additive Underdose Alarm_BCU", "workflow_name": "BCU ALARM PARAMETERS"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off_Fail", "workflow_name": "BCU ALARM PARAMETERS"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off", "workflow_name": "BCU ALARM PARAMETERS"},
+                        {"sop_id": "SOP028A_C", "interlock_name": "BCU Permissive Off", "workflow_name": "BCU ALARM PARAMETERS CLOSE"},
                         {"sop_id": "SOP029", "interlock_name": "Tank leakage alarm", "workflow_name": "TANK LEAKAGE"},
                         {"sop_id": "SOP032", "interlock_name": "Primary Radar Guage_H alarm", "workflow_name": "TANK PRIMARY RADAR GAUGE HAND HH"},
                         {"sop_id": "SOP032", "interlock_name": "Primary Radar Guage_HH alarm", "workflow_name": "TANK PRIMARY RADAR GAUGE HAND HH"},

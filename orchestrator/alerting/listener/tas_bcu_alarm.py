@@ -11,18 +11,29 @@ from orchestrator.alerting.alert_manager import create_alert, close_alert
 from orchestrator.alerting.listener.tas_listener import fix_additional_info
 
 
-async def alert_history_check(alertdata):
-    date_check = datetime.fromtimestamp(int(alertdata["createdTime"])).strftime("%Y-%m-%d")
-    
-    query = (
-        f"""bu = 'TAS' and """
-        f"""sap_id = '{alertdata.get('sap_id', '')}' and """
-        f"""alert_section = 'TAS' and """
-        f"""device_id = '{alertdata.get('device_id', '')}' and """
-        f"""device_name = '{alertdata.get('device_name', '')}' and """
-        f"""interlock_name = '{alertdata.get('interlock_name', '')}' and """
-        f"""DATE(created_at) = '{date_check}' and alert_status='Close' """
-    )
+async def alert_history_check(alertdata, month_check=None):
+    date_check = datetime.now().strftime("%Y-%m-%d")
+    if month_check:
+        month = datetime.now().strftime("%Y-%b")
+        query = (
+            f"""bu = 'TAS' and """
+            f"""sap_id = '{alertdata.get('sap_id', '')}' and """
+            f"""alert_section = 'TAS' and """
+            f"""device_id = '{alertdata.get('device_id', '')}' and """
+            f"""device_name = '{alertdata.get('device_name', '')}' and """
+            f"""interlock_name = '{alertdata.get('interlock_name', '')}' and """
+            f"""TO_CHAR(created_at, 'YYYY-Mon') = '{month}' and alert_status='Close'"""
+        )
+    else:
+        query = (
+            f"""bu = 'TAS' and """
+            f"""sap_id = '{alertdata.get('sap_id', '')}' and """
+            f"""alert_section = 'TAS' and """
+            f"""device_id = '{alertdata.get('device_id', '')}' and """
+            f"""device_name = '{alertdata.get('device_name', '')}' and """
+            f"""interlock_name = '{alertdata.get('interlock_name', '')}' and """
+            f"""DATE(created_at) = '{date_check}' and alert_status='Close' """
+        )
     params = urdhva_base.queryparams.QueryParams(q=query)
     resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
     if resp["data"]:
@@ -48,7 +59,8 @@ async def tas_bcu_listener(rmsg):
             alert_history = await alert_history_check(alertdata)
             if alert_history:
                 # Closing the alert as for same device, already the alert has been created for the current date
-                await close_alert(alertdata)
+                alertdata["sop_id"] = f"{alertdata['sop_id']}_C"
+                await create_alert(alertdata)
                 print(f"Device already initiated for the day, Closing the alert : {alertdata}")
                 return
             custom_data = rmsg['details']['additionalInfo'].get("customData", {})
