@@ -20,7 +20,7 @@ async def find_matching_row(csv_file_path, match_criteria):
         reader = pd.read_csv(csv_file_path).to_dict(orient="records")
         for row in reader:
             # Check if the row matches the criteria
-            if all(row.get(key,'').strip().lower() == value.strip().lower() for key, value in match_criteria.items()):
+            if all(str(row.get(key,'')).strip().lower() == str(value).strip().lower() for key, value in match_criteria.items()):
                 print(f"found matching row : {row}")
                 return row
         return None
