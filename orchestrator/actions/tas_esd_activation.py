@@ -64,14 +64,18 @@ class TasEsdActivation:
         for result in interlock_results:
             esd_close_query = f"bu = 'TAS' and sap_id = '{sap_id}' and alert_section = 'TAS' and interlock_name = {esd_fail_status} AND created_at >= NOW() - INTERVAL '{time_window} seconds'"
             esd_params = urdhva_base.queryparams.QueryParams()
-            esd_params.fields = ["tas_device_name", location_name]
+            esd_params.fields = ["tas_device_name", "location_name"]
             esd_params.q = esd_close_query
             esd_close_alerts = await hpcl_ceg_model.Alerts.get_all(esd_params, resp_type='plain')
             esd_close_data = esd_close_alerts.get("data", [])
             
+            location_name = ""
             if esd_close_data:
                 for alert in esd_close_data:
                     esd_device_names.append(alert.get('tas_device_name', ''))
+        
+                location_name = esd_close_data[0].get("location_name", "")
+
         
         # Check maintenance alerts for the ESD devices
         for device_name in esd_device_names:
@@ -138,7 +142,7 @@ class TasEsdActivation:
             alert_data = {
                 "BU": bu,
                 "sap_id": sap_id,
-                "location_name": "",
+                "location_name": location_name,
                 "sop_id": "SOP02A",
                 "interlock_name": alert_message,
                 "alert_status": "Open",
