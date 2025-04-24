@@ -55,8 +55,10 @@ class AuthenticationManager:
         url = urdhva_base.settings.open_ldap_url
         headers = {'Content-Type': 'application/json'}
         response = requests.post(url, data=json.dumps({"user_id": username, "password": password}), headers=headers, timeout=15)
-        if response.status_code == 204:
-            return True
+        if int(response.status_code // 200) == 1:
+            resp = response.json()
+            if resp.get('success') in ('true', True):
+                return True
         return False
 
     @classmethod
