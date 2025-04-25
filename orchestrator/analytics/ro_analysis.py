@@ -2,6 +2,7 @@ import urdhva_base
 import json
 import time
 import requests
+import traceback
 import charts_actions
 import hpcl_ceg_model
 import dashboard_studio_model
@@ -33,6 +34,14 @@ async def interlock_disable(params: dict):
     default_headers = {"Content-Type": "application/json"}
     try:
         response = requests.post(url, json=params, headers=default_headers)
+        try:
+            response_data = response.json()
+        except (ValueError, requests.exceptions.JSONDecodeError):
+            response_data = {"raw_text": response.text or "Empty response"}
+        log_payload = {
+            "status_code": response.status_code,
+            "response": response_data
+        }
         audit_data = {
             "method": "POST",
             "url": url,
@@ -40,7 +49,7 @@ async def interlock_disable(params: dict):
             "alert_id": alert_id,
             "request_no": params['reqno'],
             "response": str(response.status_code),
-            "response_msg": json.dumps(response.json()),
+            "response_msg": json.dumps(log_payload),
             "request_datetime": urdhva_base.utilities.get_present_time().isoformat(),
             "api_ack": None,
             "api_ack_datetime": None
@@ -48,6 +57,7 @@ async def interlock_disable(params: dict):
         await api_audit_log(audit_data=audit_data)
         return response.json()
     except Exception as e:
+        print(traceback.format_exc())
         print(f"Error while disabling interlock {e}")
         return {"status": False, "message": "Failed to post cris API"}
 
