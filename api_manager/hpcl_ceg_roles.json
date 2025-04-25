@@ -4418,6 +4418,75 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "romasterdata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "RoMasterData",
+            "attributes": {},
+            "uris": [
+                "/api/romasterdata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "update_ro_master_data"
+                }
+            ]
+        },
+        {
+            "name": "romasterdata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "RoMasterData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/romasterdata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "romasterdata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "RoMasterData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/romasterdata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "update_ro_master_data"
+                }
+            ]
         }
     ],
     "policies": [
@@ -4815,6 +4884,10 @@
         {
             "name": "get_pi_score",
             "displayName": "get_pi_score"
+        },
+        {
+            "name": "update_ro_master_data",
+            "displayName": "update_ro_master_data"
         }
     ]
 }

@@ -32,7 +32,6 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
         if location_df.empty:
             return {"status": False, "message": "No TAS locations found."}
         
-      
         mfm_query = "SELECT sap_id, COUNT(bcu_number) as mfm_count FROM host_mfm_factor WHERE bcu_number IS NOT NULL GROUP BY sap_id"
         mfm_df = await execute_query(query=mfm_query)
         mfm_df = pd.DataFrame(mfm_df)
@@ -114,28 +113,49 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                 else:
                     location_counts[device_type].append(device_name)
 
+            # Track unique tanks associated with tank-related devices
+            tank_devices = set()
+            for dev_type, device_names in location_counts.items():
+                # If this is a tank-related device type (from device_type_mapping["Tank"])
+                if dev_type in ["Primary Level", "VFT", "Radar", "ROSOV", "MOV", "RIMSEAL"]:
+                    for device_name in device_names:
+                        # Extract the tank name from the device name
+                        # Assuming tank name is before the '@' symbol in device_name
+                        tank_name = device_name.split('@')[0] if '@' in device_name else device_name
+                        tank_devices.add(tank_name)
+            
+            # Calculate total tank count
+            total_tank_count = len(tank_devices)
+
             # Convert counts to final records
             for dev_type, device_names in location_counts.items():
                 count = 0
                 for device_name in device_names:
                     if dev_type == "Hooter" and device_name.split('@')[0].endswith("HOOTER_ACK"):
-                         continue
+                        continue
                     if dev_type == "Pump" and any(kw in device_name.upper() for kw in ["BLUE DYE", "FO"]):
-                          continue
+                        continue
                     count +=1
                 if dev_type in ["Tank Maintenance","Fire Pump"]:
                     continue
                 if dev_type == "Loading Point":
-                     dev_type = "Gantry BCU" 
+                    dev_type = "Gantry BCU" 
 
                 if count > 0:
-                    final_records.append({
+                    record = {
                         "sap_id": sap_id,
                         "name": location_name,
                         "zone": zone,
                         "device_type": dev_type,
                         "count": str(count)
-                    })
+                    }
+                    
+                    # Add total_tank_count field to tank-related devices
+                    if dev_type in ["Primary Level", "VFT", "Radar", "ROSOV", "MOV", "RIMSEAL"]:
+                        record["total_tank_count"] = total_tank_count
+                    
+                    final_records.append(record)
+                    
             # Add MFM count if available
             if sap_id in mfm_map:
                 final_records.append({
@@ -157,7 +177,7 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": f"Error: {str(e)}"}
-
+        
 @router.post('/architecture_data', tags=['ArchitectureData'])
 async def architecturedata_architecture_data(data: Architecturedata_Architecture_DataParams):
     try:
