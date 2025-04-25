@@ -100,7 +100,7 @@ class AlertFactory:
             # assign roles for emlock and ro alerts
             if alert_data.get("alert_section", bu) == 'EMLock':
                 assigned_user_roles = ["Planning Officer SOD"]
-            elif alert_data.get("alert_section", bu) == 'RO' and interlock_name != '':
+            elif alert_data.get("alert_section", bu) == 'RO' and interlock_name != 'Dry Out Each Indent Wise MainFlow':
                 assigned_user_roles = ["RO Dealer"]
             else:
                 assigned_user_roles = []
