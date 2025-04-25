@@ -1,5 +1,5 @@
 import urdhva_base
-import datetime
+from datetime import datetime
 import traceback
 import hpcl_ceg_model
 

@@ -23,7 +23,7 @@ class SendWriteCommand:
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
             if not isinstance(alert_data, dict):
-                alert_data = alert_data._dict_
+                alert_data = alert_data.__dict__
             # Extracting required parameters from alert data
             interlock_name = alert_data.get('interlock_name')
             equipment_name = alert_data.get('tas_device_name') or alert_data.get('device_name') # Prioritize tas_device_name
