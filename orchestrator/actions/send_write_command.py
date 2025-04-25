@@ -26,22 +26,22 @@ class SendWriteCommand:
                 alert_data = alert_data._dict_
             # Extracting required parameters from alert data
             interlock_name = alert_data.get('interlock_name')
-            equipment_name = alert_data.get('device_name')
+            equipment_name = alert_data.get('tas_device_name') or alert_data.get('device_name') # Prioritize tas_device_name
             sap_id = alert_data.get('sap_id')
             if not (interlock_name and equipment_name and sap_id):
                 print("missing required fields")
                 return 
              # Define the matching criteria
             match_criteria = {
-                "interlock_name": interlock_name,
-                "equipment_name": equipment_name
+                "equipment_name": equipment_name,
+                "sap_id": sap_id
             }
             
             # Read the CSV file and find the matching row
             matched_row = await find_matching_csv.find_matching_row(csv_file_path, match_criteria)
 
             if not matched_row:
-                print(f"No matching row found for interlock name :{interlock_name} and equipment name : {equipment_name}")
+                print(f"No matching row found for sap_id :{sap_id} and equipment name : {equipment_name}")
                 return
             
             # Extracting the tag and write control from the matched row
@@ -63,7 +63,7 @@ class SendWriteCommand:
             }
 
             # handle this message playload to publish to rabbit mq
-            status, message = await send_rabbitmq.send_command_rabbitmq(message, queue_name=f'command_write_{sap_id}')
+            status, message = await send_rabbitmq.send_command_rabbitmq(message, queue_name=f'write_{sap_id}')
             if status:
                 return True, message
             else:
