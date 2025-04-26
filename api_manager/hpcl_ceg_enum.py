@@ -130,6 +130,7 @@ class AlertActionType(str, enum.Enum):
     BayReAssigned = 'BayReAssigned'
     Effect = 'Effect'
     Cause = 'Cause'
+    ESDFailure = 'ESDFailure'
 
 
 

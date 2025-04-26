@@ -90,6 +90,7 @@ Enum AlertActionType str {
     BayReAssigned='BayReAssigned'
     Effect='Effect'
     Cause='Cause'
+    ESDFailure='ESDFailure'
 }
 
 Enum IndentStatus str {
