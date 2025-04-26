@@ -356,6 +356,9 @@ def get_and_insert_data(cursor, query, params=None):
     data = pd.concat([data,lubes_ps_data])
     data = pl.from_pandas(data)
     '''
+    data.loc[(data['ORGSBUCD'] == '4000')&(data['MATERIAL_GROUP_CD'] =='031'),'ProductName'] = 'ALPROL'
+    data.loc[(data['ORGSBUCD'] == '4000')&(~(data['MATERIAL_GROUP_CD'].isin(['031','038'])))&(data['DISTRIBUTION_CHANNEL_CD'].isin(['014','14'])),'ProductName'] = 'Lubes-Exports'
+    data.loc[(data['ORGSBUCD'] == '4000')&(data['MATERIAL_GROUP_CD'] =='038')&(data['DISTRIBUTION_CHANNEL_CD'].isin(['011','11','012','12'])),'ProductName'] = 'HP DEF-Retail'
     data = pl.from_pandas(data)
     
     insertToDB(data, params["table_name"])
@@ -1003,6 +1006,7 @@ ORDER BY ORGSBUCD, DAY_ID;
     PRODUCTCODE,
     MATERIAL_CD,-- Added MATERIAL_CD
     DISTRIBUTION_CHANNEL_CD,
+    MATERIAL_GROUP_CD,
     PLANT_CD,
     MATERIALGROUPNAME,
     CURFISCALYEAR,
@@ -1056,6 +1060,7 @@ FROM (
         END AS PRODUCTCODE,
         E1.MATERIAL_CD,  -- Added MATERIAL_CD
         E1.DISTRIBUTION_CHANNEL_CD,
+        E1.MATERIAL_GROUP_CD,
         E1.PLANT_CD,
         CASE
             WHEN E2.ORG_SBU_CD <> 4000 THEN E7.MATERIAL_GROUP_NM
@@ -1098,6 +1103,7 @@ FROM (
         E1.WEIGHT_UNIT,
         E1.MATERIAL_CD,  -- Added MATERIAL_CD in GROUP BY
         E1.DISTRIBUTION_CHANNEL_CD,
+        E1.MATERIAL_GROUP_CD,
         E1.PLANT_CD
 ) OrigView
 

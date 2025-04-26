@@ -100,6 +100,13 @@ class AlertFactory:
             #     alert_resp['device_name'] = device_name
             # else:
             # # Generate alert alert_data
+            # assign roles for emlock and ro alerts
+            if alert_data.get("alert_section", bu) == 'EMLock':
+                assigned_user_roles = ["Planning Officer SOD"]
+            elif alert_data.get("alert_section", bu) == 'RO' and interlock_name != 'Dry Out Each Indent Wise MainFlow':
+                assigned_user_roles = ["RO Dealer"]
+            else:
+                assigned_user_roles = []
             alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity').capitalize() if alert_data.get('severity') else "Medium",
                                                         'alert_category': alert_data.get('alert_category'),
@@ -124,7 +131,7 @@ class AlertFactory:
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
                                                         'assigned_users': [],
-                                                        'assigned_user_roles': ["Planning Officer SOD"] if alert_data.get("alert_section", bu) == 'EMLock' else [],
+                                                        'assigned_user_roles': assigned_user_roles,
                                                         'indent_status': hpcl_ceg_enum.IndentStatus.Pending,
                                                         'dealer_id': str(alert_data.get('dealer_id', '')),
                                                         'product_code': str(alert_data.get('product_code', '')),
@@ -242,7 +249,10 @@ class AlertFactory:
                     # print("Data Pushed to VTS Vendor", resp)
 
                 if alert_data_dict.get("alert_section") in ["VA"] and alert_data_dict.get("bu") in ["RO"]:
-                    return True, "alert created" 
+                    return True, "alert created"
+                if alert_data_dict.get("alert_section") in ["RO"] and interlock_name.get("interlock_name") != 'Dry Out Each Indent Wise MainFlow':
+                    print(f"alert skipped: {alert_data_dict}")
+                    return True, "alert created"
                 await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                 await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
             else:

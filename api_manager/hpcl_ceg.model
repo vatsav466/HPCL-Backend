@@ -210,6 +210,7 @@ Model Users {
     Action=> login {
         username str regex="^[a-zA-Z0-9_.-]+$"
         password str
+        login_type optional default='employee' str
     }
 
     // API for user logout
@@ -1988,8 +1989,9 @@ Model ArchitectureData{
     device_type optional unique_field str
     count optional unique_field str
     zone optional str
-    system optional unique_field str
-    equipment_name optional unique_field str
+    system optional str
+    equipment_name optional str
+    total_tank_count optional unique_field int
 
     Action=> architecture_details {
 
@@ -2172,4 +2174,35 @@ Model DryOutRoLoss {
     region optional str
     sales_area optional str
     location_name optional str
+}
+
+Model RoMasterData {
+    interlock str
+    threshold str
+    threshold_value int
+    monthly_quota str
+    sales_officer_quota int
+    sales_officer_instance int
+    regional_manager_quota int
+    regional_manager_instance int
+    zonal_head_quota int
+    zonal_head_instance int
+
+    Action=> update_ro_master_data {
+        record_id str
+        interlock str
+        threshold str
+        threshold_value int
+        monthly_quota str
+        sales_officer_quota int
+        sales_officer_instance int
+        regional_manager_quota int
+        regional_manager_instance int
+        zonal_head_quota int
+        zonal_head_instance int
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
 }

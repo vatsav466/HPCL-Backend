@@ -30,7 +30,7 @@ productOrders = {
     "LPG": ["LPG PKD - Domestic", "LPG PKD - Non Domestic", "LPG BLK", "BULK PROPANE", "BULK BUTANE"],
     "PETCHEM": ["PETCHEM"],
     "Lubes": ["LUBES RETAIL", "Automotive Oils", "Automotive Greases", "Automotive Specialities", "Industrial oils",
-              "Industrial Greases", "Industrial Specialities", "Base Oil"],
+              "Industrial Greases", "Industrial Specialities", "Base Oil","ALPROL","Lubes-Exports","HP DEF-Retail"],
     "GAS":['CNG','LNG','CBG']
     
 }
@@ -38,7 +38,7 @@ productOrders = {
 AllProducts = {
     "Lubes": ["Industrial Greases", "DEF/Diesel Exhaust Fluid", "Automotive Greases", "Automotive Specialities",
               "Industrial oils", "Alprol", "Base Oil", "LUBES RETAIL", "Automotive Oils", "Industrial Specialities",
-              "Solvent 2445", "Miscellaneous/Minor", "Marine Lubes"],
+              "Solvent 2445", "Miscellaneous/Minor", "Marine Lubes","ALPROL","Lubes-Exports","HP DEF-Retail"],
     "Aviation": ["ATF"],
     "Retail": ["LPG BLK", "MS", "Industrial Greases", "DEF/Diesel Exhaust Fluid", "HSD", "Automotive Greases",
                "Automotive Specialities", "Compressed Bio Gas ", "Industrial oils", "Automotive Oils",
@@ -66,7 +66,8 @@ APG_Filters = ['"cumulative_level"', '"ProductName"', '"month_name"']
 # Base_Filters = ['"SBU_Name"', '"month_name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"'"ProductName"'', '"ProductName"']
 # Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"', '"month_name"']
-Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'""",
+Default_Filters = [""""SBU_Name" != '0'""", 
+                   #""""Zone_Name" != '-'""",
                    """ "SBU_Name" not in ('Common','Mumbai Ref','Renewable Energy','Visakh Ref')"""]
 # Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
 DBNames = {"m60_ta": "M60_LEVEL_METADATA", "m60_h": "MOM_LEVEL_FINAL_DATA"}

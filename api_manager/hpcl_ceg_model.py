@@ -231,6 +231,7 @@ class Users_Update_User_StatusParams(pydantic.BaseModel):
 class Users_LoginParams(pydantic.BaseModel):
     username: str = pydantic.Field(**{'pattern': '^[a-zA-Z0-9_.-]+$'})
     password: str
+    login_type: typing.Optional[str] = pydantic.Field("employee", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -5576,8 +5577,9 @@ class ArchitectureDataSchema(UrdhvaPostgresBase):
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     system: Mapped[typing.Optional[str]] = mapped_column("system", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    total_tank_count: Mapped[typing.Optional[int]] = mapped_column("total_tank_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(sap_id, name, device_type, count, system, equipment_name, name="architecture_data_sapid_name_devic_count_syste_equip"),)
+    __table_args__ = (UniqueConstraint(sap_id, name, device_type, count, total_tank_count, name="architecture_data_sapid_name_devic_count_total"),)
 
 
 class ArchitectureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5590,13 +5592,14 @@ class ArchitectureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     system: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+    total_tank_count: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = ArchitectureDataSchema
-        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'system', 'equipment_name']
+        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'total_tank_count']
 
 
 class ArchitectureData(urdhva_base.postgresmodel.PostgresModel):
@@ -5609,13 +5612,14 @@ class ArchitectureData(urdhva_base.postgresmodel.PostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     system: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+    total_tank_count: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = ArchitectureDataSchema
-        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'system', 'equipment_name']
+        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'total_tank_count']
 
 
 class ArchitectureDataGetResp(pydantic.BaseModel):
@@ -6278,3 +6282,86 @@ class DryOutRoLossGetResp(pydantic.BaseModel):
     data: typing.List[DryOutRoLoss]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class RoMasterDataSchema(UrdhvaPostgresBase):
+    __tablename__ = 'ro_master_data'
+    
+    interlock: Mapped[str] = mapped_column("interlock", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    threshold: Mapped[str] = mapped_column("threshold", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    threshold_value: Mapped[int] = mapped_column("threshold_value", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    monthly_quota: Mapped[str] = mapped_column("monthly_quota", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sales_officer_quota: Mapped[int] = mapped_column("sales_officer_quota", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sales_officer_instance: Mapped[int] = mapped_column("sales_officer_instance", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    regional_manager_quota: Mapped[int] = mapped_column("regional_manager_quota", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    regional_manager_instance: Mapped[int] = mapped_column("regional_manager_instance", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zonal_head_quota: Mapped[int] = mapped_column("zonal_head_quota", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zonal_head_instance: Mapped[int] = mapped_column("zonal_head_instance", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class RoMasterDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'ro_master_data'
+    
+    interlock: str
+    threshold: str
+    threshold_value: int
+    monthly_quota: str
+    sales_officer_quota: int
+    sales_officer_instance: int
+    regional_manager_quota: int
+    regional_manager_instance: int
+    zonal_head_quota: int
+    zonal_head_instance: int
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = RoMasterDataSchema
+        upsert_keys = []
+
+
+class RoMasterData(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'ro_master_data'
+    
+    interlock: typing.Optional[str] | None = None
+    threshold: typing.Optional[str] | None = None
+    threshold_value: typing.Optional[int] | None = None
+    monthly_quota: typing.Optional[str] | None = None
+    sales_officer_quota: typing.Optional[int] | None = None
+    sales_officer_instance: typing.Optional[int] | None = None
+    regional_manager_quota: typing.Optional[int] | None = None
+    regional_manager_instance: typing.Optional[int] | None = None
+    zonal_head_quota: typing.Optional[int] | None = None
+    zonal_head_instance: typing.Optional[int] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = RoMasterDataSchema
+        upsert_keys = []
+
+
+class RoMasterDataGetResp(pydantic.BaseModel):
+    data: typing.List[RoMasterData]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Romasterdata_Update_Ro_Master_DataParams(pydantic.BaseModel):
+    record_id: str
+    interlock: str
+    threshold: str
+    threshold_value: int
+    monthly_quota: str
+    sales_officer_quota: int
+    sales_officer_instance: int
+    regional_manager_quota: int
+    regional_manager_instance: int
+    zonal_head_quota: int
+    zonal_head_instance: int
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

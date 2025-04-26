@@ -132,7 +132,6 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP02A", "interlock_name": "MOV in PL Receipt Mode", "workflow_name": "PIPELINE MODE"}, # Immediate Close Purpose
                         {"sop_id": "SOP02A", "interlock_name": "ESD MOV_Close Status", "workflow_name": "PIPELINE MODE"}, # Immediate Close Purpose
                         
-                        
                         {"sop_id": "SOP003", "interlock_name": "Proof Test_VFT_Failed", "workflow_name": "HHH PROOF TEST"},
                         {"sop_id": "SOP003", "interlock_name": "Proof Test_Secondary Radar Guage_Failed", "workflow_name": "HHH PROOF TEST"},
                         {"sop_id": "SOP003", "interlock_name": "Proof Test_VFT_Success", "workflow_name": "HHH PROOF TEST"},

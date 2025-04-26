@@ -1255,3 +1255,14 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/dryoutroloss/{id}', tags=['DryOutRoLoss'])
 async def delete(id: str):
     return await DryOutRoLoss.delete(id)
+
+
+@router.get('/romasterdata/{id}', response_model=RoMasterData, tags=['RoMasterData'])
+async def get(id: str):
+    return await RoMasterData.get(id, skip_secrets=True)
+
+
+@router.get('/romasterdata', response_model=RoMasterDataGetResp, tags=['RoMasterData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await RoMasterData.get_all(params, skip_secrets=True)
+
