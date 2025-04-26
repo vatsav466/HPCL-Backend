@@ -272,7 +272,7 @@ class BasePostgresModel(pydantic.BaseModel):
                 query_ = f"{query} LIMIT {limit} OFFSET {limit * skip}"
             else:
                 query_ = f"{query}"
-            if not query_.upper().startswith("WITH ") and not query_.upper().startswith("SELECT "):
+            if not query_.strip().upper().startswith("WITH ") and not query_.strip().upper().startswith("SELECT "):
                 query_ = f"select {query_}"
             result = await session.execute(text(query_))
             resp = result.all()

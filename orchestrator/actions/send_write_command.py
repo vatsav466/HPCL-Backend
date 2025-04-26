@@ -1,6 +1,8 @@
 import urdhva_base
 import traceback
 import hpcl_ceg_model
+import sys
+sys.path.append("/opt/ceg/algo/orchestrator")
 import tas_operations.send_rabbitmq as send_rabbitmq
 import tas_operations.find_matching_csv as find_matching_csv
 
