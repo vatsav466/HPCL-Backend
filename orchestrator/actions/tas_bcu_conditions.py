@@ -75,8 +75,6 @@ class BCUAlertConditions:
             params = urdhva_base.queryparams.QueryParams(q=query)
             resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
             print("-"*50)
-            logger.info("resp :", resp)
-            print("-"*50)
             if resp["data"]:
                 return True, {"alert_status": "historic"}
             # elif await self.is_in_justification_check(params):
