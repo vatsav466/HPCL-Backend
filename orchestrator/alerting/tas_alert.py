@@ -1,4 +1,5 @@
 import urdhva_base
+import time
 import json
 import httpx
 import datetime
@@ -99,9 +100,11 @@ class TASAlertManager(alert_factory.AlertFactory):
         """
         try:
             logger.info(f"Alert data received to close alert: {alert_data}")
+            print("-- In Close Alert ---")
             with open(f"/opt/ceg/algo/things_board/device_data/{alert_data['sap_id']}.json") as f:
                 device_data = json.load(f)
             device_keys = []
+            print("device_keys -->", device_keys)
             for rec in device_data["data"]:
                 if rec['device_name'] == alert_data['device_name']:
                     for sensor in rec['sensors']:
@@ -120,6 +123,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                      f"sap_id='{alert_data['sap_id']}' and alert_status!='Close'")
             resp_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=100),
                                                             resp_type='plain')
+            print("resp_data :", resp_data)
             if len(resp_data['data']):
                 for alert in resp_data['data']:
                     alert_id = alert['id']
@@ -135,6 +139,8 @@ class TASAlertManager(alert_factory.AlertFactory):
                     url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
                                                         alert_section="TAS")
                     url += "/engine-rest/message"
+                    print("Camunda URL :", url)
+                    time.sleep(5)
                     try:
                         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
                         if int(r.status_code / 100) != 2:

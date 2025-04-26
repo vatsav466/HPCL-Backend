@@ -1,5 +1,6 @@
 import csv
 import aiofiles
+import pandas as pd
 
 
 async def find_matching_row(csv_file_path, match_criteria):
@@ -15,14 +16,16 @@ async def find_matching_row(csv_file_path, match_criteria):
     """ 
 
     try:
-        async with aiofiles.open(csv_file_path, mode='r') as file:
-            # Read the CSV file asynchronously
-            reader = csv.DictReader(await file.read().splitlines())
-            for row in reader:
-                # Check if the row matches the criteria
-                if all(row[key] == value for key, value in match_criteria.items()):
-                    return row
-            return None
+        # Read the CSV file asynchronously
+        reader = pd.read_csv(csv_file_path)
+        reader = reader[reader["sap_id"].astype(str) == str(match_criteria["sap_id"])]
+        reader = reader.to_dict(orient="records")
+        for row in reader:
+            # Check if the row matches the criteria
+            if all(str(row.get(key,'')).strip().lower() == str(value).strip().lower() for key, value in match_criteria.items()):
+                print(f"found matching row : {row}")
+                return row
+        return None
     except Exception as e:
         print(f"Error reading CSV file: {e}")
         return None
