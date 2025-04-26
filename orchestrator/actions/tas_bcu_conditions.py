@@ -20,6 +20,29 @@ class BCUAlertConditions:
             "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail"
         ]
 
+    async def is_in_justification_check(self, params):
+        try:
+            date_check = datetime.now().strftime("%Y-%m-%d")
+            query = (
+                        f"""bu = 'TAS' and """
+                        f"""sap_id = '{params.get('sap_id', '')}' and """
+                        f"""alert_section = 'TAS' and """
+                        f"""device_id = '{params.get('device_id', '')}' and """
+                        f"""device_name = '{params.get('device_name', '')}' and """
+                        f"""interlock_name = '{params.get('interlock_name', '')}' and """
+                        f"""DATE(created_at) = '{date_check}' and """
+                        f"""alert_message = 'command_sent' """
+                    )
+            logger.info("query :", query)
+            params = urdhva_base.queryparams.QueryParams(q=query)
+            resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
+            if resp["data"]:
+                return True
+            return False
+        except Exception as e:
+            print("Exception in is_in_justification_check :", str(e))
+            return False
+
     async def alert_history_check(self, params):
         try:
             params = self.params
@@ -55,9 +78,11 @@ class BCUAlertConditions:
             logger.info("resp :", resp)
             print("-"*50)
             if resp["data"]:
-                # return True, {"approved": True}
                 return True, {"alert_status": "historic"}
-            return True, {"alert_status": "new"}
+            # elif await self.is_in_justification_check(params):
+            #     return True, {"alert_status": "historic"}
+            else:
+                return True, {"alert_status": "new"}
         except Exception as e:
             logger.error("Exception :", str(e))
             return False

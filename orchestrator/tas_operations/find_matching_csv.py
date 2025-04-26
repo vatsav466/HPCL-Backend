@@ -18,7 +18,7 @@ async def find_matching_row(csv_file_path, match_criteria):
     try:
         # Read the CSV file asynchronously
         reader = pd.read_csv(csv_file_path)
-        reader = reader[reader["sap_id"] == match_criteria["sap_id"]]
+        reader = reader[reader["sap_id"].astype(str) == str(match_criteria["sap_id"])]
         reader = reader.to_dict(orient="records")
         for row in reader:
             # Check if the row matches the criteria
