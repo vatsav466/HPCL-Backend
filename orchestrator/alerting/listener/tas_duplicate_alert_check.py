@@ -3,6 +3,8 @@ from datetime import datetime
 import traceback
 import hpcl_ceg_model
 
+logger = urdhva_base.logger.Logger.getInstance("alert_factory_log")
+
 async def duplicate_check(alertdata):
     query = (
         f"""bu = 'TAS' and """
@@ -13,7 +15,7 @@ async def duplicate_check(alertdata):
         f"""interlock_name = '{alertdata.get('interlock_name', '')}' and """
         f"""alert_status != 'Close'"""
     )
-    print("query --> ", query)
+    logger.info("query --> ", query)
     params = urdhva_base.queryparams.QueryParams(q=query)
     resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
 

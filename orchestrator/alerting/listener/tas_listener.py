@@ -97,11 +97,11 @@ async def tas_listener(rmsg):
     Returns:
         bool: True if the message was processed successfully, False otherwise.
     """
-    print(rmsg)
+    logger.info(rmsg)
     try:
         if rmsg.get("details") and rmsg["details"].get("additionalInfo"):
             rmsg["details"]["additionalInfo"] = fix_additional_info(rmsg["details"]["additionalInfo"])
-        print('-' * 12)
+        logger.info('-' * 12)
         if rmsg['status'] == 'ACTIVE_UNACK':
             alertdata = rmsg['details']['additionalInfo']
             alertdata['severity'] = rmsg['severity']
@@ -110,28 +110,28 @@ async def tas_listener(rmsg):
             custom_data = rmsg['details']['additionalInfo'].get("customData", {})
             
             alertdata['message'] = ", ".join([f"{key}={value}" for key, value in custom_data.items()])
-            print("Create Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
+            logger.info("Create Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
                                                         rmsg['type']))
 
             # First, check if it's a duplicate
             is_duplicate = await duplicates_check.duplicate_check(alertdata)
             
             if is_duplicate:
-                print(f"Alert already exists (duplicate) for: {alertdata}")
+                logger.info(f"Alert already exists (duplicate) for: {alertdata}")
             else:
                 if alertdata['interlock_name'] in [
                     "VFT_UnderMaintenance", "Secondary Radar_Under Maintenance", 
                     "ROSOV_Under Maintenance", "MOV_Under Maintenance", 
                     "Rim Seal system_Under Maintenance", "Tank_UnderMaintenance"]:
-                    print("into maintenance check")
+                    logger.info("into maintenance check")
                     await maintenance_check.create_under_maintenance_alert(alertdata)
                 else:
-                    print("into normal maintenance check")
+                    logger.info("into normal maintenance check")
                     is_maintenance_alert = await maintenance_check.maintenance_alert_check(alertdata)
                     if is_maintenance_alert:
-                        print(f"Maintenance alert already exists for: {alertdata}")
+                        logger.info(f"Maintenance alert already exists for: {alertdata}")
                     else:
-                        print("not maintenance alert")
+                        logger.info("not maintenance alert")
                         await create_alert(alertdata)
 
 
@@ -139,15 +139,15 @@ async def tas_listener(rmsg):
             alertdata = rmsg['details']['additionalInfo']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
-            print("Close Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
+            logger.info("Close Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
                                                         rmsg['type']))
             await close_alert(alertdata)
         else:
-            print("Invalid message received:%s" % rmsg)
+            logger.info("Invalid message received:%s" % rmsg)
         return True
     except Exception as e:
-        print(traceback.format_exc())
-        print("Exception in processing RQ message:%s" % e)
+        logger.info(traceback.format_exc())
+        logger.info("Exception in processing RQ message:%s" % e)
 
 # if __name__ == "__main__": 
     # asyncio.run(tas_listener())
