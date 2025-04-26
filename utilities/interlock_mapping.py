@@ -126,9 +126,11 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP02A", "interlock_name": "Gantry Permissive Off_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Barrier Gate opened_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "ESD ROSOV_Close Status_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
-
+                        {"sop_id": "SOP02A", "interlock_name": "ESD MOV_Close Status_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "ROSOV in PL Receipt Mode", "workflow_name": "PIPELINE MODE"}, # Immediate Close Purpose
                         {"sop_id": "SOP02A", "interlock_name": "ESD ROSOV_Close Status", "workflow_name": "PIPELINE MODE"}, # Immediate Close Purpose
+                        {"sop_id": "SOP02A", "interlock_name": "MOV in PL Receipt Mode", "workflow_name": "PIPELINE MODE"}, # Immediate Close Purpose
+                        {"sop_id": "SOP02A", "interlock_name": "ESD MOV_Close Status", "workflow_name": "PIPELINE MODE"}, # Immediate Close Purpose
                         
                         
                         {"sop_id": "SOP003", "interlock_name": "Proof Test_VFT_Failed", "workflow_name": "HHH PROOF TEST"},

@@ -1,5 +1,8 @@
 import urdhva_base
 import re
+import time
+import json
+import httpx
 import datetime
 import traceback
 import hpcl_ceg_model
@@ -66,12 +69,12 @@ async def maintenance_alert_check(alert_data):
         # In case of error, let the alert through by default
         return False
 
-async def close_tas_workflow(alert_data):
+async def close_tas_workflow(alert_data, message_type='Message'):
     alert_data['alert_type'] = 'TAS'
     alert_data['alert_id'] = alert_data.get('external_id', '')
-    print(f"Closing camunda workflow for alert_id: {alert_data['id']}")
+    print(f"Closing camunda workflow for alert_id: {alert_data['id']} {alert_data}")
     data = {
-        "messageName": "Message",
+        "messageName": message_type,
         "businessKey": alert_data['unique_id'],
         "processVariables": {"alert_id": {"value": alert_data['id'], "type": "String"},
                                 "closed": {"value": True, "type": "Boolean"}}}
@@ -80,6 +83,7 @@ async def close_tas_workflow(alert_data):
                                         alert_section="TAS")
     url += "/engine-rest/message"
     try:
+        time.sleep(30)
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
         if int(r.status_code / 100) != 2:
             print(f"Error while sending message to camunda: {r.status_code} - {r.text}")

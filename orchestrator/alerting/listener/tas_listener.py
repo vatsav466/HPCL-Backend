@@ -221,7 +221,8 @@ def load_device_data(sap_id):
         dict: The device data loaded from the json file
     """
     try:
-        data_path = f"/opt/ceg/algo/things_board/device_data/{sap_id}.json"
+        # data_path = f"/opt/ceg/algo/things_board/device_data/{sap_id}.json"
+        data_path = f"/Users/mac_1/PycharmProjects/Cloud/dnc_backend_v2/things_board/device_data/{sap_id}.json"
         with open(data_path, 'r') as file:
             return json.load(file)
     except Exception as e:
@@ -555,3 +556,457 @@ async def tas_listener(rmsg):
 # }
 #     asyncio.run(tas_listener(rmsg))
 #     # asyncio.run(tas_listener())
+
+
+if __name__ == "__main__": 
+    data = [
+    {
+        "tenantId": {
+            "entityType": "TENANT",
+            "id": "92026430-bab2-11ef-a2e1-e9d5c168f7f6"
+        },
+        "type": "ESD Alarm",
+        "originator": {
+            "entityType": "DEVICE",
+            "id": "15206430-e929-11ef-bdaf-63952eabadd3"
+        },
+        "severity": "CRITICAL",
+        "status": "ACTIVE_UNACK",
+        "startTs": 1744975368728,
+        "endTs": 1744975368728,
+        "ackTs": 0,
+        "clearTs": 1744975481560,
+        "details": {
+            "additionalInfo": {
+                "location_id": "1128",
+                "location_name": "Mathura",
+                "plantlocationid": "1128",
+                "plantlocation": "Mathura",
+                "bu_id": "79980420-bab4-11ef-89d8-8bef67f22d63",
+                "SAPID": "1128",
+                "BU": "TAS",
+                "ESD-26@Mathura": 1,
+                "ESD STATUS": "0",
+                "ESD MAINTENANCE STATUS": "0",
+                "deviceId": "79980420-bab4-11ef-89d8-8bef67f22d63",
+                "deviceType": "ESD",
+                "deviceName": "ESD-26@Mathura",
+                "sap_id": "1128",
+                "interlock_name": "Plant ESD activated",
+                "unit_name": "ESD-26_IN FRONT OF TK-24@Mathura",
+                "bu": "TAS",
+                "sop_id": "SOP002",
+                "alert_category": "Safety",
+                "Sensor_Type": "ESD",
+                "Sensor_Name": "ESD",
+                "severity": "Critical",
+                "Cause_Effect": "Cause",
+                "effect_sop_id": ["SOP02A"]
+            }
+        },
+        "propagate": False,
+        "propagateRelationTypes": [],
+        "id": {
+            "entityType": "ALARM",
+            "id": "75740980-1c47-11f0-82ca-03bdbba508c1"},
+        "createdTime": 1744975368728,
+        "name": "ESD Alarm"
+    },
+    {
+        "tenantId": {
+            "entityType": "TENANT",
+            "id": "92026430-bab2-11ef-a2e1-e9d5c168f7f6"
+        },
+        "type": "ESD ROSOV Closed ",
+        "originator": {
+            "entityType": "DEVICE",
+            "id": "0bf12a20-e929-11ef-bdaf-63952eabadd3"
+        },
+        "severity": "CRITICAL",
+        "status": "ACTIVE_UNACK",
+        "startTs": 1745220214217,
+        "endTs": 1745220214217,
+        "ackTs": 0,
+        "clearTs": 0,
+        "details": {
+            "additionalInfo": {
+                "location_id": "1128",
+                "location_name": "Mathura",
+                "bu_id": "79980420-bab4-11ef-89d8-8bef67f22d63",
+                "SAPID": "1128",
+                "BU": "TAS",
+                "TK-10@Mathura": 1,
+                "Primary Gauge HIGH": "0",
+                "TANK LEAKAGE STATUS": "0",
+                "Primary Gauge HIGH HIGH": "0",
+                "LEVEL SWITCH": "0",
+                "LEVEL SWITCH PROOF OK": "0",
+                "LEVEL SWITCH PROOF FAILED": "0",
+                "RADAR PROOF TEST OK": "0",
+                "RADAR PROOF TEST NOT OK": "0",
+                "RADAR HHH": "0",
+                "RADAR PROOF OK": "0",
+                "RADAR PROOF FAILED": "0",
+                "ROSOV OPEN STATUS IL1": "0",
+                "ROSOV FAIL TO CLOSE STATUS IL1": "0",
+                "ROSOV OPEN STATUS IL2": "0",
+                "ROSOV FAIL TO CLOSE STATUS IL2": "0",
+                "ROSOV OPEN STATUS OL": "0",
+                "ROSOV FAIL TO CLOSE STATUS OL": "0",
+                "ROSOV OPEN STATUS RCL": "0",
+                "ROSOV FAIL TO CLOSE STATUS RCL": "0",
+                "MOV STATUS IL1": "0",
+                "MOV STATUS IL2": "0",
+                "MOV STATUS OL": "0",
+                "MOV STATUS RCL": "0",
+                "RIMSEAL FIRE ALARM": "0",
+                "RIMSEAL FAULT ALARM": "0",
+                "deviceType": "Tank",
+                "deviceName": "TK-07_BS VI MS@Mathura",
+                "sap_id": "1128",
+                "interlockName": "ESD ROSOV_Close Status",
+                "unitName": "TK-07_BS VI MS@Mathura",
+                "deviceId": "12345-bab4-11ef-89d8-8bef67f22d63",
+                "sopid": "SOP02A",
+                "alert_category": "Safety",
+                "severity": "Critical",
+                "Sensor_Type": "ROSOV",
+                "Sensor_Name": "ROSOV",
+                "customData": {
+                    "ESD Active": 1,
+                    "ROSOV OPEN STATUS IL1": 0,
+                    "MOV STATUS IL1": 0,
+                    "Tank Receipt Mode": 0
+                }
+            }
+        },
+        "propagate": False,
+        "propagateRelationTypes": [],
+        "id": {
+            "entityType": "ALARM",
+            "id": "88bcbb90-1e81-11f0-82ca-03bdbba508c1"
+        },
+        "createdTime": 1745220214217,
+        "name": "ESD ROSOV Closed "
+    },
+    {
+        "tenantId": {
+            "entityType": "TENANT",
+            "id": "92026430-bab2-11ef-a2e1-e9d5c168f7f6"
+        },
+        "type": "MOV Non Receipt",
+        "originator": {
+            "entityType": "DEVICE",
+            "id": "0bf12a20-e929-11ef-bdaf-63952eabadd3"
+        },
+        "severity": "CRITICAL",
+        "status": "ACTIVE_UNACK",
+        "startTs": 1744975374221,
+        "endTs": 1744975374221,
+        "ackTs": 0,
+        "clearTs": 1744975481969,
+        "details": {
+            "additionalInfo": {
+                "location_id": "1128",
+                "location_name": "Mathura",
+                "bu_id": "234565ew-bab4-11ef-89d8-8bef67f22d63",
+                "SAPID": "1128",
+                "BU": "TAS",
+                "TK-10@Mathura": 1,
+                "Primary Gauge HIGH": "0",
+                "TANK LEAKAGE STATUS": "0",
+                "Primary Gauge HIGH HIGH": "0",
+                "LEVEL SWITCH": "0",
+                "LEVEL SWITCH PROOF OK": "0",
+                "LEVEL SWITCH PROOF FAILED": "0",
+                "RADAR PROOF TEST OK": "0",
+                "RADAR PROOF TEST NOT OK": "0",
+                "RADAR HHH": "0",
+                "RADAR PROOF OK": "0",
+                "RADAR PROOF FAILED": "0",
+                "ROSOV OPEN STATUS IL1": "0",
+                "ROSOV FAIL TO CLOSE STATUS IL1": "0",
+                "ROSOV OPEN STATUS IL2": "0",
+                "ROSOV FAIL TO CLOSE STATUS IL2": "0",
+                "ROSOV OPEN STATUS OL": "0",
+                "ROSOV FAIL TO CLOSE STATUS OL": "0",
+                "ROSOV OPEN STATUS RCL": "0",
+                "ROSOV FAIL TO CLOSE STATUS RCL": "0",
+                "MOV STATUS IL1": "0",
+                "MOV STATUS IL2": "0",
+                "MOV STATUS OL": "0",
+                "MOV STATUS RCL": "0",
+                "RIMSEAL FIRE ALARM": "0",
+                "RIMSEAL FAULT ALARM": "0",
+                "deviceId": "234565ew-bab4-11ef-89d8-8bef67f22d63",
+                "deviceType": "Tank",
+                "deviceName": "TK-06@Mathura",
+                "sap_id": "1128",
+                "interlockName": "ESD ROSOV_Close Status_Fail",
+                "unitName": "TK-06_BS VI MS@Mathura",
+                "sopid": "SOP02A",
+                "alert_category": "Safety",
+                "severity": "Critical",
+                "Sensor_Type": "ROSOV",
+                "Sensor_Name": "ROSOV"
+            }
+        },
+        "propagate": False,
+        "propagateRelationTypes": [],
+        "id": {
+            "entityType": "ALARM",
+            "id": "78ba33d0-1c47-11f0-82ca-03bdbba508c1"
+        },
+        "createdTime": 1744975374221,
+        "name": "ESD ROSOV_Close Status_Fail"
+    },
+    {
+        "tenantId": {
+            "entityType": "TENANT",
+            "id": "92026430-bab2-11ef-a2e1-e9d5c168f7f6"
+        },
+        "type": "MOV Non Receipt",
+        "originator": {
+            "entityType": "DEVICE",
+            "id": "0bf12a20-e929-11ef-bdaf-63952eabadd3"
+        },
+        "severity": "CRITICAL",
+        "status": "ACTIVE_UNACK",
+        "startTs": 1744975374221,
+        "endTs": 1744975374221,
+        "ackTs": 0,
+        "clearTs": 1744975481969,
+        "details": {
+            "additionalInfo": {
+                "location_id": "1128",
+                "location_name": "Mathura",
+                "bu_id": "234565232-bab4-11ef-89d8-8bef67f22d63",
+                "SAPID": "1128",
+                "BU": "TAS",
+                "TK-10@Mathura": 1,
+                "Primary Gauge HIGH": "0",
+                "TANK LEAKAGE STATUS": "0",
+                "Primary Gauge HIGH HIGH": "0",
+                "LEVEL SWITCH": "0",
+                "LEVEL SWITCH PROOF OK": "0",
+                "LEVEL SWITCH PROOF FAILED": "0",
+                "RADAR PROOF TEST OK": "0",
+                "RADAR PROOF TEST NOT OK": "0",
+                "RADAR HHH": "0",
+                "RADAR PROOF OK": "0",
+                "RADAR PROOF FAILED": "0",
+                "ROSOV OPEN STATUS IL1": "0",
+                "ROSOV FAIL TO CLOSE STATUS IL1": "0",
+                "ROSOV OPEN STATUS IL2": "0",
+                "ROSOV FAIL TO CLOSE STATUS IL2": "0",
+                "ROSOV OPEN STATUS OL": "0",
+                "ROSOV FAIL TO CLOSE STATUS OL": "0",
+                "ROSOV OPEN STATUS RCL": "0",
+                "ROSOV FAIL TO CLOSE STATUS RCL": "0",
+                "MOV STATUS IL1": "0",
+                "MOV STATUS IL2": "0",
+                "MOV STATUS OL": "0",
+                "MOV STATUS RCL": "0",
+                "RIMSEAL FIRE ALARM": "0",
+                "RIMSEAL FAULT ALARM": "0",
+                "deviceId": "234565232-bab4-11ef-89d8-8bef67f22d63",
+                "deviceType": "Tank",
+                "deviceName": "TK-08@Mathura",
+                "sap_id": "1128",
+                "interlockName": "ESD ROSOV_Close Status",
+                "unitName": "TK-08_BS VI MS@Mathura",
+                "sopid": "SOP02A",
+                "alert_category": "Safety",
+                "severity": "Critical",
+                "Sensor_Type": "ROSOV",
+                "Sensor_Name": "ROSOV"
+            }
+        },
+        "propagate": False,
+        "propagateRelationTypes": [],
+        "id": {
+            "entityType": "ALARM",
+            "id": "78ba33d0-1c47-11f0-82ca-03bdbba508c1"
+        },
+        "createdTime": 1744975374221,
+        "name": "ESD ROSOV_Close Status"
+    },
+    {
+        "tenantId": {
+            "entityType": "TENANT",
+            "id": "92026430-bab2-11ef-a2e1-e9d5c168f7f6"
+        },
+        "type": "ESD Alarm",
+        "originator": {
+            "entityType": "DEVICE",
+            "id": "15206430-e929-11ef-bdaf-63952eabadd3"
+        },
+        "severity": "CRITICAL",
+        "status": "ACTIVE_UNACK",
+        "startTs": 1744975368728,
+        "endTs": 1744975368728,
+        "ackTs": 0,
+        "clearTs": 1744975481560,
+        "details": {
+            "additionalInfo": {
+                "location_id": "1128",
+                "location_name": "Mathura",
+                "plantlocationid": "1128",
+                "plantlocation": "Mathura",
+                "bu_id": "79980420-bab4-11ef-89d8-8bef67f22d63",
+                "SAPID": "1128",
+                "BU": "TAS",
+                "ESD-26@Mathura": 1,
+                "ESD STATUS": "0",
+                "ESD MAINTENANCE STATUS": "0",
+                "deviceId": "79980420-bab4-11ef-89d8-8bef67f22d63",
+                "deviceType": "ESD",
+                "deviceName": "ESD-26@Mathura",
+                "sap_id": "1128",
+                "interlock_name": "All ROSOVs closed(Except PL Receipt)_Fail",
+                "unit_name": "ESD-26_IN FRONT OF TK-24@Mathura",
+                "bu": "TAS",
+                "sop_id": "SOP02A",
+                "alert_category": "Safety",
+                "Sensor_Type": "ESD",
+                "Sensor_Name": "ESD",
+                "severity": "Critical"
+            }
+        },
+        "propagate": False,
+        "propagateRelationTypes": [],
+        "id": {
+            "entityType": "ALARM",
+            "id": "75740980-1c47-11f0-82ca-03bdbba508c1"},
+        "createdTime": 1744975368728,
+        "name": "ESD Alarm"
+    },
+    {
+        "tenantId": {
+            "entityType": "TENANT",
+            "id": "92026430-bab2-11ef-a2e1-e9d5c168f7f6"
+        },
+        "type": "ESD Alarm",
+        "originator": {
+            "entityType": "DEVICE",
+            "id": "15206430-e929-11ef-bdaf-63952eabadd3"
+        },
+        "severity": "CRITICAL",
+        "status": "ACTIVE_UNACK",
+        "startTs": 1744975368728,
+        "endTs": 1744975368728,
+        "ackTs": 0,
+        "clearTs": 1744975481560,
+        "details": {
+            "additionalInfo": {
+                "location_id": "1128",
+                "location_name": "Mathura",
+                "plantlocationid": "1128",
+                "plantlocation": "Mathura",
+                "bu_id": "79980420-bab4-11ef-89d8-8bef67f22d63",
+                "SAPID": "1128",
+                "BU": "TAS",
+                "ESD-26@Mathura": 1,
+                "ESD STATUS": "0",
+                "ESD MAINTENANCE STATUS": "0",
+                "deviceId": "79980420-bab4-11ef-89d8-8bef67f22d63",
+                "deviceType": "ESD",
+                "deviceName": "ESD-26@Mathura",
+                "sap_id": "1128",
+                "interlock_name": "All DBBVs closed(Except PL Receipt)_Fail",
+                "unit_name": "ESD-26_IN FRONT OF TK-24@Mathura",
+                "bu": "TAS",
+                "sop_id": "SOP02A",
+                "alert_category": "Safety",
+                "Sensor_Type": "ESD",
+                "Sensor_Name": "ESD",
+                "severity": "Critical"
+            }
+        },
+        "propagate": False,
+        "propagateRelationTypes": [],
+        "id": {
+            "entityType": "ALARM",
+            "id": "75740980-1c47-11f0-82ca-03bdbba508c1"},
+        "createdTime": 1744975368728,
+        "name": "ESD Alarm"
+    },
+    {
+        "tenantId": {
+            "entityType": "TENANT",
+            "id": "92026430-bab2-11ef-a2e1-e9d5c168f7f6"
+        },
+        "type": "ROSOV Pipe Line Mode",
+        "originator": {
+            "entityType": "DEVICE",
+            "id": "0bc31540-e929-11ef-bdaf-63952eabadd3"
+        },
+        "severity": "CRITICAL",
+        "status": "ACTIVE_UNACK",
+        "startTs": 1744975369367,
+        "endTs": 1744975369367,
+        "ackTs": 0,
+        "clearTs": 1744975482111,
+        "details": {
+            "additionalInfo": {
+                "location_id": "1128",
+                "location_name": "Mathura",
+                "bu_id": "12345-bab4-11ef-89d8-8bef67f22d63",
+                "SAPID": "1128",
+                "BU": "TAS",
+                "TK-07@Mathura": 1,
+                "Primary Gauge HIGH": "0",
+                "TANK LEAKAGE STATUS": "0",
+                "Primary Gauge HIGH HIGH": "0",
+                "LEVEL SWITCH": "0",
+                "LEVEL SWITCH PROOF OK": "0",
+                "LEVEL SWITCH PROOF FAILED": "0",
+                "RADAR PROOF TEST OK": "0",
+                "RADAR PROOF TEST NOT OK": "0",
+                "RADAR HHH": "0",
+                "RADAR PROOF OK": "0",
+                "RADAR PROOF FAILED": "0",
+                "ROSOV OPEN STATUS IL1": "0",
+                "ROSOV FAIL TO CLOSE STATUS IL1": "0",
+                "ROSOV OPEN STATUS IL2": "0",
+                "ROSOV FAIL TO CLOSE STATUS IL2": "0",
+                "ROSOV OPEN STATUS OL": "0",
+                "ROSOV FAIL TO CLOSE STATUS OL": "0",
+                "ROSOV OPEN STATUS RCL": "0",
+                "ROSOV FAIL TO CLOSE STATUS RCL": "0",
+                "MOV STATUS IL1": "1",
+                "MOV STATUS IL2": "1",
+                "MOV STATUS OL": "1",
+                "MOV STATUS RCL": "1",
+                "RIMSEAL FIRE ALARM": "0",
+                "RIMSEAL FAULT ALARM": "0",
+                "deviceId": "12345-bab4-11ef-89d8-8bef67f22d63",
+                "deviceType": "Tank",
+                "deviceName": "TK-07@Mathura",
+                "sap_id": "1128",
+                "interlockName": "ROSOV in PL Receipt Mode",
+                "unitName": "TK-07_BS VI HSD@Mathura",
+                "sopid": "SOP02A",
+                "alert_category": "Safety",
+                "severity": "Critical",
+                "Sensor_Type": "ROSOV",
+                "Sensor_Name": "ROSOV"
+            }
+        },
+        "propagate": False,
+        "propagateRelationTypes": [],
+        "id": {
+            "entityType": "ALARM",
+            "id": "75d5d890-1c47-11f0-82ca-03bdbba508c1"
+        },
+        "createdTime": 1744975369369,
+        "name": "ROSOV Pipe Line Mode"
+    }
+]
+
+async def send_alarms():
+    for rmsg in data:
+        await tas_listener(rmsg)
+
+# Run it
+asyncio.run(send_alarms())
