@@ -202,15 +202,3 @@ async def architecturedata_architecture_data(data: Architecturedata_Architecture
 
     except Exception as e:
         return {"status": False, "message": f"Error: {str(e)}"}
-
-
-# Action architecture_details
-@router.post('/architecture_details', tags=['ArchitectureData'])
-async def architecturedata_architecture_details(data: Architecturedata_Architecture_DetailsParams):
-    ...
-
-
-# Action architecture_data
-@router.post('/architecture_data', tags=['ArchitectureData'])
-async def architecturedata_architecture_data(data: Architecturedata_Architecture_DataParams):
-    ...
