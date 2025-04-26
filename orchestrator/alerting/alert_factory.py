@@ -53,6 +53,9 @@ class AlertFactory:
         """
         try:
             # print("Alert data:", alert_data)
+            return_data = False
+            if 'return_data' in alert_data.keys():
+                return_data = alert_data.get("return_data", False)
             bu = alert_data['bu']
             sop_id = alert_data.get('sop_id', '')
             sap_id = alert_data['sap_id']
@@ -255,7 +258,8 @@ class AlertFactory:
             else:
                 print(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
                 logger.info(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
-
+            if return_data:
+                return True, alert_data_dict
             return True, "Alert Created"
 
         except Exception as e:

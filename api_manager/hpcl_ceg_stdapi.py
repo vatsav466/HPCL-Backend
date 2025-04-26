@@ -27,6 +27,31 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await Users.get_all(params, skip_secrets=True)
 
 
+@router.post('/tasactionlogs', response_model=TasActionLogs, tags=['TasActionLogs'])
+async def create(inputObj: TasActionLogsCreate):
+    return await inputObj.create()
+
+
+@router.put('/tasactionlogs', response_model=TasActionLogs, tags=['TasActionLogs'])
+async def update(inputObj: TasActionLogs):
+    return await inputObj.modify()
+
+
+@router.get('/tasactionlogs/{id}', response_model=TasActionLogs, tags=['TasActionLogs'])
+async def get(id: str):
+    return await TasActionLogs.get(id, skip_secrets=True)
+
+
+@router.get('/tasactionlogs', response_model=TasActionLogsGetResp, tags=['TasActionLogs'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TasActionLogs.get_all(params, skip_secrets=True)
+
+
+@router.delete('/tasactionlogs/{id}', tags=['TasActionLogs'])
+async def delete(id: str):
+    return await TasActionLogs.delete(id)
+
+
 @router.get('/locationmaster/{id}', response_model=LocationMaster, tags=['LocationMaster'])
 async def get(id: str):
     return await LocationMaster.get(id, skip_secrets=True)
