@@ -19,7 +19,7 @@ async def maintenance_alert_check(alert_data):
         bool: True if alert should be skipped (don't create), False if alert should be created
     """
     try:
-        print("alert_data ---> ", alert_data)
+        logger.info("alert_data ---> ", alert_data)
         related_equipment_names = ["VFT", "RADAR", "ROSOV", "MOV", "RIMSEAL"]
         current_equipment_name = alert_data.get('equipment_name', '')
         original_device_name = alert_data.get('device_name', '')
@@ -37,7 +37,7 @@ async def maintenance_alert_check(alert_data):
             tas_device_name_for_query = tas_device_name
         # Only perform this check if the current alert's interlock name does NOT end with "Maintenance"
         if not interlock_name.endswith("Maintenance"):
-            print(f"Checking for maintenance alerts for equipment: {current_equipment_name}")
+            logger.info(f"Checking for maintenance alerts for equipment: {current_equipment_name}")
             logger.debug(f"Checking for maintenance alerts for equipment: {current_equipment_name}")
             
             # Query for any alerts with the same equipment_name where interlock_name ends with "Maintenance"
@@ -49,13 +49,13 @@ async def maintenance_alert_check(alert_data):
                 f"""interlock_name LIKE '%Maintenance%' and """
                 f"""alert_status != 'Close'"""
             )
-            print(f"Equipment maintenance check query: {equipment_maintenance_query}")
+            logger.info(f"Equipment maintenance check query: {equipment_maintenance_query}")
             logger.debug(f"Equipment maintenance check query: {equipment_maintenance_query}")
             equipment_maintenance_params = urdhva_base.queryparams.QueryParams(q=equipment_maintenance_query)
             equipment_maintenance_resp = await hpcl_ceg_model.Alerts.get_all(equipment_maintenance_params, resp_type='plain')
             
             if equipment_maintenance_resp["data"]:
-                print(f"Equipment {current_equipment_name} has a maintenance alert - skipping new alert")
+                logger.info(f"Equipment {current_equipment_name} has a maintenance alert - skipping new alert")
                 logger.info(f"Equipment {current_equipment_name} has a maintenance alert - skipping new alert")
                 return True  # Skip alert creation - maintenance alert exists for the same equipment
         
@@ -72,7 +72,7 @@ async def maintenance_alert_check(alert_data):
 async def close_tas_workflow(alert_data, message_type='Message'):
     alert_data['alert_type'] = 'TAS'
     alert_data['alert_id'] = alert_data.get('external_id', '')
-    print(f"Closing camunda workflow for alert_id: {alert_data['id']} {alert_data}")
+    logger.info(f"Closing camunda workflow for alert_id: {alert_data['id']} {alert_data}")
     data = {
         "messageName": message_type,
         "businessKey": alert_data['unique_id'],
@@ -86,18 +86,18 @@ async def close_tas_workflow(alert_data, message_type='Message'):
         time.sleep(30)
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
         if int(r.status_code / 100) != 2:
-            print(f"Error while sending message to camunda: {r.status_code} - {r.text}")
+            logger.info(f"Error while sending message to camunda: {r.status_code} - {r.text}")
         else:
-            print("Message sent to camunda")
+            logger.info("Message sent to camunda")
     except Exception as e:
         logger.error(f"Exception in closing camunda flow {e} for alert_id {alert_data['id']}, "
                         f"business_key {alert_data['unique_id']}")
     await close_alert(alert_data=alert_data)
 
 async def create_under_maintenance_alert(alert_data):
-    print(f"Under maintenance alert - creating alert for {alert_data['tas_device_name']}")
+    logger.info(f"Under maintenance alert - creating alert for {alert_data['tas_device_name']}")
     if alert_data['interlock_name'] == 'Tank_Under Maintenance':
-        print(f"maintenance alert - creating alert for {alert_data['tas_device_name']}")
+        logger.info(f"maintenance alert - creating alert for {alert_data['tas_device_name']}")
         maintenance_query = (
                 f"""bu = 'TAS' and """
                 f"""sap_id = '{alert_data.get('sap_id', '')}' and """
@@ -110,23 +110,23 @@ async def create_under_maintenance_alert(alert_data):
                 f"""alert_status != 'Close'"""
             )
         maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
-        print("maintenance_query --> ", maintenance_query)
+        logger.info("maintenance_query --> ", maintenance_query)
 
         maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
-        print("maintenance_resp --> ", maintenance_resp)
+        logger.info("maintenance_resp --> ", maintenance_resp)
 
         if maintenance_resp["data"]:
-            print(f"Under maintenance alert - creating alert for {maintenance_resp["data"]}")
+            logger.info(f"Under maintenance alert - creating alert for {maintenance_resp["data"]}")
             for data in maintenance_resp["data"]:
-                print(f"Under maintenance alert - creating alert for {data}")
-                print("into close_tas_workflow")
+                logger.info(f"Under maintenance alert - creating alert for {data}")
+                logger.info("into close_tas_workflow")
                 await close_tas_workflow(data)
             
         await create_alert(alert_data=alert_data)
         return
     
     if alert_data['interlock_name'] != 'Tank_Under Maintenance':
-        print(f"not tank maintenance alert - creating alert for {alert_data['tas_device_name']}")
+        logger.info(f"not tank maintenance alert - creating alert for {alert_data['tas_device_name']}")
         maintenance_query = (
                 f"""bu = 'TAS' and """
                 f"""sap_id = '{alert_data.get('sap_id', '')}' and """
@@ -140,8 +140,8 @@ async def create_under_maintenance_alert(alert_data):
         maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
         maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
         if maintenance_resp['data']:
-            print(f"not tank Under maintenance alert - creating alert for {maintenance_resp['data']}")
-            print(f"Tank Under Maintenance {alert_data}")
+            logger.info(f"not tank Under maintenance alert - creating alert for {maintenance_resp['data']}")
+            logger.info(f"Tank Under Maintenance {alert_data}")
         else:
             await create_alert(alert_data=alert_data)
         return
