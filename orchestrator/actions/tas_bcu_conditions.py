@@ -45,7 +45,6 @@ class BCUAlertConditions:
 
     async def alert_history_check(self, params):
         try:
-            params = self.params
             print("-"*50)
             logger.info("params :", params)
             print("-"*50)
