@@ -7,7 +7,7 @@ import hpcl_ceg_model
 import orchestrator.alerting.alert_factory as alert_create
 import orchestrator.alerting.listener.tas_maintenance_alert_check as alert_close
 
-logger = urdhva_base.logger.Logger.getInstance("esd_activation_processing_log")
+logger = urdhva_base.logger.Logger.getInstance("workflow_process-log")
 
 
 class TasEsdActivation:
@@ -77,8 +77,7 @@ class TasEsdActivation:
                     
                     if esd_close_data:
                         alerts_found = True
-                        print(f"Found relevant alerts for {fail_status_interlock} on attempt {attempt_count+1}")
-                        
+                        logger.info(f"Found relevant alerts for {fail_status_interlock} on attempt {attempt_count+1}")
                         # Process the found alerts
                         for alert in esd_close_data:
                             esd_device_name = alert.get('tas_device_name', '')
@@ -97,7 +96,7 @@ class TasEsdActivation:
                 
                 if not alerts_found:
                     attempt_count += 1
-                    print(f"Attempt {attempt_count}/{max_attempts}: Waiting for alerts to arrive...")
+                    logger.info(f"Attempt {attempt_count}/{max_attempts}: Waiting for alerts to arrive...")
                     await asyncio.sleep(poll_interval)
             
             # Check maintenance alerts if no ESD device names found
@@ -141,7 +140,7 @@ class TasEsdActivation:
                     total_count = fault_alert_count + rosov_pl_close_count + esd_close_status_count
                     path = "fault"
 
-                print(f"ROSOV Path: {path}, Total count: {total_count}, Tank count: {total_tank_count}")
+                logger.info(f"ROSOV Path: {path}, Total count: {total_count}, Tank count: {total_tank_count}")
 
                 if total_count == total_tank_count:
                     return await self._create_rosov_alert(bu, sap_id, location_name, total_count)
@@ -155,7 +154,7 @@ class TasEsdActivation:
                     total_count = fault_alert_count + mov_pl_close_count + esd_mov_close_status_count
                     path = "fault"
 
-                print(f"DBBV Path: {path}, Total count: {total_count}, Tank count: {total_tank_count}")
+                logger.info(f"DBBV Path: {path}, Total count: {total_count}, Tank count: {total_tank_count}")
 
                 if total_count == total_tank_count:
                     return await self._create_dbbv_alert(bu, sap_id, location_name, total_count)
@@ -184,7 +183,7 @@ class TasEsdActivation:
             return True, {"status": "counts don't match", "rosov_total": (maintenance_alert_count + rosov_pl_close_count + esd_close_status_count), "dbbv_total": (maintenance_alert_count + mov_pl_close_count + esd_mov_close_status_count), "tank_count": total_tank_count}
         
         except Exception as e:
-            print(traceback.format_exc())
+            logger.info(traceback.format_exc())
             logger.error(traceback.format_exc())
             return False, {"status": str(e)}
     
@@ -198,7 +197,7 @@ class TasEsdActivation:
         )
         esd_params = urdhva_base.queryparams.QueryParams()
         esd_params.q = esd_query
-        print(f"Query for {interlock_name}: {esd_params.q}")
+        logger.info(f"Query for {interlock_name}: {esd_params.q}")
         esd_params.fields = ["tas_device_name", "location_name"]
 
         esd_close_alerts = await hpcl_ceg_model.Alerts.get_all(esd_params, resp_type='plain')
@@ -213,10 +212,10 @@ class TasEsdActivation:
         maint_params = urdhva_base.queryparams.QueryParams()
         maint_params.q = maint_query
         maint_params.fields = ["tas_device_name"]
-        print(f"Maintenance query: {maint_params.q}")
+        logger.info(f"Maintenance query: {maint_params.q}")
         
         maint_alerts = await hpcl_ceg_model.Alerts.get_all(maint_params, resp_type='plain')
-        print(f"Maintenance alerts: {maint_alerts}")
+        logger.info(f"Maintenance alerts: {maint_alerts}")
         return maint_alerts
     
     async def _query_fault_alerts(self, sap_id):
@@ -227,11 +226,11 @@ class TasEsdActivation:
         )
         fault_params = urdhva_base.queryparams.QueryParams()
         fault_params.q = fault_query
-        print(f"Fault query: {fault_params.q}")
+        logger.info(f"Fault query: {fault_params.q}")
         fault_params.fields = ["tas_device_name"]
 
         fault_alerts = await hpcl_ceg_model.Alerts.get_all(fault_params, resp_type='plain')
-        print(f"Fault alerts: {fault_alerts}")
+        logger.info(f"Fault alerts: {fault_alerts}")
         return fault_alerts
     
     async def _query_esd_status_alerts(self, sap_id, interlock_name, time_window):
@@ -242,10 +241,10 @@ class TasEsdActivation:
         )
         esd_status_params = urdhva_base.queryparams.QueryParams()
         esd_status_params.q = esd_status_query
-        print(f"ESD status query: {esd_status_params.q}")
+        logger.info(f"ESD status query: {esd_status_params.q}")
         
         esd_status_data = await hpcl_ceg_model.Alerts.get_all(esd_status_params, resp_type='plain')
-        print(f"ESD status data: {esd_status_data}")
+        logger.info(f"ESD status data: {esd_status_data}")
         return esd_status_data
     
     async def _query_pl_mode_alerts(self, sap_id, interlock_name, time_window):
@@ -256,10 +255,10 @@ class TasEsdActivation:
         )
         pl_params = urdhva_base.queryparams.QueryParams()
         pl_params.q = pl_query
-        print(f"PL mode query: {pl_params.q}")
+        logger.info(f"PL mode query: {pl_params.q}")
         
         pl_data = await hpcl_ceg_model.Alerts.get_all(pl_params, resp_type='plain')
-        print(f"PL mode data: {pl_data}")
+        logger.info(f"PL mode data: {pl_data}")
         return pl_data
     
     async def _get_total_tank_count(self, sap_id):
@@ -267,14 +266,14 @@ class TasEsdActivation:
         arch_query = f"sap_id = '{sap_id}'"
         arch_params = urdhva_base.queryparams.QueryParams()
         arch_params.q = arch_query
-        print(f"Architecture query: {arch_params.q}")
+        logger.info(f"Architecture query: {arch_params.q}")
         arch_params.fields = ["total_tank_count"]
 
         arch_data = await hpcl_ceg_model.ArchitectureData.get_all(arch_params, resp_type='plain')
-        print(f"Architecture data: {arch_data}")
+        logger.info(f"Architecture data: {arch_data}")
         tank_counts = {item.get("total_tank_count", 0) for item in arch_data.get("data", [])}
         total_tank_count = max(tank_counts) if tank_counts else 0
-        print(f"Total tank count: {total_tank_count}")
+        logger.info(f"Total tank count: {total_tank_count}")
         return total_tank_count
     
     async def _create_rosov_alert(self, bu, sap_id, location_name, total_count):
@@ -294,7 +293,7 @@ class TasEsdActivation:
             "return_data": True
         }
         status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data)
-        print("created_alert ROSOV ---> ", created_alert)
+        logger.info("created_alert ROSOV ---> ", created_alert)
         if created_alert and isinstance(created_alert, dict):
             alert_data["unique_id"] = created_alert.get("unique_id")
             alert_data["id"] = created_alert.get("id")
@@ -326,7 +325,7 @@ class TasEsdActivation:
             "return_data": True
         }
         status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data)
-        print("created_alert DBBV ---> ", created_alert)
+        logger.info("created_alert DBBV ---> ", created_alert)
         if created_alert and isinstance(created_alert, dict):
             alert_data["unique_id"] = created_alert.get("unique_id")
             alert_data["id"] = created_alert.get("id")
@@ -353,7 +352,7 @@ class TasEsdActivation:
             params = urdhva_base.queryparams.QueryParams()
             params.q = query
             params.fields = ["id", "alert_history"]
-            print(f"[UpdateHistory] Query: {params.q}")
+            logger.info(f"[UpdateHistory] Query: {params.q}")
             
             alerts = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
             processed_time = datetime.datetime.utcnow()
@@ -391,11 +390,11 @@ class TasEsdActivation:
 
             return True
         except Exception as e:
-            print(traceback.format_exc())
+            logger.info(traceback.format_exc())
             logger.error(f"Error in _update_alert_history: {str(e)}")
             return False
 
         except Exception as e:
-            print(traceback.format_exc())
+            logger.info(traceback.format_exc())
             logger.error(f"Error updating fault history: {str(e)}")
             return False
