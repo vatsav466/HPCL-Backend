@@ -102,7 +102,7 @@ tas_interlock_mapping = [
                         
                         {"sop_id": "SOP002", "interlock_name": "Plant ESD activated", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP002", "interlock_name": "EM Locks : VTS Offline - Customer", "model": "VTS", "workflow_name": ""},
-                        {"sop_id": "SOP02A", "interlock_name": "All ROSOVs closed(Except PL Receipt)", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
+                        {"sop_id": "SOP02A", "interlock_name": "All ROSOVs Closed(Except PL Receipt)", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Tanks in TTL Dispatch in Dormant Mode", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "As Power ESD Activation in Main PMCC Panel after 120 Sec", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Hooter cum strobe for ESD activated in control room", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
@@ -114,7 +114,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP02A", "interlock_name": "Gantry Permissive Off", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Barrier Gate opened", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
 
-                        {"sop_id": "SOP02A", "interlock_name": "All ROSOVs closed(Except PL Receipt)_Fail", "workflow_name": "TAS ESD CAUSE AND NON EFFECT SOP002 SOP02A"},
+                        {"sop_id": "SOP02A", "interlock_name": "All ROSOVs Closed(Except PL Receipt)_Fail", "workflow_name": "TAS ESD CAUSE AND NON EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Tanks in TTL Dispatch in Dormant Mode_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "As Power ESD Activation in Main PMCC Panel after 120 Sec_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Hooter cum strobe for ESD activated in control room_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},

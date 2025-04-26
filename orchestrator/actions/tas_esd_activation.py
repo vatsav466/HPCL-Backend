@@ -34,7 +34,7 @@ class TasEsdActivation:
             interlock_name = params.get("interlock_name", "")
             
             # Define the known interlock names
-            ROSOV_INTERLOCK = "All ROSOVs closed(Except PL Receipt)_Fail"
+            ROSOV_INTERLOCK = "All ROSOVs Closed(Except PL Receipt)_Fail"
             DBBV_INTERLOCK = "All DBBVs Closed(Except PL Receipt)_Fail"
             ESD_ROSOV_FAIL = "ESD ROSOV_Close Status_Fail"
             ROSOV_PL_MODE = "ROSOV in PL Receipt Mode"
