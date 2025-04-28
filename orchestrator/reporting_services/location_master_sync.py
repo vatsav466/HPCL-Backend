@@ -160,7 +160,6 @@ async def sync_location_master():
                             left_on="REPORTING_OFFICE", right_on="RO_CODE", how="left")
         data["bu"] = config.get("bu", "").upper()
         data = await process_data(data)
-        data.to_csv(f"/tmp/location_master_{config.get('bu', '')}.csv", index=False)
         await clear_existing_location_master(config.get("bu", ""))
         await insert_users(data.to_dict(orient="records"))
 
