@@ -110,16 +110,16 @@ async def create_under_maintenance_alert(alert_data):
                 f"""alert_status != 'Close'"""
             )
         maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
-        logger.info(f"maintenance_query --> {maintenance_query}")
+        logger.info(f"maintenance_query --> {json.dumps(maintenance_params, default=str)}")
 
         maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
-        logger.info(f"maintenance_resp --> {maintenance_resp}")
+        logger.info(f"maintenance_resp --> {json.dumps(maintenance_resp, default=str)}")
 
         if maintenance_resp["data"]:
             logger.info(f"Under maintenance alert - creating alert for {maintenance_resp["data"]}")
             for data in maintenance_resp["data"]:
-                logger.info(f"Under maintenance alert - creating alert for {json.dumps(data)}")
-                logger.info(f"into close_tas_workflow ----> {json.dumps(data)}")
+                logger.info(f"Under maintenance alert - creating alert for {json.dumps(data, default=str)}")
+                logger.info(f"into close_tas_workflow ----> {json.dumps(data, default=str)}")
                 await close_tas_workflow(data)
             
         await create_alert(alert_data=alert_data)
@@ -141,7 +141,7 @@ async def create_under_maintenance_alert(alert_data):
         maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
         if maintenance_resp['data']:
             logger.info(f"not tank Under maintenance alert - creating alert for {maintenance_resp['data']}")
-            logger.info(f"Tank Under Maintenance {json.dumps(alertdata)}")
+            logger.info(f"Tank Under Maintenance {json.dumps(alertdata, default=str)}")
         else:
             await create_alert(alert_data=alert_data)
         return
