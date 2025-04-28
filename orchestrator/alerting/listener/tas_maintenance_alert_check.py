@@ -110,16 +110,16 @@ async def create_under_maintenance_alert(alert_data):
                 f"""alert_status != 'Close'"""
             )
         maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
-        logger.info("maintenance_query --> ", {maintenance_query})
+        logger.info(f"maintenance_query --> {maintenance_query}")
 
         maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
-        logger.info("maintenance_resp --> ", {maintenance_resp})
+        logger.info(f"maintenance_resp --> {maintenance_resp}")
 
         if maintenance_resp["data"]:
             logger.info(f"Under maintenance alert - creating alert for {maintenance_resp["data"]}")
             for data in maintenance_resp["data"]:
                 logger.info(f"Under maintenance alert - creating alert for {data}")
-                logger.info("into close_tas_workflow ----> ", {data})
+                logger.info(f"into close_tas_workflow ----> {data}")
                 await close_tas_workflow(data)
             
         await create_alert(alert_data=alert_data)
