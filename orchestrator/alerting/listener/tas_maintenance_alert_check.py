@@ -118,8 +118,8 @@ async def create_under_maintenance_alert(alert_data):
         if maintenance_resp["data"]:
             logger.info(f"Under maintenance alert - creating alert for {maintenance_resp["data"]}")
             for data in maintenance_resp["data"]:
-                logger.info(f"Under maintenance alert - creating alert for {data}")
-                logger.info(f"into close_tas_workflow ----> {data}")
+                logger.info(f"Under maintenance alert - creating alert for {json.dumps(data)}")
+                logger.info(f"into close_tas_workflow ----> {json.dumps(data)}")
                 await close_tas_workflow(data)
             
         await create_alert(alert_data=alert_data)
@@ -141,7 +141,7 @@ async def create_under_maintenance_alert(alert_data):
         maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
         if maintenance_resp['data']:
             logger.info(f"not tank Under maintenance alert - creating alert for {maintenance_resp['data']}")
-            logger.info(f"Tank Under Maintenance {alert_data}")
+            logger.info(f"Tank Under Maintenance {json.dumps(alertdata)}")
         else:
             await create_alert(alert_data=alert_data)
         return
