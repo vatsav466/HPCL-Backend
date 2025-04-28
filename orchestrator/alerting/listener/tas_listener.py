@@ -119,9 +119,9 @@ async def tas_listener(rmsg):
                 logger.info(f"Alert already exists (duplicate) for: {alertdata}")
             else:
                 if alertdata['interlock_name'] in [
-                    "VFT_UnderMaintenance", "Secondary Radar_Under Maintenance", 
+                    "VFT_Under Maintenance", "Secondary Radar_Under Maintenance", 
                     "ROSOV_Under Maintenance", "MOV_Under Maintenance", 
-                    "Rim Seal system_Under Maintenance", "Tank_UnderMaintenance"]:
+                    "Rim Seal system_Under Maintenance", "Tank_Under Maintenance"]:
                     logger.info("into maintenance check")
                     await maintenance_check.create_under_maintenance_alert(alertdata)
                 else:
