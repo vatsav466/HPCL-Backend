@@ -44,13 +44,13 @@ async def send_command_rabbitmq(message, queue_name):
         print(traceback.format_exc())
         return False, str(e)
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # Dynamically construct the queue name
-    sap_id = "1919"
-    queue_name = f"command_write_{sap_id}"
-    message = {
-        "command": "write",
-        "sensor_tag": "tag_name",
-        "value": 1
-    }
-    asyncio.run(send_command_rabbitmq(message, queue_name))
+    # sap_id = "1919"
+    # queue_name = f"command_write_{sap_id}"
+    # message = {
+    #     "command": "write",
+    #     "sensor_tag": "tag_name",
+    #     "value": 1
+    # }
+    # asyncio.run(send_command_rabbitmq(message, queue_name))

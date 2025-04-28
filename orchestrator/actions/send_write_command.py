@@ -63,7 +63,7 @@ class SendWriteCommand:
             }
 
             # handle this message playload to publish to rabbit mq
-            status, message = await send_rabbitmq.send_command_rabbitmq(message, queue_name=f'write_{sap_id}')
+            status, message = await send_rabbitmq.send_command_rabbitmq(message, queue_name=f'command_write_{sap_id}')
             if status:
                 return True, message
             else:
