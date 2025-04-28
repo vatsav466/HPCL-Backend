@@ -22,7 +22,7 @@ async def tasactionlogs_capture_logs(data: Tasactionlogs_Capture_LogsParams):
         rpt["location_name"] = [location_name["data"][-1].get("name", "")]
         rpt["zone"] = [location_name["data"][-1].get("zone", "")]
         rpt["region"] = [location_name["data"][-1].get("region", "")]
-        rpt["sap_id"] = [location_name["data"][-1].get("region", "")]
+        rpt["sap_id"] = [location_name["data"][-1].get("sap_id", "")]
     await hpcl_ceg_model.TasActionLogsCreate(**rpt).create()
     
     return True, "Successfully captured the log"
