@@ -4637,6 +4637,7 @@ class GlobalAnalytics:
                 })
                 grouped_resp["Rejections"] = grouped_resp["sortout"] / grouped_resp["total"]
             if grouped_resp is not None:
+                grouped_resp["Rejections"] = grouped_resp["Rejections"] * 100
                 grouped_resp["Rejections"] = grouped_resp["Rejections"].round(1)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
 
