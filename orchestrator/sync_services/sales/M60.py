@@ -113,6 +113,7 @@ def insertToDB(data, table_name, indexing_col=()):
                   "Datetime(time_unit='us', time_zone=None)": str('timestamp'),
                   "Datetime(time_unit='ns', time_zone=None)": str('timestamp'),
                   "Decimal(precision=5, scale=2)": str('double precision'),
+                  "Decimal(precision=6, scale=2)": str('double precision'),
                   "Decimal(precision=6, scale=4)": str('double precision'),
                   "Decimal(precision=9, scale=4)": str('double precision'),
                   "Decimal(precision=9, scale=0)": str('double precision'),
