@@ -10,6 +10,13 @@ import tas_duplicate_alert_check as duplicates_check
 import orchestrator.alerting.alert_factory as alert_factory
 
 
+# Define a mapping of interlock names
+INTERLOCK_NAME_MAPPING = {
+    "BCU K- Factor Change": "K Factor BCU Permissive Off_Fail",
+    "BCU Local Loading": "Local Loading BCU Permissive Off_Fail",
+    "MFM factor Change": "MFM Factor BCU Permissive Off_Fail"
+}
+
 async def tas_bcu_analog():
     try:
         # Interlock names to monitor
@@ -54,7 +61,9 @@ async def tas_bcu_analog():
                 
                 # Trigger alert only when exactly 3 occurrences are found in the week
                 if alert_count > 2:
-                   # Create alert data
+                    # Map the interlock name if it exists in the mapping
+                    mapped_interlock_name = INTERLOCK_NAME_MAPPING.get(interlock_name, interlock_name)
+                    # Create alert data
                     query2 = f"""
                         SELECT severity, device_type, bu,
                         FROM alerts
@@ -68,8 +77,9 @@ async def tas_bcu_analog():
                        severity = resp2["data"][0].get("severity", "")
                        bu = resp2["data"][0].get("bu", "")
                        device_type = resp2["data"][0].get("device_type", "")
+                    
                     alert_data = {
-                        "interlock_name": "K Factor BCU Primissive Off_Fail",
+                        "interlock_name": mapped_interlock_name,
                         "device_name": device_name,
                         "sop_id": "SOP28A",
                         "sap_id": sap_id,
