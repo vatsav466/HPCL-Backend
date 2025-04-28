@@ -246,22 +246,22 @@ alert_action = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Planning Officer SOD", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
                 },
                 "Maintenance": {
                     "name": "Maintenance",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Planning Officer SOD", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal M&I Officer SOD", "M&I Officer SOD"]
+                    "roles": ["Admin", "Planning Officer SOD", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal M&I Officer SOD", "M&I Officer SOD"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal M&I Officer SOD", "M&I Officer SOD"]
+                    "roles": ["Admin", "Planning Officer SOD", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal M&I Officer SOD", "M&I Officer SOD"]
                 }
             },
             "category": {
