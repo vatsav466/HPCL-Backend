@@ -98,6 +98,7 @@ async def create_under_maintenance_alert(alert_data):
     logger.info(f"Under maintenance alert - creating alert for {alert_data['tas_device_name']}")
     if alert_data['interlock_name'] == 'Tank_Under Maintenance':
         logger.info(f"maintenance alert - creating alert for {alert_data['tas_device_name']}")
+        time.sleep(3)
         maintenance_query = (
                 f"""bu = 'TAS' and """
                 f"""sap_id = '{alert_data.get('sap_id', '')}' and """
