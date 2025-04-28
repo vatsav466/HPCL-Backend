@@ -174,7 +174,7 @@
       <bpmn:incoming>Flow_0vufaeg</bpmn:incoming>
       <bpmn:outgoing>Flow_0p21qv6</bpmn:outgoing>
       <bpmn:timerEventDefinition id="TimerEventDefinition_1nyku9y">
-        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5S</bpmn:timeDuration>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT3S</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:intermediateCatchEvent>
     <bpmn:sequenceFlow id="Flow_0p21qv6" sourceRef="Event_0lllzyn" targetRef="Activity_0vuueme" />

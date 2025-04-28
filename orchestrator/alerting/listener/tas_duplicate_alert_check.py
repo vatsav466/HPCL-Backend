@@ -15,7 +15,7 @@ async def duplicate_check(alertdata):
         f"""interlock_name = '{alertdata.get('interlock_name', '')}' and """
         f"""alert_status != 'Close'"""
     )
-    logger.info("query --> ", query)
+    logger.info("query --> %s", query)
     params = urdhva_base.queryparams.QueryParams(q=query)
     resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
 
