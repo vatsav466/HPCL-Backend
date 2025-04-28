@@ -21,8 +21,7 @@ def load_device_data(sap_id):
         dict: The device data loaded from the json file
     """
     try:
-        # data_path = f"/opt/ceg/algo/things_board/device_data/{sap_id}.json"
-        data_path = f"/Users/mac_1/PycharmProjects/Cloud/dnc_backend_v2/things_board/device_data/{sap_id}.json"
+        data_path = f"/opt/ceg/algo/things_board/device_data/{sap_id}.json"
         with open(data_path, 'r') as file:
             return json.load(file)
     except Exception as e:
