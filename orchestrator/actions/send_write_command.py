@@ -37,7 +37,6 @@ class SendWriteCommand:
                 "equipment_name": equipment_name,
                 "sap_id": sap_id
             }
-                                    
             # Read the CSV file and find the matching row
             matched_row = await find_matching_csv.find_matching_row(csv_file_path, match_criteria)
 
