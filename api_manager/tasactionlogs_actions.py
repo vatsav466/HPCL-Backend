@@ -16,12 +16,13 @@ async def tasactionlogs_capture_logs(data: Tasactionlogs_Capture_LogsParams):
     rpt["section"] = data.section
     rpt["comments"] = data.comments
     rpt["description"] = data.description
-    query = f""" name, zone, region from location_master where sap_id='{data.sap_id}' """
+    query = f""" sap_id, name, zone, region from location_master where sap_id='{data.sap_id}' """
     location_name = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=1)
     if location_name["data"]:
         rpt["location_name"] = [location_name["data"][-1].get("name", "")]
         rpt["zone"] = [location_name["data"][-1].get("zone", "")]
         rpt["region"] = [location_name["data"][-1].get("region", "")]
+        rpt["sap_id"] = [location_name["data"][-1].get("region", "")]
     await hpcl_ceg_model.TasActionLogsCreate(**rpt).create()
     
     return True, "Successfully captured the log"
