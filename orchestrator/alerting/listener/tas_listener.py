@@ -119,19 +119,19 @@ async def tas_listener(rmsg):
                 logger.info(f"Alert already exists (duplicate) for: {alertdata}")
             else:
                 logger.info("*"*100)
-                logger.info("alertdata ------> ", alertdata)
+                logger.info(f"alertdata ------> {alertdata}")
                 logger.info("*"*100)
                 if alertdata['interlock_name'] in [
                     "VFT_Under Maintenance", "Secondary Radar_Under Maintenance", 
                     "ROSOV_Under Maintenance", "MOV_Under Maintenance", 
                     "Rim Seal system_Under Maintenance", "Tank_Under Maintenance"]:
                     logger.info("*"*100)
-                    logger.info("into maintenance check --> ", alertdata)
+                    logger.info("into maintenance check --> ", {alertdata})
                     logger.info("*"*100)
                     await maintenance_check.create_under_maintenance_alert(alertdata)
                 else:
                     logger.info("*"*100)
-                    logger.info("into normal maintenance check  ---> ", alertdata)
+                    logger.info("into normal maintenance check  ---> ", {alertdata})
                     logger.info("*"*100)
                     is_maintenance_alert = await maintenance_check.maintenance_alert_check(alertdata)
                     if is_maintenance_alert:
@@ -140,7 +140,7 @@ async def tas_listener(rmsg):
                         logger.info("*"*100)
                     else:
                         logger.info("*"*100)
-                        logger.info("not maintenance alert")
+                        logger.info(f"not maintenance alert {alertdata}")
                         logger.info("*"*100)
                         await create_alert(alertdata)
 
