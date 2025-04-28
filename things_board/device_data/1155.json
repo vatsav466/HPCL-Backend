@@ -1659,9 +1659,9 @@
                 },
                 {
                     "sensor_name": "MOV STATUS IL1",
-                    "sensor_tag": "MOV.DBBV-006.OPEN_STATUS",
+                    "sensor_tag": "MOV.DBBV-004.OPEN_STATUS",
                     "normal_value": "1",
-                    "sensor_id": "DBBV-006",
+                    "sensor_id": "DBBV-004",
                     "sensor_type": "MOV IL1"
                 },
                 {
@@ -1680,9 +1680,9 @@
                 },
                 {
                     "sensor_name": "MOV STATUS RCL",
-                    "sensor_tag": "MOV.DBBV-004.OPEN_STATUS",
+                    "sensor_tag": "MOV.DBBV-006.OPEN_STATUS",
                     "normal_value": "1",
-                    "sensor_id": "DBBV-004",
+                    "sensor_id": "DBBV-006",
                     "sensor_type": "MOV RCL"
                 },
                 {
@@ -1848,9 +1848,9 @@
                 },
                 {
                     "sensor_name": "MOV STATUS IL1",
-                    "sensor_tag": "MOV.DBBV-009.OPEN_STATUS",
+                    "sensor_tag": "MOV.DBBV-007.OPEN_STATUS",
                     "normal_value": "1",
-                    "sensor_id": "DBBV-009",
+                    "sensor_id": "DBBV-007",
                     "sensor_type": "MOV IL1"
                 },
                 {
@@ -1869,9 +1869,9 @@
                 },
                 {
                     "sensor_name": "MOV STATUS RCL",
-                    "sensor_tag": "MOV.DBBV-007.OPEN_STATUS",
+                    "sensor_tag": "MOV.DBBV-009.OPEN_STATUS",
                     "normal_value": "1",
-                    "sensor_id": "DBBV-007",
+                    "sensor_id": "DBBV-009",
                     "sensor_type": "MOV RCL"
                 },
                 {
@@ -2037,9 +2037,9 @@
                 },
                 {
                     "sensor_name": "MOV STATUS IL1",
-                    "sensor_tag": "MOV.DBBV-012.OPEN_STATUS",
+                    "sensor_tag": "MOV.DBBV-010.OPEN_STATUS",
                     "normal_value": "1",
-                    "sensor_id": "DBBV-012",
+                    "sensor_id": "DBBV-010",
                     "sensor_type": "MOV IL1"
                 },
                 {
@@ -2058,9 +2058,9 @@
                 },
                 {
                     "sensor_name": "MOV STATUS RCL",
-                    "sensor_tag": "MOV.DBBV-010.OPEN_STATUS",
+                    "sensor_tag": "MOV.DBBV-012.OPEN_STATUS",
                     "normal_value": "1",
-                    "sensor_id": "DBBV-010",
+                    "sensor_id": "DBBV-012",
                     "sensor_type": "MOV RCL"
                 },
                 {
@@ -2226,9 +2226,9 @@
                 },
                 {
                     "sensor_name": "MOV STATUS IL1",
-                    "sensor_tag": "MOV.DBBV-015.OPEN_STATUS",
+                    "sensor_tag": "MOV.DBBV-013.OPEN_STATUS",
                     "normal_value": "1",
-                    "sensor_id": "DBBV-015",
+                    "sensor_id": "DBBV-013",
                     "sensor_type": "MOV IL1"
                 },
                 {
@@ -2247,9 +2247,9 @@
                 },
                 {
                     "sensor_name": "MOV STATUS RCL",
-                    "sensor_tag": "MOV.DBBV-013.OPEN_STATUS",
+                    "sensor_tag": "MOV.DBBV-015.OPEN_STATUS",
                     "normal_value": "1",
-                    "sensor_id": "DBBV-013",
+                    "sensor_id": "DBBV-015",
                     "sensor_type": "MOV RCL"
                 },
                 {
@@ -3981,9 +3981,9 @@
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL1",
-                    "sensor_tag": "MOV.DBBV-006.MAINTENANCE_STATUS",
+                    "sensor_tag": "MOV.DBBV-004.MAINTENANCE_STATUS",
                     "normal_value": "0",
-                    "sensor_id": "DBBV-006",
+                    "sensor_id": "DBBV-004",
                     "sensor_type": "MOV IL1"
                 },
                 {
@@ -3995,9 +3995,9 @@
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE RCL",
-                    "sensor_tag": "MOV.DBBV-004.MAINTENANCE_STATUS",
+                    "sensor_tag": "MOV.DBBV-006.MAINTENANCE_STATUS",
                     "normal_value": "0",
-                    "sensor_id": "DBBV-004",
+                    "sensor_id": "DBBV-006",
                     "sensor_type": "MOV RCL"
                 },
                 {
@@ -4070,9 +4070,9 @@
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL1",
-                    "sensor_tag": "MOV.DBBV-009.MAINTENANCE_STATUS",
+                    "sensor_tag": "MOV.DBBV-007.MAINTENANCE_STATUS",
                     "normal_value": "0",
-                    "sensor_id": "DBBV-009",
+                    "sensor_id": "DBBV-007",
                     "sensor_type": "MOV IL1"
                 },
                 {
@@ -4084,9 +4084,9 @@
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE RCL",
-                    "sensor_tag": "MOV.DBBV-007.MAINTENANCE_STATUS",
+                    "sensor_tag": "MOV.DBBV-009.MAINTENANCE_STATUS",
                     "normal_value": "0",
-                    "sensor_id": "DBBV-007",
+                    "sensor_id": "DBBV-009",
                     "sensor_type": "MOV RCL"
                 },
                 {
@@ -4159,9 +4159,9 @@
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL1",
-                    "sensor_tag": "MOV.DBBV-012.MAINTENANCE_STATUS",
+                    "sensor_tag": "MOV.DBBV-010.MAINTENANCE_STATUS",
                     "normal_value": "0",
-                    "sensor_id": "DBBV-012",
+                    "sensor_id": "DBBV-010",
                     "sensor_type": "MOV IL1"
                 },
                 {
@@ -4173,9 +4173,9 @@
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE RCL",
-                    "sensor_tag": "MOV.DBBV-010.MAINTENANCE_STATUS",
+                    "sensor_tag": "MOV.DBBV-012.MAINTENANCE_STATUS",
                     "normal_value": "0",
-                    "sensor_id": "DBBV-010",
+                    "sensor_id": "DBBV-012",
                     "sensor_type": "MOV RCL"
                 },
                 {
@@ -4248,9 +4248,9 @@
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL1",
-                    "sensor_tag": "MOV.DBBV-015.MAINTENANCE_STATUS",
+                    "sensor_tag": "MOV.DBBV-013.MAINTENANCE_STATUS",
                     "normal_value": "0",
-                    "sensor_id": "DBBV-015",
+                    "sensor_id": "DBBV-013",
                     "sensor_type": "MOV IL1"
                 },
                 {
@@ -4262,9 +4262,9 @@
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE RCL",
-                    "sensor_tag": "MOV.DBBV-013.MAINTENANCE_STATUS",
+                    "sensor_tag": "MOV.DBBV-015.MAINTENANCE_STATUS",
                     "normal_value": "0",
-                    "sensor_id": "DBBV-013",
+                    "sensor_id": "DBBV-015",
                     "sensor_type": "MOV RCL"
                 },
                 {
@@ -6128,6 +6128,134 @@
                 {
                     "sensor_name": "FIRE PUMP TRIPPED FAULT",
                     "sensor_tag": "PUMP.JCY-02.PUMP_TRIPPED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP LLOP ALARM",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP HWT ALARM",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                }
+            ]
+        },
+        {
+            "device_name": "Farthest Point PT_WATER Pressure_Near Tank no. 01@Roorkee",
+            "device_id": "c7b876b0-241a-11f0-bffc-8db61e26e13b",
+            "device_type": "Fire Pump",
+            "device_key": "jWyhtb2rE1NVquc2nnYc",
+            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "sensors": [
+                {
+                    "sensor_name": "PUMP ON STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "PUMP OFF STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "PUMP LR STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP MAINTENANCE",
+                    "sensor_tag": "PressureTransmitter.PT-01.MAINTENANCE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 1",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 2",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 3",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START STANDBY",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP TRIPPED FAULT",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP LLOP ALARM",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP HWT ALARM",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                }
+            ]
+        },
+        {
+            "device_name": "Nearest Point PT_WATER Pressure_FWP pump house@Roorkee",
+            "device_id": "c8363230-241a-11f0-bffc-8db61e26e13b",
+            "device_type": "Fire Pump",
+            "device_key": "A9VnX3gbXrBjaOTtL1NA",
+            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "sensors": [
+                {
+                    "sensor_name": "PUMP ON STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "PUMP OFF STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "PUMP LR STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP MAINTENANCE",
+                    "sensor_tag": "PressureTransmitter.PT-02.MAINTENANCE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 1",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 2",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 3",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START STANDBY",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP TRIPPED FAULT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 },
                 {
@@ -9544,6 +9672,48 @@
             ]
         },
         {
+            "device_name": "Gantry Permissive override@Roorkee",
+            "device_id": "de6906e0-241a-11f0-bffc-8db61e26e13b",
+            "device_type": "Gantry override",
+            "device_key": "bXxwnPMhhj9OEMNVJ04r",
+            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "sensors": [
+                {
+                    "sensor_name": "OVERRIDE STATUS",
+                    "sensor_tag": "PLC.SFTPLC.RESET_GANTRY_OPERATION",
+                    "normal_value": "0"
+                }
+            ]
+        },
+        {
+            "device_name": "Gantry Permissive Write CMD status@Roorkee",
+            "device_id": "dedb29a0-241a-11f0-bffc-8db61e26e13b",
+            "device_type": "Gantry override",
+            "device_key": "DRGkTeVeoPQfHDXyaKb5",
+            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "sensors": [
+                {
+                    "sensor_name": "OVERRIDE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-501A.PERMISSIVE_FROM_DNC_STATUS",
+                    "normal_value": "0"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD Write CMD status@Roorkee",
+            "device_id": "df6c4610-241a-11f0-bffc-8db61e26e13b",
+            "device_type": "Gantry override",
+            "device_key": "43oQCmjiDoFO2AWagV9H",
+            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "sensors": [
+                {
+                    "sensor_name": "OVERRIDE STATUS",
+                    "sensor_tag": "PLC.SFTPLC.ESD_FROM_DNC_STATUS",
+                    "normal_value": "0"
+                }
+            ]
+        },
+        {
             "device_name": "Two Fire Engine Running status@Roorkee",
             "device_id": "1cfc9d60-20cc-11f0-82ca-03bdbba508c1",
             "device_type": "Fire Effect",
@@ -9747,8 +9917,8 @@
                 },
                 {
                     "sensor_name": "Jockey Pump1 Auto",
-                    "sensor_tag": "",
-                    "normal_value": "0"
+                    "sensor_tag": "PUMP.JCY-01.AUTO_STATUS",
+                    "normal_value": "1"
                 },
                 {
                     "sensor_name": "Jockey Pump2 Remote",
@@ -9757,8 +9927,8 @@
                 },
                 {
                     "sensor_name": "Jockey Pump2 Auto",
-                    "sensor_tag": "",
-                    "normal_value": "0"
+                    "sensor_tag": "PUMP.JCY-02.AUTO_STATUS",
+                    "normal_value": "1"
                 }
             ]
         }

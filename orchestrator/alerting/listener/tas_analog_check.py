@@ -7,7 +7,7 @@ import hpcl_ceg_model
 import uuid
 from datetime import datetime, timedelta
 import tas_duplicate_alert_check as duplicates_check
-import orchestrator.alerting.alert_factory as alert_factory
+from orchestrator.alerting.alert_manager import create_alert
 
 
 # Define a mapping of interlock names
@@ -65,7 +65,7 @@ async def tas_bcu_analog():
                     mapped_interlock_name = INTERLOCK_NAME_MAPPING.get(interlock_name, interlock_name)
                     # Create alert data
                     query2 = f"""
-                        SELECT severity, device_type, bu,
+                        SELECT severity, device_type, bu
                         FROM alerts
                         WHERE interlock_name = '{interlock_name}'
                         AND device_name = '{device_name}'
@@ -81,12 +81,13 @@ async def tas_bcu_analog():
                     alert_data = {
                         "interlock_name": mapped_interlock_name,
                         "device_name": device_name,
-                        "sop_id": "SOP28A",
+                        "sop_id": "SOP028A",
                         "sap_id": sap_id,
                         "bu": bu,
                         "device_type": device_type,
                         "severity": severity,
-                        "alert_id": str(uuid.uuid1())     
+                        "alert_id": str(uuid.uuid1()),
+                        "alert_type": "TAS"     
                     }
                     
                     # Check for duplicates
@@ -101,7 +102,7 @@ async def tas_bcu_analog():
                         print(f"Alert history exists for {interlock_name} on device {device_name}. Skipping alert creation.")
                         continue
                     # Create the alert
-                    success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+                    success, msg = await create_alert(alert_data)
                     if success:
                         print(f"Weekly summary alert created successfully for {interlock_name} on device {device_name}.")
                     else:
