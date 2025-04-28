@@ -126,12 +126,12 @@ async def tas_listener(rmsg):
                     "ROSOV_Under Maintenance", "MOV_Under Maintenance", 
                     "Rim Seal system_Under Maintenance", "Tank_Under Maintenance"]:
                     logger.info("*"*100)
-                    logger.info("into maintenance check")
+                    logger.info("into maintenance check --> ", alertdata)
                     logger.info("*"*100)
                     await maintenance_check.create_under_maintenance_alert(alertdata)
                 else:
                     logger.info("*"*100)
-                    logger.info("into normal maintenance check")
+                    logger.info("into normal maintenance check  ---> ", alertdata)
                     logger.info("*"*100)
                     is_maintenance_alert = await maintenance_check.maintenance_alert_check(alertdata)
                     if is_maintenance_alert:
