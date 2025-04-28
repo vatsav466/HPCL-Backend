@@ -30,35 +30,30 @@ async def interlock_disable(params: dict):
     if 'alert_id' in params.keys():
         alert_id = params['alert_id']
         del params['alert_id']
-    url = "https://crisuat.hpcl.co.in/HOSApp/dashboard/api/getinterlockreqdtls"
+    url = urdhva_base.settings.cris_interlock_disable_url
     default_headers = {"Content-Type": "application/json"}
+    log_payload = {"status_code": 401, "response": {}}
+    audit_data = {
+        "method": "POST", "url": url, "payload": params, "alert_id": alert_id,
+        "request_no": params['reqno'], "response": str(401),
+        "response_msg": json.dumps(log_payload), "request_datetime":
+            urdhva_base.utilities.get_present_time().isoformat(), "api_ack": None, "api_ack_datetime": None
+    }
     try:
         response = requests.post(url, json=params, headers=default_headers)
         try:
             response_data = response.json()
         except (ValueError, requests.exceptions.JSONDecodeError):
             response_data = {"raw_text": response.text or "Empty response"}
-        log_payload = {
-            "status_code": response.status_code,
-            "response": response_data
-        }
-        audit_data = {
-            "method": "POST",
-            "url": url,
-            "payload": params,
-            "alert_id": alert_id,
-            "request_no": params['reqno'],
-            "response": str(response.status_code),
-            "response_msg": json.dumps(log_payload),
-            "request_datetime": urdhva_base.utilities.get_present_time().isoformat(),
-            "api_ack": None,
-            "api_ack_datetime": None
-        }
+        log_payload = {"status_code": response.status_code, "response": response_data}
+        audit_data['response'] = str(response.status_code)
+        audit_data['response_msg'] = json.dumps(log_payload)
         await api_audit_log(audit_data=audit_data)
         return response.json()
     except Exception as e:
         print(traceback.format_exc())
         print(f"Error while disabling interlock {e}")
+        await api_audit_log(audit_data=audit_data)
         return {"status": False, "message": "Failed to post cris API"}
 
 async def get_ro_alerts_count(bu: str, violation_type: str, sap_id: str):
