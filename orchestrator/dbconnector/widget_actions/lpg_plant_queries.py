@@ -1302,7 +1302,7 @@ ORDER BY
                         "plant" as "plant",
                         'CS' AS "rejection_type",
                         SUM("total") as total,
-                        SUM("sortout") as sortout,
+                        SUM("totalsortout") as sortout,
                         CAST("process_date" AS DATE) as "process_date"
                     from
                         "lpg_cs_rejections"
