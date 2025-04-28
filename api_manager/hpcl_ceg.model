@@ -90,6 +90,7 @@ Enum AlertActionType str {
     BayReAssigned='BayReAssigned'
     Effect='Effect'
     Cause='Cause'
+    ESDFailure='ESDFailure'
 }
 
 Enum IndentStatus str {
@@ -226,6 +227,49 @@ Model DataFilters internal {
     key str
     cond str
     value str
+}
+
+Enum TasLogAction str {
+    Shutdown='Shutdown'
+    SignalClearOff='SignalClearOff'
+}
+
+Enum TasLogSection str {
+    Gantry='Gantry'
+    ESD='ESD'
+}
+
+Model TasActionLogs {
+    username index_field str
+    email optional index_field str
+    first_name optional str
+    last_name optional str
+    employee_id optional index_field str
+    employee_number optional str
+    bu index_field list BusinessUnit
+    sap_id index_field list str
+    location_name index_field list str
+    system_role index_field list str
+    novex_role index_field list str
+    region optional list str
+    state optional list str
+    zone optional list str
+    sales_area optional list str
+    description optional str
+    comments optional str
+    action optional TasLogAction
+    section optional TasLogSection
+
+    Action=> capture_logs {
+        sap_id str
+        action str
+        description optional str
+        comments optional str
+        section optional str
+    }
+    Config=> {
+        access_key_mapping='bu,zone,region,sales_area,sap_id'
+    }
 }
 
 Model LocationMaster {
@@ -2091,6 +2135,7 @@ Model DryOutAlertReport {
 
 Model VendorApiAudit {
     method str
+    vendor str
     url str
     payload optional dict
     alert_id unique_field index_field str
@@ -2130,4 +2175,35 @@ Model DryOutRoLoss {
     region optional str
     sales_area optional str
     location_name optional str
+}
+
+Model RoMasterData {
+    interlock str
+    threshold str
+    threshold_value int
+    monthly_quota str
+    sales_officer_quota int
+    sales_officer_instance int
+    regional_manager_quota int
+    regional_manager_instance int
+    zonal_head_quota int
+    zonal_head_instance int
+
+    Action=> update_ro_master_data {
+        record_id str
+        interlock str
+        threshold str
+        threshold_value int
+        monthly_quota str
+        sales_officer_quota int
+        sales_officer_instance int
+        regional_manager_quota int
+        regional_manager_instance int
+        zonal_head_quota int
+        zonal_head_instance int
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
 }

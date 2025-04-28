@@ -130,6 +130,7 @@ class AlertActionType(str, enum.Enum):
     BayReAssigned = 'BayReAssigned'
     Effect = 'Effect'
     Cause = 'Cause'
+    ESDFailure = 'ESDFailure'
 
 
 
@@ -157,6 +158,26 @@ class IndentStatus(str, enum.Enum):
     R3Swipe = 'R3Swipe'
     VTS = 'VTS'
     Delivered = 'Delivered'
+
+
+
+
+
+
+
+class TasLogAction(str, enum.Enum):
+    Shutdown = 'Shutdown'
+    SignalClearOff = 'SignalClearOff'
+
+
+
+
+
+
+
+class TasLogSection(str, enum.Enum):
+    Gantry = 'Gantry'
+    ESD = 'ESD'
 
 
 

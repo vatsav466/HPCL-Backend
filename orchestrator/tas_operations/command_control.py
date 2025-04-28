@@ -5,12 +5,14 @@ import json
 command_mapping = {
     "gantry_shutdown": {"tag": "SmartLoad-Dual.BC-501A.PERMISSIVE_FROM_DNC", "value": 1},
     "gantry_start": {"tag": "SmartLoad-Dual.BC-501A.PERMISSIVE_FROM_DNC", "value": 0},
+    "esd_shutdown": {"tag": "PLC.SFTPLC.ESD_FROM_DNC", "value": 1},
+    "esd_start": {"tag": "PLC.SFTPLC.ESD_FROM_DNC", "value": 0}
 
 }
 
 
 async def publish_command(sap_id, command, value):
-    return False, "Operation not allowed, Please contact support"
+    # return False, "Operation not allowed, Please contact support"
     if not command_mapping.get(command):
         return False, "Invalid inputs"
     connection = await aio_pika.connect_robust(

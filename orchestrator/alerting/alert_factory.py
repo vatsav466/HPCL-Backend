@@ -53,6 +53,9 @@ class AlertFactory:
         """
         try:
             # print("Alert data:", alert_data)
+            return_data = False
+            if 'return_data' in alert_data.keys():
+                return_data = alert_data.get("return_data", False)
             bu = alert_data['bu']
             sop_id = alert_data.get('sop_id', '')
             sap_id = alert_data['sap_id']
@@ -97,6 +100,13 @@ class AlertFactory:
             #     alert_resp['device_name'] = device_name
             # else:
             # # Generate alert alert_data
+            # assign roles for emlock and ro alerts
+            if alert_data.get("alert_section", bu) == 'EMLock':
+                assigned_user_roles = ["Planning Officer SOD"]
+            elif alert_data.get("alert_section", bu) == 'RO' and interlock_name != 'Dry Out Each Indent Wise MainFlow':
+                assigned_user_roles = ["RO Dealer"]
+            else:
+                assigned_user_roles = []
             alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity').capitalize() if alert_data.get('severity') else "Medium",
                                                         'alert_category': alert_data.get('alert_category'),
@@ -121,7 +131,7 @@ class AlertFactory:
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
                                                         'assigned_users': [],
-                                                        'assigned_user_roles': ["Planning Officer SOD"] if alert_data.get("alert_section", bu) == 'EMLock' else [],
+                                                        'assigned_user_roles': assigned_user_roles,
                                                         'indent_status': hpcl_ceg_enum.IndentStatus.Pending,
                                                         'dealer_id': str(alert_data.get('dealer_id', '')),
                                                         'product_code': str(alert_data.get('product_code', '')),
@@ -248,7 +258,8 @@ class AlertFactory:
             else:
                 print(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
                 logger.info(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
-
+            if return_data:
+                return True, alert_data_dict
             return True, "Alert Created"
 
         except Exception as e:

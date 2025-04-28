@@ -89,8 +89,10 @@ class Postgresql:
         manual_fan_count = data['manual_fan_count'].iloc[-1]
         
         # If no manual fans printed, no alert needed
+        # if manual_fan_count == 0:
+        #     return False, "No alert needed", "No manual FAN was printed"
         if manual_fan_count == 0:
-            return False, "No alert needed", "No manual FAN was printed"
+            return 
         
         # Calculate percentage of manual fans compared to total
         if total_fan_count > 0:  # Avoid division by zero
@@ -433,8 +435,15 @@ class Postgresql:
                         # Calculate alert status
                         result = await self.cal_host_manual_fan_printed([record])
                         
-                        if isinstance(result, tuple) and len(result) == 3:
+                        # if isinstance(result, tuple) and len(result) == 3:
+                        #     is_close_alert, interlock_name, device_msg = result
+
+                        if result is None:
+                            # No alert needed, continue without doing anything
+                            pass
+                        else:
                             is_close_alert, interlock_name, device_msg = result
+                            # Now proceed to create alert
                         
                         print("device_msg --> ", device_msg)
                         # Prepare alert data

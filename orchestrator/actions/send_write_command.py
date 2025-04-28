@@ -1,7 +1,8 @@
 import urdhva_base
 import traceback
 import hpcl_ceg_model
-import csv
+import sys
+sys.path.append("/opt/ceg/algo/orchestrator")
 import tas_operations.send_rabbitmq as send_rabbitmq
 import tas_operations.find_matching_csv as find_matching_csv
 
@@ -19,29 +20,28 @@ class SendWriteCommand:
         Args:
               params (dict): A dictionary containing 'alert_id' and 'interrupt'
         """
-        csv_file_path = ""
+        csv_file_path = "/opt/ceg/algo/orchestrator/tas_operations/write_tag.csv"
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
             if not isinstance(alert_data, dict):
-                alert_data = alert_data._dict_
+                alert_data = alert_data.__dict__
             # Extracting required parameters from alert data
             interlock_name = alert_data.get('interlock_name')
-            equipment_name = alert_data.get('device_name')
+            equipment_name = alert_data.get('tas_device_name') or alert_data.get('device_name') # Prioritize tas_device_name
             sap_id = alert_data.get('sap_id')
             if not (interlock_name and equipment_name and sap_id):
                 print("missing required fields")
                 return 
              # Define the matching criteria
             match_criteria = {
-                "interlock_name": interlock_name,
-                "equipment_name": equipment_name
+                "equipment_name": equipment_name,
+                "sap_id": sap_id
             }
-            
             # Read the CSV file and find the matching row
             matched_row = await find_matching_csv.find_matching_row(csv_file_path, match_criteria)
 
             if not matched_row:
-                print(f"No matching row found for interlock name :{interlock_name} and equipment name : {equipment_name}")
+                print(f"No matching row found for sap_id :{sap_id} and equipment name : {equipment_name}")
                 return
             
             # Extracting the tag and write control from the matched row
@@ -63,7 +63,11 @@ class SendWriteCommand:
             }
 
             # handle this message playload to publish to rabbit mq
-            await send_rabbitmq.send_command_rabbitmq(message, sap_id, queue_name=f'command_write_{sap_id}')
+            status, message = await send_rabbitmq.send_command_rabbitmq(message, queue_name=f'command_write_{sap_id}')
+            if status:
+                return True, message
+            else:
+                return False
         
         except Exception as e:
             print(f"Error in handle write command: {e}")

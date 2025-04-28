@@ -252,6 +252,112 @@ class DataFiltersCreate(pydantic.BaseModel):
     value: str
 
 
+class TasActionLogsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_action_logs'
+    
+    username: Mapped[str] = mapped_column("username", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    email: Mapped[typing.Optional[str]] = mapped_column("email", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    first_name: Mapped[typing.Optional[str]] = mapped_column("first_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    last_name: Mapped[typing.Optional[str]] = mapped_column("last_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    employee_id: Mapped[typing.Optional[str]] = mapped_column("employee_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    employee_number: Mapped[typing.Optional[str]] = mapped_column("employee_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[typing.List[str]] = mapped_column("location_name", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    system_role: Mapped[typing.List[str]] = mapped_column("system_role", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    novex_role: Mapped[typing.List[str]] = mapped_column("novex_role", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[typing.Optional[typing.List[str]]] = mapped_column("region", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.Optional[typing.List[str]]] = mapped_column("state", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[typing.List[str]]] = mapped_column("zone", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    sales_area: Mapped[typing.Optional[typing.List[str]]] = mapped_column("sales_area", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    description: Mapped[typing.Optional[str]] = mapped_column("description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    comments: Mapped[typing.Optional[str]] = mapped_column("comments", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    action: Mapped[typing.Optional[typing.Any]] = mapped_column("action", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    section: Mapped[typing.Optional[typing.Any]] = mapped_column("section", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+
+class TasActionLogsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_action_logs'
+    
+    username: str
+    email: typing.Optional[str] = pydantic.Field("", **{})
+    first_name: typing.Optional[str] = pydantic.Field("", **{})
+    last_name: typing.Optional[str] = pydantic.Field("", **{})
+    employee_id: typing.Optional[str] = pydantic.Field("", **{})
+    employee_number: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.List[hpcl_ceg_enum.BusinessUnit]
+    sap_id: typing.List[str]
+    location_name: typing.List[str]
+    system_role: typing.List[str]
+    novex_role: typing.List[str]
+    region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    state: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    description: typing.Optional[str] = pydantic.Field("", **{})
+    comments: typing.Optional[str] = pydantic.Field("", **{})
+    action: typing.Optional[hpcl_ceg_enum.TasLogAction] | None = None
+    section: typing.Optional[hpcl_ceg_enum.TasLogSection] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasActionLogsSchema
+        upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
+
+
+class TasActionLogs(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_action_logs'
+    
+    username: typing.Optional[str] | None = None
+    email: typing.Optional[str] = pydantic.Field("", **{})
+    first_name: typing.Optional[str] = pydantic.Field("", **{})
+    last_name: typing.Optional[str] = pydantic.Field("", **{})
+    employee_id: typing.Optional[str] = pydantic.Field("", **{})
+    employee_number: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[typing.List[hpcl_ceg_enum.BusinessUnit]] | None = None
+    sap_id: typing.Optional[typing.List[str]] | None = None
+    location_name: typing.Optional[typing.List[str]] | None = None
+    system_role: typing.Optional[typing.List[str]] | None = None
+    novex_role: typing.Optional[typing.List[str]] | None = None
+    region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    state: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    description: typing.Optional[str] = pydantic.Field("", **{})
+    comments: typing.Optional[str] = pydantic.Field("", **{})
+    action: typing.Optional[hpcl_ceg_enum.TasLogAction] | None = None
+    section: typing.Optional[hpcl_ceg_enum.TasLogSection] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasActionLogsSchema
+        upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
+
+
+class TasActionLogsGetResp(pydantic.BaseModel):
+    data: typing.List[TasActionLogs]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Tasactionlogs_Capture_LogsParams(pydantic.BaseModel):
+    sap_id: str
+    action: str
+    description: typing.Optional[str] = pydantic.Field("", **{})
+    comments: typing.Optional[str] = pydantic.Field("", **{})
+    section: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class LocationMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'location_master'
     
@@ -5969,6 +6075,7 @@ class VendorApiAuditSchema(UrdhvaPostgresBase):
     __tablename__ = 'vendor_api_audit'
     
     method: Mapped[str] = mapped_column("method", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    vendor: Mapped[str] = mapped_column("vendor", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     url: Mapped[str] = mapped_column("url", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     payload: Mapped[typing.Optional[dict]] = mapped_column("payload", JSONB, index=False, nullable=True, default=pydantic.Field(default_factory=dict), primary_key=False, unique=False)
     alert_id: Mapped[str] = mapped_column("alert_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
@@ -5986,6 +6093,7 @@ class VendorApiAuditCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'vendor_api_audit'
     
     method: str
+    vendor: str
     url: str
     payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
     alert_id: str
@@ -6008,6 +6116,7 @@ class VendorApiAudit(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'vendor_api_audit'
     
     method: typing.Optional[str] | None = None
+    vendor: typing.Optional[str] | None = None
     url: typing.Optional[str] | None = None
     payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
     alert_id: typing.Optional[str] | None = None
@@ -6176,3 +6285,86 @@ class DryOutRoLossGetResp(pydantic.BaseModel):
     data: typing.List[DryOutRoLoss]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class RoMasterDataSchema(UrdhvaPostgresBase):
+    __tablename__ = 'ro_master_data'
+    
+    interlock: Mapped[str] = mapped_column("interlock", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    threshold: Mapped[str] = mapped_column("threshold", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    threshold_value: Mapped[int] = mapped_column("threshold_value", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    monthly_quota: Mapped[str] = mapped_column("monthly_quota", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sales_officer_quota: Mapped[int] = mapped_column("sales_officer_quota", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sales_officer_instance: Mapped[int] = mapped_column("sales_officer_instance", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    regional_manager_quota: Mapped[int] = mapped_column("regional_manager_quota", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    regional_manager_instance: Mapped[int] = mapped_column("regional_manager_instance", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zonal_head_quota: Mapped[int] = mapped_column("zonal_head_quota", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zonal_head_instance: Mapped[int] = mapped_column("zonal_head_instance", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class RoMasterDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'ro_master_data'
+    
+    interlock: str
+    threshold: str
+    threshold_value: int
+    monthly_quota: str
+    sales_officer_quota: int
+    sales_officer_instance: int
+    regional_manager_quota: int
+    regional_manager_instance: int
+    zonal_head_quota: int
+    zonal_head_instance: int
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = RoMasterDataSchema
+        upsert_keys = []
+
+
+class RoMasterData(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'ro_master_data'
+    
+    interlock: typing.Optional[str] | None = None
+    threshold: typing.Optional[str] | None = None
+    threshold_value: typing.Optional[int] | None = None
+    monthly_quota: typing.Optional[str] | None = None
+    sales_officer_quota: typing.Optional[int] | None = None
+    sales_officer_instance: typing.Optional[int] | None = None
+    regional_manager_quota: typing.Optional[int] | None = None
+    regional_manager_instance: typing.Optional[int] | None = None
+    zonal_head_quota: typing.Optional[int] | None = None
+    zonal_head_instance: typing.Optional[int] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = RoMasterDataSchema
+        upsert_keys = []
+
+
+class RoMasterDataGetResp(pydantic.BaseModel):
+    data: typing.List[RoMasterData]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Romasterdata_Update_Ro_Master_DataParams(pydantic.BaseModel):
+    record_id: str
+    interlock: str
+    threshold: str
+    threshold_value: int
+    monthly_quota: str
+    sales_officer_quota: int
+    sales_officer_instance: int
+    regional_manager_quota: int
+    regional_manager_instance: int
+    zonal_head_quota: int
+    zonal_head_instance: int
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
