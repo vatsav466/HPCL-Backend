@@ -23,6 +23,7 @@ class TasEsdActivation:
 
     async def tas_esd_activation_check(self, params):
         try:
+            # Extract basic parameters
             bu = params.get("BU", "")
             sap_id = params.get("sap_id", "")
             sop_id = params.get("sop_id", "")
@@ -49,17 +50,13 @@ class TasEsdActivation:
             max_attempts = 6  # Total 30 seconds (6 attempts × 5 seconds)
             poll_interval = 5  # Check every 5 seconds
             
-            # Initial counts
-            maintenance_alert_count = fault_alert_count = rosov_pl_close_count = esd_close_status_count = 0
-            mov_pl_close_count = esd_mov_close_status_count = 0
-            esd_device_names = []
-            location_name = ""
-            
             # Determine which alert type we're dealing with based on interlock name
             is_rosov_alert = (interlock_name == ROSOV_INTERLOCK)
             is_dbbv_alert = (interlock_name == DBBV_INTERLOCK)
             
-            # Step 1: Determine which interlock we're processing and poll for required alerts
+            # Step 1: Poll for required alerts
+            esd_device_names = []
+            location_name = ""
             alerts_found = False
             attempt_count = 0
             
@@ -67,7 +64,6 @@ class TasEsdActivation:
             
             while not alerts_found and attempt_count < max_attempts:
                 if is_rosov_alert or is_dbbv_alert:
-                    # Processing a main interlock (ROSOV or DBBV)
                     # Query for related failure status
                     esd_close_data = await self._query_esd_alerts(
                         sap_id, 
@@ -83,14 +79,7 @@ class TasEsdActivation:
                             esd_device_name = alert.get('tas_device_name', '')
                             if esd_device_name:
                                 esd_device_names.append(esd_device_name)
-                                # # Update alert history for this device
-                                # await self._update_alert_history(
-                                #     bu=bu, 
-                                #     sap_id=sap_id, 
-                                #     device_name=esd_device_name,
-                                #     interlock_name=interlock_name,
-                                #     fail_status_interlock=fail_status_interlock
-                                # )
+                        
                         if esd_close_data:
                             location_name = esd_close_data[0].get("location_name", "")
                 
@@ -99,69 +88,142 @@ class TasEsdActivation:
                     logger.info(f"Attempt {attempt_count}/{max_attempts}: Waiting for alerts to arrive...")
                     await asyncio.sleep(poll_interval)
             
-            # Check maintenance alerts if no ESD device names found
-            if not esd_device_names:
-                maint_alerts = await self._query_maintenance_alerts(sap_id)
-                device_names = {a.get("tas_device_name") for a in maint_alerts.get("data", []) if a.get("tas_device_name")}
-                maintenance_alert_count = len(device_names)
-            else:
-                for device in esd_device_names:
-                    fault_alerts = await self._query_fault_alerts(sap_id)
-                    unique_devices = {a.get("tas_device_name") for a in fault_alerts.get("data", []) if a.get("tas_device_name")}
-                    fault_alert_count += len(unique_devices)
-
-            # Query for relevant alerts based on the interlock type
+            # Step 2: Get all the counts we need for decision making
+            # Check for maintenance alerts - get unique device names
+            maint_alerts = await self._query_maintenance_alerts(sap_id)
+            maintenance_devices = set()
+            for alert in maint_alerts.get("data", []):
+                device = alert.get("tas_device_name")
+                if device:
+                    maintenance_devices.add(device)
+            maintenance_alert_count = len(maintenance_devices)
+            logger.info(f"Unique maintenance devices: {maintenance_devices}, count: {maintenance_alert_count}")
+            
+            # Check for fault alerts - get unique device names
+            fault_alerts = await self._query_fault_alerts(sap_id)
+            fault_devices = set()
+            for alert in fault_alerts.get("data", []):
+                device = alert.get("tas_device_name")
+                if device:
+                    fault_devices.add(device)
+            fault_alert_count = len(fault_devices)
+            logger.info(f"Unique fault devices: {fault_devices}, count: {fault_alert_count}")
+            
+            # Get pipeline mode and close status counts for both types
+            rosov_pl_close_count = mov_pl_close_count = esd_close_status_count = esd_mov_close_status_count = 0
+            
+            # Get PL mode and close status counts for ROSOV
             if is_rosov_alert:
-                # Query for ROSOV-related alerts
                 esd_status_data = await self._query_esd_status_alerts(sap_id, ESD_ROSOV_CLOSE, time_window)
                 esd_close_status_count = len(esd_status_data.get("data", []))
                 
                 rosov_pl_data = await self._query_pl_mode_alerts(sap_id, ROSOV_PL_MODE, time_window)
                 rosov_pl_close_count = len(rosov_pl_data.get("data", []))
             
+            # Get PL mode and close status counts for DBBV/MOV
             if is_dbbv_alert:
-                # Query for DBBV/MOV-related alerts
                 esd_mov_status_data = await self._query_esd_status_alerts(sap_id, ESD_MOV_CLOSE, time_window)
                 esd_mov_close_status_count = len(esd_mov_status_data.get("data", []))
                 
                 mov_pl_data = await self._query_pl_mode_alerts(sap_id, MOV_PL_MODE, time_window)
                 mov_pl_close_count = len(mov_pl_data.get("data", []))
                     
-            # Architecture total tank count
+            # Get total tank count from architecture data
             total_tank_count = await self._get_total_tank_count(sap_id)
-
-            # Calculate totals based on which interlock we're dealing with
-            if is_rosov_alert and (maintenance_alert_count > 0 or fault_alert_count > 0):
-                # Decision branch for ROSOV alerts
-                if maintenance_alert_count > 0:
-                    total_count = maintenance_alert_count + rosov_pl_close_count + esd_close_status_count
-                    path = "maintenance"
-                else:
-                    total_count = fault_alert_count + rosov_pl_close_count + esd_close_status_count
-                    path = "fault"
-
-                logger.info(f"ROSOV Path: {path}, Total count: {total_count}, Tank count: {total_tank_count}")
-
-                if total_count == total_tank_count:
-                    return await self._create_rosov_alert(bu, sap_id, location_name, total_count)
             
-            if is_dbbv_alert and (maintenance_alert_count > 0 or fault_alert_count > 0):
-                # Decision branch for DBBV/MOV alerts
-                if maintenance_alert_count > 0:
-                    total_count = maintenance_alert_count + mov_pl_close_count + esd_mov_close_status_count
-                    path = "maintenance"
-                else:
-                    total_count = fault_alert_count + mov_pl_close_count + esd_mov_close_status_count
-                    path = "fault"
-
-                logger.info(f"DBBV Path: {path}, Total count: {total_count}, Tank count: {total_tank_count}")
-
-                if total_count == total_tank_count:
-                    return await self._create_dbbv_alert(bu, sap_id, location_name, total_count)
+            # Step 3: Implement the logic patterns for decision making
             
-            # 🔁 NEW: If no fault or maintenance, update alert history for collected ESD devices
-            if maintenance_alert_count == 0 and fault_alert_count == 0:
-                if is_rosov_alert and esd_device_names:
+            # Calculate totals for comparison with tank count - KEEPING MAINTENANCE AND FAULT SEPARATE
+            rosov_total_with_maintenance = maintenance_alert_count + rosov_pl_close_count + esd_close_status_count
+            rosov_total_with_fault = fault_alert_count + rosov_pl_close_count + esd_close_status_count
+            
+            dbbv_total_with_maintenance = maintenance_alert_count + mov_pl_close_count + esd_mov_close_status_count
+            dbbv_total_with_fault = fault_alert_count + mov_pl_close_count + esd_mov_close_status_count
+            
+            # Flag for PL mode, maintenance status, fault status
+            has_pl_mode = (rosov_pl_close_count > 0) if is_rosov_alert else (mov_pl_close_count > 0)
+            has_maintenance = maintenance_alert_count > 0
+            has_fault = fault_alert_count > 0
+            
+            logger.info(f"ROSOV counts - maintenance path: {rosov_total_with_maintenance}, fault path: {rosov_total_with_fault}")
+            logger.info(f"DBBV counts - maintenance path: {dbbv_total_with_maintenance}, fault path: {dbbv_total_with_fault}")
+            
+            # Determine if we should create a new alert
+            create_alert = False
+            using_path = ""
+            
+            if is_rosov_alert:
+                # Logic Pattern 1: PL Mode + Maintenance + Counts Match
+                if has_pl_mode and has_maintenance and rosov_total_with_maintenance == total_tank_count:
+                    create_alert = True
+                    using_path = "maintenance"
+                    logger.info("Pattern 1A: ROSOV - PL Mode + Maintenance + Counts Match")
+                
+                # Logic Pattern 1: PL Mode + Fault + Counts Match
+                elif has_pl_mode and has_fault and rosov_total_with_fault == total_tank_count:
+                    create_alert = True
+                    using_path = "fault"
+                    logger.info("Pattern 1B: ROSOV - PL Mode + Fault + Counts Match")
+                
+                # Logic Pattern 2: PL Mode + NO Maintenance + NO Fault + Counts Match
+                elif has_pl_mode and not has_maintenance and not has_fault and (rosov_pl_close_count + esd_close_status_count) == total_tank_count:
+                    create_alert = True
+                    using_path = "clean"
+                    logger.info("Pattern 2: ROSOV - PL Mode + NO Maintenance/Fault + Counts Match")
+                
+                # Logic Pattern 3: NO PL Mode + Maintenance + Counts Match
+                elif not has_pl_mode and has_maintenance and rosov_total_with_maintenance == total_tank_count:
+                    create_alert = True
+                    using_path = "maintenance_no_pl"
+                    logger.info("Pattern 3A: ROSOV - NO PL Mode + Maintenance + Counts Match")
+                
+                # Logic Pattern 3: NO PL Mode + Fault + Counts Match
+                elif not has_pl_mode and has_fault and rosov_total_with_fault == total_tank_count:
+                    create_alert = True
+                    using_path = "fault_no_pl"
+                    logger.info("Pattern 3B: ROSOV - NO PL Mode + Fault + Counts Match")
+                
+                if create_alert:
+                    return await self._create_rosov_alert(bu, sap_id, location_name, max(rosov_total_with_maintenance, rosov_total_with_fault))
+            
+            elif is_dbbv_alert:
+                # Logic Pattern 1: PL Mode + Maintenance + Counts Match
+                if has_pl_mode and has_maintenance and dbbv_total_with_maintenance == total_tank_count:
+                    create_alert = True
+                    using_path = "maintenance"
+                    logger.info("Pattern 1A: DBBV - PL Mode + Maintenance + Counts Match")
+                
+                # Logic Pattern 1: PL Mode + Fault + Counts Match
+                elif has_pl_mode and has_fault and dbbv_total_with_fault == total_tank_count:
+                    create_alert = True
+                    using_path = "fault"
+                    logger.info("Pattern 1B: DBBV - PL Mode + Fault + Counts Match")
+                
+                # Logic Pattern 2: PL Mode + NO Maintenance + NO Fault + Counts Match
+                elif has_pl_mode and not has_maintenance and not has_fault and (mov_pl_close_count + esd_mov_close_status_count) == total_tank_count:
+                    create_alert = True
+                    using_path = "clean"
+                    logger.info("Pattern 2: DBBV - PL Mode + NO Maintenance/Fault + Counts Match")
+                
+                # Logic Pattern 3: NO PL Mode + Maintenance + Counts Match
+                elif not has_pl_mode and has_maintenance and dbbv_total_with_maintenance == total_tank_count:
+                    create_alert = True
+                    using_path = "maintenance_no_pl"
+                    logger.info("Pattern 3A: DBBV - NO PL Mode + Maintenance + Counts Match")
+                
+                # Logic Pattern 3: NO PL Mode + Fault + Counts Match
+                elif not has_pl_mode and has_fault and dbbv_total_with_fault == total_tank_count:
+                    create_alert = True
+                    using_path = "fault_no_pl"
+                    logger.info("Pattern 3B: DBBV - NO PL Mode + Fault + Counts Match")
+                
+                if create_alert:
+                    return await self._create_dbbv_alert(bu, sap_id, location_name, max(dbbv_total_with_maintenance, dbbv_total_with_fault))
+            
+            # Otherwise (no conditions met): Update alert history
+            logger.info("No pattern matched: Updating alert history")
+            if esd_device_names:
+                if is_rosov_alert:
                     for dev_name in esd_device_names:
                         await self._update_alert_history(
                             bu=bu,
@@ -170,7 +232,7 @@ class TasEsdActivation:
                             interlock_name=ROSOV_INTERLOCK,
                             fail_status_interlock=ESD_ROSOV_FAIL
                         )
-                elif is_dbbv_alert and esd_device_names:
+                elif is_dbbv_alert:
                     for dev_name in esd_device_names:
                         await self._update_alert_history(
                             bu=bu,
@@ -179,14 +241,27 @@ class TasEsdActivation:
                             interlock_name=DBBV_INTERLOCK,
                             fail_status_interlock=ESD_MOV_FAIL
                         )
-                        
-            return True, {"status": "counts don't match", "rosov_total": (maintenance_alert_count + rosov_pl_close_count + esd_close_status_count), "dbbv_total": (maintenance_alert_count + mov_pl_close_count + esd_mov_close_status_count), "tank_count": total_tank_count}
+        
+            return True, {
+                "status": "counts don't match", 
+                "path_used": using_path,
+                "rosov_total_maintenance": rosov_total_with_maintenance,
+                "rosov_total_fault": rosov_total_with_fault,
+                "dbbv_total_maintenance": dbbv_total_with_maintenance,
+                "dbbv_total_fault": dbbv_total_with_fault,
+                "tank_count": total_tank_count,
+                "has_pl_mode": has_pl_mode,
+                "has_maintenance": has_maintenance,
+                "has_fault": has_fault,
+                "maintenance_devices": len(maintenance_devices),
+                "fault_devices": len(fault_devices)
+            }
         
         except Exception as e:
             logger.info(traceback.format_exc())
             logger.error(traceback.format_exc())
             return False, {"status": str(e)}
-    
+            
     async def _query_esd_alerts(self, sap_id, interlock_name, time_window):
         """Query for ESD alerts based on interlock name"""
         esd_query = (
@@ -293,7 +368,7 @@ class TasEsdActivation:
             "return_data": True
         }
         status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data)
-        logger.info("created_alert ROSOV ---> ", created_alert)
+        logger.info(f"created_alert ROSOV ---> {created_alert}")
         if created_alert and isinstance(created_alert, dict):
             alert_data["unique_id"] = created_alert.get("unique_id")
             alert_data["id"] = created_alert.get("id")
@@ -325,7 +400,7 @@ class TasEsdActivation:
             "return_data": True
         }
         status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data)
-        logger.info("created_alert DBBV ---> ", created_alert)
+        logger.info(f"created_alert DBBV ---> {created_alert}")
         if created_alert and isinstance(created_alert, dict):
             alert_data["unique_id"] = created_alert.get("unique_id")
             alert_data["id"] = created_alert.get("id")
@@ -383,7 +458,7 @@ class TasEsdActivation:
                         "action_type": "ESDFailure"
                     }
                     updated_history = existing_history + [new_entry]
-                    print(f"[UpdateHistory] Updating alert ID {alert_id} with history: {new_entry}")
+                    logger.info(f"[UpdateHistory] Updating alert ID {alert_id} with history: {new_entry}")
                     
                     alert_obj = hpcl_ceg_model.Alerts(id=alert_id, alert_history=updated_history)
                     await alert_obj.modify()
@@ -393,8 +468,4 @@ class TasEsdActivation:
             logger.info(traceback.format_exc())
             logger.error(f"Error in _update_alert_history: {str(e)}")
             return False
-
-        except Exception as e:
-            logger.info(traceback.format_exc())
-            logger.error(f"Error updating fault history: {str(e)}")
-            return False
+            
