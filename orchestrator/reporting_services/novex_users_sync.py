@@ -195,10 +195,15 @@ async def insert_ro_dealer(cursor):
             data["system_role"] = "RO Dealer"
             data["manual_user"] = False
             data["bu"] = 'RO'
-            for col in ["zone", "region", "sap_id", "bu", "sales_area"]:
+            data['zone'] = data['zone'].map(reporting_config.zone_map)
+            for col in ["zone", "region", "state", "sap_id", "bu", "sales_area", "novex_role", "system_role"]:
                 if col in data.columns:
                     data[col] = data[col].fillna("").astype(str)
-                    data[col] = '["' + data[col] + '"]'
+                    data[col] = '["' + data[col] + '"]'            
+            for col in ["status", "is_ad_user"]:
+                data[col] = True
+            for col in data.columns:
+                data[col] = data[col].fillna("")
             await insert_users(data.to_dict(orient="records"))
 
 
