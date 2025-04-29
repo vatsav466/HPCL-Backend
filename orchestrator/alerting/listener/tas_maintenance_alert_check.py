@@ -95,74 +95,62 @@ async def close_tas_workflow(alert_data, message_type='Message'):
     await close_alert(alert_data=alert_data)
 
 async def create_under_maintenance_alert(alert_data):
-    logger.info("*"*100)
-    logger.info(f"Under maintenance alert - creating alert for {alert_data['interlock_name']}")
-    logger.info("*"*100)
-    logger.info(f"Under maintenance alert - creating alert for {alert_data['tas_device_name']}")
-    logger.info("*"*100)
     if alert_data['interlock_name'] == 'Tank_Under Maintenance':
-        logger.info("*"*100)
-        logger.info(f"maintenance alert - creating alert for {alert_data['tas_device_name']}")
-        logger.info("*"*100)
-        time.sleep(5)
+        logger.info("*" * 100)
+        logger.info(f"Processing Tank_Under Maintenance alert for: {alert_data['tas_device_name']}")
+        logger.info("*" * 100)
+
+        await asyncio.sleep(5)
+
         maintenance_query = (
-                f"""bu = 'TAS' and """
-                f"""sap_id = '{alert_data.get('sap_id', '')}' and """
-                f"""alert_section = 'TAS' and """
-                f"""device_id = '{alert_data.get('device_id', '')}' and """
-                f"""created_at >= NOW() - INTERVAL '5 minutes' and """
-                # f"""tas_device_name = '{alert_data.get('tas_device_name')}' and """
-                # f"""device_type = '{alert_data.get('device_type', '')}' and """
-                # f"""interlock_name = 'Tank_Under Maintenance' and """
-                f"""alert_status != 'Close'"""
-            )
+            f"""bu = 'TAS' and """
+            f"""sap_id = '{alert_data.get('sap_id', '')}' and """
+            f"""alert_section = 'TAS' and """
+            f"""device_id = '{alert_data.get('device_id', '')}' and """
+            f"""created_at >= NOW() - INTERVAL '5 minutes' and """
+            f"""alert_status != 'Close'"""
+        )
+
         maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
-        logger.info("*"*100)
         logger.info(f"maintenance_query --> {json.dumps(maintenance_params, default=str)}")
-        logger.info("*"*100)
 
         maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
-        logger.info("*"*100)
         logger.info(f"maintenance_resp --> {json.dumps(maintenance_resp, default=str)}")
-        logger.info("*"*100)
 
-        if maintenance_resp["data"]:
-            logger.info("*"*100)
-            logger.info(f"Under maintenance alert - creating alert for {maintenance_resp["data"]}")
-            logger.info("*"*100)
+        if maintenance_resp.get("data"):
             for data in maintenance_resp["data"]:
-                logger.info("*"*100)
-                logger.info(f"Under maintenance alert - creating alert for {json.dumps(data, default=str)}")
-                logger.info("*"*100)
-                logger.info(f"into close_tas_workflow ----> {json.dumps(data, default=str)}")
-                logger.info("*"*100)
-                await close_tas_workflow(data)
-            
-        await create_alert(alert_data=alert_data)
-        return
-    
-    if alert_data['interlock_name'] != 'Tank_Under Maintenance':
-        logger.info("*"*100)
-        logger.info(f"not tank maintenance alert - creating alert for {alert_data['interlock_name']}")
-        logger.info("*"*100)
-        maintenance_query = (
-                f"""bu = 'TAS' and """
-                f"""sap_id = '{alert_data.get('sap_id', '')}' and """
-                f"""alert_section = 'TAS' and """
-                f"""device_id = '{alert_data.get('device_id', '')}' and """
-                # f"""tas_device_name = '{alert_data.get('tas_device_name')}' and """
-                # f"""device_type = '{alert_data.get('device_type', '')}' and """
-                f"""interlock_name = 'Tank_Under Maintenance' and """
-                f"""alert_status != 'Close'"""
-            )
-        maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
-        maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
-        if maintenance_resp['data']:
-            logger.info("*"*100)
-            logger.info(f"not tank Under maintenance alert - creating alert for {maintenance_resp['data']}")
-            logger.info("*"*100)
-            logger.info(f"Tank Under Maintenance {json.dumps(alertdata, default=str)}")
-            logger.info("*"*100)
+                logger.info(f"Closing existing alert: {json.dumps(data, default=str)}")
+                await close_tas_workflow(data, message_type='Message')
         else:
             await create_alert(alert_data=alert_data)
+
         return
+
+    
+    if alert_data['interlock_name'] != 'Tank_Under Maintenance':
+        logger.info("*" * 100)
+        logger.info(f"Checking for existing 'Tank_Under Maintenance' alert for device_id: {alert_data.get('device_id', '')}")
+        logger.info("*" * 100)
+
+        maintenance_query = (
+            f"bu = 'TAS' AND "
+            f"sap_id = '{alert_data.get('sap_id', '')}' AND "
+            f"alert_section = 'TAS' AND "
+            f"device_id = '{alert_data.get('device_id', '')}' AND "
+            f"interlock_name = 'Tank_Under Maintenance' AND "
+            f"alert_status != 'Close'"
+        )
+        logger.info(f"Maintenance query: {maintenance_query}")
+
+        maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
+        maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
+
+        logger.info(f"Maintenance response: {maintenance_resp}")
+
+        if maintenance_resp and maintenance_resp.get("data"):
+            logger.info("*" * 100)
+            logger.info(f"Not creating alert; existing Tank Under Maintenance alert found: {maintenance_resp['data']}")
+            logger.info("*" * 100)
+        else:
+            await create_alert(alert_data=alert_data)
+
