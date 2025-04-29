@@ -123,9 +123,7 @@ async def create_under_maintenance_alert(alert_data):
             for data in maintenance_resp["data"]:
                 logger.info(f"Closing existing alert: {json.dumps(data, default=str)}")
                 await close_tas_workflow(data, message_type='Message')
-        else:
-            await create_alert(alert_data=alert_data)
-
+        await create_alert(alert_data=alert_data)
         return
 
     
