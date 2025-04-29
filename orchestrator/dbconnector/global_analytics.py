@@ -3411,6 +3411,11 @@ class GlobalAnalytics:
             if cross_filters:
                 conditions = []
                 for rec in cross_filters:
+                    if "DATE" in rec.key:
+                        start = rec.value.split(",")[0]
+                        end = (datetime.strptime(rec.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
+                        conditions.append(f"BETWEEN '{start}' AND '{end}' ")
+                        continue
                     rec.value = rec.value.split(",")
                     # Now handle other cases
                     if isinstance(rec.value, str):
