@@ -3408,6 +3408,24 @@ class GlobalAnalytics:
             function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             card_query = lpg_plant_queries.lpg_plant_query.get(drill_state.split(",")[0])
             
+            if cross_filters:
+                conditions = []
+                for rec in cross_filters:
+                    rec.value = rec.value.split(",")
+                    # Now handle other cases
+                    if isinstance(rec.value, str):
+                        condition = f"{rec.key} = '{rec.value}'"
+                    else:
+                        if len(rec.value) == 1:
+                            condition = f"{rec.key} = '{rec.value[0]}'"
+                        else:
+                            condition = f"{rec.key} in {tuple(rec.value)}"
+                    conditions.append(condition)
+                if conditions:
+                    if not "where" in card_query.lower():
+                        card_query  += ' WHERE '
+                    card_query  += ' AND '.join(conditions)
+            
             today = datetime.now()
             current_month = datetime.now().strftime("%B") # format : January, February
             if today.month < 4:
