@@ -22,6 +22,7 @@ from pydantic.fields import Field
 from urllib.parse import urlparse
 from slowapi.extension import Limiter
 from cryptography.fernet import Fernet
+import urdhva_base.ttl_cache as ttl_cache
 from slowapi.util import get_remote_address
 from starlette.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
@@ -139,6 +140,29 @@ async def has_permission(method: str, path: str):
     return True if resource in permissions and operation in permissions[resource] else False
 
 
+async def get_vendor_authorization_details():
+    """Cache data loader"""
+    redis_ins = await urdhva_base.redispool.get_redis_connection()
+    vendor_details = {}
+    resp = await redis_ins.hgetall("vendor_auth")
+    for key, info in resp.items():
+        if isinstance(key, bytes):
+            key = key.decode()
+        if isinstance(info, bytes):
+            info = info.decode()
+        if key.endswith('_access_key'):
+            vendor = key.split("_access_key")[0]
+            if vendor not in vendor_details:
+                vendor_details[vendor] = {}
+            vendor_details[vendor]['access_key'] = info
+        elif key.endswith('_allowed_apis'):
+            vendor = key.split("_allowed_apis")[0]
+            if vendor not in vendor_details:
+                vendor_details[vendor] = {}
+            vendor_details[vendor]['allowed_apis'] = json.loads(info)
+    return vendor_details
+
+
 async def validate_header_based_authentication(request: fastapi.Request):
     """
         Validates the authentication of an incoming HTTP request based on headers.
@@ -164,18 +188,28 @@ async def validate_header_based_authentication(request: fastapi.Request):
     access_key = headers.get("ceg-auth-token")
     if access_key:
         vendor = headers.get("vendor")
-        redis_ins = await urdhva_base.redispool.get_redis_connection()
-        # Validate Access key
-        if await redis_ins.hexists("vendor_auth", f"{vendor}_access_key"):
-            db_access_key = await redis_ins.hget("vendor_auth", f"{vendor}_access_key")
-            if db_access_key and isinstance(db_access_key, bytes):
-                db_access_key = db_access_key.decode()
-            if db_access_key == access_key:
-                allowed_apis = json.loads(await redis_ins.hget("vendor_auth", f"{vendor}_allowed_apis"))
-                if allowed_apis and request.url.path not in allowed_apis:
-                    return False, fastapi.responses.JSONResponse("Invalid permissions", 403)
-                return True, None
-            return False, fastapi.responses.JSONResponse("Invalid token", 403)
+        if vendor:
+            ins = ttl_cache.CacheDataInstance.get_instance("vendor_auth", get_vendor_authorization_details)
+            cache_data = await ins.get(vendor)
+            vendor_data = cache_data.get(vendor) if cache_data else {}
+            if not vendor_data or access_key != vendor_data.get('access_key'):
+                return False, fastapi.responses.JSONResponse("Invalid Authentication Credentials", 401)
+            if vendor_data.get('allowed_apis') and request.url.path not in vendor_data.get('allowed_apis'):
+                return False, fastapi.responses.JSONResponse("Permission Denied", 403)
+            return True, None
+            #
+            # redis_ins = await urdhva_base.redispool.get_redis_connection()
+            # # Validate Access key
+            # if await redis_ins.hexists("vendor_auth", f"{vendor}_access_key"):
+            #     db_access_key = await redis_ins.hget("vendor_auth", f"{vendor}_access_key")
+            #     if db_access_key and isinstance(db_access_key, bytes):
+            #         db_access_key = db_access_key.decode()
+            #     if db_access_key == access_key:
+            #         allowed_apis = json.loads(await redis_ins.hget("vendor_auth", f"{vendor}_allowed_apis"))
+            #         if allowed_apis and request.url.path not in allowed_apis:
+            #             return False, fastapi.responses.JSONResponse("Invalid permissions", 403)
+            #         return True, None
+            #     return False, fastapi.responses.JSONResponse("Invalid token", 403)
     return False, None
 
 
