@@ -213,7 +213,7 @@ async def sync_users():
             query += f" AND {roles_condition}"
         additional_data = await get_additional_data(bu, cursor)
         data = await fetch_data(cursor, query)
-        if additional_data:
+        if not additional_data.empty:
             data = pd.concat([data, additional_data])
         print("Length of Data Before Merge:", len(data))
         data = pd.merge(data, role_master[['novex_role', 'tibco_role']], left_on='ROLE_NAME', right_on='tibco_role', how='left')
@@ -223,7 +223,7 @@ async def sync_users():
         data = await process_data(data, bu)
         await clear_existing_user(bu)
         await insert_users(data.to_dict(orient="records"))
-    # await insert_ro_dealer(cursor)
+    await insert_ro_dealer(cursor)
 
 
 if __name__ == "__main__":
