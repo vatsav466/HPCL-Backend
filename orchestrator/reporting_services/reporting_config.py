@@ -34,6 +34,15 @@ lpg_query = """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLO
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
                 WHERE ZR.LOCATION like '2%' """
 
+
+additional_lpg_query = ["""SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL, 
+                            ZE.EMP_BU_CODE,ZE.PLANT_CODE,ZE.PLANT_DESC,ZE.SALES_GRP, ZSA.SALES_GROUP_DESC,ZR.ROLE_NAME as ROLE_NAME, ZR.LOCATION as LOCATION, EPL.ZZONE as Zone,
+                            EPL.ZLOC_TYPE
+                        FROM ZGRCCV_ROLE_STG ZR left JOIN ZHRCV_EMP_NONHCM_STG ZE on ZR.USER_NAME = ZE.EMPLOYEE_NUMBER 
+                            LEFT JOIN ZMMCV_PLANT_STG EPL on ZE.PLANT_CODE = EPL.PLANT
+                            LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
+                        WHERE ZR.LOCATION like '2%' and ZR.ROLE_NAME IN ("IL_DGM_LPGOPNNFP", "IL_CHMNGR_LPGHSEZONE")"""]
+
 # Add required roles in novex_role_master.csv
 tas_query = f""" SELECT ZE.EMPLOYEE_NUMBER as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL, 
                     ZE.EMP_BU_CODE,ZE.PLANT_CODE,ZE.PLANT_DESC, ZR.ROLE_NAME as ROLE_NAME, ZR.LOCATION as LOCATION, EPL.ZZONE as zone
@@ -72,7 +81,7 @@ location_master_schema = {
 
 _rename = {"PLANT": "sap_id", "PLANT_DESC": "name", "ZZONE": "zone", "STATE_NAME": "state", 
            "SALES_OFFICE_DESC": "region", "SALES_GROUP_DESC": "sales_area", "CITY1": "city", 
-           "POST_CODE1": "pincode", "STREET": "land_mark", "STR_SUPPL1": "location"}
+           "POST_CODE1": "pincode", "STREET": "land_mark", "STR_SUPPL1": "location", "dealer_email": "email"}
 
 location_configs = [
     {
@@ -127,7 +136,7 @@ location_configs = [
                     zso.SALES_OFFICE_DESC, zso.SALES_GROUP_DESC, plt.ZZONE, zcs.CITY AS CITY1, zcs.POSTAL_CODE AS POST_CODE1, zcs.ADDRESS1, zcs.ADDRESS2, zcs.ADDRESS3, zcs.ADDRESS4,
                     zcs.ADDRESS5, plt.PLANT_DESC AS terminal_plant_name, plt.STATE_NAME, zcs.first_telephone_number AS dealer_phone,
                     zcs.second_tel_no, zcs.email_id AS dealer_email, zca.inactive, zcs.OUTLET_TYPE, zcs.gstin, zcs.mrn, zcs.OUTLET_TYPE, zcs.gstin,
-                    zcs.mrn, zcs.permanent_Account_number
+                    zcs.mrn, zcs.permanent_Account_number, zca.sales_grp
                 FROM ZSDCV_CUST_SA_STG zca 
                     INNER join ZSDCV_CUSTOMER_STG zcs on zcs.customer_number = zca.customer 
                     INNER join ZSDCV_SO_PARAM_STG zso on zso.sales_district = zca.sales_district AND
