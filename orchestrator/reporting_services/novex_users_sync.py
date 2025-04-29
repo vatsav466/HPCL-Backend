@@ -170,21 +170,21 @@ async def get_additional_data(bu, cursor):
     if queries:
         for query in queries:
             additional_data = pd.concat([additional_data, await fetch_data(cursor, query)])
-    additional_data.loc[
-        (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
-        (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
-        "novex_role"
-    ] = "HQ Operations LPG"
-    additional_data.loc[
-        (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
-        (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
-        "novex_role"
-    ] = "Zonal Operations LPG"
-    additional_data.loc[
-        (additional_data["ROLE_NAME"].fillna("") == "IL_CHMNGR_LPGHSEZONE"),
-        "novex_role"
-    ] = "Zonal HSE LPG"
-    additional_data = additional_data[additional_data["ZLOC_TYPE"].fillna("") != ""]
+        additional_data.loc[
+            (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
+            (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
+            "novex_role"
+        ] = "HQ Operations LPG"
+        additional_data.loc[
+            (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
+            (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
+            "novex_role"
+        ] = "Zonal Operations LPG"
+        additional_data.loc[
+            (additional_data["ROLE_NAME"].fillna("") == "IL_CHMNGR_LPGHSEZONE"),
+            "novex_role"
+        ] = "Zonal HSE LPG"
+        additional_data = additional_data[additional_data["ZLOC_TYPE"].fillna("") != ""]
     return additional_data
 
 
