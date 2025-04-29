@@ -3424,6 +3424,8 @@ class GlobalAnalytics:
                 if conditions:
                     if not "where" in card_query.lower():
                         card_query  += ' WHERE '
+                    else:
+                        card_query += ' AND '
                     card_query  += ' AND '.join(conditions)
             
             today = datetime.now()
