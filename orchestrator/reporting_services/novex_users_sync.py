@@ -195,7 +195,7 @@ async def insert_ro_dealer(cursor):
             data["system_role"] = "RO Dealer"
             data["manual_user"] = False
             data["bu"] = 'RO'
-            for col in ["zone", "region", "sap_id", "bu", "sales_area"]:
+            for col in ["zone", "region", "state", "sap_id", "bu", "sales_area", "novex_role", "system_role"]:
                 if col in data.columns:
                     data[col] = data[col].fillna("").astype(str)
                     data[col] = '["' + data[col] + '"]'
