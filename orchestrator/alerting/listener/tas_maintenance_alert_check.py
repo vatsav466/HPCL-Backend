@@ -94,15 +94,13 @@ async def close_tas_workflow(alert_data, message_type='Message'):
 
     for attempt in range(1, max_retries + 1):
         try:
-            async with httpx.AsyncClient(verify=False) as client:
-                r = await client.post(url, headers={'Content-Type': 'application/json'}, json=data)
-
+            r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
             if r.status_code // 100 == 2:
                 logger.info("Message sent to camunda")
                 break
             else:
-                logger.warning(f"Attempt {attempt}: Error sending message to camunda: "
-                            f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
+                logger.error(f"Attempt {attempt}: Error sending message to camunda: "
+                    f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
         except Exception as e:
             logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} "
                         f"for alert_id {alert_data['id']}, business_key {alert_data['unique_id']}")

@@ -73,7 +73,6 @@ class TASAlertManager(alert_factory.AlertFactory):
                 alert_section="TAS", 
                 location_data=loc_dt
             )
-
             return await cls.create_alert(alert_data, camunda_url)
 
         except Exception as e:
@@ -147,6 +146,8 @@ class TASAlertManager(alert_factory.AlertFactory):
                             "closed": {"value": True, "type": "Boolean"}
                         }
                     }
+                    # await redis_ins.hdel("alert_camunda_url", str(alert['id']))
+
                     url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'], alert_section="TAS", location_data=loc_dt)
                     url += "/engine-rest/message"
                     print("Camunda URL:", url)
@@ -158,7 +159,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                     for attempt in range(1, max_retries + 1):
                         await asyncio.sleep(5)  # wait before the first send
                         try:
-                            r = await httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
+                            r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
                             if r.status_code // 100 == 2:
                                 print("Message sent to camunda")
                                 break
