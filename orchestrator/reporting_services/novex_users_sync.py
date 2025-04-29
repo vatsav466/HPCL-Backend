@@ -137,7 +137,7 @@ async def process_data(data, bu):
     data['zone'] = data['zone'].map(reporting_config.zone_map)
     data['last_name'] = data['first_name'].fillna("").apply(lambda x: x.split(" ")[-1] if " " in x else "")
     data['first_name'] = data['first_name'].fillna("").apply(lambda x: x.rstrip(x.split(" ")[-1]) if " " in x else x)
-    for col in ["zone", "region", "sap_id", "bu", "sales_area"]:
+    for col in ["zone", "region", "state", "sap_id", "bu", "sales_area"]:
         if col in data.columns:
             data[col] = data[col].fillna("").astype(str)
             data[col] = '["' + data[col] + '"]'
