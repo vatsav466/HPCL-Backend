@@ -83,7 +83,7 @@ async def close_tas_workflow(alert_data, message_type='Message'):
                                         alert_section="TAS")
     url += "/engine-rest/message"
     try:
-        time.sleep(30)
+        time.sleep(5)
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
         if int(r.status_code / 100) != 2:
             logger.info(f"Error while sending message to camunda: {r.status_code} - {r.text}")
@@ -101,6 +101,7 @@ async def create_under_maintenance_alert(alert_data):
         logger.info("*" * 100)
 
         await asyncio.sleep(5)
+        logger.info("Checking for existing maintenance alerts after 5 seconds...")
 
         maintenance_query = (
             f"""bu = 'TAS' and """
