@@ -1115,7 +1115,7 @@ LIMIT 10000;''',
                                                     FROM 
                                                         lpg_operations_summary
                                                     WHERE 
-                                                        DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE);   
+                                                        DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE) 
                                                 ''',
                                                 
     'lpg_operations_current_month_productivity': f'''
