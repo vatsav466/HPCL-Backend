@@ -342,27 +342,27 @@ async def get_vts_instance(tt_number: str):
         instance['severity'] = vts_map["main_supply_removal_count"]["severity"]
         violation_name = "main_supply_removal_count"
 
-    elif "route_deviation_count" in violation_counts.keys() and violation_counts['route_deviation_count'] >= 5:
+    elif "route_deviation_count" in violation_counts.keys() and violation_counts['route_deviation_count'] > 5:
         instance = vts_map["route_deviation_count"]['alerting_rules'][await get_instance(tt_number)]
         instance['severity'] = vts_map["route_deviation_count"]["severity"]
         violation_name = "route_deviation_count"
 
-    elif "stoppage_violations_count" in violation_counts.keys() and violation_counts['stoppage_violations_count'] >= 5:
+    elif "stoppage_violations_count" in violation_counts.keys() and violation_counts['stoppage_violations_count'] > 5:
         instance = vts_map["stoppage_violations_count"]['alerting_rules'][await get_instance(tt_number)]
         instance['severity'] = vts_map["stoppage_violations_count"]["severity"]
         violation_name = "stoppage_violations_count"
 
-    elif "speed_violation_count" in violation_counts.keys() and violation_counts['speed_violation_count'] >= 3:
+    elif "speed_violation_count" in violation_counts.keys() and violation_counts['speed_violation_count'] > 3:
         instance = vts_map["speed_violation_count"]['alerting_rules'][await get_instance(tt_number)]
         instance['severity'] = vts_map["speed_violation_count"]["severity"]
         violation_name = "speed_violation_count"
 
-    elif "night_driving_count" in violation_counts.keys() and violation_counts['night_driving_count'] >= 3:
+    elif "night_driving_count" in violation_counts.keys() and violation_counts['night_driving_count'] > 3:
         instance = vts_map["night_driving_count"]['alerting_rules'][await get_instance(tt_number)]
         instance['severity'] = vts_map["night_driving_count"]["severity"]
         violation_name = "night_driving_count"
 
-    elif "continuous_driving_count" in violation_counts.keys() and violation_counts['continuous_driving_count'] >= 3:
+    elif "continuous_driving_count" in violation_counts.keys() and violation_counts['continuous_driving_count'] > 3:
         instance = vts_map["continuous_driving_count"]['alerting_rules'][await get_instance(tt_number)]
         instance['severity'] = vts_map["continuous_driving_count"]["severity"]
         violation_name = "continuous_driving_count"
