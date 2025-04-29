@@ -170,6 +170,21 @@ async def get_additional_data(bu, cursor):
     if queries:
         for query in queries:
             additional_data = pd.concat([additional_data, await fetch_data(cursor, query)])
+    additional_data.loc[
+        (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
+        (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
+        "novex_role"
+    ] = "HQ Operations LPG"
+    additional_data.loc[
+        (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
+        (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
+        "novex_role"
+    ] = "Zonal Operations LPG"
+    additional_data.loc[
+        (additional_data["ROLE_NAME"].fillna("") == "IL_CHMNGR_LPGHSEZONE"),
+        "novex_role"
+    ] = "Zonal HSE LPG"
+    
     return additional_data
 
 
@@ -220,14 +235,15 @@ async def sync_users():
         roles = role_master['tibco_role'].unique().tolist()
         if roles:
             roles_condition = "ZR.ROLE_NAME IN ({})".format(', '.join([f"'{role}'" for role in roles]))
-            query += f" AND {roles_condition}"
-        additional_data = await get_additional_data(bu, cursor)
-        data = await fetch_data(cursor, query)
-        if not additional_data.empty:
-            data = pd.concat([data, additional_data])
+            query += f" AND {roles_condition}"        
+        data = await fetch_data(cursor, query)        
         print("Length of Data Before Merge:", len(data))
         data = pd.merge(data, role_master[['novex_role', 'tibco_role']], left_on='ROLE_NAME', right_on='tibco_role', how='left')
         print("Length of Data After Merge:", len(data))
+        # Addtion additional conditional Users
+        additional_data = await get_additional_data(bu, cursor)
+        if not additional_data.empty:
+            data = pd.concat([data, additional_data])
         data = await combine_roles(data, _id="EMPLOYEE_NUMBER", role_name=["ROLE_NAME", "novex_role"])
         data["bu"] = bu.upper()
         data = await process_data(data, bu)
