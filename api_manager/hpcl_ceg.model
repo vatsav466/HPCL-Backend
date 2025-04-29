@@ -690,6 +690,8 @@ Model Alerts {
     dealer_id optional str
     workflow_instance_id optional str
     workflow_datetime optional datetime
+    workflow_url optional str
+    workflow_port optional str
     terminal_plant_id optional str
     terminal_plant_name optional str
     // For Indent Rerouting

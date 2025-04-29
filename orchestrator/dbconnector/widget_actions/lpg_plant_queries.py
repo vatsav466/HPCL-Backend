@@ -1112,8 +1112,10 @@ LIMIT 10000;''',
                                                             (SUM(bottling_14_2kg) * 14.2 + SUM(bottling_19kg) * 19)::NUMERIC / 1000, 
                                                             0
                                                         ) AS current_month_production
-                                                    FROM lpg_operations_summary
-                                                    WHERE DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE);   
+                                                    FROM 
+                                                        lpg_operations_summary
+                                                    WHERE 
+                                                        DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE) 
                                                 ''',
                                                 
     'lpg_operations_current_month_productivity': f'''
@@ -1122,7 +1124,7 @@ LIMIT 10000;''',
                                                     FROM
                                                         "lpg_operations_summary"
                                                     WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);    
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE)  
                                                 ''',
     
     'lpg_operations_notconnected_plants': ''' SELECT DISTINCT m."short_name"
@@ -1383,28 +1385,28 @@ ORDER BY
                                                         FROM
                                                             "lpg_cs_rejections"
                                                         WHERE
-                                                            DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
+                                                            DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
 
     'lpg_operations_current_month_cs_rejection': ''' SELECT
                                                         ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "cs_rejection"
                                                     FROM
                                                         "lpg_cs_rejections"
                                                     WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
 
     'lpg_operations_current_month_gd_rejection': ''' SELECT
                                                         ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "gd_rejection"
                                                     FROM
                                                         "lpg_gd_rejections"
                                                     WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
 
     'lpg_operations_current_month_pt_rejection': ''' SELECT
                                                         ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "pt_rejection"
                                                     FROM
                                                         "lpg_pt_rejections"
                                                     WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
 
     "lpg_cdcms_domestic_sales_table": f''' select 
                                         "ZOName" as "ZOName",

@@ -63,7 +63,7 @@ async def clear_existing_location_master(bu):
                 password=creds["password"],
                 port=creds["port"]
             )
-    query = f""" DELETE FROM location_master WHERE bu='{bu.upper()}'; """
+    query = f""" DELETE FROM location_master WHERE bu='{bu.upper()}' AND location_onboard IS FALSE; """
     cursor = pg_conn.cursor()
     cursor.execute(query)
     pg_conn.commit()

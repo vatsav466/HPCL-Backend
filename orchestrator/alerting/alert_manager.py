@@ -570,7 +570,7 @@ class AlertAction:
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=messaged_data, verify=False)
 
         if int(r.status_code / 100) != 2:
-            print(f"Error while sending message to camunda: {r.status_code} - {r.text}")
+            print(f"Error while sending message to camunda: {r.status_code} - {r.text} - {alert_data.unique_id}")
         else:
             print("Message sent to camunda")
         return True, "Successfully sent message to camunda"

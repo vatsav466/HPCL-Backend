@@ -48,8 +48,8 @@ class CauseEffect:
             effect_alert_id = effect_alert['id']
             effect_interlock_name = effect_alert.get('interlock_name', "Unknown Effect")
             
-            if effect_interlock_name.lower().endswith('_fail'):
-                continue
+            # if effect_interlock_name.lower().endswith('_fail'):
+            #     continue
             # Update effect alert's history with cause reference
             existing_effect_history = effect_alert.get('alert_history', [])
             last_processed_time = processed_time
@@ -120,8 +120,8 @@ class CauseEffect:
         return True, {"Message": "Alert History updated"}
 
     async def handle_effect_alert(self, params):
-        if params.get('interlock_name', '').lower().endswith('_fail'):
-            return True, {"Message": "Skipped _fail interlock"}
+        # if params.get('interlock_name', '').lower().endswith('_fail'):
+        #     return True, {"Message": "Skipped _fail interlock"}
         
         # Get current effect alert details
         effect_alert_id = params.get("alert_id")

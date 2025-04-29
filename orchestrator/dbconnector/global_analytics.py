@@ -3408,6 +3408,32 @@ class GlobalAnalytics:
             function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             card_query = lpg_plant_queries.lpg_plant_query.get(drill_state.split(",")[0])
             
+            if cross_filters:
+                conditions = []
+                for rec in cross_filters:
+                    if "DATE" in rec.key:
+                        start = rec.value.split(",")[0]
+                        end = (datetime.strptime(rec.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
+                        conditions.append(f"process_date BETWEEN '{start}' AND '{end}' ")
+                        card_query = card_query.split("WHERE")[0].split("where")[0]
+                        continue
+                    rec.value = rec.value.split(",")
+                    # Now handle other cases
+                    if isinstance(rec.value, str):
+                        condition = f"{rec.key} = '{rec.value}'"
+                    else:
+                        if len(rec.value) == 1:
+                            condition = f"{rec.key} = '{rec.value[0]}'"
+                        else:
+                            condition = f"{rec.key} in {tuple(rec.value)}"
+                    conditions.append(condition)
+                if conditions:
+                    if not "where" in card_query.lower():
+                        card_query  += ' WHERE '
+                    else:
+                        card_query += ' AND '
+                    card_query  += ' AND '.join(conditions)
+            
             today = datetime.now()
             current_month = datetime.now().strftime("%B") # format : January, February
             if today.month < 4:
@@ -3640,6 +3666,7 @@ class GlobalAnalytics:
                     start = filter.value.split(",")[0]
                     end = (datetime.strptime(filter.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
                     daterange = f" '{start}' AND '{end}' "
+                    continue
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
@@ -4500,10 +4527,16 @@ class GlobalAnalytics:
         cs_resp_ = lpg_plant_queries.lpg_plant_query.get("cs_query")
         pt_resp_ = lpg_plant_queries.lpg_plant_query.get("pt_query")
         gd_resp_ = lpg_plant_queries.lpg_plant_query.get("gd_query")
-
+        
+        daterange = None
         _filters = []
         if cross_filters:
             for filter in cross_filters:
+                if "DATE" in filter.key:
+                    start = filter.value.split(",")[0]
+                    end = (datetime.strptime(filter.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
+                    daterange = f" '{start}' AND '{end}' "
+                    continue
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -4527,12 +4560,18 @@ class GlobalAnalytics:
                 if "process_date" in conditions:
                     common_filter = f''' AND "zone" IS NOT NULL '''                    
                 else:
-                    common_filter = f''' AND DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
+                    if daterange:
+                        common_filter = f''' "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '''
+                    else:
+                        common_filter = f''' AND DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
             else:
                 cs_resp_ += 'WHERE '
                 pt_resp_ += ' WHERE '
                 gd_resp_ += ' WHERE '
-                common_filter = f''' DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
+                if daterange:
+                    common_filter = f''' "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '''
+                else:
+                    common_filter = f''' DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
             
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
