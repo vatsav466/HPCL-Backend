@@ -186,14 +186,19 @@ async def insert_ro_dealer(cursor):
         if config["bu"].lower() == "ro":
             query = config["query"]
             data = await fetch_data(cursor, query)
-            data["username"] = data["PLANT"].astype(str).apply(lambda x: x.lstrip("00"))
-            data["employee_id"] = data["username"]
-            data.rename(columns={reporting_config._rename}, inplace=True)
+            data["PLANT"] = data["PLANT"].astype(str).apply(lambda x: x.lstrip("00"))
+            data["username"] = data["PLANT"]
+            data["employee_id"] = data["PLANT"]
+            data.rename(columns=reporting_config._rename, inplace=True)
             data['first_name'], data['last_name'] = zip(*data['name'].apply(split_name))
             data["novex_role"] = "RO Dealer"
             data["system_role"] = "RO Dealer"
             data["manual_user"] = False
             data["bu"] = 'RO'
+            for col in ["zone", "region", "sap_id", "bu", "sales_area"]:
+                if col in data.columns:
+                    data[col] = data[col].fillna("").astype(str)
+                    data[col] = '["' + data[col] + '"]'
             await insert_users(data.to_dict(orient="records"))
 
 
