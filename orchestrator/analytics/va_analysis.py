@@ -153,11 +153,11 @@ async def get_period_datetime(period: str, today=None):
             today = datetime.datetime.now(datetime.timezone.utc)
         year, month = today.year, today.month
         first_half_start = datetime.datetime(year, month, 1, 0, 0, 0)
-        first_half_end = datetime.datetime(year, month, 14, 23, 59, 59)
+        first_half_end = datetime.datetime(year, month, 15, 23, 59, 59)
         last_day = (datetime.datetime(year, month, 28) + datetime.timedelta(days=4)).replace(day=1) - datetime.timedelta(days=1)
-        second_half_start = datetime.datetime(year, month, 15, 0, 0, 0)
+        second_half_start = datetime.datetime(year, month, 16, 0, 0, 0)
         second_half_end = datetime.datetime(year, month, last_day.day, 23, 59, 59)
-        return (first_half_start, first_half_end) if today.day <= 14 else (second_half_start, second_half_end)
+        return (first_half_start, first_half_end) if today.day <= 15 else (second_half_start, second_half_end)
     if period == 'oneweek':
         if not today:
             today = datetime.datetime.now(datetime.timezone.utc)

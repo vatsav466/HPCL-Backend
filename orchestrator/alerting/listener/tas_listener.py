@@ -118,19 +118,30 @@ async def tas_listener(rmsg):
             if is_duplicate:
                 logger.info(f"Alert already exists (duplicate) for: {alertdata}")
             else:
+                logger.info("*"*100)
+                logger.info(f"alertdata ------> {alertdata}")
+                logger.info("*"*100)
                 if alertdata['interlock_name'] in [
-                    "VFT_UnderMaintenance", "Secondary Radar_Under Maintenance", 
+                    "VFT_Under Maintenance", "Secondary Radar_Under Maintenance", 
                     "ROSOV_Under Maintenance", "MOV_Under Maintenance", 
-                    "Rim Seal system_Under Maintenance", "Tank_UnderMaintenance"]:
-                    logger.info("into maintenance check")
+                    "Rim Seal system_Under Maintenance", "Tank_Under Maintenance"]:
+                    logger.info("*"*100)
+                    logger.info(f"into maintenance check --> {json.dumps(alertdata, default=str)}")
+                    logger.info("*"*100)
                     await maintenance_check.create_under_maintenance_alert(alertdata)
                 else:
-                    logger.info("into normal maintenance check")
+                    logger.info("*"*100)
+                    logger.info(f"into normal maintenance check  ---> {json.dumps(alertdata, default=str)}")
+                    logger.info("*"*100)
                     is_maintenance_alert = await maintenance_check.maintenance_alert_check(alertdata)
                     if is_maintenance_alert:
-                        logger.info(f"Maintenance alert already exists for: {alertdata}")
+                        logger.info("*"*100)
+                        logger.info(f"Maintenance alert already exists for: {json.dumps(alertdata, default=str)}")
+                        logger.info("*"*100)
                     else:
-                        logger.info("not maintenance alert")
+                        logger.info("*"*100)
+                        logger.info(f"not maintenance alert ---> {json.dumps(alertdata, default=str)}")
+                        logger.info("*"*100)
                         await create_alert(alertdata)
 
 

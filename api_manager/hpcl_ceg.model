@@ -2135,6 +2135,7 @@ Model DryOutAlertReport {
 
 Model VendorApiAudit {
     method str
+    vendor str
     url str
     payload optional dict
     alert_id unique_field index_field str

@@ -27,7 +27,7 @@
       <bpmn:incoming>Flow_1jnzw5g</bpmn:incoming>
       <bpmn:outgoing>Flow_1vs5aga</bpmn:outgoing>
       <bpmn:timerEventDefinition id="TimerEventDefinition_13nfz66">
-        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT10S</bpmn:timeDuration>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT3S</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:intermediateCatchEvent>
     <bpmn:sequenceFlow id="Flow_1vs5aga" sourceRef="Event_15bsnlx" targetRef="Activity_0teo5dw" />

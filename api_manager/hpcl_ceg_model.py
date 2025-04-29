@@ -6075,6 +6075,7 @@ class VendorApiAuditSchema(UrdhvaPostgresBase):
     __tablename__ = 'vendor_api_audit'
     
     method: Mapped[str] = mapped_column("method", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    vendor: Mapped[str] = mapped_column("vendor", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     url: Mapped[str] = mapped_column("url", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     payload: Mapped[typing.Optional[dict]] = mapped_column("payload", JSONB, index=False, nullable=True, default=pydantic.Field(default_factory=dict), primary_key=False, unique=False)
     alert_id: Mapped[str] = mapped_column("alert_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
@@ -6092,6 +6093,7 @@ class VendorApiAuditCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'vendor_api_audit'
     
     method: str
+    vendor: str
     url: str
     payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
     alert_id: str
@@ -6114,6 +6116,7 @@ class VendorApiAudit(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'vendor_api_audit'
     
     method: typing.Optional[str] | None = None
+    vendor: typing.Optional[str] | None = None
     url: typing.Optional[str] | None = None
     payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
     alert_id: typing.Optional[str] | None = None

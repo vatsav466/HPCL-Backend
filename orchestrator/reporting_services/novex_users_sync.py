@@ -123,7 +123,7 @@ async def process_data(data, bu):
         sales_master['SACode'] = sales_master['SACode'].astype(str)
         data = pd.merge(data, sales_master, left_on='SALES_GRP', right_on='SACode', how='left')
         data.rename(columns={"SAName": "sales_area"}, inplace=True)
-    elif "SALES_GROUP_DESC" in data.columns and bu!='LPG':
+    elif "SALES_GROUP_DESC" in data.columns and bu != 'LPG':
         data["sales_area"] = data["SALES_GROUP_DESC"]
     print("Before dropping empty username :", len(data))
     data = data[data["username"].fillna("") != ""]
@@ -137,7 +137,7 @@ async def process_data(data, bu):
     data['zone'] = data['zone'].map(reporting_config.zone_map)
     data['last_name'] = data['first_name'].fillna("").apply(lambda x: x.split(" ")[-1] if " " in x else "")
     data['first_name'] = data['first_name'].fillna("").apply(lambda x: x.rstrip(x.split(" ")[-1]) if " " in x else x)
-    for col in ["zone", "region", "sap_id", "bu", "sales_area"]:
+    for col in ["zone", "region", "state", "sap_id", "bu", "sales_area"]:
         if col in data.columns:
             data[col] = data[col].fillna("").astype(str)
             data[col] = '["' + data[col] + '"]'
@@ -164,6 +164,64 @@ async def process_data(data, bu):
     return data
 
 
+async def get_additional_data(bu, cursor):
+    queries = getattr(reporting_config, f"additional_{bu}_query", None)
+    additional_data = pd.DataFrame()
+    if queries:
+        for query in queries:
+            additional_data = pd.concat([additional_data, await fetch_data(cursor, query)])
+        additional_data.loc[
+            (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
+            (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
+            "novex_role"
+        ] = "HQ Operations LPG"
+        additional_data.loc[
+            (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
+            (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
+            "novex_role"
+        ] = "Zonal Operations LPG"
+        additional_data.loc[
+            (additional_data["ROLE_NAME"].fillna("") == "IL_CHMNGR_LPGHSEZONE"),
+            "novex_role"
+        ] = "Zonal HSE LPG"
+        additional_data = additional_data[additional_data["ZLOC_TYPE"].fillna("") != ""]
+    return additional_data
+
+
+def split_name(name):
+    parts = name.split()
+    if len(parts) == 1:
+        return name, ""
+    else:
+        return " ".join(parts[:-1]), parts[-1]
+
+
+async def insert_ro_dealer(cursor):
+    for config in reporting_config.location_configs:
+        if config["bu"].lower() == "ro":
+            query = config["query"]
+            data = await fetch_data(cursor, query)
+            data["PLANT"] = data["PLANT"].astype(str).apply(lambda x: x.lstrip("00"))
+            data["username"] = data["PLANT"]
+            data["employee_id"] = data["PLANT"]
+            data.rename(columns=reporting_config._rename, inplace=True)
+            data['first_name'], data['last_name'] = zip(*data['name'].apply(split_name))
+            data["novex_role"] = "RO Dealer"
+            data["system_role"] = "RO Dealer"
+            data["manual_user"] = False
+            data["bu"] = 'RO'
+            data['zone'] = data['zone'].map(reporting_config.zone_map)
+            for col in ["zone", "region", "state", "sap_id", "bu", "sales_area", "novex_role", "system_role"]:
+                if col in data.columns:
+                    data[col] = data[col].fillna("").astype(str)
+                    data[col] = '["' + data[col] + '"]'            
+            for col in ["status", "is_ad_user"]:
+                data[col] = True
+            for col in data.columns:
+                data[col] = data[col].fillna("")
+            await insert_users(data.to_dict(orient="records"))
+
+
 async def sync_users():
     connection = await get_db_connection()
     cursor = connection.cursor()
@@ -177,16 +235,21 @@ async def sync_users():
         roles = role_master['tibco_role'].unique().tolist()
         if roles:
             roles_condition = "ZR.ROLE_NAME IN ({})".format(', '.join([f"'{role}'" for role in roles]))
-            query += f" AND {roles_condition}"
-        data = await fetch_data(cursor, query)  
+            query += f" AND {roles_condition}"        
+        data = await fetch_data(cursor, query)        
         print("Length of Data Before Merge:", len(data))
         data = pd.merge(data, role_master[['novex_role', 'tibco_role']], left_on='ROLE_NAME', right_on='tibco_role', how='left')
         print("Length of Data After Merge:", len(data))
+        # Addtion additional conditional Users
+        additional_data = await get_additional_data(bu, cursor)
+        if not additional_data.empty:
+            data = pd.concat([data, additional_data])
         data = await combine_roles(data, _id="EMPLOYEE_NUMBER", role_name=["ROLE_NAME", "novex_role"])
         data["bu"] = bu.upper()
         data = await process_data(data, bu)
         await clear_existing_user(bu)
         await insert_users(data.to_dict(orient="records"))
+    await insert_ro_dealer(cursor)
 
 
 if __name__ == "__main__":
