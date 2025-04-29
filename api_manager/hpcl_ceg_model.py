@@ -1326,6 +1326,8 @@ class AlertsSchema(UrdhvaPostgresBase):
     dealer_id: Mapped[typing.Optional[str]] = mapped_column("dealer_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("workflow_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    workflow_url: Mapped[typing.Optional[str]] = mapped_column("workflow_url", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    workflow_port: Mapped[typing.Optional[str]] = mapped_column("workflow_port", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     servicing_plant_id: Mapped[typing.Optional[str]] = mapped_column("servicing_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -1408,6 +1410,8 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     dealer_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_datetime: typing.Optional[datetime.datetime] | None = None
+    workflow_url: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_port: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     servicing_plant_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -1499,6 +1503,8 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     dealer_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_datetime: typing.Optional[datetime.datetime] | None = None
+    workflow_url: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_port: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     servicing_plant_id: typing.Optional[str] = pydantic.Field("", **{})

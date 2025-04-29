@@ -142,6 +142,8 @@ class AlertFactory:
                                                         'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
                                                         'tt_load_number': str(alert_data.get('tt_load_number', '')),
                                                         'cause_effect': alert_data.get('Cause_Effect', ''),
+                                                        'workflow_url': alert_data.get('workflow_url', ''),
+                                                        'workflow_port': alert_data.get('workflow_port', ''),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()

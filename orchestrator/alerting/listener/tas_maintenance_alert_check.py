@@ -84,8 +84,19 @@ async def close_tas_workflow(alert_data, message_type='Message'):
         }
     }
 
-    url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'], alert_section="TAS")
-    url += "/engine-rest/message"
+    url = alert_data.get('workflow_url')
+    if url:
+        url = url.rstrip('/') + "/engine-rest/message"
+    else:
+        url = await helpers.get_camunda_url(
+            bu=alert_data['bu'],
+            sap_id=alert_data['sap_id'],
+            alert_section="TAS",
+            location_data=loc_dt
+        )
+        url = url.rstrip('/') + "/engine-rest/message"
+
+    print("Camunda URL:", url)
 
     max_retries = 5
     initial_delay = 5  # seconds

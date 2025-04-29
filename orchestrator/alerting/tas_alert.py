@@ -73,6 +73,9 @@ class TASAlertManager(alert_factory.AlertFactory):
                 alert_section="TAS", 
                 location_data=loc_dt
             )
+            alert_data['workflow_url'] = camunda_url
+            alert_data['workflow_port'] = camunda_url.split(":")[2]
+
             return await cls.create_alert(alert_data, camunda_url)
 
         except Exception as e:
@@ -127,7 +130,7 @@ class TASAlertManager(alert_factory.AlertFactory):
             resp_data = await hpcl_ceg_model.Alerts.get_all(
                 urdhva_base.queryparams.QueryParams(q=query, limit=100), resp_type='plain'
             )
-            status, loc_dt = await cache_api_actions.get_location_data(bu=alert_data['bu'], location_id=alert_data['sap_id'])
+            # status, loc_dt = await cache_api_actions.get_location_data(bu=alert_data['bu'], location_id=alert_data['sap_id'])
 
 
             print("resp_data :", resp_data)
@@ -148,16 +151,27 @@ class TASAlertManager(alert_factory.AlertFactory):
                     }
                     # await redis_ins.hdel("alert_camunda_url", str(alert['id']))
 
-                    url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'], alert_section="TAS", location_data=loc_dt)
-                    url += "/engine-rest/message"
-                    print("Camunda URL:", url)
+                    url = tas_alert_data.get('workflow_url')
+                    logger.info("url --> %s", url)
+                    if url:
+                        url = url.rstrip('/') + "/engine-rest/message"
+                    else:
+                        url = await helpers.get_camunda_url(
+                            bu=tas_alert_data['bu'],
+                            sap_id=tas_alert_data['sap_id'],
+                            alert_section="TAS",
+                            location_data=loc_dt
+                        )
+                        url = url.rstrip('/') + "/engine-rest/message"
 
+                    print("Camunda URL:", url)
                     # Retry logic
                     max_retries = 5
                     initial_delay = 5  # seconds
 
                     for attempt in range(1, max_retries + 1):
                         await asyncio.sleep(5)  # wait before the first send
+                        print("attempt:", attempt)
                         try:
                             r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
                             if r.status_code // 100 == 2:
