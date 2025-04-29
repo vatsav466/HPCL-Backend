@@ -4561,7 +4561,7 @@ class GlobalAnalytics:
                     common_filter = f''' AND "zone" IS NOT NULL '''                    
                 else:
                     if daterange:
-                        common_filter = f''' "process_date" BETWEEN '{daterange}' AND "zone" IS NOT NULL '''
+                        common_filter = f''' "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '''
                     else:
                         common_filter = f''' AND DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
             else:
@@ -4569,7 +4569,7 @@ class GlobalAnalytics:
                 pt_resp_ += ' WHERE '
                 gd_resp_ += ' WHERE '
                 if daterange:
-                    common_filter = f''' "process_date" BETWEEN '{daterange}' AND "zone" IS NOT NULL '''
+                    common_filter = f''' "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '''
                 else:
                     common_filter = f''' DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
             
