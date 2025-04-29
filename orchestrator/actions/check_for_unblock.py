@@ -5,6 +5,7 @@ import hpcl_ceg_model
 import utilities.emlock_mapping as emlock_mapping
 import utilities.va_alert_mapping as va_alert_mapping
 import utilities.role_configuration as role_configuration
+import utilities.tas_role_configuration as tas_role_configuration
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -65,8 +66,11 @@ class CheckForUnblock:
                 time_difference = target_time_ist - now_ist
                 minutes = int(time_difference.total_seconds() // 60)
                 totalWaitTime = "PT" + str(minutes) + "M"
+            if alert_data.get("alert_section", "") in ["TAS"]:
+                escalation_time = params.get("escalate_time_block","")
+                totalWaitTime = tas_role_configuration.tas_role_mapping[alert_data["alert_section"]][alert_data["interlock_name"]]["block_time"][escalation_time]
+                print("totalWaittime---------->",totalWaitTime)
             return True, {"waitTime": totalWaitTime}
-
         except Exception as e:
             print(traceback.format_exc())
             logger.error(e)

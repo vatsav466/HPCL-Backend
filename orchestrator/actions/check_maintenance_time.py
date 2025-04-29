@@ -62,9 +62,9 @@ class CheckMaintenanceTime:
                     timestamp = datetime.datetime.strptime(maintenance_time, "%Y-%m-%dT%H:%M:%S")
                     # Subtract 5 days
                     new_timestamp = timestamp - datetime.timedelta(days=5)
-                    # Convert back to string in the same format
-                    totalWaitTime = new_timestamp.strftime("%Y-%m-%dT%H:%M:%S")
-                    #totalWaitTime = '2025-02-04T19:56:20'
+                    wait_time_minutes = int((new_timestamp - current_time).total_seconds() // 60)
+                    totalWaitTime = f"PT{wait_time_minutes}M"
+                    print("totalWaitTime --> ", totalWaitTime)
                     return True, {"waitTime": totalWaitTime}
                 else:
                     # Return current time + 60 seconds
