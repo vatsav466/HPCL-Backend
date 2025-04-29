@@ -74,25 +74,45 @@ async def close_tas_workflow(alert_data, message_type='Message'):
     alert_data['alert_type'] = 'TAS'
     alert_data['alert_id'] = alert_data.get('external_id', '')
     logger.info(f"Closing camunda workflow for alert_id: {alert_data['id']} {alert_data}")
+
     data = {
         "messageName": message_type,
         "businessKey": alert_data['unique_id'],
-        "processVariables": {"alert_id": {"value": alert_data['id'], "type": "String"},
-                                "closed": {"value": True, "type": "Boolean"}}}
+        "processVariables": {
+            "alert_id": {"value": alert_data['id'], "type": "String"},
+            "closed": {"value": True, "type": "Boolean"}
+        }
+    }
 
-    url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
-                                        alert_section="TAS")
+    url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'], alert_section="TAS")
     url += "/engine-rest/message"
-    try:
-        await asyncio.sleep(10)
-        r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
-        if int(r.status_code / 100) != 2:
-            logger.info(f"Error while sending message to camunda: {r.status_code} - {r.text}")
+
+    max_retries = 5
+    initial_delay = 5  # seconds
+
+    await asyncio.sleep(10)  # One-time wait before retry loop
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            async with httpx.AsyncClient(verify=False) as client:
+                r = await client.post(url, headers={'Content-Type': 'application/json'}, json=data)
+
+            if r.status_code // 100 == 2:
+                logger.info("Message sent to camunda")
+                break
+            else:
+                logger.warning(f"Attempt {attempt}: Error sending message to camunda: "
+                            f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
+        except Exception as e:
+            logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} "
+                        f"for alert_id {alert_data['id']}, business_key {alert_data['unique_id']}")
+
+        if attempt < max_retries:
+            backoff = initial_delay * (2 ** (attempt - 1))
+            await asyncio.sleep(backoff)
         else:
-            logger.info("Message sent to camunda")
-    except Exception as e:
-        logger.error(f"Exception in closing camunda flow {e} for alert_id {alert_data['id']}, "
-                        f"business_key {alert_data['unique_id']}")
+            logger.error(f"Failed to send message to camunda after {max_retries} attempts")
+
     await close_alert(alert_data=alert_data)
 
 async def create_under_maintenance_alert(alert_data):

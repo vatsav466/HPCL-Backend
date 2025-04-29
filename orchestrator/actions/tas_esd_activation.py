@@ -261,7 +261,7 @@ class TasEsdActivation:
             logger.info(traceback.format_exc())
             logger.error(traceback.format_exc())
             return False, {"status": str(e)}
-            
+
     async def _query_esd_alerts(self, sap_id, interlock_name, time_window):
         """Query for ESD alerts based on interlock name"""
         esd_query = (
@@ -404,7 +404,7 @@ class TasEsdActivation:
         if created_alert and isinstance(created_alert, dict):
             alert_data["unique_id"] = created_alert.get("unique_id")
             alert_data["id"] = created_alert.get("id")
-            await alert_close.close_tas_workflow(alert_data=alert_data)
+            await alert_close.close_tas_workflow(alert_data=alert_data, message_type="interLockOk")
             return True, {
                 "status": "success",
                 "message": alert_message,
