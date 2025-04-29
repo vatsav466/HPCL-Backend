@@ -3415,6 +3415,7 @@ class GlobalAnalytics:
                         start = rec.value.split(",")[0]
                         end = (datetime.strptime(rec.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
                         conditions.append(f"BETWEEN '{start}' AND '{end}' ")
+                        card_query = card_query.split("WHERE")[0].split("where")[0]
                         continue
                     rec.value = rec.value.split(",")
                     # Now handle other cases
