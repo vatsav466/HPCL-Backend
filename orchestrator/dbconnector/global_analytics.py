@@ -3414,7 +3414,7 @@ class GlobalAnalytics:
                     if "DATE" in rec.key:
                         start = rec.value.split(",")[0]
                         end = (datetime.strptime(rec.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-                        conditions.append(f"BETWEEN process_date '{start}' AND '{end}' ")
+                        conditions.append(f"process_date BETWEEN '{start}' AND '{end}' ")
                         card_query = card_query.split("WHERE")[0].split("where")[0]
                         continue
                     rec.value = rec.value.split(",")
