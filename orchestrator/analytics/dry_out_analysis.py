@@ -1779,3 +1779,37 @@ async def trigger_camunda_workflow(alert_data):
     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
     redis_ins = await urdhva_base.redispool.get_redis_connection()
     await redis_ins.hset("alert_camunda_url", str(alert_data['id']), camunda_url)
+
+async def get_nozzle_sales(dry_out_in_days='1'):
+    query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
+             f"mark_as_false = true and alert_status != 'Close' and interlock_name = 'Dry Out Each Indent Wise MainFlow'")
+    alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+    alert_data = pd.DataFrame(alert_data.get("data", []))
+    # print(alert_data)
+
+    query = f"""SELECT DISTINCT 
+                s.erp_code
+            FROM "HPCL_HOS".ms_nozzle_list n
+            INNER JOIN "HPCL_HOS".ms_site s ON n.site_id = s.site_id
+            WHERE s.erp_code IN {tuple(alert_data['sap_id'].unique().tolist())}
+              AND NOT EXISTS (
+                SELECT 1
+                FROM "HPCL_HOS".ms_nozzle_list n2
+                INNER JOIN "HPCL_HOS".ms_site s2 ON n2.site_id = s2.site_id
+                WHERE n2.site_id = n.site_id
+                  AND n2.noz_last_trxn_date::date = CURRENT_DATE
+                  AND n2.enable = true
+            )
+            AND n.enable = true"""
+
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "cris", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    site_data = await function(
+        query=query
+    )
+    site_data = pd.DataFrame(site_data)
+    print(site_data['erp_code'].unique().tolist())
+    return len(site_data['erp_code'].unique().tolist())
