@@ -184,7 +184,7 @@ async def get_additional_data(bu, cursor):
         (additional_data["ROLE_NAME"].fillna("") == "IL_CHMNGR_LPGHSEZONE"),
         "novex_role"
     ] = "Zonal HSE LPG"
-    
+    additional_data = additional_data[additional_data["ZLOC_TYPE"].fillna("") != ""]
     return additional_data
 
 
