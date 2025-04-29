@@ -1112,8 +1112,10 @@ LIMIT 10000;''',
                                                             (SUM(bottling_14_2kg) * 14.2 + SUM(bottling_19kg) * 19)::NUMERIC / 1000, 
                                                             0
                                                         ) AS current_month_production
-                                                    FROM lpg_operations_summary
-                                                    WHERE DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE) 
+                                                    FROM 
+                                                        lpg_operations_summary
+                                                    WHERE 
+                                                        DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE);   
                                                 ''',
                                                 
     'lpg_operations_current_month_productivity': f'''
