@@ -56,6 +56,8 @@ class AlertFactory:
             return_data = False
             if 'return_data' in alert_data.keys():
                 return_data = alert_data.get("return_data", False)
+            alert_data['workflow_url'] = camunda_url
+            alert_data['workflow_port'] = camunda_url.split(":")[2]
             bu = alert_data['bu']
             sop_id = alert_data.get('sop_id', '')
             sap_id = alert_data['sap_id']
