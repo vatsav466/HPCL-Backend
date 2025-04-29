@@ -5,3 +5,9 @@
 api_manager/.algo_env
 .scannerwork/.sonar_lock
 .scannerwork/report-task.txt
+UrdhvaBase/urdhva_base.egg-info/dependency_links.txt
+UrdhvaBase/urdhva_base.egg-info/not-zip-safe
+UrdhvaBase/urdhva_base.egg-info/PKG-INFO
+UrdhvaBase/urdhva_base.egg-info/requires.txt
+UrdhvaBase/urdhva_base.egg-info/SOURCES.txt
+UrdhvaBase/urdhva_base.egg-info/top_level.txt
