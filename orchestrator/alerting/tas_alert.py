@@ -127,6 +127,8 @@ class TASAlertManager(alert_factory.AlertFactory):
             resp_data = await hpcl_ceg_model.Alerts.get_all(
                 urdhva_base.queryparams.QueryParams(q=query, limit=100), resp_type='plain'
             )
+            status, loc_dt = await cache_api_actions.get_location_data(bu=alert_data['bu'], location_id=alert_data['sap_id'])
+
 
             print("resp_data :", resp_data)
             if len(resp_data['data']):
@@ -144,8 +146,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                             "closed": {"value": True, "type": "Boolean"}
                         }
                     }
-
-                    url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'], alert_section="TAS")
+                    url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'], alert_section="TAS", location_data=loc_dt)
                     url += "/engine-rest/message"
                     print("Camunda URL:", url)
 
