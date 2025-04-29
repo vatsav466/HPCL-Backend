@@ -59,7 +59,7 @@ class SendWriteCommand:
             message = {
                 "command": "write",
                 "sensor_tag": tag,
-                "value" : write_control
+                "value" : str(write_control)
             }
 
             # handle this message playload to publish to rabbit mq
