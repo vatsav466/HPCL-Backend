@@ -146,6 +146,17 @@ Model VA crud_disable {
         location_type optional BusinessUnit
         data list vaScore
     }
+
+    Action=> ingest_data_close {
+        alert_id str
+        status str
+        acknowledged_by str
+        closed_at str
+        action_description optional str
+        action_code optional str
+        action_reason optional str
+        action_category optional str
+    }
 }
 
 Model productsDetails internal {

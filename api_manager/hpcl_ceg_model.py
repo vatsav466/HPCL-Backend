@@ -3205,8 +3205,6 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     violation_type: Mapped[typing.Optional[typing.List[str]]] = mapped_column("violation_type", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(tl_number, report_duration, invoice_number, name="vts_alert_history_tl_number_report_duration_invoice_number"),)
-
 
 class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'vts_alert_history'
@@ -3240,7 +3238,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = VtsAlertHistorySchema
-        upsert_keys = ['tl_number', 'report_duration', 'invoice_number']
+        upsert_keys = []
         access_key_mapping = ['location_id:sap_id']
 
 
@@ -3276,7 +3274,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = VtsAlertHistorySchema
-        upsert_keys = ['tl_number', 'report_duration', 'invoice_number']
+        upsert_keys = []
         access_key_mapping = ['location_id:sap_id']
 
 
@@ -3362,6 +3360,13 @@ class VaAlertHistorySchema(UrdhvaPostgresBase):
     device_id: Mapped[typing.Optional[str]] = mapped_column("device_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     video_url: Mapped[typing.Optional[str]] = mapped_column("video_url", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("alert_timestamp", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    acknowledged_by: Mapped[typing.Optional[str]] = mapped_column("acknowledged_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    closed_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closed_at", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    action_description: Mapped[typing.Optional[str]] = mapped_column("action_description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    action_code: Mapped[typing.Optional[str]] = mapped_column("action_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    action_reason: Mapped[typing.Optional[str]] = mapped_column("action_reason", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    action_category: Mapped[typing.Optional[str]] = mapped_column("action_category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class VaAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -3376,6 +3381,13 @@ class VaAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     device_id: typing.Optional[str] = pydantic.Field("", **{})
     video_url: typing.Optional[str] = pydantic.Field("", **{})
     alert_timestamp: typing.Optional[datetime.datetime] | None = None
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    acknowledged_by: typing.Optional[str] = pydantic.Field("", **{})
+    closed_at: typing.Optional[datetime.datetime] | None = None
+    action_description: typing.Optional[str] = pydantic.Field("", **{})
+    action_code: typing.Optional[str] = pydantic.Field("", **{})
+    action_reason: typing.Optional[str] = pydantic.Field("", **{})
+    action_category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -3398,6 +3410,13 @@ class VaAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     device_id: typing.Optional[str] = pydantic.Field("", **{})
     video_url: typing.Optional[str] = pydantic.Field("", **{})
     alert_timestamp: typing.Optional[datetime.datetime] | None = None
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    acknowledged_by: typing.Optional[str] = pydantic.Field("", **{})
+    closed_at: typing.Optional[datetime.datetime] | None = None
+    action_description: typing.Optional[str] = pydantic.Field("", **{})
+    action_code: typing.Optional[str] = pydantic.Field("", **{})
+    action_reason: typing.Optional[str] = pydantic.Field("", **{})
+    action_category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'

@@ -10,14 +10,21 @@ async def update_vendor_authentication_headers():
     await redis_client.hset("vendor_auth", f"hpcl_{vendor}_access_key",
                             "Mauad4ysWfCzb1eAOSLKYM9yp8DyxLtio0H7QbXl7kkkzaTePw7dYJui3KWCccSp")
     await redis_client.hset("vendor_auth", f"hpcl_{vendor}_allowed_apis",
-                            json.dumps([f"/api/{vendor}/ingest_data", f"/api/{vendor}"]))
+                            json.dumps([
+                                f"/api/{vendor}/ingest_data", f"/api/{vendor}",
+                                f"/api/{vendor}/ingest_data_score", f"/api/{vendor}/ingest_data_close"
+                            ]))
 
     # For VTS
     vendor = 'vts'
     await redis_client.hset("vendor_auth", f"hpcl_{vendor}_access_key",
                             "ZALpdEQTyfc6hZ1Oc98msUc3srqQGIfLYDEu7wxqhWy3FbPECaHejcEMUiSsZiB0")
     await redis_client.hset("vendor_auth", f"hpcl_{vendor}_allowed_apis",
-                            json.dumps([f"/api/{vendor}/ingest_data", f"/api/{vendor}"]))
+                            json.dumps([
+                                f"/api/{vendor}/ingest_data", f"/api/{vendor}",
+                                f"/api/{vendor}/ingest_data_blocked_trucks",
+                                f"/api/{vendor}/ingest_data_un_blocked_trucks"
+                            ]))
 
     # For IMS
     # vendor = 'ims'
@@ -38,7 +45,7 @@ async def update_vendor_authentication_headers():
     await redis_client.hset("vendor_auth", f"hpcl_{vendor}_access_key",
                             "FOA5iiG81MK0kWSOJh5jtlAbYvkJ4viIZh2yRqzam9DWlGzzFPpYkhvtMSmcsjwq")
     await redis_client.hset("vendor_auth", f"hpcl_{vendor}_allowed_apis",
-                            json.dumps([f"/api/{vendor}/ingest_data", f"/api/{vendor}"]))
+                            json.dumps([f"/api/{vendor}/ingest_data", f"/api/{vendor}", f"/api/{vendor}/api_ack"]))
 
     # For EMLock
     vendor = 'emlock'
