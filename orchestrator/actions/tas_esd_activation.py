@@ -292,47 +292,51 @@ class TasEsdActivation:
         # maint_alerts = await hpcl_ceg_model.Alerts.get_all(maint_params, resp_type='plain')
         # logger.info(f"Maintenance alerts: {maint_alerts}")
         # return maint_alerts
-        maint_query = (
-            f"bu = 'TAS' AND sap_id = '{sap_id}' AND alert_section = 'TAS' "
-            f"AND interlock_name LIKE '%Maintenance%' AND alert_status != 'Close'"
-        )
-        maint_params = urdhva_base.queryparams.QueryParams()
-        maint_params.q = maint_query
-        maint_params.fields = ["tas_device_name", "device_id", "interlock_name", "alert_status"]
-        
-        logger.info(f"Maintenance query: {maint_params.q}")
-        all_maint_alerts = await hpcl_ceg_model.Alerts.get_all(maint_params, resp_type='plain')
-        logger.info(f"All maintenance alerts: {all_maint_alerts}")
-        
-        # Filter for specific maintenance types we're interested in
-        maintenance_types = ["Tank_Under Maintenance", "ROSOV_Under Maintenance", "MOV_Under Maintenance"]
-        filtered_alerts = [
-            alert for alert in all_maint_alerts 
-            if any(maint_type in alert.get("interlock_name", "") for maint_type in maintenance_types)
-        ]
-        logger.info(f"Filtered maintenance alerts (specific types): {len(filtered_alerts)}")
-        
-        # Group alerts by device_id and tas_device_name
-        device_groups = {}
-        for alert in filtered_alerts:
-            device_key = (alert.get("device_id"), alert.get("tas_device_name"))
-            if device_key not in device_groups:
-                device_groups[device_key] = []
-            device_groups[device_key].append(alert)
-        
-        # Count maintenance alerts according to the specified rules
-        maintenance_count = len(device_groups)  # Each unique device counts as ONE maintenance alert
-        maintenance_alerts = filtered_alerts  # Keep all the individual alerts for reference
-        
-        # Log details for better understanding
-        for device_key, alerts in device_groups.items():
-            device_id, tas_device_name = device_key
-            alert_types = [alert.get("interlock_name") for alert in alerts]
-            logger.info(f"Device {device_id} ({tas_device_name}) has maintenance alerts: {alert_types}")
-        
-        logger.info(f"Total unique devices under maintenance: {maintenance_count}")
-        
-        return maintenance_alerts, maintenance_count
+        try:
+            logger.info(f"Querying maintenance alerts for SAP ID: {sap_id}")
+            
+            # List of maintenance alert types to check for
+            maintenance_types = ["Tank_Under Maintenance", "Under Maintenance"]
+            
+            # Query for open maintenance alerts
+            maintenance_query = (
+                f"bu = 'TAS' AND "
+                f"sap_id = '{sap_id}' AND "
+                f"alert_section = 'TAS' AND "
+                f"alert_status != 'Close'"
+            )
+            
+            maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
+            maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
+            
+            logger.debug(f"Maintenance alerts query response: {json.dumps(maintenance_resp, default=str)}")
+            
+            # Filter alerts for maintenance types
+            maintenance_alerts = []
+            if maintenance_resp and "data" in maintenance_resp and maintenance_resp["data"]:
+                # Make sure we're working with a list of dictionary objects
+                alerts_data = maintenance_resp["data"]
+                
+                for alert in alerts_data:
+                    # Ensure alert is a dictionary before using .get()
+                    if isinstance(alert, dict):
+                        interlock_name = alert.get("interlock_name", "")
+                        # Check if this alert is a maintenance type alert
+                        if any(maint_type in interlock_name for maint_type in maintenance_types):
+                            maintenance_alerts.append(alert)
+                    else:
+                        logger.warning(f"Unexpected alert data type: {type(alert)}, expected dict. Value: {alert}")
+            
+            maintenance_alert_count = len(maintenance_alerts)
+            logger.info(f"Found {maintenance_alert_count} maintenance alerts")
+            
+            return maintenance_alerts, maintenance_alert_count
+            
+        except Exception as e:
+            logger.error(f"Error in _query_maintenance_alerts: {e}")
+            logger.error(traceback.format_exc())
+            # Return empty list and zero count in case of error
+            return [], 0
     
     async def _query_fault_alerts(self, sap_id):
         """Query for fault alerts"""
