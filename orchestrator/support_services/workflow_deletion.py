@@ -175,16 +175,16 @@ class Workflows_Deletion:
         It then deletes the running instances in Camunda that do not exist in the database.
         """
         for idx,record in workflow_resp.iterrows():
-            if record["alert_section"] in ["EMLock"]:
-                continue
-            query = (f"select * from alerts where alert_section='{record['alert_section']}' and alert_status!='Close'")
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-            resp = await function(query=query)
-            data_resp = pd.DataFrame(resp)
-            present_alert_ids_in_db = data_resp["id"].tolist()
-            await self.delete_running_instances(present_alert_ids_in_db, record["alert_section"])
+            if record["alert_section"] in ["TAS"]:
+                # continue
+                query = (f"select * from alerts where alert_section='{record['alert_section']}' and alert_status!='Close'")
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+                function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+                resp = await function(query=query)
+                data_resp = pd.DataFrame(resp)
+                present_alert_ids_in_db = data_resp["id"].tolist()
+                await self.delete_running_instances(present_alert_ids_in_db, record["alert_section"])
 
     async def instance_removal(self):
         """
