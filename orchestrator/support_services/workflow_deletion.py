@@ -3,8 +3,8 @@ import requests
 import asyncio
 import traceback
 import pandas as pd
+import charts_actions
 import dashboard_studio_model
-import api_manager.charts_actions
 
 class Workflows_Deletion:
 
