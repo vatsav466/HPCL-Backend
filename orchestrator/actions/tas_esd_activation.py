@@ -253,8 +253,8 @@ class TasEsdActivation:
                 "has_pl_mode": has_pl_mode,
                 "has_maintenance": has_maintenance,
                 "has_fault": has_fault,
-                "maintenance_devices": len(maintenance_devices),
-                "fault_devices": len(fault_devices)
+                #"maintenance_devices": len(maintenance_devices),
+                #"fault_devices": len(fault_devices)
             }
         
         except Exception as e:
