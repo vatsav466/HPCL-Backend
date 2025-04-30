@@ -120,10 +120,10 @@ class Tas_Analysis:
 
         """
         try:
-            query = (f"""select bu,sap_id,external_id,device_name,COUNT(*) AS duplicate_count from alerts """
+            query = (f"""select bu, sap_id, sop_id, interlock_name, device_id, external_id, device_name, COUNT(*) AS duplicate_count from alerts """
                     f"where bu = 'TAS' and "
                     f"alert_section = 'TAS' "
-                    f"GROUP BY bu,sap_id,external_id,device_name "
+                    f"GROUP BY bu, sap_id, sop_id, interlock_name, device_id, external_id, device_name "
                     f"HAVING COUNT(*)>1")
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
