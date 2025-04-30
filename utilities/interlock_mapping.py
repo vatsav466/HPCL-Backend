@@ -113,6 +113,8 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP02A", "interlock_name": "All TLF Product Pumps Stopped", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Gantry Permissive Off", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Barrier Gate opened", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
+                        {"sop_id": "SOP02A", "interlock_name": "TLF Gantry Permissive Power Off", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
+
 
                         {"sop_id": "SOP02A", "interlock_name": "All ROSOVs Closed(Except PL Receipt)_Fail", "workflow_name": "TAS ESD CAUSE AND NON EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Tanks in TTL Dispatch in Dormant Mode_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
@@ -125,6 +127,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP02A", "interlock_name": "All TLF Product Pumps Stopped_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Gantry Permissive Off_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Barrier Gate opened_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
+                        {"sop_id": "SOP02A", "interlock_name": "TLF Gantry Permissive Power Off_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "ESD ROSOV_Close Status_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "ESD MOV_Close Status_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "ROSOV in PL Receipt Mode", "workflow_name": "PIPELINE MODE"}, # Immediate Close Purpose
