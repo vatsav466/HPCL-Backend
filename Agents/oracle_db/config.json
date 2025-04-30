@@ -149,6 +149,7 @@
         "ENTRY_TIME": "entry_time",
         "EXIT_TIME": "exit_time",
         "PASSWORD_EXPIRY_DATE": "password_expiry_date",
+        "USERNAME":"user_name",
         "USERGROUP": "user_group",
         "TANK_NAME": "tank_name",
         "TANK_MODE": "tank_mode",
