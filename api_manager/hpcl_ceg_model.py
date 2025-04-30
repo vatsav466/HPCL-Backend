@@ -5524,6 +5524,7 @@ class HostStandaloneTtsSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, bcu_number, bay_number, product_name, required_qty, loaded_qty, sap_id, name="host_standalone_tts_loadn_truck_compa_bcunu_baynu_produ_requi_"),)
 
@@ -5543,6 +5544,7 @@ class HostStandaloneTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5568,6 +5570,7 @@ class HostStandaloneTts(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5593,6 +5596,7 @@ class HostTasUserDetailsSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(user_name, password_expiry_date, user_group, sap_id, name="host_tas_user_details_usern_passw_userg_sapid"),)
 
@@ -5606,6 +5610,7 @@ class HostTasUserDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5625,6 +5630,7 @@ class HostTasUserDetails(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5651,6 +5657,7 @@ class HostLiveTankDetailsSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(tank_name, tank_mode, sap_id, name="host_live_tank_details_tank_name_tank_mode_sap_id"),)
 
@@ -5665,6 +5672,7 @@ class HostLiveTankDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5685,6 +5693,7 @@ class HostLiveTankDetails(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5712,6 +5721,7 @@ class HostSuspectedLoadsSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(event_time, bay_number, bcu_number, load_number, truck_number, sap_id, name="host_suspected_loads_event_baynu_bcunu_loadn_truck_sapid"),)
 
@@ -5727,6 +5737,7 @@ class HostSuspectedLoadsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5748,6 +5759,7 @@ class HostSuspectedLoads(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5781,6 +5793,7 @@ class HostPltDetailsSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(transaction_number, mfm_number, stock, sap_id, name="host_plt_details_transaction_number_mfm_number_stock_sap_id"),)
 
@@ -5802,6 +5815,7 @@ class HostPltDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5829,6 +5843,7 @@ class HostPltDetails(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5867,6 +5882,7 @@ class HostDayEndDetailsSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(bay_number, bcu_number, stock, sap_id, name="host_day_end_details_bay_number_bcu_number_stock_sap_id"),)
 
@@ -5893,6 +5909,7 @@ class HostDayEndDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5925,6 +5942,7 @@ class HostDayEndDetails(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5950,6 +5968,7 @@ class HostDayEndSummarySchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(total_loaded_tts, total_sick_tts, total_cancelled_tts, sap_id, name="host_day_end_summary_total_total_total_sapid"),)
 
@@ -5963,6 +5982,7 @@ class HostDayEndSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -5982,6 +6002,7 @@ class HostDayEndSummary(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'

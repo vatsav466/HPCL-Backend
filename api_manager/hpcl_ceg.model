@@ -1978,6 +1978,7 @@ Model HostStandaloneTts {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -1992,6 +1993,7 @@ Model HostTasUserDetails {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -2007,6 +2009,7 @@ Model HostLiveTankDetails {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -2024,6 +2027,7 @@ Model HostSuspectedLoads {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -2046,6 +2050,7 @@ Model HostPltDetails {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -2073,6 +2078,7 @@ Model HostDayEndDetails {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -2088,6 +2094,7 @@ Model HostDayEndSummary {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
