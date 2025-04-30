@@ -1309,8 +1309,8 @@ Model VtsAlertHistory {
     vendor_id optional str
     location_id optional str
     location_type optional str
-    tl_number unique_field index_field str
-    report_duration unique_field optional str
+    tl_number index_field str
+    report_duration optional str
     vts_start_datetime optional datetime
     vts_end_datetime optional datetime
     total_trips optional int
@@ -1326,7 +1326,7 @@ Model VtsAlertHistory {
     approved_by optional str
     auto_unblock optional bool
     alert_id optional str
-    invoice_number optional unique_field index_field str
+    invoice_number optional index_field str
     tt_type optional str
     violation_type optional list str
 
@@ -1363,6 +1363,13 @@ Model VaAlertHistory {
     device_id optional str
     video_url optional str
     alert_timestamp optional datetime
+    status optional str
+    acknowledged_by optional str
+    closed_at optional datetime
+    action_description optional str
+    action_code optional str
+    action_reason optional str
+    action_category optional str
 
     Config=> {
         crud_operations='read'

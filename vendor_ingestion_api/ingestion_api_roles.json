@@ -111,6 +111,9 @@
                 },
                 {
                     "name": "ingest_data_score"
+                },
+                {
+                    "name": "ingest_data_close"
                 }
             ]
         },
@@ -156,6 +159,9 @@
                 },
                 {
                     "name": "ingest_data_score"
+                },
+                {
+                    "name": "ingest_data_close"
                 }
             ]
         },
@@ -540,6 +546,10 @@
         {
             "name": "ingest_data_score",
             "displayName": "ingest_data_score"
+        },
+        {
+            "name": "ingest_data_close",
+            "displayName": "ingest_data_close"
         },
         {
             "name": "ingest_data",
