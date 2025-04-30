@@ -97,7 +97,7 @@ class TasEsdActivation:
             #     if device:
             #         maintenance_devices.add(device)
             maint_alerts, maintenance_alert_count = await self._query_maintenance_alerts(sap_id)
-            logger.info(f"Unique maintenance devices: {maintenance_devices}, count: {maintenance_alert_count}")
+            logger.info(f"count: {maintenance_alert_count}")
             
             # Check for fault alerts - get unique device names
             fault_alerts = await self._query_fault_alerts(sap_id)
