@@ -90,13 +90,13 @@ class TasEsdActivation:
             
             # Step 2: Get all the counts we need for decision making
             # Check for maintenance alerts - get unique device names
-            maint_alerts = await self._query_maintenance_alerts(sap_id)
-            maintenance_devices = set()
-            for alert in maint_alerts.get("data", []):
-                device = alert.get("tas_device_name")
-                if device:
-                    maintenance_devices.add(device)
-            maintenance_alert_count = len(maintenance_devices)
+            # maint_alerts = await self._query_maintenance_alerts(sap_id)
+            # maintenance_devices = set()
+            # for alert in maint_alerts.get("data", []):
+            #     device = alert.get("tas_device_name")
+            #     if device:
+            #         maintenance_devices.add(device)
+            maint_alerts, maintenance_alert_count = await self._query_maintenance_alerts(sap_id)
             logger.info(f"Unique maintenance devices: {maintenance_devices}, count: {maintenance_alert_count}")
             
             # Check for fault alerts - get unique device names
@@ -280,18 +280,59 @@ class TasEsdActivation:
     
     async def _query_maintenance_alerts(self, sap_id):
         """Query for maintenance alerts"""
+        # maint_query = (
+        #     f"bu = 'TAS' AND sap_id = '{sap_id}' AND alert_section = 'TAS' "
+        #     f"AND interlock_name LIKE '%Maintenance%' AND alert_status != 'Close'"
+        # )
+        # maint_params = urdhva_base.queryparams.QueryParams()
+        # maint_params.q = maint_query
+        # maint_params.fields = ["tas_device_name"]
+        # logger.info(f"Maintenance query: {maint_params.q}")
+        
+        # maint_alerts = await hpcl_ceg_model.Alerts.get_all(maint_params, resp_type='plain')
+        # logger.info(f"Maintenance alerts: {maint_alerts}")
+        # return maint_alerts
         maint_query = (
             f"bu = 'TAS' AND sap_id = '{sap_id}' AND alert_section = 'TAS' "
             f"AND interlock_name LIKE '%Maintenance%' AND alert_status != 'Close'"
         )
         maint_params = urdhva_base.queryparams.QueryParams()
         maint_params.q = maint_query
-        maint_params.fields = ["tas_device_name"]
-        logger.info(f"Maintenance query: {maint_params.q}")
+        maint_params.fields = ["tas_device_name", "device_id", "interlock_name", "alert_status"]
         
-        maint_alerts = await hpcl_ceg_model.Alerts.get_all(maint_params, resp_type='plain')
-        logger.info(f"Maintenance alerts: {maint_alerts}")
-        return maint_alerts
+        logger.info(f"Maintenance query: {maint_params.q}")
+        all_maint_alerts = await hpcl_ceg_model.Alerts.get_all(maint_params, resp_type='plain')
+        logger.info(f"All maintenance alerts: {all_maint_alerts}")
+        
+        # Filter for specific maintenance types we're interested in
+        maintenance_types = ["Tank_Under Maintenance", "ROSOV_Under Maintenance", "MOV_Under Maintenance"]
+        filtered_alerts = [
+            alert for alert in all_maint_alerts 
+            if any(maint_type in alert.get("interlock_name", "") for maint_type in maintenance_types)
+        ]
+        logger.info(f"Filtered maintenance alerts (specific types): {len(filtered_alerts)}")
+        
+        # Group alerts by device_id and tas_device_name
+        device_groups = {}
+        for alert in filtered_alerts:
+            device_key = (alert.get("device_id"), alert.get("tas_device_name"))
+            if device_key not in device_groups:
+                device_groups[device_key] = []
+            device_groups[device_key].append(alert)
+        
+        # Count maintenance alerts according to the specified rules
+        maintenance_count = len(device_groups)  # Each unique device counts as ONE maintenance alert
+        maintenance_alerts = filtered_alerts  # Keep all the individual alerts for reference
+        
+        # Log details for better understanding
+        for device_key, alerts in device_groups.items():
+            device_id, tas_device_name = device_key
+            alert_types = [alert.get("interlock_name") for alert in alerts]
+            logger.info(f"Device {device_id} ({tas_device_name}) has maintenance alerts: {alert_types}")
+        
+        logger.info(f"Total unique devices under maintenance: {maintenance_count}")
+        
+        return maintenance_alerts, maintenance_count
     
     async def _query_fault_alerts(self, sap_id):
         """Query for fault alerts"""
