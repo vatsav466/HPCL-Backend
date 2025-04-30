@@ -3,9 +3,9 @@ import requests
 import asyncio
 import traceback
 import pandas as pd
-import charts_actions
 import hpcl_ceg_model
 import dashboard_studio_model
+import api_manager.charts_actions
 import utilities.helpers as helpers
 
 class Tas_Analysis:
