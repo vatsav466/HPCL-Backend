@@ -635,7 +635,18 @@ class DataMonitor:
                 "HOST_LOCALLOADEDTTS",
                 "HOST_BAYREASSIGNMENT",
                 "HOST_OVERLOADEDTTS",
-                "HOST_UNAUTHORIZEDFLOW"
+                "HOST_UNAUTHORIZEDFLOW",
+                "HOST_StandaloneTTs",
+                "HOST_TASUserDetails",
+                "HOST_LiveTankDetails",
+                "HOST_SuspectedLoads",
+                "HOST_PLTDetails",
+                "HOST_DayEndDetails",
+                "HOST_DayEndSummary",
+                "HOST_KFACTORCHANGES",
+                "HOST_MFMKFACTOR",
+                "HOST_MASTERSTATUS"
+                
             ]
 
             current_date = datetime.datetime.today().date()

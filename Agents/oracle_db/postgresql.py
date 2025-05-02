@@ -294,7 +294,13 @@ class Postgresql:
                 
                 if "bay_reassignment_time" in record and isinstance(record["bay_reassignment_time"], str):
                     record["bay_reassignment_time"] = pd.to_datetime(record["bay_reassignment_time"])
+
+                if "trans_start_time" in record and isinstance(record["trans_start_time"], str):
+                    record["trans_start_time"] = pd.to_datetime(record["trans_start_time"], str)
                 
+                if "trans_end_time" in record and isinstance(record["trans_end_time"], str):
+                    record["trans_end_time"] = pd.to_datetime(record["trans_end_time"], str)
+                                
                 if "current_k_factor" in record:
                     try:
                         record["current_k_factor"] = round(float(record["current_k_factor"]), 2) if record["current_k_factor"] else None

@@ -4893,8 +4893,10 @@ class HostKFactorChangesSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(bcu_number, preset_number, timestamp, initial_setting, final_setting, sap_id, name="host_k_factor_changes_bcunu_prese_times_initi_final_sapid"),)
+    __table_args__ = (UniqueConstraint(bcu_number, preset_number, timestamp, initial_setting, final_setting, sap_id, date, name="host_k_factor_changes_bcunu_prese_times_initi_final_sapid_date"),)
 
 
 class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4912,13 +4914,15 @@ class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostKFactorChangesSchema
-        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting', 'sap_id']
+        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting', 'sap_id', 'date']
         search_fields = ['bay_number', 'bcu_number', 'sap_id']
 
 
@@ -4937,13 +4941,15 @@ class HostKFactorChanges(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostKFactorChangesSchema
-        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting', 'sap_id']
+        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting', 'sap_id', 'date']
         search_fields = ['bay_number', 'bcu_number', 'sap_id']
 
 
@@ -5389,8 +5395,10 @@ class HostMFMFactorSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(mfm_number, stock_code, sap_id, name="host_mfm_factor_mfm_number_stock_code_sap_id"),)
+    __table_args__ = (UniqueConstraint(mfm_number, stock_code, sap_id, date, name="host_mfm_factor_mfm_number_stock_code_sap_id_date"),)
 
 
 class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5409,13 +5417,15 @@ class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostMFMFactorSchema
-        upsert_keys = ['mfm_number', 'stock_code', 'sap_id']
+        upsert_keys = ['mfm_number', 'stock_code', 'sap_id', 'date']
         search_fields = ['mfm_number', 'bcu_number', 'sap_id']
 
 
@@ -5435,13 +5445,15 @@ class HostMFMFactor(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostMFMFactorSchema
-        upsert_keys = ['mfm_number', 'stock_code', 'sap_id']
+        upsert_keys = ['mfm_number', 'stock_code', 'sap_id', 'date']
         search_fields = ['mfm_number', 'bcu_number', 'sap_id']
 
 
@@ -5461,8 +5473,10 @@ class MasterStatusSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(status, location_code, sap_id, name="master_status_status_location_code_sap_id"),)
+    __table_args__ = (UniqueConstraint(status, location_code, sap_id, date, name="master_status_status_location_code_sap_id_date"),)
 
 
 class MasterStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5475,13 +5489,15 @@ class MasterStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = MasterStatusSchema
-        upsert_keys = ['status', 'location_code', 'sap_id']
+        upsert_keys = ['status', 'location_code', 'sap_id', 'date']
 
 
 class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
@@ -5494,13 +5510,15 @@ class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = MasterStatusSchema
-        upsert_keys = ['status', 'location_code', 'sap_id']
+        upsert_keys = ['status', 'location_code', 'sap_id', 'date']
 
 
 class MasterStatusGetResp(pydantic.BaseModel):
@@ -5525,8 +5543,10 @@ class HostStandaloneTtsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, bcu_number, bay_number, product_name, required_qty, loaded_qty, sap_id, name="host_standalone_tts_loadn_truck_compa_bcunu_baynu_produ_requi_"),)
+    __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, bcu_number, bay_number, product_name, required_qty, loaded_qty, sap_id, date, name="host_standalone_tts_loadn_truck_compa_bcunu_baynu_produ_requi_"),)
 
 
 class HostStandaloneTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5545,13 +5565,15 @@ class HostStandaloneTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostStandaloneTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'bcu_number', 'bay_number', 'product_name', 'required_qty', 'loaded_qty', 'sap_id']
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'bcu_number', 'bay_number', 'product_name', 'required_qty', 'loaded_qty', 'sap_id', 'date']
         search_fields = ['load_number', 'truck_number', 'bcu_number', 'sap_id', 'product_name']
 
 
@@ -5571,13 +5593,15 @@ class HostStandaloneTts(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostStandaloneTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'bcu_number', 'bay_number', 'product_name', 'required_qty', 'loaded_qty', 'sap_id']
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'bcu_number', 'bay_number', 'product_name', 'required_qty', 'loaded_qty', 'sap_id', 'date']
         search_fields = ['load_number', 'truck_number', 'bcu_number', 'sap_id', 'product_name']
 
 
@@ -5597,8 +5621,10 @@ class HostTasUserDetailsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(user_name, password_expiry_date, user_group, sap_id, name="host_tas_user_details_usern_passw_userg_sapid"),)
+    __table_args__ = (UniqueConstraint(user_name, password_expiry_date, user_group, sap_id, date, name="host_tas_user_details_usern_passw_userg_sapid_date"),)
 
 
 class HostTasUserDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5611,13 +5637,15 @@ class HostTasUserDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostTasUserDetailsSchema
-        upsert_keys = ['user_name', 'password_expiry_date', 'user_group', 'sap_id']
+        upsert_keys = ['user_name', 'password_expiry_date', 'user_group', 'sap_id', 'date']
         search_fields = ['user_name', 'user_group', 'password_expiry_date', 'sap_id']
 
 
@@ -5631,13 +5659,15 @@ class HostTasUserDetails(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostTasUserDetailsSchema
-        upsert_keys = ['user_name', 'password_expiry_date', 'user_group', 'sap_id']
+        upsert_keys = ['user_name', 'password_expiry_date', 'user_group', 'sap_id', 'date']
         search_fields = ['user_name', 'user_group', 'password_expiry_date', 'sap_id']
 
 
@@ -5658,8 +5688,10 @@ class HostLiveTankDetailsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(tank_name, tank_mode, sap_id, name="host_live_tank_details_tank_name_tank_mode_sap_id"),)
+    __table_args__ = (UniqueConstraint(tank_name, tank_mode, sap_id, date, name="host_live_tank_details_tank_name_tank_mode_sap_id_date"),)
 
 
 class HostLiveTankDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5673,13 +5705,15 @@ class HostLiveTankDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostLiveTankDetailsSchema
-        upsert_keys = ['tank_name', 'tank_mode', 'sap_id']
+        upsert_keys = ['tank_name', 'tank_mode', 'sap_id', 'date']
         search_fields = ['tank_name', 'tank_name', 'sap_id']
 
 
@@ -5694,13 +5728,15 @@ class HostLiveTankDetails(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostLiveTankDetailsSchema
-        upsert_keys = ['tank_name', 'tank_mode', 'sap_id']
+        upsert_keys = ['tank_name', 'tank_mode', 'sap_id', 'date']
         search_fields = ['tank_name', 'tank_name', 'sap_id']
 
 
@@ -5722,8 +5758,10 @@ class HostSuspectedLoadsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(event_time, bay_number, bcu_number, load_number, truck_number, sap_id, name="host_suspected_loads_event_baynu_bcunu_loadn_truck_sapid"),)
+    __table_args__ = (UniqueConstraint(event_time, bay_number, bcu_number, load_number, truck_number, sap_id, date, name="host_suspected_loads_event_baynu_bcunu_loadn_truck_sapid_date"),)
 
 
 class HostSuspectedLoadsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5738,13 +5776,15 @@ class HostSuspectedLoadsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostSuspectedLoadsSchema
-        upsert_keys = ['event_time', 'bay_number', 'bcu_number', 'load_number', 'truck_number', 'sap_id']
+        upsert_keys = ['event_time', 'bay_number', 'bcu_number', 'load_number', 'truck_number', 'sap_id', 'date']
         search_fields = ['event_time', 'bay_number', 'bcu_number', 'load_number', 'truck_number', 'sap_id']
 
 
@@ -5760,13 +5800,15 @@ class HostSuspectedLoads(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostSuspectedLoadsSchema
-        upsert_keys = ['event_time', 'bay_number', 'bcu_number', 'load_number', 'truck_number', 'sap_id']
+        upsert_keys = ['event_time', 'bay_number', 'bcu_number', 'load_number', 'truck_number', 'sap_id', 'date']
         search_fields = ['event_time', 'bay_number', 'bcu_number', 'load_number', 'truck_number', 'sap_id']
 
 
@@ -5794,8 +5836,10 @@ class HostPltDetailsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(transaction_number, mfm_number, stock, sap_id, name="host_plt_details_transaction_number_mfm_number_stock_sap_id"),)
+    __table_args__ = (UniqueConstraint(transaction_number, mfm_number, stock, sap_id, date, name="host_plt_details_trans_mfmnu_stock_sapid_date"),)
 
 
 class HostPltDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5816,13 +5860,15 @@ class HostPltDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostPltDetailsSchema
-        upsert_keys = ['transaction_number', 'mfm_number', 'stock', 'sap_id']
+        upsert_keys = ['transaction_number', 'mfm_number', 'stock', 'sap_id', 'date']
         search_fields = ['transaction_number', 'mfm_number', 'stock', 'sap_id']
 
 
@@ -5844,13 +5890,15 @@ class HostPltDetails(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostPltDetailsSchema
-        upsert_keys = ['transaction_number', 'mfm_number', 'stock', 'sap_id']
+        upsert_keys = ['transaction_number', 'mfm_number', 'stock', 'sap_id', 'date']
         search_fields = ['transaction_number', 'mfm_number', 'stock', 'sap_id']
 
 
@@ -5883,8 +5931,10 @@ class HostDayEndDetailsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(bay_number, bcu_number, stock, sap_id, name="host_day_end_details_bay_number_bcu_number_stock_sap_id"),)
+    __table_args__ = (UniqueConstraint(bay_number, bcu_number, stock, sap_id, date, name="host_day_end_details_bay_number_bcu_number_stock_sap_id_date"),)
 
 
 class HostDayEndDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5910,13 +5960,15 @@ class HostDayEndDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostDayEndDetailsSchema
-        upsert_keys = ['bay_number', 'bcu_number', 'stock', 'sap_id']
+        upsert_keys = ['bay_number', 'bcu_number', 'stock', 'sap_id', 'date']
         search_fields = ['bay_number', 'bcu_number', 'stock', 'sap_id']
 
 
@@ -5943,13 +5995,15 @@ class HostDayEndDetails(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostDayEndDetailsSchema
-        upsert_keys = ['bay_number', 'bcu_number', 'stock', 'sap_id']
+        upsert_keys = ['bay_number', 'bcu_number', 'stock', 'sap_id', 'date']
         search_fields = ['bay_number', 'bcu_number', 'stock', 'sap_id']
 
 
@@ -5969,8 +6023,10 @@ class HostDayEndSummarySchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(total_loaded_tts, total_sick_tts, total_cancelled_tts, sap_id, name="host_day_end_summary_total_total_total_sapid"),)
+    __table_args__ = (UniqueConstraint(total_loaded_tts, total_sick_tts, total_cancelled_tts, sap_id, date, name="host_day_end_summary_total_total_total_sapid_date"),)
 
 
 class HostDayEndSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5983,13 +6039,15 @@ class HostDayEndSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostDayEndSummarySchema
-        upsert_keys = ['total_loaded_tts', 'total_sick_tts', 'total_cancelled_tts', 'sap_id']
+        upsert_keys = ['total_loaded_tts', 'total_sick_tts', 'total_cancelled_tts', 'sap_id', 'date']
         search_fields = ['total_loaded_tts', 'total_cancelled_tts', 'total_sick_tts', 'sap_id']
 
 
@@ -6003,13 +6061,15 @@ class HostDayEndSummary(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostDayEndSummarySchema
-        upsert_keys = ['total_loaded_tts', 'total_sick_tts', 'total_cancelled_tts', 'sap_id']
+        upsert_keys = ['total_loaded_tts', 'total_sick_tts', 'total_cancelled_tts', 'sap_id', 'date']
         search_fields = ['total_loaded_tts', 'total_cancelled_tts', 'total_sick_tts', 'sap_id']
 
 
