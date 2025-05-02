@@ -1808,6 +1808,8 @@ Model HostKFactorChanges {
     location_name optional str
     zone optional str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -1944,6 +1946,8 @@ Model HostMFMFactor {
     location_name optional str
     zone optional str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -1959,6 +1963,8 @@ Model MasterStatus {
     location_name optional str
     zone optional str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -1979,6 +1985,8 @@ Model HostStandaloneTts {
     location_name optional str
     zone optional str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -1994,6 +2002,8 @@ Model HostTasUserDetails {
     location_name optional str
     zone optional str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -2010,6 +2020,8 @@ Model HostLiveTankDetails {
     location_name optional str
     zone optional str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -2028,6 +2040,8 @@ Model HostSuspectedLoads {
     location_name optional str
     zone optional str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -2051,6 +2065,8 @@ Model HostPltDetails {
     location_name optional str
     zone optional str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -2079,6 +2095,8 @@ Model HostDayEndDetails {
     location_name optional str
     zone optional str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -2095,6 +2113,8 @@ Model HostDayEndSummary {
     location_name optional str
     zone optional str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
