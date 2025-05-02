@@ -104,7 +104,7 @@ class TelemetryService:
 
         try:
             # Fetch the ThingsBoard URL for the given SAP ID
-            thingsboard_url = await get_thingsboard_url(site_id)
+            thingsboard_url = await get_thingsboard_url(str(site_id))
 
             # Load site data (assuming this is already implemented)
             site_data = await TelemetryService.load_site_data(site_id)
