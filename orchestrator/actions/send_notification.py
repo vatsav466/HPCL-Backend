@@ -15,6 +15,7 @@ import utilities.role_configuration as role_configuration
 import utilities.emlock_mapping as emlock_mapping
 import utilities.lpg_role_configuration as lpg_role_configuration
 import utilities.cris_alert_mapping as cris_alert_mapping
+import utilities.tas_role_configuration as tas_role_configuration
 from utilities.interlock_template_mapping import (
     InterlockTemplateMapping,
     TemplateMapping
@@ -145,7 +146,7 @@ class SendNotification:
         sap_id = self.alert_data.get("sap_id", "")
         message_type = self.params.get("messagetype")
         roles_list = ""
-        if self.alert_data.get("alert_section","") in ["VTS","RO"]:
+        if self.alert_data.get("alert_section","") in ["VTS","RO","TAS"]:
             roles_list = (await self._role_configuration_rolemailto() or "")
         elif self.alert_data.get("alert_section","") in ["VA","LPG","EMLock"]:
             roles_list = await self._get_va_roles_list()
@@ -661,7 +662,7 @@ class SendNotification:
         self.update_alert = getattr(self, "update_alert", {}) or {}
 
         assigning_roles = ""
-        if self.alert_data.get("alert_section","") in ["VTS","VA","LPG","EMLock","RO"]:
+        if self.alert_data.get("alert_section","") in ["VTS","VA","LPG","EMLock","RO","TAS"]:
             assigning_roles = (await self._role_configuration_mqofrole() or "")
         else:
             assigning_roles = self.params.get("mqofrole", "")
@@ -677,7 +678,7 @@ class SendNotification:
         print("self.update_alert ---> ", self.update_alert)
 
         if self.params.get("messagetype") in ["escalation", "escalate"]:
-            if self.alert_data.get("alert_section","") in ["VTS","RO"]:
+            if self.alert_data.get("alert_section","") in ["VTS","RO","TAS"]:
                 self.update_alert["last_escalated_to"] = (await self._role_configuration_rolemailto()).split(",")
             elif self.alert_data.get("alert_section", "") in ["VA","LPG","EMLock"]:
                 self.update_alert["last_escalated_to"] = (await self._get_va_roles_list()).split(",")
@@ -685,7 +686,7 @@ class SendNotification:
                 self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",")
             self.update_alert["action_msg"] = "Escalated to " + ", ".join(f"'{roles_name}'" for roles_name in self.update_alert["last_escalated_to"])
         else:
-            if self.alert_data.get("alert_section","") in ["VTS","RO"]:
+            if self.alert_data.get("alert_section","") in ["VTS","RO","TAS"]:
                 self.update_alert["last_notified_to"] = (await self._role_configuration_rolemailto()).split(",")
             elif self.alert_data.get("alert_section", "") in ["VA", "LPG", "EMLock"]:
                 self.update_alert["last_notified_to"] = (await self._get_va_roles_list()).split(",")
@@ -809,6 +810,12 @@ class SendNotification:
                 cris_mapping = cris_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
                 if mailto and mailto in ["0","1","2","3","4"]:
                     return cris_mapping.get(mailto,"")
+        
+        elif self.alert_data.get("alert_section","") in ["TAS"]:
+            tas_mapping = tas_role_configuration.tas_role_mapping[alert_section].get(interlock_name, {})
+            if mailto and mailto in ["0","1","2","3","4","5"]:
+                return tas_mapping["rolemailto"].get(mailto,"")
+            
         return mailto
     
     async def _role_configuration_mqofrole(self):
@@ -863,6 +870,13 @@ class SendNotification:
                 if mqof and mqof in ["0","1","2","3","4"]:
                     cris_mapping = cris_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
                     return cris_mapping.get(mqof,"")
+                
+        elif self.alert_data.get("alert_section","") in ["TAS"]:
+            interlock_name = self.alert_data.get("interlock_name","")
+            alert_section = self.alert_data.get("alert_section","")
+            tas_mapping = tas_role_configuration.tas_role_mapping[alert_section].get(interlock_name, {})
+            if mqof and mqof in ["0","1","2","3","4","5"]:
+                return tas_mapping["rolemailto"].get(mqof,"")
         
         return mqof
 

@@ -198,9 +198,6 @@
       <bpmndi:BPMNShape id="Event_1jx62fx_di" bpmnElement="Event_03ktp2f">
         <dc:Bounds x="1472" y="282" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1xln3dm_di" bpmnElement="Event_0brc4qr">
-        <dc:Bounds x="1472" y="122" width="36" height="36" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_0t5vxur" bpmnElement="Activity_1ju3q0w">
         <dc:Bounds x="1000" y="100" width="100" height="80" />
         <bpmndi:BPMNLabel />
@@ -250,7 +247,7 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0es62gh_di" bpmnElement="Flow_0es62gh">
         <di:waypoint x="1420" y="140" />
-        <di:waypoint x="1472" y="140" />
+        <di:waypoint x="1502" y="140" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_13dws13_di" bpmnElement="Flow_13dws13">
         <di:waypoint x="1210" y="300" />
