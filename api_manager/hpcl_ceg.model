@@ -1309,8 +1309,8 @@ Model VtsAlertHistory {
     vendor_id optional str
     location_id optional str
     location_type optional str
-    tl_number unique_field index_field str
-    report_duration unique_field optional str
+    tl_number index_field str
+    report_duration optional str
     vts_start_datetime optional datetime
     vts_end_datetime optional datetime
     total_trips optional int
@@ -1326,7 +1326,7 @@ Model VtsAlertHistory {
     approved_by optional str
     auto_unblock optional bool
     alert_id optional str
-    invoice_number optional unique_field index_field str
+    invoice_number optional index_field str
     tt_type optional str
     violation_type optional list str
 
@@ -1363,6 +1363,13 @@ Model VaAlertHistory {
     device_id optional str
     video_url optional str
     alert_timestamp optional datetime
+    status optional str
+    acknowledged_by optional str
+    closed_at optional datetime
+    action_description optional str
+    action_code optional str
+    action_reason optional str
+    action_category optional str
 
     Config=> {
         crud_operations='read'
@@ -1957,6 +1964,144 @@ Model MasterStatus {
         access_key_mapping=''
     }
 }
+
+Model HostStandaloneTts {
+    load_number optional unique_field int
+    created_date optional datetime
+    truck_number optional unique_field str
+    compartment_number optional unique_field int
+    bcu_number optional unique_field str
+    bay_number optional unique_field str
+    product_name optional unique_field str
+    required_qty optional unique_field int
+    loaded_qty optional unique_field int
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
+    alert_created optional bool
+
+    Config=> {
+        access_key_mapping=''
+        search_fields='load_number,truck_number,bcu_number,sap_id,product_name'
+    }
+}
+
+Model HostTasUserDetails {
+    user_name optional unique_field str
+    password_expiry_date optional unique_field  str
+    user_group optional unique_field str
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
+    alert_created optional bool
+
+    Config=> {
+        access_key_mapping=''
+        search_fields='user_name,user_group,password_expiry_date,sap_id'
+    }
+}
+
+Model HostLiveTankDetails {
+    tank_name optional unique_field str
+    tank_mode optional unique_field str
+    curr_level optional int
+    water_level optional int
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
+    alert_created optional bool
+
+    Config=> {
+        access_key_mapping=''
+        search_fields='tank_name,tank_name,sap_id'
+    }
+
+}
+
+Model HostSuspectedLoads {
+    event_time optional unique_field str
+    bay_number optional unique_field str
+    bcu_number optional unique_field str
+    load_number optional unique_field int
+    truck_number optional unique_field str
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
+    alert_created optional bool
+
+    Config=> {
+        access_key_mapping=''
+        search_fields='event_time,bay_number,bcu_number,load_number,truck_number,sap_id'
+    }
+}
+
+Model HostPltDetails {
+    transaction_number optional unique_field int
+    mfm_number optional unique_field str
+    stock optional unique_field str
+    trans_start_time optional datetime
+    trans_end_time optional datetime
+    cum_start_gross_vol_kl optional int
+    cum_end_gross_vol_kl optional int
+    cum_start_mass_mt optional int
+    cum_end_mass_mt optional int
+    uncorr_vol_kl optional int
+    mass_mt optional int
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
+    alert_created optional bool
+
+    Config=> {
+        access_key_mapping=''
+        search_fields='transaction_number,mfm_number,stock,sap_id'
+    }
+}
+
+Model HostDayEndDetails {
+    bay_number optional unique_field str
+    bcu_number optional unique_field str
+    stock optional unique_field str
+    bcu_start_totalizer optional int
+    bcu_end_totalizer optional int
+    bcu_net_totalizer optional int
+    mfm_start_totalizer optional int
+    mfm_end_totalizer optional int
+    mfm_net_totalizer optional int
+    invoiced_qty optional int
+    total_tl_qty_loaded optional int
+    bcu_mfm_net_totalizer_diff optional int
+    invoiced_total_tl_qty_diff optional int
+    invoiced_bcu_net_qty_diff optional int
+    topup_qty_local_mode optional int 
+    sampling_qty optional int
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
+    alert_created optional bool
+
+    Config=> {
+        access_key_mapping=''
+        search_fields='bay_number,bcu_number,stock,sap_id'
+    }
+    
+}
+
+Model HostDayEndSummary {
+    total_loaded_tts optional unique_field int
+    total_sick_tts optional unique_field int
+    total_cancelled_tts unique_field int
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
+    alert_created optional bool
+
+    Config=> {
+        access_key_mapping=''
+        search_fields='total_loaded_tts,total_cancelled_tts,total_sick_tts,sap_id'
+    }
+}
+
 
 Model TagsData {
     sap_id optional unique_field str

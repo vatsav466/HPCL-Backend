@@ -73,7 +73,7 @@ class CauseEffect:
             if not cause_exists:
                 new_effect_entry = {
                     "processed_time": processed_time.isoformat(),
-                    "allocated_time": last_processed_time,
+                    "allocated_time": last_processed_time if isinstance(last_processed_time, str) else last_processed_time.isoformat(),
                     "action_msg": f"Related Cause alert {interlock_name}",
                     "action_type": "Cause"
                 }
@@ -105,7 +105,7 @@ class CauseEffect:
             if not effect_exists:
                 new_cause_entry = {
                     "processed_time": processed_time.isoformat(),
-                    "allocated_time": last_processed_time,
+                    "allocated_time": last_processed_time if isinstance(last_processed_time, str) else last_processed_time.isoformat(),
                     "action_msg": f"Related Effect alert {effect_interlock_name}",
                     "action_type": "Effect"
                 }
@@ -175,7 +175,7 @@ class CauseEffect:
                 if not effect_exists:
                     new_entry = {
                         "processed_time": processed_time.isoformat(),
-                        "allocated_time": last_processed_time,
+                        "allocated_time": last_processed_time if isinstance(last_processed_time, str) else last_processed_time.isoformat(),
                         "action_msg": f"Related Effect alert {interlock_name}",
                         "action_type": "Effect"
                     }
@@ -215,7 +215,7 @@ class CauseEffect:
                 if not cause_exists and related_cause_interlock_name:
                     new_effect_entry = {
                         "processed_time": processed_time.isoformat(),
-                        "allocated_time": last_processed_time,
+                        "allocated_time": last_processed_time if isinstance(last_processed_time, str) else last_processed_time.isoformat(),
                         "action_msg": f"Related to Cause alert {related_cause_interlock_name}",
                         "action_type": "Cause"
                     }
