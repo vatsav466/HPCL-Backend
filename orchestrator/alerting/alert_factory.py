@@ -321,6 +321,7 @@ class AlertFactory:
                     await data_obj.modify()
                     logger.info(f"Closed alert with ID: {alert_data['alert_id']}")
                 except Exception as e:
+                    print(traceback.format_exc())
                     logger.error(f"Failed to close alert with ID {alert_data['alert_id']}: {e}")
                     return False, {"status": "Error", "message": f"Error closing alert: {str(e)}"}
                     
@@ -407,6 +408,7 @@ class AlertFactory:
                             alert_closed = True
                             logger.info(f"Closed alert with external ID: {alert_data['alert_id']}")
                     except Exception as e:
+                        print(traceback.format_exc())
                         logger.error(f"Error closing alert: {e}")
                         return False, {"status": "Error", "message": f"Error closing alert: {str(e)}"}
 

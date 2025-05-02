@@ -3205,8 +3205,6 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     violation_type: Mapped[typing.Optional[typing.List[str]]] = mapped_column("violation_type", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(tl_number, report_duration, invoice_number, name="vts_alert_history_tl_number_report_duration_invoice_number"),)
-
 
 class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'vts_alert_history'
@@ -3240,7 +3238,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = VtsAlertHistorySchema
-        upsert_keys = ['tl_number', 'report_duration', 'invoice_number']
+        upsert_keys = []
         access_key_mapping = ['location_id:sap_id']
 
 
@@ -3276,7 +3274,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = VtsAlertHistorySchema
-        upsert_keys = ['tl_number', 'report_duration', 'invoice_number']
+        upsert_keys = []
         access_key_mapping = ['location_id:sap_id']
 
 
@@ -3362,6 +3360,13 @@ class VaAlertHistorySchema(UrdhvaPostgresBase):
     device_id: Mapped[typing.Optional[str]] = mapped_column("device_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     video_url: Mapped[typing.Optional[str]] = mapped_column("video_url", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("alert_timestamp", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    acknowledged_by: Mapped[typing.Optional[str]] = mapped_column("acknowledged_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    closed_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closed_at", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    action_description: Mapped[typing.Optional[str]] = mapped_column("action_description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    action_code: Mapped[typing.Optional[str]] = mapped_column("action_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    action_reason: Mapped[typing.Optional[str]] = mapped_column("action_reason", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    action_category: Mapped[typing.Optional[str]] = mapped_column("action_category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class VaAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -3376,6 +3381,13 @@ class VaAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     device_id: typing.Optional[str] = pydantic.Field("", **{})
     video_url: typing.Optional[str] = pydantic.Field("", **{})
     alert_timestamp: typing.Optional[datetime.datetime] | None = None
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    acknowledged_by: typing.Optional[str] = pydantic.Field("", **{})
+    closed_at: typing.Optional[datetime.datetime] | None = None
+    action_description: typing.Optional[str] = pydantic.Field("", **{})
+    action_code: typing.Optional[str] = pydantic.Field("", **{})
+    action_reason: typing.Optional[str] = pydantic.Field("", **{})
+    action_category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -3398,6 +3410,13 @@ class VaAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     device_id: typing.Optional[str] = pydantic.Field("", **{})
     video_url: typing.Optional[str] = pydantic.Field("", **{})
     alert_timestamp: typing.Optional[datetime.datetime] | None = None
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    acknowledged_by: typing.Optional[str] = pydantic.Field("", **{})
+    closed_at: typing.Optional[datetime.datetime] | None = None
+    action_description: typing.Optional[str] = pydantic.Field("", **{})
+    action_code: typing.Optional[str] = pydantic.Field("", **{})
+    action_reason: typing.Optional[str] = pydantic.Field("", **{})
+    action_category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -5486,6 +5505,516 @@ class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
 
 class MasterStatusGetResp(pydantic.BaseModel):
     data: typing.List[MasterStatus]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class HostStandaloneTtsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'host_standalone_tts'
+    
+    load_number: Mapped[typing.Optional[int]] = mapped_column("load_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    created_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("created_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    truck_number: Mapped[typing.Optional[str]] = mapped_column("truck_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    compartment_number: Mapped[typing.Optional[int]] = mapped_column("compartment_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    bay_number: Mapped[typing.Optional[str]] = mapped_column("bay_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    product_name: Mapped[typing.Optional[str]] = mapped_column("product_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    required_qty: Mapped[typing.Optional[int]] = mapped_column("required_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    loaded_qty: Mapped[typing.Optional[int]] = mapped_column("loaded_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, bcu_number, bay_number, product_name, required_qty, loaded_qty, sap_id, name="host_standalone_tts_loadn_truck_compa_bcunu_baynu_produ_requi_"),)
+
+
+class HostStandaloneTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'host_standalone_tts'
+    
+    load_number: typing.Optional[int] = pydantic.Field(0, **{})
+    created_date: typing.Optional[datetime.datetime] | None = None
+    truck_number: typing.Optional[str] = pydantic.Field("", **{})
+    compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    bay_number: typing.Optional[str] = pydantic.Field("", **{})
+    product_name: typing.Optional[str] = pydantic.Field("", **{})
+    required_qty: typing.Optional[int] = pydantic.Field(0, **{})
+    loaded_qty: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostStandaloneTtsSchema
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'bcu_number', 'bay_number', 'product_name', 'required_qty', 'loaded_qty', 'sap_id']
+        search_fields = ['load_number', 'truck_number', 'bcu_number', 'sap_id', 'product_name']
+
+
+class HostStandaloneTts(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'host_standalone_tts'
+    
+    load_number: typing.Optional[int] = pydantic.Field(0, **{})
+    created_date: typing.Optional[datetime.datetime] | None = None
+    truck_number: typing.Optional[str] = pydantic.Field("", **{})
+    compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    bay_number: typing.Optional[str] = pydantic.Field("", **{})
+    product_name: typing.Optional[str] = pydantic.Field("", **{})
+    required_qty: typing.Optional[int] = pydantic.Field(0, **{})
+    loaded_qty: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostStandaloneTtsSchema
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'bcu_number', 'bay_number', 'product_name', 'required_qty', 'loaded_qty', 'sap_id']
+        search_fields = ['load_number', 'truck_number', 'bcu_number', 'sap_id', 'product_name']
+
+
+class HostStandaloneTtsGetResp(pydantic.BaseModel):
+    data: typing.List[HostStandaloneTts]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class HostTasUserDetailsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'host_tas_user_details'
+    
+    user_name: Mapped[typing.Optional[str]] = mapped_column("user_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    password_expiry_date: Mapped[typing.Optional[str]] = mapped_column("password_expiry_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    user_group: Mapped[typing.Optional[str]] = mapped_column("user_group", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(user_name, password_expiry_date, user_group, sap_id, name="host_tas_user_details_usern_passw_userg_sapid"),)
+
+
+class HostTasUserDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'host_tas_user_details'
+    
+    user_name: typing.Optional[str] = pydantic.Field("", **{})
+    password_expiry_date: typing.Optional[str] = pydantic.Field("", **{})
+    user_group: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostTasUserDetailsSchema
+        upsert_keys = ['user_name', 'password_expiry_date', 'user_group', 'sap_id']
+        search_fields = ['user_name', 'user_group', 'password_expiry_date', 'sap_id']
+
+
+class HostTasUserDetails(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'host_tas_user_details'
+    
+    user_name: typing.Optional[str] = pydantic.Field("", **{})
+    password_expiry_date: typing.Optional[str] = pydantic.Field("", **{})
+    user_group: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostTasUserDetailsSchema
+        upsert_keys = ['user_name', 'password_expiry_date', 'user_group', 'sap_id']
+        search_fields = ['user_name', 'user_group', 'password_expiry_date', 'sap_id']
+
+
+class HostTasUserDetailsGetResp(pydantic.BaseModel):
+    data: typing.List[HostTasUserDetails]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class HostLiveTankDetailsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'host_live_tank_details'
+    
+    tank_name: Mapped[typing.Optional[str]] = mapped_column("tank_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tank_mode: Mapped[typing.Optional[str]] = mapped_column("tank_mode", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    curr_level: Mapped[typing.Optional[int]] = mapped_column("curr_level", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    water_level: Mapped[typing.Optional[int]] = mapped_column("water_level", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(tank_name, tank_mode, sap_id, name="host_live_tank_details_tank_name_tank_mode_sap_id"),)
+
+
+class HostLiveTankDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'host_live_tank_details'
+    
+    tank_name: typing.Optional[str] = pydantic.Field("", **{})
+    tank_mode: typing.Optional[str] = pydantic.Field("", **{})
+    curr_level: typing.Optional[int] = pydantic.Field(0, **{})
+    water_level: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostLiveTankDetailsSchema
+        upsert_keys = ['tank_name', 'tank_mode', 'sap_id']
+        search_fields = ['tank_name', 'tank_name', 'sap_id']
+
+
+class HostLiveTankDetails(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'host_live_tank_details'
+    
+    tank_name: typing.Optional[str] = pydantic.Field("", **{})
+    tank_mode: typing.Optional[str] = pydantic.Field("", **{})
+    curr_level: typing.Optional[int] = pydantic.Field(0, **{})
+    water_level: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostLiveTankDetailsSchema
+        upsert_keys = ['tank_name', 'tank_mode', 'sap_id']
+        search_fields = ['tank_name', 'tank_name', 'sap_id']
+
+
+class HostLiveTankDetailsGetResp(pydantic.BaseModel):
+    data: typing.List[HostLiveTankDetails]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class HostSuspectedLoadsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'host_suspected_loads'
+    
+    event_time: Mapped[typing.Optional[str]] = mapped_column("event_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    bay_number: Mapped[typing.Optional[str]] = mapped_column("bay_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    load_number: Mapped[typing.Optional[int]] = mapped_column("load_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    truck_number: Mapped[typing.Optional[str]] = mapped_column("truck_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(event_time, bay_number, bcu_number, load_number, truck_number, sap_id, name="host_suspected_loads_event_baynu_bcunu_loadn_truck_sapid"),)
+
+
+class HostSuspectedLoadsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'host_suspected_loads'
+    
+    event_time: typing.Optional[str] = pydantic.Field("", **{})
+    bay_number: typing.Optional[str] = pydantic.Field("", **{})
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    load_number: typing.Optional[int] = pydantic.Field(0, **{})
+    truck_number: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostSuspectedLoadsSchema
+        upsert_keys = ['event_time', 'bay_number', 'bcu_number', 'load_number', 'truck_number', 'sap_id']
+        search_fields = ['event_time', 'bay_number', 'bcu_number', 'load_number', 'truck_number', 'sap_id']
+
+
+class HostSuspectedLoads(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'host_suspected_loads'
+    
+    event_time: typing.Optional[str] = pydantic.Field("", **{})
+    bay_number: typing.Optional[str] = pydantic.Field("", **{})
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    load_number: typing.Optional[int] = pydantic.Field(0, **{})
+    truck_number: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostSuspectedLoadsSchema
+        upsert_keys = ['event_time', 'bay_number', 'bcu_number', 'load_number', 'truck_number', 'sap_id']
+        search_fields = ['event_time', 'bay_number', 'bcu_number', 'load_number', 'truck_number', 'sap_id']
+
+
+class HostSuspectedLoadsGetResp(pydantic.BaseModel):
+    data: typing.List[HostSuspectedLoads]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class HostPltDetailsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'host_plt_details'
+    
+    transaction_number: Mapped[typing.Optional[int]] = mapped_column("transaction_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    mfm_number: Mapped[typing.Optional[str]] = mapped_column("mfm_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    stock: Mapped[typing.Optional[str]] = mapped_column("stock", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    trans_start_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("trans_start_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    trans_end_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("trans_end_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    cum_start_gross_vol_kl: Mapped[typing.Optional[int]] = mapped_column("cum_start_gross_vol_kl", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    cum_end_gross_vol_kl: Mapped[typing.Optional[int]] = mapped_column("cum_end_gross_vol_kl", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    cum_start_mass_mt: Mapped[typing.Optional[int]] = mapped_column("cum_start_mass_mt", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    cum_end_mass_mt: Mapped[typing.Optional[int]] = mapped_column("cum_end_mass_mt", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    uncorr_vol_kl: Mapped[typing.Optional[int]] = mapped_column("uncorr_vol_kl", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    mass_mt: Mapped[typing.Optional[int]] = mapped_column("mass_mt", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(transaction_number, mfm_number, stock, sap_id, name="host_plt_details_transaction_number_mfm_number_stock_sap_id"),)
+
+
+class HostPltDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'host_plt_details'
+    
+    transaction_number: typing.Optional[int] = pydantic.Field(0, **{})
+    mfm_number: typing.Optional[str] = pydantic.Field("", **{})
+    stock: typing.Optional[str] = pydantic.Field("", **{})
+    trans_start_time: typing.Optional[datetime.datetime] | None = None
+    trans_end_time: typing.Optional[datetime.datetime] | None = None
+    cum_start_gross_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
+    cum_end_gross_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
+    cum_start_mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
+    cum_end_mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
+    uncorr_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
+    mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostPltDetailsSchema
+        upsert_keys = ['transaction_number', 'mfm_number', 'stock', 'sap_id']
+        search_fields = ['transaction_number', 'mfm_number', 'stock', 'sap_id']
+
+
+class HostPltDetails(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'host_plt_details'
+    
+    transaction_number: typing.Optional[int] = pydantic.Field(0, **{})
+    mfm_number: typing.Optional[str] = pydantic.Field("", **{})
+    stock: typing.Optional[str] = pydantic.Field("", **{})
+    trans_start_time: typing.Optional[datetime.datetime] | None = None
+    trans_end_time: typing.Optional[datetime.datetime] | None = None
+    cum_start_gross_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
+    cum_end_gross_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
+    cum_start_mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
+    cum_end_mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
+    uncorr_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
+    mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostPltDetailsSchema
+        upsert_keys = ['transaction_number', 'mfm_number', 'stock', 'sap_id']
+        search_fields = ['transaction_number', 'mfm_number', 'stock', 'sap_id']
+
+
+class HostPltDetailsGetResp(pydantic.BaseModel):
+    data: typing.List[HostPltDetails]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class HostDayEndDetailsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'host_day_end_details'
+    
+    bay_number: Mapped[typing.Optional[str]] = mapped_column("bay_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    stock: Mapped[typing.Optional[str]] = mapped_column("stock", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    bcu_start_totalizer: Mapped[typing.Optional[int]] = mapped_column("bcu_start_totalizer", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    bcu_end_totalizer: Mapped[typing.Optional[int]] = mapped_column("bcu_end_totalizer", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    bcu_net_totalizer: Mapped[typing.Optional[int]] = mapped_column("bcu_net_totalizer", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    mfm_start_totalizer: Mapped[typing.Optional[int]] = mapped_column("mfm_start_totalizer", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    mfm_end_totalizer: Mapped[typing.Optional[int]] = mapped_column("mfm_end_totalizer", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    mfm_net_totalizer: Mapped[typing.Optional[int]] = mapped_column("mfm_net_totalizer", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    invoiced_qty: Mapped[typing.Optional[int]] = mapped_column("invoiced_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    total_tl_qty_loaded: Mapped[typing.Optional[int]] = mapped_column("total_tl_qty_loaded", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    bcu_mfm_net_totalizer_diff: Mapped[typing.Optional[int]] = mapped_column("bcu_mfm_net_totalizer_diff", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    invoiced_total_tl_qty_diff: Mapped[typing.Optional[int]] = mapped_column("invoiced_total_tl_qty_diff", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    invoiced_bcu_net_qty_diff: Mapped[typing.Optional[int]] = mapped_column("invoiced_bcu_net_qty_diff", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    topup_qty_local_mode: Mapped[typing.Optional[int]] = mapped_column("topup_qty_local_mode", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    sampling_qty: Mapped[typing.Optional[int]] = mapped_column("sampling_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(bay_number, bcu_number, stock, sap_id, name="host_day_end_details_bay_number_bcu_number_stock_sap_id"),)
+
+
+class HostDayEndDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'host_day_end_details'
+    
+    bay_number: typing.Optional[str] = pydantic.Field("", **{})
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    stock: typing.Optional[str] = pydantic.Field("", **{})
+    bcu_start_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    bcu_end_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    bcu_net_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    mfm_start_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    mfm_end_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    mfm_net_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    invoiced_qty: typing.Optional[int] = pydantic.Field(0, **{})
+    total_tl_qty_loaded: typing.Optional[int] = pydantic.Field(0, **{})
+    bcu_mfm_net_totalizer_diff: typing.Optional[int] = pydantic.Field(0, **{})
+    invoiced_total_tl_qty_diff: typing.Optional[int] = pydantic.Field(0, **{})
+    invoiced_bcu_net_qty_diff: typing.Optional[int] = pydantic.Field(0, **{})
+    topup_qty_local_mode: typing.Optional[int] = pydantic.Field(0, **{})
+    sampling_qty: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostDayEndDetailsSchema
+        upsert_keys = ['bay_number', 'bcu_number', 'stock', 'sap_id']
+        search_fields = ['bay_number', 'bcu_number', 'stock', 'sap_id']
+
+
+class HostDayEndDetails(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'host_day_end_details'
+    
+    bay_number: typing.Optional[str] = pydantic.Field("", **{})
+    bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    stock: typing.Optional[str] = pydantic.Field("", **{})
+    bcu_start_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    bcu_end_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    bcu_net_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    mfm_start_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    mfm_end_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    mfm_net_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    invoiced_qty: typing.Optional[int] = pydantic.Field(0, **{})
+    total_tl_qty_loaded: typing.Optional[int] = pydantic.Field(0, **{})
+    bcu_mfm_net_totalizer_diff: typing.Optional[int] = pydantic.Field(0, **{})
+    invoiced_total_tl_qty_diff: typing.Optional[int] = pydantic.Field(0, **{})
+    invoiced_bcu_net_qty_diff: typing.Optional[int] = pydantic.Field(0, **{})
+    topup_qty_local_mode: typing.Optional[int] = pydantic.Field(0, **{})
+    sampling_qty: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostDayEndDetailsSchema
+        upsert_keys = ['bay_number', 'bcu_number', 'stock', 'sap_id']
+        search_fields = ['bay_number', 'bcu_number', 'stock', 'sap_id']
+
+
+class HostDayEndDetailsGetResp(pydantic.BaseModel):
+    data: typing.List[HostDayEndDetails]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class HostDayEndSummarySchema(UrdhvaPostgresBase):
+    __tablename__ = 'host_day_end_summary'
+    
+    total_loaded_tts: Mapped[typing.Optional[int]] = mapped_column("total_loaded_tts", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    total_sick_tts: Mapped[typing.Optional[int]] = mapped_column("total_sick_tts", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    total_cancelled_tts: Mapped[int] = mapped_column("total_cancelled_tts", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(total_loaded_tts, total_sick_tts, total_cancelled_tts, sap_id, name="host_day_end_summary_total_total_total_sapid"),)
+
+
+class HostDayEndSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'host_day_end_summary'
+    
+    total_loaded_tts: typing.Optional[int] = pydantic.Field(0, **{})
+    total_sick_tts: typing.Optional[int] = pydantic.Field(0, **{})
+    total_cancelled_tts: int
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostDayEndSummarySchema
+        upsert_keys = ['total_loaded_tts', 'total_sick_tts', 'total_cancelled_tts', 'sap_id']
+        search_fields = ['total_loaded_tts', 'total_cancelled_tts', 'total_sick_tts', 'sap_id']
+
+
+class HostDayEndSummary(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'host_day_end_summary'
+    
+    total_loaded_tts: typing.Optional[int] = pydantic.Field(0, **{})
+    total_sick_tts: typing.Optional[int] = pydantic.Field(0, **{})
+    total_cancelled_tts: typing.Optional[int] | None = None
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    alert_created: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HostDayEndSummarySchema
+        upsert_keys = ['total_loaded_tts', 'total_sick_tts', 'total_cancelled_tts', 'sap_id']
+        search_fields = ['total_loaded_tts', 'total_cancelled_tts', 'total_sick_tts', 'sap_id']
+
+
+class HostDayEndSummaryGetResp(pydantic.BaseModel):
+    data: typing.List[HostDayEndSummary]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
 

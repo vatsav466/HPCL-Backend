@@ -14,6 +14,34 @@ RABBITMQ_PASSWORD = urdhva_base.settings.rabbitmq_password
 RABBITMQ_PREFIX_QUEUE = urdhva_base.settings.rabbitmq_queue
 BASE_URL = urdhva_base.settings.things_board_url
 
+THINGS_BOARD_CONFIG_PATH = "/opt/ceg/algo/things_board/device_data/things_board_config.json"
+
+
+async def get_thingsboard_url(sap_id):
+    """
+    Fetch the ThingsBoard URL for the given SAP ID from the configuration file.
+    If no URL is found, return the default base URL.
+
+    Args:
+        sap_id (str): The SAP ID to match.
+
+    Returns:
+        str: The ThingsBoard URL.
+    """
+    try:
+        async with aiofiles.open(THINGS_BOARD_CONFIG_PATH, "r") as file:
+            config_data = json.loads(await file.read())
+            credentials = config_data.get(sap_id)
+            if credentials:
+                print(f"Found ThingsBoard URL for SAP ID {sap_id}: {credentials['url']}")
+                return credentials["url"]
+            else:
+                print(f"No ThingsBoard URL found for SAP ID {sap_id}. Using default base URL.")
+                return BASE_URL
+    except Exception as e:
+        print(f"Error reading ThingsBoard configuration file: {e}. Using default base URL.")
+        return BASE_URL
+    
 
 class TelemetryService:
     """Handles telemetry data posting to ThingsBoard."""
@@ -38,11 +66,11 @@ class TelemetryService:
             return None
 
     @staticmethod
-    async def post_telemetry(device_key, sensor_type, value):
+    async def post_telemetry(device_key, sensor_type, value, thingsboard_url):
         """Post telemetry data to the ThingsBoard API."""
         headers = {"Content-Type": "application/json"}
         payload = {sensor_type: value}
-        telemetry_url = f"{BASE_URL}/api/v1/{device_key}/telemetry"
+        telemetry_url = f"{thingsboard_url}/api/v1/{device_key}/telemetry"
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(telemetry_url, json=payload, headers=headers, ssl=False) as response:
@@ -58,28 +86,50 @@ class TelemetryService:
 
     @staticmethod
     async def process_tags_data(location_id, tags_data, site_id):
-        """Process all tags and post telemetry for all devices."""
+        """
+        Process tags data and post telemetry to ThingsBoard.
+
+        Args:
+            location_id (str): The location ID.
+            tags_data (dict): The tags data to process.
+            site_id (str): The SAP ID (site ID).
+
+        Returns:
+            bool: True if all telemetry data is posted successfully, False otherwise.
+        """
+
         if location_id != site_id:
             print(f"Location ID {location_id} does not match SITE_ID {site_id}. Ignoring message.")
             return False
 
-        site_data = await TelemetryService.load_site_data(site_id)
-        if not site_data:
-            print(f"No site data found for SITE_ID {site_id}")
-            return False
+        try:
+            # Fetch the ThingsBoard URL for the given SAP ID
+            thingsboard_url = await get_thingsboard_url(str(site_id))
 
-        tasks = []
-        for component in site_data['data']:
-            device_key = component['device_key']
-            for sensor in component['sensors']:
-                tag_path = sensor['sensor_tag']
-                if tag_path in tags_data:
-                    value = tags_data[tag_path]
-                    tasks.append(TelemetryService.post_telemetry(device_key, sensor['sensor_name'], value))
-                else:
-                    print(f"No value found for TagPath: {tag_path} in message.")
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        return all(result is True for result in results)
+            # Load site data (assuming this is already implemented)
+            site_data = await TelemetryService.load_site_data(site_id)
+            if not site_data:
+                print(f"No site data found for site ID {site_id}.")
+                return False
+
+            tasks = []
+            for component in site_data['data']:
+                device_key = component.get('device_key')
+                for sensor in component['sensors']:
+                    tag_path = sensor['sensor_tag']
+                    if tag_path in tags_data:
+                        value = tags_data[tag_path]
+                        # Post telemetry using the fetched ThingsBoard URL
+                        tasks.append(TelemetryService.post_telemetry(device_key, sensor['sensor_name'], value, thingsboard_url))
+                    else:
+                        print(f"No value found for TagPath: {tag_path} in message.")
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            return all(result is True for result in results)
+        except Exception as e:
+            print(f"Error processing tags data: {e}")
+            return False
+            
+        
 
 async def rabbitmq_listener(sap_id):
     """Handles RabbitMQ connection and message listening asynchronously."""
@@ -118,7 +168,7 @@ async def rabbitmq_listener(sap_id):
             await asyncio.sleep(5)
 
 async def main():
-    sap_ids = ["1999", "1128", "1919", "1155", "1334"]  # Add all the SAP IDs you want to listen for
+    sap_ids = ["1999", "1128", "1919", "1155", "1334", "1216"]  # Add all the SAP IDs you want to listen for
     tasks = [rabbitmq_listener(sap_id) for sap_id in sap_ids]
     await asyncio.gather(*tasks)
 
