@@ -14,33 +14,33 @@ RABBITMQ_PASSWORD = urdhva_base.settings.rabbitmq_password
 RABBITMQ_PREFIX_QUEUE = urdhva_base.settings.rabbitmq_queue
 BASE_URL = urdhva_base.settings.things_board_url
 
-THINGS_BOARD_CONFIG_PATH = "/opt/ceg/algo/things_board/device_data/things_board_config.json"
+# THINGS_BOARD_CONFIG_PATH = "/opt/ceg/algo/things_board/device_data/things_board_config.json"
 
 
-async def get_thingsboard_url(sap_id):
-    """
-    Fetch the ThingsBoard URL for the given SAP ID from the configuration file.
-    If no URL is found, return the default base URL.
+# async def get_thingsboard_url(sap_id):
+#     """
+#     Fetch the ThingsBoard URL for the given SAP ID from the configuration file.
+#     If no URL is found, return the default base URL.
 
-    Args:
-        sap_id (str): The SAP ID to match.
+#     Args:
+#         sap_id (str): The SAP ID to match.
 
-    Returns:
-        str: The ThingsBoard URL.
-    """
-    try:
-        async with aiofiles.open(THINGS_BOARD_CONFIG_PATH, "r") as file:
-            config_data = json.loads(await file.read())
-            credentials = config_data.get(sap_id)
-            if credentials:
-                print(f"Found ThingsBoard URL for SAP ID {sap_id}: {credentials['url']}")
-                return credentials["url"]
-            else:
-                print(f"No ThingsBoard URL found for SAP ID {sap_id}. Using default base URL.")
-                return BASE_URL
-    except Exception as e:
-        print(f"Error reading ThingsBoard configuration file: {e}. Using default base URL.")
-        return BASE_URL
+#     Returns:
+#         str: The ThingsBoard URL.
+#     """
+#     try:
+#         async with aiofiles.open(THINGS_BOARD_CONFIG_PATH, "r") as file:
+#             config_data = json.loads(await file.read())
+#             credentials = config_data.get(sap_id)
+#             if credentials:
+#                 print(f"Found ThingsBoard URL for SAP ID {sap_id}: {credentials['url']}")
+#                 return credentials["url"]
+#             else:
+#                 print(f"No ThingsBoard URL found for SAP ID {sap_id}. Using default base URL.")
+#                 return BASE_URL
+#     except Exception as e:
+#         print(f"Error reading ThingsBoard configuration file: {e}. Using default base URL.")
+#         return BASE_URL
     
 
 class TelemetryService:
@@ -66,11 +66,11 @@ class TelemetryService:
             return None
 
     @staticmethod
-    async def post_telemetry(device_key, sensor_type, value, thingsboard_url):
+    async def post_telemetry(device_key, sensor_type, value):
         """Post telemetry data to the ThingsBoard API."""
         headers = {"Content-Type": "application/json"}
         payload = {sensor_type: value}
-        telemetry_url = f"{thingsboard_url}/api/v1/{device_key}/telemetry"
+        telemetry_url = f"{BASE_URL}/api/v1/{device_key}/telemetry"
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(telemetry_url, json=payload, headers=headers, ssl=False) as response:
@@ -104,7 +104,7 @@ class TelemetryService:
 
         try:
             # Fetch the ThingsBoard URL for the given SAP ID
-            thingsboard_url = await get_thingsboard_url(str(site_id))
+            #thingsboard_url = await get_thingsboard_url(str(site_id))
 
             # Load site data (assuming this is already implemented)
             site_data = await TelemetryService.load_site_data(site_id)
@@ -120,7 +120,7 @@ class TelemetryService:
                     if tag_path in tags_data:
                         value = tags_data[tag_path]
                         # Post telemetry using the fetched ThingsBoard URL
-                        tasks.append(TelemetryService.post_telemetry(device_key, sensor['sensor_name'], value, thingsboard_url))
+                        tasks.append(TelemetryService.post_telemetry(device_key, sensor['sensor_name'], value)) # pass thingsboard_url by calling get_thingsboard_url function if required  
                     else:
                         print(f"No value found for TagPath: {tag_path} in message.")
             results = await asyncio.gather(*tasks, return_exceptions=True)

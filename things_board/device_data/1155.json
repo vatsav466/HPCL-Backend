@@ -2,10 +2,10 @@
     "data": [
         {
             "device_name": "TK-01_BS VI MS@Roorkee",
-            "device_id": "e647f210-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "9f121270-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "dJkaQmMwfDaQ1AFRqJYM",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "ipm0OjQqwo03nQRSzbDp",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -191,10 +191,10 @@
         },
         {
             "device_name": "TK-02_BS VI MS@Roorkee",
-            "device_id": "e6ac8040-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "9f8df930-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "b8TjKpg7jz0vLSn9ZgZY",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "x0qKPnNfpfRX68arf3f4",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -380,10 +380,10 @@
         },
         {
             "device_name": "TK-03_ETHANOL@Roorkee",
-            "device_id": "e71fb470-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a0028cf0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "ufOajEyAUAnXhVqVUnHF",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "Xfk7pshvj6x88LljXai8",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -569,10 +569,10 @@
         },
         {
             "device_name": "TK-04_ETHANOL@Roorkee",
-            "device_id": "e78a0f00-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a07f3700-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "plR1qVtFmRdi9O4yG8pY",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "4rmvk8Gosfq1K4scupcj",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -758,10 +758,10 @@
         },
         {
             "device_name": "TK-05_BIO DIESEL@Roorkee",
-            "device_id": "e7ef6080-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a119c950-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "xA7JX3duDKOdmoDA9pC5",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "ahqaueWBf6AvbsTlarY5",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -947,10 +947,10 @@
         },
         {
             "device_name": "TK-06_ETHANOL@Roorkee",
-            "device_id": "e85219f0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a18dc0d0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "t1XebmsLldGFMXI3IPRp",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "Z2OwaJHSDUllDKwGhUxS",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1136,10 +1136,10 @@
         },
         {
             "device_name": "TK-07_SKO@Roorkee",
-            "device_id": "e8b48540-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a215b580-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "cAjqVIgeBCipqKkWFj6F",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "T46ePM13ktRsuMVmmkZn",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1325,10 +1325,10 @@
         },
         {
             "device_name": "TK-08_ETHANOL@Roorkee",
-            "device_id": "e91765c0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a28937d0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "czBmXQ6wLJhSykRzGY0N",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "c46ByjVpJSH2LgipcIr5",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1514,10 +1514,10 @@
         },
         {
             "device_name": "TK-09_BS VI HSD@Roorkee",
-            "device_id": "e97f7660-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a31683b0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "A0DgyGUWkyvp6IVORhbh",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "IBksqaXVQDC3ZuMqdGxW",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1703,10 +1703,10 @@
         },
         {
             "device_name": "TK-10_BS VI HSD@Roorkee",
-            "device_id": "e9ec9010-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a3a13780-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "RHXQyPX1oiUlqK1dfrQR",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "gJQPt6NyxeTVHv9L3sFi",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1892,10 +1892,10 @@
         },
         {
             "device_name": "TK-11_BS VI MS@Roorkee",
-            "device_id": "ea564e60-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a4115e70-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "UrePIyPXO0M0MbF7hWXZ",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "aRPry4HomPUl6TBgirjP",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2081,10 +2081,10 @@
         },
         {
             "device_name": "TK-12_BS VI MS@Roorkee",
-            "device_id": "eac67550-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a48221a0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "vBYXayTBouCDnxUTHXzN",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "axVQAQf9GbZ7pKkTdyUK",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2270,10 +2270,10 @@
         },
         {
             "device_name": "TK-13_WATER@Roorkee",
-            "device_id": "eb32f2c0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a4f8ff50-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "ThedCzL6vwGGBNcbBY9X",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "7kyUfnGoNz1bYk9WDQss",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2459,10 +2459,10 @@
         },
         {
             "device_name": "TK-14_WATER@Roorkee",
-            "device_id": "eb99a3d0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a5788f90-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "EZXrXFXjZ7W0wyfqb015",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "RBkufJ9oQzf5bOELnN8w",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2648,10 +2648,10 @@
         },
         {
             "device_name": "TK-15_BS VI MS@Roorkee",
-            "device_id": "ec0a6700-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a5ee82e0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "RTWlLDBjbutZKZmgjjAN",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "sT30LQl47REUe596sRIo",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2837,10 +2837,10 @@
         },
         {
             "device_name": "TK-16_BS VI MS@Roorkee",
-            "device_id": "ec73fe40-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a65e0d90-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "6pQxxKJ3Sk8AQHsMqwlN",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "L0RcYz45TycVoMaB1x9o",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3026,10 +3026,10 @@
         },
         {
             "device_name": "TK-17_BS VI HSD@Roorkee",
-            "device_id": "ecde58d0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a6cd7130-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank",
-            "device_key": "bIguYZjfFFJUtnkwsGlW",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "REz8PdCV4zYrwEMimooL",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3215,10 +3215,10 @@
         },
         {
             "device_name": "TK-01_BS VI MS@Roorkee_M",
-            "device_id": "ed433520-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a7481f70-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "SYfZKrgnQI7T9UlQTmKF",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "ejnoiFNtvD4nFgFymTRk",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -3304,10 +3304,10 @@
         },
         {
             "device_name": "TK-02_BS VI MS@Roorkee_M",
-            "device_id": "eda83880-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a7cda320-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "n8iQWeeuPvMUKNBzO3gD",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "ESJE3MRG4RPNGpoogY3n",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -3393,10 +3393,10 @@
         },
         {
             "device_name": "TK-03_ETHANOL@Roorkee_M",
-            "device_id": "ee1970e0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a861ccd0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "m0GC4rRKsxuMnjdlU4PA",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "o08vk6IoDZ3Hm9qSwzSb",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -3482,10 +3482,10 @@
         },
         {
             "device_name": "TK-04_ETHANOL@Roorkee_M",
-            "device_id": "ee7facc0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a8d8f8a0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "M3ouPMgxYFcJG0n3ywkz",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "NslSjUcP2pKsxGDPKeZj",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -3571,10 +3571,10 @@
         },
         {
             "device_name": "TK-05_BIO DIESEL@Roorkee_M",
-            "device_id": "eef551f0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a94ec4e0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "PkuqmkiJBSCFdNcBlDaO",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "pFSQWqBBvnxraFTvrKVG",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -3660,10 +3660,10 @@
         },
         {
             "device_name": "TK-06_ETHANOL@Roorkee_M",
-            "device_id": "ef67c2d0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "a9c63ed0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "MbeETqZqBQWm6ufID2rE",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "s9xDRC3a86eVAzkqe6GV",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -3749,10 +3749,10 @@
         },
         {
             "device_name": "TK-07_SKO@Roorkee_M",
-            "device_id": "efd77490-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "aa5f2370-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "DydMeevAvs5de3X9XKGR",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "U50mqZTTp0mtf3lpjamA",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -3838,10 +3838,10 @@
         },
         {
             "device_name": "TK-08_ETHANOL@Roorkee_M",
-            "device_id": "f03b8d90-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "aad53dd0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "v91LXs3vu1wrDsrvD8pI",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "pbfD0XkZrXRJypZ1X1ZU",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -3927,10 +3927,10 @@
         },
         {
             "device_name": "TK-09_BS VI HSD@Roorkee_M",
-            "device_id": "f0a12d30-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "ab4cb7c0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "1KcAxkLFzzy349ODmcIj",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "leIa6fJoZ4HYJy7eSUHZ",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4016,10 +4016,10 @@
         },
         {
             "device_name": "TK-10_BS VI HSD@Roorkee_M",
-            "device_id": "f10fcd80-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "abc36e60-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "suc86qhPqSlcNsx17ZJU",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "X1HWkBvRTdhFYRTTNRZv",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4105,10 +4105,10 @@
         },
         {
             "device_name": "TK-11_BS VI MS@Roorkee_M",
-            "device_id": "f17964c0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "ac3961b0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "ZGZ68iZCysK1cSJLiQg7",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "xOQ17xzXxiUD2BYmR8mO",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4194,10 +4194,10 @@
         },
         {
             "device_name": "TK-12_BS VI MS@Roorkee_M",
-            "device_id": "f1e741c0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "acbd10a0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "lnUQmkcnsxnge7VH2ubC",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "JXI62DNyaLI8Pl9e2POx",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4283,10 +4283,10 @@
         },
         {
             "device_name": "TK-13_WATER@Roorkee_M",
-            "device_id": "f2495ef0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "ad396c90-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "PZQ51ScgPjcj5fNUnpuf",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "VEfhOue76iDkd4TPoM4i",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4372,10 +4372,10 @@
         },
         {
             "device_name": "TK-14_WATER@Roorkee_M",
-            "device_id": "f2ab7c20-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "adaaa4f0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "n5bvXUl6Zq5luLt7sXQw",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "qKu3HNoWJAnOrrUAlf5p",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4461,10 +4461,10 @@
         },
         {
             "device_name": "TK-15_BS VI MS@Roorkee_M",
-            "device_id": "f314ec50-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "ae1d15d0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "FH52V1t2dMuh0aWdAGsp",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "HnU8kjgTvSyMHTsDDyw8",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4550,10 +4550,10 @@
         },
         {
             "device_name": "TK-16_BS VI MS@Roorkee_M",
-            "device_id": "f377f3e0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "ae95c840-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "oMsVfQwZfsZ0iBh65hUU",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "jYufIuViziy3cgwwcESD",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4639,10 +4639,10 @@
         },
         {
             "device_name": "TK-17_BS VI HSD@Roorkee_M",
-            "device_id": "f3def310-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "af3e3d40-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Tank Maintenance",
-            "device_key": "1WI41wZlzqUIfMZbt5vd",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "NJz4wFvvp0c03UsdYdL0",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4728,10 +4728,10 @@
         },
         {
             "device_name": "ADTV-PMP-01_POWERMS@Roorkee",
-            "device_id": "f4483c30-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "afcaece0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "5MfqV7wn78GpvFOtSIPg",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "Fh0qK6FG5vQZcrJFGBXW",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -4757,10 +4757,10 @@
         },
         {
             "device_name": "ADTV-PMP-02_POWERMS@Roorkee",
-            "device_id": "f4b79fd0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b03b8900-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "7P1lJdjFj33HZNra3LOq",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "WTu0LoABORHgbG7nGR8b",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -4786,10 +4786,10 @@
         },
         {
             "device_name": "ADTV-PMP-03_TURBOHSD@Roorkee",
-            "device_id": "f51bb8d0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b0c77550-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "MwK3KLbMd5gkesEXPefH",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "Mtqk6OUBzvO75F9ynwbQ",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -4815,10 +4815,10 @@
         },
         {
             "device_name": "ADTV-PMP-04_TURBOHSD@Roorkee",
-            "device_id": "f5997450-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b14d6e30-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "nRo4UmC6ekasegBC9F9d",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "jMi0AKK1Bt5FkraU68XT",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -4844,10 +4844,10 @@
         },
         {
             "device_name": "ADTV-PMP-05_BLUE DYE@Roorkee",
-            "device_id": "f5fe2990-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b2021830-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "UHPDMkRcMWJX1doGfzzQ",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "TSnnKnPCOeQsqr9OYBcE",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -4873,10 +4873,10 @@
         },
         {
             "device_name": "ADTV-PMP-06_BLUE DYE@Roorkee",
-            "device_id": "f66772b0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b297a170-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "J4jOpyLnXzahZmH34NfI",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "RiVKjYox0s5wI4vBL4Zn",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -4902,10 +4902,10 @@
         },
         {
             "device_name": "PMP-01_BS VI HSD@Roorkee",
-            "device_id": "f6e88990-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b30138b0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "P7pzUwPK5VIS1oAk2Rfi",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "LDBnB4WcsNchpPC7YhQ3",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -4931,10 +4931,10 @@
         },
         {
             "device_name": "PMP-02_BS VI HSD@Roorkee",
-            "device_id": "f75491d0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b37fb780-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "ilrXif2kun0HkcExsxY9",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "ZdLRvzO5QWjyorI3Oxa4",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -4960,10 +4960,10 @@
         },
         {
             "device_name": "PMP-03_BS VI HSD@Roorkee",
-            "device_id": "f7d8b5f0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b40d5180-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "dpnU8PkI7iDNVqKZV4bT",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "Tw81ESwlSerq4oCTuuO4",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -4989,10 +4989,10 @@
         },
         {
             "device_name": "PMP-04_BS VI MS@Roorkee",
-            "device_id": "f847a460-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b482a890-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "gwr9Aqkuj4kdC3f3291G",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "pOmPOFxdQe8chGP1T4vA",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5018,10 +5018,10 @@
         },
         {
             "device_name": "PMP-05_BS VI MS@Roorkee",
-            "device_id": "f8ac80b0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b513c500-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "6dE4xcOp9clKRRBQxSYf",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "8vwU1g73fsBhW3aPiNV6",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5047,10 +5047,10 @@
         },
         {
             "device_name": "PMP-06_BS VI MS@Roorkee",
-            "device_id": "f93782a0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b58105c0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "2kv6fiEAtGjWXx25RbZd",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "1ReEk0Nv899mLLeBAMHw",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5076,10 +5076,10 @@
         },
         {
             "device_name": "PMP-07_BS VI HSD@Roorkee",
-            "device_id": "f9a38ae0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b5faa290-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "6jDxRcbZOaDBJwu5UHQe",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "1Z542Ng4oAeKnbZy4vt6",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5105,10 +5105,10 @@
         },
         {
             "device_name": "PMP-08_BS VI HSD@Roorkee",
-            "device_id": "fa30fdd0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b67db540-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "NBDYS5bICx0Q9xJtmmA8",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "hKma8xs7ZHTautGyacKH",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5134,10 +5134,10 @@
         },
         {
             "device_name": "PMP-09_BS VI HSD@Roorkee",
-            "device_id": "fa962840-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b6f33360-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "Ezc2C9TO0gXAHEf6HIZZ",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "h8SdgrObPa0eZiMKZxVv",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5163,10 +5163,10 @@
         },
         {
             "device_name": "PMP-10_BS VI HSD@Roorkee",
-            "device_id": "fb03b720-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b7681540-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "jsfucipsN7uYnBY46iGh",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "hPuOSQ6jGjIgPmLbDytw",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5192,10 +5192,10 @@
         },
         {
             "device_name": "PMP-11_BS VI MS@Roorkee",
-            "device_id": "fb9fa900-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b7d8ff80-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "6MmKrC9NHGCAPwUQeNAk",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "mzMnbbHsTYXiJcYDA0cw",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5221,10 +5221,10 @@
         },
         {
             "device_name": "PMP-12_BS VI MS@Roorkee",
-            "device_id": "fc023b60-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b86253c0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "kk7QAeiTJQif5UIvg5hZ",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "KzyyorjKJ1hKRY5h74ta",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5250,10 +5250,10 @@
         },
         {
             "device_name": "PMP-13_BS VI MS@Roorkee",
-            "device_id": "fc6961a0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b8e650d0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "n5tyLqkFDkvbnk2gl5fb",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "yETsg7rlgil35v1U0CZt",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5279,10 +5279,10 @@
         },
         {
             "device_name": "PMP-14_BS VI MS@Roorkee",
-            "device_id": "fcd087e0-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b96f7e00-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "eWhnlSge2XOELaenw1wT",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "xyDAlZ4nTJzVPyCNl37U",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5308,10 +5308,10 @@
         },
         {
             "device_name": "PMP-15_BS VI HSD@Roorkee",
-            "device_id": "fd351610-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "b9fddb50-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "14EYCkESikD6jzVoTFMA",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "gM6OWCX0NDIRxzA1RTwA",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5337,10 +5337,10 @@
         },
         {
             "device_name": "PMP-16_BS VI HSD@Roorkee",
-            "device_id": "fda82330-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "ba7a8560-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "uoIwjygphtIfZSJKvujI",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "UGEWnD6vdtAjGmNPiuPg",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5366,10 +5366,10 @@
         },
         {
             "device_name": "PMP-17_ETHANOL@Roorkee",
-            "device_id": "fe0f2260-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "bb195d70-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "Y4XZTvhWqGVVxxVNthAF",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "GVQYBgjhIaMlARg6yeOU",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5395,10 +5395,10 @@
         },
         {
             "device_name": "PMP-18_ETHANOL@Roorkee",
-            "device_id": "fe825690-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "bb8fc5f0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "P2N1E4FxRJpF68WNHQkB",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "uwddI5VW5Y8z0fi8ZxWr",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5424,10 +5424,10 @@
         },
         {
             "device_name": "PMP-19_BS VI HSD@Roorkee",
-            "device_id": "fee9f200-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "bc0e44c0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "jADAyJINDXkahErRl9G4",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "A9m2o8UQj3Oo9sW9JNki",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5453,10 +5453,10 @@
         },
         {
             "device_name": "PMP-20_BS VI HSD@Roorkee",
-            "device_id": "ff4f6a90-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "bc7b8580-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "dqIGANY7rj9AqIfFUQRw",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "CHYkavIskcTqX2v1OE0D",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5482,10 +5482,10 @@
         },
         {
             "device_name": "PMP-21_BS IV HSD@Roorkee",
-            "device_id": "ffb04f40-20cb-11f0-82ca-03bdbba508c1",
+            "device_id": "bcee4480-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "mr6RY1eyZYEypA7a0PkX",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "Xy6DwIzsBTi9eNeJSxeX",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5511,10 +5511,10 @@
         },
         {
             "device_name": "PMP-22_BS VI MS@Roorkee",
-            "device_id": "0015eee0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "bd77bfd0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "2h5qXcOfYkXYuzMa9RSC",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "0dTdOqDXFSJrEU1W1RuV",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5540,10 +5540,10 @@
         },
         {
             "device_name": "PMP-23_BS VI MS@Roorkee",
-            "device_id": "008181f0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "bde8f830-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "aqO805XZrf0rQzF1L4F1",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "8XLf8nTbQbFNLJg3Dmw2",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5569,10 +5569,10 @@
         },
         {
             "device_name": "PMP-24_SKO@Roorkee",
-            "device_id": "00f70010-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "be6b4790-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "oZVHiSff3a5TXSf3DvK1",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "eiaS7iTytjVT3ssICGxk",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5598,10 +5598,10 @@
         },
         {
             "device_name": "PMP-25_SKO@Roorkee",
-            "device_id": "01681160-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "beeab0c0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "Ms7OpIeXAEphCpI63nPK",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "feIjXrhwFaz7HfvoVqdQ",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5627,10 +5627,10 @@
         },
         {
             "device_name": "PMP-26_ETHANOL@Roorkee",
-            "device_id": "01cc9f90-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "bf79aa50-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "jnTCU2J0p2ebGvb2fOzJ",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "JaZp3FQXNH9E9LiHARAD",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5656,10 +5656,10 @@
         },
         {
             "device_name": "PMP-27_ETHANOL@Roorkee",
-            "device_id": "023ec250-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c051e1e0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "cbs4eKayJUJCELvlqlti",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "svxnoMwFzfn7NoGkUR1M",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5685,10 +5685,10 @@
         },
         {
             "device_name": "PMP-28_ETHANOL@Roorkee",
-            "device_id": "02b1cf70-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c0dc6ea0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "mEUIRwr86U439G4nGJ3y",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "I4upJVL8bfyXLzIlzRZj",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5714,10 +5714,10 @@
         },
         {
             "device_name": "PMP-29_ETHANOL@Roorkee",
-            "device_id": "032ad000-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c17a5c50-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "sUhnYTFj5Fy82Gp3tk85",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "JFwejsE42H2NPoOJp52B",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5743,10 +5743,10 @@
         },
         {
             "device_name": "PMP-30_ETHANOL@Roorkee",
-            "device_id": "0399e580-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c1f0ebe0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "6rafxExktOirUddTCMkl",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "etFA9rqtYCo52tUOhHHm",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5772,10 +5772,10 @@
         },
         {
             "device_name": "PMP-IOCL-01_BS VI MS@Roorkee",
-            "device_id": "0404b540-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c269ec70-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "LsTCVr5YIpFlviPMoSHk",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "MMLaEggQBKbJsiCUDCOV",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5801,10 +5801,10 @@
         },
         {
             "device_name": "PMP-IOCL-02_BS VI MS@Roorkee",
-            "device_id": "04799720-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c2e955a0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "68vXu2gLzzM6o3cRW7Mc",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "dTjHQ4OPxJdA1u9FpS9f",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5830,10 +5830,10 @@
         },
         {
             "device_name": "PMP-IOCL-03_BS VI HSD@Roorkee",
-            "device_id": "04e29220-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c35e5e90-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "U5sUQ5Hx0F2JzNJwilWk",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "e6Psm968fKsz1BLMfiws",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5859,10 +5859,10 @@
         },
         {
             "device_name": "PMP-IOCL-04_BS VI HSD@Roorkee",
-            "device_id": "054e9a60-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c3ddc7c0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Pump",
-            "device_key": "rEl3NekLRpudCdYTHudC",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "CVq4MPlvGFxlvsE9XJvl",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5888,10 +5888,10 @@
         },
         {
             "device_name": "FWP-01_Water@Roorkee",
-            "device_id": "05bc7760-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c460b360-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Fire Pump",
-            "device_key": "ra4YZJr7R4wJEbfaEkQT",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "Mu0UwWF77rccGKea2DwP",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5952,10 +5952,10 @@
         },
         {
             "device_name": "FWP-02_Water@Roorkee",
-            "device_id": "06276e30-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c4d80640-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Fire Pump",
-            "device_key": "e0S8ggK2im4Aq4QYfgbO",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "xQEzP7hOOeR6Fnke4Len",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6016,10 +6016,10 @@
         },
         {
             "device_name": "JCY-01_Jockey@Roorkee",
-            "device_id": "0693eba0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c5498cc0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Fire Pump",
-            "device_key": "1B9eerHsLOduIJN273P4",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "QEf2QrCfwjJQ4mNV8Dt8",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6080,10 +6080,10 @@
         },
         {
             "device_name": "JCY-02_Jockey@Roorkee",
-            "device_id": "07152990-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c5bdab50-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Fire Pump",
-            "device_key": "DBQM7wUlAKN0kjYDEBaE",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "atWXe1fbBF6ytiQAKRS4",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6144,10 +6144,10 @@
         },
         {
             "device_name": "Farthest Point PT_WATER Pressure_Near Tank no. 01@Roorkee",
-            "device_id": "c7b876b0-241a-11f0-bffc-8db61e26e13b",
+            "device_id": "c6c70500-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Fire Pump",
-            "device_key": "jWyhtb2rE1NVquc2nnYc",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "F8Yy2IhYPkO0cksfgkys",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6208,10 +6208,10 @@
         },
         {
             "device_name": "Nearest Point PT_WATER Pressure_FWP pump house@Roorkee",
-            "device_id": "c8363230-241a-11f0-bffc-8db61e26e13b",
+            "device_id": "c73b71b0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Fire Pump",
-            "device_key": "A9VnX3gbXrBjaOTtL1NA",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "JG8V5mgkoMVxk3nDembf",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6272,10 +6272,10 @@
         },
         {
             "device_name": "UPS-01_CR - Process@Roorkee",
-            "device_id": "077e72b0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c7c78510-273f-11f0-b475-bbbb14fdc372",
             "device_type": "UPS",
-            "device_key": "qU08TOM0zxiGeoQuWgaA",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "ppDRZ7CBTHvEXvtYw47b",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "UPS FAIL",
@@ -6301,10 +6301,10 @@
         },
         {
             "device_name": "UPS-02_CR - Process@Roorkee",
-            "device_id": "07eb3e40-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c8447d40-273f-11f0-b475-bbbb14fdc372",
             "device_type": "UPS",
-            "device_key": "fVDxuscLPp88R82trDAI",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "xvOdpDEKifNnSsG9I2YC",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "UPS FAIL",
@@ -6330,10 +6330,10 @@
         },
         {
             "device_name": "GEPLC_Process PLC@Roorkee",
-            "device_id": "0851a130-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c8cdf890-273f-11f0-b475-bbbb14fdc372",
             "device_type": "PLC",
-            "device_key": "KAssO6K9oK6SEkVldZXQ",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "xqCwjB5nDjd4CF9TlZLi",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PLC A IS MASTER",
@@ -6380,10 +6380,10 @@
         },
         {
             "device_name": "SFT PLC_Safety PLC@Roorkee",
-            "device_id": "08be45b0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c94b17d0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "PLC",
-            "device_key": "C848Hfq4mlrmYii5szrs",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "Ap3U3pMVkXbnYL43YQgv",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "PLC A IS MASTER",
@@ -6430,10 +6430,10 @@
         },
         {
             "device_name": "HDS-01_HCD-OPENED-TYP1_TANKFARM TK11 12 MS@Roorkee",
-            "device_id": "094c54e0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "c9c26ab0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "HCD",
-            "device_key": "qYgc4oDtug23nLBg72S6",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "j741hSOPGFSEKX9DlWqZ",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -6469,10 +6469,10 @@
         },
         {
             "device_name": "HDS-02_HCD-OPENED-TYP2_TTL PUM HOUSE@Roorkee",
-            "device_id": "09c1fa10-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "ca49c320-273f-11f0-b475-bbbb14fdc372",
             "device_type": "HCD",
-            "device_key": "ELvVsqT0pqrop1c3tP7f",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "n4HPGiX6LsIaJD9DRVFF",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -6508,10 +6508,10 @@
         },
         {
             "device_name": "HDS-03_HCD-OPENED-TYP3_PLT PUMP HOUSE@Roorkee",
-            "device_id": "0a370300-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "cadf2550-273f-11f0-b475-bbbb14fdc372",
             "device_type": "HCD",
-            "device_key": "igVFLUStr3HhYGh9fLTS",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "QD5dM2OZY6a1ItX2v4E2",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -6547,10 +6547,10 @@
         },
         {
             "device_name": "HDS-04_HCD-FIXED-TYP1_TANKFARM TK-11 MS@Roorkee",
-            "device_id": "0aa13680-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "cb540730-273f-11f0-b475-bbbb14fdc372",
             "device_type": "HCD",
-            "device_key": "lSOARj7eKDGzcQYZxb9C",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "LcVvKiRP5N1zwVPqx7Wl",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -6586,10 +6586,10 @@
         },
         {
             "device_name": "HDS-07_HCD-FIXED-TYP4_TLF PUMP HOUSE@Roorkee",
-            "device_id": "0b0c5460-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "cbe54ab0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "HCD",
-            "device_key": "mFnyVJXic8V9BWBqZmOh",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "m7cq4PyPylwgt9TCZVZf",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -6625,10 +6625,10 @@
         },
         {
             "device_name": "HDS-08_HCD-OPEN-TYPE_NEAR TANK-8@Roorkee",
-            "device_id": "0b729040-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "cc5c4f70-273f-11f0-b475-bbbb14fdc372",
             "device_type": "HCD",
-            "device_key": "LwnEKMyhE9CVR8l2Dolx",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "C23g1FPktwXjP4q3b7g8",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -6664,10 +6664,10 @@
         },
         {
             "device_name": "HDS-09_HCD-FIXED-TYPE_NEAR TANK-8@Roorkee",
-            "device_id": "0bd856f0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "cce30ba0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "HCD",
-            "device_key": "AfvCr8x3gTlT4rVRzTr7",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "GwUSWITn2nX10EtAHFg7",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -6703,10 +6703,10 @@
         },
         {
             "device_name": "DV-01@Roorkee",
-            "device_id": "0c3e92d0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "cd58fef0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Dyke",
-            "device_key": "nZSabWjeYhoBi5mI0UAO",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "n6ziwuquX7JpYpREH37N",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -6722,10 +6722,10 @@
         },
         {
             "device_name": "DV-02@Roorkee",
-            "device_id": "0ca2f9f0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "cdd078e0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Dyke",
-            "device_key": "s4PsHJlTjVg83jgHg4ix",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "38YRdfLEEsrTwNSXMaMJ",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -6741,10 +6741,10 @@
         },
         {
             "device_name": "EntryGate@Roorkee",
-            "device_id": "0d2919e0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "ce525310-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Barrier Gate",
-            "device_key": "9R7XRx9chD1Su7u1ZDir",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "VmHRa0k7Hxugb67cQLPa",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "BARRIER GATE OPEN STATUS",
@@ -6765,10 +6765,10 @@
         },
         {
             "device_name": "ExitGate@Roorkee",
-            "device_id": "0d8da810-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "ceca4230-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Barrier Gate",
-            "device_key": "cyKVtAbq118Rrv0QMquJ",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "l7R2tY0L50Pf96e5BBA5",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "BARRIER GATE OPEN STATUS",
@@ -6789,10 +6789,10 @@
         },
         {
             "device_name": "HOOTER1_ANY_HOOTER_FOR_HCD_FIELD@Roorkee",
-            "device_id": "0df4ce50-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "cf3d9d70-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Hooter",
-            "device_key": "OW2ejdzAhK99EVIHos3W",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "cVKtLAbtFNBAl3tPd96a",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -6803,10 +6803,10 @@
         },
         {
             "device_name": "HOOTER2_ACK_STATUS@Roorkee",
-            "device_id": "0e590e60-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "cfabefa0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Hooter",
-            "device_key": "hnuvI1hyoK10ivbgCRHV",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "HQJJ6A5zmO8coue3b6zN",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -6817,10 +6817,10 @@
         },
         {
             "device_name": "HOOTER3_FIELD_1@Roorkee",
-            "device_id": "0eba4130-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d01b5340-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Hooter",
-            "device_key": "y6BTXpRm3jkGkil45U1y",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "dTnxe0AIdoP5uxiQqmos",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -6831,10 +6831,10 @@
         },
         {
             "device_name": "HOOTER4_FIELD_2@Roorkee",
-            "device_id": "0f1d6fd0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d0914690-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Hooter",
-            "device_key": "dW040hgxzwzOgQ0GMsyq",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "4L0haPwArsaJdvXQFEDw",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -6845,10 +6845,10 @@
         },
         {
             "device_name": "HOOTER5_FIELD_3@Roorkee",
-            "device_id": "0f800230-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d10739e0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Hooter",
-            "device_key": "J7LqZY9hVjTAkBAKr5Gs",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "pmu8kpsuk09mGsx3zyu7",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -6859,10 +6859,10 @@
         },
         {
             "device_name": "HOOTER6_FOR_ESD_CR@Roorkee",
-            "device_id": "0fe46950-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d17b0a50-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Hooter",
-            "device_key": "U7YQp7fyxmFmScVb0kfe",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "ESzcIwGXvKSl2BWVtHSE",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -6873,10 +6873,10 @@
         },
         {
             "device_name": "HOOTER7_FOR_HC_CR@Roorkee",
-            "device_id": "1048d070-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d1f76640-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Hooter",
-            "device_key": "5JAtpQqFXe3dHfoW3S9U",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "cKCXUauo4Aask55AsYQt",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -6887,10 +6887,10 @@
         },
         {
             "device_name": "HOOTER8_FOR_RIMSEAL_CR@Roorkee",
-            "device_id": "10ac7440-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d272b0c0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Hooter",
-            "device_key": "CvCugWHqNPlzN5k7N4vB",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "R06H3NtyVr7FqQ8EBb8Q",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -6901,10 +6901,10 @@
         },
         {
             "device_name": "HOOTER9_RESET_STATUS@Roorkee",
-            "device_id": "110fa2e0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d2edfb40-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Hooter",
-            "device_key": "O8BgZbdZXeTd3Y1hI2Sy",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "DIb5AeJCRIuDnrE3P5kt",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -6915,10 +6915,10 @@
         },
         {
             "device_name": "ESD-01_INSIDE CONTROLROOM@Roorkee",
-            "device_id": "1172aa70-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d367bf20-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "AoLdsI7sLuglAOOW086o",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "gxVHM81q3gQipf9xZbr8",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -6989,10 +6989,10 @@
         },
         {
             "device_name": "ESD-02_MCC ROOM@Roorkee",
-            "device_id": "11f0b410-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d3e1f830-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "4A0S4vR308NGvCKOTcxZ",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "UYLDZWIsdLWiI601KSMI",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7063,10 +7063,10 @@
         },
         {
             "device_name": "ESD-03_SECURITY ROOM@Roorkee",
-            "device_id": "1253e2b0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d457eb80-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "Gs91uHakd6v5PJpyRTnX",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "4wygubxXbptLeEZewS8h",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7137,10 +7137,10 @@
         },
         {
             "device_name": "ESD-04_PLT PUMP HOUSE@Roorkee",
-            "device_id": "12b4c760-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d4cdb7c0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "ZpFBSonNi8IhRoomyAyv",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "6SF908NDwb5Ze3YWyEt8",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7211,10 +7211,10 @@
         },
         {
             "device_name": "ESD-05_LOCATION IN CHARGE ROOM@Roorkee",
-            "device_id": "132b56f0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d54afe10-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "SA0jQIkW1dvZLT25vSq9",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "5V6WoYOb4BDG8fRWCOUS",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7285,10 +7285,10 @@
         },
         {
             "device_name": "ESD-06_NEAR LUBE GODOWN - 1@Roorkee",
-            "device_id": "13900c30-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d5de1650-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "GTy15EusnOFecpUEEkmx",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "JqgfJO8S4ROMQVr5gXIE",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7359,10 +7359,10 @@
         },
         {
             "device_name": "ESD-07_NEAR FIRE WATER PUMP HOUSE@Roorkee",
-            "device_id": "13efdf70-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d651e6c0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "Shr3O0mrzhIlLGoKmtJC",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "GwAKACnPzgPXQxtDtyfw",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7433,10 +7433,10 @@
         },
         {
             "device_name": "ESD-08_IN BETWEEN TK-08 AND TK-09 CATWALK SIDE@Roorkee",
-            "device_id": "14504ef0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d6c14a60-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "9wpGSNJT93cYZe5Btqd6",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "DWvMwjDl5CaEGzEssIPF",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7507,10 +7507,10 @@
         },
         {
             "device_name": "ESD-09_NEAR TANK-10 CATWALK SIDE@Roorkee",
-            "device_id": "14b3cbb0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d73c6dd0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "JfyakaERIFBFwmfU2pmQ",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "UjYH4ARKFDbi2QxvthYV",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7581,10 +7581,10 @@
         },
         {
             "device_name": "ESD-10_NEAR BULK AIR ELUMINATER@Roorkee",
-            "device_id": "1525a050-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d7ba5060-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "7NwkwEZ0215lxDpwWEoq",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "0j6iyN8u0lpVeITZZVoJ",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7655,10 +7655,10 @@
         },
         {
             "device_name": "ESD-11_TLF PUMP HOUSE@Roorkee",
-            "device_id": "1586d320-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d83302d0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "McRq7KUJ3vmWsP4pwk60",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "gPCZ5m0Kl0SU309zwgW8",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7729,10 +7729,10 @@
         },
         {
             "device_name": "ESD-12_NEAR U/G TANK - 15/16 (BEHIND GANTRY)@Roorkee",
-            "device_id": "15eebcb0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d8a72160-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "gTjIwSxZTQwTv2W4fXAr",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "wPnr7UisTBJFxl90ShRb",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7803,10 +7803,10 @@
         },
         {
             "device_name": "ESD-13_IN BETWEEN TK-11 and TK-12 CATWALK SIDE@Roorkee",
-            "device_id": "16517620-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d92970c0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "RdLoWFy8bNaSIy1Wg6ni",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "YuNM5L9XIIPS3oWGE8Xg",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7877,10 +7877,10 @@
         },
         {
             "device_name": "ESD-14_GANTRY CABIN@Roorkee",
-            "device_id": "16b39350-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "d99fb230-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "TrU5DrZkP9QmE6Or6MRo",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "jgyWuiq8pK8ztqNBLDTL",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -7951,10 +7951,10 @@
         },
         {
             "device_name": "ESD-15_GANTRY BAY 2 STAIRCASE@Roorkee",
-            "device_id": "17149f10-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "da289140-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "cMcrX3q4ARCKbmk48YtX",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "RtK91GNc4rj8hyz8gysA",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8025,10 +8025,10 @@
         },
         {
             "device_name": "ESD-16_CENTRAL ESD@Roorkee",
-            "device_id": "1778df20-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "daa51440-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "K8Jyb7h3Qv7fFPzHytQ1",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "No51KmGrQG6jhvcPxXtg",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8099,10 +8099,10 @@
         },
         {
             "device_name": "ESD-17_ESD DUE TO VIBRATING FORK@Roorkee",
-            "device_id": "17dde280-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "db1f7460-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "IQd4eStrQbj1uxbgAcMY",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "Ol6WdxuBv4JAYgelcSHm",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8173,10 +8173,10 @@
         },
         {
             "device_name": "ESD-18_ESD DUE TO RADAR RELAY@Roorkee",
-            "device_id": "183db5c0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "db9edd90-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "0G0gFkuUuhx0Pdqba9cs",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "isnAmvfU5xCVapYfFAfk",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8247,10 +8247,10 @@
         },
         {
             "device_name": "ESD-IOCL_ESD-IOCL@Roorkee",
-            "device_id": "189f0fa0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "dc1f7f40-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "kWYkdqyKFmOOpMM8BE5U",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "cpzBv8S8kWl0onLlwHp1",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8321,10 +8321,10 @@
         },
         {
             "device_name": "ESD-SOFT_SOFT FROM OIC@Roorkee",
-            "device_id": "19006980-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "dca3ca70-273f-11f0-b475-bbbb14fdc372",
             "device_type": "ESD",
-            "device_key": "ziS8FY0stlLwDh8ltYf2",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "9v0AIHY2vXEc5ZQU00Fp",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8395,10 +8395,10 @@
         },
         {
             "device_name": "LP 01_BC-501A_BS VI MS@Roorkee",
-            "device_id": "1968a130-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "dd1f3c00-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Loading Point",
-            "device_key": "XAC70kBYVdPnsbhS40Wq",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "jPQGaZQFxgKpYlXNopqr",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -8537,10 +8537,10 @@
         },
         {
             "device_name": "LP 02_BC-501B_BS VI HSD@Roorkee",
-            "device_id": "19c8c290-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "dd99ea40-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Loading Point",
-            "device_key": "byttisNfpy753CeoS7BP",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "IDfBUMJRb9e0XDdnxIv0",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -8679,10 +8679,10 @@
         },
         {
             "device_name": "LP 03_BC-502A_BS VI MS@Roorkee",
-            "device_id": "1a300fe0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "de149880-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Loading Point",
-            "device_key": "CmOTBEUwWW98EujdVqwN",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "iPILOZsi32lij2gjZNdf",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -8821,10 +8821,10 @@
         },
         {
             "device_name": "LP 04_BC-502B_BS VI HSD@Roorkee",
-            "device_id": "1a92a240-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "de8a64c0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Loading Point",
-            "device_key": "hFLuGqD6Y8GZRNioMObp",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "9Ob7cbIAJzcva0RP6gSM",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -8963,10 +8963,10 @@
         },
         {
             "device_name": "LP 05_BC-503A_BS VI MS@Roorkee",
-            "device_id": "1b0ab870-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "df033e40-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Loading Point",
-            "device_key": "mEPgH4v3SmlObVIsy38n",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "y5GVR4gMaasjdXVY12q4",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -9096,7 +9096,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH BLEND",
-                    "sensor_tag": "SmartLoad-Dual.BC-503A.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-503A.BCU_C2_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
@@ -9105,10 +9105,10 @@
         },
         {
             "device_name": "LP 06_BC-503B_BS VI HSD@Roorkee",
-            "device_id": "1b6b9d20-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "df7a9120-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Loading Point",
-            "device_key": "bNXLOP3KKHvBx3aKNTnH",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "pSJrDMf315fa6khBsohs",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -9247,10 +9247,10 @@
         },
         {
             "device_name": "LP 07_BC-504A_BS VI MS@Roorkee",
-            "device_id": "1bca8600-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "e0040c70-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Loading Point",
-            "device_key": "4I1lS5pW0709WnTQDS3o",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "PrQzENKqfOyhxVdcP9r1",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -9380,7 +9380,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH BLEND",
-                    "sensor_tag": "SmartLoad-Dual.BC-504A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-504A.BCU_C2_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
@@ -9389,10 +9389,10 @@
         },
         {
             "device_name": "LP 08_BC-504B_BS VI HSD@Roorkee",
-            "device_id": "1c3c3390-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "e07b1130-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Loading Point",
-            "device_key": "bk0V2Q1bm7WKaZ0O2JPD",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "DuGQE98gKOXPPBit33q6",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -9531,10 +9531,10 @@
         },
         {
             "device_name": "LP 09_BC-505A_BS IV MS@Roorkee",
-            "device_id": "1c9c06d0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "e0f9de20-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Loading Point",
-            "device_key": "ZRmfZ7RDXbSJgh28xv6W",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "loCw2iDi0ZXJoIKxLeFz",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -9664,7 +9664,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH BLEND",
-                    "sensor_tag": "SmartLoad-Dual.BC-505A.BCU_C4_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-505A.BCU_C2_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
@@ -9673,10 +9673,10 @@
         },
         {
             "device_name": "Gantry Permissive override@Roorkee",
-            "device_id": "de6906e0-241a-11f0-bffc-8db61e26e13b",
+            "device_id": "e172deb0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Gantry override",
-            "device_key": "bXxwnPMhhj9OEMNVJ04r",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "lc1XKhs6fG4K9IJE4M0D",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "OVERRIDE STATUS",
@@ -9687,24 +9687,24 @@
         },
         {
             "device_name": "Gantry Permissive Write CMD status@Roorkee",
-            "device_id": "dedb29a0-241a-11f0-bffc-8db61e26e13b",
+            "device_id": "e1f52e10-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Gantry override",
-            "device_key": "DRGkTeVeoPQfHDXyaKb5",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "Dp6Ffks7Pggthkabjb4D",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "OVERRIDE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-501A.PERMISSIVE_FROM_DNC_STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-01A.PERMISSIVE_FROM_DNC_STATUS",
                     "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "ESD Write CMD status@Roorkee",
-            "device_id": "df6c4610-241a-11f0-bffc-8db61e26e13b",
+            "device_id": "e27dbf00-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Gantry override",
-            "device_key": "43oQCmjiDoFO2AWagV9H",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "iuCHZu7ZeZwPdEMl9zXL",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "OVERRIDE STATUS",
@@ -9715,10 +9715,10 @@
         },
         {
             "device_name": "Two Fire Engine Running status@Roorkee",
-            "device_id": "1cfc9d60-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "e2fb0550-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Fire Effect",
-            "device_key": "4sI8JNRaChGwBvfJ3DjB",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "TTS3nK8smWSFIsFSHiHy",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -9749,10 +9749,10 @@
         },
         {
             "device_name": "WATER Level below Ref. Volume@Roorkee",
-            "device_id": "1d5d5b00-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "e379d240-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Fire Effect",
-            "device_key": "BAPJhkwrHiYHXq0SnSiR",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "kCqyWcX9Czz1MsjdmwGe",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -9783,10 +9783,10 @@
         },
         {
             "device_name": "Main Fire Engines not in REMOTE@Roorkee",
-            "device_id": "1dcc4970-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "e3e84b80-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Fire Effect",
-            "device_key": "optBLoGzS9dgQjD5ujHh",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "yqzrdYrPYSSchplIsCQ2",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -9817,10 +9817,10 @@
         },
         {
             "device_name": "Gantry Permissive Off@Roorkee",
-            "device_id": "1e2edbd0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "e4619a30-273f-11f0-b475-bbbb14fdc372",
             "device_type": "Fire Effect",
-            "device_key": "WuWUELkbB1RTrTbRa1Q5",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "CubARipckwlg2NLOxJUl",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -9851,10 +9851,10 @@
         },
         {
             "device_name": "LRC Switch Over@Roorkee",
-            "device_id": "1e9083d0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "e4d802b0-273f-11f0-b475-bbbb14fdc372",
             "device_type": "LRC Switchover",
-            "device_key": "NOBpftOttWnziGVGtG4s",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "aKHwflFxpkp7z93viat3",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "LRC SWITCHOVER 30 DAYS STATUS",
@@ -9865,10 +9865,10 @@
         },
         {
             "device_name": "Operability Index@Roorkee",
-            "device_id": "1ef4eaf0-20cc-11f0-82ca-03bdbba508c1",
+            "device_id": "e549d750-273f-11f0-b475-bbbb14fdc372",
             "device_type": "OI",
-            "device_key": "1vTtKU3g7qgSUagZvla5",
-            "entity_id": "e7d839e0-1f69-11f0-82ca-03bdbba508c1",
+            "device_key": "b4pFFLAMqeFUaPCQnmB5",
+            "entity_id": "9ec52af0-273f-11f0-b475-bbbb14fdc372",
             "sensors": [
                 {
                     "sensor_name": "Fire Engine1",
@@ -9935,5 +9935,5 @@
     ],
     "location_id": "1155",
     "bu": "TAS",
-    "location_name": "Roorkee"
+    "location_name": "Roorke"
 }
