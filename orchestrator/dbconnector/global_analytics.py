@@ -3800,8 +3800,7 @@ class GlobalAnalytics:
             elif daterange:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
-            
-            print("production_zone_query_ :", production_zone_query_)
+                        
             resp = await function(query=production_zone_query_)
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
@@ -3929,7 +3928,6 @@ class GlobalAnalytics:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
             
-            print("production_zone_query_ :", production_zone_query_)
             resp = await function(query=production_zone_query_)
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
