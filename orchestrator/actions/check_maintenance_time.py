@@ -55,20 +55,23 @@ class CheckMaintenanceTime:
                 return True, {"waitTime": totalWaitTime}
             elif alert_data.get("alert_section") in ["TAS"] and alert_data.get('maintenance_time',''):
                 maintenance_time = alert_data.get('maintenance_time')
+                print("maintenance_time --> ", maintenance_time)
                 timestamp = datetime.datetime.fromisoformat(maintenance_time).replace(tzinfo=datetime.timezone.utc)
                 current_time = datetime.datetime.now(datetime.timezone.utc)   
-                if current_time<timestamp:
-                    # Parse the string into a datetime object
-                    timestamp = datetime.datetime.strptime(maintenance_time, "%Y-%m-%dT%H:%M:%S")
-                    # Subtract 5 days
+                if current_time < timestamp:
+                    # Subtract 5 days from the timestamp
                     new_timestamp = timestamp - datetime.timedelta(days=5)
+
+                    # Calculate the wait time in minutes
                     wait_time_minutes = int((new_timestamp - current_time).total_seconds() // 60)
+
+                    # Format the wait time as 'PTXM'
                     totalWaitTime = f"PT{wait_time_minutes}M"
                     print("totalWaitTime --> ", totalWaitTime)
                     return True, {"waitTime": totalWaitTime}
                 else:
                     # Return current time + 60 seconds
-                    current_time_plus_30s = (datetime.datetime.now() + datetime.timedelta(seconds=30)).strftime("%Y-%m-%dT%H:%M:%S")
+                    current_time_plus_30s = "PT30S"
                     return True, {"waitTime": current_time_plus_30s}
             else:
                 totalWaitTime = 'PT1S'

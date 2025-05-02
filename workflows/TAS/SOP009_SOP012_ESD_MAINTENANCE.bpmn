@@ -364,7 +364,7 @@
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">#{checkjustifiedapproved}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_1hg0mob" sourceRef="Gateway_1h21jn6" targetRef="Activity_07c2sl6">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">{checkjustifiedapproved}</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">#{not checkjustifiedapproved}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:intermediateCatchEvent id="Event_1sjxbxr" name="48 Hours">
       <bpmn:incoming>Flow_1kfdfl1</bpmn:incoming>
@@ -433,7 +433,7 @@
       <bpmn:outgoing>Flow_18xezaa</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:sequenceFlow id="Flow_057m463" sourceRef="Gateway_15ulmqo" targetRef="Activity_1uhscw7">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">{checkjustifiedapproved}</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">#{not checkjustifiedapproved}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:intermediateCatchEvent id="Event_1cstzf5" name="72 Hours">
       <bpmn:incoming>Flow_1ddvlti</bpmn:incoming>
@@ -484,7 +484,7 @@
       <bpmn:incoming>Flow_0cjyl8i</bpmn:incoming>
     </bpmn:serviceTask>
     <bpmn:sequenceFlow id="Flow_0cjyl8i" sourceRef="Gateway_0ala3aa" targetRef="Activity_0mj43n7">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">{checkjustifiedapproved}</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">#{not checkjustifiedapproved}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:serviceTask id="Activity_1csxj4v" name="Resolve ALert" camunda:type="external" camunda:topic="tas_workflow_consumer_13">
       <bpmn:extensionElements>
@@ -592,7 +592,7 @@
     <bpmn:sequenceFlow id="Flow_18xezaa" sourceRef="Activity_1uhscw7" targetRef="Activity_0lad23g" />
   </bpmn:process>
   <bpmn:message id="Message_26gq0b2" name="Justification" />
-  <bpmn:message id="Message_19i1rnn" name="Message" />
+  <bpmn:message id="Message_19i1rnn" name="Approved" />
   <bpmn:message id="Message_0gaeu0m" name="interLockOk" />
   <bpmn:message id="Message_3b46e02" name="Request" />
   <bpmn:message id="Message_1q7ou62" name="extradays" />
