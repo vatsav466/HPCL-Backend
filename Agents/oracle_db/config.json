@@ -17,7 +17,15 @@
         "HOST_UNAUTHORIZEDFLOW",
         "HOST_OVERLOADEDTTS",
         "HOST_MFMKFACTOR",
-        "HOST_MASTERSTATUS"
+        "HOST_MASTERSTATUS",
+        "HOST_StandaloneTTs",
+        "HOST_TASUserDetails",
+        "HOST_LiveTankDetails",
+        "HOST_SuspectedLoads",
+        "HOST_PLTDetails",
+        "HOST_DayEndDetails",
+        "HOST_DayEndSummary"
+
     ],
     "conn_host": "10.90.38.167",
     "conn_port": "5672",
@@ -181,7 +189,8 @@
         "SAMPLING_QTY": "sampling_qty",
         "TOTAL_LOADED_TTS": "total_loaded_tts",
         "TOTAL_SICK_TTS": "total_sick_tts",
-        "TOTAL_CANCELLED_TTS": "total_cancelled_tts"
+        "TOTAL_CANCELLED_TTS": "total_cancelled_tts",
+        "MFM_DESCRIPTION": "mfm_description"
     },
 
     "alert_logic": {

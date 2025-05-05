@@ -105,7 +105,7 @@ class Postgresql:
             print("manual_percentage --> ", manual_percentage)
             return True, "Manual FAN printed more than 5% of total TT loaded", f"Manual percentage: {manual_percentage:.2f}% exceeds threshold of 5%"
         else:
-            return False, "No alert needed", f"Manual percentage: {manual_percentage:.2f}% is within threshold of 5%"
+            return 
 
 
     async def cal_unauthorized_flow(self, net_totalizer):
@@ -254,6 +254,10 @@ class Postgresql:
         dict: Status and message of the operation.
         """
         for record in sample_records:
+            if "cum_start_mass_mt" in record:
+                record["cum_start_mass_mt"] = str(record["cum_start_mass_mt"])
+            if "cum_end_mass_mt" in record:
+                record["cum_end_mass_mt"] = str(record["cum_end_mass_mt"])
             if "date" in record and isinstance(record["date"], str):
                 try:
                     record["date"] = date.fromisoformat(record["date"])
