@@ -1191,6 +1191,28 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H"
             }
+        },
+        "TLF Gantry Permissive Power Off_Fail": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+            },
+            "block_time": {
+                "0": "PT24H"
+            }
+        },
+        "Dykevalve_Activated Hooter_Fail": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+            },
+            "block_time": {
+                "0": "PT24H"
+            }
         }
     }
 }
