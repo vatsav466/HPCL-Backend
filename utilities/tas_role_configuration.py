@@ -736,7 +736,7 @@ tas_role_mapping={
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
-            "mqof": {
+            "block_time": {
                 "0": "PT24H",
                 "4": "PT6H"
             }
