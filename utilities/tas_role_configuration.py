@@ -10,7 +10,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "HHH alarm from Secondary Radar guage": {
@@ -23,7 +26,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ROSOV_Close Status": {
@@ -36,7 +42,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "MOV_Close Status": {
@@ -49,7 +58,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ROSOV_Close Status_Fail": {
@@ -62,7 +74,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "MOV_Close Status_Fail": {
@@ -75,7 +90,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Plant ESD activated": {
@@ -88,7 +106,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All ROSOVs Closed(Except PL Receipt)": {
@@ -101,7 +122,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All ROSOVs closed": {
@@ -112,7 +136,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Tanks in TTL Dispatch in Dormant Mode": {
@@ -125,7 +154,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "As Power ESD Activation in Main PMCC Panel after 120 Sec": {
@@ -138,7 +170,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Hooter cum strobe for ESD activated in control room": {
@@ -151,7 +186,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Siren Activated": {
@@ -164,7 +202,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ESD Command To Process PLC": {
@@ -177,7 +218,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All DBBVs Closed(Except PL Receipt)": {
@@ -190,7 +234,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All DBBVs Closed": {
@@ -201,7 +248,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All Tanks in Dormant Mode": {
@@ -214,7 +266,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All TLF Product Pumps Stopped": {
@@ -227,7 +282,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Gantry Permissive Off": {
@@ -238,7 +296,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Barrier Gate opened": {
@@ -251,7 +314,26 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "TLF Gantry Permissive Power Off": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All ROSOVs Closed(Except PL Receipt)_Fail": {
@@ -264,7 +346,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Tanks in TTL Dispatch in Dormant Mode_Fail": {
@@ -277,7 +362,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "As Power ESD Activation in Main PMCC Panel after 120 Sec_Fail": {
@@ -290,7 +378,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Hooter cum strobe for ESD activated in control room_Fail": {
@@ -303,7 +394,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Siren Activated_Fail": {
@@ -316,7 +410,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ESD Command To Process PLC_Fail": {
@@ -329,7 +426,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All DBBVs Closed(Except PL Receipt)_Fail": {
@@ -342,7 +442,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All Tanks in Dormant Mode_Fail": {
@@ -355,7 +458,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All TLF Product Pumps Stopped_Fail": {
@@ -367,7 +473,11 @@ tas_role_mapping={
             },
             "block_time": {
                 "0": "PT24H",
-                "2": "PT5S"
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Gantry Permissive Off_Fail": {
@@ -379,7 +489,11 @@ tas_role_mapping={
             },
             "block_time": {
                 "0": "PT24H",
-                "2": "PT5S"
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Barrier Gate opened_Fail": {
@@ -392,7 +506,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ESD ROSOV_Close Status_Fail": {
@@ -405,7 +522,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ESD MOV_Close Status_Fail": {
@@ -418,7 +538,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ROSOV in PL Receipt Mode": {
@@ -429,7 +552,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "3": "PT10S"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ESD ROSOV_Close Status": {
@@ -440,7 +568,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "3": "PT10S"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "MOV in PL Receipt Mode": {
@@ -451,7 +584,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "3": "PT10S"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ESD MOV_Close Status": {
@@ -462,7 +600,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "3": "PT10S"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Proof Test_VFT_Failed": {
@@ -473,7 +616,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Proof Test_Secondary Radar Guage_Failed": {
@@ -484,7 +632,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Proof Test_VFT_Success": {
@@ -495,7 +648,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Proof Test_Secondary Radar Guage_Success": {
@@ -506,7 +664,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Rim Seal system_Fault activated": {
@@ -517,7 +680,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "HCD_20% LEL activated": {
@@ -529,7 +697,11 @@ tas_role_mapping={
             },
             "block_time": {
                 "0": "PT24H",
-                "4": "PT6H"
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "HCD_40% LEL activated": {
@@ -541,7 +713,43 @@ tas_role_mapping={
             },
             "block_time": {
                 "0": "PT24H",
-                "4": "PT6H"
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "HCD_20% LEL activated Hooter_Fail": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "HCD_40% LEL activated Hooter_Fail": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Earthing Failure Alarm": {
@@ -552,7 +760,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ESD Push button_Under Maintenance": {
@@ -563,7 +776,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Rim Seal system_Under Maintenance": {
@@ -574,7 +792,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "HCD_Under Maintenance": {
@@ -585,7 +808,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Tank_Under Maintenance": {
@@ -596,7 +824,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ROSOV_Under Maintenance": {
@@ -607,7 +840,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "MOV_Under Maintenance": {
@@ -618,7 +856,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "VFT_Under Maintenance": {
@@ -629,7 +872,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Secondary Radar_Under Maintenance": {
@@ -640,7 +888,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Fire engine_Under Maintenance": {
@@ -651,7 +904,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "JockeyPump_Under Maintenance": {
@@ -662,7 +920,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "HydrantPT_Under Maintenance": {
@@ -673,7 +936,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Fire engine_ FailtoStart": {
@@ -684,7 +952,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Fireengine_LLOP": {
@@ -695,7 +968,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "FireEngine_HWOT": {
@@ -706,7 +984,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "FireEngine_Tripped": {
@@ -717,7 +1000,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Jockeypump_ FailtoStart": {
@@ -728,7 +1016,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Dykevalve_Activated": {
@@ -740,7 +1033,11 @@ tas_role_mapping={
             },
             "block_time": {
                 "0": "PT24H",
-                "4": "PT6H"
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "HCD_Fault activated": {
@@ -751,7 +1048,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "AirCompressor_Fault activated": {
@@ -762,7 +1064,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ROSOV_FailtoClose": {
@@ -773,7 +1080,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "SafetyPLC_Communication fail": {
@@ -784,7 +1096,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "UPS_Fail": {
@@ -795,7 +1112,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "UPS_Lowbattery": {
@@ -806,7 +1128,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "ProcessPLC_Communication fail": {
@@ -817,7 +1144,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "LRC Master Switchover required in 30 days": {
@@ -828,7 +1160,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Firefighting system parameter": {
@@ -839,7 +1176,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Hooter Activated at control room": {
@@ -850,7 +1192,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All TLF Product Pumps Stopped": {
@@ -861,7 +1208,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "TLF Header Line MOV Close": {
@@ -872,7 +1224,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Gantry Permissive Off": {
@@ -883,7 +1240,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "All BCU Permissive Fail Status": {
@@ -894,7 +1256,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Day End totaliser Mismatch": {
@@ -905,7 +1272,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "BCU vs MFM totalizer mismatch alarm": {
@@ -916,7 +1288,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "K Factor Change_BCU": {
@@ -927,7 +1304,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "K Factor Change_MFM": {
@@ -938,7 +1320,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Pulse Security": {
@@ -949,7 +1336,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "K-Factors": {
@@ -960,7 +1352,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "No Flow alarm_BCU": {
@@ -971,7 +1368,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Low Flow alarm_BCU": {
@@ -982,7 +1384,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "High Flow Alarm_BCU": {
@@ -993,7 +1400,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Unauthorized Flow Alarm_BCU": {
@@ -1004,7 +1416,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Meter overrun Alarm_BCU": {
@@ -1015,7 +1432,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Blend overdose Alarm_BCU": {
@@ -1026,7 +1448,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Blend Underdose Alarm_BCU": {
@@ -1037,7 +1464,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Additive Overdose Alarm_BCU": {
@@ -1048,7 +1480,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Additive Underdose Alarm_BCU": {
@@ -1059,7 +1496,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "BCU Permissive Off_Fail": {
@@ -1070,7 +1512,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "BCU Permissive Off": {
@@ -1081,7 +1528,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Tank leakage alarm": {
@@ -1092,7 +1544,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Primary Radar Guage_H alarm": {
@@ -1103,7 +1560,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Primary Radar Guage_HH alarm": {
@@ -1114,7 +1576,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "K Factor BCU Permissive Off_Fail": {
@@ -1125,6 +1592,11 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
                 "5": "PT60S"
             }
         },
@@ -1136,6 +1608,11 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
                 "5": "PT60S"
             }
         },
@@ -1147,6 +1624,11 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
                 "5": "PT60S"
             }
         },
@@ -1158,6 +1640,11 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
                 "5": "PT60S"
             }
         },
@@ -1169,6 +1656,11 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
                 "5": "PT60S"
             }
         },
@@ -1180,7 +1672,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "TLF Header Line MOV Close_Fail": {
@@ -1191,7 +1688,12 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "TLF Gantry Permissive Power Off_Fail": {
@@ -1204,8 +1706,10 @@ tas_role_mapping={
             "block_time": {
                 "0": "PT24H",
                 "1": "PT3S",
-                "2": "PT5S"
-
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         },
         "Dykevalve_Activated Hooter_Fail": {
@@ -1217,7 +1721,11 @@ tas_role_mapping={
             },
             "block_time": {
                 "0": "PT24H",
-                "4": "PT6H"
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
             }
         }
     }
