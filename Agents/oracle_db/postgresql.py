@@ -296,10 +296,10 @@ class Postgresql:
                     record["bay_reassignment_time"] = pd.to_datetime(record["bay_reassignment_time"])
 
                 if "trans_start_time" in record and isinstance(record["trans_start_time"], str):
-                    record["trans_start_time"] = pd.to_datetime(record["trans_start_time"], str)
+                    record["trans_start_time"] = pd.to_datetime(record["trans_start_time"])
                 
                 if "trans_end_time" in record and isinstance(record["trans_end_time"], str):
-                    record["trans_end_time"] = pd.to_datetime(record["trans_end_time"], str)
+                    record["trans_end_time"] = pd.to_datetime(record["trans_end_time"])
                                 
                 if "current_k_factor" in record:
                     try:
