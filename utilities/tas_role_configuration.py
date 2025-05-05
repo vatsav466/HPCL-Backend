@@ -366,7 +366,8 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "2": "PT5S"
             }
         },
         "Gantry Permissive Off_Fail": {
@@ -377,7 +378,8 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "2": "PT5S"
             }
         },
         "Barrier Gate opened_Fail": {
