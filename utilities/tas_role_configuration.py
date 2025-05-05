@@ -1200,7 +1200,10 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S"
+
             }
         },
         "Dykevalve_Activated Hooter_Fail": {
@@ -1211,7 +1214,8 @@ tas_role_mapping={
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
             },
             "block_time": {
-                "0": "PT24H"
+                "0": "PT24H",
+                "4": "PT6H"
             }
         }
     }
