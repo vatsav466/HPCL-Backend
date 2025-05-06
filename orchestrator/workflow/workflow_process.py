@@ -45,7 +45,7 @@ class Camunda:
             except requests.exceptions.RequestException as e:
                 logger.error(f"Attempt {attempt} - Error while starting workflow: {e}")
                 print(traceback.format_exc())
-            if attempt <= MAX_RETRIES:
+            if attempt < MAX_RETRIES:
                 time.sleep(RETRY_DELAY)
 
     async def closeWorkflow(self, payload, workflowId, camunda_url=urdhva_base.settings.camunda_url):
