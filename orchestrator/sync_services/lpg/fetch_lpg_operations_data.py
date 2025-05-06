@@ -1,13 +1,13 @@
 import os
 import sys
-import psycopg2
-import pandas as pd
-import polars as pl
 import socket
 import datetime
+import psycopg2
 import traceback
+import pandas as pd
+import polars as pl
+import mysql.connector
 import concurrent.futures
-import signal
 import generate_lpg_operations_summary
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -85,7 +85,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
     Fetch data from database with both connection and query timeout handling,
     supporting chunked data retrieval for large datasets
     """
-    query  = query.replace(";","")
+    query = query.replace(";","")
     # Check connection with timeout
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(timeout)  # Connection timeout
@@ -101,8 +101,23 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
         sock.close()  # Properly close the socket
 
     # Database connection with timeout
+    conn = None
+    cursor = None
     try:
-        pg_conn = psycopg2.connect(
+        if params["db_type"] == 'mysql':
+            conn = mysql.connector.connect(
+                host=params["host"],
+                database=params["database"],
+                user=params["user"],
+                password=params["password"],
+                port=int(params["port"]),
+                connection_timeout=timeout
+            )
+            cursor = conn.cursor()
+            # Set statement timeout (in milliseconds) — note: MySQL calls this `max_execution_time`
+            cursor.execute(f"SET SESSION max_execution_time = {query_timeout * 1000};")
+        else:  # PostgreSQL
+            conn = psycopg2.connect(
                 host=params["host"],
                 database=params["database"],
                 user=params["user"],
@@ -110,11 +125,10 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                 port=params["port"],
                 connect_timeout=timeout  # Connection timeout
             )
-        pg_conn.set_session(autocommit=True)  # Enable autocommit for timeout settings
-        cursor = pg_conn.cursor()
-
-        # Set statement timeout at the connection level (milliseconds)
-        cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")
+            conn.set_session(autocommit=True)  # Enable autocommit for timeout settings
+            cursor = conn.cursor()
+            # Set statement timeout at the connection level (milliseconds)
+            cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")
 
     except Exception as e:
         print(f"Database connection error for {params.get('PlantName', 'unknown')}: {str(e)}")
@@ -128,8 +142,10 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
         if not getData:
             cursor.execute(query)
             resp = cursor.fetchone()
-            cursor.close()
-            pg_conn.close()
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
             return resp[0] if resp else None
         else:
             # For chunked data retrieval
@@ -143,8 +159,10 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                 columns = [column[0] for column in cursor.description]
                 data = pd.DataFrame.from_records(data, columns=columns)
                 data = pl.from_pandas(data)
-                cursor.close()
-                pg_conn.close()
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
                 return data
 
             # Chunked retrieval for large datasets
@@ -183,23 +201,31 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
             if all_data:
                 data = pd.DataFrame.from_records(all_data, columns=columns)
                 data = pl.from_pandas(data)
-                cursor.close()
-                pg_conn.close()
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
                 return data
             else:
-                cursor.close()
-                pg_conn.close()
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
                 return pl.DataFrame()
 
-    except psycopg2.errors.QueryCanceled:
+    except (psycopg2.errors.QueryCanceled, mysql.connector.errors.OperationalError) as e:
         print(f"Query timed out after {query_timeout} seconds - skipping this plant")
-        cursor.close()
-        pg_conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
         return pl.DataFrame() if getData else None
     except Exception as e:
         print(f"Query execution error: {str(e)}")
-        cursor.close()
-        pg_conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
         return pl.DataFrame() if getData else None
 
 
@@ -246,9 +272,14 @@ def get_data_chunks(params):
                 print(f"No max date found for {plant_name}, using date {max_date} (7 days ago)")
 
         # Query without LIMIT - the fetch_data function will handle chunking
+        if params["db_type"].lower() == 'mysql':
+            production_data_table = "production_data"
+        else:
+            production_data_table = "production_log"
+        
         query = f"""
-            SELECT * FROM production_log
-            WHERE "process_date" > '{max_date}'
+            SELECT * FROM {production_data_table}
+            WHERE "process_date" > '{max_date}' and "process_date" < NOW()
             ORDER BY "process_date" ASC
         """
 
@@ -294,7 +325,8 @@ def process_plant(plant):
             "database": plant["db_database"],
             "user": plant["db_user"],
             "password": plant["db_password"],
-            "port": 5432
+            "port": plant["port"],
+            "db_type": plant["db_type"]
         }
 
         # Set timeout for this plant's processing
