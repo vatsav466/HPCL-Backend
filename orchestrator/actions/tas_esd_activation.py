@@ -659,8 +659,8 @@ class TasEsdActivation:
                         sap_id, 
                         fail_status_interlock, 
                         time_window,
-                        max_retries=3,
-                        retry_delay=2
+                        max_retries=5,
+                        retry_delay=4
                     )
                     
                     if esd_close_data:
@@ -685,8 +685,8 @@ class TasEsdActivation:
             maint_alerts, maintenance_alert_count, device_alerts_map = await retry_query(
                 self._query_maintenance_alerts, 
                 sap_id,
-                max_retries=3,
-                retry_delay=2
+                max_retries=5,
+                retry_delay=4
             )
             logger.info(f"maintenance alertcount: {maintenance_alert_count}")
             
@@ -694,8 +694,8 @@ class TasEsdActivation:
             fault_alerts, fault_alert_count, device_alerts_map = await retry_query(
                 self._query_fault_alerts, 
                 sap_id,
-                max_retries=3,
-                retry_delay=2
+                max_retries=5,
+                retry_delay=4
             )
             logger.info(f"fault_alert_count: {fault_alert_count}")
             
@@ -709,8 +709,8 @@ class TasEsdActivation:
                     sap_id, 
                     ESD_ROSOV_CLOSE, 
                     time_window,
-                    max_retries=3,
-                    retry_delay=2
+                    max_retries=5,
+                    retry_delay=4
                 )
                 esd_close_status_count = len(esd_status_data.get("data", []))
                 
@@ -719,8 +719,8 @@ class TasEsdActivation:
                     sap_id, 
                     ROSOV_PL_MODE, 
                     time_window,
-                    max_retries=3,
-                    retry_delay=2
+                    max_retries=5,
+                    retry_delay=4
                 )
                 rosov_pl_close_count = len(rosov_pl_data.get("data", []))
             
@@ -731,8 +731,8 @@ class TasEsdActivation:
                     sap_id, 
                     ESD_MOV_CLOSE, 
                     time_window,
-                    max_retries=3,
-                    retry_delay=2
+                    max_retries=5,
+                    retry_delay=4
                 )
                 esd_mov_close_status_count = len(esd_mov_status_data.get("data", []))
                 
@@ -741,8 +741,8 @@ class TasEsdActivation:
                     sap_id, 
                     MOV_PL_MODE, 
                     time_window,
-                    max_retries=3,
-                    retry_delay=2
+                    max_retries=5,
+                    retry_delay=4
                 )
                 mov_pl_close_count = len(mov_pl_data.get("data", []))
                     
@@ -750,8 +750,8 @@ class TasEsdActivation:
             total_tank_count = await retry_query(
                 self._get_total_tank_count, 
                 sap_id,
-                max_retries=3,
-                retry_delay=2
+                max_retries=5,
+                retry_delay=4
             )
             
             # Step 3: Implement the logic patterns for decision making
@@ -813,8 +813,8 @@ class TasEsdActivation:
                         sap_id, 
                         location_name, 
                         max(rosov_total_with_maintenance, rosov_total_with_fault),
-                        max_retries=3,
-                        retry_delay=2
+                        max_retries=5,
+                        retry_delay=4
                     )
             
             elif is_dbbv_alert:
@@ -855,8 +855,8 @@ class TasEsdActivation:
                         sap_id, 
                         location_name, 
                         max(dbbv_total_with_maintenance, dbbv_total_with_fault),
-                        max_retries=3,
-                        retry_delay=2
+                        max_retries=5,
+                        retry_delay=4
                     )
             
             # Otherwise (no conditions met): Update alert history
@@ -871,8 +871,8 @@ class TasEsdActivation:
                             device_name=dev_name,
                             interlock_name=ROSOV_INTERLOCK,
                             fail_status_interlock=ESD_ROSOV_FAIL,
-                            max_retries=3,
-                            retry_delay=2
+                            max_retries=5,
+                            retry_delay=4
                         )
                 elif is_dbbv_alert:
                     for dev_name in esd_device_names:
@@ -883,8 +883,8 @@ class TasEsdActivation:
                             device_name=dev_name,
                             interlock_name=DBBV_INTERLOCK,
                             fail_status_interlock=ESD_MOV_FAIL,
-                            max_retries=3,
-                            retry_delay=2
+                            max_retries=5,
+                            retry_delay=4
                         )
         
             return True, {
