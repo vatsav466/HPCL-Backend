@@ -97,17 +97,17 @@ class TasEsdActivation:
             #     if device:
             #         maintenance_devices.add(device)
             maint_alerts, maintenance_alert_count = await self._query_maintenance_alerts(sap_id)
-            logger.info(f"count: {maintenance_alert_count}")
+            logger.info(f"maintenance alertcount: {maintenance_alert_count}")
             
             # Check for fault alerts - get unique device names
-            fault_alerts = await self._query_fault_alerts(sap_id)
-            fault_devices = set()
-            for alert in fault_alerts.get("data", []):
-                device = alert.get("tas_device_name")
-                if device:
-                    fault_devices.add(device)
-            fault_alert_count = len(fault_devices)
-            logger.info(f"Unique fault devices: {fault_devices}, count: {fault_alert_count}")
+            fault_alerts, fault_alert_count, device_alerts_map = await self._query_fault_alerts(sap_id)
+            # fault_devices = set()
+            # for alert in fault_alerts.get("data", []):
+            #     device = alert.get("tas_device_name")
+            #     if device:
+            #         fault_devices.add(device)
+            # fault_alert_count = len(fault_devices)
+            logger.info(f"fault_alert_count: {fault_alert_count}")
             
             # Get pipeline mode and close status counts for both types
             rosov_pl_close_count = mov_pl_close_count = esd_close_status_count = esd_mov_close_status_count = 0
@@ -292,11 +292,56 @@ class TasEsdActivation:
         # maint_alerts = await hpcl_ceg_model.Alerts.get_all(maint_params, resp_type='plain')
         # logger.info(f"Maintenance alerts: {maint_alerts}")
         # return maint_alerts
+        # try:
+        #     logger.info(f"Querying maintenance alerts for SAP ID: {sap_id}")
+            
+        #     # List of maintenance alert types to check for
+        #     maintenance_types = ["Tank_Under Maintenance", "ROSOV_Under Maintenance", "MOV_Under Maintenance"]
+            
+        #     # Query for open maintenance alerts
+        #     maintenance_query = (
+        #         f"bu = 'TAS' AND "
+        #         f"sap_id = '{sap_id}' AND "
+        #         f"alert_section = 'TAS' AND "
+        #         f"alert_status != 'Close'"
+        #     )
+            
+        #     maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
+        #     maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
+            
+        #     logger.debug(f"Maintenance alerts query response: {json.dumps(maintenance_resp, default=str)}")
+            
+        #     # Filter alerts for maintenance types
+        #     maintenance_alerts = []
+        #     if maintenance_resp and "data" in maintenance_resp and maintenance_resp["data"]:
+        #         # Make sure we're working with a list of dictionary objects
+        #         alerts_data = maintenance_resp["data"]
+                
+        #         for alert in alerts_data:
+        #             # Ensure alert is a dictionary before using .get()
+        #             if isinstance(alert, dict):
+        #                 interlock_name = alert.get("interlock_name", "")
+        #                 # Check if this alert is a maintenance type alert
+        #                 if any(maint_type in interlock_name for maint_type in maintenance_types):
+        #                     maintenance_alerts.append(alert)
+        #             else:
+        #                 logger.warning(f"Unexpected alert data type: {type(alert)}, expected dict. Value: {alert}")
+            
+        #     maintenance_alert_count = len(maintenance_alerts)
+        #     logger.info(f"Found {maintenance_alert_count} maintenance alerts")
+            
+        #     return maintenance_alerts, maintenance_alert_count
+            
+        # except Exception as e:
+        #     logger.error(f"Error in _query_maintenance_alerts: {e}")
+        #     logger.error(traceback.format_exc())
+        #     # Return empty list and zero count in case of error
+        #     return [], 0
         try:
             logger.info(f"Querying maintenance alerts for SAP ID: {sap_id}")
             
             # List of maintenance alert types to check for
-            maintenance_types = ["Tank_Under Maintenance", "Under Maintenance"]
+            maintenance_types = ["Tank_Under Maintenance", "ROSOV_Under Maintenance", "MOV_Under Maintenance"]
             
             # Query for open maintenance alerts
             maintenance_query = (
@@ -313,6 +358,8 @@ class TasEsdActivation:
             
             # Filter alerts for maintenance types
             maintenance_alerts = []
+            device_alerts_map = {}  # Dictionary to track alerts by device_id and device
+            
             if maintenance_resp and "data" in maintenance_resp and maintenance_resp["data"]:
                 # Make sure we're working with a list of dictionary objects
                 alerts_data = maintenance_resp["data"]
@@ -324,34 +371,110 @@ class TasEsdActivation:
                         # Check if this alert is a maintenance type alert
                         if any(maint_type in interlock_name for maint_type in maintenance_types):
                             maintenance_alerts.append(alert)
+                            
+                            # Track devices with alerts
+                            device_id = alert.get("device_id")
+                            device = alert.get("device")
+                            
+                            if device_id and device:
+                                # Create a unique key using device_id and device
+                                device_key = f"{device_id}_{device}"
+                                
+                                if device_key not in device_alerts_map:
+                                    device_alerts_map[device_key] = []
+                                
+                                device_alerts_map[device_key].append(alert)
                     else:
                         logger.warning(f"Unexpected alert data type: {type(alert)}, expected dict. Value: {alert}")
             
             maintenance_alert_count = len(maintenance_alerts)
             logger.info(f"Found {maintenance_alert_count} maintenance alerts")
             
-            return maintenance_alerts, maintenance_alert_count
+            # Find devices with multiple alerts
+            devices_with_multiple_alerts = {
+                device_key: alerts for device_key, alerts in device_alerts_map.items() 
+                if len(alerts) > 1
+            }
+            
+            if devices_with_multiple_alerts:
+                logger.info(f"Found {len(devices_with_multiple_alerts)} devices with multiple maintenance alerts")
+                for device_key, alerts in devices_with_multiple_alerts.items():
+                    device_id, device = device_key.split('_', 1)
+                    logger.info(f"Device ID: {device_id}, Device: {device} has {len(alerts)} maintenance alerts")
+            
+            return maintenance_alerts, maintenance_alert_count, device_alerts_map
             
         except Exception as e:
             logger.error(f"Error in _query_maintenance_alerts: {e}")
             logger.error(traceback.format_exc())
-            # Return empty list and zero count in case of error
-            return [], 0
+            # Return empty list, zero count, and empty map in case of error
+            return [], 0, {}
     
     async def _query_fault_alerts(self, sap_id):
         """Query for fault alerts"""
-        fault_query = (
-            f"bu = 'TAS' AND sap_id = '{sap_id}' AND alert_section = 'TAS' "
-            f"AND sop_id = 'SOP018' AND alert_status != 'Close'"
-        )
-        fault_params = urdhva_base.queryparams.QueryParams()
-        fault_params.q = fault_query
-        logger.info(f"Fault query: {fault_params.q}")
-        fault_params.fields = ["tas_device_name"]
+        try:
+            fault_query = (
+                f"bu = 'TAS' AND sap_id = '{sap_id}' AND alert_section = 'TAS' "
+                f"AND sop_id = 'SOP018' AND alert_status != 'Close'"
+            )
+            fault_params = urdhva_base.queryparams.QueryParams()
+            fault_params.q = fault_query
+            logger.info(f"Fault query: {fault_params.q}")
+            fault_params.fields = ["tas_device_name"]
 
-        fault_alerts = await hpcl_ceg_model.Alerts.get_all(fault_params, resp_type='plain')
-        logger.info(f"Fault alerts: {fault_alerts}")
-        return fault_alerts
+            fault_resp = await hpcl_ceg_model.Alerts.get_all(fault_params, resp_type='plain')
+            logger.debug(f"Fault alerts response: {json.dumps(fault_resp, default=str)}")
+            
+            # Process and organize fault alerts by device
+            fault_alerts = []
+            device_alerts_map = {}  # Dictionary to track alerts by device_id and device
+            
+            if fault_resp and "data" in fault_resp and fault_resp["data"]:
+                # Make sure we're working with a list of dictionary objects
+                alerts_data = fault_resp["data"]
+                
+                for alert in alerts_data:
+                    # Ensure alert is a dictionary before using .get()
+                    if isinstance(alert, dict):
+                        fault_alerts.append(alert)
+                        
+                        # Track devices with alerts
+                        device_id = alert.get("device_id")
+                        device = alert.get("device") or alert.get("tas_device_name")
+                        
+                        if device_id and device:
+                            # Create a unique key using device_id and device
+                            device_key = f"{device_id}_{device}"
+                            
+                            if device_key not in device_alerts_map:
+                                device_alerts_map[device_key] = []
+                            
+                            device_alerts_map[device_key].append(alert)
+                    else:
+                        logger.warning(f"Unexpected alert data type: {type(alert)}, expected dict. Value: {alert}")
+            
+            fault_alert_count = len(fault_alerts)
+            logger.info(f"Found {fault_alert_count} fault alerts")
+            
+            # Find devices with multiple alerts
+            devices_with_multiple_alerts = {
+                device_key: alerts for device_key, alerts in device_alerts_map.items() 
+                if len(alerts) > 1
+            }
+            
+            if devices_with_multiple_alerts:
+                logger.info(f"Found {len(devices_with_multiple_alerts)} devices with multiple fault alerts")
+                for device_key, alerts in devices_with_multiple_alerts.items():
+                    device_id, device = device_key.split('_', 1)
+                    logger.info(f"Device ID: {device_id}, Device: {device} has {len(alerts)} fault alerts")
+            
+            return fault_alerts, fault_alert_count, device_alerts_map
+            
+        except Exception as e:
+            logger.error(f"Error in _query_fault_alerts: {e}")
+            logger.error(traceback.format_exc())
+            # Return empty list, zero count, and empty map in case of error
+            return [], 0, {}
     
     async def _query_esd_status_alerts(self, sap_id, interlock_name, time_window):
         """Query for ESD status alerts"""
