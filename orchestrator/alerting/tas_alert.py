@@ -170,7 +170,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                     initial_delay = 5  # seconds
 
                     for attempt in range(1, max_retries + 1):
-                        await asyncio.sleep(5)  # wait before the first send
+                        # await asyncio.sleep(5)  # wait before the first send
                         print("attempt:", attempt)
                         try:
                             r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)

@@ -315,10 +315,12 @@ class AlertFactory:
                     al_data['closed_at'] = datetime.datetime.now()
                     
                     # Clean up redis entries
-                    if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
-                        await redis_ins.hdel("alert_mapping", al_data['external_id'])
-                    await redis_ins.hdel("alert_camunda_url", str(al_data['id']))
-                    
+                    try:
+                        if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
+                            await redis_ins.hdel("alert_mapping", al_data['external_id'])
+                        await redis_ins.hdel("alert_camunda_url", str(al_data['id']))
+                    except Exception as e:
+                        print("failed to delete from redis")
                     # Update the alert record
                     data_obj = hpcl_ceg_model.Alerts(**al_data)
                     await data_obj.modify()
