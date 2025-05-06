@@ -555,21 +555,23 @@ import orchestrator.alerting.listener.tas_maintenance_alert_check as alert_close
 logger = urdhva_base.logger.Logger.getInstance("workflow_process-log")
 
 
-async def retry_query(query_func, *args, max_retries=3, retry_delay=2, **kwargs):
+async def retry_query_with_empty_check(query_func, *args, max_retries=3, retry_delay=2, empty_retries=2, **kwargs):
     """
-    Generic retry function for database queries
+    Enhanced retry function for database queries that also retries on empty data
     
     Args:
         query_func: The async function to call
         *args: Arguments to pass to the function
-        max_retries: Maximum number of retry attempts
-        retry_delay: Delay between retries in seconds
+        max_retries: Maximum number of retry attempts for exceptions
+        retry_delay: Initial delay between retries in seconds
+        empty_retries: Maximum number of additional retries when data is empty
         **kwargs: Keyword arguments to pass to the function
         
     Returns:
         The result of the query function or None if all retries fail
     """
     attempt = 0
+    empty_attempt = 0
     last_exception = None
     
     while attempt <= max_retries:
@@ -578,6 +580,26 @@ async def retry_query(query_func, *args, max_retries=3, retry_delay=2, **kwargs)
                 logger.info(f"Retry attempt {attempt}/{max_retries} for {query_func.__name__}")
             
             result = await query_func(*args, **kwargs)
+            
+            # Check if result is empty or doesn't contain data
+            is_empty = False
+            if result is None:
+                is_empty = True
+            elif isinstance(result, dict) and "data" in result and (not result["data"] or len(result["data"]) == 0):
+                is_empty = True
+            elif isinstance(result, list) and len(result) == 0:
+                is_empty = True
+                
+            if is_empty and empty_attempt < empty_retries:
+                empty_attempt += 1
+                logger.info(f"Empty data received from {query_func.__name__}, empty retry attempt {empty_attempt}/{empty_retries}")
+                
+                # Use shorter backoff for empty data retries
+                backoff_time = retry_delay / 2 * (1.5 ** empty_attempt) 
+                logger.info(f"Retrying empty data in {backoff_time:.2f} seconds...")
+                await asyncio.sleep(backoff_time)
+                continue
+                
             return result
             
         except Exception as e:
@@ -905,24 +927,8 @@ class TasEsdActivation:
             logger.error(traceback.format_exc())
             return False, {"status": str(e)}
 
-    async def _query_esd_alerts(self, sap_id, interlock_name, time_window):
-        """Query for ESD alerts based on interlock name"""
-        esd_query = (
-            f"bu = 'TAS' AND sap_id = '{sap_id}' AND alert_section = 'TAS' "
-            f"AND interlock_name = '{interlock_name}' "
-            f"AND alert_status != 'Close' "
-            f"AND created_at >= NOW() - INTERVAL '{time_window} minutes'"
-        )
-        esd_params = urdhva_base.queryparams.QueryParams()
-        esd_params.q = esd_query
-        logger.info(f"Query for {interlock_name}: {esd_params.q}")
-        esd_params.fields = ["tas_device_name", "location_name"]
-
-        esd_close_alerts = await hpcl_ceg_model.Alerts.get_all(esd_params, resp_type='plain')
-        return esd_close_alerts.get("data", [])
-    
     async def _query_maintenance_alerts(self, sap_id):
-        """Query for maintenance alerts"""
+        """Query for maintenance alerts with empty data retry"""
         try:
             logger.info(f"Querying maintenance alerts for SAP ID: {sap_id}")
             
@@ -938,9 +944,28 @@ class TasEsdActivation:
             )
             
             maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
+            
+            # First attempt the query
             maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
             
-            logger.debug(f"Maintenance alerts query response: {json.dumps(maintenance_resp, default=str)}")
+            # If we get empty data, retry up to 3 more times
+            empty_retry_count = 0
+            max_empty_retries = 3
+            while (not maintenance_resp or 
+                "data" not in maintenance_resp or 
+                not maintenance_resp["data"]) and empty_retry_count < max_empty_retries:
+                
+                empty_retry_count += 1
+                logger.info(f"Empty maintenance alerts data, retry attempt {empty_retry_count}/{max_empty_retries}")
+                
+                # Increasing backoff delay for each retry
+                retry_delay = 2 * (1.5 ** empty_retry_count)
+                await asyncio.sleep(retry_delay)
+                
+                # Retry the query
+                maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
+            
+            logger.debug(f"Maintenance alerts query response after {empty_retry_count} empty retries: {json.dumps(maintenance_resp, default=str)}")
             
             # Filter alerts for maintenance types
             maintenance_alerts = []
@@ -995,9 +1020,10 @@ class TasEsdActivation:
             logger.error(traceback.format_exc())
             # Return empty list, zero count, and empty map in case of error
             return [], 0, {}
-    
+
+
     async def _query_fault_alerts(self, sap_id):
-        """Query for fault alerts"""
+        """Query for fault alerts with empty data retry"""
         try:
             fault_query = (
                 f"bu = 'TAS' AND sap_id = '{sap_id}' AND alert_section = 'TAS' "
@@ -1008,8 +1034,27 @@ class TasEsdActivation:
             logger.info(f"Fault query: {fault_params.q}")
             fault_params.fields = ["tas_device_name"]
 
+            # First attempt the query
             fault_resp = await hpcl_ceg_model.Alerts.get_all(fault_params, resp_type='plain')
-            logger.debug(f"Fault alerts response: {json.dumps(fault_resp, default=str)}")
+            
+            # If we get empty data, retry up to 3 more times
+            empty_retry_count = 0
+            max_empty_retries = 3
+            while (not fault_resp or 
+                "data" not in fault_resp or 
+                not fault_resp["data"]) and empty_retry_count < max_empty_retries:
+                
+                empty_retry_count += 1
+                logger.info(f"Empty fault alerts data, retry attempt {empty_retry_count}/{max_empty_retries}")
+                
+                # Increasing backoff delay for each retry
+                retry_delay = 2 * (1.5 ** empty_retry_count)
+                await asyncio.sleep(retry_delay)
+                
+                # Retry the query
+                fault_resp = await hpcl_ceg_model.Alerts.get_all(fault_params, resp_type='plain')
+            
+            logger.debug(f"Fault alerts response after {empty_retry_count} empty retries: {json.dumps(fault_resp, default=str)}")
             
             # Process and organize fault alerts by device
             fault_alerts = []
@@ -1061,9 +1106,47 @@ class TasEsdActivation:
             logger.error(traceback.format_exc())
             # Return empty list, zero count, and empty map in case of error
             return [], 0, {}
-    
+
+
+    async def _query_esd_alerts(self, sap_id, interlock_name, time_window):
+        """Query for ESD alerts based on interlock name with empty data retry"""
+        esd_query = (
+            f"bu = 'TAS' AND sap_id = '{sap_id}' AND alert_section = 'TAS' "
+            f"AND interlock_name = '{interlock_name}' "
+            f"AND alert_status != 'Close' "
+            f"AND created_at >= NOW() - INTERVAL '{time_window} minutes'"
+        )
+        esd_params = urdhva_base.queryparams.QueryParams()
+        esd_params.q = esd_query
+        logger.info(f"Query for {interlock_name}: {esd_params.q}")
+        esd_params.fields = ["tas_device_name", "location_name"]
+
+        # First attempt the query
+        esd_close_alerts = await hpcl_ceg_model.Alerts.get_all(esd_params, resp_type='plain')
+        
+        # If we get empty data, retry up to 3 more times
+        empty_retry_count = 0
+        max_empty_retries = 3
+        alert_data = esd_close_alerts.get("data", [])
+        
+        while (not alert_data or len(alert_data) == 0) and empty_retry_count < max_empty_retries:
+            empty_retry_count += 1
+            logger.info(f"Empty ESD alerts data for {interlock_name}, retry attempt {empty_retry_count}/{max_empty_retries}")
+            
+            # Increasing backoff delay for each retry
+            retry_delay = 2 * (1.5 ** empty_retry_count)
+            await asyncio.sleep(retry_delay)
+            
+            # Retry the query
+            esd_close_alerts = await hpcl_ceg_model.Alerts.get_all(esd_params, resp_type='plain')
+            alert_data = esd_close_alerts.get("data", [])
+        
+        logger.info(f"ESD alerts for {interlock_name} after {empty_retry_count} empty retries: {len(alert_data)} alerts found")
+        return alert_data
+
+
     async def _query_esd_status_alerts(self, sap_id, interlock_name, time_window):
-        """Query for ESD status alerts"""
+        """Query for ESD status alerts with empty data retry"""
         esd_status_query = (
             f"bu = 'TAS' AND sap_id = '{sap_id}' AND alert_section = 'TAS' AND "
             f"interlock_name = '{interlock_name}' AND alert_status != 'Open' AND created_at >= NOW() - INTERVAL '{time_window} minutes'"
@@ -1072,12 +1155,33 @@ class TasEsdActivation:
         esd_status_params.q = esd_status_query
         logger.info(f"ESD status query: {esd_status_params.q}")
         
+        # First attempt the query
         esd_status_data = await hpcl_ceg_model.Alerts.get_all(esd_status_params, resp_type='plain')
-        logger.info(f"ESD status data: {esd_status_data}")
+        
+        # If we get empty data, retry up to 3 more times
+        empty_retry_count = 0
+        max_empty_retries = 3
+        
+        while (not esd_status_data or 
+            "data" not in esd_status_data or 
+            not esd_status_data["data"]) and empty_retry_count < max_empty_retries:
+            
+            empty_retry_count += 1
+            logger.info(f"Empty ESD status data for {interlock_name}, retry attempt {empty_retry_count}/{max_empty_retries}")
+            
+            # Increasing backoff delay for each retry
+            retry_delay = 2 * (1.5 ** empty_retry_count)
+            await asyncio.sleep(retry_delay)
+            
+            # Retry the query
+            esd_status_data = await hpcl_ceg_model.Alerts.get_all(esd_status_params, resp_type='plain')
+        
+        logger.info(f"ESD status data for {interlock_name} after {empty_retry_count} empty retries: {esd_status_data}")
         return esd_status_data
-    
+
+
     async def _query_pl_mode_alerts(self, sap_id, interlock_name, time_window):
-        """Query for PL mode alerts"""
+        """Query for PL mode alerts with empty data retry"""
         pl_query = (
             f"bu = 'TAS' AND sap_id = '{sap_id}' AND alert_section = 'TAS' AND "
             f"interlock_name = '{interlock_name}' AND alert_status != 'Open' AND created_at >= NOW() - INTERVAL '{time_window} minutes'"
@@ -1086,20 +1190,61 @@ class TasEsdActivation:
         pl_params.q = pl_query
         logger.info(f"PL mode query: {pl_params.q}")
         
+        # First attempt the query
         pl_data = await hpcl_ceg_model.Alerts.get_all(pl_params, resp_type='plain')
-        logger.info(f"PL mode data: {pl_data}")
+        
+        # If we get empty data, retry up to 3 more times
+        empty_retry_count = 0
+        max_empty_retries = 3
+        
+        while (not pl_data or 
+            "data" not in pl_data or 
+            not pl_data["data"]) and empty_retry_count < max_empty_retries:
+            
+            empty_retry_count += 1
+            logger.info(f"Empty PL mode data for {interlock_name}, retry attempt {empty_retry_count}/{max_empty_retries}")
+            
+            # Increasing backoff delay for each retry
+            retry_delay = 2 * (1.5 ** empty_retry_count)
+            await asyncio.sleep(retry_delay)
+            
+            # Retry the query
+            pl_data = await hpcl_ceg_model.Alerts.get_all(pl_params, resp_type='plain')
+        
+        logger.info(f"PL mode data for {interlock_name} after {empty_retry_count} empty retries: {pl_data}")
         return pl_data
-    
+
+
     async def _get_total_tank_count(self, sap_id):
-        """Get total tank count from architecture data"""
+        """Get total tank count from architecture data with empty data retry"""
         arch_query = f"sap_id = '{sap_id}'"
         arch_params = urdhva_base.queryparams.QueryParams()
         arch_params.q = arch_query
         logger.info(f"Architecture query: {arch_params.q}")
         arch_params.fields = ["total_tank_count"]
 
+        # First attempt the query
         arch_data = await hpcl_ceg_model.ArchitectureData.get_all(arch_params, resp_type='plain')
-        logger.info(f"Architecture data: {arch_data}")
+        
+        # If we get empty data, retry up to 3 more times
+        empty_retry_count = 0
+        max_empty_retries = 3
+        
+        while (not arch_data or 
+            "data" not in arch_data or 
+            not arch_data["data"]) and empty_retry_count < max_empty_retries:
+            
+            empty_retry_count += 1
+            logger.info(f"Empty architecture data, retry attempt {empty_retry_count}/{max_empty_retries}")
+            
+            # Increasing backoff delay for each retry
+            retry_delay = 2 * (1.5 ** empty_retry_count)
+            await asyncio.sleep(retry_delay)
+            
+            # Retry the query
+            arch_data = await hpcl_ceg_model.ArchitectureData.get_all(arch_params, resp_type='plain')
+        
+        logger.info(f"Architecture data after {empty_retry_count} empty retries: {arch_data}")
         tank_counts = {item.get("total_tank_count", 0) for item in arch_data.get("data", [])}
         total_tank_count = max(tank_counts) if tank_counts else 0
         logger.info(f"Total tank count: {total_tank_count}")
