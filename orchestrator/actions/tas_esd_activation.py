@@ -1252,7 +1252,7 @@ class TasEsdActivation:
     
     async def _create_rosov_alert(self, bu, sap_id, location_name, total_count):
         """Create ROSOV alert"""
-        alert_message = "All ROSOVs closed(Except PL Receipt)"
+        alert_message = "All ROSOVs Closed(Except PL Receipt)"
         alert_data = {
             "bu": bu,
             "sap_id": sap_id,
@@ -1266,7 +1266,9 @@ class TasEsdActivation:
             "device_name": "",
             "return_data": True
         }
-        status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data)
+        camunda_url = await helpers.get_camunda_url(bu=bu, sap_id=sap_id,
+                                                        alert_section="TAS")
+        status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data, camunda_url=camunda_url)
         logger.info(f"created_alert ROSOV ---> {created_alert}")
         if created_alert and isinstance(created_alert, dict):
             alert_data["unique_id"] = created_alert.get("unique_id")
@@ -1298,7 +1300,9 @@ class TasEsdActivation:
             "device_name": "",
             "return_data": True
         }
-        status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data)
+        camunda_url = await helpers.get_camunda_url(bu=bu, sap_id=sap_id,
+                                                        alert_section="TAS")
+        status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data, camunda_url=camunda_url)
         logger.info(f"created_alert DBBV ---> {created_alert}")
         if created_alert and isinstance(created_alert, dict):
             alert_data["unique_id"] = created_alert.get("unique_id")
