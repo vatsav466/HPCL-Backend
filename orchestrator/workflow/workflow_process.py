@@ -36,21 +36,17 @@ class Camunda:
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 response = requests.post(url, data=json.dumps(payload), headers=self.headers)
-                response.raise_for_status()
-                print(response.json())
-                logger.info(response.json())
-                await self.update_alerts_with_instance_id(payload['variables']['alert_id']['value'], response.json().get("id"))
-                return response.json() 
+                if response.status_code // 100 == 2:
+                    logger.info(response.json())
+                    print(response.json())
+                    await self.update_alerts_with_instance_id(payload['variables']['alert_id']['value'], response.json().get("id"))
+                    return response.json()
+                logger.error(f"Attempt {attempt} - Error while starting workflow: {response.status_code}")
             except requests.exceptions.RequestException as e:
-                logger.error(f"Attempt {attempt} - Error starting workflow: {e}")
-                print(f"Attempt {attempt} - Error starting workflow: {e}")
-                #print(traceback.format_exc())
-
-                if attempt < MAX_RETRIES:
-                    time.sleep(RETRY_DELAY)
-                else:
-                    logger.error("Max retries reached. Workflow initiation failed.")
-    
+                logger.error(f"Attempt {attempt} - Error while starting workflow: {e}")
+                print(traceback.format_exc())
+            if attempt <= MAX_RETRIES:
+                time.sleep(RETRY_DELAY)
 
     async def closeWorkflow(self, payload, workflowId, camunda_url=urdhva_base.settings.camunda_url):
         if camunda_url:
