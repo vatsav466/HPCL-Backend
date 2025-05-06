@@ -6,6 +6,7 @@ import polars as pl
 import socket
 import datetime
 import traceback
+import mysql.connector
 import concurrent.futures
 import signal
 import generate_lpg_operations_summary
@@ -234,19 +235,32 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
         
     # Database connection with timeout
     try:
-        pg_conn = psycopg2.connect(
+        if params["db_type"] == "mysql":
+            pg_conn = mysql.connector.connect(
                 host=params["host"],
                 database=params["database"],
                 user=params["user"],
                 password=params["password"],
-                port=params["port"],
-                connect_timeout=timeout  # Connection timeout
+                port=int(params["port"]),
+                connection_timeout=timeout
             )
-        pg_conn.set_session(autocommit=True)  # Enable autocommit for timeout settings
-        cursor = pg_conn.cursor()
-        
-        # Set statement timeout at the connection level (milliseconds)
-        cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")        
+            cursor = pg_conn.cursor()
+            # Set statement timeout (in milliseconds) — note: MySQL calls this `max_execution_time`
+            cursor.execute(f"SET SESSION max_execution_time = {query_timeout * 1000};")
+        else:
+            pg_conn = psycopg2.connect(
+                    host=params["host"],
+                    database=params["database"],
+                    user=params["user"],
+                    password=params["password"],
+                    port=params["port"],
+                    connect_timeout=timeout  # Connection timeout
+                )
+            pg_conn.set_session(autocommit=True)  # Enable autocommit for timeout settings
+            cursor = pg_conn.cursor()
+            
+            # Set statement timeout at the connection level (milliseconds)
+            cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")        
         
     except Exception as e:
         print(f"Database connection error for {params.get('PlantName', 'unknown')}: {str(e)}")
@@ -344,9 +358,13 @@ def get_data_chunks(params):
         last_extracted_date = get_extraction_date(plant_name)
         
         # Query without LIMIT - the fetch_data function will handle chunking
+        if params["db_type"] == "mysql":
+            production_table = "production_data"
+        else:
+            production_table = "production_log"
         query = f""" 
-            SELECT * FROM production_log 
-            WHERE "process_date" > '{last_extracted_date}'
+            SELECT * FROM {production_table}
+            WHERE "process_date" > '{last_extracted_date}' AND "process_date" < NOW()
             ORDER BY "process_date" ASC
         """
         
@@ -408,7 +426,8 @@ def process_plant(plant):
             "database": plant["db_database"],
             "user": plant["db_user"],
             "password": plant["db_password"],
-            "port": 5432
+            "port": plant["port"],
+            "db_type": plant["db_type"],            
         }
         
         # Set timeout for this plant's processing
