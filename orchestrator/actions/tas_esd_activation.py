@@ -555,7 +555,7 @@ import orchestrator.alerting.listener.tas_maintenance_alert_check as alert_close
 logger = urdhva_base.logger.Logger.getInstance("workflow_process-log")
 
 
-async def retry_query_with_empty_check(query_func, *args, max_retries=3, retry_delay=2, empty_retries=2, **kwargs):
+async def retry_query(query_func, *args, max_retries=3, retry_delay=2, empty_retries=2, **kwargs):
     """
     Enhanced retry function for database queries that also retries on empty data
     
