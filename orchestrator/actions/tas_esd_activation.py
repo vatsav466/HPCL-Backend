@@ -548,6 +548,7 @@ import asyncio
 import json
 import datetime
 import traceback
+import hpcl_ceg_enum
 import hpcl_ceg_model
 import utilities.helpers as helpers
 import orchestrator.alerting.alert_factory as alert_create
@@ -1272,17 +1273,17 @@ class TasEsdActivation:
         status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data, camunda_url=camunda_url)
         logger.info(f"created_alert ROSOV ---> {created_alert}")
         if created_alert and isinstance(created_alert, dict):
-            alert_data["unique_id"] = created_alert.get("unique_id")
             alert_data["id"] = created_alert.get("id")
-            await alert_close.close_tas_workflow(alert_data=alert_data, message_type="interLockOk")
-            return True, {
-                "status": "success",
-                "message": alert_message,
-                "count": total_count,
-                "alert_id": alert_data["id"],
-                "unique_id": alert_data["unique_id"],
-                "alert_type": "ROSOV"
-            }
+            al_data = await hpcl_ceg_model.Alerts.get(alert_data['id'])
+            if not isinstance(al_data, dict):
+                al_data = al_data.__dict__
+            al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
+            al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
+            al_data['closed_at'] = datetime.datetime.now()
+            # Update the alert record
+            data_obj = hpcl_ceg_model.Alerts(**al_data)
+            await data_obj.modify()
+            return True, {"status": "success"}
         return True, {"status": "ROSOV alert creation failed"}
     
     async def _create_dbbv_alert(self, bu, sap_id, location_name, total_count):
@@ -1306,17 +1307,17 @@ class TasEsdActivation:
         status, created_alert = await alert_create.AlertFactory().create_alert(alert_data=alert_data, camunda_url=camunda_url)
         logger.info(f"created_alert DBBV ---> {created_alert}")
         if created_alert and isinstance(created_alert, dict):
-            alert_data["unique_id"] = created_alert.get("unique_id")
             alert_data["id"] = created_alert.get("id")
-            await alert_close.close_tas_workflow(alert_data=alert_data, message_type="interLockOk")
-            return True, {
-                "status": "success",
-                "message": alert_message,
-                "count": total_count,
-                "alert_id": alert_data["id"],
-                "unique_id": alert_data["unique_id"],
-                "alert_type": "DBBV"
-            }
+            al_data = await hpcl_ceg_model.Alerts.get(alert_data['id'])
+            if not isinstance(al_data, dict):
+                al_data = al_data.__dict__
+            al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
+            al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
+            al_data['closed_at'] = datetime.datetime.now()
+            # Update the alert record
+            data_obj = hpcl_ceg_model.Alerts(**al_data)
+            await data_obj.modify()
+            return True, {"status": "success"}
         return True, {"status": "DBBV alert creation failed"}
 
     async def _update_alert_history(self, bu, sap_id, device_name, interlock_name, fail_status_interlock):
