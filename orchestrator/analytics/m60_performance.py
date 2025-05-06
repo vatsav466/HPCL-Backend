@@ -206,24 +206,35 @@ def get_group_by_filter_key(cross_filters, Base_Filters, resp_format_org, cumula
         
             print("Time grain in top_zones ")
             
+        if time_grain == 'top_zones':
+            APG_Filters = ['"cumulative_level"', '"Zone_Name"','"ProductName"', '"month_name"']
+           
+         
         if time_grain == 'top_regions':
             Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Region_Name"', '"Zone_Name"', '"SalesArea_Name"',
                             '"ProductName"', '"month_name"']
         
             print("Time grain in top_regions ",Base_Filters)
+            
         if time_grain == 'top_regions':
             Lubes_Filters = ['"cumulative_level"', '"SBU_Name"', '"Region_Name"', '"Zone_Name"', '"SalesArea_Name"',
                             '"ProductName"', '"month_name"']
+            
+            
+        if time_grain == 'top_regions':
+            APG_Filters = ['"cumulative_level"', '"Region_Name"', '"ProductName"', '"month_name"']
             
         if time_grain == 'top_sales_area':
             Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"SalesArea_Name"', '"Zone_Name"', '"Region_Name"',
                             '"ProductName"', '"month_name"']
         
             print("Time grain in top_sales_area ")
+            
         if time_grain == 'top_sales_area':
             Lubes_Filters = ['"cumulative_level"', '"SBU_Name"', '"SalesArea_Name"', '"Zone_Name"', '"Region_Name"',
                             '"ProductName"', '"month_name"']
-            
+        if time_grain == 'top_sales_area':
+            APG_Filters = ['"cumulative_level"','"SalesArea_Name"', '"ProductName"', '"month_name"'  ]
             
             
     else:
