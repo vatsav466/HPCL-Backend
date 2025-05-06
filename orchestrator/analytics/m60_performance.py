@@ -199,10 +199,39 @@ def get_group_by_filter_key(cross_filters, Base_Filters, resp_format_org, cumula
                 Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"', '"Zone_Name"', '"Region_Name"',
                                 '"SalesArea_Name"', '"month_name"']
             print("APG_Liters at group by filter ", APG_Filters)
+            
+        if time_grain == 'top_zones':
+            Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
+                            '"ProductName"', '"month_name"']
+        
+            print("Time grain in top_zones ")
+            
+        if time_grain == 'top_regions':
+            Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Region_Name"', '"Zone_Name"', '"SalesArea_Name"',
+                            '"ProductName"', '"month_name"']
+        
+            print("Time grain in top_regions ",Base_Filters)
+        if time_grain == 'top_regions':
+            Lubes_Filters = ['"cumulative_level"', '"SBU_Name"', '"Region_Name"', '"Zone_Name"', '"SalesArea_Name"',
+                            '"ProductName"', '"month_name"']
+            
+        if time_grain == 'top_sales_area':
+            Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"SalesArea_Name"', '"Zone_Name"', '"Region_Name"',
+                            '"ProductName"', '"month_name"']
+        
+            print("Time grain in top_sales_area ")
+        if time_grain == 'top_sales_area':
+            Lubes_Filters = ['"cumulative_level"', '"SBU_Name"', '"SalesArea_Name"', '"Zone_Name"', '"Region_Name"',
+                            '"ProductName"', '"month_name"']
+            
+            
+            
     else:
         group_by_filter = ['"month_name"'] if not cumulative else []
         Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"',
                          '"month_name"']
+        
+        
         # print("len opf filters are ", cross_filters)
         if len(cross_filters) == 1:
             # if cross_filters[0]['key'].strip('"') = 'month_name' and cross_filters[0]['value'].strip('"') != '':
@@ -475,6 +504,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     # Fetching all group by filters, return should be a list always
     group_by_filter = get_group_by_filter_key(cross_filters, Base_Filters, resp_format_org, cumulative, drill_state,
                                               time_grain)
+    
+
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
     if "fiscal_year" in [x['key'].strip('"') for x in filters]:
@@ -560,6 +591,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             cross_filters = []
         else:
             print('more filters are present')
+
     actual_data = []
     hist_data = []
     target_data = []
@@ -573,6 +605,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     #else:
     actual_d = f""" ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" """
     history_d = f""" ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES" """
+    
+    
+    
     filters_req = [condition['key'].strip('"') for condition in filters if
                    condition['key'].strip('"') in ["A", "H", "T"]]
     if len(filters_req) == 0:
@@ -580,12 +615,25 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     # Generating filters
     for condition in filters:
         if condition['key'].strip('"') == "A":
+            
             actual = f"""ROUND(SUM("{DBNames['m60_ta']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" """
+            if time_grain in ['top_zones','top_regions','top_sales_area']:
+                #actual = f"""ROUND(SUM("{DBNames['m60_ta']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" ,"ProductName" """
+                if '"ProductName"' not in group_by_filter:
+                    group_by_filter.append('"ProductName"')
         elif condition['key'].strip('"') == "H":
             history = f"""ROUND(SUM("{DBNames['m60_h']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES" """
+            if time_grain in ['top_zones','top_regions','top_sales_area']:
+                #history = f"""ROUND(SUM("{DBNames['m60_h']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES","ProductName" """
+                if '"ProductName"' not in group_by_filter:
+                    group_by_filter.append('"ProductName"')
         elif condition['key'].strip('"') == "T":
             target = f""" ROUND(SUM("{DBNames['m60_ta']}"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES" """
-
+            if time_grain in ['top_zones','top_regions','top_sales_area']:
+                target = f""" ROUND(SUM("{DBNames['m60_ta']}"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES","ProductName" """
+                if '"ProductName"' not in group_by_filter:
+                    group_by_filter.append('"ProductName"')
+            
         elif condition['key'].strip('"') == "C" and '"T"' not in [x['key'] for x in filters]:
             continue
         elif condition['key'].strip('"') == "YTD":
@@ -793,6 +841,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 len(org_cross_filters) == 0 or (
                 len(org_cross_filters) == 1 and org_cross_filters[0]['key'] == '"sbu_wise"')):
             group_keys.append('month_name')
+            
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
 
@@ -816,8 +865,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                                                          filters]:
             # commenting the below line because month_name should not be present in the group_by_filter for cumulative mode
             #group_keys.append("month_name")
+            print("target",target)
+            print("group_keys",group_keys)
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
+            #print("target_data",target_data)
         else:
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
@@ -866,6 +918,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 target_data['month_name'] = pd.CategoricalIndex(target_data['month_name'], ordered=True,
                                                                 categories=months)
             target_data = target_data.to_dict(orient='records')
+    
+
 
     # Data Retrival for current financial year
     if actual:
@@ -967,16 +1021,36 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
 
     if target_data:
         for each_level in drill_list:
+            print("drill_list",drill_list)
+            print("target_data[0]",target_data[0])
+            print("each_level",each_level)
+            
             if each_level in target_data[0]:
                 if not tgt_result:
+                    area_map = {}
+                    print("came here for level ",each_level)
                     matched_level = each_level
                     for entry in target_data:
                         key = entry[each_level]
                         value = Decimal(entry['TARGET_TMT_SALES'])
                         summed_data[key] += value
-                    tgt_result = [{f"{matched_level}": k, 'TARGET_TMT_SALES': round(v, 2)} for k, v in summed_data.items()]
+                        if time_grain == 'top_sales_area':
+                            area_map[key] = entry.get('SalesArea_Name', None)
+                        if time_grain == 'top_regions':
+                            area_map[key] = entry.get('Region_Name', None)
+                        if time_grain == 'top_zones':
+                            area_map[key] = entry.get('Zone_Name', None)
+                    print("summed_data",summed_data)
+                    if time_grain == 'top_sales_area':
+                        tgt_result = [{f"{matched_level}": k, 'TARGET_TMT_SALES': round(v, 2), 'SalesArea_Name': area_map.get(k)} for k, v in summed_data.items()]
+                    if time_grain == 'top_regions':
+                        tgt_result = [{f"{matched_level}": k, 'TARGET_TMT_SALES': round(v, 2), 'Region_Name': area_map.get(k)} for k, v in summed_data.items()]
+                    if time_grain == 'top_zones':
+                            tgt_result = [{f"{matched_level}": k, 'TARGET_TMT_SALES': round(v, 2), 'Zone_Name': area_map.get(k)} for k, v in summed_data.items()]
                     if resp_format != 'heat_map':
                         continue  # Continue to check for month_name
+                
+                    
                 elif each_level == 'month_name' and matched_level:
                     # Add month_name to existing tgt_result items
                     for row in tgt_result:
@@ -986,6 +1060,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                 row['month_name'] = entry.get('month_name')
                                 break
                     break
+            print("tgt_result",tgt_result) 
+                
         print("tgt_result",tgt_result)
         non_month_keys = [k for k in drill_list if k != 'month_name']
 
@@ -1003,6 +1079,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         #df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
     df_ = [pd.DataFrame(d) for d in [actual_data, tgt_result, hist_data] if d]
     merged_df = df_[0] if len(df_) else pd.DataFrame([])
+    print("group_by_filter",group_by_filter)
     if len(df_) > 1:
         for df in df_[1:]:
             if group_by_filter:
@@ -1040,7 +1117,41 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             if key not in merged_df:
                 merged_df[key] = ""
     merged_df.fillna(0, inplace=True)
-
+    if time_grain == 'top_zones':
+             
+        result = await get_top_and_bottom_3_zones_by_year_sbu(merged_df,filters, cross_filters, drill_state, time_grain, resp_format)
+        print("RESULT",result)
+        if result["status"]:
+            print("Top 3 Zones:", result["data"]["top_3_zones"])
+            return result
+        else:
+            print("Error:", result["message"])
+            return result
+        
+    if time_grain == 'top_regions':
+             
+        result = await get_top_and_bottom_7_regions_by_year_sbu(merged_df,filters, cross_filters, drill_state, time_grain, resp_format)
+        print("RESULT",result)
+        if result["status"]:
+            print("Top 7 Regions:", result["data"]["top_region"])
+            return result
+        else:
+            print("Error:", result["message"])
+            return result   
+        
+    if time_grain == 'top_sales_area':
+             
+        result = await get_top_and_bottom_10_sales_area_by_year_sbu(merged_df,filters, cross_filters, drill_state, time_grain, resp_format)
+        print("RESULT",result)
+        if result["status"]:
+            print("Top 10 Sales Area:", result["data"]["top_sales"])
+            return result
+        else:
+            print("Error:", result["message"])
+            return result   
+    
+        
+    
     # This below if condition is to show the multi month selected cummulative values in the bar graph when multiple months is selected in drop-down
     # if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and "month_df" in merged_df.columns:
     if (len(group_by_filter) <= 1 and len(where_conditions) == 1 and "month_name" in where_conditions[0] and
@@ -1402,8 +1513,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 
         return {"status": True, "message": "Success",
                 "data": {'data': final_resp, 'level': {}, 'sales_unit': measure_unit}}
-
-
 def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
     hist_growth_details = []
     tgt_growth_details = []
@@ -1630,3 +1739,219 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
         # For regular drill down widgets
         return {key: value.to_dict() for key, value in
                 df.to_dict(orient='series').items()}, hist_growth_details, tgt_growth_details
+
+
+
+async def get_top_and_bottom_3_zones_by_year_sbu(merged_df, filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    try:
+        import pandas as pd
+
+        def get_filter_value(filters, field_name):
+            if isinstance(filters, list):
+                return next(
+                    (f.get("value") for f in filters if f.get("field") == field_name or f.get("key") == field_name),
+                    None
+                )
+            elif isinstance(filters, dict):
+                return filters.get(field_name)
+            return None
+
+        df = pd.DataFrame(merged_df)
+        print("DF", df)
+
+        # Extract SBU from filters (handles both 'sbu' and 'SBU_Name')
+        sbu_filter = get_filter_value(filters, "sbu") or get_filter_value(filters, "SBU_Name")
+        print("Resolved SBU from filters:", sbu_filter)
+
+        # Exclude unwanted SBUs
+        if sbu_filter in ["I&C", "Lubes"]:
+            return {
+                "status": False,
+                "message": "No Zone Data Present for the Current Selection",
+                "data": {}
+            }
+
+        if "Zone_Name" in df.columns:
+            # Exclude blank, empty, null or "-" zone names
+            df = df[df["Zone_Name"].notna() & (df["Zone_Name"].str.strip() != "") & (df["Zone_Name"] != "-")]
+
+            # Group and aggregate
+            zone_sales = df.groupby(["Zone_Name","ProductName"])["ACTUAL_TMT_SALES"].sum().reset_index()
+
+            # Sort and get top/bottom 3
+            top_3_zones = zone_sales.sort_values("ACTUAL_TMT_SALES", ascending=False).head(3)
+            bottom_3_zones = zone_sales.sort_values("ACTUAL_TMT_SALES", ascending=True).head(3)
+
+            # Prepare result
+            top_3_zones_data = top_3_zones.to_dict(orient="records")
+            bottom_3_zones_data = bottom_3_zones.to_dict(orient="records")
+
+            fiscal_year = get_filter_value(filters, "fiscal_year")
+
+            return {
+                "status": True,
+                "message": "Successfully retrieved top and bottom 3 zones",
+                "data": {
+                    "top_3_zones": top_3_zones_data,
+                    "bottom_3_zones": bottom_3_zones_data,
+                    "year": fiscal_year,
+                    "sbu": sbu_filter
+                }
+            }
+        else:
+            return {
+                "status": False,
+                "message": "Zone_Name column not found in the data",
+                "data": {}
+            }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": f"Error retrieving top and bottom 3 zones: {str(e)}",
+            "data": {}
+        }
+
+
+
+async def get_top_and_bottom_7_regions_by_year_sbu(merged_df, filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    try:
+        import pandas as pd
+
+        def get_filter_value(filters, field_name):
+            if isinstance(filters, list):
+                return next(
+                    (f.get("value") for f in filters if f.get("field") == field_name or f.get("key") == field_name),
+                    None
+                )
+            elif isinstance(filters, dict):
+                return filters.get(field_name)
+            return None
+
+        df = pd.DataFrame(merged_df)
+        print("DF", df)
+
+        # Extract SBU from filters
+        sbu_filter = get_filter_value(filters, "sbu") or get_filter_value(filters, "SBU_Name")
+        print("Resolved SBU from filters:", sbu_filter)
+
+        # Exclude unwanted SBUs
+        if sbu_filter in ["I&C", "Lubes"]:
+            num_top_bottom = 5  # Set to 5 if SBU is I&C or Lubes
+        else:
+            num_top_bottom = 7  # Set to 7 for all other cases
+
+        # Check if Region_Name column exists in the DataFrame
+        if "Region_Name" in df.columns:
+            # Exclude blank, empty, null or "-" region names
+            df = df[df["Region_Name"].notna() & (df["Region_Name"].str.strip() != "") & (df["Region_Name"] != "-")]
+
+            # Group and aggregate
+            region_sales = df.groupby(["Region_Name","ProductName"])["ACTUAL_TMT_SALES"].sum().reset_index()
+
+            # Sort and get top/bottom regions based on the number of regions specified
+            top_region = region_sales.sort_values("ACTUAL_TMT_SALES", ascending=False).head(num_top_bottom)
+            bottom_regions = region_sales.sort_values("ACTUAL_TMT_SALES", ascending=True).head(num_top_bottom)
+
+            # Prepare result
+            top_data = top_region.to_dict(orient="records")
+            bottom_data = bottom_regions.to_dict(orient="records")
+
+            fiscal_year = get_filter_value(filters, "fiscal_year")
+
+            return {
+                "status": True,
+                "message": f"Successfully retrieved top and bottom {num_top_bottom} regions",
+                "data": {
+                    "top_region": top_data,
+                    "bottom_regions": bottom_data,
+                    "year": fiscal_year,
+                    "sbu": sbu_filter
+                }
+            }
+
+        else:
+            return {
+                "status": False,
+                "message": "Region_Name column not found in the data",
+                "data": {}
+            }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": f"Error retrieving top and bottom regions: {str(e)}",
+            "data": {}
+        }
+
+      
+
+async def get_top_and_bottom_10_sales_area_by_year_sbu(merged_df, filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    
+    try:
+        import pandas as pd
+
+        def get_filter_value(filters, field_name):
+            if isinstance(filters, list):
+                return next(
+                    (f.get("value") for f in filters if f.get("field") == field_name or f.get("key") == field_name),
+                    None
+                )
+            elif isinstance(filters, dict):
+                return filters.get(field_name)
+            return None
+
+        df = pd.DataFrame(merged_df)
+        print("DF", df)
+
+        # Extract SBU from filters
+        sbu_filter = get_filter_value(filters, "sbu") or get_filter_value(filters, "SBU_Name")
+        print("Resolved SBU from filters:", sbu_filter)
+
+        # Set number of top/bottom entries based on SBU
+        if sbu_filter in ["I&C", "Lubes"]:
+            num_top_bottom = 7
+        else:
+            num_top_bottom = 10
+
+        if "SalesArea_Name" in df.columns:
+            # Exclude blank, empty, null or "-" sales area names
+            df = df[df["SalesArea_Name"].notna() & (df["SalesArea_Name"].str.strip() != "") & (df["SalesArea_Name"] != "-")]
+            print("df columns",df.columns)
+            # Group and aggregate
+            sales_area_sales = df.groupby(["SalesArea_Name","ProductName"])["ACTUAL_TMT_SALES"].sum().reset_index()
+
+            # Sort and get top/bottom
+            top_sales = sales_area_sales.sort_values("ACTUAL_TMT_SALES", ascending=False).head(num_top_bottom)
+            bottom_sales_area = sales_area_sales.sort_values("ACTUAL_TMT_SALES", ascending=True).head(num_top_bottom)
+
+            # Prepare result
+            top_data = top_sales.to_dict(orient="records")
+            bottom_data = bottom_sales_area.to_dict(orient="records")
+
+            fiscal_year = get_filter_value(filters, "fiscal_year")
+
+            return {
+                "status": True,
+                "message": f"Successfully retrieved top and bottom {num_top_bottom} sales areas",
+                "data": {
+                    "top_sales": top_data,
+                    "bottom_sales_area": bottom_data,
+                    "year": fiscal_year,
+                    "sbu": sbu_filter
+                }
+            }
+
+        else:
+            return {
+                "status": False,
+                "message": "SalesArea_Name column not found in the data",
+                "data": {}
+            }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": f"Error retrieving top and bottom sales areas: {str(e)}",
+            "data": {}
+        }

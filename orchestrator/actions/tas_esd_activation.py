@@ -191,37 +191,37 @@ class TasEsdActivation:
                 if has_pl_mode and has_maintenance and dbbv_total_with_maintenance == total_tank_count:
                     create_alert = True
                     using_path = "maintenance"
-                    logger.info("Pattern 1A: DBBV - PL Mode + Maintenance + Counts Match")
+                    logger.info("Pattern 1A: DBBV - PL Mode + Maintenance + Counts Match ---> %s", dbbv_total_with_maintenance, total_tank_count)
                 
                 # Logic Pattern 1: PL Mode + Fault + Counts Match
                 elif has_pl_mode and has_fault and dbbv_total_with_fault == total_tank_count:
                     create_alert = True
                     using_path = "fault"
-                    logger.info("Pattern 1B: DBBV - PL Mode + Fault + Counts Match")
+                    logger.info("Pattern 1B: DBBV - PL Mode + Fault + Counts Match ---> %s", dbbv_total_with_fault, total_tank_count)
                 
                 # Logic Pattern 2: PL Mode + NO Maintenance + NO Fault + Counts Match
                 elif has_pl_mode and not has_maintenance and not has_fault and (mov_pl_close_count + esd_mov_close_status_count) == total_tank_count:
                     create_alert = True
                     using_path = "clean"
-                    logger.info("Pattern 2: DBBV - PL Mode + NO Maintenance/Fault + Counts Match")
+                    logger.info("Pattern 2: DBBV - PL Mode + NO Maintenance/Fault + Counts Match ---> %s", (mov_pl_close_count + esd_mov_close_status_count), total_tank_count)
                 
                 # Logic Pattern 3: NO PL Mode + Maintenance + Counts Match
                 elif not has_pl_mode and has_maintenance and dbbv_total_with_maintenance == total_tank_count:
                     create_alert = True
                     using_path = "maintenance_no_pl"
-                    logger.info("Pattern 3A: DBBV - NO PL Mode + Maintenance + Counts Match")
+                    logger.info("Pattern 3A: DBBV - NO PL Mode + Maintenance + Counts Match ---> %s", dbbv_total_with_maintenance, total_tank_count)
                 
                 # Logic Pattern 3: NO PL Mode + Fault + Counts Match
                 elif not has_pl_mode and has_fault and dbbv_total_with_fault == total_tank_count:
                     create_alert = True
                     using_path = "fault_no_pl"
-                    logger.info("Pattern 3B: DBBV - NO PL Mode + Fault + Counts Match")
+                    logger.info("Pattern 3B: DBBV - NO PL Mode + Fault + Counts Match ---> %s", dbbv_total_with_fault, total_tank_count)
                 
                 if create_alert:
                     return await self._create_dbbv_alert(bu, sap_id, location_name, max(dbbv_total_with_maintenance, dbbv_total_with_fault))
             
             # Otherwise (no conditions met): Update alert history
-            logger.info("No pattern matched: Updating alert history")
+            logger.info("No pattern matched: Updating alert history for %s", esd_device_names)
             if esd_device_names:
                 if is_rosov_alert:
                     for dev_name in esd_device_names:

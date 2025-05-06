@@ -379,7 +379,7 @@
         <camunda:inputOutput>
           <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
           <camunda:inputParameter name="module_name">check_justification_approval</camunda:inputParameter>
-          <camunda:inputParameter name="class_name">checkJustificationApproval</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">CheckJustificationApproval</camunda:inputParameter>
           <camunda:inputParameter name="function_name">check_justification_approval</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
@@ -447,7 +447,7 @@
         <camunda:inputOutput>
           <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
           <camunda:inputParameter name="module_name">check_justification_approval</camunda:inputParameter>
-          <camunda:inputParameter name="class_name">checkJustificationApproval</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">CheckJustificationApproval</camunda:inputParameter>
           <camunda:inputParameter name="function_name">check_justification_approval</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>

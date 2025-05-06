@@ -14,14 +14,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "Tank Receipt Mode (MDPL)",
+                    "sensor_tag": "TANK.TK-01.RECEIPT_MDPL_STATUS",
                     "normal_value": "Normal Value",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "Tank Receipt Mode (RBPL)",
+                    "sensor_tag": "TANK.TK-01.RECEIPT_RBPL_STATUS",
                     "normal_value": "Normal Value"
                 },
                 {
@@ -229,14 +229,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-01.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "TANK.TK-02.RECEIPT_MDPL_STATUS",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-01.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "TANK.TK-02.RECEIPT_RBPL_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -444,14 +444,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-02.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "TANK.TK-03.RECEIPT_MDPL_STATUS",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-02.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "TANK.TK-03.RECEIPT_RBPL_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -659,14 +659,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-03.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "TANK.TK-04.RECEIPT_MDPL_STATUS",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-03.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "TANK.TK-04.RECEIPT_RBPL_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -874,14 +874,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-04.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "TANK.TK-05.RECEIPT_MDPL_STATUS",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-04.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "TANK.TK-05.RECEIPT_RBPL_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -1089,14 +1089,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-05.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "TANK.TK-06.RECEIPT_MDPL_STATUS",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-05.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "TANK.TK-06.RECEIPT_RBPL_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -1304,14 +1304,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-06.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "TANK.TK-07.RECEIPT_MDPL_STATUS",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-06.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "TANK.TK-07.RECEIPT_RBPL_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -1519,14 +1519,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-07.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-07.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 },
                 {
@@ -2164,14 +2164,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-11.RECEIPT_MDPL_STATUS",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-11.RECEIPT_RBPL_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -2379,14 +2379,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-11.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "TANK.TK-12.RECEIPT_MDPL_STATUS",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-11.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "TANK.TK-12.RECEIPT_RBPL_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -2594,14 +2594,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-12.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "TANK.TK-13.RECEIPT_MDPL_STATUS",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-12.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "TANK.TK-13.RECEIPT_RBPL_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -2809,14 +2809,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-13.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-13.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 },
                 {
@@ -6034,14 +6034,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-29.RECEIPT_MDPL_STATUS",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-29.RECEIPT_RBPL_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6249,14 +6249,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-29.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "TANK.TK-30.RECEIPT_MDPL_STATUS",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-29.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "TANK.TK-30.RECEIPT_RBPL_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6464,14 +6464,14 @@
                 },
                 {
                     "sensor_name": "Tank Receipt Mode",
-                    "sensor_tag": "TANK.TK-30.RECEIPT_MDPL_STATUS",
+                    "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
-                    "sensor_tag": "TANK.TK-30.RECEIPT_RBPL_STATUS",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 },
                 {

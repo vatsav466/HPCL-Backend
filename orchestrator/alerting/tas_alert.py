@@ -132,7 +132,7 @@ class TASAlertManager(alert_factory.AlertFactory):
             )
             # status, loc_dt = await cache_api_actions.get_location_data(bu=alert_data['bu'], location_id=alert_data['sap_id'])
 
-
+            print("resp_data query : %s", query)
             print("resp_data :", resp_data)
             if len(resp_data['data']):
                 for alert in resp_data['data']:

@@ -407,7 +407,10 @@ class AlertFactory:
                                 
                             data_obj = hpcl_ceg_model.Alerts(**alert)
                             await data_obj.modify()
-                            await redis_ins.hdel("alert_camunda_url", str(alert['id']))
+                            try:    
+                                await redis_ins.hdel("alert_camunda_url", str(alert['id']))
+                            except Exception as e:
+                                print("Failed to del in redis")
                             alert_closed = True
                             logger.info(f"Closed alert with external ID: {alert_data['alert_id']}")
                     except Exception as e:
