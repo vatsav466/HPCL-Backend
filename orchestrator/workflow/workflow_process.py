@@ -1,5 +1,6 @@
 import urdhva_base
 import json
+import time
 import requests
 import traceback
 import hpcl_ceg_model
@@ -29,16 +30,26 @@ class Camunda:
             self.camunda_url = camunda_url
         url = f" {self.camunda_url}/engine-rest/process-definition/key/{workflowId}/start"
 
-        try:
-            response = requests.post(url, data=json.dumps(payload), headers=self.headers)
-            response.raise_for_status()
-            print(response.json())
-            logger.info(response.json())
-            await self.update_alerts_with_instance_id(payload['variables']['alert_id']['value'], response.json().get("id"))
-        except requests.exceptions.RequestException as e:
-            print(f"Error starting workflow: {e}")
-            logger.error(f"Error starting workflow: {e}")
-            print(traceback.format_exc())
+        MAX_RETRIES = 3
+        RETRY_DELAY = 10
+
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                response = requests.post(url, data=json.dumps(payload), headers=self.headers)
+                response.raise_for_status()
+                print(response.json())
+                logger.info(response.json())
+                await self.update_alerts_with_instance_id(payload['variables']['alert_id']['value'], response.json().get("id"))
+                return response.json() 
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Attempt {attempt} - Error starting workflow: {e}")
+                print(f"Attempt {attempt} - Error starting workflow: {e}")
+                #print(traceback.format_exc())
+
+                if attempt < MAX_RETRIES:
+                    time.sleep(RETRY_DELAY)
+                else:
+                    logger.error("Max retries reached. Workflow initiation failed.")
     
 
     async def closeWorkflow(self, payload, workflowId, camunda_url=urdhva_base.settings.camunda_url):
