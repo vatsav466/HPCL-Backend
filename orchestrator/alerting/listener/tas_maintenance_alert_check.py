@@ -31,6 +31,9 @@ async def maintenance_alert_check(alert_data):
         else:
             tas_device_name = original_device_name
 
+        if alert_data['interlock_name'] in ['ESD ROSOV_Close Status_Fail', 'ESD MOV_Close Status_Fail']:
+            print(f"Creating alert for exception interlock_name: {alert_data['interlock_name']}")
+            return False
         interlock_name = alert_data.get('interlock_name', '')
         if tas_device_name.endswith('_M'):
             tas_device_name_for_query = tas_device_name[:-2]  # remove last 2 characters
