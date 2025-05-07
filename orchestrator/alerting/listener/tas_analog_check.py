@@ -123,9 +123,12 @@ async def tas_bcu_analog():
 
 
 async def check_master_status():
-    # check the analog master status table and view columns for status of lrca and lrcb
-    # getting 
-    # same on status = 1 on 30 days based on sap_id we will create alert
+    """
+    This function checks for alerts related to master status and creates alerts if certain conditions are met.
+    It queries the master_status table for specific active server names and checks the status count.  
+    If the status count is exactly 30, it creates an alert with relevant details.
+
+    """ 
     try:
        # calculate the date range for the last 30 days
        today = datetime.now()
@@ -203,6 +206,8 @@ async def check_bayreassignment():
         query1 = """
                  SELECT DISTINCT sap_id from alerts
                  WHERE interlock_name = ''
+                 ORDER BY created_at DESC
+                 LIMIT 1
                  """
         try:
             resp1 = await hpcl_ceg_model.Alerts.get_aggr_data(query1)
