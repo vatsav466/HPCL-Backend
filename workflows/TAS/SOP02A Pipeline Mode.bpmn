@@ -37,7 +37,7 @@
           <camunda:inputParameter name="module_name">check_for_unblock</camunda:inputParameter>
           <camunda:inputParameter name="class_name">CheckForUnblock</camunda:inputParameter>
           <camunda:inputParameter name="function_name">checkForVehicleUnblock</camunda:inputParameter>
-          <camunda:inputParameter name="escalate_time_block">3</camunda:inputParameter>
+          <camunda:inputParameter name="escalate_time_block">1</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1o9lj2b</bpmn:incoming>
