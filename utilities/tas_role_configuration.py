@@ -1727,6 +1727,22 @@ tas_role_mapping={
                 "4": "PT6H",
                 "5": "PT60S"
             }
+        },
+        "DayStartTotalizer_Gantry Permissive_Fail": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
         }
     }
 }
