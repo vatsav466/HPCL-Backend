@@ -202,6 +202,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP028", "interlock_name": "Additive Underdose Alarm_BCU", "workflow_name": "BCU ALARM PARAMETERS"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off_Fail", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off", "workflow_name": "BCU PERMISSIVE OFF"},
+                        {"sop_id": "SOP028A", "interlock_name": "DayStartTotalizer_Gantry Permissive_Fail", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A",  "interlock_name": "K Factor BCU Permissive Off_Fail", "workflow_name": "ANALOG ALERTS BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A",  "interlock_name": "Local Loading BCU Permissive Off_Fail", "workflow_name": "ANALOG ALERTS BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A",  "interlock_name": "MFM Factor BCU Permissive Off_Fail", "workflow_name": "ANALOG ALERTS BCU PERMISSIVE OFF"},

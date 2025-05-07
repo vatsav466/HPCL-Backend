@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import psycopg2
 import pandas as pd
 import polars as pl
@@ -42,7 +43,6 @@ def create_extraction_log_table():
         pg_conn.commit()
         cur.close()
         pg_conn.close()
-        print("-- Extraction log table checked/created successfully --")
         return True
     except Exception as e:
         print(f"Error creating extraction log table: {str(e)}")
@@ -169,7 +169,6 @@ def insertToDB(data, table_name):
     
     create_table_index = f'CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ("Date","Plant Name","system_id")'
     table_create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({table_create_sql})'
-    print("Creating table if not exists...")
     cur.execute(table_create_sql)
     pg_conn.commit()
     cur.execute(create_table_index)
@@ -268,6 +267,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
         
     try:
         print("-" * 50)
+        print("Plant Name :", params.get('PlantName', 'unknown'))
         print(f"Running Query with {query_timeout}s timeout...")
         print(query)
         
@@ -283,7 +283,6 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                 base_query = query.rstrip(';')
                 base_query += f" LIMIT {chunk_size} OFFSET "
             else:
-                print("Query already contains LIMIT - not using chunking")
                 cursor.execute(query)
                 data = cursor.fetchall()
                 columns = [column[0] for column in cursor.description]
@@ -298,7 +297,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
             offset = 0
             while True:
                 chunk_query = f"{base_query} {offset};"
-                print(f"Fetching chunk with offset {offset}, limit {chunk_size}...")
+                print(f"Fetching {params.get('PlantName', 'unknown')} plant chunk with offset {offset}, limit {chunk_size}...")
                 
                 cursor.execute(chunk_query)
                 chunk_data = cursor.fetchall()
@@ -318,7 +317,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                     break
                     
                 # Safety limit to prevent infinite loops
-                if offset > 1000000:  # 1 million record limit
+                if offset > 5000000:  # 5 million record limit
                     print("Reached maximum record limit (1M)")
                     break
                     
@@ -364,8 +363,8 @@ def get_data_chunks(params):
             production_table = "production_log"
         query = f""" 
             SELECT * FROM {production_table}
-            WHERE "process_date" > '{last_extracted_date}' AND "process_date" < NOW()
-            ORDER BY "process_date" ASC
+            WHERE process_date > '{last_extracted_date}' AND process_date < NOW()
+            ORDER BY process_date ASC
         """
         
         # Get data with query timeout and chunking
@@ -432,7 +431,6 @@ def process_plant(plant):
         
         # Set timeout for this plant's processing
         start_time = datetime.datetime.now()
-        max_processing_time = datetime.timedelta(minutes=5)
         
         success = get_data_chunks(params)
         
@@ -496,7 +494,6 @@ if __name__=="__main__":
         max_workers = min(10, len(plants))  # Use up to 10 workers but not more than the number of plants
         print(f"Processing {len(plants)} plants using {max_workers} parallel workers")
         
-        # Add a timeout for the entire process
         overall_timeout = 1200  # 10 minutes total timeout
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
