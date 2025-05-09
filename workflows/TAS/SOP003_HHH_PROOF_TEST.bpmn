@@ -14,7 +14,7 @@
     <bpmn:serviceTask id="Activity_0xhhoyf" name="Send Notification Tas Officer | Location In charge" camunda:type="external" camunda:topic="tas_workflow_consumer_1">
       <bpmn:extensionElements>
         <camunda:inputOutput>
-          <camunda:inputParameter name="rolemailto">Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD,Plant In-Charge SOD</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">0</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">active</camunda:inputParameter>
           <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
           <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
@@ -26,7 +26,7 @@
       <bpmn:incoming>Flow_0jkhrmy</bpmn:incoming>
       <bpmn:outgoing>Flow_1xx15w5</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:serviceTask id="Activity_0eaijy4" name="Reslove alert" camunda:type="external" camunda:topic="tas_workflow_consumer_2">
+    <bpmn:serviceTask id="Activity_0eaijy4" name="Reslove alert" camunda:type="external" camunda:topic="tas_workflow_consumer_3">
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="close">true</camunda:inputParameter>
@@ -39,10 +39,10 @@
       <bpmn:incoming>Flow_06ac9rh</bpmn:incoming>
       <bpmn:outgoing>Flow_0xnc7pw</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:serviceTask id="Activity_1r1ze3j" name="Send Close Notification Tas Officer | Location In charge" camunda:type="external" camunda:topic="tas_workflow_consumer_1">
+    <bpmn:serviceTask id="Activity_1r1ze3j" name="Send Close Notification Tas Officer | Location In charge" camunda:type="external" camunda:topic="tas_workflow_consumer_2">
       <bpmn:extensionElements>
         <camunda:inputOutput>
-          <camunda:inputParameter name="rolemailto">Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD,Plant In-Charge SOD</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">0</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">resolved</camunda:inputParameter>
           <camunda:inputParameter name="msg_subject">Alert Closed</camunda:inputParameter>
           <camunda:inputParameter name="BU">TAS</camunda:inputParameter>

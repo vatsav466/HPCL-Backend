@@ -133,7 +133,7 @@ async def process_data(data, bu):
     data["employee_id"] = data["username"]
     data["manual_user"] = False
     for col in ["username", "sap_id", "employee_id"]:
-        data[col] = data[col].fillna(0).astype(np.int64).astype(str)
+        data[col] = data[col].astype(str).apply(lambda x: x.replace('.00', '').replace('.0', '').lstrip('0'))
     data['zone'] = data['zone'].map(reporting_config.zone_map)
     data['last_name'] = data['first_name'].fillna("").apply(lambda x: x.split(" ")[-1] if " " in x else "")
     data['first_name'] = data['first_name'].fillna("").apply(lambda x: x.rstrip(x.split(" ")[-1]) if " " in x else x)
@@ -170,6 +170,7 @@ async def get_additional_data(bu, cursor):
     if queries:
         for query in queries:
             additional_data = pd.concat([additional_data, await fetch_data(cursor, query)])
+        
         additional_data.loc[
             (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
             (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
@@ -184,6 +185,11 @@ async def get_additional_data(bu, cursor):
             (additional_data["ROLE_NAME"].fillna("") == "IL_CHMNGR_LPGHSEZONE"),
             "novex_role"
         ] = "Zonal HSE LPG"
+        additional_data.loc[
+            (additional_data["ROLE_NAME"].fillna("") == "IL_LPGCONT_OFFCER"),
+            "novex_role"
+        ] = "Location In-Charge LPG"
+        
         additional_data = additional_data[additional_data["ZLOC_TYPE"].fillna("") != ""]
     return additional_data
 

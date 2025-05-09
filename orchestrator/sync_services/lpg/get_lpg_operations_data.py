@@ -1,11 +1,13 @@
 import os
 import sys
+import time
 import psycopg2
 import pandas as pd
 import polars as pl
 import socket
 import datetime
 import traceback
+import mysql.connector
 import concurrent.futures
 import signal
 import generate_lpg_operations_summary
@@ -41,7 +43,6 @@ def create_extraction_log_table():
         pg_conn.commit()
         cur.close()
         pg_conn.close()
-        print("-- Extraction log table checked/created successfully --")
         return True
     except Exception as e:
         print(f"Error creating extraction log table: {str(e)}")
@@ -168,7 +169,6 @@ def insertToDB(data, table_name):
     
     create_table_index = f'CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ("Date","Plant Name","system_id")'
     table_create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({table_create_sql})'
-    print("Creating table if not exists...")
     cur.execute(table_create_sql)
     pg_conn.commit()
     cur.execute(create_table_index)
@@ -234,19 +234,32 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
         
     # Database connection with timeout
     try:
-        pg_conn = psycopg2.connect(
+        if params["db_type"] == "mysql":
+            pg_conn = mysql.connector.connect(
                 host=params["host"],
                 database=params["database"],
                 user=params["user"],
                 password=params["password"],
-                port=params["port"],
-                connect_timeout=timeout  # Connection timeout
+                port=int(params["port"]),
+                connection_timeout=timeout
             )
-        pg_conn.set_session(autocommit=True)  # Enable autocommit for timeout settings
-        cursor = pg_conn.cursor()
-        
-        # Set statement timeout at the connection level (milliseconds)
-        cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")        
+            cursor = pg_conn.cursor()
+            # Set statement timeout (in milliseconds) — note: MySQL calls this `max_execution_time`
+            cursor.execute(f"SET SESSION max_execution_time = {query_timeout * 1000};")
+        else:
+            pg_conn = psycopg2.connect(
+                    host=params["host"],
+                    database=params["database"],
+                    user=params["user"],
+                    password=params["password"],
+                    port=params["port"],
+                    connect_timeout=timeout  # Connection timeout
+                )
+            pg_conn.set_session(autocommit=True)  # Enable autocommit for timeout settings
+            cursor = pg_conn.cursor()
+            
+            # Set statement timeout at the connection level (milliseconds)
+            cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")        
         
     except Exception as e:
         print(f"Database connection error for {params.get('PlantName', 'unknown')}: {str(e)}")
@@ -254,6 +267,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
         
     try:
         print("-" * 50)
+        print("Plant Name :", params.get('PlantName', 'unknown'))
         print(f"Running Query with {query_timeout}s timeout...")
         print(query)
         
@@ -269,7 +283,6 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                 base_query = query.rstrip(';')
                 base_query += f" LIMIT {chunk_size} OFFSET "
             else:
-                print("Query already contains LIMIT - not using chunking")
                 cursor.execute(query)
                 data = cursor.fetchall()
                 columns = [column[0] for column in cursor.description]
@@ -284,7 +297,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
             offset = 0
             while True:
                 chunk_query = f"{base_query} {offset};"
-                print(f"Fetching chunk with offset {offset}, limit {chunk_size}...")
+                print(f"Fetching {params.get('PlantName', 'unknown')} plant chunk with offset {offset}, limit {chunk_size}...")
                 
                 cursor.execute(chunk_query)
                 chunk_data = cursor.fetchall()
@@ -304,7 +317,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                     break
                     
                 # Safety limit to prevent infinite loops
-                if offset > 1000000:  # 1 million record limit
+                if offset > 5000000:  # 5 million record limit
                     print("Reached maximum record limit (1M)")
                     break
                     
@@ -344,10 +357,14 @@ def get_data_chunks(params):
         last_extracted_date = get_extraction_date(plant_name)
         
         # Query without LIMIT - the fetch_data function will handle chunking
+        if params["db_type"] == "mysql":
+            production_table = "production_data"
+        else:
+            production_table = "production_log"
         query = f""" 
-            SELECT * FROM production_log 
-            WHERE "process_date" > '{last_extracted_date}'
-            ORDER BY "process_date" ASC
+            SELECT * FROM {production_table}
+            WHERE process_date > '{last_extracted_date}' AND process_date < NOW()
+            ORDER BY process_date ASC
         """
         
         # Get data with query timeout and chunking
@@ -408,12 +425,12 @@ def process_plant(plant):
             "database": plant["db_database"],
             "user": plant["db_user"],
             "password": plant["db_password"],
-            "port": 5432
+            "port": plant["port"],
+            "db_type": plant["db_type"],            
         }
         
         # Set timeout for this plant's processing
         start_time = datetime.datetime.now()
-        max_processing_time = datetime.timedelta(minutes=5)
         
         success = get_data_chunks(params)
         
@@ -477,7 +494,6 @@ if __name__=="__main__":
         max_workers = min(10, len(plants))  # Use up to 10 workers but not more than the number of plants
         print(f"Processing {len(plants)} plants using {max_workers} parallel workers")
         
-        # Add a timeout for the entire process
         overall_timeout = 1200  # 10 minutes total timeout
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:

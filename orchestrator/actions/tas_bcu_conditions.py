@@ -33,7 +33,7 @@ class BCUAlertConditions:
                         f"""DATE(created_at) = '{date_check}' and """
                         f"""alert_message = 'command_sent' """
                     )
-            logger.info("query :", query)
+            logger.info("query : %s", query)
             params = urdhva_base.queryparams.QueryParams(q=query)
             resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
             if resp["data"]:
@@ -70,7 +70,7 @@ class BCUAlertConditions:
                     f"""interlock_name = '{params.get('interlock_name', '')}' and """
                     f"""DATE(created_at) = '{date_check}' and alert_status='Close' """
                 )
-            logger.info("query :", query)
+            logger.info("query : %s", query)
             params = urdhva_base.queryparams.QueryParams(q=query)
             resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
             print("-"*50)

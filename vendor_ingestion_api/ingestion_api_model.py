@@ -165,6 +165,21 @@ class Va_Ingest_Data_ScoreParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Va_Ingest_Data_CloseParams(pydantic.BaseModel):
+    alert_id: str
+    status: str
+    acknowledged_by: str
+    closed_at: str
+    action_description: typing.Optional[str] = pydantic.Field("", **{})
+    action_code: typing.Optional[str] = pydantic.Field("", **{})
+    action_reason: typing.Optional[str] = pydantic.Field("", **{})
+    action_category: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class productsDetailsCreate(pydantic.BaseModel):
     prod_code: typing.Optional[str] = pydantic.Field("", **{})
     uom: typing.Optional[str] = pydantic.Field("", **{})

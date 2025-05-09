@@ -149,6 +149,9 @@ async def close_camunda_workflow(alert_data, camunda_url):
         if not instance_id:
             instance_id = alert_data.get("workflow_instance_id")
         url = f"{camunda_url}/engine-rest/process-instance/{instance_id}"
+        print("instance_id: ", instance_id)
+        if not instance_id:
+            return False
         for attempt in range(MAX_RETRIES):
             try:
                 response = requests.delete(url, headers=headers)

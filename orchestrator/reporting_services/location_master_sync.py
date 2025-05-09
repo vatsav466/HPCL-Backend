@@ -63,7 +63,7 @@ async def clear_existing_location_master(bu):
                 password=creds["password"],
                 port=creds["port"]
             )
-    query = f""" DELETE FROM location_master WHERE bu='{bu.upper()}'; """
+    query = f""" DELETE FROM location_master WHERE bu='{bu.upper()}' AND location_onboard IS FALSE; """
     cursor = pg_conn.cursor()
     cursor.execute(query)
     pg_conn.commit()
@@ -154,8 +154,8 @@ async def sync_location_master():
             if config.get("reporting_office_query", None) and col in data.columns:
                 del data[col]
         if config.get("reporting_office_query", None):
-            data_ro = await fetch_data(cursor, config.get("reporting_office_query"))        
-            data_ro = await combine_roles(data_ro, _id="RO_CODE", role_name=["SALES_GROUP_DESC"])        
+            data_ro = await fetch_data(cursor, config.get("reporting_office_query"))
+            data_ro = await combine_roles(data_ro, _id="RO_CODE", role_name=["SALES_GROUP_DESC"])
             data = pd.merge(data, data_ro[["RO_CODE", "SALES_OFFICE_DESC", "SALES_GROUP_DESC"]],
                             left_on="REPORTING_OFFICE", right_on="RO_CODE", how="left")
         data["bu"] = config.get("bu", "").upper()

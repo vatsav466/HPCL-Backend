@@ -105,7 +105,7 @@ class Postgresql:
             print("manual_percentage --> ", manual_percentage)
             return True, "Manual FAN printed more than 5% of total TT loaded", f"Manual percentage: {manual_percentage:.2f}% exceeds threshold of 5%"
         else:
-            return False, "No alert needed", f"Manual percentage: {manual_percentage:.2f}% is within threshold of 5%"
+            return 
 
 
     async def cal_unauthorized_flow(self, net_totalizer):
@@ -254,6 +254,10 @@ class Postgresql:
         dict: Status and message of the operation.
         """
         for record in sample_records:
+            if "cum_start_mass_mt" in record:
+                record["cum_start_mass_mt"] = str(record["cum_start_mass_mt"])
+            if "cum_end_mass_mt" in record:
+                record["cum_end_mass_mt"] = str(record["cum_end_mass_mt"])
             if "date" in record and isinstance(record["date"], str):
                 try:
                     record["date"] = date.fromisoformat(record["date"])
@@ -294,7 +298,13 @@ class Postgresql:
                 
                 if "bay_reassignment_time" in record and isinstance(record["bay_reassignment_time"], str):
                     record["bay_reassignment_time"] = pd.to_datetime(record["bay_reassignment_time"])
+
+                if "trans_start_time" in record and isinstance(record["trans_start_time"], str):
+                    record["trans_start_time"] = pd.to_datetime(record["trans_start_time"])
                 
+                if "trans_end_time" in record and isinstance(record["trans_end_time"], str):
+                    record["trans_end_time"] = pd.to_datetime(record["trans_end_time"])
+                                
                 if "current_k_factor" in record:
                     try:
                         record["current_k_factor"] = round(float(record["current_k_factor"]), 2) if record["current_k_factor"] else None

@@ -2,6 +2,7 @@ import urdhva_base
 import time
 import json
 import httpx
+import asyncio
 import datetime
 import traceback
 import hpcl_ceg_model
@@ -72,6 +73,8 @@ class TASAlertManager(alert_factory.AlertFactory):
                 alert_section="TAS", 
                 location_data=loc_dt
             )
+            alert_data['workflow_url'] = camunda_url
+            alert_data['workflow_port'] = camunda_url.split(":")[2]
 
             return await cls.create_alert(alert_data, camunda_url)
 
@@ -101,28 +104,35 @@ class TASAlertManager(alert_factory.AlertFactory):
         try:
             logger.info(f"Alert data received to close alert: {alert_data}")
             print("-- In Close Alert ---")
+
             with open(f"/opt/ceg/algo/things_board/device_data/{alert_data['sap_id']}.json") as f:
                 device_data = json.load(f)
+
             device_keys = []
-            print("device_keys -->", device_keys)
             for rec in device_data["data"]:
                 if rec['device_name'] == alert_data['device_name']:
                     for sensor in rec['sensors']:
                         if sensor['sensor_name'] in alert_data:
                             device_keys.append(f"{sensor['sensor_name']}: {alert_data[sensor['sensor_name']]}")
                     break
-            device_data = f"{alert_data['device_name']}({", ".join(device_keys)})"
+
+            device_data_str = f"{alert_data['device_name']}({', '.join(device_keys)})"
             processed_time = datetime.datetime.now(datetime.timezone.utc)
-            alert_data["alert_history"] = {"processed_time": processed_time.isoformat(),
-                                           "allocated_time": processed_time.isoformat(),
-                                           "action_msg": f"{alert_data['interlock_name']} Interlock "
-                                                         f"cleared",
-                                           "action_type": "InterlockCleared"}
-            
+            alert_data["alert_history"] = {
+                "processed_time": processed_time.isoformat(),
+                "allocated_time": processed_time.isoformat(),
+                "action_msg": f"{alert_data['interlock_name']} Interlock cleared",
+                "action_type": "InterlockCleared"
+            }
+
             query = (f"external_id='{alert_data['alert_id']}' and bu='{alert_data['bu']}' and "
-                     f"sap_id='{alert_data['sap_id']}' and alert_status!='Close'")
-            resp_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=100),
-                                                            resp_type='plain')
+                    f"sap_id='{alert_data['sap_id']}' and alert_status!='Close'")
+            resp_data = await hpcl_ceg_model.Alerts.get_all(
+                urdhva_base.queryparams.QueryParams(q=query, limit=100), resp_type='plain'
+            )
+            # status, loc_dt = await cache_api_actions.get_location_data(bu=alert_data['bu'], location_id=alert_data['sap_id'])
+
+            print("resp_data query : %s", query)
             print("resp_data :", resp_data)
             if len(resp_data['data']):
                 for alert in resp_data['data']:
@@ -130,28 +140,60 @@ class TASAlertManager(alert_factory.AlertFactory):
                     tas_alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
                     if not isinstance(tas_alert_data, dict):
                         tas_alert_data = tas_alert_data.__dict__
+
                     data = {
                         "messageName": "interLockOk",
                         "businessKey": tas_alert_data['unique_id'],
-                        "processVariables": {"alert_id": {"value": alert_id, "type": "String"},
-                                             "closed": {"value": True, "type": "Boolean"}}}
+                        "processVariables": {
+                            "alert_id": {"value": alert_id, "type": "String"},
+                            "closed": {"value": True, "type": "Boolean"}
+                        }
+                    }
+                    # await redis_ins.hdel("alert_camunda_url", str(alert['id']))
 
-                    url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
-                                                        alert_section="TAS")
-                    url += "/engine-rest/message"
-                    print("Camunda URL :", url)
-                    time.sleep(5)
-                    try:
-                        r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
-                        if int(r.status_code / 100) != 2:
-                            print(f"Error while sending message to camunda: {r.status_code} - {r.text}")
+                    url = tas_alert_data.get('workflow_url')
+                    logger.info("url --> %s", url)
+                    if url:
+                        url = url.rstrip('/') + "/engine-rest/message"
+                    else:
+                        url = await helpers.get_camunda_url(
+                            bu=tas_alert_data['bu'],
+                            sap_id=tas_alert_data['sap_id'],
+                            alert_section="TAS",
+                            location_data=loc_dt
+                        )
+                        url = url.rstrip('/') + "/engine-rest/message"
+
+                    print("Camunda URL:", url)
+                    # Retry logic
+                    max_retries = 5
+                    initial_delay = 5  # seconds
+
+                    for attempt in range(1, max_retries + 1):
+                        # await asyncio.sleep(5)  # wait before the first send
+                        print("attempt:", attempt)
+                        try:
+                            r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
+                            if r.status_code // 100 == 2:
+                                print("Message sent to camunda")
+                                break
+                            else:
+                                print(f"Attempt {attempt}: Error sending message to camunda: "
+                                    f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
+                        except Exception as e:
+                            logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} for alert_id {alert_id}, "
+                                        f"business_key {tas_alert_data['unique_id']}")
+
+                        if attempt < max_retries:
+                            backoff = initial_delay * (2 ** (attempt - 1))
+                            await asyncio.sleep(backoff)
                         else:
-                            print("Message sent to camunda")
-                    except Exception as e:
-                        logger.error(f"Exception in closing camunda flow {e} for alert_id {alert_id}, "
-                                     f"business_key {tas_alert_data['unique_id']}")
+                            logger.error(f"Failed to send message to camunda after {max_retries} attempts")
+
             else:
                 await cls.close_alert(alert_data)
+
             return "Successfully sent message to camunda"
+
         except Exception as e:
             raise Exception(f"Error closing alert {e}")

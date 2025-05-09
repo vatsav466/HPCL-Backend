@@ -48,8 +48,8 @@ class CauseEffect:
             effect_alert_id = effect_alert['id']
             effect_interlock_name = effect_alert.get('interlock_name', "Unknown Effect")
             
-            if effect_interlock_name.lower().endswith('_fail'):
-                continue
+            # if effect_interlock_name.lower().endswith('_fail'):
+            #     continue
             # Update effect alert's history with cause reference
             existing_effect_history = effect_alert.get('alert_history', [])
             last_processed_time = processed_time
@@ -73,7 +73,7 @@ class CauseEffect:
             if not cause_exists:
                 new_effect_entry = {
                     "processed_time": processed_time.isoformat(),
-                    "allocated_time": last_processed_time,
+                    "allocated_time": last_processed_time if isinstance(last_processed_time, str) else last_processed_time.isoformat(),
                     "action_msg": f"Related Cause alert {interlock_name}",
                     "action_type": "Cause"
                 }
@@ -105,7 +105,7 @@ class CauseEffect:
             if not effect_exists:
                 new_cause_entry = {
                     "processed_time": processed_time.isoformat(),
-                    "allocated_time": last_processed_time,
+                    "allocated_time": last_processed_time if isinstance(last_processed_time, str) else last_processed_time.isoformat(),
                     "action_msg": f"Related Effect alert {effect_interlock_name}",
                     "action_type": "Effect"
                 }
@@ -120,8 +120,8 @@ class CauseEffect:
         return True, {"Message": "Alert History updated"}
 
     async def handle_effect_alert(self, params):
-        if params.get('interlock_name', '').lower().endswith('_fail'):
-            return True, {"Message": "Skipped _fail interlock"}
+        # if params.get('interlock_name', '').lower().endswith('_fail'):
+        #     return True, {"Message": "Skipped _fail interlock"}
         
         # Get current effect alert details
         effect_alert_id = params.get("alert_id")
@@ -175,7 +175,7 @@ class CauseEffect:
                 if not effect_exists:
                     new_entry = {
                         "processed_time": processed_time.isoformat(),
-                        "allocated_time": last_processed_time,
+                        "allocated_time": last_processed_time if isinstance(last_processed_time, str) else last_processed_time.isoformat(),
                         "action_msg": f"Related Effect alert {interlock_name}",
                         "action_type": "Effect"
                     }
@@ -215,7 +215,7 @@ class CauseEffect:
                 if not cause_exists and related_cause_interlock_name:
                     new_effect_entry = {
                         "processed_time": processed_time.isoformat(),
-                        "allocated_time": last_processed_time,
+                        "allocated_time": last_processed_time if isinstance(last_processed_time, str) else last_processed_time.isoformat(),
                         "action_msg": f"Related to Cause alert {related_cause_interlock_name}",
                         "action_type": "Cause"
                     }

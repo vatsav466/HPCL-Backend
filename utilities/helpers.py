@@ -177,7 +177,6 @@ async def get_location_details(bu, sap_id):
     for attempt in range(MAX_RETRIES):
         try:
             if not bu or not sap_id:
-                print("Invalid parameters: 'bu' and 'sap_id' are required.")
                 return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
             async with httpx.AsyncClient(verify=False) as client:
                 base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
@@ -188,7 +187,7 @@ async def get_location_details(bu, sap_id):
                 else:
                     print(resp.status_code, resp.text)
         except Exception as e:
-            print("Error In getting location details: ", e)
+            print(f"Error in getting location details: {e}, BU: {bu}, Location ID: {sap_id}")
         if attempt < MAX_RETRIES - 1:
             time.sleep(RETRY_DELAY * (2 ** attempt))
         else:

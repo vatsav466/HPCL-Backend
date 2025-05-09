@@ -3805,6 +3805,447 @@
             ]
         },
         {
+            "name": "hoststandalonetts",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HostStandaloneTts",
+            "attributes": {},
+            "uris": [
+                "/api/hoststandalonetts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hoststandalonetts_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HostStandaloneTts_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/hoststandalonetts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "hoststandalonetts_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HostStandaloneTts_admin",
+            "attributes": {},
+            "uris": [
+                "/api/hoststandalonetts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hosttasuserdetails",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HostTasUserDetails",
+            "attributes": {},
+            "uris": [
+                "/api/hosttasuserdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hosttasuserdetails_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HostTasUserDetails_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/hosttasuserdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "hosttasuserdetails_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HostTasUserDetails_admin",
+            "attributes": {},
+            "uris": [
+                "/api/hosttasuserdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hostlivetankdetails",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HostLiveTankDetails",
+            "attributes": {},
+            "uris": [
+                "/api/hostlivetankdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hostlivetankdetails_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HostLiveTankDetails_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/hostlivetankdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "hostlivetankdetails_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HostLiveTankDetails_admin",
+            "attributes": {},
+            "uris": [
+                "/api/hostlivetankdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hostsuspectedloads",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HostSuspectedLoads",
+            "attributes": {},
+            "uris": [
+                "/api/hostsuspectedloads/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hostsuspectedloads_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HostSuspectedLoads_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/hostsuspectedloads/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "hostsuspectedloads_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HostSuspectedLoads_admin",
+            "attributes": {},
+            "uris": [
+                "/api/hostsuspectedloads/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hostpltdetails",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HostPltDetails",
+            "attributes": {},
+            "uris": [
+                "/api/hostpltdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hostpltdetails_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HostPltDetails_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/hostpltdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "hostpltdetails_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HostPltDetails_admin",
+            "attributes": {},
+            "uris": [
+                "/api/hostpltdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hostdayenddetails",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HostDayEndDetails",
+            "attributes": {},
+            "uris": [
+                "/api/hostdayenddetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hostdayenddetails_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HostDayEndDetails_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/hostdayenddetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "hostdayenddetails_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HostDayEndDetails_admin",
+            "attributes": {},
+            "uris": [
+                "/api/hostdayenddetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hostdayendsummary",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HostDayEndSummary",
+            "attributes": {},
+            "uris": [
+                "/api/hostdayendsummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hostdayendsummary_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HostDayEndSummary_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/hostdayendsummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "hostdayendsummary_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HostDayEndSummary_admin",
+            "attributes": {},
+            "uris": [
+                "/api/hostdayendsummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "tagsdata",
             "type": "all",
             "ownerManagedAccess": false,

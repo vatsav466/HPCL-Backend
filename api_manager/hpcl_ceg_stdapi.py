@@ -1052,6 +1052,181 @@ async def delete(id: str):
     return await MasterStatus.delete(id)
 
 
+@router.post('/hoststandalonetts', response_model=HostStandaloneTts, tags=['HostStandaloneTts'])
+async def create(inputObj: HostStandaloneTtsCreate):
+    return await inputObj.create()
+
+
+@router.put('/hoststandalonetts', response_model=HostStandaloneTts, tags=['HostStandaloneTts'])
+async def update(inputObj: HostStandaloneTts):
+    return await inputObj.modify()
+
+
+@router.get('/hoststandalonetts/{id}', response_model=HostStandaloneTts, tags=['HostStandaloneTts'])
+async def get(id: str):
+    return await HostStandaloneTts.get(id, skip_secrets=True)
+
+
+@router.get('/hoststandalonetts', response_model=HostStandaloneTtsGetResp, tags=['HostStandaloneTts'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostStandaloneTts.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hoststandalonetts/{id}', tags=['HostStandaloneTts'])
+async def delete(id: str):
+    return await HostStandaloneTts.delete(id)
+
+
+@router.post('/hosttasuserdetails', response_model=HostTasUserDetails, tags=['HostTasUserDetails'])
+async def create(inputObj: HostTasUserDetailsCreate):
+    return await inputObj.create()
+
+
+@router.put('/hosttasuserdetails', response_model=HostTasUserDetails, tags=['HostTasUserDetails'])
+async def update(inputObj: HostTasUserDetails):
+    return await inputObj.modify()
+
+
+@router.get('/hosttasuserdetails/{id}', response_model=HostTasUserDetails, tags=['HostTasUserDetails'])
+async def get(id: str):
+    return await HostTasUserDetails.get(id, skip_secrets=True)
+
+
+@router.get('/hosttasuserdetails', response_model=HostTasUserDetailsGetResp, tags=['HostTasUserDetails'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostTasUserDetails.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hosttasuserdetails/{id}', tags=['HostTasUserDetails'])
+async def delete(id: str):
+    return await HostTasUserDetails.delete(id)
+
+
+@router.post('/hostlivetankdetails', response_model=HostLiveTankDetails, tags=['HostLiveTankDetails'])
+async def create(inputObj: HostLiveTankDetailsCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostlivetankdetails', response_model=HostLiveTankDetails, tags=['HostLiveTankDetails'])
+async def update(inputObj: HostLiveTankDetails):
+    return await inputObj.modify()
+
+
+@router.get('/hostlivetankdetails/{id}', response_model=HostLiveTankDetails, tags=['HostLiveTankDetails'])
+async def get(id: str):
+    return await HostLiveTankDetails.get(id, skip_secrets=True)
+
+
+@router.get('/hostlivetankdetails', response_model=HostLiveTankDetailsGetResp, tags=['HostLiveTankDetails'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostLiveTankDetails.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostlivetankdetails/{id}', tags=['HostLiveTankDetails'])
+async def delete(id: str):
+    return await HostLiveTankDetails.delete(id)
+
+
+@router.post('/hostsuspectedloads', response_model=HostSuspectedLoads, tags=['HostSuspectedLoads'])
+async def create(inputObj: HostSuspectedLoadsCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostsuspectedloads', response_model=HostSuspectedLoads, tags=['HostSuspectedLoads'])
+async def update(inputObj: HostSuspectedLoads):
+    return await inputObj.modify()
+
+
+@router.get('/hostsuspectedloads/{id}', response_model=HostSuspectedLoads, tags=['HostSuspectedLoads'])
+async def get(id: str):
+    return await HostSuspectedLoads.get(id, skip_secrets=True)
+
+
+@router.get('/hostsuspectedloads', response_model=HostSuspectedLoadsGetResp, tags=['HostSuspectedLoads'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostSuspectedLoads.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostsuspectedloads/{id}', tags=['HostSuspectedLoads'])
+async def delete(id: str):
+    return await HostSuspectedLoads.delete(id)
+
+
+@router.post('/hostpltdetails', response_model=HostPltDetails, tags=['HostPltDetails'])
+async def create(inputObj: HostPltDetailsCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostpltdetails', response_model=HostPltDetails, tags=['HostPltDetails'])
+async def update(inputObj: HostPltDetails):
+    return await inputObj.modify()
+
+
+@router.get('/hostpltdetails/{id}', response_model=HostPltDetails, tags=['HostPltDetails'])
+async def get(id: str):
+    return await HostPltDetails.get(id, skip_secrets=True)
+
+
+@router.get('/hostpltdetails', response_model=HostPltDetailsGetResp, tags=['HostPltDetails'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostPltDetails.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostpltdetails/{id}', tags=['HostPltDetails'])
+async def delete(id: str):
+    return await HostPltDetails.delete(id)
+
+
+@router.post('/hostdayenddetails', response_model=HostDayEndDetails, tags=['HostDayEndDetails'])
+async def create(inputObj: HostDayEndDetailsCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostdayenddetails', response_model=HostDayEndDetails, tags=['HostDayEndDetails'])
+async def update(inputObj: HostDayEndDetails):
+    return await inputObj.modify()
+
+
+@router.get('/hostdayenddetails/{id}', response_model=HostDayEndDetails, tags=['HostDayEndDetails'])
+async def get(id: str):
+    return await HostDayEndDetails.get(id, skip_secrets=True)
+
+
+@router.get('/hostdayenddetails', response_model=HostDayEndDetailsGetResp, tags=['HostDayEndDetails'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostDayEndDetails.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostdayenddetails/{id}', tags=['HostDayEndDetails'])
+async def delete(id: str):
+    return await HostDayEndDetails.delete(id)
+
+
+@router.post('/hostdayendsummary', response_model=HostDayEndSummary, tags=['HostDayEndSummary'])
+async def create(inputObj: HostDayEndSummaryCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostdayendsummary', response_model=HostDayEndSummary, tags=['HostDayEndSummary'])
+async def update(inputObj: HostDayEndSummary):
+    return await inputObj.modify()
+
+
+@router.get('/hostdayendsummary/{id}', response_model=HostDayEndSummary, tags=['HostDayEndSummary'])
+async def get(id: str):
+    return await HostDayEndSummary.get(id, skip_secrets=True)
+
+
+@router.get('/hostdayendsummary', response_model=HostDayEndSummaryGetResp, tags=['HostDayEndSummary'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostDayEndSummary.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostdayendsummary/{id}', tags=['HostDayEndSummary'])
+async def delete(id: str):
+    return await HostDayEndSummary.delete(id)
+
+
 @router.post('/tagsdata', response_model=TagsData, tags=['TagsData'])
 async def create(inputObj: TagsDataCreate):
     return await inputObj.create()

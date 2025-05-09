@@ -56,6 +56,8 @@ class AlertFactory:
             return_data = False
             if 'return_data' in alert_data.keys():
                 return_data = alert_data.get("return_data", False)
+            alert_data['workflow_url'] = camunda_url
+            alert_data['workflow_port'] = camunda_url.split(":")[2]
             bu = alert_data['bu']
             sop_id = alert_data.get('sop_id', '')
             sap_id = alert_data['sap_id']
@@ -87,19 +89,6 @@ class AlertFactory:
                 alert_data['alert_id'] = alert_id
             unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
 
-            # # Generate alert alert_data
-            # query = f"interlock_name = '{interlock_name}' and alert_status = 'Open' and device_name = '{device_name}' and bu = 'TAS' and alert_section = 'TAS'"
-            # params = urdhva_base.queryparams.QueryParams(q=query)
-            # resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
-
-            # # Check if alert already exists
-            # if resp and resp.get("data") and len(resp.get("data")) > 0:
-            #     # Alert already exists, no need to create a new one
-            #     alert_resp = resp.get("data")[0]  # Use existing alert
-            #     alert_resp['interlock_name'] = interlock_name
-            #     alert_resp['device_name'] = device_name
-            # else:
-            # # Generate alert alert_data
             # assign roles for emlock and ro alerts
             if alert_data.get("alert_section", bu) == 'EMLock':
                 assigned_user_roles = ["Planning Officer SOD"]
@@ -155,6 +144,8 @@ class AlertFactory:
                                                         'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
                                                         'tt_load_number': str(alert_data.get('tt_load_number', '')),
                                                         'cause_effect': alert_data.get('Cause_Effect', ''),
+                                                        'workflow_url': alert_data.get('workflow_url', ''),
+                                                        'workflow_port': alert_data.get('workflow_port', ''),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -253,6 +244,9 @@ class AlertFactory:
                 if alert_data_dict.get("alert_section") in ["RO"] and interlock_name.get("interlock_name") != 'Dry Out Each Indent Wise MainFlow':
                     print(f"alert skipped: {alert_data_dict}")
                     return True, "alert created"
+                if alert_data_dict.get("alert_section") in ["EMLock"]:
+                    print("Workflow Skipped")
+                    return True, "alert created"
                 await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                 await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
             else:
@@ -267,121 +261,6 @@ class AlertFactory:
             logger.error(f"Error in alert creation {e}, traceback {traceback.format_exc()}")
             return False, f"Error in alert creation {e}"
 
-    # @classmethod
-    # async def close_alert(cls, alert_data):
-    #     """
-    #     Close Alert and Interlock for the given BU, SOP ID and SAP ID
-
-    #     Parameters:
-    #         alert_data (dict): A dictionary containing the data to close the alert
-    #             - bu (str): Business unit
-    #             - sop_id (str): SOP ID
-    #             - sap_id (str): SAP ID
-
-    #     Returns:
-    #         dict: A dictionary containing the status, message and the closed alert document
-    #     """
-    #     # print("alert_data close ---> ", alert_data)
-    #     try:
-    #         # il_data = None
-    #         # al_data = None
-    #         if 'BU' in alert_data.keys():
-    #             bu = alert_data['BU']
-    #         else:
-    #             bu = alert_data['bu']
-    #         if 'interlock_id' not in alert_data.keys():
-    #             # Query for Interlock
-    #             query = f"interlock_name='{alert_data['interlock_name']}' AND bu='{bu}' AND sop_id='{alert_data['sop_id']}' AND sap_id='{alert_data['sap_id']}'"
-    #             params = urdhva_base.queryparams.QueryParams()
-    #             params.limit = 1
-    #             params.q = query
-    #             il_resp = await hpcl_ceg_model.Interlock.get_all(params)
-    #             il_data = []
-    #             if il_resp and hasattr(il_resp, '__dict__') and il_resp.__dict__.get('body'):
-    #                 # Decode and parse Interlock response
-    #                 body_str = il_resp.__dict__['body'].decode('utf-8')
-    #                 il_json = json.loads(body_str)
-    #                 il_data = il_json.get("data", [])
-
-    #             # Query for Alert
-    #             query = f"external_id='{alert_data['alert_id']}'"
-    #             params = urdhva_base.queryparams.QueryParams()
-    #             params.limit = 1
-    #             params.q = query
-    #             alert_resp = await hpcl_ceg_model.Alerts.get_all(params)
-    #             alert_data_list = []
-    #             if alert_resp and hasattr(alert_resp, '__dict__') and alert_resp.__dict__.get('body'):
-    #                 # Decode and parse Alert response
-    #                 body_str = alert_resp.__dict__['body'].decode('utf-8')
-    #                 alert_json = json.loads(body_str)
-    #                 alert_data_list = alert_json.get("data", [])
-
-    #             # Handle case where both Interlock and Alert are not found
-    #             if not alert_data_list and not il_data:
-    #                 logger.info("Both Interlock and Alert records not found. Skipping closure.")
-    #                 return
-
-    #             # Modify Interlock if found
-    #             if il_data:
-    #                 interlock = il_data[0]
-    #                 interlock['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
-    #                 data_obj = hpcl_ceg_model.Interlock(**interlock)
-    #                 await data_obj.modify()
-
-    #             # Modify Alert if found
-    #             if alert_data_list:
-    #                 for alert in alert_data_list:
-    #                     if alert_data.get("alert_history"):
-    #                         if not alert.get("alert_history"):
-    #                             alert["alert_history"] = alert_data["alert_history"]
-    #                         else:
-    #                             alert_data["alert_history"]["allocated_time"] = alert["alert_history"][-1].get("processed_time")
-    #                             alert["alert_history"].append(alert_data["alert_history"])
-    #                     alert['severity'] = alert_data.get('severity', "Medium").capitalize()
-    #                     alert['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
-    #                     alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
-    #                     alert['interlock_name'] = alert_data.get('interlock_name', '')
-    #                     if il_data:
-    #                         alert['interlock_id'] = str(il_data[0]['id'])
-    #                     data_obj = hpcl_ceg_model.Alerts(**alert)
-    #                     await data_obj.modify()
-    #                     redis_ins = await urdhva_base.redispool.get_redis_connection()
-    #                     await redis_ins.hdel("alert_camunda_url", str(alert['id']))
-
-    #             print("Interlock and Alert updated successfully.")
-
-    #         else:
-    #             if alert_data.get("interlock_id", ""):
-    #                 il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
-    #                 if not isinstance(il_data, dict):
-    #                     il_data = il_data.__dict__
-    #                 il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
-    #                 data_obj = hpcl_ceg_model.Interlock(**il_data)
-    #                 await data_obj.modify()
-    #             else:
-    #                 logger.info(f"Interlock ID not available {alert_data}")
-            
-    #             al_data = await hpcl_ceg_model.Alerts.get(alert_data['alert_id'])
-    #             if not isinstance(al_data, dict):
-    #                 al_data = al_data.__dict__
-    #             al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
-    #             al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
-    #             al_data['closed_at'] = datetime.datetime.now()
-    #             redis_ins = await urdhva_base.redispool.get_redis_connection()
-    #             if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
-    #                 await redis_ins.hdel("alert_mapping", al_data['external_id'])
-    #             data_obj = hpcl_ceg_model.Alerts(**al_data)
-    #             await data_obj.modify()
-    #             await redis_ins.hdel("alert_camunda_url", str(al_data['id']))
-    #             await redis_ins.close()
-
-    #         return True, {"status": "Alert Closed"}
-        
-    #     except Exception as e:
-    #         print(e)
-    #         print(traceback.format_exc())
-    #         logger.error(f"Error in alert closure {e}, traceback {traceback.format_exc()}")
-    #         return False, {"status": f"Error in alert closure: {str(e)}"}
 
     @classmethod
     async def close_alert(cls, alert_data):
@@ -436,15 +315,18 @@ class AlertFactory:
                     al_data['closed_at'] = datetime.datetime.now()
                     
                     # Clean up redis entries
-                    if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
-                        await redis_ins.hdel("alert_mapping", al_data['external_id'])
-                    await redis_ins.hdel("alert_camunda_url", str(al_data['id']))
-                    
+                    try:
+                        if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
+                            await redis_ins.hdel("alert_mapping", al_data['external_id'])
+                        await redis_ins.hdel("alert_camunda_url", str(al_data['id']))
+                    except Exception as e:
+                        print("failed to delete from redis")
                     # Update the alert record
                     data_obj = hpcl_ceg_model.Alerts(**al_data)
                     await data_obj.modify()
                     logger.info(f"Closed alert with ID: {alert_data['alert_id']}")
                 except Exception as e:
+                    print(traceback.format_exc())
                     logger.error(f"Failed to close alert with ID {alert_data['alert_id']}: {e}")
                     return False, {"status": "Error", "message": f"Error closing alert: {str(e)}"}
                     
@@ -527,10 +409,14 @@ class AlertFactory:
                                 
                             data_obj = hpcl_ceg_model.Alerts(**alert)
                             await data_obj.modify()
-                            await redis_ins.hdel("alert_camunda_url", str(alert['id']))
+                            try:    
+                                await redis_ins.hdel("alert_camunda_url", str(alert['id']))
+                            except Exception as e:
+                                print("Failed to del in redis")
                             alert_closed = True
                             logger.info(f"Closed alert with external ID: {alert_data['alert_id']}")
                     except Exception as e:
+                        print(traceback.format_exc())
                         logger.error(f"Error closing alert: {e}")
                         return False, {"status": "Error", "message": f"Error closing alert: {str(e)}"}
 
