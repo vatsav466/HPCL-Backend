@@ -6368,3 +6368,61 @@ class Romasterdata_Update_Ro_Master_DataParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class TASMonthlyOIScoresSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_monthly_oi_scores'
+    
+    location_id: Mapped[typing.Optional[str]] = mapped_column("location_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    module_name: Mapped[typing.Optional[str]] = mapped_column("module_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    rule_name: Mapped[typing.Optional[str]] = mapped_column("rule_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    year: Mapped[typing.Optional[int]] = mapped_column("year", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    month: Mapped[typing.Optional[int]] = mapped_column("month", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    score: Mapped[typing.Optional[float]] = mapped_column("score", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    weightage: Mapped[typing.Optional[float]] = mapped_column("weightage", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(location_id, module_name, rule_name, year, month, name="tas_monthly_oi_scores_locat_modul_rulen_year_month"),)
+
+
+class TASMonthlyOIScoresCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_monthly_oi_scores'
+    
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    module_name: typing.Optional[str] = pydantic.Field("", **{})
+    rule_name: typing.Optional[str] = pydantic.Field("", **{})
+    year: typing.Optional[int] = pydantic.Field(0, **{})
+    month: typing.Optional[int] = pydantic.Field(0, **{})
+    score: typing.Optional[float] = pydantic.Field(0.0, **{})
+    weightage: typing.Optional[float] = pydantic.Field(0.0, **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TASMonthlyOIScoresSchema
+        upsert_keys = ['location_id', 'module_name', 'rule_name', 'year', 'month']
+
+
+class TASMonthlyOIScores(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_monthly_oi_scores'
+    
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    module_name: typing.Optional[str] = pydantic.Field("", **{})
+    rule_name: typing.Optional[str] = pydantic.Field("", **{})
+    year: typing.Optional[int] = pydantic.Field(0, **{})
+    month: typing.Optional[int] = pydantic.Field(0, **{})
+    score: typing.Optional[float] = pydantic.Field(0.0, **{})
+    weightage: typing.Optional[float] = pydantic.Field(0.0, **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TASMonthlyOIScoresSchema
+        upsert_keys = ['location_id', 'module_name', 'rule_name', 'year', 'month']
+
+
+class TASMonthlyOIScoresGetResp(pydantic.BaseModel):
+    data: typing.List[TASMonthlyOIScores]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

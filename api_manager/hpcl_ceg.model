@@ -2207,3 +2207,13 @@ Model RoMasterData {
         crud_operations='read'
     }
 }
+
+Model TASMonthlyOIScores {
+    location_id optional unique_field str
+    module_name optional unique_field str
+    rule_name optional unique_field str
+    year optional unique_field int
+    month optional unique_field int
+    score optional float
+    weightage optional float
+}
