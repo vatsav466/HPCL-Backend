@@ -4324,6 +4324,69 @@
             ]
         },
         {
+            "name": "tasprooftest",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasProofTest",
+            "attributes": {},
+            "uris": [
+                "/api/tasprooftest/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "tasprooftest_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasProofTest_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasprooftest/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tasprooftest_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasProofTest_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasprooftest/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "architecturedata",
             "type": "all",
             "ownerManagedAccess": false,

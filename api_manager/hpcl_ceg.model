@@ -2151,6 +2151,17 @@ Model TagsData {
     }
 }
 
+Model TasProofTest{
+    device_name optional str
+    sap_id optional unique_field str
+    device_id optional unique_field str
+    interlock_name optional str
+    location_name optional str
+    proof_test_created_at optional datetime
+    next_proof_test_date optional datetime
+
+}
+
 Model ArchitectureData{
     sap_id optional unique_field str
     name optional unique_field str
