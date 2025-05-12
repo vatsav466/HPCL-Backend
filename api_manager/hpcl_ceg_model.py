@@ -6165,6 +6165,64 @@ class Tagsdata_Get_Tags_DataParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class TasProofTestSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_proof_test'
+    
+    device_name: Mapped[typing.Optional[str]] = mapped_column("device_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_id: Mapped[typing.Optional[str]] = mapped_column("device_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    interlock_name: Mapped[typing.Optional[str]] = mapped_column("interlock_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    proof_test_created_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("proof_test_created_at", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    next_proof_test_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("next_proof_test_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(sap_id, device_id, name="tas_proof_test_sap_id_device_id"),)
+
+
+class TasProofTestCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_proof_test'
+    
+    device_name: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    device_id: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_name: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    proof_test_created_at: typing.Optional[datetime.datetime] | None = None
+    next_proof_test_date: typing.Optional[datetime.datetime] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasProofTestSchema
+        upsert_keys = ['sap_id', 'device_id']
+
+
+class TasProofTest(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_proof_test'
+    
+    device_name: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    device_id: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_name: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    proof_test_created_at: typing.Optional[datetime.datetime] | None = None
+    next_proof_test_date: typing.Optional[datetime.datetime] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasProofTestSchema
+        upsert_keys = ['sap_id', 'device_id']
+
+
+class TasProofTestGetResp(pydantic.BaseModel):
+    data: typing.List[TasProofTest]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class ArchitectureDataSchema(UrdhvaPostgresBase):
     __tablename__ = 'architecture_data'
     

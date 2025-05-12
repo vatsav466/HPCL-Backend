@@ -1252,6 +1252,31 @@ async def delete(id: str):
     return await TagsData.delete(id)
 
 
+@router.post('/tasprooftest', response_model=TasProofTest, tags=['TasProofTest'])
+async def create(inputObj: TasProofTestCreate):
+    return await inputObj.create()
+
+
+@router.put('/tasprooftest', response_model=TasProofTest, tags=['TasProofTest'])
+async def update(inputObj: TasProofTest):
+    return await inputObj.modify()
+
+
+@router.get('/tasprooftest/{id}', response_model=TasProofTest, tags=['TasProofTest'])
+async def get(id: str):
+    return await TasProofTest.get(id, skip_secrets=True)
+
+
+@router.get('/tasprooftest', response_model=TasProofTestGetResp, tags=['TasProofTest'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TasProofTest.get_all(params, skip_secrets=True)
+
+
+@router.delete('/tasprooftest/{id}', tags=['TasProofTest'])
+async def delete(id: str):
+    return await TasProofTest.delete(id)
+
+
 @router.post('/architecturedata', response_model=ArchitectureData, tags=['ArchitectureData'])
 async def create(inputObj: ArchitectureDataCreate):
     return await inputObj.create()
