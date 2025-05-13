@@ -446,5 +446,143 @@
                 "month_calendar": false
             }
         ]
+    },
+    "water_quantity": {
+        "name": "Water_Quantity",
+        "weightage": 10,
+        "rules": [
+            {
+                "name": "Water Quantity",
+                "weightage": 10,
+                "month_calendar": false
+            }
+        ]
+    },
+    "foam_quantity": {
+        "name": "Foam_Quantity",
+        "weightage": 5,
+        "rules": [
+            {
+                "name": "Foam Quantity",
+                "weightage": 5,
+                "month_calendar": false
+            }
+        ]
+    },
+    "fire_engines_in_auto_mode": {
+        "name": "Fire_Engines_In_Auto_Mode",
+        "weightage": 10,
+        "rules": [
+            {
+                "name": "Fire Engines in Auto Mode",
+                "weightage": 10,
+                "month_calendar": false
+            }
+        ]
+    },
+    "hydrant_line": {
+        "name": "Hydrant_Line",
+        "weightage": 5,
+        "rules": [
+            {
+                "name": "Pressurized Hydrant Line",
+                "weightage": 2.5,
+                "month_calendar": false
+            },
+            {
+                "name": "Jockey Pump",
+                "weightage": 2.5,
+                "month_calendar": false
+            }
+        ]
+    },
+    "EMLOCK": {
+        "name": "EMLOCK",
+        "weightage": 5,
+        "model": "EMLock",
+        "rules": [
+            {
+                "name": "Fan Number Not Generated",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Fan Number Not Generated",
+                "interlock_name": "Fan Number Not Generated"
+            },
+            {
+                "name": "Swipe In Count Exceeded",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Swipe In Count Exceeded",
+                "interlock_name": "Swipe In Count Exceeded"
+            },
+            {
+                "name": "TT outside Terminal Radius",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "TT outside Terminal Radius",
+                "interlock_name": "TT outside Terminal Radius"
+            },
+            {
+                "name": "Swipe Out Count Limit Exceed",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Swipe Out Count Limit Exceed",
+                "interlock_name": "Swipe Out Count Limit Exceed"
+            },
+            {
+                "name": "Invoice Not Generated",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Invoice Not Generated",
+                "interlock_name": "Invoice Not Generated"
+            },
+            {
+                "name": "Shipment Number Not Generated",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Shipment Number Not Generated",
+                "interlock_name": "Shipment Number Not Generated"
+            },
+            {
+                "name": "TT outside RO radius",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "TT outside RO radius",
+                "interlock_name": "TT outside RO radius"
+            },
+            {
+                "name": "Pre Decantation Request Exceed",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Pre Decantation Request Exceed",
+                "interlock_name": "Pre Decantation Request Exceed"
+            },
+            {
+                "name": "Post Decantation Request Exceed",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Post Decantation Request Exceed",
+                "interlock_name": "Post Decantation Request Exceed"
+            }
+        ]
+    },
+    "DRYOUT": {
+        "name": "DRYOUT",
+        "weightage": 10,
+        "rules": [
+            {
+                "name": "DryOut",
+                "weightage": 10
+            }
+        ]
     }
 }

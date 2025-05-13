@@ -54,10 +54,12 @@ async def generate_performance_score(bu, location_id=None):
     performance_score = {}
     present_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
     for location in locations:
+        print("location --> ", location)
         # Generating performance score for each location
         print(f"Generating performance score for {location['sap_id']}")
         await ins.configure_va(va_data.get(location['sap_id']))
         response, _ = await ins.generate_performance_index(location['sap_id'])
+        print("response --> ", response)
         score = sum([rec['score'] for rec in list(response.values())])
         performance_score[location['sap_id']] = {"sap_id": location['sap_id'],
                                                  "score": round(score if score < 100 else 100, 2),
@@ -73,6 +75,7 @@ async def generate_performance_score(bu, location_id=None):
         performance_score[sap_id]['rank'] = int(df[df['sap_id'] == sap_id]['rank'].values[0])
         performance_score[sap_id]['national_score'] = national_avg
     performance_score = list(performance_score.values())
+    print("performance_score --> ", performance_score)
     # Updating performance score to database
     await hpcl_ceg_model.PerformanceScore.bulk_update(performance_score.copy(), upsert=True)
     await hpcl_ceg_model.PerformanceScoreHistory.bulk_update(performance_score, upsert=False)
