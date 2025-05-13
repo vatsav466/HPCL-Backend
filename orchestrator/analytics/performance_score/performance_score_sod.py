@@ -106,12 +106,21 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         # Extract all interlock names from rules
         all_interlocks = []
         for rule in rules['rules']:
-            if rule['model'] != 'open_alerts':
-                continue
-            if isinstance(rule['interlock_name'], list):
-                all_interlocks.extend(rule['interlock_name'])
-            else:
-                all_interlocks.append(rule['interlock_name'])
+            if 'rules' in rule:  # Handle nested rules like Hooter
+                for sub_rule in rule['rules']:
+                    if sub_rule['model'] != 'open_alerts':
+                        continue
+                    if isinstance(sub_rule['interlock_name'], list):
+                        all_interlocks.extend(sub_rule['interlock_name'])
+                    else:
+                        all_interlocks.append(sub_rule['interlock_name'])
+            else:  # Regular rule
+                if rule['model'] != 'open_alerts':
+                    continue
+                if isinstance(rule['interlock_name'], list):
+                    all_interlocks.extend(rule['interlock_name'])
+                else:
+                    all_interlocks.append(rule['interlock_name'])
 
         # Remove duplicates
         interlocks = list(set(all_interlocks))
@@ -135,75 +144,159 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             print("item --> ", item)
             open_alerts[item['interlock_name']].append(item['tas_device_name'])
 
+        # Process rules
         for rule in rules['rules']:
-            if rule['model'] != 'open_alerts':
-                continue
+            if 'rules' in rule:  # Handle nested rules (like Hooter)
+                # For Hooter, calculate combined score
+                hooter_sub_scores = []
+                total_sub_weightage = 0
+                
+                for sub_rule in rule['rules']:
+                    if sub_rule['model'] != 'open_alerts':
+                        continue
+                    
+                    total_sub_weightage += sub_rule['weightage']
+                    rule_weightage = sub_rule['weightage']
+                    equipment_name = sub_rule['equipment_name']
+                    interlock_names = sub_rule['interlock_name'] if isinstance(sub_rule['interlock_name'], list) else [sub_rule['interlock_name']]
 
-            rule_weightage = rule['weightage']
-            equipment_name = rule['equipment_name']
-            interlock_names = rule['interlock_name'] if isinstance(rule['interlock_name'], list) else [rule['interlock_name']]
+                    # Get parameter count from architecture_data
+                    special_interlocks = {
+                        "As Power ESD Activation in Main PMCC Panel after 120 Sec"
+                        # "SafetyPLC_Communication fail"
+                    }
 
-            # Get parameter count from architecture_data
-            special_interlocks = {
-                "As Power ESD Activation in Main PMCC Panel after 120 Sec"
-                # "SafetyPLC_Communication fail"
-            }
-
-            if any(interlock in special_interlocks for interlock in interlock_names):
-                parameter_count = 1
-            else:
-                if isinstance(equipment_name, list):
-                    device_types = ", ".join(f"'{item}'" for item in equipment_name)
-                    query = f"""
-                        SELECT count FROM architecture_data 
-                        WHERE device_type IN ({device_types}) 
-                        AND sap_id = '{location_id}'
-                    """
-                else:
-                    query = f"""
-                        SELECT count FROM architecture_data 
-                        WHERE device_type = '{equipment_name}' 
-                        AND sap_id = '{location_id}'
-                    """
-                print("query --> ", query)
-                architecture_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(query)
-                print("architecture_data", architecture_data)
-                parameter_count = architecture_data['data'][0].get('count', 0) if architecture_data.get('data') else 100
-                parameter_count = int(parameter_count) if isinstance(parameter_count, str) and parameter_count.isdigit() else int(parameter_count or 0)
-            
-            if not parameter_count or parameter_count == 0:
-                weightage = None
-                score = 0
-            else:
-                weightage = round(rule_weightage / parameter_count, 2)
-                print("weightage", weightage)
-                unique_devices = set()
-                print("interlock_names", interlock_names)
-                print("open_alerts", open_alerts)
-
-                # Collect all affected device names
-                for interlock_name in interlock_names:
-                    if interlock_name in open_alerts:
-                        if interlock_name == "As Power ESD Activation in Main PMCC Panel after 120 Sec":
-                            unique_devices.add("SPECIAL_CASE_DEVICE")  # Use a dummy placeholder
-                            break  # No need to process further, as we only want one count
+                    if any(interlock in special_interlocks for interlock in interlock_names):
+                        parameter_count = 1
+                    else:
+                        if isinstance(equipment_name, list):
+                            device_types = ", ".join(f"'{item}'" for item in equipment_name)
+                            query = f"""
+                                SELECT count FROM architecture_data 
+                                WHERE device_type IN ({device_types}) 
+                                AND sap_id = '{location_id}'
+                            """
                         else:
-                            for device_name in open_alerts[interlock_name]:
-                                print("device_name", device_name)
-                                unique_devices.add(device_name)
+                            query = f"""
+                                SELECT count FROM architecture_data 
+                                WHERE device_type = '{equipment_name}' 
+                                AND sap_id = '{location_id}'
+                            """
+                        print("query --> ", query)
+                        architecture_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(query)
+                        print("architecture_data", architecture_data)
+                        parameter_count = architecture_data['data'][0].get('count', 0) if architecture_data.get('data') else 100
+                        parameter_count = int(parameter_count) if isinstance(parameter_count, str) and parameter_count.isdigit() else int(parameter_count or 0)
+                    
+                    if not parameter_count or parameter_count == 0:
+                        weightage = None
+                        score = 0
+                    else:
+                        weightage = round(rule_weightage / parameter_count, 2)
+                        print("weightage", weightage)
+                        unique_devices = set()
+                        print("interlock_names", interlock_names)
+                        print("open_alerts", open_alerts)
 
-                print("unique_devices", unique_devices)
+                        # Collect all affected device names
+                        for interlock_name in interlock_names:
+                            if interlock_name in open_alerts:
+                                if interlock_name == "As Power ESD Activation in Main PMCC Panel after 120 Sec":
+                                    unique_devices.add("SPECIAL_CASE_DEVICE")  # Use a dummy placeholder
+                                    break  # No need to process further, as we only want one count
+                                else:
+                                    for device_name in open_alerts[interlock_name]:
+                                        print("device_name", device_name)
+                                        unique_devices.add(device_name)
 
-                asset_unhealthy_count = len(unique_devices)
-                print("asset_unhealthy_count", asset_unhealthy_count)
-                score = ((parameter_count - asset_unhealthy_count) / parameter_count) * (rule_weightage / 100)
-                print("score", score)
-            pi_score.append({
-                "name": rule['name'],
-                "score": round(score, 4),
-                "weightage": rule_weightage,
-                "module": rules.get('name', name)
-            })
+                        print("unique_devices", unique_devices)
+
+                        asset_unhealthy_count = len(unique_devices)
+                        print("asset_unhealthy_count", asset_unhealthy_count)
+                        score = ((parameter_count - asset_unhealthy_count) / parameter_count) * (rule_weightage / 100)
+                        print("score", score)
+                    
+                    # Store sub-score but don't add to main pi_score yet
+                    hooter_sub_scores.append(score)
+                
+                # Calculate combined Hooter score
+                if hooter_sub_scores:
+                    combined_score = sum(hooter_sub_scores)
+                    pi_score.append({
+                        "name": rule['name'],  # Use the parent rule name (Hooter)
+                        "score": round(combined_score, 4),
+                        "weightage": rule['weightage'],  # Use the parent rule weightage
+                        "module": rules.get('name', name)
+                    })
+            else:  # Regular rule processing (unchanged from original)
+                if rule['model'] != 'open_alerts':
+                    continue
+
+                rule_weightage = rule['weightage']
+                equipment_name = rule['equipment_name']
+                interlock_names = rule['interlock_name'] if isinstance(rule['interlock_name'], list) else [rule['interlock_name']]
+
+                # Get parameter count from architecture_data
+                special_interlocks = {
+                    "As Power ESD Activation in Main PMCC Panel after 120 Sec"
+                    # "SafetyPLC_Communication fail"
+                }
+
+                if any(interlock in special_interlocks for interlock in interlock_names):
+                    parameter_count = 1
+                else:
+                    if isinstance(equipment_name, list):
+                        device_types = ", ".join(f"'{item}'" for item in equipment_name)
+                        query = f"""
+                            SELECT count FROM architecture_data 
+                            WHERE device_type IN ({device_types}) 
+                            AND sap_id = '{location_id}'
+                        """
+                    else:
+                        query = f"""
+                            SELECT count FROM architecture_data 
+                            WHERE device_type = '{equipment_name}' 
+                            AND sap_id = '{location_id}'
+                        """
+                    print("query --> ", query)
+                    architecture_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(query)
+                    print("architecture_data", architecture_data)
+                    parameter_count = architecture_data['data'][0].get('count', 0) if architecture_data.get('data') else 100
+                    parameter_count = int(parameter_count) if isinstance(parameter_count, str) and parameter_count.isdigit() else int(parameter_count or 0)
+                
+                if not parameter_count or parameter_count == 0:
+                    weightage = None
+                    score = 0
+                else:
+                    weightage = round(rule_weightage / parameter_count, 2)
+                    print("weightage", weightage)
+                    unique_devices = set()
+                    print("interlock_names", interlock_names)
+                    print("open_alerts", open_alerts)
+
+                    # Collect all affected device names
+                    for interlock_name in interlock_names:
+                        if interlock_name in open_alerts:
+                            if interlock_name == "As Power ESD Activation in Main PMCC Panel after 120 Sec":
+                                unique_devices.add("SPECIAL_CASE_DEVICE")  # Use a dummy placeholder
+                                break  # No need to process further, as we only want one count
+                            else:
+                                for device_name in open_alerts[interlock_name]:
+                                    print("device_name", device_name)
+                                    unique_devices.add(device_name)
+
+                    print("unique_devices", unique_devices)
+
+                    asset_unhealthy_count = len(unique_devices)
+                    print("asset_unhealthy_count", asset_unhealthy_count)
+                    score = ((parameter_count - asset_unhealthy_count) / parameter_count) * (rule_weightage / 100)
+                    print("score", score)
+                pi_score.append({
+                    "name": rule['name'],
+                    "score": round(score, 4),
+                    "weightage": rule_weightage,
+                    "module": rules.get('name', name)
+                })
 
         print("pi_score", pi_score)
 
@@ -212,8 +305,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
         print("final_score    ----->   ", final_score)
-        return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
-
+        return {"name": rules.get('name', name), "score": round(final_score, 2), "weightage": rules['weightage'], "results": pi_score}
 
     async def _compute_process_interlocks_pi_score(self, name, rules, location_id):
         """
@@ -435,10 +527,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 ...
             pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
                              'module': rules.get('name', name)})
+        print(" vts pi score -----> ", pi_score)
         final_score = sum([score['score'] for score in pi_score])
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
+        print("final_score    ----->   ", final_score)
         return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
 
 
@@ -547,7 +641,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     print(f"Error processing device {device.get('name')}: {e}")
                     continue
 
-        final_score = round((sum(r['score'] for r in pi_score) * rules['weightage']) / 100, 2)
+        final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
+        print("final_score ---> ", final_score)
         return {
             "name": rules.get('name', name),
             "score": final_score,
@@ -580,7 +675,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     print(f"Error processing device {device.get('name')}: {e}")
                     continue
 
-        final_score = round((sum(r['score'] for r in pi_score) * rules['weightage']) / 100, 2)
+        final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
+        print("final_score ---> ", final_score)
         return {
             "name": rules.get('name', name),
             "score": final_score,
@@ -622,7 +718,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     print(f"Error processing device {device.get('name', 'Unknown')}: {e}")
                     continue
 
-        final_score = round((sum(r['score'] for r in pi_score) * rules['weightage']) / 100, 2)
+        final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
+        print("final_score ---> ", final_score)
         return {
             "name": rules.get('name', name),
             "score": final_score,
@@ -676,7 +773,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     print(f"Error processing device {device.get('name')}: {e}")
                     continue
 
-        final_score = round((sum(r['score'] for r in pi_score) * rules['weightage']) / 100, 2)
+        final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
+        print("final_score ---> ", final_score)
         return {
             "name": rules.get('name', name),
             "score": final_score,
@@ -706,12 +804,15 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             list: A list containing a dictionary with the module's name, calculated
                 score, weightage, and detailed results of each rule evaluation.
         """
+        print("Inside _compute_emlock_pi_score")
         pi_score = []
+
+        # Iterate through rules for the module
         for rule in rules['rules']:
-            if rule['model'] != 'open_alerts':
+            if rule['model'] != 'EMLock':
                 continue
 
-            # 1. Get all open alerts at location
+            # 1. Fetch open alerts at location
             query = (
                 f"SELECT DISTINCT(vehicle_number), interlock_name, severity "
                 f"FROM alerts "
@@ -726,51 +827,56 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             vehicles_with_critical_or_high = set()
             alert_data = {}
 
-            for record in data['data']:
+            # Process each alert
+            for record in data.get('data', []):
                 vehicle_number = record.get('vehicle_number')
-                interlock_name = record.get('interlock_name')
+                interlock_name = record.get('interlock_name', '')
                 severity = record.get('severity', '').lower()
 
                 if vehicle_number:
                     all_vehicle_numbers.add(vehicle_number)
 
-                # Count only matching interlocks per rule
+                # Match interlocks with rule search values
                 for rule_ in rule.get('rules', []):
-                    if rule_['search_value'] in interlock_name:
-                        alert_data[rule_['search_value']] = alert_data.get(rule_['search_value'], 0) + 1
+                    search_values = rule_['search_value']
+                    if isinstance(search_values, str):
+                        search_values = [search_values]
 
-                        # Add vehicle to critical/high set if matched
-                        if severity in ['Critical', 'High']:
+                    if any(val in interlock_name for val in search_values):
+                        alert_data[rule_['name']] = alert_data.get(rule_['name'], 0) + 1
+
+                        if severity in ['critical', 'high']:
                             vehicles_with_critical_or_high.add(vehicle_number)
 
             total_vehicles = len(all_vehicle_numbers)
             affected_vehicles = len(vehicles_with_critical_or_high)
-
-            # Avoid division by zero
+            print("total_vehicles --> ", total_vehicles)
+            # Scoring logic
             if total_vehicles > 0:
                 score_val = (total_vehicles - affected_vehicles) / total_vehicles
                 score = round(score_val * 100, 2)
             else:
-                score = 5.0
-
-            # Add score for each rule element
-            for rule_ in rule.get('rules', []):
-                pi_score.append({
-                    "name": rule_['name'],
-                    "score": score,
-                    "weightage": rule_['weightage'],
-                    "module": rules.get('name', name)
-                })
-
+                score = 5.0  # full marks if no data / alerts
+            print("score --> ", score)
+            # Interlock-wise scores
+            pi_score.append({
+                "name": rule['name'],
+                "score": score,
+                "weightage": rule['weightage'],
+                "module": rules.get('name', '')
+            })
+        print("pi_score --> ", pi_score)
         # Final score aggregation
-        final_score = round((sum(r['score'] for r in pi_score) * rules['weightage']) / 100, 2)
-
+        final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
+        print("final_score --> ", final_score)
+        # Final result structure
         return {
-            "name": rules.get('name', name),
+            "name": rules.get('name', ''),
             "score": final_score,
             "weightage": rules['weightage'],
             "results": pi_score
         }
+
 
 
     async def _compute_dryout_pi_score(self, name, rules, location_id):

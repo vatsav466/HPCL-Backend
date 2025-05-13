@@ -1,7 +1,7 @@
 {
     "va": {
         "name": "VA",
-        "weightage": 30,
+        "weightage": 10,
         "rules": [
             {
                 "name": "VA Portal",
@@ -51,7 +51,7 @@
     },
     "vts": {
         "name": "VTS",
-        "weightage": 20,
+        "weightage": 5,
         "rules": [
             {
                 "name": "VTS Vehicle Wise Alerts",
@@ -214,30 +214,40 @@
             },
             {
                 "name": "Hooter",
-                "equipment_name": "Dyke",
                 "model": "open_alerts",
                 "weightage": 6.67,
-                "search_key": "interlock_name",
-                "search_value": "Dykevalve_Activated Hooter_Fail",
-                "interlock_name": "Dykevalve_Activated Hooter_Fail"
-            },
-            {
-                "name": "Hooter",
-                "equipment_name": "HCD",
-                "model": "open_alerts",
-                "weightage": 6.67,
-                "search_key": "interlock_name",
-                "search_value": ["HCD_20% LEL activated Hooter_Fail", "HCD_40% LEL activated Hooter_Fail"],
-                "interlock_name": ["HCD_20% LEL activated Hooter_Fail", "HCD_40% LEL activated Hooter_Fail"]
-            },
-            {
-                "name": "Hooter",
-                "equipment_name": "ESD",
-                "model": "open_alerts",
-                "weightage": 6.67,
-                "search_key": "interlock_name",
-                "search_value": "Hooter cum strobe for ESD activated in control room_Fail",
-                "interlock_name": "Hooter cum strobe for ESD activated in control room_Fail"
+                "rules": [
+                  {
+                    "equipment_name": "Dyke",
+                    "model": "open_alerts",
+                    "search_key": "interlock_name",
+                    "search_value": "Dykevalve_Activated Hooter_Fail",
+                    "interlock_name": "Dykevalve_Activated Hooter_Fail",
+                    "weightage": 2.22
+                  },
+                  {
+                    "equipment_name": "HCD",
+                    "model": "open_alerts",
+                    "search_key": "interlock_name",
+                    "search_value": [
+                      "HCD_20% LEL activated Hooter_Fail",
+                      "HCD_40% LEL activated Hooter_Fail"
+                    ],
+                    "interlock_name": [
+                      "HCD_20% LEL activated Hooter_Fail",
+                      "HCD_40% LEL activated Hooter_Fail"
+                    ],
+                    "weightage": 2.22
+                  },
+                  {
+                    "equipment_name": "ESD",
+                    "model": "open_alerts",
+                    "search_key": "interlock_name",
+                    "search_value": "Hooter cum strobe for ESD activated in control room_Fail",
+                    "interlock_name": "Hooter cum strobe for ESD activated in control room_Fail",
+                    "weightage": 2.22
+                  }
+                ]
             },
             {
                 "name": "MCC Room Power ESD",
