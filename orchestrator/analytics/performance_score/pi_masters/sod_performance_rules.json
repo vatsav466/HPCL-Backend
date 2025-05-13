@@ -160,12 +160,12 @@
         "rules": [
             {
                 "name": "Secondary Radar Guage",
-                "equipment_name": "RADAR",
+                "equipment_name": "Radar",
                 "model": "open_alerts",
                 "weightage": 6.67,
                 "search_key": "interlock_name",
-                "search_value": "Secondary Radar_Under Maintenanc",
-                "interlock_name": "Secondary Radar_Under Maintenanc"
+                "search_value": ["HHH alarm from Secondary Radar guage", "Secondary Radar_Under Maintenance"],
+                "interlock_name": ["HHH alarm from Secondary Radar guage", "Secondary Radar_Under Maintenance"]
             },
             {
                 "name": "VFT",
@@ -173,8 +173,8 @@
                 "model": "open_alerts",
                 "weightage": 6.67,
                 "search_key": "interlock_name",
-                "search_value": ["Tank_Under Maintenance", "VFT_Under Maintenance"],
-                "interlock_name": ["Tank_Under Maintenance", "VFT_Under Maintenance"]
+                "search_value": ["HHH alarm from VFT", "VFT_Under Maintenance"],
+                "interlock_name": ["HHH alarm from VFT", "VFT_Under Maintenance"]
             },
             {
                 "name": "ROSOV",
@@ -182,8 +182,8 @@
                 "model": "open_alerts",
                 "weightage": 6.67,
                 "search_key": "interlock_name",
-                "search_value": ["Tank_Under Maintenance", "ROSOV_Under Maintenance", "ROSOV_FailtoClose"],
-                "interlock_name": ["Tank_Under Maintenance", "ROSOV_Under Maintenance", "ROSOV_FailtoClose"]
+                "search_value": ["ROSOV_Under Maintenance", "ROSOV_FailtoClose", "ROSOV_Close Status"],
+                "interlock_name": ["ROSOV_Under Maintenance", "ROSOV_FailtoClose", "ROSOV_Close Status"]
             },
             {
                 "name": "HCD",
@@ -191,8 +191,8 @@
                 "model": "open_alerts",
                 "weightage": 6.67,
                 "search_key": "interlock_name",
-                "search_value": ["HCD_Under Maintenance", "HCD_Fault activated"],
-                "interlock_name": ["HCD_Under Maintenance", "HCD_Fault activated"]
+                "search_value": ["HCD_Under Maintenance", "HCD_Fault activated", "HCD_20% LEL activated", "HCD_40% LEL activated"],
+                "interlock_name": ["HCD_Under Maintenance", "HCD_Fault activated", "HCD_20% LEL activated", "HCD_40% LEL activated"]
             },
             {
                 "name": "Rim Seal",
@@ -200,8 +200,8 @@
                 "model": "open_alerts",
                 "weightage": 6.67,
                 "search_key": "interlock_name",
-                "search_value": ["Rim Seal system_Under Maintenance", "Tank_Under Maintenance", "Rim Seal system_Fault activated"],
-                "interlock_name": ["Rim Seal system_Under Maintenance", "Tank_Under Maintenance", "Rim Seal system_Fault activated"]
+                "search_value": ["Rim Seal system_Under Maintenance", "Rim Seal system_Fault activated"],
+                "interlock_name": ["Rim Seal system_Under Maintenance", "Rim Seal system_Fault activated"]
             },
             {
                 "name": "Dyke Valves",
@@ -213,13 +213,40 @@
                 "interlock_name": "Dykevalve_Activated"
             },
             {
-                "name": "ESD",
+                "name": "Hooter",
+                "equipment_name": "Dyke",
+                "model": "open_alerts",
+                "weightage": 6.67,
+                "search_key": "interlock_name",
+                "search_value": "Dykevalve_Activated Hooter_Fail",
+                "interlock_name": "Dykevalve_Activated Hooter_Fail"
+            },
+            {
+                "name": "Hooter",
+                "equipment_name": "HCD",
+                "model": "open_alerts",
+                "weightage": 6.67,
+                "search_key": "interlock_name",
+                "search_value": ["HCD_20% LEL activated Hooter_Fail", "HCD_40% LEL activated Hooter_Fail"],
+                "interlock_name": ["HCD_20% LEL activated Hooter_Fail", "HCD_40% LEL activated Hooter_Fail"]
+            },
+            {
+                "name": "Hooter",
                 "equipment_name": "ESD",
                 "model": "open_alerts",
                 "weightage": 6.67,
                 "search_key": "interlock_name",
-                "search_value": ["ESD Push button_Under Maintenance"],
-                "interlock_name": ["ESD Push button_Under Maintenance"]
+                "search_value": "Hooter cum strobe for ESD activated in control room_Fail",
+                "interlock_name": "Hooter cum strobe for ESD activated in control room_Fail"
+            },
+            {
+                "name": "MCC Room Power ESD",
+                "equipment_name": "ESD",
+                "model": "open_alerts",
+                "weightage": 6.67,
+                "search_key": "interlock_name",
+                "search_value": "As Power ESD Activation in Main PMCC Panel after 120 Sec",
+                "interlock_name": "As Power ESD Activation in Main PMCC Panel after 120 Sec"
             },
             {
                 "name": "Fire Engine",
@@ -238,6 +265,15 @@
                 "search_key": "interlock_name",
                 "search_value": ["JockeyPump_Under Maintenance", "Jockeypump_ FailtoStart"],
                 "interlock_name": ["JockeyPump_Under Maintenance", "Jockeypump_ FailtoStart"]
+            },
+            {
+                "name": "ESD",
+                "equipment_name": "ESD",
+                "model": "open_alerts",
+                "weightage": 6.67,
+                "search_key": "interlock_name",
+                "search_value": "ESD Push button_Under Maintenance",
+                "interlock_name": "ESD Push button_Under Maintenance"
             },
             {
                 "name": "Hydrant PTs",
@@ -263,8 +299,17 @@
                 "model": "open_alerts",
                 "weightage": 6.67,
                 "search_key": "interlock_name",
-                "search_value": ["SafetyPLC_Communication fail"],
-                "interlock_name": ["SafetyPLC_Communication fail"]
+                "search_value": "SafetyPLC_Communication fail",
+                "interlock_name": "SafetyPLC_Communication fail"
+            },
+            {
+                "name": "Air Compressor",
+                "equipment_name": "Air Compressor",
+                "model": "open_alerts",
+                "weightage": 6.67,
+                "search_key": "interlock_name",
+                "search_value": "AirCompressor_Fault activated",
+                "interlock_name": "AirCompressor_Fault activated"
             }
         ]
     },
@@ -274,84 +319,269 @@
         "rules": [
             {
                 "name": "LRC Master",
-                "equipment_name": "Pump",
+                "equipment_name": "LRC Switchover",
                 "model": "open_alerts",
                 "weightage": 7.41,
                 "search_key": "interlock_name",
-                "search_value": ["Pump_Overload", "Pump_Overcurrent"],
-                "interlock_name": ["Pump_Overload", "Pump_Overcurrent"]
+                "search_value": "LRC Master Switchover required in 30 days",
+                "interlock_name": "LRC Master Switchover required in 30 days",
+                "month_calendar": true
             },
             {
-                "name": "BCU Totalizer Mismatch with MFM Totalize",
+                "name": "BCU Totalizer Mismatch with last day Totalizer",
+                "equipment_name": "Gantry BCU",
                 "model": "open_alerts",
                 "weightage": 7.41,
                 "search_key": "interlock_name",
-                "search_value": ["BCU vs MFM totalizer mismatch alarm"],
-                "interlock_name": ["BCU vs MFM totalizer mismatch alarm"]
+                "search_value": "Day End totaliser Mismatch",
+                "interlock_name": "Day End totaliser Mismatch",
+                "month_calendar": true
             },
             {
-                "name": "K Factor Change in MFM",
+                "name": "BCU Totalizer Mismatch with MFM Totalizer",
+                "equipment_name": "Gantry BCU",
                 "model": "open_alerts",
                 "weightage": 7.41,
                 "search_key": "interlock_name",
-                "search_value": ["K factor change_MFM"],
-                "interlock_name": ["K factor change_MFM"]
+                "search_value": "BCU vs MFM totalizer mismatch alarm",
+                "interlock_name": "BCU vs MFM totalizer mismatch alarm",
+                "month_calendar": true
             },
             {
                 "name": "K Factor Change in BCU",
+                "equipment_name": "Gantry BCU",
                 "model": "open_alerts",
                 "weightage": 7.41,
                 "search_key": "interlock_name",
-                "search_value": ["K factor change_BCU"],
-                "interlock_name": ["K factor change_BCU"]
+                "search_value": "K Factor Change_BCU",
+                "interlock_name": "K Factor Change_BCU",
+                "month_calendar": true
             },
             {
-                "name": "Manual FAN Printing Greater Than 5 Percent",
+                "name": "K Factor Change in MFM",
+                "equipment_name": "MFM",
+                "model": "open_alerts",
+                "weightage": 7.41,
+                "search_key": "interlock_name",
+                "search_value": "K factor change_MFM",
+                "interlock_name": "K factor change_MFM",
+                "month_calendar": true
+            },
+            {
+                "name": "BCU Local Loading Status",
+                "equipment_name": "Gantry BCU",
+                "model": "open_alerts",
+                "weightage": 7.41,
+                "search_key": "interlock_name",
+                "search_value": "BCU Local Loading",
+                "interlock_name": "BCU Local Loading",
+                "month_calendar": true
+            },
+            {
+                "name": "Manual FAN Printing > 5%",
+                "equipment_name": "FAN",
                 "model": "open_alerts",
                 "weightage": 7.41,
                 "search_key": "interlock_name",
                 "search_value": "Manual FAN printed more than 5% of total TT loaded",
-                "interlock_name": "Manual FAN printed more than 5% of total TT loaded"
+                "interlock_name": "Manual FAN printed more than 5% of total TT loaded",
+                "month_calendar": true
+            },
+            {
+                "name": "Manual Bay ReAssignment > 5%",
+                "equipment_name": "Gantry BCU",
+                "model": "open_alerts",
+                "weightage": 7.41,
+                "search_key": "interlock_name",
+                "search_value": "Manual Bay assignment of more than 5% of total TT loaded",
+                "interlock_name": "Manual Bay assignment of more than 5% of total TT loaded",
+                "month_calendar": true
+            },
+            {
+                "name": "BCU Parameters Analysis",
+                "equipment_name": "Gantry BCU",
+                "model": "open_alerts",
+                "weightage": 7.41,
+                "search_key": "interlock_name",
+                "search_value": ["No Flow alarm_BCU", "Low Flow alarm_BCU", 
+                                "High Flow Alarm_BCU", "Unauthorized Flow Alarm_BCU", 
+                                "Meter overrun Alarm_BCU", "Blend overdose Alarm_BCU",
+                                "Blend Underdose Alarm_BCU", "Additive Overdose Alarm_BCU",
+                                "Additive Underdose Alarm_BCU"],
+                "interlock_name": ["No Flow alarm_BCU", "Low Flow alarm_BCU", 
+                                "High Flow Alarm_BCU", "Unauthorized Flow Alarm_BCU", 
+                                "Meter overrun Alarm_BCU", "Blend overdose Alarm_BCU",
+                                "Blend Underdose Alarm_BCU", "Additive Overdose Alarm_BCU",
+                                "Additive Underdose Alarm_BCU"],
+                "month_calendar": true
             },
             {
                 "name": "Tank Wise Primary Radar",
+                "equipment_name": "Primary Level",
                 "model": "open_alerts",
                 "weightage": 7.41,
                 "search_key": "interlock_name",
-                "search_value": "Primary Radar Guage_H alarm",
-                "interlock_name": "Primary Radar Guage_H alarm"
+                "search_value": ["Primary Radar Guage_H alarm", "Primary Radar Guage_HH alarm"],
+                "interlock_name": ["Primary Radar Guage_H alarm", "Primary Radar Guage_HH alarm"],
+                "month_calendar": false
             },
             {
                 "name": "Tank DBBVs",
+                "equipment_name": "MOV",
                 "model": "open_alerts",
                 "weightage": 7.41,
                 "search_key": "interlock_name",
-                "search_value": "MOV_Close Status_Fail",
-                "interlock_name": "Primary Radar Guage_H alarm"
-            },
-            {
-                "name": "Tank DBBVs",
-                "model": "open_alerts",
-                "weightage": 7.41,
-                "search_key": "interlock_name",
-                "search_value": "MOV_Close Status_Fail",
-                "interlock_name": "MOV_Close Status_Fail"
+                "search_value": ["MOV_Under Maintenance", "MOV_Close Status", "MOV_Close Status_Fail"],
+                "interlock_name": ["MOV_Under Maintenance", "MOV_Close Status", "MOV_Close Status_Fail"],
+                "month_calendar": false
             },
             {
                 "name": "Process_PLC_Healthiness",
+                "equipment_name": "PLC",
                 "model": "open_alerts",
                 "weightage": 7.41,
                 "search_key": "interlock_name",
                 "search_value": "ProcessPLC_Communication fail",
-                "interlock_name": "ProcessPLC_Communication fail"
+                "interlock_name": "ProcessPLC_Communication fail",
+                "month_calendar": false
+            }
+        ]
+    },
+    "water_quantity": {
+        "name": "Water_Quantity",
+        "weightage": 10,
+        "rules": [
+            {
+                "name": "Water Quantity",
+                "weightage": 10,
+                "month_calendar": false
+            }
+        ]
+    },
+    "foam_quantity": {
+        "name": "Foam_Quantity",
+        "weightage": 5,
+        "rules": [
+            {
+                "name": "Foam Quantity",
+                "weightage": 5,
+                "month_calendar": false
+            }
+        ]
+    },
+    "fire_engines_in_auto_mode": {
+        "name": "Fire_Engines_In_Auto_Mode",
+        "weightage": 10,
+        "rules": [
+            {
+                "name": "Fire Engines in Auto Mode",
+                "weightage": 10,
+                "month_calendar": false
+            }
+        ]
+    },
+    "hydrant_line": {
+        "name": "Hydrant_Line",
+        "weightage": 5,
+        "rules": [
+            {
+                "name": "Pressurized Hydrant Line",
+                "weightage": 2.5,
+                "month_calendar": false
             },
             {
-                "name": "BCU Parameters Analysis",
-                "model": "open_alerts",
-                "weightage": 7.41,
+                "name": "Jockey Pump",
+                "weightage": 2.5,
+                "month_calendar": false
+            }
+        ]
+    },
+    "EMLOCK": {
+        "name": "EMLOCK",
+        "weightage": 5,
+        "model": "EMLock",
+        "rules": [
+            {
+                "name": "Fan Number Not Generated",
+                "model": "EMLock",
+                "weightage": 5,
                 "search_key": "interlock_name",
-                "search_value": ["No Flow alarm_BCU", "Low Flow alarm_BCU", "High Flow Alarm_BCU", "Blend overdose Alarm_BCU", "Blend overdose Alarm_BCU", "Additive Underdose Alarm_BCU"],
-                "interlock_name": ["MOV_Open Status_Fail", "MOV_Close Status_Fail"]
+                "search_value": "Fan Number Not Generated",
+                "interlock_name": "Fan Number Not Generated"
+            },
+            {
+                "name": "Swipe In Count Exceeded",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Swipe In Count Exceeded",
+                "interlock_name": "Swipe In Count Exceeded"
+            },
+            {
+                "name": "TT outside Terminal Radius",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "TT outside Terminal Radius",
+                "interlock_name": "TT outside Terminal Radius"
+            },
+            {
+                "name": "Swipe Out Count Limit Exceed",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Swipe Out Count Limit Exceed",
+                "interlock_name": "Swipe Out Count Limit Exceed"
+            },
+            {
+                "name": "Invoice Not Generated",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Invoice Not Generated",
+                "interlock_name": "Invoice Not Generated"
+            },
+            {
+                "name": "Shipment Number Not Generated",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Shipment Number Not Generated",
+                "interlock_name": "Shipment Number Not Generated"
+            },
+            {
+                "name": "TT outside RO radius",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "TT outside RO radius",
+                "interlock_name": "TT outside RO radius"
+            },
+            {
+                "name": "Pre Decantation Request Exceed",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Pre Decantation Request Exceed",
+                "interlock_name": "Pre Decantation Request Exceed"
+            },
+            {
+                "name": "Post Decantation Request Exceed",
+                "model": "EMLock",
+                "weightage": 5,
+                "search_key": "interlock_name",
+                "search_value": "Post Decantation Request Exceed",
+                "interlock_name": "Post Decantation Request Exceed"
+            }
+        ]
+    },
+    "DRYOUT": {
+        "name": "DRYOUT",
+        "weightage": 10,
+        "rules": [
+            {
+                "name": "DryOut",
+                "weightage": 10
             }
         ]
     }

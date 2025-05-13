@@ -289,16 +289,5 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
         return {"status": False, "message": "No data found"}
 
     except Exception as e:
+        print(traceback.format_exc())
         return {"status": False, "message": f"Error: {str(e)}"}
-
-
-# Action things_board_device_data
-@router.post('/things_board_device_data', tags=['TagsData'])
-async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
-    ...
-
-
-# Action get_tags_data
-@router.post('/get_tags_data', tags=['TagsData'])
-async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
-    ...

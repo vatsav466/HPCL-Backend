@@ -4,17 +4,20 @@ import datetime
 import pandas as pd
 import hpcl_ceg_model
 from performance_score_lpg import LPGPerformanceScore
+from performance_score_sod import SODPerformanceScore
 import orchestrator.analytics.va_analysis as va_analysis
 
 
 def get_performance_score_instance(bu):
     if bu == 'LPG':
         return LPGPerformanceScore()
+    elif bu == 'TAS':
+        return SODPerformanceScore()
     return None
 
 
 async def fetch_va_score(bu):
-    resp = await va_analysis.get_ro_terminal_scores({'LocationType': 'TAS',
+    resp = await va_analysis.get_ro_terminal_scores({'LocationType': bu,
                                                      'StartDate': datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")})
     if resp['status']:
         va_score = {rec['LOCATION_ID']: rec for rec in resp['data']}
@@ -51,16 +54,18 @@ async def generate_performance_score(bu, location_id=None):
     performance_score = {}
     present_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
     for location in locations:
+        print("location --> ", location)
         # Generating performance score for each location
         print(f"Generating performance score for {location['sap_id']}")
         await ins.configure_va(va_data.get(location['sap_id']))
         response, _ = await ins.generate_performance_index(location['sap_id'])
+        print("response --> ", response)
         score = sum([rec['score'] for rec in list(response.values())])
         performance_score[location['sap_id']] = {"sap_id": location['sap_id'],
                                                  "score": round(score if score < 100 else 100, 2),
                                                  "category": list(response.values()),
                                                  'timestamp': present_timestamp, "region": location["region"],
-                                                 'bu': 'LPG', "zone": location["zone"], "name": location["name"]}
+                                                 'bu': bu, "zone": location["zone"], "name": location["name"]}
     # Generating rank and national average
     df = pd.DataFrame(list(performance_score.values()))
     df = df[['sap_id', 'score']]
@@ -70,6 +75,7 @@ async def generate_performance_score(bu, location_id=None):
         performance_score[sap_id]['rank'] = int(df[df['sap_id'] == sap_id]['rank'].values[0])
         performance_score[sap_id]['national_score'] = national_avg
     performance_score = list(performance_score.values())
+    print("performance_score --> ", performance_score)
     # Updating performance score to database
     await hpcl_ceg_model.PerformanceScore.bulk_update(performance_score.copy(), upsert=True)
     await hpcl_ceg_model.PerformanceScoreHistory.bulk_update(performance_score, upsert=False)
@@ -77,7 +83,7 @@ async def generate_performance_score(bu, location_id=None):
 
 
 async def main():
-    supported_bus = ['LPG']
+    supported_bus = ['LPG', 'TAS']
     for bu in supported_bus:
         await generate_performance_score(bu)
 

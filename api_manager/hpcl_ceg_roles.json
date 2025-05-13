@@ -5060,6 +5060,69 @@
                     "name": "update_ro_master_data"
                 }
             ]
+        },
+        {
+            "name": "tasmonthlyoiscores",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TASMonthlyOIScores",
+            "attributes": {},
+            "uris": [
+                "/api/tasmonthlyoiscores/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "tasmonthlyoiscores_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TASMonthlyOIScores_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasmonthlyoiscores/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tasmonthlyoiscores_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TASMonthlyOIScores_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasmonthlyoiscores/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
