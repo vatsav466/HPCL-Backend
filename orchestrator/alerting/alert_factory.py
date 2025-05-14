@@ -242,7 +242,7 @@ class AlertFactory:
                 if alert_data_dict.get("alert_section") in ["VA"] and alert_data_dict.get("bu") in ["RO"]:
                     return True, "alert created"
                 if alert_data_dict.get("alert_section") in ["RO"] and interlock_name.get("interlock_name") != 'Dry Out Each Indent Wise MainFlow':
-                    print(f"alert skipped: {alert_data_dict}")
+                    # print(f"alert skipped: {alert_data_dict}")
                     return True, "alert created"
                 if alert_data_dict.get("alert_section") in ["EMLock"]:
                     print("Workflow Skipped")

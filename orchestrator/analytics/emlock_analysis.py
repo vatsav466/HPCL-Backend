@@ -50,6 +50,7 @@ async def close_emlock_alert(alert_data: dict):
     response = requests.post(
         url=url, json=alert_data, headers=headers
     )
+    print("response: ", response.json())
     if response.status_code // 100 == 2:
         return {"status": True, "message": "Data posted successfully", "data": response.json()}
     return {"status": False, "message": "Data posting unsuccessfully", "data": response.json()}
