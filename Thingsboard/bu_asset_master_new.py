@@ -1,7 +1,7 @@
 import urdhva_base
 import os
 import json
-
+sys.path.append("/opt/ceg/algo/api_manager")
 import requests
 import pandas as pd
 import hpcl_ceg_model
