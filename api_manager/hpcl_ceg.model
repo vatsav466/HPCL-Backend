@@ -91,6 +91,7 @@ Enum AlertActionType str {
     Effect='Effect'
     Cause='Cause'
     ESDFailure='ESDFailure'
+    Maintenance='Maintenance'
 }
 
 Enum IndentStatus str {

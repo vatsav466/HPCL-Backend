@@ -108,6 +108,7 @@
           <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
+          <camunda:inputParameter name="mqofrole">0</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_00uq2ey</bpmn:incoming>
@@ -244,10 +245,6 @@
       <bpmndi:BPMNEdge id="Flow_0uziufp_di" bpmnElement="Flow_0uziufp">
         <di:waypoint x="1238" y="140" />
         <di:waypoint x="1320" y="140" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0es62gh_di" bpmnElement="Flow_0es62gh">
-        <di:waypoint x="1420" y="140" />
-        <di:waypoint x="1502" y="140" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_13dws13_di" bpmnElement="Flow_13dws13">
         <di:waypoint x="1210" y="300" />
