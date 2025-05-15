@@ -31,7 +31,7 @@
     <bpmn:serviceTask id="Activity_073s72k" name="Notify Location Incharge" camunda:type="external" camunda:topic="tas_workflow_consumer_14">
       <bpmn:extensionElements>
         <camunda:inputOutput>
-          <camunda:inputParameter name="mqofrole">0</camunda:inputParameter>
+          <camunda:inputParameter name="mqofrole">4</camunda:inputParameter>
           <camunda:inputParameter name="rolemailto">0</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">notify</camunda:inputParameter>
           <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
