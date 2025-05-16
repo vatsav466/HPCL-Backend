@@ -147,7 +147,7 @@ class SendNotification:
         """
         bu = self.params.get("BU")
         sap_id = self.alert_data.get("sap_id", "")
-        message_type = self.params.get("messagetype")
+        message_type = self.params.get("messagetype", '')
         roles_list = ""
         if self.alert_data.get("alert_section","") in ["VTS","RO","TAS"]:
             roles_list = (await self._role_configuration_rolemailto() or "")
@@ -181,7 +181,8 @@ class SendNotification:
         # Convert defaultdict to a normal dictionary
         self.roles_mapper["rolemailto"] = dict(self.roles_mapper["rolemailto"])
         await self._prepare_recipients(self.roles_mapper["rolemailto"])
-        await self._prepare_message_content(bu, message_type)
+        if message_type is not None:
+            await self._prepare_message_content(bu, message_type)
 
     # async def _prepare_recipients(self, users: List[Dict]):
     #     """Prepare email and SMS recipients"""
