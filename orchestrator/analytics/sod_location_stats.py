@@ -16,9 +16,18 @@ async def generate_sod_engineering_location_stats(sap_id):
     status, location_data = await helpers.get_location_details('TAS', sap_id)
     if not status:
         return {"status": False, "data": "Invalid Location / Location not found"}
+    device_types = (
+        'MOV', 'HCD', 'Dyke', 'Hooter', 'Primary Level', 'Jockey Pump', 'VFT',
+        'PT', 'ROSOV', 'ESD', 'Pump', 'Radar', 'Fire Engine', 'Barrier Gate',
+        'Gantry BCU', 'MFM'
+    )
 
     try:
-        query = f"sap_id='{location_data['sap_id']}'"
+        query = (
+            f"sap_id = '{location_data['sap_id']}' "
+            f"and device_type in {device_types}"
+        )
+        
         params = urdhva_base.queryparams.QueryParams()
         params.fields = []
         params.q = query
