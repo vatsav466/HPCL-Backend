@@ -100,6 +100,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP01A", "interlock_name": "ROSOV_Close Status_Fail", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
                         {"sop_id": "SOP01A", "interlock_name": "MOV_Close Status_Fail", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
                         
+                        {"sop_id": "SOP002", "interlock_name": "ESD Pushbutton Activated", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP002", "interlock_name": "Plant ESD activated", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP002", "interlock_name": "EM Locks : VTS Offline - Customer", "model": "VTS", "workflow_name": ""},
                         {"sop_id": "SOP02A", "interlock_name": "All ROSOVs Closed(Except PL Receipt)", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
