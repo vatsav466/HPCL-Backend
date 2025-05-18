@@ -202,6 +202,8 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP028", "interlock_name": "Additive Overdose Alarm_BCU", "workflow_name": "BCU ALARM PARAMETERS"},
                         {"sop_id": "SOP028", "interlock_name": "Additive Underdose Alarm_BCU", "workflow_name": "BCU ALARM PARAMETERS"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off_Fail", "workflow_name": "BCU PERMISSIVE OFF"},
+                        {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off_DNC", "workflow_name": "BCU PERMISSIVE OFF"},
+                        {"sop_id": "SOP028A", "interlock_name": "Gantry Permissive Off_DNC", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A", "interlock_name": "DayStartTotalizer_Gantry Permissive_Fail", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A",  "interlock_name": "K Factor BCU Permissive Off_Fail", "workflow_name": "ANALOG ALERTS BCU PERMISSIVE OFF"},
@@ -498,7 +500,7 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
             filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), filtered_data))
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
-    #print("filtered_data--->", filtered_data)
+    print("filtered_data--->", filtered_data)
     return filtered_data[0] if filtered_data else {}
 
 
