@@ -101,29 +101,59 @@ async def close_tas_workflow(alert_data, message_type='Message'):
 
     print("Camunda URL:", url)
 
+    # max_retries = 5
+    # initial_delay = 5  # seconds
+
+    # await asyncio.sleep(2)  # One-time wait before retry loop
+
+    # for attempt in range(1, max_retries + 1):
+    #     try:
+    #         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
+    #         if r.status_code // 100 == 2:
+    #             logger.info("Message sent to camunda")
+    #             break
+    #         else:
+    #             logger.error(f"Attempt {attempt}: Error sending message to camunda: "
+    #                 f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
+    #     except Exception as e:
+    #         logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} "
+    #                     f"for alert_id {alert_data['id']}, business_key {alert_data['unique_id']}")
+
+    #     if attempt < max_retries:
+    #         backoff = initial_delay * (2 ** (attempt - 1))
+    #         await asyncio.sleep(backoff)
+    #     else:
+    #         logger.error(f"Failed to send message to camunda after {max_retries} attempts")
+
+    # await close_alert(alert_data=alert_data)
     max_retries = 5
-    initial_delay = 5  # seconds
+    initial_delay = 1  # seconds
+    max_backoff = 10  # seconds
 
-    await asyncio.sleep(10)  # One-time wait before retry loop
+    await asyncio.sleep(1)  # Optional initial delay
 
-    for attempt in range(1, max_retries + 1):
-        try:
-            r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
-            if r.status_code // 100 == 2:
-                logger.info("Message sent to camunda")
-                break
+    async with httpx.AsyncClient(verify=False) as client:
+        for attempt in range(1, max_retries + 1):
+            try:
+                r = await client.post(url, headers={'Content-Type': 'application/json'}, json=data)
+                if r.status_code // 100 == 2:
+                    logger.info("Message sent to camunda")
+                    break
+                elif r.status_code in {400, 403, 404}:
+                    logger.error(f"Non-retryable error: {r.status_code} - {r.text}")
+                    break
+                else:
+                    logger.error(f"Attempt {attempt}: Error sending message to camunda: "
+                                f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
+            except Exception as e:
+                logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} "
+                            f"for alert_id {alert_data['id']}, business_key {alert_data['unique_id']}")
+
+            if attempt < max_retries:
+                backoff = min(initial_delay * (2 ** (attempt - 1)), max_backoff)
+                await asyncio.sleep(backoff)
             else:
-                logger.error(f"Attempt {attempt}: Error sending message to camunda: "
-                    f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
-        except Exception as e:
-            logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} "
-                        f"for alert_id {alert_data['id']}, business_key {alert_data['unique_id']}")
-
-        if attempt < max_retries:
-            backoff = initial_delay * (2 ** (attempt - 1))
-            await asyncio.sleep(backoff)
-        else:
-            logger.error(f"Failed to send message to camunda after {max_retries} attempts")
+                logger.error(f"Failed to send message to camunda after {max_retries} attempts")
 
     await close_alert(alert_data=alert_data)
 
@@ -155,6 +185,8 @@ async def create_under_maintenance_alert(alert_data):
             for data in maintenance_resp["data"]:
                 logger.info(f"Closing existing alert: {json.dumps(data, default=str)}")
                 await close_tas_workflow(data, message_type='Message')
+            await create_alert(alert_data=alert_data)
+        else:
             await create_alert(alert_data=alert_data)
         return
 

@@ -16,9 +16,18 @@ async def generate_sod_engineering_location_stats(sap_id):
     status, location_data = await helpers.get_location_details('TAS', sap_id)
     if not status:
         return {"status": False, "data": "Invalid Location / Location not found"}
+    device_types = (
+        'MOV', 'HCD', 'Dyke', 'Hooter', 'Primary Level', 'Jockey Pump', 'VFT',
+        'PT', 'ROSOV', 'ESD', 'Pump', 'Radar', 'Fire Engine', 'Barrier Gate',
+        'Gantry BCU', 'MFM'
+    )
 
     try:
-        query = f"sap_id='{location_data['sap_id']}'"
+        query = (
+            f"sap_id = '{location_data['sap_id']}' "
+            f"and device_type in {device_types}"
+        )
+        
         params = urdhva_base.queryparams.QueryParams()
         params.fields = []
         params.q = query
@@ -65,29 +74,29 @@ async def generate_sod_engineering_location_stats(sap_id):
 
         DEVICE_TYPE_MAPPING = {
             "MOV": "MOV",
-            "RIMSEAL": "RIMSEAL",
-            "Dyke Valve": "Dyke Valve",
+            # "RIMSEAL": "RIMSEAL",
+            # "Dyke Valve": "Dyke Valve",
             "HCD": "HCD",
             "Dyke": "Dyke",
             "Hooter": "Hooter",
             "Primary Level": "Primary Radar",
-            "LRC Switchover": "LRC Switchover",
-            "PLC": "PLC",
+            # "LRC Switchover": "LRC Switchover",
+            # "PLC": "PLC",
             "Jockey Pump": "Jockey Pump",
-            "Fire Effect": "Fire Effect",
-            "UPS": "UPS",
-            "Gantry override": "Gantry override",
+            # "Fire Effect": "Fire Effect",
+            # "UPS": "UPS",
+            # "Gantry override": "Gantry override",
             "VFT": "VFT",
             "PT": "PT Hydrant",
             "ROSOV": "Rosov",
             "ESD": "ESD",
             "Pump": "Pumps",
-            "OI Tags": "OI Tags",
+            # "OI Tags": "OI Tags",
             "Radar": "Secondary Radar",
             "Fire Engine": "Fire Engine",
-            "ESD Effect": "ESD Effect",
+            # "ESD Effect": "ESD Effect",
             "Barrier Gate": "Barrier Gate",
-            "Power ESD": "Power ESD",
+            # "Power ESD": "Power ESD",
             "Gantry BCU": "Gantry BCU",
             "MFM": "MFM"
         } 

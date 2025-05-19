@@ -1466,3 +1466,27 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await RoMasterData.get_all(params, skip_secrets=True)
 
+
+@router.post('/tasmonthlyoiscores', response_model=TASMonthlyOIScores, tags=['TASMonthlyOIScores'])
+async def create(inputObj: TASMonthlyOIScoresCreate):
+    return await inputObj.create()
+
+
+@router.put('/tasmonthlyoiscores', response_model=TASMonthlyOIScores, tags=['TASMonthlyOIScores'])
+async def update(inputObj: TASMonthlyOIScores):
+    return await inputObj.modify()
+
+
+@router.get('/tasmonthlyoiscores/{id}', response_model=TASMonthlyOIScores, tags=['TASMonthlyOIScores'])
+async def get(id: str):
+    return await TASMonthlyOIScores.get(id, skip_secrets=True)
+
+
+@router.get('/tasmonthlyoiscores', response_model=TASMonthlyOIScoresGetResp, tags=['TASMonthlyOIScores'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TASMonthlyOIScores.get_all(params, skip_secrets=True)
+
+
+@router.delete('/tasmonthlyoiscores/{id}', tags=['TASMonthlyOIScores'])
+async def delete(id: str):
+    return await TASMonthlyOIScores.delete(id)

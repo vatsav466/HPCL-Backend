@@ -166,30 +166,57 @@ class TASAlertManager(alert_factory.AlertFactory):
 
                     print("Camunda URL:", url)
                     # Retry logic
+                    # max_retries = 5
+                    # initial_delay = 5  # seconds
+
+                    # for attempt in range(1, max_retries + 1):
+                    #     # await asyncio.sleep(5)  # wait before the first send
+                    #     print("attempt:", attempt)
+                    #     try:
+                    #         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
+                    #         if r.status_code // 100 == 2:
+                    #             print("Message sent to camunda")
+                    #             break
+                    #         else:
+                    #             print(f"Attempt {attempt}: Error sending message to camunda: "
+                    #                 f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
+                    #     except Exception as e:
+                    #         logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} for alert_id {alert_id}, "
+                    #                     f"business_key {tas_alert_data['unique_id']}")
+
+                    #     if attempt < max_retries:
+                    #         backoff = initial_delay * (2 ** (attempt - 1))
+                    #         await asyncio.sleep(backoff)
+                    #     else:
+                    #         logger.error(f"Failed to send message to camunda after {max_retries} attempts")
                     max_retries = 5
-                    initial_delay = 5  # seconds
+                    initial_delay = 1  # seconds
+                    max_backoff = 10  # seconds
 
-                    for attempt in range(1, max_retries + 1):
-                        # await asyncio.sleep(5)  # wait before the first send
-                        print("attempt:", attempt)
-                        try:
-                            r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
-                            if r.status_code // 100 == 2:
-                                print("Message sent to camunda")
-                                break
+                    await asyncio.sleep(1)  # Optional initial delay
+
+                    async with httpx.AsyncClient(verify=False) as client:
+                        for attempt in range(1, max_retries + 1):
+                            try:
+                                r = await client.post(url, headers={'Content-Type': 'application/json'}, json=data)
+                                if r.status_code // 100 == 2:
+                                    logger.info("Message sent to camunda")
+                                    break
+                                elif r.status_code in {400, 403, 404}:
+                                    logger.error(f"Non-retryable error: {r.status_code} - {r.text}")
+                                    break
+                                else:
+                                    logger.error(f"Attempt {attempt}: Error sending message to camunda: "
+                                                f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
+                            except Exception as e:
+                                logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} "
+                                            f"for alert_id {alert_data['id']}, business_key {alert_data['unique_id']}")
+
+                            if attempt < max_retries:
+                                backoff = min(initial_delay * (2 ** (attempt - 1)), max_backoff)
+                                await asyncio.sleep(backoff)
                             else:
-                                print(f"Attempt {attempt}: Error sending message to camunda: "
-                                    f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
-                        except Exception as e:
-                            logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} for alert_id {alert_id}, "
-                                        f"business_key {tas_alert_data['unique_id']}")
-
-                        if attempt < max_retries:
-                            backoff = initial_delay * (2 ** (attempt - 1))
-                            await asyncio.sleep(backoff)
-                        else:
-                            logger.error(f"Failed to send message to camunda after {max_retries} attempts")
-
+                                logger.error(f"Failed to send message to camunda after {max_retries} attempts")
             else:
                 await cls.close_alert(alert_data)
 

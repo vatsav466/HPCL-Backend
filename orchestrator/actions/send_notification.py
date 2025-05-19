@@ -98,7 +98,10 @@ class SendNotification:
                 return True, {"msg": "Notification skipped"}
             await self._process_roles_and_users()
             await self._process_message_type()
-            await self._send_notifications()
+            send_email = self.params.get("send_email", True)
+        
+            if send_email is True:
+                await self._send_notifications()
             await self._update_alert_status()
             return await self._create_task_result()
 
@@ -144,7 +147,7 @@ class SendNotification:
         """
         bu = self.params.get("BU")
         sap_id = self.alert_data.get("sap_id", "")
-        message_type = self.params.get("messagetype")
+        message_type = self.params.get("messagetype", '')
         roles_list = ""
         if self.alert_data.get("alert_section","") in ["VTS","RO","TAS"]:
             roles_list = (await self._role_configuration_rolemailto() or "")
@@ -178,7 +181,8 @@ class SendNotification:
         # Convert defaultdict to a normal dictionary
         self.roles_mapper["rolemailto"] = dict(self.roles_mapper["rolemailto"])
         await self._prepare_recipients(self.roles_mapper["rolemailto"])
-        await self._prepare_message_content(bu, message_type)
+        if message_type is not None:
+            await self._prepare_message_content(bu, message_type)
 
     # async def _prepare_recipients(self, users: List[Dict]):
     #     """Prepare email and SMS recipients"""
@@ -517,6 +521,7 @@ class SendNotification:
         """
         message_type = self.params.get("messagetype")
         print("message_type --> ", message_type)
+        # Check if email sending is explicitly disabled
         if message_type == "active":
             await self._send_active_notification()           
         elif message_type == "resolved":
@@ -667,14 +672,22 @@ class SendNotification:
         else:
             assigning_roles = self.params.get("mqofrole", "")
 
-        # Common fields to update
-        self.update_alert.update({
-            "action_type": self.base_alert_data.get("action_type"),
-            "action_msg": self.base_alert_data.get("action_msg"),
-            "assigned_user_roles": assigning_roles,
-            # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
-            "last_mailed_to": list(self.roles_mapper.get("rolemailto", {}).keys())
-        })
+        if self.base_alert_data.get("action_type") and self.base_alert_data.get("action_msg"):
+            self.update_alert.update({
+                    "action_type": self.base_alert_data.get("action_type"),
+                    "action_msg": self.base_alert_data.get("action_msg"),
+                    "assigned_user_roles": assigning_roles,
+                    # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
+                    "last_mailed_to": list(self.roles_mapper.get("rolemailto", {}).keys())
+            })
+        else:
+            self.update_alert.update({
+                    "action_type": hpcl_ceg_model.AlertActionType.Escalated.value,
+                    "action_msg": self.params.get("msg_subject"),
+                    "assigned_user_roles": assigning_roles,
+                    # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
+                    "last_mailed_to": list(self.roles_mapper.get("rolemailto", {}).keys())
+            })
         print("self.update_alert ---> ", self.update_alert)
 
         if self.params.get("messagetype") in ["escalation", "escalate"]:

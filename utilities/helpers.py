@@ -15,6 +15,7 @@ except ImportError:
     from random import choice
 from dateutil.relativedelta import relativedelta
 from utilities import interlock_category_mapping
+import Thingsboard.bu_asset_master_new as tb_master
 
 
 def month_short_to_number(short_name):
@@ -304,3 +305,85 @@ def map_device_category(interlock_name):
         if interlock_name in interlocks:
             return category
     return "Unknown"
+
+def fetch_oi_devices(self, page_size=100, page=0):
+    """
+    Fetch devices from ThingsBoard instance.
+
+    Parameters
+    ----------
+    page_size : int
+        Page size of the devices list.
+    page : int
+        Page number of the devices list.
+
+    Returns
+    -------
+    list
+        List of devices.
+    """
+    params = {'pageSize': 100, 'page': 0}
+    print("params --> ", params)
+    response = tb_master.ThingsBoardInterface().api_handler("GET", "/api/tenant/devices", {}, params)
+    return response.get("data", []) if response else []
+
+
+def fetch_device_data(self, device_id, key="water"):
+    # Fetching server attributes
+    attr_url = f"/api/plugins/telemetry/DEVICE/{device_id}/values/attributes/SERVER_SCOPE"
+    attr_data = tb_master.ThingsBoardInterface().api_handler('GET', attr_url, {}, {})
+
+    required_kls = None
+    target_volume = None
+
+    # Extract required attributes from the server data
+    if isinstance(attr_data, list):
+        for item in attr_data:
+            # Handle water attributes
+            if key == "water":
+                if item.get('key') == 'Required Water Volume':
+                    required_kls = float(item.get('value'))
+                elif item.get('key') == 'Water Volume':
+                    target_volume = float(item.get('value'))
+            
+            # Handle foam attributes
+            elif key == "foam":
+                if item.get('key') == 'Required Foam Volume':
+                    required_kls = float(item.get('value'))
+                elif item.get('key') == 'Foam Volume':
+                    target_volume = float(item.get('value'))
+    elif isinstance(attr_data, dict):
+        if key == "water":
+            required_kls = float(attr_data.get('Required Water Volume')) if 'Required Water Volume' in attr_data else None
+            target_volume = float(attr_data.get('Water Volume')) if 'Water Volume' in attr_data else None
+        elif key == "foam":
+            required_kls = float(attr_data.get('Required Foam Volume')) if 'Required Foam Volume' in attr_data else None
+            target_volume = float(attr_data.get('Foam Volume')) if 'Foam Volume' in attr_data else None
+
+    # Raise an exception if either value is missing
+    if required_kls is None or target_volume is None:
+        raise Exception(f"Missing '{key.capitalize()} Volume' or 'Required {key.capitalize()} Volume' in server attributes")
+
+    # Fetching telemetry data for the device
+    telemetry_url = f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries"
+    telemetry_params = {'keys': f'{key.capitalize()} Volume'}
+    telemetry_data = tb_master.ThingsBoardInterface().api_handler('GET', telemetry_url, {}, telemetry_params)
+
+    volume = None
+    if f'{key.capitalize()} Volume' in telemetry_data:
+        latest_entry = telemetry_data[f'{key.capitalize()} Volume'][-1]  # Get the latest entry
+        volume = float(latest_entry.get('value'))
+
+    # Raise an exception if volume is missing
+    if volume is None:
+        raise Exception(f"Missing '{key.capitalize()} Volume' telemetry")
+
+    return required_kls, target_volume, volume
+
+
+
+def fetch_alarm_data(self, device_id):
+    alarm_url = f"/api/alarm/DEVICE/{device_id}?searchStatus=ACTIVE"
+    params = {'pageSize': 100, 'page': 0}
+    alarm_data = tb_master.ThingsBoardInterface().api_handler('GET', alarm_url, {}, params)
+    return alarm_data
