@@ -67,7 +67,7 @@ class BCUAlertConditions:
                     f"""alert_section = 'TAS' and """
                     f"""device_id = '{params.get('device_id', '')}' and """
                     f"""device_name = '{params.get('device_name', '')}' and """
-                    f"""interlock_name = '{params.get('interlock_name', '')}' and """
+                    f"""interlock_name = 'BCU Permissive Off_Fail_DNC' and """
                     f"""DATE(created_at) = '{date_check}' and alert_status='Close' """
                 )
             logger.info("query : %s", query)

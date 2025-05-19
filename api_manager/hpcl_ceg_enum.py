@@ -131,6 +131,7 @@ class AlertActionType(str, enum.Enum):
     Effect = 'Effect'
     Cause = 'Cause'
     ESDFailure = 'ESDFailure'
+    Maintenance = 'Maintenance'
 
 
 

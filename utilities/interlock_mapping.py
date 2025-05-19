@@ -100,6 +100,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP01A", "interlock_name": "ROSOV_Close Status_Fail", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
                         {"sop_id": "SOP01A", "interlock_name": "MOV_Close Status_Fail", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
                         
+                        {"sop_id": "SOP002", "interlock_name": "ESD Pushbutton Activated", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP002", "interlock_name": "Plant ESD activated", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP002", "interlock_name": "EM Locks : VTS Offline - Customer", "model": "VTS", "workflow_name": ""},
                         {"sop_id": "SOP02A", "interlock_name": "All ROSOVs Closed(Except PL Receipt)", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
@@ -201,6 +202,8 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP028", "interlock_name": "Additive Overdose Alarm_BCU", "workflow_name": "BCU ALARM PARAMETERS"},
                         {"sop_id": "SOP028", "interlock_name": "Additive Underdose Alarm_BCU", "workflow_name": "BCU ALARM PARAMETERS"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off_Fail", "workflow_name": "BCU PERMISSIVE OFF"},
+                        {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off_DNC", "workflow_name": "BCU PERMISSIVE OFF"},
+                        {"sop_id": "SOP028A", "interlock_name": "Gantry Permissive Off_DNC", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A", "interlock_name": "DayStartTotalizer_Gantry Permissive_Fail", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A",  "interlock_name": "K Factor BCU Permissive Off_Fail", "workflow_name": "ANALOG ALERTS BCU PERMISSIVE OFF"},
@@ -218,7 +221,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP064", "interlock_name": "TT Overloaded", "workflow_name": ""},
                         {"sop_id": "SOP065", "interlock_name": "BCU K- Factor Change", "workflow_name": ""},
                         {"sop_id": "SOP066", "interlock_name": "Bay reassignment", "workflow_name": ""},
-                        {"sop_id": "SOP067", "interlock_name": "Manual Bay reasignment reported", "workflow_name": ""},
+                        {"sop_id": "SOP067", "interlock_name": "Manual Bay assignment of more than 5% of total TT loaded", "workflow_name": ""},
                         {"sop_id": "SOP068", "interlock_name": "SickTT Reported", "workflow_name": ""},
                         {"sop_id": "SOP069", "interlock_name": "MFM factor Change", "workflow_name": ""},
                         {"sop_id": "SOP073", "interlock_name": "Day End Report", "workflow_name": ""},
@@ -497,7 +500,7 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
             filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), filtered_data))
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
-    #print("filtered_data--->", filtered_data)
+    print("filtered_data--->", filtered_data)
     return filtered_data[0] if filtered_data else {}
 
 

@@ -5,7 +5,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -21,7 +22,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -37,7 +39,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -53,7 +56,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -69,7 +73,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -85,7 +90,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -101,7 +107,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -117,7 +124,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -133,7 +141,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -149,7 +158,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -165,7 +175,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -181,7 +192,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -197,7 +209,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -213,7 +226,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -229,7 +243,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -245,7 +260,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -261,7 +277,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -277,7 +294,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -293,7 +311,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -309,7 +328,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -325,7 +345,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -341,7 +362,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -357,7 +379,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -373,7 +396,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -389,7 +413,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -405,7 +430,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -421,7 +447,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -437,7 +464,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -453,7 +481,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -469,7 +498,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -485,7 +515,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -501,7 +532,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -517,7 +549,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -533,7 +566,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -549,7 +583,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -565,7 +600,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -581,7 +617,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -597,7 +634,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -613,7 +651,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -629,7 +668,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -645,7 +685,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -661,7 +702,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -677,7 +719,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -693,7 +736,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -709,7 +753,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -725,7 +770,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -741,7 +787,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -757,7 +804,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -773,7 +821,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -789,7 +838,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -805,7 +855,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -821,7 +872,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -837,7 +889,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -853,7 +906,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -869,7 +923,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -885,7 +940,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -901,7 +957,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -917,7 +974,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -933,7 +991,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -949,7 +1008,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -965,7 +1025,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -981,7 +1042,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -997,7 +1059,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1013,7 +1076,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1029,7 +1093,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1045,7 +1110,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1061,7 +1127,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1077,7 +1144,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1093,7 +1161,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1109,7 +1178,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1125,7 +1195,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1141,7 +1212,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1157,7 +1229,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1173,7 +1246,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1189,7 +1263,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1205,7 +1280,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1221,7 +1297,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1237,7 +1314,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1253,7 +1331,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1269,7 +1348,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1285,7 +1365,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1301,7 +1382,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1317,7 +1399,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1333,7 +1416,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1349,7 +1433,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1365,7 +1450,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1381,7 +1467,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1397,7 +1484,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1413,7 +1501,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1429,7 +1518,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1445,7 +1535,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1461,7 +1552,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1477,7 +1569,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1493,7 +1586,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1509,7 +1603,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1525,7 +1620,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1541,7 +1637,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1557,7 +1654,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1573,7 +1671,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1589,7 +1688,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1605,7 +1705,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1621,7 +1722,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1637,7 +1739,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1653,7 +1756,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1669,7 +1773,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1685,7 +1790,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1701,7 +1807,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1717,7 +1824,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
@@ -1733,7 +1841,8 @@ tas_role_mapping={
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
-                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD"
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
             },
             "block_time": {
                 "0": "PT24H",
