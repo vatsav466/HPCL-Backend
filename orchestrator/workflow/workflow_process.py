@@ -1,6 +1,6 @@
 import urdhva_base
 import json
-import time
+import asyncio
 import requests
 import traceback
 import hpcl_ceg_model
@@ -29,7 +29,6 @@ class Camunda:
         if camunda_url:
             self.camunda_url = camunda_url
         url = f" {self.camunda_url}/engine-rest/process-definition/key/{workflowId}/start"
-
         MAX_RETRIES = 3
         RETRY_DELAY = 10
 
@@ -46,7 +45,7 @@ class Camunda:
                 logger.error(f"Attempt {attempt} - Error while starting workflow: {e}")
                 print(traceback.format_exc())
             if attempt < MAX_RETRIES:
-                time.sleep(RETRY_DELAY)
+                await asyncio.sleep(RETRY_DELAY)
 
     async def closeWorkflow(self, payload, workflowId, camunda_url=urdhva_base.settings.camunda_url):
         if camunda_url:

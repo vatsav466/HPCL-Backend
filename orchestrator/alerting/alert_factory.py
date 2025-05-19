@@ -192,7 +192,8 @@ class AlertFactory:
                                     "effect_sop_id": {"value": alert_data.get('effect_sop_id', ''), "type": "String"}, # Added for TAS use
                                     "device_id": {"value": alert_data.get('device_id', ''), "type": "String"}, # Added for TAS use
                                     "device_name": {"value": alert_data.get('device_name', ''), "type": "String"}, # Added for TAS use
-                                    "device_type": {"value": alert_data.get('device_type', ''), "type": "String"} # Added for TAS use
+                                    "device_type": {"value": alert_data.get('device_type', ''), "type": "String"}, # Added for TAS use
+                                    "tas_device_name": {"value": alert_data.get('tas_device_name', ''), "type": "String"}, # Added for TAS use
                                     }}
 
             # Create Interlock

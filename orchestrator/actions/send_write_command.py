@@ -185,8 +185,10 @@ class SendWriteCommand:
                 "sensor_tag": tag,
                 "value": str(write_control)
             }
+            print("message  ---> ", message)
 
             status, response = await send_rabbitmq.send_command_rabbitmq(message, queue_name=f"command_write_{sap_id}")
+            print("response  ---> ", response)
             if not status:
                 return False, {"status": "Error", "message": "Failed to send command"}
             return True, response

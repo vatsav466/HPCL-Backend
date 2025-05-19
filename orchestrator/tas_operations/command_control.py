@@ -45,4 +45,4 @@ async def publish_command(sap_id, command, value):
             ),
             routing_key=queue_name
         )
-    return True, "Command sent to location"
+    return True, {"message": f"Command sent to location {sap_id}"}
