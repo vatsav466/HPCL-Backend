@@ -333,8 +333,10 @@ async def notify_prooftest():
                 continue
 
             # Convert dates to datetime objects
-            proof_test_created_at = datetime.strptime(proof_test_created_at, "%Y-%m-%d %H:%M:%S")
-            next_proof_test_date = datetime.strptime(next_proof_test_date, "%Y-%m-%d %H:%M:%S")
+            if isinstance(proof_test_created_at, str):
+                proof_test_created_at = datetime.strptime(proof_test_created_at, "%Y-%m-%d %H:%M:%S")
+            if isinstance(next_proof_test_date, str):
+                next_proof_test_date = datetime.strptime(next_proof_test_date, "%Y-%m-%d %H:%M:%S")
 
             # Calculate the 84th and 89th days before the next proof test date
             day_84 = next_proof_test_date - timedelta(days=6)
@@ -343,12 +345,13 @@ async def notify_prooftest():
             # Check if today matches the 84th or 89th day
             if today == day_84.date() or today == day_89.date():
                 notify_email = NotifyEMail()
-                notify_email.publish_message(
+                resp = await notify_email.publish_message(
                     **{
-                        'to_emails': ['venu@algofusiontech.com'],
+                        'recipients': ['manohar.v@algofusiontech.com'],
                         'subject': f"Proof Test Notification for {device_name} - {interlock_name} on {location_name} - {sap_id} ",
                         'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/proof_test_alert.html", data=record),
-                        'html_content': True
+                        'html_content': True,
+                        'force_send': True
                     }
                 )
                              
