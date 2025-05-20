@@ -123,7 +123,6 @@ async def tas_bcu_analog():
     except Exception as e:
         print(f"Error in tas_bcu_analog: {traceback.format_exc()}")
 
-
 async def check_master_status():
     """
     This function checks for alerts related to master status and creates alerts if certain conditions are met.
@@ -163,7 +162,20 @@ async def check_master_status():
                continue
            sap_id = record.get("sap_id", "")
            status_count = record.get("satus_count", 0)
-           
+
+
+           if status_count == 25:
+               notify_email = NotifyEMail()
+               resp = await notify_email.publish_message(
+                    **{
+                        'recipients': [''], # Add the recipient email addresses here
+                        'subject': f"LRC Master Switch Over Notification  ",
+                        'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/proof_test_alert.html", data=record),
+                        'html_content': True,
+                        'force_send': True
+                    }
+                )
+               
            # Check if the status count is exactly 30
            if status_count == 30:
                # Create alert data
@@ -198,78 +210,71 @@ async def check_master_status():
 async def check_bayreassignment():
     """
     This function checks for alerts related to Bay reassignment and creates alerts if certain conditions are met.
-    It queries the alerts table for specific interlock names and checks the total count of alerts.
-    If the alert count exceeds a threshold (5% of the total count), it creates an alert with relevant details.
-
+    It processes day-end data for all sap_id values and checks if the alert count exceeds 5% of the total count.
+    If the condition is met, it creates an alert with relevant details.
     """
-    
     try:
-        # Step 1: Query the alerts table to check if an alert exit in the interlock_name 
+        # Step 1: Query the alerts table to get the day-end count of alerts for each sap_id
         query1 = """
-                 SELECT DISTINCT sap_id from alerts
-                 WHERE interlock_name = ''
-                 ORDER BY created_at DESC
-                 LIMIT 1
-                 """
+            SELECT sap_id, COUNT(*) AS alert_count
+            FROM alerts
+            WHERE interlock_name = 'Bay reassignment'
+            AND DATE(created_at) = CURRENT_DATE
+            GROUP BY sap_id
+        """
         try:
             resp1 = await hpcl_ceg_model.Alerts.get_aggr_data(query1)
         except Exception as e:
             print(f"Error executing query1: {e}")
             return
-        
-        # check if resp1 contains data
+
+        # Check if resp1 contains data
         if not resp1.get("data", []):
             print("No data found for Bay reassignment check")
             return
-        
-        # Step 2: process the response
+
+        # Step 2: Process the response for each sap_id
         for record in resp1.get("data", []):
             sap_id = record.get("sap_id")
+            alert_count = record.get("alert_count", 0)
 
-            # Query the host_manual_fan_printed table for the latest entry for the sap_id
+            if not sap_id or alert_count == 0:
+                print(f"Invalid data for sap_id: {sap_id}, alert_count: {alert_count}")
+                continue
+
+            # Query the host_manual_fan_printed table to get the day-end total count for the same sap_id
             query2 = f"""
-                     SELECT total_count
-                     FROM host_manual_fan_printed
-                     WHERE sap_id = '{sap_id}'
-                     ORDER BY created_at DESC
-                     LIMIT 1
-                     """
+                SELECT  total_count
+                FROM host_manual_fan_printed
+                WHERE sap_id = '{sap_id}'
+                AND DATE(created_at) = CURRENT_DATE
+            """
             try:
                 resp2 = await hpcl_ceg_model.Alerts.get_aggr_data(query2)
             except Exception as e:
                 print(f"Error executing query2: {e}")
                 continue
-            
-            # get the total_count from the response
-            total_count = resp2.get["data", []][0].get("total_count", 0)
-            if total_count == 0:
-                print(f"Total count is Zero for sap_id: {sap_id}")
+
+            # Check if resp2 contains data
+            if not resp2.get("data", []):
+                print(f"No total count data found for sap_id: {sap_id}")
                 continue
 
-            # calculate 5% of the total_count
+            # Get the total_count from the response
+            total_count = resp2.get("data", [])[0].get("total_count", 0)
+
+            if total_count == 0:
+                print(f"Invalid total_count for sap_id: {sap_id}")
+                continue
+
+            # Calculate the threshold (5% of the total_count)
             threshold = total_count * 0.05
 
-            # query the alerts table for the count of alerts with interlock_name = 'Bay reassignment'
-            query3 = f"""
-                     SELECT COUNT(*) as alert_count
-                     FROM alerts
-                     WHERE sap_id = '{sap_id}'
-                     AND interlock_name = 'Bay reassignment'
-                     """
-            try:
-                resp3 = await hpcl_ceg_model.Alerts.get_aggr_data(query3)
-            except Exception as e:  
-                print(f"Error executing query3: {e}")
-                continue
-
-            # get the alert_count from the response
-            alert_count = resp3.get("data", [])[0].get("alert_count", 0)
-
-            # check if the alert_count is greater than 5% of the total_count
-            if alert_count > threshold:
-                # create the alert
+            # Check if the alert_count exceeds the threshold
+            if threshold > alert_count:
+                # Create the alert
                 alert_data = {
-                    "interlock_name": "",
+                    "interlock_name": "Manual FAN printed more than 5% of total TT loaded",
                     "device_name": "",
                     "sop_id": "",
                     "sap_id": sap_id,
@@ -277,21 +282,21 @@ async def check_bayreassignment():
                     "device_type": "",
                     "severity": "Medium",
                     "alert_id": str(uuid.uuid1()),
-                    "alert_type": "TAS"     
+                    "alert_type": "TAS"
                 }
-                
+
                 # Check for duplicates
                 is_duplicate = await duplicates_check.duplicate_check(alert_data)
                 if is_duplicate:
-                    print(f"Duplicate alert found for Bay Reassignment on device {sap_id}. Skipping alert creation.")
+                    print(f"Duplicate alert found for Bay Reassignment on sap_id {sap_id}. Skipping alert creation.")
                     continue
-                
+
                 # Create the alert
                 success, msg = await create_alert(alert_data)
                 if success:
-                    print(f"Bay reassignment alert created successfully for {sap_id}.")
+                    print(f"Bay reassignment alert created successfully for sap_id {sap_id}.")
                 else:
-                    print(f"Failed to create Bay reassignment alert for {sap_id}: {msg}")    
+                    print(f"Failed to create Bay reassignment alert for sap_id {sap_id}: {msg}")
     except Exception as e:
         print(f"Error in check_bayreassignment: {traceback.format_exc()}")
 
@@ -347,7 +352,7 @@ async def notify_prooftest():
                 notify_email = NotifyEMail()
                 resp = await notify_email.publish_message(
                     **{
-                        'recipients': ['manohar.v@algofusiontech.com'],
+                        'recipients': [''], # Add the recipient email addresses here
                         'subject': f"Proof Test Notification for {device_name} - {interlock_name} on {location_name} - {sap_id} ",
                         'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/proof_test_alert.html", data=record),
                         'html_content': True,
