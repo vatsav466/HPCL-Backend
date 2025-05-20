@@ -262,6 +262,8 @@ def get_and_insert_data(cursor, query, params=None):
     data['Zone_Name'] = data['Zone_Name'].str.replace('North Central LPG Zone','North Central LPG Zo').str.replace('South Central Retail Zone','South Central Retail').str.replace('South Central LPG Zone ','South Central LPG Zo').str.replace('EAST CENTRAL ZONE','East Central Zone').str.replace('North West Frontier Zone','North West Frontier').str.replace('North West Retail Zone','North West Retail Zo').str.replace('North Central Retail Zone','North Central Retail')
     data['Zone_Name'] = data['Zone_Name'].str.replace('East Zone','East').str.replace('West Zone','West').str.replace('North Zone','North').str.replace('South Zone','South')
     data.loc[(data['SBU_Name'] == 'I&C') & (data['ProductName'] == 'PETCHEM'), 'SBU_Name'] = 'PETCHEM'
+    data.loc[(data['SBU_Name'] == 'Lubes') & (data['ProductName'] == 'Solvent 2445'), ['ORGSBUCD', 'SBU_Name']] = ['3000', 'I&C']
+
     
     print(data['MATERIAL_CD'].unique().tolist())
     print(data.dtypes)
