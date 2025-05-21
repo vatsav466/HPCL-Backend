@@ -110,13 +110,14 @@ class TASAlertManager(alert_factory.AlertFactory):
 
             device_keys = []
             for rec in device_data["data"]:
-                if rec['device_name'] == alert_data['device_name']:
-                    for sensor in rec['sensors']:
-                        if sensor['sensor_name'] in alert_data:
-                            device_keys.append(f"{sensor['sensor_name']}: {alert_data[sensor['sensor_name']]}")
-                    break
+                if alert_data.get('device_name'):
+                    if rec['device_name'] == alert_data['device_name']:
+                        for sensor in rec['sensors']:
+                            if sensor['sensor_name'] in alert_data:
+                                device_keys.append(f"{sensor['sensor_name']}: {alert_data[sensor['sensor_name']]}")
+                        break
 
-            device_data_str = f"{alert_data['device_name']}({', '.join(device_keys)})"
+            device_data_str = f"{alert_data.get('device_name')}({', '.join(device_keys)})"
             processed_time = datetime.datetime.now(datetime.timezone.utc)
             alert_data["alert_history"] = {
                 "processed_time": processed_time.isoformat(),

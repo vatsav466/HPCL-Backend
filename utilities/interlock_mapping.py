@@ -204,6 +204,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off_Fail", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off_DNC", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A", "interlock_name": "Gantry Permissive Off_DNC", "workflow_name": "BCU PERMISSIVE OFF"},
+                        {"sop_id": "SOP028A", "interlock_name": "Gantry Permissive Off_ACK from TAS", "workflow_name": "BCU ALARM PARAMETERS ACK"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A", "interlock_name": "DayStartTotalizer_Gantry Permissive_Fail", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A",  "interlock_name": "K Factor BCU Permissive Off_Fail", "workflow_name": "ANALOG ALERTS BCU PERMISSIVE OFF"},
