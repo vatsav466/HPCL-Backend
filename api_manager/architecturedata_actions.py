@@ -163,7 +163,7 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                     "name": location_name,
                     "zone": zone,
                     "device_type": "MFM",
-                    "count": str(mfm_df['mfm_count'])
+                    "count": str(mfm_map[sap_id])
                 })
         # Update database
         try:

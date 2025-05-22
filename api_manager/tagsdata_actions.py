@@ -15,7 +15,7 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
 router = fastapi.APIRouter(prefix='/tagsdata')
 
-BASE_JSON_PATH = "/opt/ceg/algo/thingsboard/device_data"
+BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data"
 
 @router.post('/things_board_device_data', tags=['TagsData'])
 async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
@@ -217,7 +217,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                     "name": location_name,
                     "zone": zone,
                     "device_type": "MFM",
-                    "count": str(mfm_df['mfm_count']),
+                    "count": str(mfm_map[sap_id]),
                     "system": "Gantry"  # MFM is always classified as Gantry
                 }
                 
