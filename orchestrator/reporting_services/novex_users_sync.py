@@ -181,6 +181,19 @@ async def get_additional_data(bu, cursor):
             (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
             "novex_role"
         ] = "Zonal Operations LPG"
+        
+        # For IL_MANAGER_LPG
+        additional_data.loc[
+            (additional_data["ROLE_NAME"].fillna("") == "IL_MANAGER_LPG") &
+            (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
+            "novex_role"
+        ] = "Zonal Manager LPG"
+        additional_data.loc[
+            (additional_data["ROLE_NAME"].fillna("") == "IL_MANAGER_LPG") &
+            (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
+            "novex_role"
+        ] = "HQO Manager LPG"
+
         additional_data.loc[
             (additional_data["ROLE_NAME"].fillna("") == "IL_CHMNGR_LPGHSEZONE"),
             "novex_role"
