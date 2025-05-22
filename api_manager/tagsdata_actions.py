@@ -15,7 +15,7 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
 router = fastapi.APIRouter(prefix='/tagsdata')
 
-BASE_JSON_PATH = "/opt/ceg/algo/thingsboard/device_data"
+BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data"
 
 @router.post('/things_board_device_data', tags=['TagsData'])
 async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
@@ -33,7 +33,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         if location_df.empty:
             return {"status": False, "message": "No TAS locations found."}
         
-        mfm_query = "SELECT sap_id, COUNT(bcu_number) as mfm_count FROM host_mfm_factor WHERE bcu_number IS NOT NULL GROUP BY sap_id"
+        mfm_query = "SELECT sap_id, COUNT(DISTINCT mfm_number) AS mfm_count FROM host_mfm_factor where bcu_number is not NULL GROUP BY sap_id ORDER BY sap_id;"
         mfm_df = await execute_query(query=mfm_query)
         mfm_df = pd.DataFrame(mfm_df)
         mfm_map = dict(zip(mfm_df['sap_id'],mfm_df['mfm_count']))
