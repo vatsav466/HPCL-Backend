@@ -18,27 +18,6 @@ BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data"
 
 @router.post('/architecture_details', tags=['ArchitectureData'])
 async def architecturedata_architecture_details(data: Architecturedata_Architecture_DetailsParams):
-    """
-    Description:
-        This function processes architecture details by fetching TAS BU locations, reading device data from JSON files, and
-        aggregating device and maintenance fault counts by device type and location. It updates the architecture data in the database.
-
-    Input:
-        - data: Architecturedata_Architecture_DetailsParams
-
-    Returns:
-        - JSON response with status and message:
-            - Success: Data updated successfully in the database.
-            - Failure: Error message indicating the reason for failure.
-
-    Details:
-        - Establishes a connection to execute queries.
-        - Fetches TAS BU locations and MFM data.
-        - Reads device data from JSON files corresponding to each location.
-        - Maps device types to predefined categories and counts devices and sensors.
-        - Deduplicates and updates the final records in the database.
-        - Handles errors during data processing and database operations gracefully.
-    """
     try:
         # Setup connection
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -53,7 +32,7 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
         if location_df.empty:
             return {"status": False, "message": "No TAS locations found."}
         
-        mfm_query = "SELECT sap_id, COUNT(DISTINCT mfm_number) AS mfm_count FROM host_mfm_factor where bcu_number is not NULL GROUP BY sap_id ORDER BY sap_id;"
+        mfm_query = "SELECT sap_id, COUNT(bcu_number) as mfm_count FROM host_mfm_factor WHERE bcu_number IS NOT NULL GROUP BY sap_id"
         mfm_df = await execute_query(query=mfm_query)
         mfm_df = pd.DataFrame(mfm_df)
         mfm_map = dict(zip(mfm_df['sap_id'],mfm_df['mfm_count']))
@@ -205,8 +184,8 @@ async def architecturedata_architecture_data(data: Architecturedata_Architecture
         arch_result = await architecturedata_architecture_details(Architecturedata_Architecture_DetailsParams())
         if not arch_result.get('status'):
             return {"status": False, "message": "Failed to referesh the architecture data"}
-
-        limit = 10000                                                       
+                                                                
+        limit = 10000
         skip = 0
         res = []
 
