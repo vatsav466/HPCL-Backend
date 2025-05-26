@@ -4,6 +4,7 @@ import fastapi
 import json
 import traceback
 import pandas as pd
+import polars as pl
 import os
 from collections import defaultdict
 import utilities.connection_mapping as connection_mapping
@@ -167,6 +168,11 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                 })
         # Update database
         try:
+            df = pl.DataFrame(final_records)
+            # Step 2: Drop duplicates
+            df = df.unique()
+            # Step 3: Convert back to a list of dicts
+            final_records = df.to_dicts()
             await ArchitectureData.bulk_update(final_records, upsert=True)
             print(f"Updated {len(final_records)} records.")
             return {"status": True, "message": "Data updated successfully."}

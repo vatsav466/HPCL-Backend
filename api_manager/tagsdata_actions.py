@@ -6,6 +6,7 @@ import json
 import fastapi
 import traceback
 import pandas as pd
+import polars as pl
 from collections import defaultdict
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
@@ -267,6 +268,11 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 final_records.append(mfm_record)
         # Update database
         try:
+            df = pl.DataFrame(final_records)
+            # Step 2: Drop duplicates
+            df = df.unique()
+            # Step 3: Convert back to a list of dicts
+            final_records = df.to_dicts()
             await TagsData.bulk_update(final_records, upsert=True)
             print(f"Updated {len(final_records)} records.")
             return {"status": True, "message": "Data updated successfully."}
