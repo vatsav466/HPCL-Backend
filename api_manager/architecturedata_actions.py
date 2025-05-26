@@ -18,6 +18,27 @@ BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data"
 
 @router.post('/architecture_details', tags=['ArchitectureData'])
 async def architecturedata_architecture_details(data: Architecturedata_Architecture_DetailsParams):
+    """
+    Description:
+        This function processes architecture details by fetching TAS BU locations, reading device data from JSON files, and
+        aggregating device and maintenance fault counts by device type and location. It updates the architecture data in the database.
+
+    Input:
+        - data: Architecturedata_Architecture_DetailsParams
+
+    Returns:
+        - JSON response with status and message:
+            - Success: Data updated successfully in the database.
+            - Failure: Error message indicating the reason for failure.
+
+    Details:
+        - Establishes a connection to execute queries.
+        - Fetches TAS BU locations and MFM data.
+        - Reads device data from JSON files corresponding to each location.
+        - Maps device types to predefined categories and counts devices and sensors.
+        - Deduplicates and updates the final records in the database.
+        - Handles errors during data processing and database operations gracefully.
+    """
     try:
         # Setup connection
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -165,6 +186,15 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                     "device_type": "MFM",
                     "count": str(mfm_map[sap_id])
                 })
+        
+        # Deduplicate final_records by (sap_id, device_type)
+        unique_records = {}
+        for record in final_records:
+            key = (record['sap_id'], record['device_type'])
+            unique_records[key] = record
+
+        final_records = list(unique_records.values())
+
         # Update database
         try:
             await ArchitectureData.bulk_update(final_records, upsert=True)
@@ -184,8 +214,8 @@ async def architecturedata_architecture_data(data: Architecturedata_Architecture
         arch_result = await architecturedata_architecture_details(Architecturedata_Architecture_DetailsParams())
         if not arch_result.get('status'):
             return {"status": False, "message": "Failed to referesh the architecture data"}
-                                                                
-        limit = 10000
+
+        limit = 10000                                                       
         skip = 0
         res = []
 

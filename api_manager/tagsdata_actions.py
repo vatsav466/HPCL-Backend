@@ -19,6 +19,20 @@ BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data"
 
 @router.post('/things_board_device_data', tags=['TagsData'])
 async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
+    """
+    Description:
+        Fetches and processes device data from ThingsBoard for TAS BU locations and updates the database.
+    Input:
+        data: Tagsdata_Things_Board_Device_DataParams
+    Returns:
+        A status and message indicating the success or failure of the operation.
+    Details:
+        - Establishes a connection and executes queries to fetch location and MFM data.
+        - Processes JSON files to extract device and sensor information.
+        - Aggregates counts of devices and maintenance faults by device type and location.
+        - Updates the database with the processed records.
+    """
+
     try:    
         # Setup connection
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -37,7 +51,6 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         mfm_df = await execute_query(query=mfm_query)
         mfm_df = pd.DataFrame(mfm_df)
         mfm_map = dict(zip(mfm_df['sap_id'],mfm_df['mfm_count']))
-        final_records = []
 
         device_type_mapping = {
             "Tank": [
@@ -58,6 +71,9 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 ("ESD MAINTENANCE", "ESD")
             ]
         }
+
+        # Use a dict to aggregate records by (sap_id, device_type)
+        aggregated_records = {}
 
         # Process each location
         for _, row in location_df.iterrows():
@@ -84,14 +100,12 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 sensors = device.get('sensors', [])
                 device_name = str(device.get('device_name', ''))
                 if device_type in ['Tank', 'OI', 'ESD']:
-                    # Tank/OI: Count based on sensors with valid tags
                     for sensor in sensors:
                         sensor_tag = str(sensor.get('sensor_tag', '')).strip()
                         if not sensor_tag:
-                            continue  # Skip sensors without tags
+                            continue
                         sensor_name = str(sensor.get('sensor_name', '')).lower()
                         
-                        # Special handling for OI "Pt/PT" at end of string
                         if device_type == 'OI':
                             for keyword, mapped_type in device_type_mapping[device_type]:
                                 if keyword == 'Fire':
@@ -105,7 +119,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                                 elif keyword.lower() in sensor_name:
                                     location_counts[mapped_type].append(device_name)
                                     break
-                        else:  # Tank devices
+                        else:
                             for keyword, mapped_type in device_type_mapping[device_type]:
                                 if keyword.lower() in sensor_name:
                                     location_counts[mapped_type].append(device_name)
@@ -113,21 +127,16 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 else:
                     location_counts[device_type].append(device_name)
 
-            # Track unique tanks associated with tank-related devices
             tank_devices = set()
             for dev_type, device_names in location_counts.items():
-                # If this is a tank-related device type (from device_type_mapping["Tank"])
                 if dev_type in ["Primary Level", "VFT", "Radar", "ROSOV", "MOV", "RIMSEAL"]:
                     for device_name in device_names:
-                        # Extract the tank name from the device name
-                        # Assuming tank name is before the '@' symbol in device_name
                         tank_name = device_name.split('@')[0] if '@' in device_name else device_name
                         tank_devices.add(tank_name)
             
-            # Calculate total tank count
             total_tank_count = len(tank_devices)
 
-            # Convert counts to final records
+            # Aggregate counts and mf_counts per (sap_id, device_type)
             for dev_type, device_names in location_counts.items():
                 count = 0
                 for device_name in device_names:
@@ -135,130 +144,134 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                         continue
                     if dev_type == "Pump" and any(kw in device_name.upper() for kw in ["BLUE DYE", "FO"]):
                         continue
-                    count +=1
-                if dev_type in ["Tank Maintenance","Fire Pump"]:
+                    count += 1
+
+                if dev_type in ["Tank Maintenance", "Fire Pump"]:
                     continue
                 if dev_type == "Loading Point":
-                    dev_type = "Gantry BCU" 
+                    dev_type = "Gantry BCU"
 
-                if count > 0:
-                    # Create the base record
-                    record = {
+                if count <= 0:
+                    continue
+
+                # Compose key for aggregation
+                key = (sap_id, dev_type)
+
+                # Prepare system classification
+                upper_dev_type = dev_type.upper()
+                system = system_classification.get(upper_dev_type, "Unknown")
+
+                # Get maintenance fault count from alerts table
+                mf_count = 0
+                interlocks = []
+
+                for maintenance_item in Maintenance:
+                    equipment = maintenance_item["equipment_name"]
+                    if isinstance(equipment, list):
+                        if dev_type in equipment and maintenance_item["alert_category"] == system:
+                            interlocks.append(maintenance_item["interlock_name"])
+                    elif dev_type.upper() == equipment.upper() and maintenance_item["alert_category"] == system:
+                        interlocks.append(maintenance_item["interlock_name"])
+
+                for fault_item in Fault:
+                    equipment = fault_item["equipment_name"]
+                    if isinstance(equipment, list):
+                        if dev_type in equipment and fault_item["alert_category"] == system:
+                            interlocks.append(fault_item["interlock_name"])
+                    elif dev_type.upper() == equipment.upper() and fault_item["alert_category"] == system:
+                        interlocks.append(fault_item["interlock_name"])
+
+                if interlocks:
+                    in_clause = ", ".join(f"'{item}'" for item in interlocks)
+                    query = (f"SELECT COUNT(DISTINCT device_name) as count FROM alerts "
+                             f"WHERE interlock_name IN ({in_clause}) AND alert_status='Open' "
+                             f"AND sap_id='{sap_id}'")
+                    resp = await execute_query(query=query)
+                    if resp and len(resp) > 0:
+                        mf_count = resp[0]['count'] or 0
+
+                if key in aggregated_records:
+                    aggregated_records[key]["count"] += count
+                    aggregated_records[key]["mf_count"] += mf_count
+                else:
+                    aggregated_records[key] = {
                         "sap_id": sap_id,
                         "name": location_name,
                         "zone": zone,
                         "device_type": dev_type,
-                        "count": str(count)
+                        "count": count,
+                        "mf_count": mf_count,
+                        "system": system,
+                        "total_tank_count": total_tank_count if dev_type in ["Primary Level", "VFT", "Radar", "ROSOV", "MOV", "RIMSEAL"] else None
                     }
-                    
-                    # Add system classification
-                    # Note: Using uppercase key for consistent lookup in the mapping
-                    upper_dev_type = dev_type.upper()
-                    if upper_dev_type in system_classification:
-                        record["system"] = system_classification[upper_dev_type]
-                    else:
-                        record["system"] = "Unknown"  # Default value for unmapped device types
-                    
-                    # Get maintenance fault count from alerts table
-                    mf_count = 0
-                    system = record["system"]
-                    
-                    # Getting all interlock names from Maintenance and Fault mappings
-                    interlocks = []
-                    
-                    # Check Maintenance array - handle both string and list equipment_name
-                    for maintenance_item in Maintenance:
-                        equipment = maintenance_item["equipment_name"]
-                        # Handle the case where equipment_name is a list
-                        if isinstance(equipment, list):
-                            if dev_type in equipment and maintenance_item["alert_category"] == system:
-                                interlocks.append(maintenance_item["interlock_name"])
-                        # Handle the case where equipment_name is a string
-                        elif dev_type.upper() == equipment.upper() and maintenance_item["alert_category"] == system:
-                            interlocks.append(maintenance_item["interlock_name"])
-                    
-                    # Check Fault array - similar logic
-                    for fault_item in Fault:
-                        equipment = fault_item["equipment_name"]
-                        # Handle the case where equipment_name is a list
-                        if isinstance(equipment, list):
-                            if dev_type in equipment and fault_item["alert_category"] == system:
-                                interlocks.append(fault_item["interlock_name"])
-                        # Handle the case where equipment_name is a string
-                        elif dev_type.upper() == equipment.upper() and fault_item["alert_category"] == system:
-                            interlocks.append(fault_item["interlock_name"])
-                    
-                    if interlocks:
-                        # Create a proper SQL query with parameters
-                        in_clause = ", ".join(f"'{item}'" for item in interlocks)
-                        query = (f"SELECT COUNT(DISTINCT device_name) as count FROM alerts "
-                               f"WHERE interlock_name IN ({in_clause}) AND alert_status='Open' "
-                               f"AND sap_id='{sap_id}'")
-                        
-                        # Execute query and get results
-                        resp = await execute_query(query=query)
-                        if resp and len(resp) > 0:
-                            mf_count = resp[0]['count'] or 0
-                    
-                    # Add mf_count to the record
-                    record["mf_count"] = str(mf_count)
-                    
-                    # Add total_tank_count field to tank-related devices
-                    # if dev_type in ["Primary Level", "VFT", "Radar", "ROSOV", "MOV", "RIMSEAL"]:
-                    #     record["total_tank_count"] = total_tank_count
-                    
-                    final_records.append(record)
-                    
-            # Add MFM count if available
+
+            # Add MFM count record similarly
             if sap_id in mfm_map:
-                # Create record for MFM device type
-                mfm_record = {
-                    "sap_id": sap_id,
-                    "name": location_name,
-                    "zone": zone,
-                    "device_type": "MFM",
-                    "count": str(mfm_map[sap_id]),
-                    "system": "Gantry"  # MFM is always classified as Gantry
-                }
-                
-                # Get maintenance fault count for MFM
+                mfm_dev_type = "MFM"
+                key = (sap_id, mfm_dev_type)
+                mfm_count = mfm_map[sap_id]
+
+                mfm_system = "Gantry"
                 mfm_mf_count = 0
                 interlocks = []
-                
-                # Check both Maintenance and Fault arrays for MFM
+
                 for maintenance_item in Maintenance:
                     equipment = maintenance_item["equipment_name"]
-                    # Check if equipment_name is "MFM" (string comparison case-insensitive)
                     if (isinstance(equipment, str) and equipment.upper() == "MFM" and 
-                        maintenance_item["alert_category"] == "Gantry"):
+                        maintenance_item["alert_category"] == mfm_system):
                         interlocks.append(maintenance_item["interlock_name"])
-                    # Check if equipment_name is a list containing "MFM"
-                    elif isinstance(equipment, list) and "MFM" in equipment and maintenance_item["alert_category"] == "Gantry":
+                    elif isinstance(equipment, list) and "MFM" in equipment and maintenance_item["alert_category"] == mfm_system:
                         interlocks.append(maintenance_item["interlock_name"])
-                
+
                 for fault_item in Fault:
                     equipment = fault_item["equipment_name"]
-                    # Check if equipment_name is "MFM" (string comparison case-insensitive)
                     if (isinstance(equipment, str) and equipment.upper() == "MFM" and 
-                        fault_item["alert_category"] == "Gantry"):
+                        fault_item["alert_category"] == mfm_system):
                         interlocks.append(fault_item["interlock_name"])
-                    # Check if equipment_name is a list containing "MFM"
-                    elif isinstance(equipment, list) and "MFM" in equipment and fault_item["alert_category"] == "Gantry":
+                    elif isinstance(equipment, list) and "MFM" in equipment and fault_item["alert_category"] == mfm_system:
                         interlocks.append(fault_item["interlock_name"])
-                
+
                 if interlocks:
                     in_clause = ", ".join(f"'{item}'" for item in interlocks)
                     query = (f"SELECT COUNT(DISTINCT device_name) as count FROM alerts "
-                           f"WHERE interlock_name IN ({in_clause}) AND alert_status='Open' "
-                           f"AND sap_id='{sap_id}'")
-                    
+                             f"WHERE interlock_name IN ({in_clause}) AND alert_status='Open' "
+                             f"AND sap_id='{sap_id}'")
                     resp = await execute_query(query=query)
                     if resp and len(resp) > 0:
                         mfm_mf_count = resp[0]['count'] or 0
-                
-                # Add mf_count to the MFM record
-                mfm_record["mf_count"] = str(mfm_mf_count)
-                final_records.append(mfm_record)
+
+                if key in aggregated_records:
+                    aggregated_records[key]["count"] += mfm_count
+                    aggregated_records[key]["mf_count"] += mfm_mf_count
+                else:
+                    aggregated_records[key] = {
+                        "sap_id": sap_id,
+                        "name": location_name,
+                        "zone": zone,
+                        "device_type": mfm_dev_type,
+                        "count": mfm_count,
+                        "mf_count": mfm_mf_count,
+                        "system": mfm_system,
+                        "total_tank_count": None
+                    }
+
+        # Prepare final_records list from aggregated data
+        final_records = []
+        for record in aggregated_records.values():
+            # Convert counts to strings as per your original code
+            rec = {
+                "sap_id": record["sap_id"],
+                "name": record["name"],
+                "zone": record["zone"],
+                "device_type": record["device_type"],
+                "count": str(record["count"]),
+                "mf_count": str(record["mf_count"]),
+                "system": record["system"]
+            }
+            if record["total_tank_count"] is not None:
+                rec["total_tank_count"] = record["total_tank_count"]
+            final_records.append(rec)
+
         # Update database
         try:
             await TagsData.bulk_update(final_records, upsert=True)
