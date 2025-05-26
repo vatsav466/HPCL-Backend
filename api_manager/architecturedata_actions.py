@@ -186,15 +186,6 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                     "device_type": "MFM",
                     "count": str(mfm_map[sap_id])
                 })
-        
-        # Deduplicate final_records by (sap_id, device_type)
-        unique_records = {}
-        for record in final_records:
-            key = (record['sap_id'], record['device_type'])
-            unique_records[key] = record
-
-        final_records = list(unique_records.values())
-
         # Update database
         try:
             await ArchitectureData.bulk_update(final_records, upsert=True)
