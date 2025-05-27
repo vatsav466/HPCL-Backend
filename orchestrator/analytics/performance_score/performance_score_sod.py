@@ -620,6 +620,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
     async def _compute_vts_pi_score(self, name, rules, location_id):
         pi_score = []
         total_vehicles = 190
+        df = pd.read_csv('/opt/ceg/algo/orchestrator/reporting_services/vehicle_master_count_of_tt_no.csv')
+        df = df[df['sap_id'] == int(location_id)]
+        
+        if not df.empty:
+            total_vehicles = df['count_of_tt_no'].sum()
+
         for rule in rules['rules']:
             alert_score = []
             if rule['model'] == 'vts_interlock':
@@ -641,8 +647,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 for rule_ in rule['rules']:
                     if rule_['search_value'] in alert_data:
                         score = ((total_vehicles - alert_data[rule_['search_value']]) / total_vehicles)
-                        score = round(score * (rule_['weightage'] / 100), 2)
-                        alert_score.append(score)
+                        score = round(score * (rule_['weightage']), 2)
+                        alert_score.append(float(score))
                     else:
                         alert_score.append(rule_['weightage'])
             # Generating score by comparing number of active vehicles with no of open alerts
