@@ -5,11 +5,11 @@ import asyncio
 import traceback
 import hpcl_ceg_model
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import tas_duplicate_alert_check as duplicates_check
 from orchestrator.alerting.alert_manager import create_alert, read_template
 from orchestrator.notification_manager.notify_email import NotifyEMail
-
+from orchestrator.alerting.alert_factory import AlertFactory
 
 
 # Define a mapping of interlock names
@@ -122,90 +122,7 @@ async def tas_bcu_analog():
                         print(f"Failed to create weekly summary alert for {interlock_name} on device {device_name}: {msg}")
     except Exception as e:
         print(f"Error in tas_bcu_analog: {traceback.format_exc()}")
-
-async def check_master_status():
-    """
-    This function checks for alerts related to master status and creates alerts if certain conditions are met.
-    It queries the master_status table for specific active server names and checks the status count.  
-    If the status count is exactly 30, it creates an alert with relevant details.
-
-    """ 
-    try:
-       # calculate the date range for the last 30 days
-       today = datetime.now()
-       past_30_days = today - timedelta(days=30)
-       past_30_days_str = past_30_days.strftime("%Y-%m-%d")
-       today_str = today.strftime("%Y-%m-%d")
-       query = """
-               SELECT active_server_name, sap_id, COUNT(*) as status_count
-               FROM master_status
-               WHERE status = '1'
-               AND created_at BETWEEN '{past_30_days_str}' AND '{today_str}'
-               AND active_server_name IN ('LRCA', 'LRCB')
-               GROUP BY active_server_name, sap_id
-            """
-       # Exceute the query
-       try:
-           resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
-       except Exception as e:
-           print(f"Error executing query: {e}")
-           return
-       # Check if resp contains data
-       if not resp.get("data", []):
-           print("No data found for master status check")
-           return
-       # Process the response
-       for record in resp.get("data", []):
-           active_server_name = record.get("active_server_name")
-           if not active_server_name:
-               print(f"Active server name is missing in the record: {record}")
-               continue
-           sap_id = record.get("sap_id", "")
-           status_count = record.get("satus_count", 0)
-
-
-           if status_count == 25:
-               notify_email = NotifyEMail()
-               resp = await notify_email.publish_message(
-                    **{
-                        'recipients': [''], # Add the recipient email addresses here
-                        'subject': f"LRC Master Switch Over Notification  ",
-                        'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/proof_test_alert.html", data=record),
-                        'html_content': True,
-                        'force_send': True
-                    }
-                )
-               
-           # Check if the status count is exactly 30
-           if status_count == 30:
-               # Create alert data
-               alert_data = {
-                   "interlock_name": "LRC Master Switchover required in 30 days",
-                   "device_name": active_server_name,
-                   "sop_id": "SOP022",
-                   "sap_id": sap_id,
-                   "bu": "TAS",
-                   "device_type": "",
-                   "severity": "Medium",
-                   "alert_id": str(uuid.uuid1()),
-                   "alert_type": "TAS"     
-               }
-               
-               # Check for duplicates
-               is_duplicate = await duplicates_check.duplicate_check(alert_data)
-               if is_duplicate:
-                   print(f"Duplicate alert found for Master Status Check on device {active_server_name}. Skipping alert creation.")
-                   continue
-               
-               # Create the alert
-               success, msg = await create_alert(alert_data)
-               if success:
-                   print(f"Master status check alert created successfully for {active_server_name}.")
-               else:
-                   print(f"Failed to create master status check alert for {active_server_name}: {msg}")
-    except Exception as e:
-        print(f"Error in check_master_status: {traceback.format_exc()}")
-
+        
 
 async def check_bayreassignment():
     """
@@ -215,19 +132,21 @@ async def check_bayreassignment():
     """
     try:
         # Step 1: Query the alerts table to get the day-end count of alerts for each sap_id
-        query1 = """
+        query1 = f"""
             SELECT sap_id, COUNT(*) AS alert_count
             FROM alerts
             WHERE interlock_name = 'Bay reassignment'
             AND DATE(created_at) = CURRENT_DATE
             GROUP BY sap_id
         """
+    
         try:
             resp1 = await hpcl_ceg_model.Alerts.get_aggr_data(query1)
         except Exception as e:
             print(f"Error executing query1: {e}")
             return
 
+        
         # Check if resp1 contains data
         if not resp1.get("data", []):
             print("No data found for Bay reassignment check")
@@ -235,6 +154,7 @@ async def check_bayreassignment():
 
         # Step 2: Process the response for each sap_id
         for record in resp1.get("data", []):
+        
             sap_id = record.get("sap_id")
             alert_count = record.get("alert_count", 0)
 
@@ -242,6 +162,7 @@ async def check_bayreassignment():
                 print(f"Invalid data for sap_id: {sap_id}, alert_count: {alert_count}")
                 continue
 
+            
             # Query the host_manual_fan_printed table to get the day-end total count for the same sap_id
             query2 = f"""
                 SELECT  total_count
@@ -254,7 +175,7 @@ async def check_bayreassignment():
             except Exception as e:
                 print(f"Error executing query2: {e}")
                 continue
-
+            
             # Check if resp2 contains data
             if not resp2.get("data", []):
                 print(f"No total count data found for sap_id: {sap_id}")
@@ -266,24 +187,50 @@ async def check_bayreassignment():
             if total_count == 0:
                 print(f"Invalid total_count for sap_id: {sap_id}")
                 continue
-
+            
             # Calculate the threshold (5% of the total_count)
-            threshold = total_count * 0.05
+            fan_printed = total_count * 0.05
 
             # Check if the alert_count exceeds the threshold
-            if threshold > alert_count:
+            
+            if   alert_count > fan_printed:
+                
                 # Create the alert
+                # Initialize or extract alert history
+                alert_history = record.get("alert_history", [])
+                if not isinstance(alert_history, list):
+                    alert_history = []
+
+                # Set allocated_time and processed_time
+                allocated_time = (
+                    alert_history[-1]["processed_time"]
+                    if alert_history and "processed_time" in alert_history[-1]
+                    else datetime.now(timezone.utc).isoformat()
+                )
+                processed_time = datetime.now(timezone.utc).isoformat()
+
+                # Append new entry to alert history
+                alert_history.append({
+                    "allocated_time": allocated_time,
+                    "processed_time": processed_time,
+                    "action_type": "Message",
+                    "action_msg": "Alert due to Analog input",
+                    })
+
                 alert_data = {
                     "interlock_name": "Manual FAN printed more than 5% of total TT loaded",
                     "device_name": "",
-                    "sop_id": "",
+                    "sop_id": "SOP063",
                     "sap_id": sap_id,
                     "bu": "TAS",
                     "device_type": "",
                     "severity": "Medium",
                     "alert_id": str(uuid.uuid1()),
-                    "alert_type": "TAS"
+                    "alert_type": "TAS",
+                    "alert_history": alert_history
                 }
+
+                
 
                 # Check for duplicates
                 is_duplicate = await duplicates_check.duplicate_check(alert_data)
@@ -292,7 +239,7 @@ async def check_bayreassignment():
                     continue
 
                 # Create the alert
-                success, msg = await create_alert(alert_data)
+                success, msg = await AlertFactory.create_alert(alert_data)
                 if success:
                     print(f"Bay reassignment alert created successfully for sap_id {sap_id}.")
                 else:
@@ -363,3 +310,6 @@ async def notify_prooftest():
 
     except Exception as e:
         print(f"Error in notify_prooftest: {traceback.format_exc()}")
+
+if __name__ == "__main__":
+    asyncio.run(check_bayreassignment())
