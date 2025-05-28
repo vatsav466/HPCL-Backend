@@ -124,127 +124,6 @@ async def tas_bcu_analog():
         print(f"Error in tas_bcu_analog: {traceback.format_exc()}")
         
 
-async def check_master_status():
-    """
-    This function checks for alerts related to master status and creates alerts if certain conditions are met.
-    It queries the master_status table for specific active server names and checks the status count.  
-    If the status count is exactly 30, it creates an alert with relevant details.
-
-    """ 
-    try:
-       # calculate the date range for the last 30 days
-       today = datetime.now()
-       past_30_days = today - timedelta(days=30)
-       past_30_days_str = past_30_days.strftime("%Y-%m-%d")
-       today_str = today.strftime("%Y-%m-%d")
-       query = f"""
-               SELECT active_server_name, sap_id, location_name, COUNT(*) as status_count
-               FROM master_status
-               WHERE status = '1'
-               AND created_at BETWEEN '{past_30_days_str}' AND '{today_str}'
-               AND active_server_name IN ('LRCA', 'LRCB')
-               GROUP BY active_server_name, sap_id, location_name
-            """
-       # Exceute the query
-       try:
-           resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
-       except Exception as e:
-           print(f"Error executing query: {e}")
-           return
-       # Check if resp contains data
-       if not resp.get("data", []):
-           print("No data found for master status check")
-           return
-       # Process the response
-       for record in resp.get("data", []):
-           active_server_name = record.get("active_server_name")
-           if not active_server_name:
-               print(f"Active server name is missing in the record: {record}")
-               continue
-           sap_id = record.get("sap_id", "")
-           status_count = record.get("status_count", 0)
-
-           # Fetch email addresses from the database users table
-           recipients = []
-           for role in ["Safety Officer SOD", "Maintenance Officer SOD", "Planning Officer SOD"]:
-               email_query = f"""
-                SELECT email
-                FROM users
-                WHERE 'TAS' = ANY (bu) AND '{sap_id}' = ANY (sap_id) AND '{role}'=ANY(novex_role)
-           """
-               mail = await hpcl_ceg_model.Users.get_aggr_data(email_query)
-               if mail.get("data", None):
-                   mail = mail["data"]
-                   recipients.extend([m.get("email") for m in mail])
-           if recipients:
-               recipients = list(set(recipients))
-           if not recipients:
-                print(f"No email addresses found for sap_id: {sap_id}")
-                continue 
-           if 25 == status_count <=29:
-               record["interlock_name"] = "LRC Master Switchover required in 30 days"
-               notify_email = NotifyEMail()
-               resp = await notify_email.publish_message(
-                    **{
-                        'recipients': recipients, # Add the recipient email addresses here
-                        'subject': f"LRC Master Switch Over Notification  ",
-                        'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/lrc_switchover.html", data=record),
-                        'html_content': True,
-                        'force_send': True
-                    }
-                )
-               
-           # Check if the status count is exactly 30
-           if status_count == 30:
-                # Create the alert
-                # Initialize or extract alert history
-                alert_history = record.get("alert_history", [])
-                if not isinstance(alert_history, list):
-                    alert_history = []
-
-               # Set allocated_time and processed_time
-                allocated_time = (
-                    alert_history[-1]["processed_time"]
-                    if alert_history and "processed_time" in alert_history[-1]
-                    else datetime.now(timezone.utc).isoformat()
-                )
-                processed_time = datetime.now(timezone.utc).isoformat()
-
-                # Append new entry to alert history
-                alert_history.append({
-                    "allocated_time": allocated_time,
-                    "processed_time": processed_time,
-                    "action_type": "Message",
-                    "action_msg": "Alert due to Analog input",
-                    })
-                alert_data = {
-                   "interlock_name": "LRC Master Switchover required in 30 days",
-                   "device_name": active_server_name,
-                   "sop_id": "SOP022",
-                   "sap_id": sap_id,
-                   "bu": "TAS",
-                   "device_type": "",
-                   "severity": "Medium",
-                   "alert_id": str(uuid.uuid1()),
-                   "alert_type": "TAS",
-                   "alert_history": alert_history
-               }
-               # Check for duplicates
-                is_duplicate = await duplicates_check.duplicate_check(alert_data)
-                if is_duplicate:
-                   print(f"Duplicate alert found for Master Status Check on device {active_server_name}. Skipping alert creation.")
-                   continue
-               
-                # Create the alert
-                success, msg = await AlertFactory.create_alert(alert_data)
-                if success:
-                    print(f"Master status check alert created successfully for {active_server_name}.")
-                else:
-                   print(f"Failed to create master status check alert for {active_server_name}: {msg}")
-    except Exception as e:
-        print(f"Error in check_master_status: {traceback.format_exc()}")
-
-
 async def check_bayreassignment():
     """
     This function checks for alerts related to Bay reassignment and creates alerts if certain conditions are met.
@@ -341,7 +220,7 @@ async def check_bayreassignment():
                 alert_data = {
                     "interlock_name": "Manual FAN printed more than 5% of total TT loaded",
                     "device_name": "",
-                    "sop_id": "",
+                    "sop_id": "SOP063",
                     "sap_id": sap_id,
                     "bu": "TAS",
                     "device_type": "",
