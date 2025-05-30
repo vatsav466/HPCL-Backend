@@ -755,12 +755,7 @@ class LPG_CONSOLIDATED():
 
             total_normal_gap = production_gaps['total_normal_gap']
             total_break_gap = production_gaps['total_break_gap']
-            print("max_normal_op_hours :", max_normal_op_hours)
-            print("total_normal_gap :", total_normal_gap)
-            print("max_break_op_hours :", max_break_op_hours)
-            print("total_break_gap :", total_break_gap)
-            #if not total_normal_gap['total_break_gap']:
-            #    total_normal_gap = 0
+
             if total_break_gap == None:
                 total_break_gap = 0
             if total_normal_gap == None:
@@ -806,11 +801,6 @@ class LPG_CONSOLIDATED():
         # production_hours_df = pd.DataFrame.from_dict({k: self.flatten_dict(v) for k, v in data['productionHoursData'].items()}, orient='index')
         # productivity_data_df = pd.DataFrame.from_dict({k: self.flatten_dict(v) for k, v in data['productivityData'].items()}, orient='index')
 
-        # print(carousals_df)
-        # print(bottling_data_df)
-        # print(production_hours_df)
-        # print(productivity_data_df)
-
         # output_file = "/tmp/ConsolidatedLPG.xlsx"
         # writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
         # carousals_df.to_excel(writer, sheet_name='Carousals', index=True)
@@ -841,7 +831,6 @@ class LPG_CONSOLIDATED():
         if not datacheck:
             return pd.DataFrame()
         query = f"""SELECT MAX(process_date) AS max_datetime FROM "lpg_operations_data" WHERE CAST(process_date AS DATE) = '{fromDate}' AND "Plant Name"='{self.plantShortName.capitalize()}';"""
-        print("query -->", query)
         process_date =  self.get_data(query, runOnly=True)
         print("process_date :", process_date)
         if not process_date:
@@ -1039,7 +1028,6 @@ def generate_summary():
             location = plant["short_name"]
             ###### START DATE ######
             query = f""" SELECT MIN("process_date") FROM lpg_operations_data WHERE "Plant Name" = '{location.capitalize()}' """
-            print("min query :", query)
             cursor.execute(query)
             start_date = cursor.fetchone()[0]
             if start_date:
@@ -1048,7 +1036,6 @@ def generate_summary():
                 start_date = datetime.strptime(start_date, "%Y-%m-%d")
             ###### END DATE ######
             query = f""" SELECT MAX("process_date") FROM lpg_operations_data WHERE "Plant Name" = '{location.capitalize()}' """
-            print("max query :", query)
             cursor.execute(query)
             end_date = cursor.fetchone()[0]
             if end_date:
@@ -1064,25 +1051,20 @@ def generate_summary():
             print(f"Processing --> {location} from {start_date.date()} to {end_date.date()}")
             # Process each date for this location
             while current_date <= end_date:
-                print("-"*50)
-                print("current_date --->", current_date)
-                print("-"*50)
+                print("-"*20)
+                print("Plant Name      --->", location)
+                print("processing date --->", current_date)
+                print("-"*20)
                 fromDate = current_date.strftime("%Y-%m-%d")
-                toDate = current_date.strftime("%Y-%m-%d")            
-                print("location -->", location)
+                toDate = current_date.strftime("%Y-%m-%d")                            
                 ins = LPG_CONSOLIDATED(creds["host"], creds["database"], creds["user"], creds["password"], creds["port"], location)
                 data = ins.getPerformanceData(fromDate, toDate, location)
-                print("*-"*25)
-                print(f"Summary of {location}  :")
-                print(data)
-                print("*-"*25)
                 if not data.empty:
                     for col in data.columns:
                         try:
                             data[col] = data[col].fillna(0).astype(np.float64)
                         except Exception as e:
-                            print(f"- Could Not Convert {col} to Float -")
-                    # insertToDB(data, "LPG_OPERATIONS_SUMMARY_DATA")
+                            continue
                     
                     for col in data.columns:
                         data.rename(columns={col: col.replace(".","_")}, inplace=True)
@@ -1105,7 +1087,7 @@ def generate_summary():
         conn.commit()
         cursor.close()
         conn.close()
-        return
+        return False
     
     query = f""" TRUNCATE lpg_operations_data; """
     cursor.execute(query)

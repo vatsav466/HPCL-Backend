@@ -37,12 +37,10 @@ def create_extraction_log_table():
             PRIMARY KEY (plant_name)
         );
         """
-
         cur.execute(create_table_sql)
         pg_conn.commit()
         cur.close()
         pg_conn.close()
-        print("-- Extraction log table checked/created successfully --")
         return True
     except Exception as e:
         print(f"Error creating extraction log table: {str(e)}")
@@ -146,7 +144,6 @@ def update_extraction_log(plant_name, status, max_date=None):
         return False
 
 def insertToDB(data, table_name):
-    print(f"Inserting {len(data)} rows to {table_name}")
     creds = credential_loader.get_credentials('APP_DB')
     pg_conn = psycopg2.connect(
                 host=creds['host'],
@@ -169,7 +166,6 @@ def insertToDB(data, table_name):
 
     create_table_index = f'CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ("Date","Plant Name","system_id")'
     table_create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({table_create_sql})'
-    print("Creating table if not exists...")
     cur.execute(table_create_sql)
     pg_conn.commit()
     cur.execute(create_table_index)
@@ -283,7 +279,6 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                 base_query = query.rstrip(';')
                 base_query += f" LIMIT {chunk_size} OFFSET "
             else:
-                print("Query already contains LIMIT - not using chunking")
                 cursor.execute(query)
                 data = cursor.fetchall()
                 columns = [column[0] for column in cursor.description]
@@ -298,8 +293,6 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
             offset = 0
             while True:
                 chunk_query = f"{base_query} {offset};"
-                print(f"Fetching chunk with offset {offset}, limit {chunk_size}...")
-
                 cursor.execute(chunk_query)
                 chunk_data = cursor.fetchall()
 
@@ -318,7 +311,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                     break
 
                 # Safety limit to prevent infinite loops
-                if offset > 1000000:  # 1 million record limit
+                if offset > 2000000:  # 2 million record limit
                     print("Reached maximum record limit (1M)")
                     break
 
@@ -432,7 +425,6 @@ def process_plant(plant):
 
         # Set timeout for this plant's processing
         start_time = datetime.datetime.now()
-        max_processing_time = datetime.timedelta(minutes=5)
 
         success = get_data_chunks(params)
 
@@ -473,9 +465,7 @@ if __name__=="__main__":
         create_extraction_log_table()
         
         plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
-        #plants = plants.filter((pl.col("id") > 50) & (pl.col("id") <= 60))
-
-
+        # plants = plants.filter((pl.col("id") > 50) & (pl.col("id") <= 60))
         print("plants :", plants)
         successful_plants = []
         failed_plants = []
