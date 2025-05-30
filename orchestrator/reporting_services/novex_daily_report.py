@@ -180,18 +180,19 @@ async def fetch_sales_data():
     # sales_data['least_performing_zone'] = f"{sbu_level_zones[-1][0]} ({round(sbu_level_zones[-1][1], 1)})"
 
     for sbu, dat in sbu_level_zones.items():
-        sales_data[f'top_performing_{sbu}_zones'] = [f"{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)",
-                                                     f"{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)"]
-        sales_data[f'bottom_performing_{sbu}_zones'] = [f"{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)",
-                                                        f"{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)"]
+        # sales_data[f'top_performing_{sbu}_zones'] = [f"{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)",
+        sales_data[f'top_performing_{sbu}_zones'] = [f'''{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)''',
+                                                     f'''{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)''']
+        sales_data[f'bottom_performing_{sbu}_zones'] = [f'''{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)''',
+                                                        f'''{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)''']
     for sbu, dat in sbu_level_regions.items():
         if len(dat) > 3:
-            sales_data[f'top_performing_{sbu}_regions'] = [f"{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)",
-                                                           f"{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)",
-                                                           f"{round_off(dat[2][0], "")} ({round_off(dat[2][1])}%)"]
-            sales_data[f'bottom_performing_{sbu}_regions'] = [f"{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)",
-                                                              f"{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)",
-                                                              f"{round_off(dat[-3][0], "")} ({round_off(dat[-3][1])}%)"]
+            sales_data[f'top_performing_{sbu}_regions'] = [f'''{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)''',
+                                                           f'''{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)''',
+                                                           f'''{round_off(dat[2][0], "")} ({round_off(dat[2][1])}%)''']
+            sales_data[f'bottom_performing_{sbu}_regions'] = [f'''{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)''',
+                                                              f'''{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)''',
+                                                              f'''{round_off(dat[-3][0], "")} ({round_off(dat[-3][1])}%)''']
 
 
     filters = {"filters": [actual, history, cumulative,
@@ -233,10 +234,22 @@ async def fetch_sales_data():
         sbu_sales_data['yesterday_growth'] = get_growth_percentage(current, hist)
 
         # For current month data
-        # month_start = helpers.get_time_stamp_by_delta(with_month_start_day=True)
-        # filters = {"filters": [actual, history, cumulative,
-        #                        {"key": "\"DATE\"", "cond": "equals", "value": f"{month_start},{yesterday_date}"}],
-        #            "cross_filters": [], "drill_state": ""}
+        month_start = helpers.get_time_stamp_by_delta(with_month_start_day=True)
+        filters = {"filters": [actual, history, cumulative,
+                               {"key": "\"DATE\"", "cond": "equals", "value": f"{month_start},{yesterday_date}"}],
+                   "cross_filters": [], "drill_state": ""}
+        
+        if sbu_filter:
+            filters['filters'].append(sbu_filter)
+            
+        resp = await m60_performance.m60_performance(**filters)
+
+        present_month_act = float(resp['data']['data']['ACTUAL_TMT_SALES'][0])
+        present_month_hist = float(resp['data']['data']['ACTUAL_HISTORY_TMT_SALES'][0])
+        sbu_sales_data['present_month_historical'] = round_off(present_month_hist, "")
+        sbu_sales_data['present_month_current'] = round_off(present_month_act, "")
+        sbu_sales_data['present_month_growth'] = get_growth_percentage(present_month_act, present_month_hist)
+        sbu_sales_data['ytpm_historical'] = sbu_sales_data['ytpm_current'] = sbu_sales_data['ytpm_growth'] = 'NA'
         
         today = datetime.datetime.today()
         first_day_current_month = today.replace(day=1)
@@ -254,18 +267,6 @@ async def fetch_sales_data():
         }
         
         
-        
-        if sbu_filter:
-            filters['filters'].append(sbu_filter)
-            
-        resp = await m60_performance.m60_performance(**filters)
-
-        present_month_act = float(resp['data']['data']['ACTUAL_TMT_SALES'][0])
-        present_month_hist = float(resp['data']['data']['ACTUAL_HISTORY_TMT_SALES'][0])
-        sbu_sales_data['present_month_historical'] = round_off(present_month_hist, "")
-        sbu_sales_data['present_month_current'] = round_off(present_month_act, "")
-        sbu_sales_data['present_month_growth'] = get_growth_percentage(present_month_act, present_month_hist)
-        sbu_sales_data['ytpm_historical'] = sbu_sales_data['ytpm_current'] = sbu_sales_data['ytpm_growth'] = 'NA'
         # For ytpm data
         if present_month != 4:
             filters = {"filters": [actual, history, ytpm, cumulative], "cross_filters": [], "drill_state": ""}
