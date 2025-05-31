@@ -357,8 +357,8 @@ def get_data_chunks(params):
             production_table = "production_log"
         query = f"""
             SELECT * FROM {production_table}
-            WHERE "process_date" > '{last_extracted_date}' AND "process_date" < NOW()
-            ORDER BY "process_date" ASC
+            WHERE process_date > '{last_extracted_date}' AND process_date < NOW()
+            ORDER BY process_date ASC
         """
 
         # Get data with query timeout and chunking
