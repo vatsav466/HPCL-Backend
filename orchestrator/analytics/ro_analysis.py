@@ -35,7 +35,7 @@ async def interlock_disable(params: dict):
     log_payload = {"status_code": 401, "response": {}}
     audit_data = {
         "method": "POST", "url": url, "payload": params, "alert_id": alert_id,
-        "request_no": params['reqno'], "response": str(401),
+        "request_no": params['reqno'], "response": str(401), "vendor": "CRIS",
         "response_msg": json.dumps(log_payload), "request_datetime":
             urdhva_base.utilities.get_present_time().isoformat(), "api_ack": None, "api_ack_datetime": None
     }
@@ -72,7 +72,7 @@ async def get_ro_alerts_count(bu: str, violation_type: str, sap_id: str):
         function = await charts_actions.charts_connection_vault_routing(
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        print("Query: ", query)
+        # print("Query: ", query)
         print(resp)
         if resp:
             resp = resp[0]
@@ -106,7 +106,7 @@ async def check_alert_exists(alert_id, violation_type, sap_id):
     function = await charts_actions.charts_connection_vault_routing(
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     resp = await function(query=query)
-    print("Query: ", query)
+    # print("Query: ", query)
     print("resp: ", resp)
     if resp:
         return True
