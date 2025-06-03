@@ -177,7 +177,7 @@ async def get_additional_data(bu, cursor):
             (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
             (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
             "novex_role"
-        ] = "HQ Operations LPG"
+        ] = "HQO Operations LPG"
         additional_data.loc[
             (additional_data["ROLE_NAME"].fillna("") == "IL_DGM_LPGOPNNFP") &
             (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
