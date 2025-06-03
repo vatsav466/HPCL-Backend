@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 import psycopg2
 import pandas as pd
 import polars as pl
@@ -25,9 +24,9 @@ def create_extraction_log_table():
                     password=creds['password'],
                     port=int(creds['port']),
                     connect_timeout=10
-                )    
+                )
         cur = pg_conn.cursor()
-        
+
         # Create extraction log table if not exists
         create_table_sql = """
         CREATE TABLE IF NOT EXISTS plant_extraction_log (
@@ -38,7 +37,6 @@ def create_extraction_log_table():
             PRIMARY KEY (plant_name)
         );
         """
-        
         cur.execute(create_table_sql)
         pg_conn.commit()
         cur.close()
@@ -59,34 +57,34 @@ def get_extraction_date(plant_name, default_days=5):
                     password=creds['password'],
                     port=int(creds['port']),
                     connect_timeout=10
-                )    
+                )
         cur = pg_conn.cursor()
-        
+
         # Check if plant exists in tracking table
         query = """
-        SELECT last_extracted_date FROM plant_extraction_log 
+        SELECT last_extracted_date FROM plant_extraction_log
         WHERE plant_name = %s
         """
         cur.execute(query, (plant_name,))
         result = cur.fetchone()
-        
+
         if result:
             last_date = result[0]
             print(f"Found last extracted date for {plant_name}: {last_date}")
         else:
             # Initialize new plant with default date (N days ago)
-            default_date = (datetime.datetime.now() - datetime.timedelta(days=default_days)).strftime("%Y-%m-%d")
-            
+            # default_date = (datetime.datetime.now() - datetime.timedelta(days=default_days)).strftime("%Y-%m-%d")
+            default_date = "2025-04-01"
             insert_query = """
-            INSERT INTO plant_extraction_log 
-            (plant_name, last_extracted_date, last_processed_date, extraction_status) 
+            INSERT INTO plant_extraction_log
+            (plant_name, last_extracted_date, last_processed_date, extraction_status)
             VALUES (%s, %s, %s, 'NEW')
             """
             cur.execute(insert_query, (plant_name, default_date, default_date))
             pg_conn.commit()
             last_date = default_date
             print(f"Initialized new plant {plant_name} with default date: {default_date}")
-            
+
         cur.close()
         pg_conn.close()
         return last_date
@@ -106,14 +104,14 @@ def update_extraction_log(plant_name, status, max_date=None):
                     password=creds['password'],
                     port=int(creds['port']),
                     connect_timeout=10
-                )    
+                )
         cur = pg_conn.cursor()
-        
+
         # Update successful extraction with max date
         if status == "EXTRACTED" and max_date:
             query = """
-            UPDATE plant_extraction_log 
-            SET last_extracted_date = %s, 
+            UPDATE plant_extraction_log
+            SET last_extracted_date = %s,
                 extraction_status = %s
             WHERE plant_name = %s
             """
@@ -121,7 +119,7 @@ def update_extraction_log(plant_name, status, max_date=None):
         # Update after summary generation
         elif status == "PROCESSED":
             query = """
-            UPDATE plant_extraction_log 
+            UPDATE plant_extraction_log
             SET last_processed_date = last_extracted_date,
                 extraction_status = %s
             WHERE plant_name = %s
@@ -130,12 +128,12 @@ def update_extraction_log(plant_name, status, max_date=None):
         # Update on failure
         else:
             query = """
-            UPDATE plant_extraction_log 
+            UPDATE plant_extraction_log
             SET extraction_status = %s
             WHERE plant_name = %s
             """
             cur.execute(query, (status, plant_name))
-            
+
         pg_conn.commit()
         cur.close()
         pg_conn.close()
@@ -146,7 +144,6 @@ def update_extraction_log(plant_name, status, max_date=None):
         return False
 
 def insertToDB(data, table_name):
-    print(f"Inserting {len(data)} rows to {table_name}")
     creds = credential_loader.get_credentials('APP_DB')
     pg_conn = psycopg2.connect(
                 host=creds['host'],
@@ -155,18 +152,18 @@ def insertToDB(data, table_name):
                 password=creds['password'],
                 port=int(creds['port']),
                 connect_timeout=10
-            )    
+            )
     table_create_sql = ''
     cur = pg_conn.cursor()
     dtype_dict = {'String':str('text'),'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'), 'Float64': str('double precision'),'Float32': str('double precision'),
                   'Object': str('text'), 'Datetime': str('timestamp'), 'Utf8': str('text'), "Datetime(time_unit='us', time_zone=None)": str('timestamp'), "Datetime(time_unit='ns', time_zone=None)": str('timestamp')}
-    
+
     col_dtype = {col: data[col].dtype for col in data.columns}
     for col, dty in col_dtype.items():
         dty = dtype_dict.get(str(dty))
         table_create_sql += f'"{col}" {dty},'
     table_create_sql = table_create_sql[:-1]
-    
+
     create_table_index = f'CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ("Date","Plant Name","system_id")'
     table_create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({table_create_sql})'
     cur.execute(table_create_sql)
@@ -200,7 +197,7 @@ def insertToDB(data, table_name):
             # Remove the temporary file immediately after using it
             if os.path.exists(csv_file):
                 os.remove(csv_file)
-                
+
         cur.close()
         pg_conn.close()
         print(f"-- Data Inserted to {table_name} --")
@@ -216,7 +213,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
     """
     Fetch data from database with both connection and query timeout handling,
     supporting chunked data retrieval for large datasets
-    """    
+    """
     query  = query.replace(";","")
     # Check connection with timeout
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -231,7 +228,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
         return pl.DataFrame() if getData else None
     finally:
         sock.close()
-        
+
     # Database connection with timeout
     try:
         if params["db_type"] == "mysql":
@@ -257,20 +254,19 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                 )
             pg_conn.set_session(autocommit=True)  # Enable autocommit for timeout settings
             cursor = pg_conn.cursor()
-            
+
             # Set statement timeout at the connection level (milliseconds)
-            cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")        
-        
+            cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")
+
     except Exception as e:
         print(f"Database connection error for {params.get('PlantName', 'unknown')}: {str(e)}")
         return pl.DataFrame() if getData else None
-        
+
     try:
         print("-" * 50)
-        print("Plant Name :", params.get('PlantName', 'unknown'))
         print(f"Running Query with {query_timeout}s timeout...")
         print(query)
-        
+
         if not getData:
             cursor.execute(query)
             resp = cursor.fetchone()
@@ -291,39 +287,37 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                 cursor.close()
                 pg_conn.close()
                 return data
-                
+
             # Chunked retrieval for large datasets
             all_data = []
             offset = 0
             while True:
                 chunk_query = f"{base_query} {offset};"
-                print(f"Fetching {params.get('PlantName', 'unknown')} plant chunk with offset {offset}, limit {chunk_size}...")
-                
                 cursor.execute(chunk_query)
                 chunk_data = cursor.fetchall()
-                
+
                 if not chunk_data:  # No more data
                     break
-                    
+
                 print(f"Retrieved {len(chunk_data)} records in this chunk")
                 if not all_data:  # First chunk
                     columns = [column[0] for column in cursor.description]
-                
+
                 all_data.extend(chunk_data)
                 offset += chunk_size
-                
+
                 # Break if we got fewer rows than the chunk size
                 if len(chunk_data) < chunk_size:
                     break
-                    
+
                 # Safety limit to prevent infinite loops
-                if offset > 5000000:  # 5 million record limit
+                if offset > 2000000:  # 2 million record limit
                     print("Reached maximum record limit (1M)")
                     break
-                    
+
             print(f'Total Records: {len(all_data)}')
             print("-" * 50)
-            
+
             # Convert to DataFrame
             if all_data:
                 data = pd.DataFrame.from_records(all_data, columns=columns)
@@ -335,7 +329,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                 cursor.close()
                 pg_conn.close()
                 return pl.DataFrame()
-                
+
     except psycopg2.errors.QueryCanceled:
         print(f"Query timed out after {query_timeout} seconds - skipping this plant")
         cursor.close()
@@ -351,43 +345,43 @@ def get_data_chunks(params):
     """Process data retrieval in chunks with better error handling"""
     table_name = "lpg_operations_data"
     plant_name = params['PlantName']
-    
+
     try:
         # Get last extracted date from extraction log
         last_extracted_date = get_extraction_date(plant_name)
-        
+
         # Query without LIMIT - the fetch_data function will handle chunking
         if params["db_type"] == "mysql":
             production_table = "production_data"
         else:
             production_table = "production_log"
-        query = f""" 
+        query = f"""
             SELECT * FROM {production_table}
             WHERE process_date > '{last_extracted_date}' AND process_date < NOW()
             ORDER BY process_date ASC
         """
-        
+
         # Get data with query timeout and chunking
         print(f"Fetching data for plant {plant_name} with chunking...")
         data = fetch_data(
-            query, 
-            getData=True, 
-            params=params, 
-            timeout=15, 
+            query,
+            getData=True,
+            params=params,
+            timeout=15,
             query_timeout=180,  # Shorter timeout per chunk
             chunk_size=25000   # Smaller chunks
         )
-        
+
         if data is None or data.is_empty():
             print(f"-- No data or query timed out for plant {plant_name} --")
             update_extraction_log(plant_name, "NO_DATA")
             return False
-            
+
         data = data.with_columns(pl.lit(params["PlantName"]).alias("Plant Name"))
         current_date = datetime.datetime.now()
         data = data.with_columns(pl.lit(current_date).alias("Date"))
         print(f"Length of data for {plant_name}: {len(data)}")
-        
+
         # Get max process_date for updating the extraction log
         if not data.is_empty():
             max_date = data["process_date"].max()
@@ -397,7 +391,7 @@ def get_data_chunks(params):
                 max_date = last_extracted_date
         else:
             max_date = last_extracted_date
-        
+
         # Insert data
         if insertToDB(data, table_name):
             # Update extraction log with success and max date
@@ -407,7 +401,7 @@ def get_data_chunks(params):
         else:
             update_extraction_log(plant_name, "INSERT_FAILED")
             return False
-        
+
     except Exception as e:
         print(f"Error in get_data for plant {plant_name}: {str(e)}")
         print("Traceback:", traceback.format_exc())
@@ -418,7 +412,7 @@ def process_plant(plant):
     """Process a single plant - to be used with ThreadPoolExecutor"""
     try:
         print(f"Starting processing for plant: {plant['PlantName']}")
-        
+
         params = {
             "PlantName": plant["PlantName"],
             "host": plant["host_ip"],
@@ -426,17 +420,17 @@ def process_plant(plant):
             "user": plant["db_user"],
             "password": plant["db_password"],
             "port": plant["port"],
-            "db_type": plant["db_type"],            
+            "db_type": plant["db_type"],
         }
-        
+
         # Set timeout for this plant's processing
         start_time = datetime.datetime.now()
-        
+
         success = get_data_chunks(params)
-        
+
         processing_time = datetime.datetime.now() - start_time
         print(f"Plant {plant['PlantName']} processed in {processing_time.total_seconds():.2f} seconds")
-        
+
         return plant["PlantName"], success
     except Exception as e:
         print(f"Error processing plant {plant['PlantName']}: {str(e)}")
@@ -470,39 +464,26 @@ if __name__=="__main__":
         # Create extraction log table if not exists
         create_extraction_log_table()
         
-        # Truncate the operations data table as you were doing before
-        creds = credential_loader.get_credentials('APP_DB')
-        pg_conn = psycopg2.connect(
-                    host=creds["host"],
-                    database=creds["database"],
-                    user=creds["user"],
-                    password=creds["password"],
-                    port=int(creds["port"])
-                )
-        cursor = pg_conn.cursor()
-        query = f""" TRUNCATE lpg_operations_data; """
-        cursor.execute(query)
-        pg_conn.commit()
-        cursor.close()
-        pg_conn.close()
-        
-        plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")        
+        plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
+        # plants = plants.filter((pl.col("id") > 50) & (pl.col("id") <= 60))
+        print("plants :", plants)
         successful_plants = []
         failed_plants = []
-        
+
         # Set up parallel processing
         max_workers = min(10, len(plants))  # Use up to 10 workers but not more than the number of plants
         print(f"Processing {len(plants)} plants using {max_workers} parallel workers")
-        
+
+        # Add a timeout for the entire process
         overall_timeout = 1200  # 10 minutes total timeout
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all plants for processing
             futures = {}
             for plant in plants.iter_rows(named=True):
                 future = executor.submit(process_plant, plant)
                 futures[future] = plant["PlantName"]
-            
+
             # Process results as they complete
             completed_futures = []
             try:
@@ -535,13 +516,13 @@ if __name__=="__main__":
                         update_extraction_log(plant_name, "CANCELLED")
                         print(f"Cancelled processing for plant: {plant_name}")
                         future.cancel()
-        
+
         print("*"*50)
         print(f"-- Data Insertion to lpg_operations_data completed --")
         print(f"-- Successfully processed {len(successful_plants)} plants: {', '.join(successful_plants)}")
         print(f"-- Failed to process {len(failed_plants)} plants: {', '.join(failed_plants)}")
         print("*"*50)
-        
+
         # Only run summary generation if at least one plant was processed
         if successful_plants:
             # Call summary generation
@@ -550,32 +531,30 @@ if __name__=="__main__":
                 # Update all successful plants as processed
                 update_processed_plants(successful_plants)
                 print("Summary generation completed successfully")
+                try:
+                    creds = credential_loader.get_credentials('APP_DB')
+                    pg_conn = psycopg2.connect(
+                                host=creds["host"],
+                                database=creds["database"],
+                                user=creds["user"],
+                                password=creds["password"],
+                                port=int(creds["port"])
+                            )
+                    cursor = pg_conn.cursor()
+                    query = f""" TRUNCATE lpg_operations_data; """
+                    cursor.execute(query)
+                    pg_conn.commit()
+                    cursor.close()
+                    pg_conn.close()
+                    print('-- Removed the data from lpg_operations_data table --')
+                except Exception as cleanup_error:
+                    print(f"Error during cleanup: {str(cleanup_error)}")
             else:
                 print("Summary generation failed")
         else:
             print("No plants were successfully processed, skipping summary generation")
-        
+
     except Exception as e:
         print("*-"*25)
         print("-- Exception in fetching the operations data -- ")
-        print("Traceback:", traceback.format_exc())
-        
-        # Clean up on error - truncate as you were doing before
-        try:
-            creds = credential_loader.get_credentials('APP_DB')
-            pg_conn = psycopg2.connect(
-                        host=creds["host"],
-                        database=creds["database"],
-                        user=creds["user"],
-                        password=creds["password"],
-                        port=int(creds["port"])
-                    )
-            cursor = pg_conn.cursor()
-            query = f""" TRUNCATE lpg_operations_data; """
-            cursor.execute(query)
-            pg_conn.commit()
-            cursor.close()
-            pg_conn.close()
-            print('-- Removed the data from lpg_operations_data table --')
-        except Exception as cleanup_error:
-            print(f"Error during cleanup: {str(cleanup_error)}")
+        print("Traceback:", traceback.format_exc())        

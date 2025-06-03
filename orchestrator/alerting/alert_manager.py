@@ -612,26 +612,15 @@ class AlertAction:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "Approved")
 
-    # @classmethod
-    # async def justify_alert(cls, input_data, alert_data):
-    #     """
-    #     Function to justify an alert
-    #     :param input_data:
-    #     :param alert_data:
-    #     :return:
-    #     """
-    #     if input_data.get("alert_section","") in ["TAS"] and input_data.get("days",0):
-    #         # Add 30 days to the current time
-    #         maintenance_time = helpers.get_time_stamp_by_delta(days=input_data.get("days",0), 
-    #                                         with_month_start_day=False, 
-    #                                         ascending=True,
-    #                                         date_time_format=None).strftime("%Y-%m-%dT%H:%M:%S")
-    #         alert_id = alert_data.get('id') if isinstance(alert_data, dict) else getattr(alert_data, 'id', None)
-    #         if not alert_id:
-    #             raise ValueError("Alert data does not have an 'id' field.")
-
-    #         await hpcl_ceg_model.Alerts(**{"id": alert_id, "maintenance_time": maintenance_time}).modify()
-    #     return await cls.publish_to_camunda(input_data, alert_data, "Justification")
+    @classmethod
+    async def justify_alert(cls, input_data, alert_data):
+        """
+        Function to justify an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Justification")
     
     @classmethod
     async def maintenance_alert(cls, input_data, alert_data):

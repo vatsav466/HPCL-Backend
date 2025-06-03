@@ -100,14 +100,17 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP01A", "interlock_name": "ROSOV_Close Status_Fail", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
                         {"sop_id": "SOP01A", "interlock_name": "MOV_Close Status_Fail", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
                         
+                        {"sop_id": "SOP002", "interlock_name": "ESD Pushbutton Activated", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP002", "interlock_name": "Plant ESD activated", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP002", "interlock_name": "EM Locks : VTS Offline - Customer", "model": "VTS", "workflow_name": ""},
+                        {"sop_id": "SOP02A", "interlock_name": "All ROSOVs Closed", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "All ROSOVs Closed(Except PL Receipt)", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Tanks in TTL Dispatch in Dormant Mode", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "As Power ESD Activation in Main PMCC Panel after 120 Sec", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Hooter cum strobe for ESD activated in control room", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Siren Activated", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "ESD Command To Process PLC", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
+                        {"sop_id": "SOP02A", "interlock_name": "All DBBVs Closed", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "All DBBVs Closed(Except PL Receipt)", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "All Tanks in Dormant Mode", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "All TLF Product Pumps Stopped", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
@@ -115,13 +118,14 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP02A", "interlock_name": "Barrier Gate opened", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "TLF Gantry Permissive Power Off", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
 
-
+                        {"sop_id": "SOP02A", "interlock_name": "All ROSOVs Closed_Fail", "workflow_name": "TAS ESD CAUSE AND NON EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "All ROSOVs Closed(Except PL Receipt)_Fail", "workflow_name": "TAS ESD CAUSE AND NON EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Tanks in TTL Dispatch in Dormant Mode_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "As Power ESD Activation in Main PMCC Panel after 120 Sec_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Hooter cum strobe for ESD activated in control room_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "Siren Activated_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "ESD Command To Process PLC_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
+                        {"sop_id": "SOP02A", "interlock_name": "All DBBVs Closed_Fail", "workflow_name": "TAS ESD CAUSE AND NON EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "All DBBVs Closed(Except PL Receipt)_Fail", "workflow_name": "TAS ESD CAUSE AND NON EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "All Tanks in Dormant Mode_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
                         {"sop_id": "SOP02A", "interlock_name": "All TLF Product Pumps Stopped_Fail", "workflow_name": "TAS ESD CAUSE AND EFFECT SOP002 SOP02A"},
@@ -201,6 +205,9 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP028", "interlock_name": "Additive Overdose Alarm_BCU", "workflow_name": "BCU ALARM PARAMETERS"},
                         {"sop_id": "SOP028", "interlock_name": "Additive Underdose Alarm_BCU", "workflow_name": "BCU ALARM PARAMETERS"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off_Fail", "workflow_name": "BCU PERMISSIVE OFF"},
+                        {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off_DNC", "workflow_name": "BCU PERMISSIVE OFF"},
+                        {"sop_id": "SOP028A", "interlock_name": "Gantry Permissive Off_DNC", "workflow_name": "BCU PERMISSIVE OFF"},
+                        {"sop_id": "SOP028A", "interlock_name": "Gantry Permissive Off_ACK from TAS", "workflow_name": "BCU ALARM PARAMETERS ACK"},
                         {"sop_id": "SOP028A", "interlock_name": "BCU Permissive Off", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A", "interlock_name": "DayStartTotalizer_Gantry Permissive_Fail", "workflow_name": "BCU PERMISSIVE OFF"},
                         {"sop_id": "SOP028A",  "interlock_name": "K Factor BCU Permissive Off_Fail", "workflow_name": "ANALOG ALERTS BCU PERMISSIVE OFF"},
@@ -497,7 +504,7 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
             filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), filtered_data))
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
-    #print("filtered_data--->", filtered_data)
+    print("filtered_data--->", filtered_data)
     return filtered_data[0] if filtered_data else {}
 
 

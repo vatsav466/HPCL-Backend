@@ -37,8 +37,8 @@ productOrders = {
 
 AllProducts = {
     "Lubes": ["Industrial Greases", "DEF/Diesel Exhaust Fluid", "Automotive Greases", "Automotive Specialities",
-              "Industrial oils", "Alprol", "Base Oil", "LUBES RETAIL", "Automotive Oils", "Industrial Specialities",
-              "Solvent 2445", "Miscellaneous/Minor", "Marine Lubes","ALPROL","Lubes-Exports","HP DEF-Retail"],
+              "Industrial oils", "Base Oil", "LUBES RETAIL", "Automotive Oils", "Industrial Specialities",
+              "Miscellaneous/Minor", "Marine Lubes","ALPROL","Lubes-Exports","HP DEF-Retail"],
     "Aviation": ["ATF"],
     "Retail": ["LPG BLK", "MS", "Industrial Greases", "DEF/Diesel Exhaust Fluid", "HSD", "Automotive Greases",
                "Automotive Specialities", "Compressed Bio Gas ", "Industrial oils", "Automotive Oils",
@@ -67,7 +67,7 @@ APG_Filters = ['"cumulative_level"', '"ProductName"', '"month_name"']
 # Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"', '"month_name"']
 Default_Filters = [""""SBU_Name" != '0'""", 
-                   #""""Zone_Name" != '-'""",
+                   """"Zone_Name" != '-'""",
                    """ "SBU_Name" not in ('Common','Mumbai Ref','Renewable Energy','Visakh Ref')"""]
 # Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
 DBNames = {"m60_ta": "M60_LEVEL_METADATA", "m60_h": "MOM_LEVEL_FINAL_DATA"}
@@ -241,8 +241,6 @@ def get_group_by_filter_key(cross_filters, Base_Filters, resp_format_org, cumula
         group_by_filter = ['"month_name"'] if not cumulative else []
         Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"',
                          '"month_name"']
-        
-        
         # print("len opf filters are ", cross_filters)
         if len(cross_filters) == 1:
             # if cross_filters[0]['key'].strip('"') = 'month_name' and cross_filters[0]['value'].strip('"') != '':
@@ -442,7 +440,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                             cross_filter["value"].lower() in ['*',
                                                                                                               '_empty',
                                                                                                               'all'])]
-
     # Filtering filters
     filters = [filter_cond for filter_cond in filters
                if not (filter_cond.get("cond") in ['=', 'equals'] and filter_cond.get("value") and
@@ -515,8 +512,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     # Fetching all group by filters, return should be a list always
     group_by_filter = get_group_by_filter_key(cross_filters, Base_Filters, resp_format_org, cumulative, drill_state,
                                               time_grain)
-    
-
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
     if "fiscal_year" in [x['key'].strip('"') for x in filters]:
@@ -602,7 +597,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             cross_filters = []
         else:
             print('more filters are present')
-
     actual_data = []
     hist_data = []
     target_data = []
@@ -616,9 +610,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     #else:
     actual_d = f""" ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" """
     history_d = f""" ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES" """
-    
-    
-    
     filters_req = [condition['key'].strip('"') for condition in filters if
                    condition['key'].strip('"') in ["A", "H", "T"]]
     if len(filters_req) == 0:
@@ -626,7 +617,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     # Generating filters
     for condition in filters:
         if condition['key'].strip('"') == "A":
-            
             actual = f"""ROUND(SUM("{DBNames['m60_ta']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" """
             if time_grain in ['top_zones','top_regions','top_sales_area']:
                 #actual = f"""ROUND(SUM("{DBNames['m60_ta']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" ,"ProductName" """
@@ -852,7 +842,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 len(org_cross_filters) == 0 or (
                 len(org_cross_filters) == 1 and org_cross_filters[0]['key'] == '"sbu_wise"')):
             group_keys.append('month_name')
-            
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
 
@@ -876,11 +865,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                                                          filters]:
             # commenting the below line because month_name should not be present in the group_by_filter for cumulative mode
             #group_keys.append("month_name")
-            print("target",target)
-            print("group_keys",group_keys)
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
-            #print("target_data",target_data)
         else:
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
@@ -929,8 +915,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 target_data['month_name'] = pd.CategoricalIndex(target_data['month_name'], ordered=True,
                                                                 categories=months)
             target_data = target_data.to_dict(orient='records')
-    
-
 
     # Data Retrival for current financial year
     if actual:
@@ -946,7 +930,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 filter_dates.append([start_date, end_date])
         # For Month level aggregations from month data table
         for date_range in filter_dates:
-            actual_data.extend(await collect_data([actual], 'M60_LEVEL_METADATA',
+            actual_data.extend(await collect_data([actual], 'MOM_DAY_LEVEL_DATA',
                                                   where_conditions + Default_Filters, date_range[0], date_range[1],
                                                   group_by_filter))
         # For Month level aggregations from day wise data table
@@ -977,7 +961,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             else:
                 filter_dates.append([start_date_history, end_date_history])
         for date_range in filter_dates:
-            hist_data.extend(await collect_data([history], 'MOM_LEVEL_FINAL_DATA',
+            hist_data.extend(await collect_data([history], 'MOM_DAY_LEVEL_DATA',
                                                 where_conditions_history + Default_Filters, date_range[0],
                                                 date_range[1], group_by_filter, '"YEARMONTH"'))
         # Todo:- for optimization use single query for day filter with or condition
@@ -1032,10 +1016,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
 
     if target_data:
         for each_level in drill_list:
-            print("drill_list",drill_list)
-            print("target_data[0]",target_data[0])
-            print("each_level",each_level)
-            
             if each_level in target_data[0]:
                 if not tgt_result:
                     area_map = {}
@@ -1060,8 +1040,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                             tgt_result = [{f"{matched_level}": k, 'TARGET_TMT_SALES': round(v, 2), 'Zone_Name': area_map.get(k)} for k, v in summed_data.items()]
                     if resp_format != 'heat_map':
                         continue  # Continue to check for month_name
-                
-                    
                 elif each_level == 'month_name' and matched_level:
                     # Add month_name to existing tgt_result items
                     for row in tgt_result:
@@ -1071,18 +1049,18 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                 row['month_name'] = entry.get('month_name')
                                 break
                     break
-            print("tgt_result",tgt_result) 
-                
         print("tgt_result",tgt_result)
         non_month_keys = [k for k in drill_list if k != 'month_name']
-
         if (
             all(k not in target_data[0] for k in non_month_keys) and
             'month_name' in target_data[0] and
             len(tgt_result) == 0
         ):
             tgt_result = target_data
-
+        
+        if len(tgt_result) == 0:
+            tgt_result = target_data
+        
         #if any(drill_list) not in target_data[0] and len(tgt_result) == 0:
         #    tgt_result = target_data
             #if len(tgt_result) ==0:
@@ -1090,7 +1068,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         #df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
     df_ = [pd.DataFrame(d) for d in [actual_data, tgt_result, hist_data] if d]
     merged_df = df_[0] if len(df_) else pd.DataFrame([])
-    print("group_by_filter",group_by_filter)
     if len(df_) > 1:
         for df in df_[1:]:
             if group_by_filter:
@@ -1161,7 +1138,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             print("Error:", result["message"])
             return result   
     
-        
     
     # This below if condition is to show the multi month selected cummulative values in the bar graph when multiple months is selected in drop-down
     # if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and "month_df" in merged_df.columns:
@@ -1452,6 +1428,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                 grouped_df = df.groupby('ProductName', as_index=False).agg({
                                     'ACTUAL_TMT_SALES': 'sum',
                                     'ACTUAL_HISTORY_TMT_SALES': 'sum',
+                                    "TARGET_TMT_SALES": 'sum',
                                     'cumulative': lambda x: ''  # customize if needed
                                 })
 

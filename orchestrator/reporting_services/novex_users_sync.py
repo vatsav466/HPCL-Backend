@@ -10,7 +10,7 @@ import polars as pl
 import numpy as np
 import mysql.connector
 sys.path.append("/opt/ceg/algo")
-import api_manager.hpcl_ceg_model as hpcl_ceg_model
+import hpcl_ceg_model
 import orchestrator.dbconnector.credential_loader as credential_loader
 import orchestrator.reporting_services.reporting_config as reporting_config
 
@@ -133,7 +133,8 @@ async def process_data(data, bu):
     data["employee_id"] = data["username"]
     data["manual_user"] = False
     for col in ["username", "sap_id", "employee_id"]:
-        data[col] = data[col].astype(str).apply(lambda x: x.replace('.00', '').replace('.0', '').lstrip('0'))
+        if col in data.columns:
+            data[col] = data[col].astype(str).apply(lambda x: x.replace('.00', '').replace('.0', '').lstrip('0'))
     data['zone'] = data['zone'].map(reporting_config.zone_map)
     data['last_name'] = data['first_name'].fillna("").apply(lambda x: x.split(" ")[-1] if " " in x else "")
     data['first_name'] = data['first_name'].fillna("").apply(lambda x: x.rstrip(x.split(" ")[-1]) if " " in x else x)
@@ -141,6 +142,7 @@ async def process_data(data, bu):
         if col in data.columns:
             data[col] = data[col].fillna("").astype(str)
             data[col] = '["' + data[col] + '"]'
+    data["email"] = data["email"].fillna("").astype(str)
     
     for _role in ["Zonal", "Zone"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
@@ -181,6 +183,19 @@ async def get_additional_data(bu, cursor):
             (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
             "novex_role"
         ] = "Zonal Operations LPG"
+        
+        # For IL_MANAGER_LPG
+        additional_data.loc[
+            (additional_data["ROLE_NAME"].fillna("") == "IL_MANAGER_LPG") &
+            (additional_data["ZLOC_TYPE"].fillna("").str.contains("90|68")),
+            "novex_role"
+        ] = "Zonal Manager LPG"
+        additional_data.loc[
+            (additional_data["ROLE_NAME"].fillna("") == "IL_MANAGER_LPG") &
+            (additional_data["ZLOC_TYPE"].fillna("").str.contains("91|99")),
+            "novex_role"
+        ] = "HQO Manager LPG"
+
         additional_data.loc[
             (additional_data["ROLE_NAME"].fillna("") == "IL_CHMNGR_LPGHSEZONE"),
             "novex_role"

@@ -236,9 +236,18 @@ async def locationmaster_get_sod_engineering_stats(data: Locationmaster_Get_Sod_
 # Action location_command_control
 @router.post('/location_command_control', tags=['LocationMaster'])
 async def locationmaster_location_command_control(data: Locationmaster_Location_Command_ControlParams):
+    rpt = urdhva_base.context.context.get('rpt', {})
+    user_name = rpt.get("username")
+    employee_id = rpt.get("employee_id")
     if data.sap_id not in ['1128']:
         return False, "Location not onboarded"
-    return await tas_command_control.publish_command(data.sap_id, data.action, "1")
+    query_params = urdhva_base.queryparams.QueryParams(q=f"sap_id='{data.sap_id}'")
+    resp = await LocationMaster.get_all(query_params, resp_type="plain")
+    if not resp["data"]:
+        return False, f"data not found for respective {data.sap_id}"
+    bu = resp["data"][0].bu
+    location_name = resp["data"][0].name
+    return await tas_command_control.publish_command(data.sap_id, data.action, bu, location_name, user_name, employee_id, "1")
 
 
 # Action get_dist_loc_details

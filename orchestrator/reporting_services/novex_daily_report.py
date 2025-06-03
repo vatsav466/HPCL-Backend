@@ -18,6 +18,7 @@ from charts_actions import charts_connection_vault_routing
 import orchestrator.analytics.m60_performance as m60_performance
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.notification_manager.notification_factory as notification_factory
+# from datetime import datetime, timedelta
 
 actual = {"key": "\"A\"", "cond": "equals", "value": "true"}
 history = {"key": "\"H\"", "cond": "equals", "value": "true"}
@@ -160,7 +161,10 @@ async def fetch_sales_data():
     filters = {"filters": [actual, history, cumulative, ytd, target], "cross_filters": [],
                "drill_state": "", "time_grain": ""}
     resp = await m60_performance.m60_performance(**filters)
+    
+    # exit()
     sales_data['current_sales'] = round_off(resp['data']['data']['ACTUAL_TMT_SALES'][0], "")
+    
     sales_data['history_sales'] = round_off(resp['data']['data']['ACTUAL_HISTORY_TMT_SALES'][0], "")
     sales_data['pro_rate_sales_target'] = round_off(resp['data']['data']['TARGET_TMT_SALES'][0], "")
 
@@ -176,18 +180,20 @@ async def fetch_sales_data():
     # sales_data['least_performing_zone'] = f"{sbu_level_zones[-1][0]} ({round(sbu_level_zones[-1][1], 1)})"
 
     for sbu, dat in sbu_level_zones.items():
-        sales_data[f'top_performing_{sbu}_zones'] = [f"{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)",
-                                                     f"{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)"]
-        sales_data[f'bottom_performing_{sbu}_zones'] = [f"{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)",
-                                                        f"{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)"]
+        # sales_data[f'top_performing_{sbu}_zones'] = [f"{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)",
+        sales_data[f'top_performing_{sbu}_zones'] = [f'''{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)''',
+                                                     f'''{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)''']
+        sales_data[f'bottom_performing_{sbu}_zones'] = [f'''{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)''',
+                                                        f'''{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)''']
     for sbu, dat in sbu_level_regions.items():
         if len(dat) > 3:
-            sales_data[f'top_performing_{sbu}_regions'] = [f"{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)",
-                                                           f"{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)",
-                                                           f"{round_off(dat[2][0], "")} ({round_off(dat[2][1])}%)"]
-            sales_data[f'bottom_performing_{sbu}_regions'] = [f"{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)",
-                                                              f"{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)",
-                                                              f"{round_off(dat[-3][0], "")} ({round_off(dat[-3][1])}%)"]
+            sales_data[f'top_performing_{sbu}_regions'] = [f'''{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)''',
+                                                           f'''{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)''',
+                                                           f'''{round_off(dat[2][0], "")} ({round_off(dat[2][1])}%)''']
+            sales_data[f'bottom_performing_{sbu}_regions'] = [f'''{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)''',
+                                                              f'''{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)''',
+                                                              f'''{round_off(dat[-3][0], "")} ({round_off(dat[-3][1])}%)''']
+
 
     filters = {"filters": [actual, history, cumulative,
                            {"key": "\"DATE\"", "cond": "equals", "value": f"{yesterday_date},{yesterday_date}"}],
@@ -232,21 +238,51 @@ async def fetch_sales_data():
         filters = {"filters": [actual, history, cumulative,
                                {"key": "\"DATE\"", "cond": "equals", "value": f"{month_start},{yesterday_date}"}],
                    "cross_filters": [], "drill_state": ""}
+        
         if sbu_filter:
             filters['filters'].append(sbu_filter)
+            
         resp = await m60_performance.m60_performance(**filters)
+
         present_month_act = float(resp['data']['data']['ACTUAL_TMT_SALES'][0])
         present_month_hist = float(resp['data']['data']['ACTUAL_HISTORY_TMT_SALES'][0])
         sbu_sales_data['present_month_historical'] = round_off(present_month_hist, "")
         sbu_sales_data['present_month_current'] = round_off(present_month_act, "")
         sbu_sales_data['present_month_growth'] = get_growth_percentage(present_month_act, present_month_hist)
         sbu_sales_data['ytpm_historical'] = sbu_sales_data['ytpm_current'] = sbu_sales_data['ytpm_growth'] = 'NA'
+        
+        today = datetime.datetime.today()
+        first_day_current_month = today.replace(day=1)
+        last_day_prev_month = first_day_current_month - datetime.timedelta(days=1)
+        first_day_prev_month = last_day_prev_month.replace(day=1)
+
+        prev_month_start = first_day_prev_month.strftime("%Y-%m-%d")
+        prev_month_end = last_day_prev_month.strftime("%Y-%m-%d")
+
+        filters = {
+            "filters": [actual, history, cumulative,
+                        {"key": "\"DATE\"", "cond": "equals", "value": f"{prev_month_start},{prev_month_end}"}],
+            "cross_filters": [],
+            "drill_state": ""
+        }
+        
+        
         # For ytpm data
         if present_month != 4:
             filters = {"filters": [actual, history, ytpm, cumulative], "cross_filters": [], "drill_state": ""}
+            if ytpm:
+                # filters['filters'].append({"key": "\"fiscal_year\"", "cond": "equals", "value": "2025-2026"})
+                dyn_fis_year=f"{fiscal_year.FiscalYear.current().start.year}-{fiscal_year.FiscalYear.current().end.year}"
+                print("fiscal_year---------------->>>>>",dyn_fis_year)
+                filters['filters'].append({"key": "\"fiscal_year\"", "cond": "equals", "value": dyn_fis_year})
+                
             if sbu_filter:
                 filters['filters'].append(sbu_filter)
+            print("checking ytpm --------------------------->filters",filters)
+
             resp = await m60_performance.m60_performance(**filters)
+            print("resp",resp)
+    
             ytpm_act = float(resp['data']['data']['ACTUAL_TMT_SALES'][0])
             ytpm_hist = float(resp['data']['data']['ACTUAL_HISTORY_TMT_SALES'][0])
             sbu_sales_data['ytpm_historical'] = round_off(ytpm_hist, "")
@@ -257,7 +293,7 @@ async def fetch_sales_data():
         else:
             final_data["sales_data"].update(sbu_sales_data)
     return final_data
-
+    
 
 def dict_to_object(d):
     """Convert dictionary to object (recursively for nested dictionaries)."""
@@ -409,6 +445,7 @@ async def publish_daily_novex_status_email():
     print("-" * 50)
     print("status_data :", json.dumps(status_data))
     print("-" * 50)
+    print("-------->status_data",status_data)
     await send_notification(status_data)
 
 
@@ -425,7 +462,7 @@ async def send_notification(notification_data):
     ins = await notification_factory.get_notification_module("email")
     await ins.publish_message(
         subject="Novex Daily Report",
-        recipients=["sanjayk@hpcl.in", "ajay.samudra@hpcl.in", "cvmallinath@hpcl.in", "debeshp@hpcl.in",
+        recipients=["sanjayk@hpcl.in", "cvmallinath@hpcl.in", "debeshp@hpcl.in",
                     "purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in"],
         html_content=True,
         body=final_data,

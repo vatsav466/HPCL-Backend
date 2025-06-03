@@ -38,7 +38,7 @@ async def send_command_rabbitmq(message, queue_name):
                 ),
                 routing_key=queue_name
             )
-            return True, {"message":"Command sent to location"}
+            return True, {"Message": "Command successfully sent to RabbitMQ"}
     except Exception as e:
         print(f"Error in send command to RabbitMQ: {e}")
         print(traceback.format_exc())

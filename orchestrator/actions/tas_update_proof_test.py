@@ -36,7 +36,8 @@ class TasUpdateProofTest:
                 print("Missing required fields")
 
             # Convert created_at to a datetime object
-            created_at = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+            if isinstance(created_at, str):
+                created_at = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
 
             # Calculate the next proof test date (90 days from created_at)
             next_proof_test_date = created_at + timedelta(days=90)
@@ -44,26 +45,33 @@ class TasUpdateProofTest:
             # Check if the record already exists in the tas_proof_test table
             interlock_names = ["Proof Test_VFT_Success", "Proof Test_Secondary Radar Guage_Success"]
 
-            for interlock_name in interlock_names:
+            if interlock_name in interlock_names:
                 #check if the record already exists in the tas_proof_test table
                 query = f"""
-                    SELECT * FROM tas_proof_test
+                    SELECT id, device_name, sap_id, device_id, interlock_name, location_name, proof_test_created_at, next_proof_test_date
+                    FROM tas_proof_test
                     WHERE device_name = '{equipment_name}' AND sap_id = '{sap_id}' AND device_id = '{device_id}' AND interlock_name = '{interlock_name}'
                     AND location_name = '{location_name}'
                 """
                 existing_record = await hpcl_ceg_model.TasProofTest.get_aggr_data(query)
 
             if existing_record.get("data", []):
-                existing_record["proof_test_created_at"] = created_at.strftime("%Y-%m-%d %H:%M:%S")
-                existing_record["next_proof_test_date"] = next_proof_test_date.strftime("%Y-%m-%d %H:%M:%S")
-                data_obj = hpcl_ceg_model.TasProofTest(**existing_record)
+                record = existing_record["data"][0]
+
+                if "id" not in record:
+                    print(f"Missing ID in record: {record}")
+                    return False, {"message": "Missing ID in record"}
+
+                record["proof_test_created_at"] = created_at.strftime("%Y-%m-%d %H:%M:%S")
+                record["next_proof_test_date"] = next_proof_test_date.strftime("%Y-%m-%d %H:%M:%S")
+                data_obj = hpcl_ceg_model.TasProofTest(**record)
                 await data_obj.modify()
                 print(f"Updated proof test record for device: {equipment_name}, SAP ID: {sap_id}")
                 return True , {"message": "Moved to next block"}
             else:
                 data = {
                     "interlock_name": interlock_name,
-                    "equipment_name": equipment_name,
+                    "device_name": equipment_name,
                     "device_id": device_id,
                     "location_name": location_name,
                     "sap_id": sap_id,

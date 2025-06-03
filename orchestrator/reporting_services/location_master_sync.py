@@ -133,7 +133,8 @@ async def process_data(data):
     for col, _type in reporting_config.location_master_schema.items():
         if _type.lower() == 'varchar':
             data[col] = data[col].fillna("")
-    
+    if "email" in data.columns:
+        data["email"] = data["email"].fillna("").astype(str)
     data = data[list(reporting_config.location_master_schema.keys())]
     data['zone'] = data['zone'].map(reporting_config.zone_map)
     print("Before dropping blank Zone :", len(data))

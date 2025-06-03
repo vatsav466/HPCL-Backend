@@ -1493,7 +1493,7 @@ class TasEsdActivation:
                     new_entry = {
                         "processed_time": processed_time.isoformat(),
                         "allocated_time": last_processed_time,
-                        "action_msg": f"ESD {device_type} failure alert for device {device_name}",
+                        "action_msg": f"{device_type} close failure alert for device {device_name}",
                         "action_type": "ESDFailure"
                     }
                     updated_history = existing_history + [new_entry]
