@@ -83,7 +83,9 @@ class LpgRejections:
             self.params["violation_type"] = "Check Scale Rejection"
             self.params["message"] = f"Check Scale rejection is going above 8%. The current rejection rate is {str(data['rejection'])}"
             self.params["alert_history"] = [{"action_msg": self.params["message"],  "action_type": "Created"}]
-            await create_alert(self.params)
+            camunda_url = await helpers.get_camunda_url(bu=self.params["alert_type"], sap_id=self.params["sap_id"],
+                                                        alert_section=self.params["alert_section"])
+            await create_alert(self.params,camunda_url)
 
 
     async def get_current_gd_rejections(self):
@@ -139,7 +141,9 @@ class LpgRejections:
             else:
                 self.params["message"] = f"Valve Leak rejection is going above 6%. The current rejection rate is {str(data['rejection'])}"
             self.params["alert_history"] = [{"action_msg": self.params["message"], "action_type": "Created"}]
-            await create_alert(self.params)
+            camunda_url = await helpers.get_camunda_url(bu=self.params["alert_type"], sap_id=self.params["sap_id"],
+                                                        alert_section=self.params["alert_section"])
+            await create_alert(self.params,camunda_url)
 
 
     async def get_current_pt_rejections(self):
@@ -195,8 +199,9 @@ class LpgRejections:
             else:
                 self.params["message"] = f"O-Ring Leak rejection is going above 12%. The current rejection rate is {str(data['rejection'])}"
             self.params["alert_history"] = [{"action_msg": self.params["message"], "action_type": "Created"}]
-            await create_alert(self.params)
-
+            camunda_url = await helpers.get_camunda_url(bu=self.params["alert_type"], sap_id=self.params["sap_id"],
+                                                        alert_section=self.params["alert_section"])
+            await create_alert(self.params,camunda_url)
 
     async def check_rejections(self, params):
         if not self.params:
