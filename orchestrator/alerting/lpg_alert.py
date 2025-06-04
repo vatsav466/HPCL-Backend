@@ -1,6 +1,7 @@
 import urdhva_base
 import json
 import traceback
+import utilities.helpers as helpers
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
 
@@ -35,8 +36,7 @@ class LPGAlertManager(alert_factory.AlertFactory):
             status, loc_dt = await alert_helper.get_location_details(bu=alert_data['BU'],sap_id=alert_data['sapid'])
             if status:
                 alert_data['location_data'] = loc_dt
-        
-            return await cls.create_alert(alert_data)
+            return await cls.create_alert(alert_data,camunda_url)
 
         except Exception as e:
             logger.error(e)
