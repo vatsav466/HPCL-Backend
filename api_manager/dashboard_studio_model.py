@@ -122,8 +122,8 @@ class filtered_keysCreate(pydantic.BaseModel):
 class WidgetFiltersCreate(pydantic.BaseModel):
     key: str = pydantic.Field(**{'pattern': '^[a-zA-Z0-9_.\\-=" ]+$'})
     cond: str
-    value: typing.Optional[str] = pydantic.Field("", **{})
-    val: typing.Optional[str] = pydantic.Field("", **{})
+    value: typing.Optional[str] = pydantic.Field("", **{'pattern': '^([a-zA-Z0-9,\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]+|)$'})
+    val: typing.Optional[str] = pydantic.Field("", **{'pattern': '^([a-zA-Z0-9,\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]+|)$'})
 
 
 class ChartsSchema(UrdhvaPostgresBase):
@@ -283,11 +283,10 @@ class Charts_Get_Distinct_ValuesParams(pydantic.BaseModel):
     table: str
     column: typing.List[str]
     where_cond: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
-    
+
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
-
 
 
 class Charts_Get_Product_ValuesParams(pydantic.BaseModel):
@@ -296,6 +295,10 @@ class Charts_Get_Product_ValuesParams(pydantic.BaseModel):
     table: str
     column: typing.List[str]
     where_cond: typing.Optional[typing.List[dict]] = pydantic.Field(pydantic.Field(default_factory=dict), )
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Charts_Generate_Dynamic_Chart_QueryParams(pydantic.BaseModel):
