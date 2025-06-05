@@ -119,6 +119,40 @@ tas_role_mapping={
                 "5": "PT60S"
             }
         },
+        "ESD Pushbutton Activated": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "All ROSOVs Closed": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
         "All ROSOVs Closed(Except PL Receipt)": {
             "rolemailto": {
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
@@ -358,6 +392,40 @@ tas_role_mapping={
             }
         },
         "All ROSOVs Closed(Except PL Receipt)_Fail": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "All ROSOVs Closed_Fail": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "All DBBVs Closed_Fail": {
             "rolemailto": {
                 "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",

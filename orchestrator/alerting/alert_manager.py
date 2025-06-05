@@ -400,7 +400,10 @@ class AlertAction:
             # return await getattr(cls, function_name)(input_data, alert_data)
 
             # For testing added below 3 lines
-            meg_resp = await getattr(cls, function_name)(input_data, alert_data)
+            if input_data['alert_section'] != 'EMLock':
+                meg_resp = await getattr(cls, function_name)(input_data, alert_data)
+            else:
+                meg_resp = {"status": "True", "message": "Alert Closed", "data": []}
 
             status, func = await _is_close_alert(input_data)
             if status and func:

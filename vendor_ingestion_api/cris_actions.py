@@ -71,7 +71,7 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
             if not await ro_analysis.check_alert_exists(entry['alarm_id'], entry['violation_type'], entry['sap_id']):
                 await alert_manager.create_alert({**entry, "alert_type": "RO"}, camunda_url=camunda_url)
             else:
-                print(f"Alert already exists {entry}")
+                print(f"Alert already exists")
         else:
             query = (f"""select * from alerts where external_id = '{entry["alarm_id"]}'"""
                      f"and violation_type = '{entry["interlock_type"]}' and alert_status != 'Close'")

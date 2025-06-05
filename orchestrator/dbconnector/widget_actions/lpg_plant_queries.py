@@ -657,11 +657,9 @@ LIMIT 10000;''',
                         a.sap_id, a.interlock_name,
                         COUNT(a.severity) as severity_count, 
                         a.alert_status, 
-                        a.severity,
-                        b.name
+                        a.severity
                     FROM alerts a 
-                    left join location_master b ON a.sap_id = b.sap_id
-                    GROUP BY a.sap_id, a.interlock_name, a.severity, a.alert_status, b.name
+                    GROUP BY a.sap_id, a.interlock_name, a.severity, a.alert_status
                     ORDER BY severity_count DESC;
                     ''',
 
