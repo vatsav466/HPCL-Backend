@@ -1006,9 +1006,9 @@ async def generate_auto_complete_text(prompt):
         #     """
 
         query = f"""
-            SELECT DISTINCT ai_text 
+            SELECT DISTINCT ai_texts
             FROM public.ai_texts
-            WHERE ai_text ILIKE '%{prompt}%'
+            WHERE ai_texts ILIKE '%{prompt}%'
             LIMIT 6;
             """
         result = await session.execute(text(query))
