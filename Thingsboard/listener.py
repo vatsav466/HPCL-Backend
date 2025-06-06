@@ -50,7 +50,7 @@ class TelemetryService:
         """Load site data from a local JSON file."""
 
         if urdhva_base.settings.environment:
-            base_path = "/opt/ceg/algo/uat/"
+            base_path = "/opt/ceg/algo/prod/"
         else:
             base_path = "/opt/ceg/algo/things_board/device_data/"
 
