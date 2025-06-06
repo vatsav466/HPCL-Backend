@@ -1436,7 +1436,7 @@ Model M60LevelMetaData{
     engine_id optional str
 
     Config=> {
-        access_key_mapping='SBU_Name:bu,ZONE:zone,SalesArea_Name:sales_area,Region_Name:region'
+        access_key_mapping='SBU_Name:bu,ORGZONECD:zone,SalesArea_Name:sales_area,Region_Name:region'
     }
 
 }
