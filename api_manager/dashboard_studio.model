@@ -548,10 +548,8 @@ Model DashboardGroups {
 }
 
 Model AITexts {
-    ai_text str
-    organization_id int
-    requested_by optional str
-
+    ai_texts str
+   
     Config=> {
         collection_name=ai_texts
     }
