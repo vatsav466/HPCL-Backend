@@ -31,6 +31,7 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
             query = f'''
                 SELECT 
                     "site_id",
+                    (select erp_code from ms_site ms where ms.site_id = trd.site_id) as "sap_id",
                     "fcc_code",
                     "transaction_date", 
                     "tank_no", 
@@ -45,7 +46,7 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
                     "last_transaction_date",
                     "first_transaction_date"
                 FROM
-                    "{connection_mapping.schema_mapping.get("cris", "HPCL_HOS")}"."tr_transaction_dailysales"
+                    "{connection_mapping.schema_mapping.get("cris", "HPCL_HOS")}"."tr_transaction_dailysales" trd
                 WHERE 
                     {where_clause}
             '''
@@ -56,7 +57,8 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
             function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
             data = await function(query=query)
             column_mapping = {
-                "site_id": pl.Utf8,                
+                "site_id": pl.Utf8,
+                "sap_id": pl.Utf8,
                 "fcc_code": pl.Utf8,               
                 "transaction_date": pl.Date,   
                 "tank_no": pl.Int32,               
@@ -76,7 +78,7 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
             # ro master
             ro_query = f''' 
                 SELECT 
-                    "ro_id", 
+                    "sap_id" as "ro_id", 
                     "sap_id"
                 FROM 
                     "public"."location_master"; '''
@@ -86,9 +88,11 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
             ro_data = await function(query=ro_query)
             ro_master = pl.DataFrame(ro_data)
             ro_master = ro_master.rename(mapping={"sap_id": "ro_sap_code"})
-
+            ro_master = ro_master.with_columns(pl.col("ro_id").str.replace(",", "").alias("ro_id"))
+            ro_master = ro_master.with_columns(pl.col("ro_id").str.replace(",", "").alias("ro_id"))
             tr_daily_sales = tr_daily_sales.join(ro_master.unique(subset='ro_id', keep='first'), left_on='site_id', right_on='ro_id', how='left')
             tr_daily_sales = tr_daily_sales.filter(pl.col("ro_sap_code").is_not_null())
+            tr_daily_sales = tr_daily_sales.drop('sap_id')
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
             function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
