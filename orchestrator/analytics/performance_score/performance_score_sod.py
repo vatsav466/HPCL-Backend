@@ -1045,11 +1045,14 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 and detailed results of each rule evaluation.
         """
         try:
-            carry_forward_weight = [r['weightage'] for r in rules if r['name'] == 'Carry Forward']
-            carry_forward_weight = carry_forward_weight[0]
+            rule_list = rules['rules']  # Get the list inside the 'rules' key
 
-            dryout_weight = [r['weightage'] for r in rules if r['name'] == 'Cat A Dryout']
-            dryout_weight = dryout_weight[0]
+            carry_forward_weight = [r['weightage'] for r in rule_list if r['name'] == 'Carry Forward']
+            carry_forward_weight = carry_forward_weight[0] if carry_forward_weight else 0
+
+            dryout_weight = [r['weightage'] for r in rule_list if r['name'] == 'Cat A Dryout']
+            dryout_weight = dryout_weight[0] if dryout_weight else 0
+
             today_str = datetime.datetime.now().strftime('%Y-%m-%d')
             placed_carry_forward_count = 0
             placed_dryout_score = 0
