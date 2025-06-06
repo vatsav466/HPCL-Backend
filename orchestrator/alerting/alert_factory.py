@@ -141,7 +141,7 @@ class AlertFactory:
                                                         'vehicle_blocked_end_date': alert_data.get("vehicle_blocked_end_date", None),
                                                         'origin_altid': alert_data.get('origin_altid',''),
                                                         'mark_as_false': alert_data.get('mark_as_false', False),
-                                                        'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
+                                                        'external_timestamp': alert_data.get('alert_timestamp', urdhva_base.utilities.get_present_time().isoformat()),
                                                         'tt_load_number': str(alert_data.get('tt_load_number', '')),
                                                         'cause_effect': alert_data.get('Cause_Effect', ''),
                                                         'workflow_url': alert_data.get('workflow_url', ''),
