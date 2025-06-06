@@ -15,3 +15,9 @@ async def industryperformance_generate_ai_industry_performance(data: Industryper
 @router.post('/list_ai_industry_performance_queries', tags=['IndustryPerformance'])
 async def industryperformance_list_ai_industry_performance_queries(data: Industryperformance_List_Ai_Industry_Performance_QueriesParams):
     return await industry_generative_ai.list_ai_industry_performance_queries(data.search_text)
+
+
+# Action ai_texts
+@router.post('/ai_texts', tags=['IndustryPerformance'])
+async def industryperformance_ai_texts(data: Industryperformance_Ai_TextsParams):
+    ...
