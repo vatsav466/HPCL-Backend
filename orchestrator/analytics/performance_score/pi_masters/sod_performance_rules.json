@@ -508,11 +508,11 @@
     },
     "DRYOUT": {
         "name": "DRYOUT",
-        "weightage": 10,
+        "weightage": 15,
         "rules": [
             {
                 "name": "DryOut",
-                "weightage": 10
+                "weightage": 15
             }
         ]
     }

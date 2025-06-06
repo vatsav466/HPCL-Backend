@@ -1083,7 +1083,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 SELECT a.*, c.sap_id as c_sap_id, c.indent_no as c_indent_no
                 FROM alerts a
                 INNER JOIN carry_fwd_indent c
-                    ON a.sapi_id = c.sapi_id AND a.indent_no = c.indent_no
+                    ON a.sap_id = c.sap_id AND a.indent_no = c.indent_no
                 WHERE a.indent_status = 'Completed'
                 AND a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
                 AND c.created_at >= CURRENT_DATE - INTERVAL '2 days'
