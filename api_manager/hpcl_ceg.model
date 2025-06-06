@@ -1505,6 +1505,7 @@ Model IndustryPerformance {
     Action=> list_ai_industry_performance_queries {
         search_text str
     }
+
     
     Config=> {
         access_key_mapping='ORGSBUNAME:bu,ORGZONENAME:zone,ORGSANAME:sales_area'
@@ -2396,4 +2397,8 @@ Model TASMonthlyOIScores {
     month optional unique_field int
     score optional float
     weightage optional float
+}
+
+Model ai_texts{
+    ai_texts str
 }

@@ -1490,3 +1490,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/tasmonthlyoiscores/{id}', tags=['TASMonthlyOIScores'])
 async def delete(id: str):
     return await TASMonthlyOIScores.delete(id)
+
+
+@router.post('/ai_texts', response_model=ai_texts, tags=['ai_texts'])
+async def create(inputObj: ai_textsCreate):
+    return await inputObj.create()
+
+
+@router.put('/ai_texts', response_model=ai_texts, tags=['ai_texts'])
+async def update(inputObj: ai_texts):
+    return await inputObj.modify()
+
+
+@router.get('/ai_texts/{id}', response_model=ai_texts, tags=['ai_texts'])
+async def get(id: str):
+    return await ai_texts.get(id, skip_secrets=True)
+
+
+@router.get('/ai_texts', response_model=ai_textsGetResp, tags=['ai_texts'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await ai_texts.get_all(params, skip_secrets=True)
+
+
+@router.delete('/ai_texts/{id}', tags=['ai_texts'])
+async def delete(id: str):
+    return await ai_texts.delete(id)

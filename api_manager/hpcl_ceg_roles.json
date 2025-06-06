@@ -5123,6 +5123,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "ai_texts",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "ai_texts",
+            "attributes": {},
+            "uris": [
+                "/api/ai_texts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "ai_texts_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "ai_texts_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/ai_texts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "ai_texts_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "ai_texts_admin",
+            "attributes": {},
+            "uris": [
+                "/api/ai_texts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
