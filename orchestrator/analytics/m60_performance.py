@@ -5,6 +5,8 @@ import pandas as pd
 import urdhva_base.utilities
 from calendar import monthrange
 import utilities.helpers as helpers
+import hpcl_ceg_model
+import dashboard_studio_model
 import dateutil.parser as dt_parser
 import utilities.fiscal_year as fiscal_year
 import utilities.connection_mapping as connection_mapping
@@ -167,6 +169,9 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     print("query",query)
+    access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.M60LevelMetaData.get_clause_conditions(formated=True)]
+    query =  await widget_actions.WidgetActions.apply_filter_drilldown(query, access_filters, drilldown = '')
     resp = await function(query=query)
     return resp
 
