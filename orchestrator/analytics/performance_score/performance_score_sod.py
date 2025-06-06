@@ -1045,6 +1045,11 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 and detailed results of each rule evaluation.
         """
         try:
+            carry_forward_weight = [r['weightage'] for r in rules if r['name'] == 'Carry Forward']
+            carry_forward_weight = carry_forward_weight[0]
+
+            dryout_weight = [r['weightage'] for r in rules if r['name'] == 'Cat A Dryout']
+            dryout_weight = dryout_weight[0]
             today_str = datetime.datetime.now().strftime('%Y-%m-%d')
             placed_carry_forward_count = 0
             placed_dryout_score = 0
@@ -1102,12 +1107,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             # Each part contributes 50 to total 100
             carry_forward_score = (
                 (executed_carry_forward_count / placed_carry_forward_count) * 50
-                if placed_carry_forward_count > 0 else 5
+                if placed_carry_forward_count > 0 else carry_forward_weight
             )
 
             dryout_score = (
                 (executed_dryout_score / placed_dryout_score) * 50
-                if placed_dryout_score > 0 else 5
+                if placed_dryout_score > 0 else dryout_weight
             )
 
             total_score = round(carry_forward_score + dryout_score, 2)
@@ -1116,18 +1121,18 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             return {
                 "name": "Dryouts and Carry forward",
                 "score": total_score,       # out of 100%
-                "weightage": 10,            # total weightage
+                "weightage": rules['weightage'],  # total weightage from DRYOUT
                 "results": [
                     {
                         "name": "Carry Forward",
-                        "score": round(carry_forward_score, 2),  # out of 50%
-                        "weightage": 5,
+                        "score": carry_forward_score,  # out of 50%
+                        "weightage": carry_forward_weight,
                         "module": "Dryouts"
                     },
                     {
                         "name": "Cat A Dryout",
-                        "score": round(dryout_score, 2),         # out of 50%
-                        "weightage": 5,
+                        "score": dryout_score,         # out of 50%
+                        "weightage": dryout_weight,
                         "module": "Dryouts"
                     }
                 ]
@@ -1139,6 +1144,6 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             return {
                 "name": "Dryouts and Carry forward",
                 "score": 0.0,
-                "weightage": 100,
+                "weightage": rules['weightage'],
                 "results": []
             }

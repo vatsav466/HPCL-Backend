@@ -511,8 +511,14 @@
         "weightage": 15,
         "rules": [
             {
-                "name": "DryOut",
-                "weightage": 15
+                "name": "Placed Carry Forward Count",
+                "weightage": 7.5,
+                "month_calendar": false
+            },
+            {
+                "name": "Executed Carry Forward Count",
+                "weightage": 7.5,
+                "month_calendar": false
             }
         ]
     }
