@@ -83,7 +83,15 @@ async def sync_ims_dealer_details():
                     "TELEPHONE_NUMBER": pl.String,
                     "MOBILE_NUMBER": pl.String,
                     "CUSTOMER_ACCOUNT_GROUP": pl.String,
-                    "CUSTOMER_INDICATOR": pl.String
+                    "CUSTOMER_INDICATOR": pl.String,
+                    'POWER95_TYPE': pl.String,
+                    'POWER99_TYPE': pl.String,
+                    'POWER100_TYPE': pl.String,
+                    'E20_TYPE': pl.String,
+                    'CAN_TAKE_POWER95': pl.String,
+                    'CAN_TAKE_POWER99': pl.String,
+                    'CAN_TAKE_POWER100': pl.String,
+                    'CAN_TAKE_E20': pl.String
         }
         ro_data = pd.DataFrame(ro_data)
         ro_data = pl.DataFrame(ro_data, schema=ro_data_schema)

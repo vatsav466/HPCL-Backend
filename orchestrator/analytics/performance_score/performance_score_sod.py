@@ -1045,6 +1045,14 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 and detailed results of each rule evaluation.
         """
         try:
+            rule_list = rules['rules']  # Get the list inside the 'rules' key
+
+            carry_forward_weight = [r['weightage'] for r in rule_list if r['name'] == 'Carry Forward']
+            carry_forward_weight = carry_forward_weight[0] if carry_forward_weight else 0
+
+            dryout_weight = [r['weightage'] for r in rule_list if r['name'] == 'Cat A Dryout']
+            dryout_weight = dryout_weight[0] if dryout_weight else 0
+
             today_str = datetime.datetime.now().strftime('%Y-%m-%d')
             placed_carry_forward_count = 0
             placed_dryout_score = 0
@@ -1083,7 +1091,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 SELECT a.*, c.sap_id as c_sap_id, c.indent_no as c_indent_no
                 FROM alerts a
                 INNER JOIN carry_fwd_indent c
-                    ON a.sapi_id = c.sapi_id AND a.indent_no = c.indent_no
+                    ON a.sap_id = c.sap_id AND a.indent_no = c.indent_no
                 WHERE a.indent_status = 'Completed'
                 AND a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
                 AND c.created_at >= CURRENT_DATE - INTERVAL '2 days'
@@ -1102,12 +1110,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             # Each part contributes 50 to total 100
             carry_forward_score = (
                 (executed_carry_forward_count / placed_carry_forward_count) * 50
-                if placed_carry_forward_count > 0 else 5
+                if placed_carry_forward_count > 0 else carry_forward_weight
             )
 
             dryout_score = (
                 (executed_dryout_score / placed_dryout_score) * 50
-                if placed_dryout_score > 0 else 5
+                if placed_dryout_score > 0 else dryout_weight
             )
 
             total_score = round(carry_forward_score + dryout_score, 2)
@@ -1116,18 +1124,18 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             return {
                 "name": "Dryouts and Carry forward",
                 "score": total_score,       # out of 100%
-                "weightage": 10,            # total weightage
+                "weightage": rules['weightage'],  # total weightage from DRYOUT
                 "results": [
                     {
                         "name": "Carry Forward",
-                        "score": round(carry_forward_score, 2),  # out of 50%
-                        "weightage": 5,
+                        "score": carry_forward_score,  # out of 50%
+                        "weightage": carry_forward_weight,
                         "module": "Dryouts"
                     },
                     {
                         "name": "Cat A Dryout",
-                        "score": round(dryout_score, 2),         # out of 50%
-                        "weightage": 5,
+                        "score": dryout_score,         # out of 50%
+                        "weightage": dryout_weight,
                         "module": "Dryouts"
                     }
                 ]
@@ -1139,6 +1147,6 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             return {
                 "name": "Dryouts and Carry forward",
                 "score": 0.0,
-                "weightage": 100,
+                "weightage": rules['weightage'],
                 "results": []
             }

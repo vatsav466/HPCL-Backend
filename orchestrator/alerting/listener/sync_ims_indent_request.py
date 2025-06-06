@@ -39,7 +39,7 @@ async def sync_ims_indent_request():
                 "PENDING_UPDT_TIME": pl.Datetime
             }
         ro_data = pd.DataFrame(ro_data)
-        ro_data = pl.DataFrame(ro_data, schema=ro_data_schema)
+        ro_data = pl.DataFrame(ro_data, schema=ro_data_schema, strict=False)
         ist = pytz.timezone('Asia/Kolkata')
         sync_date = datetime.datetime.now(ist).strftime("%y%m%d-%H") + "00"
         ro_data = ro_data.with_columns(pl.lit(sync_date).alias("run_id"))

@@ -317,6 +317,12 @@ class Postgresql:
                     except (ValueError, TypeError):
                         record["current_meter_factor"] = None  # Handle invalid values
 
+                if "last_k_factor" in record:
+                    try:
+                        record["last_k_factor"] = str(float(record["last_k_factor"]))
+                    except (ValueError, TypeError):
+                        record["last_k_factor"] = None # Handle invalid values
+                
         if not isinstance(sample_records, pl.DataFrame):
             sample_records = pl.DataFrame(sample_records)
 

@@ -508,11 +508,17 @@
     },
     "DRYOUT": {
         "name": "DRYOUT",
-        "weightage": 10,
+        "weightage": 15,
         "rules": [
             {
-                "name": "DryOut",
-                "weightage": 10
+                "name": "Carry Forward",
+                "weightage": 7.5,
+                "month_calendar": false
+            },
+            {
+                "name": "Cat A Dryout",
+                "weightage": 7.5,
+                "month_calendar": false
             }
         ]
     }

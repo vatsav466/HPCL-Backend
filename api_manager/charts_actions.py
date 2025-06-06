@@ -877,3 +877,15 @@ async def charts_previous_present_month_amount_litres(data: Charts_Previous_Pres
 
     return {"status": True, "message": "success", "data": final_result}
 
+
+
+# Action get_distinct_values
+@router.post('/get_distinct_values', tags=['Charts'])
+async def charts_get_distinct_values(data: Charts_Get_Distinct_ValuesParams):
+    ...
+
+
+# Action get_product_values
+@router.post('/get_product_values', tags=['Charts'])
+async def charts_get_product_values(data: Charts_Get_Product_ValuesParams):
+    ...
