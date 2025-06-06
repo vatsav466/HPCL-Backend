@@ -1110,12 +1110,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             # Each part contributes 50 to total 100
             carry_forward_score = (
                 (executed_carry_forward_count / placed_carry_forward_count) * 50
-                if placed_carry_forward_count > 0 else carry_forward_weight
+                if placed_carry_forward_count > 0 and executed_carry_forward_count > 0 else carry_forward_weight
             )
 
             dryout_score = (
                 (executed_dryout_score / placed_dryout_score) * 50
-                if placed_dryout_score > 0 else dryout_weight
+                if placed_dryout_score > 0 and executed_dryout_score > 0 else dryout_weight
             )
 
             total_score = round(carry_forward_score + dryout_score, 2)
