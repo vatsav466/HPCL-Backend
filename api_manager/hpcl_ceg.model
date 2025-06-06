@@ -2399,6 +2399,3 @@ Model TASMonthlyOIScores {
     weightage optional float
 }
 
-Model ai_texts{
-    ai_texts str
-}
