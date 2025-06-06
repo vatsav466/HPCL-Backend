@@ -511,12 +511,12 @@
         "weightage": 15,
         "rules": [
             {
-                "name": "Placed Carry Forward Count",
+                "name": "Carry Forward",
                 "weightage": 7.5,
                 "month_calendar": false
             },
             {
-                "name": "Executed Carry Forward Count",
+                "name": "Cat A Dryout",
                 "weightage": 7.5,
                 "month_calendar": false
             }
