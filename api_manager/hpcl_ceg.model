@@ -721,7 +721,7 @@ Model Alerts {
         bu optional str
         alert_section optional str
         action_type AlertActionType
-        alert_id str
+        alert_id int min=1 max=9999999
         action_msg optional str
         days optional int
         justificationType optional str
@@ -737,7 +737,7 @@ Model Alerts {
         event_tags optional tags
     }
     Action=> intitiate_vts_exception {
-        alert_id str
+        alert_id int min=1 max=9999999
         excep_msg optional str
     }
     Action=> get_performance_index {
@@ -765,7 +765,7 @@ Model Alerts {
 
     Action=> get_closed_alerts_details {
         bu str
-        alert_id str
+        alert_id int min=1 max=9999999
         alert_section str
         interlock_name str
     }
@@ -963,7 +963,7 @@ Model IndentDryOut {
     }
 
     Action=> get_alert_history {
-        alert_id str
+        alert_id int min=1 max=9999999
     }
 
     Action=> get_dry_out_stats {
@@ -1326,7 +1326,7 @@ Model VtsAlertHistory {
     continuous_driving_count optional int
     approved_by optional str
     auto_unblock optional bool
-    alert_id optional str
+    alert_id optional int min=1 max=9999999
     invoice_number optional index_field str
     tt_type optional str
     violation_type optional list str
@@ -1358,7 +1358,7 @@ Model VaAlertHistory {
     vendor_id optional str
     location_id optional str
     location_type optional str
-    alert_id optional str
+    alert_id optional int min=1 max=9999999
     alert_type optional str
     alert_description optional str
     device_id optional str
@@ -2319,7 +2319,7 @@ Model VendorApiAudit {
     vendor str
     url str
     payload optional dict
-    alert_id unique_field index_field str
+    alert_id unique_field index_field int min=1 max=9999999
     request_no optional index_field str
     response str
     response_msg optional str
@@ -2339,7 +2339,7 @@ Model VtsTruckDetails {
     instance_1 optional int
     instance_2 optional int
     instance_3 optional int
-    alert_id optional str
+    alert_id optional int min=1 max=9999999
 }
 
 Model DryOutRoLoss {
