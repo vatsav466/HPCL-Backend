@@ -90,7 +90,7 @@ def get_camunda_urls(task_type):
     elif task_type == 'LPG':
         if cfg.get('LPG'):
             config_data.extend([{"url": rec['url'], "listener_name": 'lpg_workflow_consumer'}
-                                for rec in cfg['TAS'] if rec.get('alert_section') == 'LPG'])
+                                for rec in cfg['LPG'] if rec.get('alert_section') == 'LPG'])
         else:
             config_data.append({"url": urdhva_base.settings.camunda_url, "listener_name": "lpg_workflow_consumer"})
     elif task_type == 'VA':
