@@ -5685,6 +5685,7 @@ class HostLiveTankDetailsSchema(UrdhvaPostgresBase):
     
     tank_name: Mapped[typing.Optional[str]] = mapped_column("tank_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tank_mode: Mapped[typing.Optional[str]] = mapped_column("tank_mode", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tank_code: Mapped[typing.Optional[str]] = mapped_column("tank_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     curr_level: Mapped[typing.Optional[int]] = mapped_column("curr_level", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     water_level: Mapped[typing.Optional[int]] = mapped_column("water_level", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -5702,6 +5703,7 @@ class HostLiveTankDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     
     tank_name: typing.Optional[str] = pydantic.Field("", **{})
     tank_mode: typing.Optional[str] = pydantic.Field("", **{})
+    tank_code: typing.Optional[str] = pydantic.Field("", **{})
     curr_level: typing.Optional[int] = pydantic.Field(0, **{})
     water_level: typing.Optional[int] = pydantic.Field(0, **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -5725,6 +5727,7 @@ class HostLiveTankDetails(urdhva_base.postgresmodel.PostgresModel):
     
     tank_name: typing.Optional[str] = pydantic.Field("", **{})
     tank_mode: typing.Optional[str] = pydantic.Field("", **{})
+    tank_code: typing.Optional[str] = pydantic.Field("", **{})
     curr_level: typing.Optional[int] = pydantic.Field(0, **{})
     water_level: typing.Optional[int] = pydantic.Field(0, **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})

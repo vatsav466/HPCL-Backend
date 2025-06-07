@@ -190,7 +190,8 @@
         "TOTAL_LOADED_TTS": "total_loaded_tts",
         "TOTAL_SICK_TTS": "total_sick_tts",
         "TOTAL_CANCELLED_TTS": "total_cancelled_tts",
-        "MFM_DESCRIPTION": "mfm_description"
+        "MFM_DESCRIPTION": "mfm_description",
+        "TANK_CODE": "tank_code"
     },
 
     "alert_logic": {

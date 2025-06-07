@@ -2016,6 +2016,7 @@ Model HostTasUserDetails {
 Model HostLiveTankDetails {
     tank_name optional unique_field str
     tank_mode optional unique_field str
+    tank_code optional str
     curr_level optional int
     water_level optional int
     sap_id optional unique_field str
