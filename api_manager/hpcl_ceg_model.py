@@ -3200,7 +3200,7 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     continuous_driving_count: Mapped[typing.Optional[int]] = mapped_column("continuous_driving_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     approved_by: Mapped[typing.Optional[str]] = mapped_column("approved_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     auto_unblock: Mapped[typing.Optional[bool]] = mapped_column("auto_unblock", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
-    alert_id: Mapped[typing.Optional[int]] = mapped_column("alert_id", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     invoice_number: Mapped[typing.Optional[str]] = mapped_column("invoice_number", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     violation_type: Mapped[typing.Optional[typing.List[str]]] = mapped_column("violation_type", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -3228,7 +3228,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     continuous_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
     auto_unblock: typing.Optional[bool] = pydantic.Field(False, )
-    alert_id: typing.Optional[int] = pydantic.Field(0, **{'ge': 1, 'le': 9999999})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
     invoice_number: typing.Optional[str] = pydantic.Field("", **{})
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -3264,7 +3264,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     continuous_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
     auto_unblock: typing.Optional[bool] = pydantic.Field(False, )
-    alert_id: typing.Optional[int] = pydantic.Field(0, **{'ge': 1, 'le': 9999999})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
     invoice_number: typing.Optional[str] = pydantic.Field("", **{})
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -3354,7 +3354,7 @@ class VaAlertHistorySchema(UrdhvaPostgresBase):
     vendor_id: Mapped[typing.Optional[str]] = mapped_column("vendor_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_id: Mapped[typing.Optional[str]] = mapped_column("location_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    alert_id: Mapped[typing.Optional[int]] = mapped_column("alert_id", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_type: Mapped[typing.Optional[str]] = mapped_column("alert_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_description: Mapped[typing.Optional[str]] = mapped_column("alert_description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_id: Mapped[typing.Optional[str]] = mapped_column("device_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -3375,7 +3375,7 @@ class VaAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     vendor_id: typing.Optional[str] = pydantic.Field("", **{})
     location_id: typing.Optional[str] = pydantic.Field("", **{})
     location_type: typing.Optional[str] = pydantic.Field("", **{})
-    alert_id: typing.Optional[int] = pydantic.Field(0, **{'ge': 1, 'le': 9999999})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
     alert_type: typing.Optional[str] = pydantic.Field("", **{})
     alert_description: typing.Optional[str] = pydantic.Field("", **{})
     device_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -3404,7 +3404,7 @@ class VaAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     vendor_id: typing.Optional[str] = pydantic.Field("", **{})
     location_id: typing.Optional[str] = pydantic.Field("", **{})
     location_type: typing.Optional[str] = pydantic.Field("", **{})
-    alert_id: typing.Optional[int] = pydantic.Field(0, **{'ge': 1, 'le': 9999999})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
     alert_type: typing.Optional[str] = pydantic.Field("", **{})
     alert_description: typing.Optional[str] = pydantic.Field("", **{})
     device_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -6734,7 +6734,7 @@ class VendorApiAuditSchema(UrdhvaPostgresBase):
     vendor: Mapped[str] = mapped_column("vendor", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     url: Mapped[str] = mapped_column("url", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     payload: Mapped[typing.Optional[dict]] = mapped_column("payload", JSONB, index=False, nullable=True, default=pydantic.Field(default_factory=dict), primary_key=False, unique=False)
-    alert_id: Mapped[int] = mapped_column("alert_id", Integer, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    alert_id: Mapped[str] = mapped_column("alert_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     request_no: Mapped[typing.Optional[str]] = mapped_column("request_no", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     response: Mapped[str] = mapped_column("response", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     response_msg: Mapped[typing.Optional[str]] = mapped_column("response_msg", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -6752,7 +6752,7 @@ class VendorApiAuditCreate(urdhva_base.postgresmodel.BasePostgresModel):
     vendor: str
     url: str
     payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
-    alert_id: int = pydantic.Field(**{'ge': 1, 'le': 9999999})
+    alert_id: str
     request_no: typing.Optional[str] = pydantic.Field("", **{})
     response: str
     response_msg: typing.Optional[str] = pydantic.Field("", **{})
@@ -6775,7 +6775,7 @@ class VendorApiAudit(urdhva_base.postgresmodel.PostgresModel):
     vendor: typing.Optional[str] | None = None
     url: typing.Optional[str] | None = None
     payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
-    alert_id: typing.Optional[int] = pydantic.Field(**{'ge': 1, 'le': 9999999})
+    alert_id: typing.Optional[str] | None = None
     request_no: typing.Optional[str] = pydantic.Field("", **{})
     response: typing.Optional[str] | None = None
     response_msg: typing.Optional[str] = pydantic.Field("", **{})
@@ -6810,7 +6810,7 @@ class VtsTruckDetailsSchema(UrdhvaPostgresBase):
     instance_1: Mapped[typing.Optional[int]] = mapped_column("instance_1", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     instance_2: Mapped[typing.Optional[int]] = mapped_column("instance_2", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     instance_3: Mapped[typing.Optional[int]] = mapped_column("instance_3", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    alert_id: Mapped[typing.Optional[int]] = mapped_column("alert_id", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(truck_regno, name="vts_truck_details_truck_regno"),)
 
@@ -6828,7 +6828,7 @@ class VtsTruckDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     instance_1: typing.Optional[int] = pydantic.Field(0, **{})
     instance_2: typing.Optional[int] = pydantic.Field(0, **{})
     instance_3: typing.Optional[int] = pydantic.Field(0, **{})
-    alert_id: typing.Optional[int] = pydantic.Field(0, **{'ge': 1, 'le': 9999999})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -6851,7 +6851,7 @@ class VtsTruckDetails(urdhva_base.postgresmodel.PostgresModel):
     instance_1: typing.Optional[int] = pydantic.Field(0, **{})
     instance_2: typing.Optional[int] = pydantic.Field(0, **{})
     instance_3: typing.Optional[int] = pydantic.Field(0, **{})
-    alert_id: typing.Optional[int] = pydantic.Field(0, **{'ge': 1, 'le': 9999999})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
