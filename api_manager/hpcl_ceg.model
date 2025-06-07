@@ -1326,7 +1326,7 @@ Model VtsAlertHistory {
     continuous_driving_count optional int
     approved_by optional str
     auto_unblock optional bool
-    alert_id optional int min=1 max=9999999
+    alert_id optional str
     invoice_number optional index_field str
     tt_type optional str
     violation_type optional list str
@@ -1358,7 +1358,7 @@ Model VaAlertHistory {
     vendor_id optional str
     location_id optional str
     location_type optional str
-    alert_id optional int min=1 max=9999999
+    alert_id optional str
     alert_type optional str
     alert_description optional str
     device_id optional str
@@ -2319,7 +2319,7 @@ Model VendorApiAudit {
     vendor str
     url str
     payload optional dict
-    alert_id unique_field index_field int min=1 max=9999999
+    alert_id unique_field index_field str
     request_no optional index_field str
     response str
     response_msg optional str
@@ -2339,7 +2339,7 @@ Model VtsTruckDetails {
     instance_1 optional int
     instance_2 optional int
     instance_3 optional int
-    alert_id optional int min=1 max=9999999
+    alert_id optional str
 }
 
 Model DryOutRoLoss {
