@@ -2,20 +2,16 @@ import urdhva_base
 import traceback
 import hpcl_ceg_model
 import pandas as pd
+import polars as pl
 import utilities.helpers as helpers
 from utilities.analog_data_mapping import Maintenance, Fault
 
 
 async def generate_sod_engineering_location_stats(sap_id):
-    """
-    Function to get TAS location data for Engineering dashboard, This will give status of master/slave and
-    Counts of Device/Equipment types with Faulty and Maintenance Count
-    :param sap_id:
-    :return:
-    """
     status, location_data = await helpers.get_location_details('TAS', sap_id)
     if not status:
         return {"status": False, "data": "Invalid Location / Location not found"}
+
     device_types = (
         'MOV', 'HCD', 'Dyke', 'Hooter', 'Primary Level', 'Jockey Pump', 'VFT',
         'PT', 'ROSOV', 'ESD', 'Pump', 'Radar', 'Fire Engine', 'Barrier Gate',
@@ -23,11 +19,7 @@ async def generate_sod_engineering_location_stats(sap_id):
     )
 
     try:
-        query = (
-            f"sap_id = '{location_data['sap_id']}' "
-            f"and device_type in {device_types}"
-        )
-        
+        query = f"sap_id = '{location_data['sap_id']}' and device_type in {device_types}"
         params = urdhva_base.queryparams.QueryParams()
         params.fields = []
         params.q = query
@@ -37,30 +29,49 @@ async def generate_sod_engineering_location_stats(sap_id):
         if not resp:
             return {"status": False, "message": "No data found"}
 
+        # Mapping interlocks
         maintenance_map = {}
         fault_map = {}
 
         for entry in Maintenance:
-            equipment_names = entry["equipment_name"]
+            equipment_names = entry.get("equipment_name", [])
             if isinstance(equipment_names, str):
                 equipment_names = equipment_names.split(",")
+
             for equip in equipment_names:
                 maintenance_map.setdefault(equip.strip(), set()).add(entry["interlock_name"])
 
         for entry in Fault:
-            equipment_names = entry["equipment_name"]
+            equipment_names = entry.get("equipment_name", [])
             if isinstance(equipment_names, str):
                 equipment_names = equipment_names.split(",")
+
             for equip in equipment_names:
                 fault_map.setdefault(equip.strip(), set()).add(entry["interlock_name"])
 
-        df = pd.DataFrame(resp)
-        required_columns = ['device_type', 'count']
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            raise KeyError(f"Missing columns: {missing_columns}")
 
+        df = pd.DataFrame(resp)
         df["count"] = pd.to_numeric(df["count"], errors="coerce").fillna(0).astype(int)
+        grouped_df = df.groupby("device_type", as_index=False)["count"].sum()
+
+        DEVICE_TYPE_MAPPING = {
+            "MOV": "MOV",
+            "HCD": "HCD",
+            "Dyke": "Dyke",
+            "Hooter": "Hooter",
+            "Primary Level": "Primary Radar",
+            "Jockey Pump": "Jockey Pump",
+            "VFT": "VFT",
+            "PT": "PT Hydrant",
+            "ROSOV": "Rosov",
+            "ESD": "ESD",
+            "Pump": "Pumps",
+            "Radar": "Secondary Radar",
+            "Fire Engine": "Fire Engine",
+            "Barrier Gate": "Barrier Gate",
+            "Gantry BCU": "Gantry BCU",
+            "MFM": "MFM"
+        }
 
         hardcoded_status = [
             {"id": "lrca", "name": "LRCA", "status": "standby"},
@@ -71,61 +82,30 @@ async def generate_sod_engineering_location_stats(sap_id):
             {"id": "process_plc_b", "name": "PLC B", "status": "standby"}
         ]
 
-        DEVICE_TYPE_MAPPING = {
-            "MOV": "MOV",
-            # "RIMSEAL": "RIMSEAL",
-            # "Dyke Valve": "Dyke Valve",
-            "HCD": "HCD",
-            "Dyke": "Dyke",
-            "Hooter": "Hooter",
-            "Primary Level": "Primary Radar",
-            # "LRC Switchover": "LRC Switchover",
-            # "PLC": "PLC",
-            "Jockey Pump": "Jockey Pump",
-            # "Fire Effect": "Fire Effect",
-            # "UPS": "UPS",
-            # "Gantry override": "Gantry override",
-            "VFT": "VFT",
-            "PT": "PT Hydrant",
-            "ROSOV": "Rosov",
-            "ESD": "ESD",
-            "Pump": "Pumps",
-            # "OI Tags": "OI Tags",
-            "Radar": "Secondary Radar",
-            "Fire Engine": "Fire Engine",
-            # "ESD Effect": "ESD Effect",
-            "Barrier Gate": "Barrier Gate",
-            # "Power ESD": "Power ESD",
-            "Gantry BCU": "Gantry BCU",
-            "MFM": "MFM"
-        } 
+        result_dict = {item["id"]: item for item in hardcoded_status}
 
-        result = []
-        result.extend(hardcoded_status)
-
-        for _, row in df.iterrows():
+        for _, row in grouped_df.iterrows():
             device_name = row["device_type"]
             total = row["count"]
 
             mapped_name = DEVICE_TYPE_MAPPING.get(device_name, device_name)
             device_id = mapped_name.lower().replace(" ", "_")
-
             maintenance_interlocks = maintenance_map.get(device_name, set())
             fault_interlocks = fault_map.get(device_name, set())
 
             total_maintenance_count = await get_alert_count_for_interlock_set(maintenance_interlocks, device_name)
             total_fault_count = await get_alert_count_for_interlock_set(fault_interlocks, device_name)
 
-            device_data = {
+            result_dict[device_id] = {
                 "id": device_id,
                 "name": mapped_name,
+                "status": None,
                 "total": total,
                 "faulty": total_fault_count,
                 "maintanance": total_maintenance_count
             }
 
-            result.append(device_data)
-
+        result = list(result_dict.values())
         return {"status": True, "message": "Success", "data": result}
 
     except Exception as e:
@@ -134,9 +114,6 @@ async def generate_sod_engineering_location_stats(sap_id):
 
 
 async def get_alert_count_for_interlock_set(interlocks, equipment):
-    """
-    Count number of unique interlocks triggered for a given equipment.
-    """
     if not interlocks or not equipment:
         return 0
 
@@ -150,8 +127,8 @@ async def get_alert_count_for_interlock_set(interlocks, equipment):
     if not result.get("data"):
         return 0
 
-    unique_interlocks = {entry['interlock_name'] for entry in result['data'] if 'interlock_name' in entry}
-    return len(unique_interlocks)
+    return len({entry['interlock_name'] for entry in result['data'] if 'interlock_name' in entry})
+
 
 async def get_filtered_location_data(bu, location_onboard, specific_zone=None, specific_sap_id=None):
     """
