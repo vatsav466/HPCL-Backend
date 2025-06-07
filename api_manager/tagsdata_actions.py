@@ -39,6 +39,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         if location_df.empty:
             return {"status": False, "message": "No TAS locations found."}
         
+        mfm_map = {}
         mfm_query = """
             SELECT sap_id, COUNT(DISTINCT mfm_number) AS mfm_count
             FROM host_mfm_factor
@@ -48,7 +49,8 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         """
         mfm_df = await execute_query(query=mfm_query)
         mfm_df = pd.DataFrame(mfm_df)
-        mfm_map = dict(zip(mfm_df['sap_id'],mfm_df['mfm_count']))
+        if not mfm_df.empty:
+            mfm_map = dict(zip(mfm_df['sap_id'],mfm_df['mfm_count']))
         final_records = []
 
         device_type_mapping = {
@@ -77,7 +79,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
             location_name = str(row['name'])
             zone = str(row['zone'])
 
-            json_path = os.path.join(BASE_JSON_PATH, f"{sap_id}.json")
+            json_path = os.path.join(base_path, f"{sap_id}.json")
             if not os.path.exists(json_path):
                 print(f"Skipping {sap_id}: File not found.")
                 continue

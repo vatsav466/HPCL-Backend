@@ -118,7 +118,7 @@ async def get_alert_count_for_interlock_set(interlocks, equipment):
         return 0
 
     interlock_filter = ",".join(f"'{i}'" for i in interlocks)
-    query = f"equipment_name='{equipment}' and interlock_name in ({interlock_filter})"
+    query = f"equipment_name='{equipment}' and interlock_name in ({interlock_filter}) and alert_status = 'Open'"
     params = urdhva_base.queryparams.QueryParams()
     params.q = query
     params.fields = ['interlock_name']

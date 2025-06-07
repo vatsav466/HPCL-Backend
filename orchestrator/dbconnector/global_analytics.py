@@ -8610,174 +8610,6 @@ class GlobalAnalytics:
     
     @staticmethod
     async def bay_reassignment(filters, cross_filters, drill_state):
-        # try:
-        #     # Initialize date flag
-        #     date = False
-        #     if "date" in drill_state:
-        #         date = True
-        #     print("date --> ", date)
-            
-            # # Check if zone or plant filters are present
-            # zone_filter = ''
-            # plant_filter = ''
-            # reassigned_bay = ''
-            # if filters:
-            #     for filter in filters:
-            #         if "zone" in filter.key:
-            #             zone_filter = filter.value
-            #         if "plant" in filter.key:
-            #             plant_filter = filter.value
-            #         if "reassigned_bay" in filter.key:
-            #             reassigned_bay = filter.value
-            
-            # # Initialize date filter variables
-            # date_filter_applied = False
-            # start_date = None
-            # end_date = None
-            
-            # # Process cross filters for date
-            # if cross_filters:
-            #     for filter in cross_filters:
-            #         if "DATE" in filter.key:
-            #             date_parts = filter.value.split(',')
-            #             start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-            #             end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-            #             date_filter_applied = True
-            
-        #     # Construct base SQL Query with CTE for better performance
-        #     query = """WITH bay_reassignment AS (SELECT 
-        #                 DATE(created_at) AS created_date,
-        #                 zone,
-        #                 location_name,
-        #                 sap_id,
-        #                 reassigned_bay,
-        #                 load_number,
-        #                 truck_number
-        #             FROM 
-        #                 host_bay_re_assignment
-        #             WHERE 1=1
-        #     """
-            
-        #     # Add zone filter if present
-            # if zone_filter:
-            #     query += f" AND zone IN ('{zone_filter}')"
-            
-            # # Add plant/location filter if present
-            # if plant_filter:
-            #     query += f" AND sap_id IN ('{plant_filter}')"
-            
-            # # Add date filter directly to SQL if applied
-            # if date_filter_applied and start_date and end_date:
-            #     query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
-            
-        #     # Complete the CTE and main query
-        #     query += """
-        #         GROUP BY 
-        #                 DATE(created_at), zone, location_name, sap_id, reassigned_bay, load_number, truck_number
-        #         )
-        #         SELECT 
-        #             k.created_date,
-        #             k.zone,
-        #             k.location_name,
-        #             k.sap_id,
-        #             k.reassigned_bay,
-        #             k.load_number,
-        #             k.truck_number,
-        #             (SELECT COUNT(*) 
-        #             FROM alerts a 
-        #             WHERE a.interlock_name = 'Bay reassignment'
-        #             AND a.vehicle_number = k.truck_number
-        #             AND a.tt_load_number = k.load_number::VARCHAR
-        #             AND DATE(a.created_at) = k.created_date) AS alert_count
-        #         FROM 
-        #             bay_reassignment k
-        #         ORDER BY 
-        #             k.created_date DESC, alert_count DESC
-        #     """
-            
-        #     print("query --> ", query)
-            
-        #     # Execute query
-        #     # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        #     # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-
-        #     # try:
-        #     #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        #     #     resp = await function(query=query)
-        #     try:
-        #         resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
-        #         resp = resp.get('data', '')
-        #     except Exception as e:
-        #         return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
-
-        #     if not resp:
-        #         return {"status": False, "message": "Data Not found", "data": {}}
-
-        #     # Convert response to Polars DataFrame
-        #     resp_df = pl.DataFrame(resp)
-        #     if resp_df.is_empty():
-        #             return {"status": True, "data": {}}
-
-        #     resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
-
-        #     # Date filtering if not applied in SQL - default to last 30 days
-        #     if not date_filter_applied:
-        #         last_30_days = datetime.now() - timedelta(days=30)
-        #         resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
-
-        #     if reassigned_bay:
-        #         resp_df = resp_df.filter(pl.col("reassigned_bay") == reassigned_bay)
-        #     # Generate appropriate result format based on date flag
-        #     if date:
-        #         # Daily Data Aggregation
-        #         group_cols = ["created_date", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number"]
-        #         grouped = resp_df.group_by(group_cols).agg(
-        #             pl.sum("alert_count").alias("total_alerts")
-        #         )
-
-        #         result = {}
-        #         for row in grouped.iter_rows(named=True):
-        #             created_date = str(row["created_date"])
-        #             entry = {
-        #                 "zone": row["zone"],
-        #                 "sap_id": row["sap_id"],
-        #                 "location_name": row["location_name"],
-        #                 "reassigned_bay": row["reassigned_bay"],
-        #                 "load_number": row["load_number"],
-        #                 "truck_number": row["truck_number"],
-        #                 "total_alerts": row["total_alerts"]
-        #             }
-        #             result.setdefault(created_date, []).append(entry)
-        #         return {"status": True, "message": "success", "daily_data": result}
-        #     else:
-        #         # Monthly Data Aggregation
-        #         resp_df = resp_df.with_columns(
-        #             pl.col("created_date").dt.strftime("%Y-%m").alias("month_year")
-        #         )
-
-        #         group_cols = ["month_year", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number"]
-        #         grouped = resp_df.group_by(group_cols).agg(
-        #             pl.sum("alert_count").alias("total_alerts")
-        #         )
-
-        #         result = {}
-        #         for row in grouped.iter_rows(named=True):
-        #             month = row["month_year"]
-        #             entry = {
-        #                 "zone": row["zone"],
-        #                 "sap_id": row["sap_id"],
-        #                 "location_name": row["location_name"],
-        #                 "reassigned_bay": row["reassigned_bay"],
-        #                 "load_number": row["load_number"],
-        #                 "truck_number": row["truck_number"],
-        #                 "total_alerts": row["total_alerts"]
-        #             }
-        #             result.setdefault(month, []).append(entry)
-        #         return {"status": True, "message": "success", "monthly_data": result}
-
-        # except Exception as e:
-        #     print(traceback.format_exc())
-        #     return {"status": False, "message": f"Error: {str(e)}", "data": {}}
         try:
             # Check date flag once
             date = "date" in drill_state
@@ -8816,10 +8648,8 @@ class GlobalAnalytics:
                         zone,
                         location_name,
                         sap_id,
-                        reassigned_bay,
                         assigned_bay,
-                        load_number,
-                        truck_number
+                        load_number
                     FROM 
                         host_bay_re_assignment
                     WHERE 1=1
@@ -8839,17 +8669,15 @@ class GlobalAnalytics:
             # Complete the CTE and main query
             query += f"""
                 GROUP BY 
-                        DATE(created_at), zone, location_name, sap_id, reassigned_bay, load_number, truck_number, assigned_bay
+                        DATE(created_at), zone, location_name, sap_id, load_number, assigned_bay
                 )
                 SELECT 
                     k.created_date,
                     k.zone,
                     k.location_name,
                     k.sap_id,
-                    k.reassigned_bay,
                     k.assigned_bay,
                     k.load_number,
-                    k.truck_number,
                     COALESCE(COUNT(a.id), 0) AS alert_count
                 FROM 
                     bay_reassignment k
@@ -8858,7 +8686,7 @@ class GlobalAnalytics:
                     AND a.tt_load_number = k.load_number::VARCHAR
                     AND DATE(a.created_at) = k.created_date
                 GROUP BY
-                    k.created_date, k.zone, k.location_name, k.sap_id, k.reassigned_bay, k.load_number, k.truck_number, k.assigned_bay
+                    k.created_date, k.zone, k.location_name, k.sap_id, k.load_number, k.assigned_bay
                 ORDER BY 
                     k.created_date DESC, alert_count DESC
             """
@@ -8891,7 +8719,7 @@ class GlobalAnalytics:
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number", "assigned_bay"]
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "load_number", "assigned_bay"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
@@ -8903,10 +8731,8 @@ class GlobalAnalytics:
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
-                        "reassigned_bay": row["reassigned_bay"],
                         "assigned_bay": row["assigned_bay"],
                         "load_number": row["load_number"],
-                        "truck_number": row["truck_number"],
                         "total_alerts": row["total_alerts"]
                     }
                     result.setdefault(created_date, []).append(entry)
@@ -8915,7 +8741,7 @@ class GlobalAnalytics:
                 # Monthly Data Aggregation
                 resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number", "assigned_bay"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "load_number", "assigned_bay"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
@@ -8929,10 +8755,8 @@ class GlobalAnalytics:
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
-                        "reassigned_bay": row["reassigned_bay"],
                         "assigned_bay": row["assigned_bay"],
                         "load_number": row["load_number"],
-                        "truck_number": row["truck_number"],
                         "total_alerts": row["total_alerts"]
                     }
                     result.setdefault(month, []).append(entry)
