@@ -8,7 +8,7 @@ import polars as pl
 import os
 from collections import defaultdict
 import utilities.connection_mapping as connection_mapping
-from api_manager.charts_actions import charts_connection_vault_routing
+from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from utilities.analog_data_mapping import Maintenance, Fault
 # import urdhva_base.queryparams
@@ -37,11 +37,12 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
         
         if location_df.empty:
             return {"status": False, "message": "No TAS locations found."}
-        
+        mfm_map = {}
         mfm_query = "SELECT sap_id, COUNT(bcu_number) as mfm_count FROM host_mfm_factor WHERE bcu_number IS NOT NULL GROUP BY sap_id"
         mfm_df = await execute_query(query=mfm_query)
         mfm_df = pd.DataFrame(mfm_df)
-        mfm_map = dict(zip(mfm_df['sap_id'],mfm_df['mfm_count']))
+        if not mfm_df.empty:
+            mfm_map = dict(zip(mfm_df['sap_id'],mfm_df['mfm_count']))
 
         final_records = []
 
@@ -233,15 +234,3 @@ async def architecturedata_architecture_data(data: Architecturedata_Architecture
 
     except Exception as e:
         return {"status": False, "message": f"Error: {str(e)}"}
-
-
-# Action architecture_details
-@router.post('/architecture_details', tags=['ArchitectureData'])
-async def architecturedata_architecture_details(data: Architecturedata_Architecture_DetailsParams):
-    ...
-
-
-# Action architecture_data
-@router.post('/architecture_data', tags=['ArchitectureData'])
-async def architecturedata_architecture_data(data: Architecturedata_Architecture_DataParams):
-    ...

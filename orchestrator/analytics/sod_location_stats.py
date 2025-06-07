@@ -54,7 +54,6 @@ async def generate_sod_engineering_location_stats(sap_id):
             for equip in equipment_names:
                 fault_map.setdefault(equip.strip(), set()).add(entry["interlock_name"])
 
-
         df = pd.DataFrame(resp)
         required_columns = ['device_type', 'count']
         missing_columns = [col for col in required_columns if col not in df.columns]
@@ -111,11 +110,11 @@ async def generate_sod_engineering_location_stats(sap_id):
             mapped_name = DEVICE_TYPE_MAPPING.get(device_name, device_name)
             device_id = mapped_name.lower().replace(" ", "_")
 
-            unique_maintenance_interlocks = maintenance_map.get(device_name, set())
-            total_maintenance_count = len(unique_maintenance_interlocks)
+            maintenance_interlocks = maintenance_map.get(device_name, set())
+            fault_interlocks = fault_map.get(device_name, set())
 
-            unique_fault_interlocks = fault_map.get(device_name, set())
-            total_fault_count = len(unique_fault_interlocks)
+            total_maintenance_count = await get_alert_count_for_interlock_set(maintenance_interlocks, device_name)
+            total_fault_count = await get_alert_count_for_interlock_set(fault_interlocks, device_name)
 
             device_data = {
                 "id": device_id,
@@ -133,44 +132,26 @@ async def generate_sod_engineering_location_stats(sap_id):
         print(traceback.format_exc())
         return {"status": False, "message": f"Error: {str(e)}", "data": []}
 
-async def get_alert_count_for_interlock(interlock):
+
+async def get_alert_count_for_interlock_set(interlocks, equipment):
     """
-    This function checks the alert table for the count of a specific interlock.
+    Count number of unique interlocks triggered for a given equipment.
     """
-    if not interlock:
+    if not interlocks or not equipment:
         return 0
 
-    query = f"interlock_name='{interlock}'"
+    interlock_filter = ",".join(f"'{i}'" for i in interlocks)
+    query = f"equipment_name='{equipment}' and interlock_name in ({interlock_filter})"
     params = urdhva_base.queryparams.QueryParams()
     params.q = query
-    count = await hpcl_ceg_model.Alerts.count(params)
-    return count
+    params.fields = ['interlock_name']
 
-    # Hardcoded data for UI development purpose
-    # json_data = [{"id": "lrca", "name": "LRCA", "status": "standby"},
-    #              {"id": "lrcb", "name": "LRCB", "status": "online"},
-    #              {"id": "safety_plc_a", "name": "PLC A", "status": "online"},
-    #              {"id": "safety_plc_b", "name": "PLC B", "status": "standby"},
-    #              {"id": "process_plc_a", "name": "PLC A", "status": "online"},
-    #              {"id": "process_plc_b", "name": "PLC B", "status": "standby"},
-    #              {"id": "gantry_bcu", "name": "Gantry BCU ", "total": 34, "faulty": 1, "maintanance": 1},
-    #              {"id": "mfm", "name": "MFM", "total": 10, "faulty": 1, "maintanance": 0},
-    #              {"id": "primary_radar", "name": "Primary Radar", "total": 11, "faulty": 0, "maintanance": 0},
-    #              {"id": "mov", "name": "MOV", "total": 30, "faulty": 0, "maintanance": 0},
-    #              {"id": "pumps", "name": "Pumps", "total": 14, "faulty": 0, "maintanance": 1},
-    #              {"id": "barrier_gate", "name": "Barrier Gate", "total": 6, "faulty": 0, "maintanance": 0},
-    #              {"id": "rosov", "name": "Rosov", "total": 30, "faulty": 1, "maintanance": 1},
-    #              {"id": "vft", "name": "VFT", "total": 5, "faulty": 0, "maintanance": 0},
-    #              {"id": "secondary_radar", "name": "Secondary Radar", "total": 5, "faulty": 0, "maintanance": 0},
-    #              {"id": "pt_hydrant", "name": "PT Hydrant", "total": 1, "faulty": 0, "maintanance": 0},
-    #              {"id": "hooter", "name": "Hooter", "total": 20, "faulty": 0, "maintanance": 4},
-    #              {"id": "esd", "name": "ESD", "total": 10, "faulty": 0, "maintanance": 0},
-    #              {"id": "fire_engine", "name": "Fire Engine", "total": 4, "faulty": 0, "maintanance": 0},
-    #              {"id": "hcd", "name": "HCD", "total": 11, "faulty": 0, "maintanance": 0},
-    #              {"id": "dyke", "name": "Dyke", "total": 4, "faulty": 0, "maintanance": 0},
-    #              {"id": "jockey_pump", "name": "Jockey Pump", "total": 4, "faulty": 1, "maintanance": 1},
-    #              {"id": "air_compressor", "name": "Air Compressor", "total": 6, "faulty": 0, "maintanance": 1}]
-    # return {"status": True, "data":  json_data}
+    result = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
+    if not result.get("data"):
+        return 0
+
+    unique_interlocks = {entry['interlock_name'] for entry in result['data'] if 'interlock_name' in entry}
+    return len(unique_interlocks)
 
 async def get_filtered_location_data(bu, location_onboard, specific_zone=None, specific_sap_id=None):
     """
