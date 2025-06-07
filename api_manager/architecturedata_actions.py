@@ -15,9 +15,9 @@ from utilities.analog_data_mapping import Maintenance, Fault
 
 router = fastapi.APIRouter(prefix='/architecturedata')
 
-if urdhva_base.settings.environment:
+if urdhva_base.settings.environment == 'prod':
     base_path = "/opt/ceg/algo/prod/"
-elif urdhva_base.settings.environment:
+elif urdhva_base.settings.environment == 'uat':
     base_path = "/opt/ceg/algo/uat/"
 else:
     base_path = "/opt/ceg/algo/things_board/device_data/"
