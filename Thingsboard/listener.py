@@ -49,8 +49,10 @@ class TelemetryService:
     async def load_site_data(site_id):
         """Load site data from a local JSON file."""
 
-        if urdhva_base.settings.environment:
+        if urdhva_base.settings.environment == 'prod':
             base_path = "/opt/ceg/algo/prod/"
+        elif urdhva_base.settings.environment == 'uat':
+            base_path = "/opt/ceg/algo/uat/"
         else:
             base_path = "/opt/ceg/algo/things_board/device_data/"
 
