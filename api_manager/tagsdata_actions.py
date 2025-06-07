@@ -16,7 +16,12 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
 router = fastapi.APIRouter(prefix='/tagsdata')
 
-BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data"
+if urdhva_base.settings.environment:
+    base_path = "/opt/ceg/algo/prod/"
+elif urdhva_base.settings.environment:
+    base_path = "/opt/ceg/algo/uat/"
+else:
+    base_path = "/opt/ceg/algo/things_board/device_data/"
 
 @router.post('/things_board_device_data', tags=['TagsData'])
 async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):

@@ -15,7 +15,12 @@ from utilities.analog_data_mapping import Maintenance, Fault
 
 router = fastapi.APIRouter(prefix='/architecturedata')
 
-BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data"
+if urdhva_base.settings.environment:
+    base_path = "/opt/ceg/algo/prod/"
+elif urdhva_base.settings.environment:
+    base_path = "/opt/ceg/algo/uat/"
+else:
+    base_path = "/opt/ceg/algo/things_board/device_data/"
 
 @router.post('/architecture_details', tags=['ArchitectureData'])
 async def architecturedata_architecture_details(data: Architecturedata_Architecture_DetailsParams):
@@ -66,7 +71,7 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
             location_name = str(row['name'])
             zone = str(row['zone'])
 
-            json_path = os.path.join(BASE_JSON_PATH, f"{sap_id}.json")
+            json_path = os.path.join(base_path, f"{sap_id}.json")
             if not os.path.exists(json_path):
                 print(f"Skipping {sap_id}: File not found.")
                 continue
