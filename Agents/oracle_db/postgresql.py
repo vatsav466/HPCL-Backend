@@ -463,30 +463,31 @@ class Postgresql:
                         
                         print("device_msg --> ", device_msg)
                         # Prepare alert data
-                        alert_data = {
-                            'bu': 'TAS',
-                            'sop_id': sop_id,
-                            'sap_id': record.get('sap_id'),
-                            'interlock_name': interlock_name,
-                            'severity': severity,
-                            'alert_id': str(uuid.uuid1()),
-                            'device_name': str(record.get('manual_fan_count', '')),
-                            'device_type': 'Gantry',
-                            'vehicle_number': record.get('truck_number', ''),
-                            'message': device_msg,
-                            'alert_section': 'TAS'
-                        }
+                        if interlock_name != '' and interlock_name is not None:
+                            alert_data = {
+                                'bu': 'TAS',
+                                'sop_id': sop_id,
+                                'sap_id': record.get('sap_id'),
+                                'interlock_name': interlock_name,
+                                'severity': severity,
+                                'alert_id': str(uuid.uuid1()),
+                                'device_name': str(record.get('manual_fan_count', '')),
+                                'device_type': 'Gantry',
+                                'vehicle_number': record.get('truck_number', ''),
+                                'message': device_msg,
+                                'alert_section': 'TAS'
+                            }
 
-                        # Create alert for non-zero records
-                        success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-                        
-                        # Close alert if needed
-                        if is_close_alert:
-                            await self.close_created_alert(alert_data=alert_data)
+                            # Create alert for non-zero records
+                            success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
                             
-                        # Mark record as processed
-                        query = f"UPDATE {table_db_name} SET alert_created = true WHERE id = {record['id']}"
-                        await model.update_by_query(query)
+                            # Close alert if needed
+                            if is_close_alert:
+                                await self.close_created_alert(alert_data=alert_data)
+                                
+                            # Mark record as processed
+                            query = f"UPDATE {table_db_name} SET alert_created = true WHERE id = {record['id']}"
+                            await model.update_by_query(query)
                     
                     return {"status": "Table updated and alerts processed for non-zero records"}
                 else:
@@ -523,34 +524,36 @@ class Postgresql:
                     if unauthorised_records and is_close_alert:
                         # Use the first record for necessary data
                         first_record = unauthorised_records[0]
-                        alert_data = {
-                            'bu': 'TAS',
-                            'sop_id': config['sop_id'].get(table_name),
-                            'sap_id': first_record.get('sap_id'),
-                            'interlock_name': interlock_name,
-                            'severity': config['severity'].get(table_name, "Medium"),
-                            'alert_id': str(uuid.uuid1()),
-                            'device_name': bcu_number,  # Since we're dealing with multiple BCUs
-                            'device_type': 'Gantry',
-                            'vehicle_number': '',  # This might need to be populated appropriately
-                            'message': device_msg,
-                            'alert_section': 'TAS'
-                        }
-                        
-                        # Create Alert
-                        success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-                        print("msg :", msg)
-                        
-                        # Close alert if needed
-                        if success and is_close_alert:
-                            await self.close_created_alert(alert_data=alert_data)
+                        if interlock_name != '' and interlock_name is not None:
+
+                            alert_data = {
+                                'bu': 'TAS',
+                                'sop_id': config['sop_id'].get(table_name),
+                                'sap_id': first_record.get('sap_id'),
+                                'interlock_name': interlock_name,
+                                'severity': config['severity'].get(table_name, "Medium"),
+                                'alert_id': str(uuid.uuid1()),
+                                'device_name': bcu_number,  # Since we're dealing with multiple BCUs
+                                'device_type': 'Gantry',
+                                'vehicle_number': '',  # This might need to be populated appropriately
+                                'message': device_msg,
+                                'alert_section': 'TAS'
+                            }
                             
-                        # Update all records as alert_created = true
-                        for record in unauthorised_records:
-                            query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
-                            await model.update_by_query(query)
+                            # Create Alert
+                            success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+                            print("msg :", msg)
                             
-                        return {"status": "Unauthorized flow alerts processed"}
+                            # Close alert if needed
+                            if success and is_close_alert:
+                                await self.close_created_alert(alert_data=alert_data)
+                                
+                            # Update all records as alert_created = true
+                            for record in unauthorised_records:
+                                query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
+                                await model.update_by_query(query)
+                                
+                            return {"status": "Unauthorized flow alerts processed"}
 
             # Existing alert processing for other table types
             if resp.get("data", []):
@@ -569,43 +572,45 @@ class Postgresql:
                             device_msg = f"For Load Number: {record.get('load_number', '')} the ReAssigned Bay: {record.get('reassigned_bay', '')}".strip()
 
                         # Extract necessary fields from the record
-                        alert_data = {
-                            'bu': 'TAS',
-                            'sop_id': sop_id,
-                            'sap_id': record.get('sap_id'),
-                            'interlock_name': interlock_name,
-                            'severity': severity,
-                            'alert_id': str(uuid.uuid1()),
-                            'device_name': record.get('bcu_number'),
-                            'device_type': 'Gantry',
-                            'vehicle_number': record.get('truck_number', ''),
-                            'tt_load_number': record.get('load_number', ''),
-                            'message': device_msg,
-                            'alert_section': 'TAS'
-                        }
+                        if interlock_name != '' and interlock_name is not None:
+                            
+                            alert_data = {
+                                'bu': 'TAS',
+                                'sop_id': sop_id,
+                                'sap_id': record.get('sap_id'),
+                                'interlock_name': interlock_name,
+                                'severity': severity,
+                                'alert_id': str(uuid.uuid1()),
+                                'device_name': record.get('bcu_number'),
+                                'device_type': 'Gantry',
+                                'vehicle_number': record.get('truck_number', ''),
+                                'tt_load_number': record.get('load_number', ''),
+                                'message': device_msg,
+                                'alert_section': 'TAS'
+                            }
 
-                        # Create Alert
-                        if interlock_name == 'Cancel TT Reported':
-                            is_close_alert = True
-                            success, msg, alert_data = await self.create_cancel_tt_report(alert_data)
-                        elif interlock_name == 'Bay reassignment':
-                            is_close_alert = True
-                            success, msg, alert_data = await self.create_bay_reasignment_report(alert_data)
-                        else:
-                            success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-                            print("msg :", msg)
-                            is_close_alert = True
-                            if not success:
-                                print(f"Failed to create alert: {msg}")
-                                return {"status": False, "message": f"Failed {e}", "data": []}
-                        
-                        # Set alert_created = true for alert created record
-                        query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
-                        await model.update_by_query(query)
+                            # Create Alert
+                            if interlock_name == 'Cancel TT Reported':
+                                is_close_alert = True
+                                success, msg, alert_data = await self.create_cancel_tt_report(alert_data)
+                            elif interlock_name == 'Bay reassignment':
+                                is_close_alert = True
+                                success, msg, alert_data = await self.create_bay_reasignment_report(alert_data)
+                            else:
+                                success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+                                print("msg :", msg)
+                                is_close_alert = True
+                                if not success:
+                                    print(f"Failed to create alert: {msg}")
+                                    return {"status": False, "message": f"Failed {e}", "data": []}
+                            
+                            # Set alert_created = true for alert created record
+                            query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
+                            await model.update_by_query(query)
 
-                        # Close alert
-                        if is_close_alert:
-                            await self.close_created_alert(alert_data=alert_data)
+                            # Close alert
+                            if is_close_alert:
+                                await self.close_created_alert(alert_data=alert_data)
 
                     except Exception as e:
                         print(f"Error : {str(e)}")
