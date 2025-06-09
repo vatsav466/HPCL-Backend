@@ -23,8 +23,8 @@ class RabbitMQConsumer:
             config_file = "config_uat.json"
         else:
             config_file = "config.json"
-        with open("config.json", "r") as config_file:
-            config = json.load(config_file)
+        with open(config_file, "r") as file:
+            config = json.load(file)
 
         self.rabbitmq_host = config.get('conn_host', '')
         self.rabbitmq_port = int(config.get('conn_port', 5672))
