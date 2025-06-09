@@ -8,6 +8,7 @@ class RabbitMQProducer:
         """
         Load RabbitMQ configuration from JSON file for the producer.
         """
+        
         with open(config_path, 'r') as config_file:
             config = json.load(config_file)
 
