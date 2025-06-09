@@ -12,11 +12,19 @@ from datetime import datetime, date
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 
-# Path to the JSON file
-json_file = "config.json"
+# Determine the environment
+environment = urdhva_base.settings.environment
+
+# Select the appropriate configuration file
+if environment == 'prod':
+    config_file = "config_prod.json"
+elif environment == 'uat':
+    config_file = "config_uat.json"
+else:
+    config_file = "config.json"
 
 try:
-    with open(json_file, "r", encoding="utf-8") as file:
+    with open(config_file, "r", encoding="utf-8") as file:
         config = json.load(file)
     print("JSON loaded successfully!")
 
@@ -29,7 +37,7 @@ except json.JSONDecodeError as e:
     print(f"JSON parsing error: {e}")
     config = None  # Prevent using an invalid config
 except FileNotFoundError:
-    print(f"JSON file not found: {json_file}")
+    print(f"JSON file not found: {config_file}")
     config = None
 except Exception as e:
     print(f"Unexpected error: {e}")
