@@ -12,6 +12,17 @@ import utilities.helpers as helpers
 class RabbitMQConsumer:
     def __init__(self):
         """Load RabbitMQ configuration from JSON file for the consumer."""
+       
+        # Determine the environment
+        environment = urdhva_base.settings.environment
+
+        # Select the appropriate configuration file
+        if environment == 'prod':
+            config_file = "config_prod.json"
+        elif environment == 'uat':
+            config_file = "config_uat.json"
+        else:
+            config_file = "config.json"
         with open("config.json", "r") as config_file:
             config = json.load(config_file)
 
