@@ -138,7 +138,15 @@ class ThingsBoardInterface:
         self._auth_token = None
         self.location = None
         self.bu_id = None
-        self.data_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), "../things_board/device_data")
+        # determine the environment
+        environment = urdhva_base.settings.environment
+
+        if environment == 'prod':
+            self.data_path = "/opt/ceg/algo/prod/"
+        elif environment == 'uat':
+            self.data_path = "/opt/ceg/algo/uat/"
+        else:
+            self.data_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), "../things_board/device_data")
 
     @staticmethod
     def get_auth_token():
