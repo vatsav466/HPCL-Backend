@@ -889,7 +889,7 @@ async def constant_dryout_ros(days=7):
         (now - datetime.timedelta(days=i)).strftime('%y%m%d-2300') for i in range(1, days+1)
     ]
     run_ids = tuple(run_id)
-    print(run_ids)
+    # print(run_ids)
     query = f"""
     WITH forecast_dashboard AS (
         SELECT
@@ -933,7 +933,7 @@ async def constant_dryout_ros(days=7):
         .str.strptime(pl.Date, format="%y%m%d")
         .alias("run_id_date")
     )
-    print("days: ", days)
+    # print("days: ", days)
     aggregated_df = df.group_by("rosapcode").agg(
         pl.col("run_id_date").n_unique().alias("unique_days_count")
     )
@@ -948,8 +948,8 @@ async def constant_dryout_ros(days=7):
     loc_data = [value for key, value in locations.items()]
     locations_data = pl.DataFrame(loc_data)
     result = data.join(locations_data.select(["sap_id", "name"]).unique(subset="sap_id", keep='first'), left_on = "rosapcode", right_on = "sap_id", how = "left")
-    print('printing columns')
-    print(result.columns)
+    # print('printing columns')
+    # print(result.columns)
     return result.select(["rosapcode", "name"]).to_dicts()
 
 async def current_month_frequent_dryout_ros(data):
@@ -1060,12 +1060,12 @@ async def get_atg_ack(sap_id: str, product_code: str):
     atg_resp = await function(
         query=query
     )
-    print("atg_resp: ", atg_resp)
+    # print("atg_resp: ", atg_resp)
     atg_resp = pd.DataFrame(atg_resp)
     if 'item_name' in atg_resp.columns:
         atg_resp['item_name'] = atg_resp['item_name'].astype(str)
     atg_resp.replace({"item_name": await cris_product_mapping()}, inplace=True)
-    print("atg_resp: ", atg_resp)
+    # print("atg_resp: ", atg_resp)
 
     # query = f"""select distinct sap_id from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status = 'Open' and dry_out_in_days = '{dry_out_in_days}'"""
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
@@ -1084,7 +1084,7 @@ async def get_atg_ack(sap_id: str, product_code: str):
     if atg_resp.empty:
         return []
     atg_resp = atg_resp[atg_resp['item_name'] == product_code]
-    print("atg_resp: ", atg_resp)
+    # print("atg_resp: ", atg_resp)
     return atg_resp.to_dict(orient='records')
 
 async def update_dry_out_from_cris(records):
@@ -1112,7 +1112,7 @@ async def update_dry_out_from_cris(records):
         how='outer', indicator=True
     )
     right_df = final_resp[final_resp['_merge'] == 'right_only']
-    print(right_df)
+    # print(right_df)
     for right in right_df.to_dict(orient='records'):
         query = f"""update alerts set mark_as_false=false where alert_status != 'Close' and sap_id = '{right["rosapcode"]}' and product_code = '{right["product_code"]}' and interlock_name = 'Dry Out Each Indent Wise MainFlow'"""
         await hpcl_ceg_model.Alerts.update_by_query(query)
@@ -1122,7 +1122,7 @@ async def update_dry_out_from_cris(records):
         await hpcl_ceg_model.Alerts.update_by_query(query)
 
 async def update_atg_ack(alert_id: str, sap_id: str, product_code: str):
-    print(f"alert_id: {alert_id} sap_id: {sap_id} product_code: {product_code}")
+    # print(f"alert_id: {alert_id} sap_id: {sap_id} product_code: {product_code}")
     alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
@@ -1132,7 +1132,7 @@ async def update_atg_ack(alert_id: str, sap_id: str, product_code: str):
         atg_resp = atg_resp[0]
         if not alert_data.get("atg_ack", False):
             query = f"""update alerts set atg_ack=true, atg_ack_time='{atg_resp.get("recptentrydate").strftime("%Y-%m-%d %H:%M:%S")}' where id = {alert_id}"""
-            print(f"update query for atg: {query}")
+            # print(f"update query for atg: {query}")
             await hpcl_ceg_model.Alerts.update_by_query(query)
 
 async def get_atg_ack_count(dry_out_in_days='1'):
@@ -1140,7 +1140,7 @@ async def get_atg_ack_count(dry_out_in_days='1'):
     query = (f"select count(distinct sap_id) from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' "
              f"and dry_out_in_days='{dry_out_in_days}' and atg_ack=true and atg_ack_time::DATE = '{to_day}'")
     data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=10000)
-    print("Data: ", data)
+    # print("Data: ", data)
     if data.get("data", []):
         data = data.get("data", [])
         return data[0].get("count", 0)
@@ -1313,7 +1313,7 @@ async def dry_out_report(dry_out_in_days='1'):
         how='left'
     )
     final_df = final_df.sort_values(by="LOADED_ON", ascending=True).groupby("INDENT_NO").first().reset_index()
-    print(final_df)
+    # print(final_df)
     return final_df.to_dict(orient="records")
 
 async def get_dryout_aging(conditions):
@@ -1337,7 +1337,6 @@ async def get_dryout_aging(conditions):
     resp = await function(
         query=query
     )
-    print("resp: ", resp)
     return resp[0] if resp else {}
 
 async def get_ro_count_less_50(condition):
@@ -1627,7 +1626,6 @@ async def get_dryout_aging_data():
         query=query
     )
     resp = pd.DataFrame(resp)
-    print("resp: ", resp)
     resp.rename(columns={
         "sap_id": "DEALER_CODE", "location_name": "LOCATION_NAME", "zone": "ZONE",
         "indent_status": "INDENT_STATUS", "product_code": "PRODUCT_CODE", "age_category": "AGE_CATEGORY",
@@ -1669,7 +1667,6 @@ async def generate_dry_out_report(records):
     records['dryout_end_datetime'] = None
     records['dryout_date'] = urdhva_base.utilities.get_present_time().replace(hour=0, minute=0, second=0, microsecond=0)
     records['alert_status'] = 'Open'
-    print(records)
     await hpcl_ceg_model.DryOutAlertReport.bulk_update(records.to_dict(orient='records'), upsert=True)
 
     query = f"SELECT id, sap_id, product_code from dry_out_alert_report where alert_status='Open'"
@@ -1811,5 +1808,5 @@ async def get_nozzle_sales(dry_out_in_days='1'):
         query=query
     )
     site_data = pd.DataFrame(site_data)
-    print(site_data['erp_code'].unique().tolist())
+    # print(site_data['erp_code'].unique().tolist())
     return len(site_data['erp_code'].unique().tolist())
