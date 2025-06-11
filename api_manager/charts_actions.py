@@ -258,6 +258,7 @@ async def charts_get_product_values(data: Charts_Get_Distinct_ValuesParams):
             "PETCHEM": ["PETCHEM"],
             "Lubes": ["LUBES RETAIL", "Automotive Oils", "Automotive Greases", "Automotive Specialities", "Industrial oils",
                     "Industrial Greases", "Industrial Specialities", "Base Oil"]
+            "GAS": ["CNG", "LNG", "Compressed Bio Gas (CBG)"]
         }
     Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
     Charts_Connection_Vault_RoutingParams.action = 'get_product_values'

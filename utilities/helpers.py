@@ -16,7 +16,7 @@ except ImportError:
 from dateutil.relativedelta import relativedelta
 from utilities import interlock_category_mapping
 import Thingsboard.bu_asset_master_new as tb_master
-
+from utilities import sales_mapping
 
 def month_short_to_number(short_name):
     # Parses the short month name (%b) and extracts the month as an integer.
@@ -387,3 +387,73 @@ def fetch_alarm_data(self, device_id):
     params = {'pageSize': 100, 'page': 0}
     alarm_data = tb_master.ThingsBoardInterface().api_handler('GET', alarm_url, {}, params)
     return alarm_data
+
+def get_user_details():
+    rpt = urdhva_base.context.context.get('rpt', {})
+    user_bu = rpt.get("bu", [])
+    user_zone = rpt.get("zone", [])
+    user_region = rpt.get("region", [])
+    user_sales_area = rpt.get("sales_area", [])
+
+    user_zone = [sales_mapping.sales_zone_map.get(zone, zone) for zone in user_zone]
+
+            
+    where_clause = []
+
+    if user_bu:
+        if len(user_bu) == 1:
+            where_clause.append({
+                "key": "SBU_Name",
+                "cond": "=",
+                "value": user_bu[0]
+            })
+        else:
+            where_clause.append({
+                "key": "SBU_Name",
+                "cond": "IN",
+                "value": user_bu
+            })
+
+    if user_zone:
+        if len(user_zone) == 1:
+            where_clause.append({
+                "key": "ORGZONECD",
+                "cond": "=",
+                "value": user_zone[0]
+            })
+        else:
+            where_clause.append({
+                "key": "ORGZONECD",
+                "cond": "IN",
+                "value": user_zone
+            })
+
+    if user_region:
+        if len(user_region) == 1:
+            where_clause.append({
+                "key": "Region_Name",
+                "cond": "=",
+                "value": user_region[0]
+            })
+        else:
+            where_clause.append({
+                "key": "Region_Name",
+                "cond": "IN",
+                "value": user_region
+            })
+
+    if user_sales_area:
+        if len(user_sales_area) == 1:
+            where_clause.append({
+                "key": "SalesArea_Name",
+                "cond": "=",
+                "value": user_sales_area[0]
+            })
+        else:
+            where_clause.append({
+                "key": "SalesArea_Name",
+                "cond": "IN",
+                "value": user_sales_area
+            })
+
+    return where_clause
