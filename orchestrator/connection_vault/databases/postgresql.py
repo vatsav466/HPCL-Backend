@@ -471,6 +471,9 @@ class Postgresql(BaseAction):
         #         "status": False, "message": "Unable to connect to PostgresSQL",
         #         "data": []
         #     }
+        data = helpers.get_user_details()
+        if data:
+            where_clause = data
         try:
             columns_mapping = dict()
             connection = await self.get_connection()
@@ -542,6 +545,8 @@ class Postgresql(BaseAction):
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
             }
+            
+            
     async def get_product_values(self, schema_name, table_name, column_name, where_clause=None, debug=False, **kwargs):
         """
         @description:
@@ -584,6 +589,9 @@ class Postgresql(BaseAction):
         #         "status": False, "message": "Unable to connect to PostgresSQL",
         #         "data": []
         #     }
+        data = helpers.get_user_details()
+        if data:
+            where_clause = data
         try:
             columns_mapping = dict()
             connection = await self.get_connection()
