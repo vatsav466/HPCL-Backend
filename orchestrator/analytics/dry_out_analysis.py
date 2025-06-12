@@ -761,10 +761,21 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                             WHEN item_name = 'POWER 100' THEN '3373000'
                             ELSE NULL
                         END AS item_name_code,
-                        avgsales_7days
-                    
+                        SUM(avgsales_7days) AS avgsales_7days
                     FROM "HPCL_HOS"."sch_inventory_forecast_dashboard"
                     WHERE run_id = '{date_time}'
+                    GROUP BY 
+                        rosapcode,
+                        CASE
+                            WHEN item_name = 'HSD' THEN '2812000'
+                            WHEN item_name = 'MS' THEN '2811000'
+                            WHEN item_name = 'TURBO' THEN '3912000'
+                            WHEN item_name = 'E20' THEN '2822000'
+                            WHEN item_name = 'POWER 95' THEN '3672000'
+                            WHEN item_name = 'POWER 99' THEN '2816000'
+                            WHEN item_name = 'POWER 100' THEN '3373000'
+                            ELSE NULL
+                        END
                 )
                 SELECT 
                     a.zone as "ZONE",
@@ -796,6 +807,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                      FROM alerts 
                      WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
                      AND indent_status NOT IN ('Cancelled', 'Completed')
+                     AND masrk_as_false = true
                      AND dry_out_in_days IN ('{dry_out_in_days}')) a
                 LEFT JOIN 
                     CombinedData cd
