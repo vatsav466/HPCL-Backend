@@ -1822,4 +1822,4 @@ async def get_nozzle_sales(dry_out_in_days='1'):
     )
     site_data = pd.DataFrame(site_data)
     # print(site_data['erp_code'].unique().tolist())
-    return len(site_data['erp_code'].unique().tolist())
+    return len(site_data['erp_code'].unique().tolist()) if 'erp_code' in site_data.columns else 0
