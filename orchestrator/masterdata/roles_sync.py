@@ -27,6 +27,7 @@ async def sync_user_roles():
                                     "LPG Operations",
                                     "LPG Plant",
                                     "LPG Analytics",
+                                    "LPG Inventory",
                                     "Video Analytics"
                                 ]
                             }
@@ -582,6 +583,7 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics"
                                 ]
                             }
@@ -594,7 +596,8 @@ async def sync_user_roles():
                             {
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
-                                    "LPG Analytics"
+                                    "LPG Analytics",
+                                    "LPG Inventory",
                                 ]
                             },
                             {
@@ -614,25 +617,12 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics"
                                 ]
                             }
                         ],
                         "name": "LPG",
-                        "status": True
-                    },
-                    "Maintenanace Officer LPG": {
-                        "allowed_pages": [
-                            {
-                                "menu_name": "LPG",
-                                "allowed_sub_menus": [
-                                    "LPG Operations",
-                                    "LPG Plant",
-                                    "Video Analytics"
-                                ]
-                            }
-                        ],
-                        "name": "SOD",
                         "status": True
                     },
                     "Maintenance Officer LPG": {
@@ -642,6 +632,7 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics"
                                 ]
                             }
@@ -656,6 +647,7 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics"
                                 ]
                             }
@@ -671,7 +663,14 @@ async def sync_user_roles():
                                     "LPG Operations",
                                     "LPG Plant",
                                     "LPG Analytics",
+                                    "LPG Inventory",
                                     "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "Performance",
+                                "allowed_sub_menus": [
+                                    "Sales Performance"
                                 ]
                             }
                         ],
@@ -697,6 +696,7 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics"
                                 ]
                             }
@@ -726,6 +726,7 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics"
                                 ]
                             }
@@ -740,6 +741,7 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics"
                                 ]
                             }
@@ -754,6 +756,7 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics"
                                 ]
                             }
@@ -768,6 +771,7 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics",
                                     "LPG Analytics"
                                 ]
@@ -783,6 +787,7 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics",
                                     "LPG Analytics"
                                 ]
@@ -798,8 +803,15 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics",
                                     "LPG Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "Performance",
+                                "allowed_sub_menus": [
+                                    "Sales Performance"                                    
                                 ]
                             }
                         ],
@@ -828,6 +840,7 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics",
                                     "LPG Analytics"
                                 ]
@@ -843,6 +856,7 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
+                                    "LPG Inventory",
                                     "Video Analytics",
                                     "LPG Analytics"
                                 ]
