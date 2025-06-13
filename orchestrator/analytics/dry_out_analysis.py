@@ -1806,7 +1806,8 @@ async def get_nozzle_sales(dry_out_in_days='1'):
                 FROM "HPCL_HOS".ms_nozzle_list n2
                 INNER JOIN "HPCL_HOS".ms_site s2 ON n2.site_id = s2.site_id
                 WHERE n2.site_id = n.site_id
-                  AND n2.noz_last_trxn_date::date = CURRENT_DATE
+--                   AND n2.noz_last_trxn_date::date = CURRENT_DATE
+                  AND n2.noz_last_trxn_date is not null
                   AND n2.enable = true
             )
             AND n.enable = true"""
