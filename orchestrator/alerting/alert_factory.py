@@ -13,6 +13,7 @@ import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
 import orchestrator.analytics.vts_analysis as vts_analysis
 import cache_gateway.cache_api_actions as cache_api_actions
+import asyncio
 
 logger = urdhva_base.logger.Logger.getInstance('alert_factory_log')
 
@@ -65,11 +66,19 @@ class AlertFactory:
             location_data = alert_data.get("location_data", {})
             device_name = alert_data.get("device_name", '')
             if not location_data:
-                if urdhva_base.ctx.exists():
-                    _, location_data = await alert_helper.get_location_details(bu, sap_id)
-                else:
-                    _, location_data = await cache_api_actions.get_location_data(bu=bu, location_id=sap_id)
-
+                retries = 3
+                for attempt in range(retries):
+                    if urdhva_base.ctx.exists(): 
+                            _, location_data = await alert_helper.get_location_details(bu, sap_id)
+                            break
+                    else:
+                            _, location_data = await cache_api_actions.get_location_data(bu=bu, location_id=sap_id)
+                    
+                    if location_data:
+                        break
+                    
+                    print(f"Retrying to fetch location data for {bu} {sap_id}... Attempt {attempt + 1}/{retries}")
+                    await asyncio.sleep(3)
             # print("location_data --> ", location_data)
             # if not status:
             #     return False, location_data
