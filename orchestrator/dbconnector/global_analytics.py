@@ -5648,7 +5648,7 @@ class GlobalAnalytics:
                     sop_id,
                     interlock_name,
                     location_name,
-                    COUNT(*) AS alert_count
+                    COUNT(DISTINCT tas_device_name) AS alert_count
                 FROM alerts
                 WHERE bu = 'TAS' AND alert_section = 'TAS'
                 {date_condition}
