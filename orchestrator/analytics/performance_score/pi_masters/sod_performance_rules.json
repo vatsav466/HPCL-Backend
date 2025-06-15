@@ -162,7 +162,7 @@
                 "name": "Secondary Radar Guage",
                 "equipment_name": "Radar",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": ["Secondary Radar_Under Maintenance", "Tank_Under Maintenance"],
                 "interlock_name": ["Secondary Radar_Under Maintenance", "Tank_Under Maintenance"]
@@ -171,7 +171,7 @@
                 "name": "VFT",
                 "equipment_name": "VFT",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": ["VFT_Under Maintenance", "Tank_Under Maintenance"],
                 "interlock_name": ["VFT_Under Maintenance", "Tank_Under Maintenance"]
@@ -180,7 +180,7 @@
                 "name": "ROSOV",
                 "equipment_name": "ROSOV",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": ["ROSOV_Under Maintenance", "Tank_Under Maintenance", "ROSOV_FailtoClose"],
                 "interlock_name": ["ROSOV_Under Maintenance", "Tank_Under Maintenance", "ROSOV_FailtoClose"]
@@ -189,7 +189,7 @@
                 "name": "HCD",
                 "equipment_name": "HCD",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": ["HCD_Under Maintenance", "HCD_Fault activated"],
                 "interlock_name": ["HCD_Under Maintenance", "HCD_Fault activated"]
@@ -198,7 +198,7 @@
                 "name": "Rim Seal",
                 "equipment_name": "RIMSEAL",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": ["Rim Seal system_Under Maintenance", "Rim Seal system_Fault activated"],
                 "interlock_name": ["Rim Seal system_Under Maintenance", "Rim Seal system_Fault activated"]
@@ -207,7 +207,7 @@
                 "name": "Dyke Valves",
                 "equipment_name": "Dyke",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": "Dykevalve_Activated",
                 "interlock_name": "Dykevalve_Activated"
@@ -215,7 +215,7 @@
             {
                 "name": "Hooter",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "rules": [
                   {
                     "equipment_name": "Dyke",
@@ -223,7 +223,7 @@
                     "search_key": "interlock_name",
                     "search_value": "",
                     "interlock_name": "",
-                    "weightage": 2.22
+                    "weightage": 2.38
                   },
                   {
                     "equipment_name": "HCD",
@@ -231,7 +231,7 @@
                     "search_key": "interlock_name",
                     "search_value": "",
                     "interlock_name": "",
-                    "weightage": 2.22
+                    "weightage": 2.38
                   },
                   {
                     "equipment_name": "ESD",
@@ -239,7 +239,7 @@
                     "search_key": "interlock_name",
                     "search_value": "",
                     "interlock_name": "",
-                    "weightage": 2.22
+                    "weightage": 2.38
                   }
                 ]
             },
@@ -247,7 +247,7 @@
                 "name": "Fire Engine",
                 "equipment_name": "Fire Engine",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": ["Fire engine_Under Maintenance", "Fire engine_ FailtoStart", "Fireengine_LLOP", "FireEngine_HWOT", "FireEngine_Tripped"],
                 "interlock_name": ["Fire engine_Under Maintenance", "Fire engine_ FailtoStart", "Fireengine_LLOP", "FireEngine_HWOT", "FireEngine_Tripped"]
@@ -256,7 +256,7 @@
                 "name": "Jockey Pump",
                 "equipment_name": "Jockey Pump",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": ["JockeyPump_Under Maintenance", "Jockeypump_ FailtoStart"],
                 "interlock_name": ["JockeyPump_Under Maintenance", "Jockeypump_ FailtoStart"]
@@ -265,7 +265,7 @@
                 "name": "ESD",
                 "equipment_name": "ESD",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": "ESD Push button_Under Maintenance",
                 "interlock_name": "ESD Push button_Under Maintenance"
@@ -274,7 +274,7 @@
                 "name": "Hydrant PTs",
                 "equipment_name": "PT",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": "HydrantPT_Under Maintenance",
                 "interlock_name": "HydrantPT_Under Maintenance"
@@ -283,7 +283,7 @@
                 "name": "UPS Safety",
                 "equipment_name": "UPS",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": "",
                 "interlock_name": ""
@@ -292,7 +292,7 @@
                 "name": "Safety PLC",
                 "equipment_name": "PLC",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": "",
                 "interlock_name": ""
@@ -301,7 +301,7 @@
                 "name": "Air Compressor",
                 "equipment_name": "Air Compressor",
                 "model": "open_alerts",
-                "weightage": 6.67,
+                "weightage": 7.14,
                 "search_key": "interlock_name",
                 "search_value": "AirCompressor_Fault activated",
                 "interlock_name": "AirCompressor_Fault activated"

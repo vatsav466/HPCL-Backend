@@ -425,7 +425,6 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         df["month_name"] = pd.Categorical(df["month_name"], categories=[m.upper() for m in m60.months], ordered=True)
         df = df.sort_values('month_name').reset_index(drop=True)
     if resp_format == 'company_level' and time_grain == 'Monthly' and '"inc"' in [x['key'] for x in filters]:
-
         getCumulative = False
         if '"cumulative"' in [x['key'] for x in filters]:
             getCumulative = True
@@ -872,8 +871,8 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
     filters, fiscal_year_pre, fiscal_year_last, months = get_date_filters(filters)
     #Added for the purpose of FY2025-2026 Apr ist
-    fiscal_year_pre = '2024-2025'
-    fiscal_year_last = '2023-2024'
+    fiscal_year_pre = '2025-2026'
+    fiscal_year_last = '2024-2025'
     if fiscal_year_pre and not fiscal_year_last:
         filters.append({"key": "fiscal_year", "cond": "equals", "value": fiscal_year_pre})
     elif not fiscal_year_pre and fiscal_year_last:
@@ -982,7 +981,7 @@ WITH current_year_sales AS (
         month_name,
         ROUND(SUM(netweight_tmt), 2) AS current_year_amount
     FROM {table_name}
-    WHERE fiscal_year='2024-2025'
+    WHERE fiscal_year='2025-2026'
         {'AND ' + filter_conditions if filter_conditions else ''}
     GROUP BY sbu_name, coname, month_name
 ),
@@ -993,7 +992,7 @@ last_year_sales AS (
         month_name,
         ROUND(SUM(netweight_tmt), 2) AS last_year_amount
     FROM {table_name}
-    WHERE fiscal_year='2023-2024'
+    WHERE fiscal_year='2024-2025'
         {'AND ' + filter_conditions if filter_conditions else ''}
     GROUP BY sbu_name, coname, month_name
 ),
@@ -1141,6 +1140,8 @@ async def get_category_wise_cumulative_data(filters):
     :param filters:
     :return:
     """
+    org_filters = filters
+    print("filters in omc_cumulative",filters)
     months_list = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR']
     present_month = datetime.datetime.now().strftime('%b').upper()
     months_list = months_list[:months_list.index(present_month)]
@@ -1149,7 +1150,16 @@ async def get_category_wise_cumulative_data(filters):
         months = months_list
     where_conditions = []
     where_conditions.extend(['"category" NOT IN (\'O\')'])
-    fiscal_years = ["2023-2024", "2024-2025"]
+    fiscal_years = []
+    print("filters",filters)
+    for each_filter in org_filters:
+        print("each_filter",each_filter)
+        if each_filter['key'].strip('"')  =='fiscal_year':
+            if each_filter['value'].strip('"') == '2024-2025':
+                fiscal_years = ["2023-2024", "2024-2025"]
+            if each_filter['value'].strip('"') == '2025-2026':
+                fiscal_years = ["2024-2025", "2025-2026"]
+    print("fiscal_years",fiscal_years)
     filters.append({"key": "\"fiscal_year\"", "cond": "one-off", "value": fiscal_years})
     for filter_cond in filters:
         filter_cond['key'] = filter_cond['key'].strip('"')
@@ -1175,10 +1185,10 @@ async def get_category_wise_cumulative_data(filters):
     df["sales"] = df["sales"].astype(str).apply(float)
     fiscal_years = sorted(df["fiscal_year"].unique())
     if len(fiscal_years) ==1:
-        if fiscal_years[0] =='2023-2024':
-            fiscal_years.extend('2024-2025')
+        if fiscal_years[0] =='2024-2025':
+            fiscal_years.extend('2025-2026')
         else:
-            fiscal_years.extend('2023-2024')
+            fiscal_years.extend('2024-2025')
     result_dict = {year: {} for year in fiscal_years}
     for year in fiscal_years:
         filtered_df = df[df["fiscal_year"] == year]
@@ -1277,6 +1287,8 @@ async def generate_omc_compare_data(filters, drill_state):
     :param drill_state:
     :return:
     """
+    
+    org_filters  = filters
     months_list = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR']
     months = []
     ind_sbu_cumulative = [x['value'] for x in filters if 'ind_sbu_cumulative' in x['key'].lower()]
@@ -1327,20 +1339,26 @@ async def generate_omc_compare_data(filters, drill_state):
     where_conditions = []
     where_conditions.extend(['"category" NOT IN (\'O\')'])
     filters = [cond_filter for cond_filter in filters if cond_filter['key'].strip('"') not in ["fiscal_year", 'month_name']]
-    filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2023-2024", "2024-2025"]})
+
+    
     for filter_cond in filters:
         filter_cond['key'] = filter_cond['key'].strip('"')
     if months:
         filters.append({'key': 'month_name', 'cond': 'one-off', 'value': months})
 
     filters.append({'key': 'coname', 'cond': 'one-off', 'value': market_share_companies})
-
+    year_filters = [filter for filter in org_filters if filter['key'].strip('"') == 'fiscal_year']
+    print("year_filters",year_filters)
     fiscal_year_pre = (f"{fiscal_year.FiscalYear.current().start.year}-"
                        f"{fiscal_year.FiscalYear.current().end.year}")
     fiscal_year_last = (f"{fiscal_year.FiscalYear.current().prev_fiscal_year.start.year}-"
                         f"{fiscal_year.FiscalYear.current().prev_fiscal_year.end.year}")
-    
-    
+    if year_filters[0]['value'].strip('"') != fiscal_year_pre:
+        fiscal_year_pre = fiscal_year_last
+        fiscal_year_last = str(int(fiscal_year_last.split('-')[0])-1)+'-'+str(int(fiscal_year_last.split('-')[-1]) -1)
+        filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": [fiscal_year_pre, fiscal_year_last]})
+    else:
+        filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2024-2025", "2025-2026"]})
     present_month = datetime.datetime.now().strftime('%b')
     if present_month.lower() == 'apr':
                 fiscal_year_pre = fiscal_year_last

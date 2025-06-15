@@ -93,8 +93,8 @@ async def generate_sod_engineering_location_stats(sap_id):
             maintenance_interlocks = maintenance_map.get(device_name, set())
             fault_interlocks = fault_map.get(device_name, set())
 
-            total_maintenance_count = await get_alert_count_for_interlock_set(maintenance_interlocks, device_name)
-            total_fault_count = await get_alert_count_for_interlock_set(fault_interlocks, device_name)
+            total_maintenance_count = await get_alert_count_for_interlock_set(maintenance_interlocks, mapped_name, sap_id)
+            total_fault_count = await get_alert_count_for_interlock_set(fault_interlocks, mapped_name, sap_id)
 
             result_dict[device_id] = {
                 "id": device_id,
@@ -113,21 +113,28 @@ async def generate_sod_engineering_location_stats(sap_id):
         return {"status": False, "message": f"Error: {str(e)}", "data": []}
 
 
-async def get_alert_count_for_interlock_set(interlocks, equipment):
+async def get_alert_count_for_interlock_set(interlocks, equipment, sap_id):
     if not interlocks or not equipment:
         return 0
 
     interlock_filter = ",".join(f"'{i}'" for i in interlocks)
-    query = f"equipment_name='{equipment}' and interlock_name in ({interlock_filter}) and alert_status = 'Open'"
+    query = f"""
+        sap_id = '{sap_id}'
+        AND equipment_name = '{equipment}' 
+        AND interlock_name IN ({interlock_filter}) 
+        AND alert_status = 'Open'
+    """
     params = urdhva_base.queryparams.QueryParams()
     params.q = query
-    params.fields = ['interlock_name']
-
+    params.fields = ['tas_device_name']
+    print("query --> ", query)
     result = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
     if not result.get("data"):
         return 0
 
-    return len({entry['interlock_name'] for entry in result['data'] if 'interlock_name' in entry})
+    #Return number of distinct devices affected
+    return len({entry['tas_device_name'] for entry in result['data'] if 'tas_device_name' in entry})
+
 
 
 async def get_filtered_location_data(bu, location_onboard, specific_zone=None, specific_sap_id=None):
@@ -146,10 +153,10 @@ async def get_filtered_location_data(bu, location_onboard, specific_zone=None, s
     query = f"bu = '{bu}' and location_onboard = '{location_onboard}'"
     params = urdhva_base.queryparams.QueryParams(q=query)
     resp = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
-    
+
     if not resp.get("data"):
         return {"status": False, "message": "No Data found", "data": []}
-    
+
     data = resp.get("data", '')
     # Now create zone and sap_id lists
     zone_list = []
@@ -159,17 +166,17 @@ async def get_filtered_location_data(bu, location_onboard, specific_zone=None, s
         zone = item.get("zone")
         sap_id = item.get("sap_id")
         name = item.get("name", "")
-        
+
         # If specific_zone is provided, only collect sap_ids for that zone
         if specific_zone and zone == specific_zone:
             zone_list.append({"id": zone, "name": zone})
             sap_id_list.append({"id": sap_id, "name": name})
-        
+
         # If specific_sap_id is provided, only collect zones for that sap_id
         elif specific_sap_id and sap_id == specific_sap_id:
             zone_list.append({"id": zone, "name": zone})
             sap_id_list.append({"id": sap_id, "name": name})
-        
+
         # If no specific filters, collect all data
         elif not specific_zone and not specific_sap_id:
             zone_list.append({"id": zone, "name": zone})
