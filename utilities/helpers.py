@@ -388,8 +388,9 @@ def fetch_alarm_data(self, device_id):
     alarm_data = tb_master.ThingsBoardInterface().api_handler('GET', alarm_url, {}, params)
     return alarm_data
 
-def get_user_details():
+def get_user_details(where_clause):
     rpt = urdhva_base.context.context.get('rpt', {})
+    print("rpt: ", rpt)
     user_bu = rpt.get("bu", [])
     user_zone = rpt.get("zone", [])
     user_region = rpt.get("region", [])
@@ -397,7 +398,8 @@ def get_user_details():
 
     user_zone = [sales_mapping.sales_zone_map.get(zone, zone) for zone in user_zone]
 
-            
+    if not user_region:
+        user_region = [x['value'] for x in where_clause if x.get('key') == 'Region_Name']   
     where_clause = []
 
     if user_bu:
@@ -407,12 +409,14 @@ def get_user_details():
                 "cond": "=",
                 "value": user_bu[0]
             })
+            print("where_clause: ", where_clause)
         else:
             where_clause.append({
                 "key": "SBU_Name",
                 "cond": "IN",
                 "value": user_bu
             })
+            print("where_clause: ", where_clause)
 
     if user_zone:
         if len(user_zone) == 1:
@@ -421,12 +425,14 @@ def get_user_details():
                 "cond": "=",
                 "value": user_zone[0]
             })
+            print("where_clause: ", where_clause)
         else:
             where_clause.append({
                 "key": "ORGZONECD",
                 "cond": "IN",
                 "value": user_zone
             })
+            print("where_clause: ", where_clause)
 
     if user_region:
         if len(user_region) == 1:
@@ -435,12 +441,14 @@ def get_user_details():
                 "cond": "=",
                 "value": user_region[0]
             })
+            print("where_clause: ", where_clause)
         else:
             where_clause.append({
                 "key": "Region_Name",
                 "cond": "IN",
                 "value": user_region
             })
+            print("where_clause: ", where_clause)
 
     if user_sales_area:
         if len(user_sales_area) == 1:
@@ -449,11 +457,13 @@ def get_user_details():
                 "cond": "=",
                 "value": user_sales_area[0]
             })
+            print("where_clause: ", where_clause)
         else:
             where_clause.append({
                 "key": "SalesArea_Name",
                 "cond": "IN",
                 "value": user_sales_area
             })
+            print("where_clause: ", where_clause)
 
     return where_clause
