@@ -473,7 +473,7 @@ class Postgresql(BaseAction):
         #         "status": False, "message": "Unable to connect to PostgresSQL",
         #         "data": []
         #     }
-        data = helpers.get_user_details()
+        data = helpers.get_user_details(where_clause)
         if data:
             where_clause = data
         try:
