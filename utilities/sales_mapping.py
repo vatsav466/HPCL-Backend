@@ -13,7 +13,7 @@ sales_zone_map = {
     "NZ": "NZ",
     "NCZ": "NCZ",
     "WZ": "WZ",
-    "NFZ": "NZ",
+    "NFZ": "NFZ",
     "NWF": "NWZ",
     "NCR": "NCZ",
     "SCR": "SCZ",
