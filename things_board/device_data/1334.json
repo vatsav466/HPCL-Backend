@@ -2,10 +2,10 @@
     "data": [
         {
             "device_name": "TK-01_BS VI MS@Rewari",
-            "device_id": "ece6c9e0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2ad5d400-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "1AG23sgb97El0Iw6zTL7",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "VrZ4MKvgLre9kSOCLCHA",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -193,10 +193,10 @@
         },
         {
             "device_name": "TK-02_BS VI MS@Rewari",
-            "device_id": "ed660c00-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2ada40d0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "5JTcBcSxSeHEOTb2Cfgz",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "wtfg32QaSX7w1YxvadVC",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -384,10 +384,10 @@
         },
         {
             "device_name": "TK-03_ETHANOL@Rewari",
-            "device_id": "eddcc2a0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2ae20900-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "I91nu7zTCP4Sx7Zjp05Y",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "dz7AuuCfmjMBMtzhco7q",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -575,10 +575,10 @@
         },
         {
             "device_name": "TK-04_ETHANOL@Rewari",
-            "device_id": "ee583430-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2ae9d130-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "3noJTFTIhfAZYAsKUyFB",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "fFeenbHkJ9Mc2vWITStt",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -766,10 +766,10 @@
         },
         {
             "device_name": "TK-05_ETHANOL@Rewari",
-            "device_id": "eed182e0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2af14b40-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "Lx5436xzG98ggyFKaZfD",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "LRj0IUbOMiU1Z9HjIRjD",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -957,10 +957,10 @@
         },
         {
             "device_name": "TK-06_BS VI HSD@Rewari",
-            "device_id": "ef483980-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2af8c550-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "lk2ZHcI9BlXVab2EO0Sb",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "ugtJGcQwH9TiW7Utftmz",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1148,10 +1148,10 @@
         },
         {
             "device_name": "TK-07_BS VI MS@Rewari",
-            "device_id": "efc42040-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b008d80-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "KCbfNfMb7HHrYRlwfc1R",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "xThowJ5f9uJxPR7k3Wme",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1339,10 +1339,10 @@
         },
         {
             "device_name": "TK-08_BS VI HSD@Rewari",
-            "device_id": "f0436260-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b082ea0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "fA2WkHuhrQbRDuIT4rOF",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "ECk6bVuseasXqGWJ375Z",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1530,10 +1530,10 @@
         },
         {
             "device_name": "TK-09_WATER@Rewari",
-            "device_id": "f0ba4010-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b0ff6d0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "PlMqWu7NxirhVCWleAJr",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "vjxrKlJIgAuSVXdpmWs1",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1721,10 +1721,10 @@
         },
         {
             "device_name": "TK-10_WATER@Rewari",
-            "device_id": "f1331990-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b1770e0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "yPA4FXmcH6sIzv1FdIqG",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "l9V2UxXvFYAgzC75se17",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1912,10 +1912,10 @@
         },
         {
             "device_name": "TK-11_BS VI HSD@Rewari",
-            "device_id": "f1ae6410-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b1eeaf0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "evF3NYObp2Ha1AghO7ee",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "HSoCxHrMZkb8sqWD26lE",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2103,10 +2103,10 @@
         },
         {
             "device_name": "TK-12_BS VI MS@Rewari",
-            "device_id": "f2296070-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b26da30-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "pqDzhc3cUvsuVJRlpOAr",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "mo5PAvLQOzBYwlbcLmg6",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2294,10 +2294,10 @@
         },
         {
             "device_name": "TK-13_BS VI HSD@Rewari",
-            "device_id": "f2a40eb0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b2e5440-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "3U0ftWLGvGDHGgrl2ebG",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "v2MmCuQo8BHOc6fWYSLb",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2485,10 +2485,10 @@
         },
         {
             "device_name": "TK-14_BS VI HSD@Rewari",
-            "device_id": "f323c600-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b35ce50-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "37Ik0NtcipeemzWhc21b",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "c43kYwE4DJSjIpdOZ5nh",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2676,10 +2676,10 @@
         },
         {
             "device_name": "TK-15_BS VI MS@Rewari",
-            "device_id": "f3a0be30-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b3de4a0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "KKgn4VcgLKtaLOZMr5oq",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "i4fIB7Jd9MOuINBMMaI9",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2867,10 +2867,10 @@
         },
         {
             "device_name": "TK-16_SLOP@Rewari",
-            "device_id": "f416d890-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b4585c0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "EM26sbOoHyb3MbzVjYp0",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "eRvQQMm3k2UEPWFnfQ6G",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3058,10 +3058,10 @@
         },
         {
             "device_name": "TK-17_SLOP@Rewari",
-            "device_id": "f4b3dbe0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b4d26e0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "4aDIwHSMmLjfNceIkvKB",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "hmO8A1EUrcxYAZwz1UrF",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3249,10 +3249,10 @@
         },
         {
             "device_name": "TK-18_ETHANOL@Rewari",
-            "device_id": "f53cbaf0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b5404b0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "bSfAffSJggjoMZc63QEc",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "6OQC9E0kxC3uNtJYtzQO",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3440,10 +3440,10 @@
         },
         {
             "device_name": "TK-19_ETHANOL@Rewari",
-            "device_id": "f5c265b0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b5bf3f0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "ksCIDRJOevd3gfMC1Erk",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "hbLBqMeCEUSNzQRt5Tn2",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3631,10 +3631,10 @@
         },
         {
             "device_name": "TK-20_ETHANOL@Rewari",
-            "device_id": "f6472610-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b636e00-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "kfk2qbiUHNGHhfgog183",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "OAhlConObOHvxnbSWoOC",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3822,10 +3822,10 @@
         },
         {
             "device_name": "TK-21_ETHANOL@Rewari",
-            "device_id": "f6c90040-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b6b8450-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "suD4BJLYI6IGF1wcCKY1",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "wG8rs3qItbWpfORxsX6T",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4013,10 +4013,10 @@
         },
         {
             "device_name": "TK-26_BS VI MS@Rewari",
-            "device_id": "f74f2030-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b732570-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "Ptlrnkcye7NT2tJ3OVS5",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "hOod08XPTLBJ92khZ0bI",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4204,10 +4204,10 @@
         },
         {
             "device_name": "TK-27_BS VI HSD@Rewari",
-            "device_id": "f7d54020-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b7a2a50-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "ikUISznt3dn3ZUtJpcSP",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "aWcSPDwrtBxSBnNnrBAE",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4395,10 +4395,10 @@
         },
         {
             "device_name": "TK-28_BS VI HSD@Rewari",
-            "device_id": "f84fc750-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b81cb70-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "MhA0JJEo5b3gR2l0LMvo",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "NAKHtKMEpfzL9qB5GNz7",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4586,10 +4586,10 @@
         },
         {
             "device_name": "TK-29_WATER@Rewari",
-            "device_id": "f8c76850-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b8a08d0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "4yd16kJjQigB1RyZ24D0",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "NnmQmKpUjyX0NxPZu4VH",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4777,10 +4777,10 @@
         },
         {
             "device_name": "TK-30_WATER@Rewari",
-            "device_id": "f94264b0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b9134c0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "X0YZb6UISHewkJ2YShq1",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "aeITA1SfhoBYqnJhqKjg",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4968,10 +4968,10 @@
         },
         {
             "device_name": "TK-32_ETHANOL@Rewari",
-            "device_id": "f9bc2890-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2b98fcf0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "49aaOHtB78pu3jlGZiZP",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "5hpowycLhxDMNm2VIjiZ",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -5159,10 +5159,10 @@
         },
         {
             "device_name": "TK-01_BS VI MS@Rewari_M",
-            "device_id": "fa34b3f0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2ba09e10-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "94kRWKMciCeupo8hCmMI",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "mDn4o1duvlD4e0Nf23aX",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5252,10 +5252,10 @@
         },
         {
             "device_name": "TK-02_BS VI MS@Rewari_M",
-            "device_id": "fab18510-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2ba88d50-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "0ALtZ05I8TM5iNQs1THD",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "Fbe1lbSUIAp3BOYsPW2X",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5345,10 +5345,10 @@
         },
         {
             "device_name": "TK-03_ETHANOL@Rewari_M",
-            "device_id": "fb28b0e0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2bb00760-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "Krmycci3yZq3Wcgok0X7",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "luvvumD6vWT2MkE1PW2C",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5438,10 +5438,10 @@
         },
         {
             "device_name": "TK-04_ETHANOL@Rewari_M",
-            "device_id": "fba708a0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2bb7a880-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "sska6fCRzrHDB0J2e7Zp",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "yesu6HlTOHgV83IKFCLu",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5531,10 +5531,10 @@
         },
         {
             "device_name": "TK-05_ETHANOL@Rewari_M",
-            "device_id": "fc227a30-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2bbf97c0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "wuNbS4ViWKtbLtA8a0JB",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "O4LClXETWoyHe7x1lk5T",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5624,10 +5624,10 @@
         },
         {
             "device_name": "TK-06_BS VI HSD@Rewari_M",
-            "device_id": "fc989490-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2bc6c3b0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "ntpRahyb0PqsGwApN28r",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "dJAu1GUe3aQX3NwZ3nnQ",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5717,10 +5717,10 @@
         },
         {
             "device_name": "TK-07_BS VI MS@Rewari_M",
-            "device_id": "fd14c970-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2bceb2f0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "AA2alFyl1tlHcuwsvJ03",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "D0wjdsZqI6NJI1DcWd67",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5810,10 +5810,10 @@
         },
         {
             "device_name": "TK-08_BS VI HSD@Rewari_M",
-            "device_id": "fd90d740-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2bd65410-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "Q7ExQtnhNagPlo0RVz9L",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "ZzV2oCh3wwBug2GTBWZk",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5903,10 +5903,10 @@
         },
         {
             "device_name": "TK-09_WATER@Rewari_M",
-            "device_id": "fe07b4f0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2bdda710-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "o49vhuBSiWtsn7QJcYct",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "Mqq4K9jUnrWT5SCT5GDx",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5996,10 +5996,10 @@
         },
         {
             "device_name": "TK-10_WATER@Rewari_M",
-            "device_id": "fe834d90-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2be56f40-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "iVQd5skx6COJgulQui5y",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "YJ6jCS8aUeXUlIJivWm7",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -6089,10 +6089,10 @@
         },
         {
             "device_name": "TK-11_BS VI HSD@Rewari_M",
-            "device_id": "fefbb1e0-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2bed1060-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "EumsJEVRVgTkhFObJNpj",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "h2spjB7LieurLDL9SQE5",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -6182,10 +6182,10 @@
         },
         {
             "device_name": "TK-12_BS VI MS@Rewari_M",
-            "device_id": "ff794650-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2bf46360-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "MVoFuCt667djbRXp4ozQ",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "PwCeusJuNsyYcn0qEBV1",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -6275,10 +6275,10 @@
         },
         {
             "device_name": "TK-13_BS VI HSD@Rewari_M",
-            "device_id": "fff09930-2745-11f0-b475-bbbb14fdc372",
+            "device_id": "2bfca0c0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "5V8Eqef8K9INWwgAcn1l",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "Tj9rjXXtcSLDqXqI83b6",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -6368,10 +6368,10 @@
         },
         {
             "device_name": "TK-14_BS VI HSD@Rewari_M",
-            "device_id": "006c0ac0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c03a5a0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "ukMmHhWH1oDYgr8MomsZ",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "YBVl09XnSD916VyaVXmE",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -6461,10 +6461,10 @@
         },
         {
             "device_name": "TK-15_BS VI MS@Rewari_M",
-            "device_id": "00e902f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c0b6dd0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "w2WptMMOOViJPFN0VQM5",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "fOAPOkb7ewclXx6Dm7XK",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -6554,10 +6554,10 @@
         },
         {
             "device_name": "TK-16_SLOP@Rewari_M",
-            "device_id": "015ecf30-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c138420-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "Q7xTTjGfniSEMRKtO89c",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "TUmDjpGssYsclNBYXCKN",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -6647,10 +6647,10 @@
         },
         {
             "device_name": "TK-17_SLOP@Rewari_M",
-            "device_id": "01dd26f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c1ab010-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "sgb7FLnRlPajrCdScqDY",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "fkXSlxQ3oiRRiaBMZqRP",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -6740,10 +6740,10 @@
         },
         {
             "device_name": "TK-18_ETHANOL@Rewari_M",
-            "device_id": "025256f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c233b90-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "nmetmNjs6Jm7HOhyR8VI",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "rxT8AnhwAVOXooFrlEVr",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -6833,10 +6833,10 @@
         },
         {
             "device_name": "TK-19_ETHANOL@Rewari_M",
-            "device_id": "02cc68f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c2b03c0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "ta3HgmGSE2kCYzbxkK9I",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "y36y8YyiGSXSXw29BOnO",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -6926,10 +6926,10 @@
         },
         {
             "device_name": "TK-20_ETHANOL@Rewari_M",
-            "device_id": "03408780-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c3256c0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "H8VH327x9qIeIwkQzQCr",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "dKDQvli33QkYv5xwZbTI",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -7019,10 +7019,10 @@
         },
         {
             "device_name": "TK-21_ETHANOL@Rewari_M",
-            "device_id": "03d46310-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c395ba0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "Zdb2wlP18Hco0qVf5i9w",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "cPdligRxCiYYzJZan3yF",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -7112,10 +7112,10 @@
         },
         {
             "device_name": "TK-26_BS VI MS@Rewari_M",
-            "device_id": "04472210-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c40fcc0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "VWMqVoBi5PUY9rcvhRHl",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "8EFm9YHooS6fDZE6waVZ",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -7205,10 +7205,10 @@
         },
         {
             "device_name": "TK-27_BS VI HSD@Rewari_M",
-            "device_id": "04bcee50-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c489de0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "Mbi7j2BmdyrzseKRJAcM",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "APHT709t3NFlMcWRglIT",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -7298,10 +7298,10 @@
         },
         {
             "device_name": "TK-28_BS VI HSD@Rewari_M",
-            "device_id": "052ffb70-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c503f00-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "oeMtmUMfSINQUjRQLVuh",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "niq2XPhmZ3IcghZZzjuz",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -7391,10 +7391,10 @@
         },
         {
             "device_name": "TK-29_WATER@Rewari_M",
-            "device_id": "05a79c70-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c585550-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "WNM4uWSbkkci6UfYxZZM",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "puGCDkjxH33UivQvF2Km",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -7484,10 +7484,10 @@
         },
         {
             "device_name": "TK-30_WATER@Rewari_M",
-            "device_id": "061be210-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c601d80-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "dvNh8UmQbxmJ04P27b8H",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "hccSe7seiDPeRfsJoHYc",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -7577,10 +7577,10 @@
         },
         {
             "device_name": "TK-32_ETHANOL@Rewari_M",
-            "device_id": "06916030-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c674970-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "EI347WZEQZKAYzhI1dB0",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "H4T1okBXFSaCjaMmeb9K",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -7670,10 +7670,10 @@
         },
         {
             "device_name": "ADTV-PMP-01_POWERMS@Rewari",
-            "device_id": "0707a1a0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c6ec380-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "mBvaYTS9dGw59yWyQ79W",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "hPs4ty3nl8brNnu56Lei",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -7707,10 +7707,10 @@
         },
         {
             "device_name": "ADTV-PMP-02_POWERMS@Rewari",
-            "device_id": "077c8380-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c77eb40-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "zd5E6XikPzUAnYGGnqe2",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "9uGAokZxvGh8cKJoeqXc",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -7744,10 +7744,10 @@
         },
         {
             "device_name": "ADTV-PMP-03_TURBOHSD@Rewari",
-            "device_id": "07efdec0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c7f6550-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "JGFiEYv35jZ8aH1WlO7D",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "RQ9vnekNEAfcE1hknbYq",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -7781,10 +7781,10 @@
         },
         {
             "device_name": "ADTV-PMP-04_TURBOHSD@Rewari",
-            "device_id": "086eabb0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c86b850-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "rquYEFUulUYMlJstvyYq",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "tQtU6C9S8ioaYD33uagY",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -7818,10 +7818,10 @@
         },
         {
             "device_name": "PMP-01_ETHANOL@Rewari",
-            "device_id": "08e6e8f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c8de440-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "AoyBOBp8r4zJKN0lNaDy",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "f6qytGaUzVOBMJMpIUbj",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -7855,10 +7855,10 @@
         },
         {
             "device_name": "PMP-02_ETHANOL@Rewari",
-            "device_id": "095dedb0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c9621a0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "gDoJChCGsukXai2oAuyb",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "QxYqh5d9wQyxcQ80nBlS",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -7892,10 +7892,10 @@
         },
         {
             "device_name": "PMP-03_ETHANOL@Rewari",
-            "device_id": "09d7b190-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2c9d2680-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "OrIYxlw3mGV4lBiyT151",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "MtYGxEdjRIwMSA3tSCvx",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -7929,10 +7929,10 @@
         },
         {
             "device_name": "PMP-04_WATER@Rewari",
-            "device_id": "0a48e9f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ca4a090-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "dpBiXbmkGzuszMY9i73g",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "KeZA1UJvAmia1GK7gXnZ",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -7966,10 +7966,10 @@
         },
         {
             "device_name": "PMP-05_WATER@Rewari",
-            "device_id": "0abe8f20-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2cac8fd0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "n3DIsyAOWfW1Nm3ur2UX",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "VhZyTgtG4FYyBUZ7U1Kx",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8003,10 +8003,10 @@
         },
         {
             "device_name": "PMP-06_BS VI MS@Rewari",
-            "device_id": "0b37b6c0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2cb430f0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "roKhSoQVmWZ1IK37AjBu",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "xlNI3RnwcHuTf1IsqKm8",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8040,10 +8040,10 @@
         },
         {
             "device_name": "PMP-07_BS VI MS@Rewari",
-            "device_id": "0bb1a1b0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2cbc4740-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "Zpns1B41H5uD6lhcLK8X",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "LKRXWKAM03n77toaiT8K",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8077,10 +8077,10 @@
         },
         {
             "device_name": "PMP-08_BS VI MS@Rewari",
-            "device_id": "0c2d6160-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2cc32510-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "qAKT9IXcfHpXHrkCtYI5",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "nmMUVd0Z1n2diLcavCU8",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8114,10 +8114,10 @@
         },
         {
             "device_name": "PMP-09_BS VI HSD@Rewari",
-            "device_id": "0ca613d0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ccbb090-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "wbQRLAG1MeCHJ5X3ZKTY",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "ncLXKd7T3NhfOfqr9tEw",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8151,10 +8151,10 @@
         },
         {
             "device_name": "PMP-10_BS VI HSD@Rewari",
-            "device_id": "0d246b90-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2cd26750-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "SJm7l28YPd2lfWUHmRPB",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "xO4SZb9Aqmai1MEPOV3r",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8188,10 +8188,10 @@
         },
         {
             "device_name": "PMP-11_BS VI HSD@Rewari",
-            "device_id": "0d99c2a0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2cd9e160-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "syfkCvbcWIpBwPIv1GPF",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "g1XgDxsTWcMASBEBbvGy",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8225,10 +8225,10 @@
         },
         {
             "device_name": "PMP-12_BS VI HSD@Rewari",
-            "device_id": "0e1645a0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ce1d0a0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "9s9xjNaplhUlwS1yQdno",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "SlBGynJUdC9EIoKnbtdg",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8262,10 +8262,10 @@
         },
         {
             "device_name": "PMP-13_BS VI HSD@Rewari",
-            "device_id": "0e919020-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ce94ab0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "7y4nYOyiG4smTzRbX9v5",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "Nk59cP42MVv6JDWvQz0X",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8299,10 +8299,10 @@
         },
         {
             "device_name": "PMP-18_ETHANOL@Rewari",
-            "device_id": "0f0a4290-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2cf1af20-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "rpfPJs2p84tRYT92Snft",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "UJYg8UWG4LO0TG7pQaoa",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8336,10 +8336,10 @@
         },
         {
             "device_name": "PMP-19_ETHANOL@Rewari",
-            "device_id": "0f887340-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2cf99e60-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "YTVZc9d1YNp0syHzS5V5",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "C42IaaqaBaTkBtqTRSLr",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8373,10 +8373,10 @@
         },
         {
             "device_name": "PMP-20_ETHANOL@Rewari",
-            "device_id": "0ffd0700-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d007c30-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "1kiupZCRMUsSGBUUutAJ",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "VAo8LLpwcrQ8aouOplmy",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8410,10 +8410,10 @@
         },
         {
             "device_name": "PMP-21_ETHANOL@Rewari",
-            "device_id": "107480f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d07f640-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "Mz3CXCve7egEwNyqd08M",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "eieuUTPn3tj1w9JpHIYe",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8447,10 +8447,10 @@
         },
         {
             "device_name": "PMP-22_ETHANOL@Rewari",
-            "device_id": "10eb85b0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d1033a0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "SWJ6KkNG5uGrgp3vGQIH",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "8vW1jvkAOSyk2Eiubslq",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8484,10 +8484,10 @@
         },
         {
             "device_name": "PMP-IOCL-01_BS VI MS@Rewari",
-            "device_id": "11648640-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d17fbd0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "DzBix8vVowoFqiXj7LJt",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "d4t17vJIQXycysS8QCFo",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8521,10 +8521,10 @@
         },
         {
             "device_name": "PMP-IOCL-02_BS VI MS@Rewari",
-            "device_id": "11e06d00-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d1f00b0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "2onAIR7cLMVtwVQPwTSv",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "YjCL0NLLDy0YG1i20IXK",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8558,10 +8558,10 @@
         },
         {
             "device_name": "PMP-IOCL-03_BS VI HSD@Rewari",
-            "device_id": "1257bfe0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d267ac0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "Pza5TWf1iKGAmgXf5HLe",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "awysdef1Rd2fUSH7zUrQ",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8595,10 +8595,10 @@
         },
         {
             "device_name": "PMP-IOCL-04_BS VI HSD@Rewari",
-            "device_id": "12cd3e00-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d2f2d50-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "kzvvKDIASvrnm1Mj4BQA",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "8jXg5PnlL15seuYiWsr1",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8632,10 +8632,10 @@
         },
         {
             "device_name": "PMP-IOCL-05_BS VI HSD@Rewari",
-            "device_id": "13494bd0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d360b20-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "JBvzXoz6XMt7metHlWmG",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "57pCiTgjpMIcyY4dY6ae",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8669,10 +8669,10 @@
         },
         {
             "device_name": "PMP-IOCL-06_BS VI HSD@Rewari",
-            "device_id": "13c83fd0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d3d8530-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "iZh21kTUd4yQRdTovnFn",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "oiZj6ArTBZ8hMka7PNVC",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8706,10 +8706,10 @@
         },
         {
             "device_name": "PMP-IOCL-07_BS VI HSD@Rewari",
-            "device_id": "1445ad30-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d4637c0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "GqxPxw2x4RCrNQt2B6up",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "SdIclGkzAOfzpmCs6pst",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8743,10 +8743,10 @@
         },
         {
             "device_name": "VRU-PMP-01_BS IV HSD@Rewari",
-            "device_id": "14bf22f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d4cc770-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "t4TuEbemxGQTdQIk7HCJ",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "10MSb5j9fEEJzwF4wA3G",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8780,10 +8780,10 @@
         },
         {
             "device_name": "FWP-01_Water_DISPATCH@Rewari",
-            "device_id": "1539aa20-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d55c820-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "HM9jhUAg7dlJiXXxLkbQ",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "ZeGeWzyyOtn8Co9IMj17",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8866,10 +8866,10 @@
         },
         {
             "device_name": "FWP-02_Water_DISPATCH@Rewari",
-            "device_id": "15b14b20-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d5d4230-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "0l2rVbBemV5Z9Ez8z0a5",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "976j9mhub45RRS5UnYQ8",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -8952,10 +8952,10 @@
         },
         {
             "device_name": "FWP-03_Water_DISPATCH@Rewari",
-            "device_id": "1628c510-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d64bc40-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "3BY6KYgqesaDcEdG8V7l",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "mOQlg2tE6N8y77nj9BOy",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -9038,10 +9038,10 @@
         },
         {
             "device_name": "JCY-01_Jockey_DISPATCH@Rewari",
-            "device_id": "16a5e450-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d6afdd0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "bO5YAc0gD4CkYeHIRl31",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "9WdrrfSaYowsCghroqRB",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -9124,10 +9124,10 @@
         },
         {
             "device_name": "JCY-02_Jockey_DISPATCH@Rewari",
-            "device_id": "173c57f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d738950-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "hUHovM3Qy4syBtw0EUwI",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "q6FyUSNiPXHavNhKxlrb",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -9210,10 +9210,10 @@
         },
         {
             "device_name": "FARTHEST_POINT_PT@Rewari",
-            "device_id": "17b5a6a0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d7a6720-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "hXdTNv80m5aNaLNjDeDR",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "mP57hJMTl8DLtJRDCfuN",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -9296,10 +9296,10 @@
         },
         {
             "device_name": "NEAREST_POINT_PT@Rewari",
-            "device_id": "18c4f3c0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d81e130-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "LC193YnRSRhrqw8OxScA",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "2pm7WWr2kniO8agEJMnO",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -9382,10 +9382,10 @@
         },
         {
             "device_name": "UPS-01_Control Room@Rewari",
-            "device_id": "193c46a0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d8a6cb0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "UPS",
-            "device_key": "iUAHPjwZBLQ1X6pGCJFF",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "72A3xvQ7gOrOVM8e2TID",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "UPS FAIL",
@@ -9419,10 +9419,10 @@
         },
         {
             "device_name": "UPS-02_Control Room@Rewari",
-            "device_id": "19b2fd40-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d914a80-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "UPS",
-            "device_key": "JdQHKtzvTcog2KRyj0l6",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "RKlrOQ8xTfbkRFt5iwfm",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "UPS FAIL",
@@ -9456,10 +9456,10 @@
         },
         {
             "device_name": "GEPLC_Process PLC@Rewari",
-            "device_id": "1a2f5930-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2d9987e0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "PLC",
-            "device_key": "04WVmLEWgpQlHKm4Ev3Z",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "N2StmxYTwp5arcxBha3I",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PLC A IS MASTER",
@@ -9506,10 +9506,10 @@
         },
         {
             "device_name": "SFT PLC_Safety PLC@Rewari",
-            "device_id": "1ab04900-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2da08cc0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "PLC",
-            "device_key": "DcmlGZQHH6eJvkqxCOEP",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "1Gr9pJkU3mOaxa25BD3m",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PLC A IS MASTER",
@@ -9556,10 +9556,10 @@
         },
         {
             "device_name": "HDS-01_OP-HCD-AT-PUMPHOUSE_OPEN TYPE AT PUMP HOUSE 1@Rewari",
-            "device_id": "1b283820-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2da8f130-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "98r1EtUXvFRoNHACeAQY",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "sdLGlKjt4E4956GU0xkG",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -9607,10 +9607,10 @@
         },
         {
             "device_name": "HDS-02_OP-HCD-NEAR-TK1-2_OPEN TYPE AT MS DYKE1 NEAR TK1-2@Rewari",
-            "device_id": "1ba0ea90-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2daff610-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "SUm8PFICU6biNj3Fqe9e",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "wlAmAdS2oYSbT1lG5Uru",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -9658,10 +9658,10 @@
         },
         {
             "device_name": "HDS-03_OP-HCD-NEAR-TK16-17_OPEN TYPE AT MS DYKE1 NEAR TK16-17@Rewari",
-            "device_id": "1c1a1230-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2db85a80-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "VZGhjTHnEh0oePRByYuk",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "OmjjU9B1viPZyTsG1IIT",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -9709,10 +9709,10 @@
         },
         {
             "device_name": "HDS-04_OP-HCD-NEAR-TK15_OPEN TYPE AT MS DYKE 2 NEAR TK15@Rewari",
-            "device_id": "1c99a270-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2dbf1140-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "1J1aKYprYehM9an36PGz",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "gFGvJlOiWChtJNPGtMbZ",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -9760,10 +9760,10 @@
         },
         {
             "device_name": "HDS-05_P-HCD-NEAR-TK17_FIXED HCD AT MS DYKE4 NEAR TK17@Rewari",
-            "device_id": "1d1254e0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2dc6d970-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "jlkAyQW2x9oG6RkyvOgZ",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "38svRPkB5Ol7yoD2d8dL",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -9811,10 +9811,10 @@
         },
         {
             "device_name": "HDS-06_OP-HCD-NEAR-TK12-26_OPEN TYPE NEAR AT MS DYKE1 NEAR TK12-26@Rewari",
-            "device_id": "1d8efef0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2dce7a90-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "YT7m8LzOb1BlwQlw7H4U",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "Gbh631aE2jYWqZ29hUnm",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -9862,10 +9862,10 @@
         },
         {
             "device_name": "HDS-07_P-HCD-NEAR-TK26_FIXED TYPE MS DYKE1 NEAR TK26@Rewari",
-            "device_id": "1e117560-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2dd61bb0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "Q7MGOXFQdQJoY9wCdt7w",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "2ENB9p14y5KjDXTiHRX4",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -9913,10 +9913,10 @@
         },
         {
             "device_name": "HDS-08_P-HDS-AT-PH-DRAIN_FIXED TYPE AT PUMP HOUSE DRAIN@Rewari",
-            "device_id": "1e878fc0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ddde3e0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "PdHeq9F10VCYuolMhh3H",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "qKMVU5KTa5snVYCuao84",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -9964,10 +9964,10 @@
         },
         {
             "device_name": "HDS-09_NEAR_TK-04_NEAR_TK-04@Rewari",
-            "device_id": "1efe9480-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2de62140-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "fcfXml4DXgiNMZ3DBcRJ",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "2lfjbFwu54f2XqQDPLH4",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -10015,10 +10015,10 @@
         },
         {
             "device_name": "DV-01@Rewari",
-            "device_id": "1f765c90-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2dedc260-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "rD3Wu3GpCEQaUPEPWb3j",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "tvDb9UbpNnL4pTtIRvvv",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -10036,10 +10036,10 @@
         },
         {
             "device_name": "DV-02@Rewari",
-            "device_id": "1fec76f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2df58a90-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "LvASuxojy90AcMVVec8S",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "Diwc9I4O5mKGnoL5PxmB",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -10057,10 +10057,10 @@
         },
         {
             "device_name": "DV-03@Rewari",
-            "device_id": "205f0ee0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2dfc1a40-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "9o7W8N2WTh09KGJcOjnz",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "oBSIQr7Mt556j0B3bGVl",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -10078,10 +10078,10 @@
         },
         {
             "device_name": "DV-04@Rewari",
-            "device_id": "20daa780-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e04a5c0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "ZYvWPl1DZxLjqdpMCFLW",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "YbMBR55uUsa9i75zgaKS",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -10099,10 +10099,10 @@
         },
         {
             "device_name": "DV-05@Rewari",
-            "device_id": "21f5b470-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e0b8390-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "lg2a874l6tbX527ybdak",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "n4rw7untDusaUWQKg3OF",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -10120,10 +10120,10 @@
         },
         {
             "device_name": "DV-06@Rewari",
-            "device_id": "22712600-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e140f10-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "4WfnUwBoAG5WG5YFXn59",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "Llmfk2MgL84XRxNBmpKf",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -10141,10 +10141,10 @@
         },
         {
             "device_name": "DV-07@Rewari",
-            "device_id": "22ebd440-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e1aece0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "MuyYn15qjiZ1aIo0rVwf",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "Yn1xPY9WBnYrnoOPK3G7",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -10162,10 +10162,10 @@
         },
         {
             "device_name": "DV-08@Rewari",
-            "device_id": "2361c790-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e232a40-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "RhwxIJJuWfpJh3gN1tNn",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "s7UKp4yULJnZCMosvwog",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -10183,10 +10183,10 @@
         },
         {
             "device_name": "EntryGate@Rewari",
-            "device_id": "23d549e0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e2a0810-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Barrier Gate",
-            "device_key": "VLJBGlWfuaSPdKqhhNA3",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "QHkCbgHRhmEOoOUpvX2y",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "BARRIER GATE OPEN STATUS",
@@ -10213,10 +10213,10 @@
         },
         {
             "device_name": "ExitGate@Rewari",
-            "device_id": "24543de0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e31a930-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Barrier Gate",
-            "device_key": "ZdSnNQ9bcExlYukdS3pw",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "GTHP7g50ecnl2tQUNEbv",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "BARRIER GATE OPEN STATUS",
@@ -10243,10 +10243,10 @@
         },
         {
             "device_name": "HOOTER_FIELD_1_Dedicated Hooter cum strobe for TLF P/H Activated in Field@Rewari",
-            "device_id": "24d04bb0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e399870-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "Wh8UNuB3dIDiqNnWv1m4",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "ESo4MqSUCKNrGj0DJ0am",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -10259,10 +10259,10 @@
         },
         {
             "device_name": "HOOTER_FIELD_2_Dedicated Hooter cum strobe for Near TK-01 Activated in Field@Rewari",
-            "device_id": "254331c0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e411280-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "5VTHjsNpsxt0iuBL0NIN",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "JXFwyGJ4oijRHx36FYev",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -10275,10 +10275,10 @@
         },
         {
             "device_name": "HOOTER_FIELD_3_Dedicated Hooter cum strobe for Near TK-12 Activated in Field@Rewari",
-            "device_id": "25b8fe00-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e48b3a0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "PhOlDZPxQLqXABYEzMa7",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "l2adJzTr4hxmArBFbQ7n",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -10291,10 +10291,10 @@
         },
         {
             "device_name": "HOOTER_FIELD_4_Dedicated Hooter cum strobe for Near TK-15 Activated in Field@Rewari",
-            "device_id": "262db8d0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e507bd0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "TOP2xDO1NkYiVKg3lNL2",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "MuIVF4Crqrh89z9HF9rX",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -10307,10 +10307,10 @@
         },
         {
             "device_name": "HOOTER_FIELD_5_Dedicated Hooter cum strobe for Near TK-16 Activated in Field@Rewari",
-            "device_id": "26a5cf00-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e581cf0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "hmDIBLffsJEVU10NthbT",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "NbLX1h3ksqwsQovsiwhx",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -10323,10 +10323,10 @@
         },
         {
             "device_name": "HOOTER_FOR_ESD_CR_Dedicated Hooter cum strobe for ESD activated in control room@Rewari",
-            "device_id": "271f1db0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e5fe520-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "Lsus4soQJ7RGa4H8BQVA",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "LLHkJ8PdYsXxhcysUHvW",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -10339,10 +10339,10 @@
         },
         {
             "device_name": "HOOTER_FOR_HC_CR_Dedicated Hooter cum strobe for HC detector activated in control room@Rewari",
-            "device_id": "279c15e0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e682280-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "i1zOpz0K4DLtockeDSEq",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "G0GCTlUoJ4i4RqCoeZgl",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -10355,10 +10355,10 @@
         },
         {
             "device_name": "HOOTER_FOR_RIMSEAL_CR_Dedicated Hooter cum strobe for FAP/Dyke activated in control room@Rewari",
-            "device_id": "2815b2b0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e6f2760-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "msPDBHChKeFyY03sQaid",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "ZQ18rDiu5kPXjvhykcWu",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -10371,10 +10371,10 @@
         },
         {
             "device_name": "ESD-01_ESD AT GANTRY SUPERVISOR CABIN@Rewari",
-            "device_id": "2892d1f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e778bd0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "vyF5KpUnZ80wZnmHSqDw",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "iuDP6RwdU3IGuesziUqb",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -10471,10 +10471,10 @@
         },
         {
             "device_name": "ESD-02_ESD AT CONTROL ROOM@Rewari",
-            "device_id": "29085010-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e7e1b80-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "bRokAOuJ3cCb5oXyRyNj",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "XfYh5G277NxjMFUr394D",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -10571,10 +10571,10 @@
         },
         {
             "device_name": "ESD-03_ESD AT INSIDE PRODUCT PUMP HOUSE@Rewari",
-            "device_id": "2982b030-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e85e3b0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "au34DNmdS6Aua53zoQk1",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "FF8hMSqHwB9JerZzjxCF",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -10671,10 +10671,10 @@
         },
         {
             "device_name": "ESD-04_ESD AT SECURITY MAIN GATE@Rewari",
-            "device_id": "29fc25f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e8d84d0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "vme2zYJlfRFTZBLiJg4e",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "kiFmbzoncsdkefNgNBL1",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -10771,10 +10771,10 @@
         },
         {
             "device_name": "ESD-05_ESD AT BEHIND BAY-08@Rewari",
-            "device_id": "2a72dc90-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e94fee0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "oTI7HWjv8J4WI31hfeF2",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "5F47bY3IoaTPYHeKiLdn",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -10871,10 +10871,10 @@
         },
         {
             "device_name": "ESD-06_ESD AT IN FRONT OF PUMP HOUSE@Rewari",
-            "device_id": "2ae685f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2e9db170-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "ENVPFt6OFsImIoNXGCGE",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "TfZIvXrUKMhRD3hAdnmR",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -10971,10 +10971,10 @@
         },
         {
             "device_name": "ESD-07_ESD AT NEAR TANK 04@Rewari",
-            "device_id": "2b5b19b0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ea46830-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "zvLVaG6ssEzsx3xLYm2w",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "q60mKEhtgdGkIXkNOCPr",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -11071,10 +11071,10 @@
         },
         {
             "device_name": "ESD-08_ESD AT NEAR TANK 28@Rewari",
-            "device_id": "2bd63d20-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2eabe240-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "JIAJmk4ys3x46Shd1CtR",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "4udPxjmf7MKnealoDYVb",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -11171,10 +11171,10 @@
         },
         {
             "device_name": "ESD-09_ESD AT NEAR TANK 17@Rewari",
-            "device_id": "2c5690b0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2eb3f890-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "J5C6DYuVcNJ4aawx6Pgd",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "dZiehxE0rbVPSouhU9kX",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -11271,10 +11271,10 @@
         },
         {
             "device_name": "ESD-10_ESD AT MCC ROOM@Rewari",
-            "device_id": "2cd00670-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ebb4b90-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "clVfZm1Vaqj6RgKRNWQF",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "e2peW1xdb0Ns6sLCdSP8",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -11371,10 +11371,10 @@
         },
         {
             "device_name": "ESD-11_ESD AT ADMIN BULDING@Rewari",
-            "device_id": "2d497c30-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ec313c0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "umeOxIbQuxFxWwzPGpWK",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "oYmN8W9hRWbQVbQwXHop",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -11471,10 +11471,10 @@
         },
         {
             "device_name": "ESD-12_ESD AT NEAR ERV SHED@Rewari",
-            "device_id": "2dbeac30-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ecab4e0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "DDQqTtKtak1S2Qa00UM2",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "9YKqoPwE2Esinh38AjzV",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -11571,10 +11571,10 @@
         },
         {
             "device_name": "ESD-13_ESD FROM PIPE LINE PLC@Rewari",
-            "device_id": "2e389720-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ed36770-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "4e3PuLKmJU5vF4cfI4hC",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "rHzWTxmJuE6gDPlunrs1",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -11671,10 +11671,10 @@
         },
         {
             "device_name": "ESD-14_CENTRAL ESD@Rewari",
-            "device_id": "2eb78b20-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2edb0890-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "7QlP0VLKCETWYZ8jhMhW",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "1WjEqoJHiquxjb9NZNRy",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -11771,10 +11771,10 @@
         },
         {
             "device_name": "ESD-17_ESD DUE TO RIM SEAL@Rewari",
-            "device_id": "2f30d9d0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ee282a0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "zZ7WNtfNTPNHHBM2ufL2",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "CSIN2vQmKa94FH3cJALM",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -11871,10 +11871,10 @@
         },
         {
             "device_name": "ESD-18_ESD AT NEAR TK 15@Rewari",
-            "device_id": "2faf3190-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2eea4ad0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "2BVSqsGf00ZxQIx98Lcu",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "lHC3LfBV9gL8kGvzmxyE",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -11971,10 +11971,10 @@
         },
         {
             "device_name": "ESD-19_ESD AT NEAR TK 01@Rewari",
-            "device_id": "30288040-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ef0b370-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "jW6QygKPdURELmx6d0hF",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "43FNRYLwc9TwiHfNbxEK",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -12071,10 +12071,10 @@
         },
         {
             "device_name": "ESD-BPCL_ESD-BPCL@Rewari",
-            "device_id": "30a6ff10-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2ef9b420-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "dWKU8NwiKFMZDxzxJKZt",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "edFU8Udgbi1T2NAOBaMu",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -12171,10 +12171,10 @@
         },
         {
             "device_name": "ESD-IOCL_ESD-IOCL@Rewari",
-            "device_id": "311ca440-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2efff5b0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "24SoGSByXOKNI22q16Dd",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "PXlSFi3WP3BR45Ay9OaM",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -12271,10 +12271,10 @@
         },
         {
             "device_name": "ESD-SOFT_SOFT FROM OIC@Rewari",
-            "device_id": "3190c2d0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f07bde0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "0g0fSsBwIw4hJAEnbHzS",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "IEPgZcAFPEpVbPX6TZtF",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -12371,10 +12371,10 @@
         },
         {
             "device_name": "ESD-VRU_VRU SKID@Rewari",
-            "device_id": "320b22f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f0f5f00-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "KTLFvjFOVp2JU518eJGg",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "hqPnXB3SUdoLuSVKPrHp",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -12471,10 +12471,10 @@
         },
         {
             "device_name": "LP-1_BC-501A_BS VI MS@Rewari",
-            "device_id": "32850de0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f170020-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "xumEnhLkiDo52CNBlMPw",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "01QL7iaU4mvRL4U8VJVr",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12613,10 +12613,10 @@
         },
         {
             "device_name": "LP-2_BC-501B_BS VI HSD@Rewari",
-            "device_id": "33007f70-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f1eef60-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "SZQ1PXgxz5woxF9tDyx7",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "xUhKBdCkGB6zqxAf6kSe",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12755,10 +12755,10 @@
         },
         {
             "device_name": "LP-3_BC-502A_BS VI MS@Rewari",
-            "device_id": "3383e040-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f27c900-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "SNNUlN8ymUwBQRvPiU8H",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "l0kQT1ZuvpUh7RcvQidA",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12897,10 +12897,10 @@
         },
         {
             "device_name": "LP-4_BC-502B_BS VI HSD@Rewari",
-            "device_id": "33fbcf60-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f2e31a0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "ESGHASK36DXQRoc2fzqc",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "pEDZgvTKWB7VvXbjzdZ8",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13039,10 +13039,10 @@
         },
         {
             "device_name": "LP-5_BC-503A_BS VI MS@Rewari",
-            "device_id": "3479d900-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f370b40-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "87NwdqdCOc5TcZJgrQte",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "vc8sOJQGZSfeVMzxGPep",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13181,10 +13181,10 @@
         },
         {
             "device_name": "LP-6_BC-503B_BS VI HSD@Rewari",
-            "device_id": "34f23d50-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f3d4cd0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "XyKxp5N2GY6g7M1N4h2G",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "peuNibqT68Ua5jGwMGBT",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13323,10 +13323,10 @@
         },
         {
             "device_name": "LP-7_BC-504A_BS VI HSD@Rewari",
-            "device_id": "35696920-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f464d80-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "wVqkUGHI3iS8n0W68Rve",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "5YFeSc3AZYm5JbHTQe46",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13465,10 +13465,10 @@
         },
         {
             "device_name": "LP-8_BC-504B_BS VI HSD@Rewari",
-            "device_id": "35e61330-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f4cb620-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "RXtpRGPNnHSOorzeE6bV",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "7f12HSCNruoQrqWY29ae",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13607,10 +13607,10 @@
         },
         {
             "device_name": "LP-9_BC-505A_BS VI HSD@Rewari",
-            "device_id": "365f3ad0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f547e50-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "9JBhbCO6lLGvB4WVdkQK",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "C8CdIeTOn3aTMWv6bHv7",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13749,10 +13749,10 @@
         },
         {
             "device_name": "LP-10_BC-505B_BS VI HSD@Rewari",
-            "device_id": "36d86270-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f5bd150-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "puCjQbbhjioY23pd5aoP",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "4YGYhUta6RdZJ2wyn8fE",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13891,10 +13891,10 @@
         },
         {
             "device_name": "LP-11_BC-506A_BS VI HSD@Rewari",
-            "device_id": "375ef790-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f652020-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "GxjdobBUG4XJ30oIjDbE",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "XRyUqTRRAjM99DhA2UIM",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -14033,10 +14033,10 @@
         },
         {
             "device_name": "LP-12_BC-506B_BS VI HSD@Rewari",
-            "device_id": "37d5fc50-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f6c7320-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "1MDGTGTlnjO5D1k1t0eu",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "moWXYhHBrhE8BGRs7Jnr",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -14175,10 +14175,10 @@
         },
         {
             "device_name": "LP-13_BC-507A_BS VI MS@Rewari",
-            "device_id": "385194f0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f72b4b0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "X4MpRAXipH2jNrCBT53d",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "ntGj9iKKbwaX4au1KNzP",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -14317,10 +14317,10 @@
         },
         {
             "device_name": "LP-14_BC-507B_BS VI HSD@Rewari",
-            "device_id": "38cbf510-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f7bb560-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "tUYJkpiv0gx1hOg0oofT",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "DsxihB9qW1Fb0LxfBhSv",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -14459,10 +14459,10 @@
         },
         {
             "device_name": "LP-15_BC-508A_BS VI HSD@Rewari",
-            "device_id": "39425d90-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f82e150-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "7xOVXwRkJo9WbtPCTEMB",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "26bcL3zeDw6MwWDGr6iZ",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -14601,10 +14601,10 @@
         },
         {
             "device_name": "LP-16_BC-508B_BS VI HSD@Rewari",
-            "device_id": "39bdcf20-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f8a8270-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "3e8zf00hnRaWnrmjv09K",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "6UjIrRMqzUKMZq56ebkM",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -14743,10 +14743,10 @@
         },
         {
             "device_name": "Gantry Permissive override@Rewari",
-            "device_id": "3a308e20-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f924aa0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Gantry override",
-            "device_key": "YKapfZwmd6vmOxgvYdLK",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "CZWNcDLA0wHQHWfj5zEU",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "OVERRIDE STATUS",
@@ -14766,10 +14766,10 @@
         },
         {
             "device_name": "Two Fire Engine Running status@Rewari",
-            "device_id": "3aad3830-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2f9a60f0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Effect",
-            "device_key": "sxkTtMzJ28HqftRTvkqd",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "mSqL21f1c0wcq0eFEfYX",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -14810,10 +14810,10 @@
         },
         {
             "device_name": "Gantry Permissive Off@Rewari",
-            "device_id": "3b2f3970-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2fa0f0a0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Effect",
-            "device_key": "ZWxnwtdx1TwiBe7z9KrT",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "4eBYZz4jPjkWYhKjuTw1",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -14854,10 +14854,10 @@
         },
         {
             "device_name": "LRC Switch Over@Rewari",
-            "device_id": "3baaab00-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2fa906f0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "LRC Switchover",
-            "device_key": "pnkr4kaFCW8pyitt73zV",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "hutsJ34q9SeChPILwjum",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LRC SWITCHOVER 30 DAYS STATUS",
@@ -14870,10 +14870,10 @@
         },
         {
             "device_name": "Operability Index@Rewari",
-            "device_id": "3c2161a0-2746-11f0-b475-bbbb14fdc372",
+            "device_id": "2fafbdb0-46ca-11f0-a2b7-a912a2440fab",
             "device_type": "OI",
-            "device_key": "Bh0PtNxCMfK9mCA4ukHq",
-            "entity_id": "ec9834b0-2745-11f0-b475-bbbb14fdc372",
+            "device_key": "VnDZyM19vXm1fqRc1LE9",
+            "entity_id": "2ad278a0-46ca-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "Fire Engine1",
