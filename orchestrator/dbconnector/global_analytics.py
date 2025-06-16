@@ -7388,7 +7388,7 @@ class GlobalAnalytics:
                         FROM 
                             cancelled_tts c
                         LEFT JOIN 
-                            alerts a ON a.vehicle_number = c.truck_number 
+                            alerts a ON a.tt_load_number = c.load_number::text 
                             AND a.interlock_name = 'Cancel TT Reported'
                             AND DATE(a.created_at) = c.created_date
                         GROUP BY 

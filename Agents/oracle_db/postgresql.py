@@ -589,7 +589,13 @@ class Postgresql:
                                 'interlock_name': interlock_name,
                                 'severity': severity,
                                 'alert_id': str(uuid.uuid1()),
-                                'device_name': record.get('bcu_number'),
+                                'device_name': (
+                                    record.get('bcu_number')
+                                    if table_db_name != 'host_mfm_factor'
+                                    else (
+                                        record.get('bcu_number') or record.get('mfm_number')
+                                    )
+                                ),    
                                 'device_type': 'Gantry',
                                 'vehicle_number': record.get('truck_number', ''),
                                 'tt_load_number': record.get('load_number', ''),
