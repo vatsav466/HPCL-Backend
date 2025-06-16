@@ -169,7 +169,7 @@ class Postgresql:
         status, msg = await alert_factory.AlertFactory.create_alert(data)
         return status, msg, data
     
-    async def create_bay_reasignment_report(self, data):
+    async def create_bay_reasignment_report(self, data, compartment_number=None):
         """
         Create or update bay reassignment report alerts.
 
@@ -188,7 +188,7 @@ class Postgresql:
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
             data['alert_id'] = alert_data['external_id']
-            action_msg = f"Truck Number: {data['vehicle_number']} and Compartment Number: {data['message']}"
+            action_msg = f"Truck Number: {data['vehicle_number']} and Compartment Number: {compartment_number}"
             input_data = {
                 "action_type": "BayReAssigned",
                 "action_msg": action_msg
@@ -603,7 +603,7 @@ class Postgresql:
                                 success, msg, alert_data = await self.create_cancel_tt_report(alert_data)
                             elif interlock_name == 'Bay reassignment':
                                 is_close_alert = True
-                                success, msg, alert_data = await self.create_bay_reasignment_report(alert_data)
+                                success, msg, alert_data = await self.create_bay_reasignment_report(alert_data, compartment_number=record.get('compartment_number', ''))
                             else:
                                 success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
                                 print("msg :", msg)
