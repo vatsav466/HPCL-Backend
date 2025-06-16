@@ -5696,13 +5696,15 @@ class GlobalAnalytics:
                 pl.col("interlock_name").map_elements(
                     lambda name: maintenance_interlocks.get(name, fault_interlocks.get(name, {})).get("alert_category")
                 ).alias("alert_category"),
-                
-                # Changed to always return "Equipment" instead of "Maintenance" or "Fault"
+
                 pl.lit("Equipment").alias("alert_type"),
-                
-                # Add equipment_name column
+
+                # Updated equipment_name logic
                 pl.col("interlock_name").map_elements(
-                    lambda name: maintenance_interlocks.get(name, fault_interlocks.get(name, {})).get("equipment_name", name)
+                    lambda name: (
+                        "Tank" if name == "Tank_Under Maintenance"
+                        else maintenance_interlocks.get(name, fault_interlocks.get(name, {})).get("equipment_name", name)
+                    )
                 ).alias("equipment_name")
             ])
             
