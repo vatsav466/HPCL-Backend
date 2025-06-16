@@ -1401,7 +1401,7 @@ ORDER BY
                                                             CASE 
                                                             WHEN SUM(total) = 0 THEN 0
                                                             ELSE ((SUM(sortout)::float / SUM(total)) * 100)::numeric
-                                                        END, 1) AS cs_rejection
+                                                        END, 1) AS gd_rejection
                                                     FROM
                                                         "lpg_gd_rejections"
                                                     WHERE
@@ -1412,7 +1412,7 @@ ORDER BY
                                                             CASE 
                                                             WHEN SUM(total) = 0 THEN 0
                                                             ELSE ((SUM(sortout)::float / SUM(total)) * 100)::numeric
-                                                        END, 1) AS cs_rejection
+                                                        END, 1) AS pt_rejection
                                                     FROM
                                                         "lpg_pt_rejections"
                                                     WHERE
