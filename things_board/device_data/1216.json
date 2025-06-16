@@ -2,10 +2,10 @@
     "data": [
         {
             "device_name": "TK-01_BS VI HSD@Bahadurgarh",
-            "device_id": "90be0bb0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9390920-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "soybKtDVz4z5D0eVPV2P",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "nJrRnDcULpAG3sGOLS84",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -15,14 +15,14 @@
                 {
                     "sensor_name": "Tank Receipt Mode",
                     "sensor_tag": "TANK.TK-01.RECEIPT_MDPL_STATUS",
-                    "normal_value": "Normal Value",
+                    "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Tank Receipt Mode1",
                     "sensor_tag": "TANK.TK-01.RECEIPT_RBPL_STATUS",
-                    "normal_value": "Normal Value"
+                    "normal_value": "0"
                 },
                 {
                     "sensor_name": "Primary Gauge Level",
@@ -217,10 +217,10 @@
         },
         {
             "device_name": "TK-02_BS VI HSD@Bahadurgarh",
-            "device_id": "91dbfed0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e93eae70-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "hTe71Bfv5TAYCtYSuJl8",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Gk5RZM8TY3BYEBXo2Y0Z",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -432,10 +432,10 @@
         },
         {
             "device_name": "TK-03_BS VI HSD@Bahadurgarh",
-            "device_id": "92b9dbb0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9482450-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "KvTvmyMUcDe1tiMcwcHy",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "py4sqvEhxxgPdnMbuVlM",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -647,10 +647,10 @@
         },
         {
             "device_name": "TK-04_BS VI HSD@Bahadurgarh",
-            "device_id": "93f19860-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e94da290-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "Uc648j4jhpXvMMIsU8rn",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "HvlgI0mY1tQnKGjqUlFa",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -862,10 +862,10 @@
         },
         {
             "device_name": "TK-05_BS VI HSD@Bahadurgarh",
-            "device_id": "953f7520-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9578da0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "aMOTWyS1By8RcBaBnx8Q",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "N5wk2KOcNtvUj12REmCx",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1077,10 +1077,10 @@
         },
         {
             "device_name": "TK-06_BS VI HSD@Bahadurgarh",
-            "device_id": "96825560-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e95cbdc0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "I50AUMtpqLU9bItUhuMw",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "hbCU1qyYy5S5LEZV7pUo",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1292,10 +1292,10 @@
         },
         {
             "device_name": "TK-07_BS VI HSD@Bahadurgarh",
-            "device_id": "971c2460-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9671e00-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "BBa2ug29OGlmiMvJpwYg",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "v24y6g0sqju1b9O1BOUh",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1507,10 +1507,10 @@
         },
         {
             "device_name": "TK-08_NAPHTHA@Bahadurgarh",
-            "device_id": "97f67ed0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e96f0d40-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "z5J3n97yHZZuT5bFWSkI",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "t5X7XBG9fju1ZZCIPoPS",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1722,10 +1722,10 @@
         },
         {
             "device_name": "TK-09_NAPHTHA@Bahadurgarh",
-            "device_id": "986175a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9732bf0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "c3iKMbt2lRKObeHwDeWN",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "UrtEkTY8cFKc3cRZDgwn",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1937,10 +1937,10 @@
         },
         {
             "device_name": "TK-10_NAPHTHA@Bahadurgarh",
-            "device_id": "98faa860-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e97c2ca0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "9gqB0iY1zEy1OswqRtzM",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "83WDK7MzPoiUFjft8VAY",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2152,10 +2152,10 @@
         },
         {
             "device_name": "TK-11_BS VI MS@Bahadurgarh",
-            "device_id": "99674ce0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e982bc50-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "Hf7kStqhu1yipWOgpyZe",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "1pSKRYqD5LGW0G1gApBq",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2367,10 +2367,10 @@
         },
         {
             "device_name": "TK-12_BS VI MS@Bahadurgarh",
-            "device_id": "99f2eb10-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e98aab90-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "iGyBPtj3LIlSuC35XHag",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "j9aYFTEEq4pmY0LJ8Iqp",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2582,10 +2582,10 @@
         },
         {
             "device_name": "TK-13_BS VI MS@Bahadurgarh",
-            "device_id": "9a6079f0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e991fe90-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "0Lth8NcsXkNi6iU7LVBl",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "iA5D6U391h9mQ1pDf8EE",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2797,10 +2797,10 @@
         },
         {
             "device_name": "TK-14_ETHANOL@Bahadurgarh",
-            "device_id": "9acf1a40-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9999fb0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "uTvXPO0MXqOxmDm3rJ2J",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "ue8l7gFxvAqraYpCPpwe",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3012,10 +3012,10 @@
         },
         {
             "device_name": "TK-15_MTO@Bahadurgarh",
-            "device_id": "9b40c7d0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9a140d0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "dzoHIHunTcuwBMLY0Wqq",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "nm2cKYf0K29V8b5qUk0M",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3227,10 +3227,10 @@
         },
         {
             "device_name": "TK-16_MTO@Bahadurgarh",
-            "device_id": "9bb386d0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9ab7a00-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "iiM2KvpYM1FRCUUTBs7Y",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "apObIeO771tTi6wilBZr",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3442,10 +3442,10 @@
         },
         {
             "device_name": "TK-17_INTERFACE@Bahadurgarh",
-            "device_id": "9c253460-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9b0f840-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "kvbA2mIpifzdggSz9cYD",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "3U1z1KBSKpmr1RiDzfTs",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3657,10 +3657,10 @@
         },
         {
             "device_name": "TK-18_INTERFACE@Bahadurgarh",
-            "device_id": "9c977e30-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9b8c070-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "F0bAq7p9ejS2wEWlVHN9",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "AuWAhjEvWsYSSdWoMr3D",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3872,10 +3872,10 @@
         },
         {
             "device_name": "TK-19_ETHANOL@Bahadurgarh",
-            "device_id": "9d08dda0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9c20f40-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "LTHu8gxrtUuPcIeAePyv",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "7FXshg6bhYnUpNH9hQN8",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4087,10 +4087,10 @@
         },
         {
             "device_name": "TK-20_INTERFACE@Bahadurgarh",
-            "device_id": "9d867210-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9c7b490-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "zKscgjdWNj5attEGrK9F",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "6bg9aStBwNiZ3oWg1cls",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4302,10 +4302,10 @@
         },
         {
             "device_name": "TK-21_INTERFACE@Bahadurgarh",
-            "device_id": "9df846b0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9d17890-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "GUJjYBhuKsj1fIZT3Xz9",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "RvV7SNnB1TIJUzHmCIKV",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4517,10 +4517,10 @@
         },
         {
             "device_name": "TK-22_ATF@Bahadurgarh",
-            "device_id": "9e68e2d0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9d6a8b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "2ECe5DTqbuSgaUSz3SIx",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "9nmP6Cg6kyNq0q9ZHCGz",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4732,10 +4732,10 @@
         },
         {
             "device_name": "TK-23_ATF@Bahadurgarh",
-            "device_id": "9ed427c0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9debf00-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "dEA9Ytp7TWDwt6ZFCZ7F",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "aLfCLPCBVjlMn0fypkc5",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4947,10 +4947,10 @@
         },
         {
             "device_name": "TK-24_ATF@Bahadurgarh",
-            "device_id": "9f4427a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9e66020-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "7MqxK7qPFQaFeGrpJgxQ",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Y3XMifrI43FXyUjZGCZ4",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -5162,10 +5162,10 @@
         },
         {
             "device_name": "TK-25_ATF@Bahadurgarh",
-            "device_id": "9fb1b680-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9ee0140-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "jZMNH5UTVlFynG5hQSK0",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "A3KXqUbnabRux2QJyheD",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -5377,10 +5377,10 @@
         },
         {
             "device_name": "TK-26_NAPHTHA@Bahadurgarh",
-            "device_id": "a02a68f0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9f5a260-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "IJDyGiWnmujCL7M1lWxR",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "o5wpadOvHe4yVzLqe9HN",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -5592,10 +5592,10 @@
         },
         {
             "device_name": "TK-27_INTERFACE NAPHTHA RICH@Bahadurgarh",
-            "device_id": "a09a68d0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "e9fd1c70-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "F78qCkVlsQg1jY7NtFvM",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "4cHYqFgnlxrImGzik8xg",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -5807,10 +5807,10 @@
         },
         {
             "device_name": "TK-28_INTERFACE HSD RICH@Bahadurgarh",
-            "device_id": "a11a4730-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea04e4a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "S8VgmWBql1Vj9qzObZkS",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "atjuyLiaqGB6IfrEWuLz",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -6022,10 +6022,10 @@
         },
         {
             "device_name": "TK-29_BS VI HSD@Bahadurgarh",
-            "device_id": "a18cb810-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea0ea8a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "0nHeh8XDnxYHXETarZ82",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "DOczTkcETJZ2gVaPPn76",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -6237,10 +6237,10 @@
         },
         {
             "device_name": "TK-30_BS VI HSD@Bahadurgarh",
-            "device_id": "a1fcdf00-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea13ffd0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "XPgCBWEmIDKK8oLzHOqd",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "kPHHspJ9pIOwZefnECTZ",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -6452,10 +6452,10 @@
         },
         {
             "device_name": "TK-31_SWEET SKO@Bahadurgarh",
-            "device_id": "a26d7b20-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea1e3900-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "ramH8qWI1G87ikXXoIzl",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "s8S0rIy2Yzk0JOFbX9Fj",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -6667,10 +6667,10 @@
         },
         {
             "device_name": "TK-32_SWEET SKO@Bahadurgarh",
-            "device_id": "a2d9f890-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea25da20-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "pQSY2x0I6bxuJSddSvch",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "npQfOtjlL4T4VVZaHrze",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -6882,10 +6882,10 @@
         },
         {
             "device_name": "TS-01_BS VI HSD@Bahadurgarh",
-            "device_id": "a345d9c0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea2b7f70-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "8DUFOObGw3GWY9sT2jSc",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "biVTJbYzR6xHPG45lNBX",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -7097,10 +7097,10 @@
         },
         {
             "device_name": "TS-02_BS VI HSD@Bahadurgarh",
-            "device_id": "a3b0a980-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea32d270-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "0T12B9bQAgrpRH1veA13",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "4cjfVfA7PCcTtlRQKkb6",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -7312,10 +7312,10 @@
         },
         {
             "device_name": "TS-03_BS VI MS@Bahadurgarh",
-            "device_id": "a41a19b0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea3a7390-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "63RTlg4ZUtUrBHVzDHwo",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "u710pjmb89vhh5J8hwuw",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -7527,10 +7527,10 @@
         },
         {
             "device_name": "TS-04_BS VI MS@Bahadurgarh",
-            "device_id": "a488ba00-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea445ea0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "YSIUDZKkDqyudGuHqVlS",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "7hlIDJGuZPrgiRLU0Em3",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -7742,10 +7742,10 @@
         },
         {
             "device_name": "TS-05_MTO@Bahadurgarh",
-            "device_id": "a4f66ff0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea49dce0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "oVPFgmuLs0JssCkynm2z",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "BFKyHblXarMmXHRVGOcR",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -7957,10 +7957,10 @@
         },
         {
             "device_name": "TS-06_ETHANOL@Bahadurgarh",
-            "device_id": "a5653750-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea517e00-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "2SWMLXKuEb2Lio0xP06r",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "FGMXTgJDar2TDMKkFyJI",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -8172,10 +8172,10 @@
         },
         {
             "device_name": "TS-07_ETHANOL@Bahadurgarh",
-            "device_id": "a5da1930-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea5b6910-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "jodUV48EHj7qX0e25WOl",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Az7bdD3JC4a6DeOznOlA",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -8387,10 +8387,10 @@
         },
         {
             "device_name": "TS-08_ETHANOL@Bahadurgarh",
-            "device_id": "a64b2a80-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea607220-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "O8OCILHPpPbLP527KBUj",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "tiVnhT0hqB9hB1xgFfcc",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -8602,10 +8602,10 @@
         },
         {
             "device_name": "TS-09_ATF@Bahadurgarh",
-            "device_id": "a6cbcc30-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea67ec30-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "pmSQjoB0GpCRv9oZrB6e",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "HZvhTh7Vv1R7GD9Vueu1",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -8817,10 +8817,10 @@
         },
         {
             "device_name": "TS-10_SLOP@Bahadurgarh",
-            "device_id": "a7347910-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea727380-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "zXPozn16zt6eGRBesRUh",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "O92zGnegdCuX7IM5oTVk",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -9032,10 +9032,10 @@
         },
         {
             "device_name": "TS-11_SLOP@Bahadurgarh",
-            "device_id": "a7b17140-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea772e70-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "fwXFQYMWhrBzpQB7fMCy",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "YAXWFMvds0HxYykSUU2P",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -9247,10 +9247,10 @@
         },
         {
             "device_name": "WTK-01_WATER@Bahadurgarh",
-            "device_id": "a8219830-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea811980-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "bWMfkFmkYbREOTITBppL",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "sa8ljAifT1F4FzJHUnQ3",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -9462,10 +9462,10 @@
         },
         {
             "device_name": "WTK-02_WATER@Bahadurgarh",
-            "device_id": "a88f9c40-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea8697c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "ESx9gldWPQEvGaRy6GgH",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "MVnt3xjpnn4XExKJFuKr",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -9677,10 +9677,10 @@
         },
         {
             "device_name": "WTK-03_WATER@Bahadurgarh",
-            "device_id": "a8f90c70-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea8e8700-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "uGiT7EkKu1qdidKrrHQM",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "6VIwLUEwH8pMEhXvpz7Y",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -9892,10 +9892,10 @@
         },
         {
             "device_name": "WTK-04_WATER@Bahadurgarh",
-            "device_id": "a962f1d0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea958be0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank",
-            "device_key": "lHa8GoxXwclcr817DRSf",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "FSWIIy1KMARe1x4LMqlw",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -10107,10 +10107,10 @@
         },
         {
             "device_name": "TK-01_BS VI HSD@Bahadurgarh_M",
-            "device_id": "a9cf6f40-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ea9d5410-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "HyxflVBBAV0g2FSKqa3p",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "uwdlO0G4qHwZUf3ESnUp",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -10210,10 +10210,10 @@
         },
         {
             "device_name": "TK-02_BS VI HSD@Bahadurgarh_M",
-            "device_id": "aa490c10-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eaa73f20-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "xLa8uodaJuUE3wB9GpJP",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "8jcp5Nb2mLUxlzno9gNM",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -10313,10 +10313,10 @@
         },
         {
             "device_name": "TK-03_BS VI HSD@Bahadurgarh_M",
-            "device_id": "aab6e910-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eaaee040-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "DwsTr5Uis89FzEVYyNYV",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "WOQb5mgnEj2FGyph05hl",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -10416,10 +10416,10 @@
         },
         {
             "device_name": "TK-04_BS VI HSD@Bahadurgarh_M",
-            "device_id": "ab25b070-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eab41060-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "f2RgyWFPR5yayHwz7oN0",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "CUpOrhQLhfN0tHBTvP8P",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -10519,10 +10519,10 @@
         },
         {
             "device_name": "TK-05_BS VI HSD@Bahadurgarh_M",
-            "device_id": "ab90f560-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eabbffa0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "2eeFql5jpaDGBXDfuTec",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "3JhEfg2tbtsug3B8UIt5",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -10622,10 +10622,10 @@
         },
         {
             "device_name": "TK-06_BS VI HSD@Bahadurgarh_M",
-            "device_id": "abfb9e10-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eac5c3a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "GFWW3PIAHPfZmDIavUXd",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "lsBxkF2A2l8MZQC7qEqq",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -10725,10 +10725,10 @@
         },
         {
             "device_name": "TK-07_BS VI HSD@Bahadurgarh_M",
-            "device_id": "ac6890b0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eacb41e0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "ZWKW6HVdGJg3D1ckepm2",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "dXCEWzy1iRp2igWIu26E",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -10828,10 +10828,10 @@
         },
         {
             "device_name": "TK-08_NAPHTHA@Bahadurgarh_M",
-            "device_id": "acded220-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ead505e0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "f5plbb5tV1uM1PB3zhKh",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "KrX6o2bkqDCMVOu0XrCw",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -10931,10 +10931,10 @@
         },
         {
             "device_name": "TK-09_NAPHTHA@Bahadurgarh_M",
-            "device_id": "ad4d7270-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eadaab30-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "YWF58dVDwzRM1PZluboR",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "eNzGPYfTSyI4JuCUclFE",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -11034,10 +11034,10 @@
         },
         {
             "device_name": "TK-10_NAPHTHA@Bahadurgarh_M",
-            "device_id": "adb6bb90-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eae1fe30-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "9GbYwRl25svxn1DI2BhU",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "HZSCBGDAbOzq1x5EKqVn",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -11137,10 +11137,10 @@
         },
         {
             "device_name": "TK-11_BS VI MS@Bahadurgarh_M",
-            "device_id": "ae1f4160-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eae97840-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "MBCXrv7U45YWUU7SgT2S",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "6hKJRyvqhy3u6dX5vphI",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -11240,10 +11240,10 @@
         },
         {
             "device_name": "TK-12_BS VI MS@Bahadurgarh_M",
-            "device_id": "ae8bbed0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eaf18e90-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "sgPvjufLYXg9KVb9nFsm",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "X7PHksl6M6RYHhKNAPKj",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -11343,10 +11343,10 @@
         },
         {
             "device_name": "TK-13_BS VI MS@Bahadurgarh_M",
-            "device_id": "aef88a60-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eafb79a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "H1U4LLqEQVDVn8WqBW81",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "nYBxh760gDCLMJWXLSow",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -11446,10 +11446,10 @@
         },
         {
             "device_name": "TK-14_ETHANOL@Bahadurgarh_M",
-            "device_id": "af63f660-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb02a590-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "pqgcNWwsCn3lHp2e845h",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "dmreJxsmqy0EMOcDNS5A",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -11549,10 +11549,10 @@
         },
         {
             "device_name": "TK-15_MTO@Bahadurgarh_M",
-            "device_id": "afe386a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb07fcc0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "jVBCJLSHEAON9SroXKcf",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "A9er5PqyZPOGJAFCBCH6",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -11652,10 +11652,10 @@
         },
         {
             "device_name": "TK-16_MTO@Bahadurgarh_M",
-            "device_id": "b04e2f50-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb0fc4f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "jYecCMxPW6TDPGzKOy9B",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "IXHHG4C4oyiNB0EmfblA",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -11755,10 +11755,10 @@
         },
         {
             "device_name": "TK-17_INTERFACE@Bahadurgarh_M",
-            "device_id": "b0bbe540-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb17db40-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "kRmSXFb41RaR2wdsmNqQ",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "yqLmJpbdD2vdFFr9Cmvh",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -11858,10 +11858,10 @@
         },
         {
             "device_name": "TK-18_INTERFACE@Bahadurgarh_M",
-            "device_id": "b12618c0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb1f2e40-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "oWQUArREsvLfzXqpk5AM",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "teH6rg9dm1cgLYXr47EO",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -11961,10 +11961,10 @@
         },
         {
             "device_name": "TK-19_ETHANOL@Bahadurgarh_M",
-            "device_id": "b195f190-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb294060-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "3L5MzH7n4d6rpQLMYYlH",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "qUSnD6A6zqpOMRcbT8PU",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -12064,10 +12064,10 @@
         },
         {
             "device_name": "TK-20_INTERFACE@Bahadurgarh_M",
-            "device_id": "b2094cd0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb2e7080-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "6aKtUZgmMhyL3scaylQm",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "crXep4lvfpzAnZfckv7r",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -12167,10 +12167,10 @@
         },
         {
             "device_name": "TK-21_INTERFACE@Bahadurgarh_M",
-            "device_id": "b2757c20-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb35ea90-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "aKBajW2PxIuQgqxAuZHX",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "t6k3fM2k16SIlw02BKL6",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -12270,10 +12270,10 @@
         },
         {
             "device_name": "TK-22_ATF@Bahadurgarh_M",
-            "device_id": "b2e18460-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb3dd9d0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "7fewclCGupTh4HbNlrxo",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "C2RwXbyAEQsAtJTbDAEv",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -12373,10 +12373,10 @@
         },
         {
             "device_name": "TK-23_ATF@Bahadurgarh_M",
-            "device_id": "b34c2d10-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb45a200-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "XCxjxWwF25wMRMFwwXSc",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "HeJZfmcDdmen5zeWEFPC",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -12476,10 +12476,10 @@
         },
         {
             "device_name": "TK-24_ATF@Bahadurgarh_M",
-            "device_id": "b3b687a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb4f6600-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "WCugpRcvgfOP5thdIYwy",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "N00c4Li5Et3YhPpceJJX",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -12579,10 +12579,10 @@
         },
         {
             "device_name": "TK-25_ATF@Bahadurgarh_M",
-            "device_id": "b4210940-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb546f10-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "984e9hF3WyZR22HmTwGJ",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "YuBhrncnXniO7ZqSMHnl",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -12682,10 +12682,10 @@
         },
         {
             "device_name": "TK-26_NAPHTHA@Bahadurgarh_M",
-            "device_id": "b4921a90-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb5c1030-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "StKFHURB76lDkJaY1M3X",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "4ptjZnTig2rdeQ7YxCo8",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -12785,10 +12785,10 @@
         },
         {
             "device_name": "TK-27_INTERFACE NAPHTHA RICH@Bahadurgarh_M",
-            "device_id": "b503ef30-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb642680-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "CSErSkXZefCPZJNWQTOL",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "3zH4z6AB3jTnlIQb7OHG",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -12888,10 +12888,10 @@
         },
         {
             "device_name": "TK-28_INTERFACE HSD RICH@Bahadurgarh_M",
-            "device_id": "b572b690-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb6dc370-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "tFTBk5SJzGMmMVXxsTj7",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "QbLngbbqOGZybmB06fme",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -12991,10 +12991,10 @@
         },
         {
             "device_name": "TK-29_BS VI HSD@Bahadurgarh_M",
-            "device_id": "b5dd1120-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb753d80-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "p4vRuzl5O2kcqTAd7SjW",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "ebTzePgrt2zZ7h2jSiuh",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -13094,10 +13094,10 @@
         },
         {
             "device_name": "TK-30_BS VI HSD@Bahadurgarh_M",
-            "device_id": "b64b8a60-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb7a94b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "V7LDh4uI0wWV4PVA09KP",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "v2rJCcPq8tn0iBiLK30D",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -13197,10 +13197,10 @@
         },
         {
             "device_name": "TK-31_SWEET SKO@Bahadurgarh_M",
-            "device_id": "b6ba2ab0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb820ec0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "8GlxznUuktXlMapPPDXH",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "9VUizWWe6obgtvzNKxcH",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -13300,10 +13300,10 @@
         },
         {
             "device_name": "TK-32_SWEET SKO@Bahadurgarh_M",
-            "device_id": "b7271d50-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb8a4c20-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "VK8UNJY4CbtVFtvwAdIj",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "sxJfZ2Ux2QpBDxNGUGob",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -13403,10 +13403,10 @@
         },
         {
             "device_name": "TS-01_BS VI HSD@Bahadurgarh_M",
-            "device_id": "b78e4390-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb93e910-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "QWa0Dxc7gVQPW4w8MTOK",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "5VsZQokDltKX63YDB0h2",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -13506,10 +13506,10 @@
         },
         {
             "device_name": "TS-02_BS VI HSD@Bahadurgarh_M",
-            "device_id": "b7f8ec40-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eb9b8a30-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "oR27Oet3LncWEPU4uU0u",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "nmdN5Ai3Osvu26EvCipy",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -13609,10 +13609,10 @@
         },
         {
             "device_name": "TS-03_BS VI MS@Bahadurgarh_M",
-            "device_id": "b8643130-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eba32b50-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "l7bQZrY06QnVZDVfdlhs",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "8aCtnLiDZBMhTbI1Z4H5",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -13712,10 +13712,10 @@
         },
         {
             "device_name": "TS-04_BS VI MS@Bahadurgarh_M",
-            "device_id": "b8e19e90-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebaacc70-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "sqSwI2OKDtoqoauXx8oY",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "ikdRJJkKj7eyayRW5QQr",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -13815,10 +13815,10 @@
         },
         {
             "device_name": "TS-05_MTO@Bahadurgarh_M",
-            "device_id": "b952d6f0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebb04ab0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "0DCmAbumllHoUhChIH7b",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "wdMJy59WWusZdUnICh3G",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -13918,10 +13918,10 @@
         },
         {
             "device_name": "TS-06_ETHANOL@Bahadurgarh_M",
-            "device_id": "b9bac080-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebb7ebd0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "iRPQBnsIJ3OCmAHERYSn",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "obVhJt255yMoI77zgiJo",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -14021,10 +14021,10 @@
         },
         {
             "device_name": "TS-07_ETHANOL@Bahadurgarh_M",
-            "device_id": "ba26efd0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebbfdb10-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "KE9z1JLgoPA0DPTaIHkS",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "VQMY0sAVR1utUhcFJpBU",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -14124,10 +14124,10 @@
         },
         {
             "device_name": "TS-08_ETHANOL@Bahadurgarh_M",
-            "device_id": "ba919880-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebc7a340-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "3UFpgSRM4gcsrh1PbOhD",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "0451c6SBBMjrLaogkcJx",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -14227,10 +14227,10 @@
         },
         {
             "device_name": "TS-09_ATF@Bahadurgarh_M",
-            "device_id": "bafcdd70-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebcef640-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Tank Maintenance",
-            "device_key": "aWT7jQe23ZIoeQBJJSch",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "EQC2ZolQldbxJ3Y4WeSZ",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -14330,10 +14330,10 @@
         },
         {
             "device_name": "ETH-PMP1_ETHANOL@Bahadurgarh",
-            "device_id": "bb6933d0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebd6be70-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "Ls1f2moFBADapX5YpEGd",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "rDwa8FWYGRZ7oLXT4G6B",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14359,10 +14359,10 @@
         },
         {
             "device_name": "ETH-PMP2_ETHANOL@Bahadurgarh",
-            "device_id": "bbd51500-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebde1170-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "xHmE2kuDYl5WQkjBcq4w",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "p9Z9xvxXivd4v5HJ6g45",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14388,10 +14388,10 @@
         },
         {
             "device_name": "PMP-01_POWER@Bahadurgarh",
-            "device_id": "bc3e1000-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebe7d570-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "WdhRd5mKiS8IP58bFtgU",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "xJ2qnfzSk4bRAKLkzVbE",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14417,10 +14417,10 @@
         },
         {
             "device_name": "PMP-02_POWER@Bahadurgarh",
-            "device_id": "bcac6230-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebefc4b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "XxfokGdoOHiDxmjJtz5h",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "yN80M7uDwpxfPjqxEfJl",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14446,10 +14446,10 @@
         },
         {
             "device_name": "PMP-03_TURBO@Bahadurgarh",
-            "device_id": "bd118ca0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebf6f0a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "ZKHFnARdVmB4XflPtc4J",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "X4yK4zjCPBDJjmxwCBz5",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14475,10 +14475,10 @@
         },
         {
             "device_name": "PMP-04_TURBO@Bahadurgarh",
-            "device_id": "bd83af60-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ebfeb8d0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "2BsrZGJgeFr2rvMIKDrg",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "wqYyLbdf3vXjLfS3JKmz",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14504,10 +14504,10 @@
         },
         {
             "device_name": "PMP-05_BS VI HSD@Bahadurgarh",
-            "device_id": "bdf24fb0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec0659f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "35vtXimDwAVyUeJo84Ou",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "b4whP2k1vvIuldB7z5rE",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14533,10 +14533,10 @@
         },
         {
             "device_name": "PMP-06_BS VI HSD@Bahadurgarh",
-            "device_id": "be5f9070-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec0bff40-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "Xlv2nwipsIyasmTtCvIJ",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "8Z6rcf6ymmxGxJcLICmO",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14562,10 +14562,10 @@
         },
         {
             "device_name": "PMP-07_BS VI HSD@Bahadurgarh",
-            "device_id": "bec6ddc0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec157520-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "2kPyfqiYKxSQq9iLXXeB",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "prsQz6sp0D0zWSwvyfao",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14591,10 +14591,10 @@
         },
         {
             "device_name": "PMP-09_BS VI HSD@Bahadurgarh",
-            "device_id": "bf344590-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec1b4180-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "LKdAPBeieMIEZiEtkPQq",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "7WNcSEfAjljVXdGl2QJn",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14620,10 +14620,10 @@
         },
         {
             "device_name": "PMP-10_BS VI HSD@Bahadurgarh",
-            "device_id": "bf9ca450-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec2309b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "E3sso0XSzmkSVaeW0vG0",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "AVXNeaewpbSqmjxlZDme",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14649,10 +14649,10 @@
         },
         {
             "device_name": "PMP-11_BLUE DYE@Bahadurgarh",
-            "device_id": "c004dc00-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec2a83c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "YQjiOUpb2D36l4ZWdmnO",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "yRXljkNHXbH0MdfyVNct",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14678,10 +14678,10 @@
         },
         {
             "device_name": "PMP-12_BLUE DYE@Bahadurgarh",
-            "device_id": "c0761460-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec33f9a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "3Gy6iYn5aKTVRf0w4o6A",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "SGdZ68KM5L1xjzh25dz4",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14707,10 +14707,10 @@
         },
         {
             "device_name": "PMP-15_BS VI MS@Bahadurgarh",
-            "device_id": "c0dee850-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec399ef0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "0sHqFub0WJ70gE1T4a8D",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "W4hY5pDZBiqpkX15M2a9",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14736,10 +14736,10 @@
         },
         {
             "device_name": "PMP-16_BS VI MS@Bahadurgarh",
-            "device_id": "c14e7300-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec418e30-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "jx70AN8VKtkn2T2RaFcf",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "B9KMct9fioED34ERhWHk",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14765,10 +14765,10 @@
         },
         {
             "device_name": "PMP-17_BS VI MS@Bahadurgarh",
-            "device_id": "c1d4ba00-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec492f50-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "Rn4xsFD8oVAECdVIGN5d",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "lbKhnBObqxxWxZrmr8bs",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14794,10 +14794,10 @@
         },
         {
             "device_name": "PMP-18_BS VI MS@Bahadurgarh",
-            "device_id": "c23f1490-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec50a960-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "svZmFNIlnwI3U1zGmjEA",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "3BIX8yvsPXdMB3X9u6Fq",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14823,10 +14823,10 @@
         },
         {
             "device_name": "PMP-19_BS VI MS@Bahadurgarh",
-            "device_id": "c2ac7c60-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec584a80-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "lreTuITXKrHKuRJ6G3cH",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "oQpZ7WoKe6FSY2s58I4Z",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14852,10 +14852,10 @@
         },
         {
             "device_name": "PMP-24_BS VI HSD@Bahadurgarh",
-            "device_id": "c31c2e20-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec6012b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "8ou2V9QmpBMqfFt0AkOs",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "AOxtE6hZHebUgKl6TKlt",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14881,10 +14881,10 @@
         },
         {
             "device_name": "PMP-25_BS VI HSD@Bahadurgarh",
-            "device_id": "c38661a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec678cc0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "j2noi5MFQYrQNxIe8iRe",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "MClOLclL320oevbWx0OV",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14910,10 +14910,10 @@
         },
         {
             "device_name": "PMP-26_BS VI HSD@Bahadurgarh",
-            "device_id": "c3fa0b00-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec7150c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "26j5TLwqMZ7rIbisPfr8",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "4vqRMJFxbqrZpTzpVx4w",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14939,10 +14939,10 @@
         },
         {
             "device_name": "PMP-28_NAPHTHA@Bahadurgarh",
-            "device_id": "c465c520-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec794000-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "YkaGOTW0tGoHfMEI9wvJ",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "F6KUAlIVdg7XNMZwKWXp",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14968,10 +14968,10 @@
         },
         {
             "device_name": "PMP-29_NAPHTHA@Bahadurgarh",
-            "device_id": "c4cf0e40-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec7e7020-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "9my0MwijqNxz0yJmP5mN",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "RnqhOlvLni1kQTEmnHrq",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -14997,10 +14997,10 @@
         },
         {
             "device_name": "PMP-30_NAPHTHA@Bahadurgarh",
-            "device_id": "c53aef70-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec865f60-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "lHkH7kqN6o3i7jtHYGkG",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "FudupZVgUFGIZIQZxGoK",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15026,10 +15026,10 @@
         },
         {
             "device_name": "PMP-31_BS VI HSD@Bahadurgarh",
-            "device_id": "c5a41180-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec8db260-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "9QhtsbHrBZAM1f3NdyRG",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "yWz1amfeymUJEhAc3AkG",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15055,10 +15055,10 @@
         },
         {
             "device_name": "PMP-32_BS VI HSD@Bahadurgarh",
-            "device_id": "c60d81b0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec95a1a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "glAo7GuR8gHlU9JqUW17",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "1MfA5sVqzrBjFpf64cD3",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15084,10 +15084,10 @@
         },
         {
             "device_name": "PMP-33_BS VI HSD@Bahadurgarh",
-            "device_id": "c67bd3e0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ec9d42c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "Q14PWmvW85jszqnufIT7",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "c4BcM9om2ilnQgc4ieER",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15113,10 +15113,10 @@
         },
         {
             "device_name": "PMP-36_BS VI MS@Bahadurgarh",
-            "device_id": "c6ea2610-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eca495c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "jBjHT6UFMSIu7I3OXEo4",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "n8Kx8THBrBntwgx5kjvd",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15142,10 +15142,10 @@
         },
         {
             "device_name": "PMP-37_BS VI MS@Bahadurgarh",
-            "device_id": "c759fee0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ecae80d0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "svzuhbLxBfIsintyMUeK",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "8BTkiAZE9QGb9DrYLwaV",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15171,10 +15171,10 @@
         },
         {
             "device_name": "PMP-38_BS VI MS@Bahadurgarh",
-            "device_id": "c7c3bd30-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ecb3ff10-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "3oCOfNp5FJ8dmxi8kGVa",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "sebHlV0Ij22e0p6gdrcA",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15200,10 +15200,10 @@
         },
         {
             "device_name": "PMP-40_BS VI MS@Bahadurgarh",
-            "device_id": "c82f5040-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ecbdea20-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "7yHvH3g3u9O3wknlkMPJ",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "RCUIC4OeSSS8QCSBPSL9",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15229,10 +15229,10 @@
         },
         {
             "device_name": "PMP-41_BS VI MS@Bahadurgarh",
-            "device_id": "c89b5880-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ecc34150-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "nMBU8SsCbVwYXkWu4BJe",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "GHT9X4sku4JASm9ZS4nq",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15258,10 +15258,10 @@
         },
         {
             "device_name": "PMP-42_BS VI MS@Bahadurgarh",
-            "device_id": "c903de50-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eccd5370-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "GSAWWYJwu9xEGJ2sBM2Z",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "mwaRTYuUsjancBIFDYJd",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15287,10 +15287,10 @@
         },
         {
             "device_name": "PMP-43_BS VI MS@Bahadurgarh",
-            "device_id": "c96deac0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ecd2d1b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "6xtgLh4ScvEfCUyaEe8p",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "PDEes9hMYg6agTTTTGD8",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15316,10 +15316,10 @@
         },
         {
             "device_name": "PMP-46_MTO@Bahadurgarh",
-            "device_id": "c9d8e190-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ecdc95b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "UPpNXPiWxroIx0DUXwBe",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "HoqYqgFoQTXeqexHp6mm",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15345,10 +15345,10 @@
         },
         {
             "device_name": "PMP-47_MTO@Bahadurgarh",
-            "device_id": "ca467070-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ece98e00-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "XPXJT4radn7xWJEsfcnE",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "nmdVhKyCcAdFlkcC1pil",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15374,10 +15374,10 @@
         },
         {
             "device_name": "PMP-48_MTO@Bahadurgarh",
-            "device_id": "cac7ae60-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ecf37910-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "3ncbaL7NhrAf0PCzHypV",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "2vcZ7FDrb0LRtN3O8MjW",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15403,10 +15403,10 @@
         },
         {
             "device_name": "PMP-52_MTO@Bahadurgarh",
-            "device_id": "cb30f780-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ecfaf320-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "gYUofmnnuB4xYI0HYGRR",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "NmdBI05pLDq3PHWxaYVi",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15432,10 +15432,10 @@
         },
         {
             "device_name": "PMP-53_MTO@Bahadurgarh",
-            "device_id": "cb9efb90-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed004a50-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "qn5QiuPxwvoTxjq9hUlS",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "7Yff3gFviOeVkM5sQG0c",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15461,10 +15461,10 @@
         },
         {
             "device_name": "PMP-54_MTO@Bahadurgarh",
-            "device_id": "cc06be10-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed0860a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "cayQugihJTFZGhCIkf1N",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "lXpeJqqnV3IBTOAzaTi1",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15490,10 +15490,10 @@
         },
         {
             "device_name": "PMP-57_ETHANOL@Bahadurgarh",
-            "device_id": "cc7bc700-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed1001c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "zemdZGm9w57zcrQxSfm5",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "QtFF6sUlL876QVTTJLHR",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15519,10 +15519,10 @@
         },
         {
             "device_name": "PMP-58_ETHANOL@Bahadurgarh",
-            "device_id": "ccf25690-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed19ecd0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "GHq8VKuFuC6HAL3lc0ab",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "mcxo4rBOWejQRtBkwiTi",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15548,10 +15548,10 @@
         },
         {
             "device_name": "PMP-59_ETHANOL@Bahadurgarh",
-            "device_id": "cd7bf8f0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed1f6b10-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "TQYKLqFloORspLc8Tglb",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "WOQ6FSOKd7zVaBotv8k9",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15577,10 +15577,10 @@
         },
         {
             "device_name": "PMP-60_ATF (B)@Bahadurgarh",
-            "device_id": "cde78c00-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed269700-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "tNy2rOqlDY5GQfKl3Bnd",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "QcrmShqP4ONc4TaoB9Yk",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15606,10 +15606,10 @@
         },
         {
             "device_name": "PMP-61_ATF (B)@Bahadurgarh",
-            "device_id": "ce547ea0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed2e3820-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "e0KY2QgaUfuMZJqxFcdM",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "lrfM2nBvKMQI62i8sCjr",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15635,10 +15635,10 @@
         },
         {
             "device_name": "PMP-62_ATF (B)@Bahadurgarh",
-            "device_id": "cebd5290-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed35d940-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "4Hu7meYRYkG1vwWUNtBj",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "H2JDeG6LXC5pUQLeCkNP",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15664,10 +15664,10 @@
         },
         {
             "device_name": "PMP-65_ATF@Bahadurgarh",
-            "device_id": "cf2e63e0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed3d5350-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "mPzGbA9BLFoCCYObMJAq",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "8DBRl08r6PdC9HB8t3Ni",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15693,10 +15693,10 @@
         },
         {
             "device_name": "PMP-66_ATF@Bahadurgarh",
-            "device_id": "cf9c8f00-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed454290-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "GfwgswpAY7hJJ5H9Kqyg",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "40iFaepHgRTLw3pSUHI9",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15722,10 +15722,10 @@
         },
         {
             "device_name": "PMP-67_ATF@Bahadurgarh",
-            "device_id": "d00f9c20-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed4f0690-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "uVLYDrmpakT2WkZpaMLz",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Lrit3nP5itGGZFhej9Sx",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15751,10 +15751,10 @@
         },
         {
             "device_name": "PMP-68_ATF@Bahadurgarh",
-            "device_id": "d07a6be0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed545dc0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "6BNoA0lcpP5Vf0h5YInI",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "UfXqeurRhciSHrc0AH0I",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15780,10 +15780,10 @@
         },
         {
             "device_name": "PMP-69_ATF@Bahadurgarh",
-            "device_id": "d0e562b0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed5e96f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "TgziVureZRHdBS6I5Nzs",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "daU6RhVXF0mfwJ3dZjE0",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15809,10 +15809,10 @@
         },
         {
             "device_name": "PMP-70_ATF@Bahadurgarh",
-            "device_id": "d14d7350-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed661100-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "1MHgjtqdgGwKfzuXRv4M",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "3Ih3nz1IpbBgymcXBTAp",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15838,10 +15838,10 @@
         },
         {
             "device_name": "PMP-71_ATF@Bahadurgarh",
-            "device_id": "d1b70a90-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed6b6830-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Pump",
-            "device_key": "fVYJqaL8uhoI6djbOW3A",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "y6F7INZCARxuJhvNpQqL",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15867,10 +15867,10 @@
         },
         {
             "device_name": "FWP-01_Water_DISPATCH@Bahadurgarh",
-            "device_id": "d22360f0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed733060-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "JA8kO0Ui8FIeszRbiCvP",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "ujLft39hGnfCpGe0KoUB",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -15941,10 +15941,10 @@
         },
         {
             "device_name": "FWP-02_Water_DISPATCH@Bahadurgarh",
-            "device_id": "d28fde60-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed7cf460-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "4e8pJ3HJVRuXREKa4wHM",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "QkoI93uNW63ikTl7URl0",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -16015,10 +16015,10 @@
         },
         {
             "device_name": "FWP-03_Water_DISPATCH@Bahadurgarh",
-            "device_id": "d2ff6910-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed849580-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "y4PZLyhzKDepZPvZcE44",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "QbfrKMTm0MkPsgyQFdj8",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -16089,10 +16089,10 @@
         },
         {
             "device_name": "FWP-04_Water_DISPATCH@Bahadurgarh",
-            "device_id": "d36e5780-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed8a13c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "wNM2iHP22GJpTExTA4kS",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "shcKANlicPFfx7weB5Wk",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -16163,10 +16163,10 @@
         },
         {
             "device_name": "FWP-05_Water_DISPATCH@Bahadurgarh",
-            "device_id": "d3ea1730-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed93d7c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "W8em1gDdtwBpZw1MQzi1",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "gU8mO0jxVGTH43WeiUXs",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -16237,10 +16237,10 @@
         },
         {
             "device_name": "FWP-06_Water_DISPATCH@Bahadurgarh",
-            "device_id": "d45498d0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ed9b78e0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "P2TOTA1eX0Q0rNoXrngE",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "6Kp1FCk1nDnALDDPQDDL",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -16311,10 +16311,10 @@
         },
         {
             "device_name": "FWP-07_Water_DISPATCH@Bahadurgarh",
-            "device_id": "d4be5720-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eda34110-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "c9mHdMEoIZJollxbchKm",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "mvkc28mZT0vEYBhRSrnk",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -16385,10 +16385,10 @@
         },
         {
             "device_name": "JCY-01_Jockey_DISPATCH@Bahadurgarh",
-            "device_id": "d52b22b0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eda89840-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "CjaME7OqA73pLJP7WbtC",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "T3lz2S9McxbFn4UsJj9u",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -16459,10 +16459,10 @@
         },
         {
             "device_name": "JCY-02_Jockey_DISPATCH@Bahadurgarh",
-            "device_id": "d595a450-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "edb25c40-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "zBq6TgiKCIpaRtc4dE5a",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "bKz9cfVZzxSYMBU1zwir",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -16533,10 +16533,10 @@
         },
         {
             "device_name": "Farthest Point PT_WATER Pressure_Near Tank no. 01@Bahadurgarh",
-            "device_id": "d5fec660-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "edb84fb0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "X5dlFYD4wtVEryA1lstq",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "sLDsQM1KoXf5Crttv6nJ",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -16607,10 +16607,10 @@
         },
         {
             "device_name": "Nearest Point PT_WATER Pressure_FWP pump house@Bahadurgarh",
-            "device_id": "d676b580-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "edbff0d0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Pump",
-            "device_key": "0LNuDdB7Yg3LCPBaPABY",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Ifwmx1Hpzp7HUIx2iXnr",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -16681,10 +16681,10 @@
         },
         {
             "device_name": "UPS-01_CR - Process@Bahadurgarh",
-            "device_id": "d6e57ce0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "edc966b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "UPS",
-            "device_key": "S0QCERAphal47SRRQc3G",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "JMPsUajksh9Vs9q24NHs",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "UPS FAIL",
@@ -16710,10 +16710,10 @@
         },
         {
             "device_name": "UPS-02_CR - Safety@Bahadurgarh",
-            "device_id": "d74ec600-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "edcf3310-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "UPS",
-            "device_key": "2AVla8dxs8OcFCVVacTD",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "NhegNYbq4GfjLw6Oa0hw",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "UPS FAIL",
@@ -16739,10 +16739,10 @@
         },
         {
             "device_name": "GEPLC_Process PLC@Bahadurgarh",
-            "device_id": "d7b772e1-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "edd6d430-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "PLC",
-            "device_key": "0PEs4s2nqZk4pEJpgC9I",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "ERk2uRYTCYTsugR77KkI",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PLC A IS MASTER",
@@ -16789,10 +16789,10 @@
         },
         {
             "device_name": "SFT PLC_Safety PLC1@Bahadurgarh",
-            "device_id": "d821f480-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ede04a10-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "PLC",
-            "device_key": "D0tPhHQz4cylZbFSwNoi",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "xjokPLHgtK6dYpGLxEMv",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PLC A IS MASTER",
@@ -16839,10 +16839,10 @@
         },
         {
             "device_name": "SFT PLC_Safety PLC2@Bahadurgarh",
-            "device_id": "d88f0e30-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ede61670-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "PLC",
-            "device_key": "ENikW72moEJbIGTa3cgZ",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "EWjDUGkShLSrFytbOV7S",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PLC A IS MASTER",
@@ -16889,10 +16889,10 @@
         },
         {
             "device_name": "SFT PLC_Safety PLC3@Bahadurgarh",
-            "device_id": "d902dea0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "edefb360-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "PLC",
-            "device_key": "eWCVHtJ2XKoT7fI8kwiJ",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "YudhvJrxQRxUMhtxIDbO",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "PLC A IS MASTER",
@@ -16939,10 +16939,10 @@
         },
         {
             "device_name": "HDS-01_HCD-OPENPATH-01_TANK - 17@Bahadurgarh",
-            "device_id": "d96f3501-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "edf75480-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "KxGnYGqzbmHI8jwxlInj",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "gFpfozMhegs0VmA1g7ov",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -16978,10 +16978,10 @@
         },
         {
             "device_name": "HDS-02_HCD-OPENPATH-02_TANK - 21@Bahadurgarh",
-            "device_id": "d9e29040-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "edfef5a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "occ2qCv6NZuMqmvVGp4J",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Gp6VKzH2DhkrIOgDeJ30",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17017,10 +17017,10 @@
         },
         {
             "device_name": "HDS-03_HCD-OPENPATH-03_TTL PUMP HOUSE@Bahadurgarh",
-            "device_id": "da4c4e90-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee066fb0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "V6AsWiiaZ5fpsMZohKQt",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "s8X827G94ek2uLC9ZVqt",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17056,10 +17056,10 @@
         },
         {
             "device_name": "HDS-04_HCD-OPENPATH-04_TANK - 19@Bahadurgarh",
-            "device_id": "dab6f740-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee0e37e0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "fzYM6jp06OjRvuv0RLJH",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "r8LTiu32kfzFGo8Wuoxd",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17095,10 +17095,10 @@
         },
         {
             "device_name": "HDS-05_HCD-OPENPATH-05_TANK - 27@Bahadurgarh",
-            "device_id": "db2a0460-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee1b7e50-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "vnRr3SDwfQuWGU2orSLV",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "9K9OCNg4tBeavRpvfPpT",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17134,10 +17134,10 @@
         },
         {
             "device_name": "HDS-06_HCD-OPENPATH-06_TANK - 11@Bahadurgarh",
-            "device_id": "db952240-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee23bbb0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "jQv97hO7nVRi1I8sXzR6",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "luzf3R2KJacPWQgENlYE",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17173,10 +17173,10 @@
         },
         {
             "device_name": "HDS-07_HCD-OPENPATH-07_TANK - 10/08@Bahadurgarh",
-            "device_id": "dc076c10-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee2b0eb0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "PmaIrFimfdK01XeXrXjo",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "I3YjCMG73OaVhXSEEvPB",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17212,10 +17212,10 @@
         },
         {
             "device_name": "HDS-08_HCD-OPENPATH-08_TANK-26/9@Bahadurgarh",
-            "device_id": "dc798ed0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee32afd0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "C15wuzFZ1nrex3VdaTqL",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "ozQEbwzwJ4q5Po6Qnyce",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17251,10 +17251,10 @@
         },
         {
             "device_name": "HDS-09_HCD-OPENPATH-09_TWL PUMP HOUSE@Bahadurgarh",
-            "device_id": "dcfe7640-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee3a02d0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "AITBqNQQf22ZSJXzNTHp",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "I3XjDJOAwhJlk2nz5BWN",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17290,10 +17290,10 @@
         },
         {
             "device_name": "HDS-10_HCD-OPENPATH-10_TANK - 13@Bahadurgarh",
-            "device_id": "dd6e7620-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee41a3f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "a1Pdpbw6lqcViEDVBkP7",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "OARte7hZxy1AmxMJI8en",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17329,10 +17329,10 @@
         },
         {
             "device_name": "HDS-11_HCD-FIXEDTYPE-01_TANK - 17@Bahadurgarh",
-            "device_id": "ddd2dd40-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee4b67f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "7LW4PV6PrZKWHK8nV8Cv",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "VPiVcSVLaxg5QkKg6DiO",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17368,10 +17368,10 @@
         },
         {
             "device_name": "HDS-12_HCD-FIXEDTYPE-02_TANK - 13@Bahadurgarh",
-            "device_id": "de3a0380-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee50e630-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "btCNnLB0nvkzYqAqy4Li",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "2McQERLRnHIdOMG4KrxV",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17407,10 +17407,10 @@
         },
         {
             "device_name": "HDS-13_HCD-FIXEDTYPE-03_TANK - 19@Bahadurgarh",
-            "device_id": "dea54870-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee58ae60-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "kdc5KKJvIpZzU9v5v87Q",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "OVvLTJaMG9EBxqcrnY33",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17446,10 +17446,10 @@
         },
         {
             "device_name": "HDS-14_HCD-FIXEDTYPE-04_TANK - 26@Bahadurgarh",
-            "device_id": "df110290-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee602870-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "M5wcxPsxv9bVn1ZZ7Trp",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "n8V8FJ5c5sGvWA7JAf7d",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17485,10 +17485,10 @@
         },
         {
             "device_name": "HDS-15_HCD-FIXEDTYPE-05_ETP@Bahadurgarh",
-            "device_id": "df7e6a60-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee67c990-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "Xb4jr5C8AA3TptoIaDah",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Un1Xiqg06YkFA2iQvRLb",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17524,10 +17524,10 @@
         },
         {
             "device_name": "HDS-16_HCD-FIXEDTYPE-06_TT PUMP HOUSE@Bahadurgarh",
-            "device_id": "dfe5dec0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee6f6ab0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "7FiLy7fUVzJcD6PKHbWj",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Ev4CfzPaqRQdSHqvtX2g",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17563,10 +17563,10 @@
         },
         {
             "device_name": "HDS-17_HCD-FIXEDTYPE-07_TWG PUMP HOUSE@Bahadurgarh",
-            "device_id": "e050fca0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee7907a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "yMg0B77Kas2XOSpszD08",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "d7dTm32QF4Z0RuFA2VKK",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17602,10 +17602,10 @@
         },
         {
             "device_name": "HDS-18_HCD-OPENPATH-11_ETH PUMP HOUSE@Bahadurgarh",
-            "device_id": "e0bb5730-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee7e85e0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "KUk9yRMsj781MNLbAgzw",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "4rKQtJ4Lb4DqAhdaipKy",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17641,10 +17641,10 @@
         },
         {
             "device_name": "HDS-19_HCD-FIXEDTYPE-08_ETH PUMP HOUSE@Bahadurgarh",
-            "device_id": "e12abad0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee864e10-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "3Yk74QIsttsKvV5xlUCE",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "o8oTw7G3e0Er0gmQZ7ug",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17680,10 +17680,10 @@
         },
         {
             "device_name": "HDS-20_HCD-FIXEDTYPE-09_VRU@Bahadurgarh",
-            "device_id": "e1971130-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee8def30-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "qlRabvNmD7idjhR19BfU",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Em57xTlazt68FHCbH1qy",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17719,10 +17719,10 @@
         },
         {
             "device_name": "HDS-21_HCD-OPENPATH-12_TK-14 OPEN PATH HCD@Bahadurgarh",
-            "device_id": "e2069be0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee959050-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "P0oWzo8nlWPQhxAPCk0u",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "MK8ZaKxBE52r0I6vazAw",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17758,10 +17758,10 @@
         },
         {
             "device_name": "HDS-22_HCD-FIXEDTYPE-10_TK-14 FIXED PATH HCD@Bahadurgarh",
-            "device_id": "e27207e0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ee9d3170-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "HCD",
-            "device_key": "oAEZJi7CIOhAdQHpqgNa",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "J9fX286hiQW48mDYaQzN",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -17797,10 +17797,10 @@
         },
         {
             "device_name": "DV-01@Bahadurgarh",
-            "device_id": "e2db7811-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eea6a750-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "iE81OWfjI5PIk01pFqkC",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "5nu3Z6GYe1OBUeaV69Xt",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -17816,10 +17816,10 @@
         },
         {
             "device_name": "DV-02@Bahadurgarh",
-            "device_id": "e35207a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eeac4ca0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "ipC10jZCunlcDU0LWoMc",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "pKBT9ORJGE2v20daOlqe",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -17835,10 +17835,10 @@
         },
         {
             "device_name": "DV-03@Bahadurgarh",
-            "device_id": "e3bd4c90-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eeb610a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "AIKr6yukNw5GteVxTuPA",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "qObNw5eVfQsyrI9fV283",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -17854,10 +17854,10 @@
         },
         {
             "device_name": "DV-04@Bahadurgarh",
-            "device_id": "e4281c50-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eebdb1c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "FJAWgJ60kLhiCgE85duh",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "g5a6mpeGkz3s6N6yAq2i",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -17873,10 +17873,10 @@
         },
         {
             "device_name": "DV-05@Bahadurgarh",
-            "device_id": "e4ac4070-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eec33000-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "0liIwnO3TSvIZ542dHNK",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "WugR4MMQPtju6CK871ax",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -17892,10 +17892,10 @@
         },
         {
             "device_name": "DV-06@Bahadurgarh",
-            "device_id": "e51848b0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eecad120-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "I1kuwJgBgZcuiCWESrhj",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "WwxkuPpIuAsWoBnNXvE8",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -17911,10 +17911,10 @@
         },
         {
             "device_name": "DV-07@Bahadurgarh",
-            "device_id": "e583dbc0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eed49520-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "3KZJbBJyxr2ABr8dfNdV",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "WFqmDrYfqtESHgRYm3x4",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -17930,10 +17930,10 @@
         },
         {
             "device_name": "DV-08@Bahadurgarh",
-            "device_id": "e6014920-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eeda1360-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "SDaBT06oQwFQ9BnylGkP",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "AAf2Rgw12wKZUZ4447Za",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -17949,10 +17949,10 @@
         },
         {
             "device_name": "DV-09@Bahadurgarh",
-            "device_id": "e66eb0f0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eee42580-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "Hl64ZNLpAP1u6pllLwm6",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "xvutWUDblOncMLt642QX",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -17968,10 +17968,10 @@
         },
         {
             "device_name": "DV-10@Bahadurgarh",
-            "device_id": "e6dd9f60-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eee9f1e0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "5ImmK31vWUEt3wl64lDP",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "dXuxiYtBVq997QA7oZxG",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -17987,10 +17987,10 @@
         },
         {
             "device_name": "DV-11@Bahadurgarh",
-            "device_id": "e7486f20-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eef11dd0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "MJxcUrHV4AJcUyfQt5rg",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "uUmT8ZXaIqiwTpZ4657L",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -18006,10 +18006,10 @@
         },
         {
             "device_name": "DV-12@Bahadurgarh",
-            "device_id": "e7ae5ce0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eefae1d0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "XvdSb7Cr92qMm7zQlKTR",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "sODKCu3lWN3VXQbts9Lw",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -18025,10 +18025,10 @@
         },
         {
             "device_name": "DV-13@Bahadurgarh",
-            "device_id": "e81caf10-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef008720-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "EnyQFcBGgioUip5YXDxp",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "hNqzTA4PiKRiI39Yzhn9",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -18044,10 +18044,10 @@
         },
         {
             "device_name": "DV-14@Bahadurgarh",
-            "device_id": "e8884220-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef080130-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "ADbYpk0l2zuhiPi43XSK",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "AveW5sjQxmN9UG7CxrU7",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -18063,10 +18063,10 @@
         },
         {
             "device_name": "DV-15@Bahadurgarh",
-            "device_id": "e8f0a0e0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef0fa250-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "uhZIlSaHmmnUnfmN2GR5",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "A7VlLhF6qbdqGg8tHDda",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -18082,10 +18082,10 @@
         },
         {
             "device_name": "DV-16@Bahadurgarh",
-            "device_id": "e956dcc0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef171c60-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "0tfK6mWctNLrXce5hTga",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "8Zvw215OYaQ5SpD7VLwn",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -18101,10 +18101,10 @@
         },
         {
             "device_name": "DV-17@Bahadurgarh",
-            "device_id": "e9beed60-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef210770-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "6dByW76Qo4FdiZwP2E8g",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "iInGl1eXAI6Fi5ckPzwA",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -18120,10 +18120,10 @@
         },
         {
             "device_name": "DV-18@Bahadurgarh",
-            "device_id": "ea2c7c40-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef2685b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "agCcdPtAOb461HawnC0y",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "ce10WpF8rBYwHX95bYBE",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -18139,10 +18139,10 @@
         },
         {
             "device_name": "DV-19@Bahadurgarh",
-            "device_id": "ea9661a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef2e26d0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "QJ1iw3SQBbz9Z1icgtof",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "pvDdu2pkkcZNwCqIrZ59",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -18158,10 +18158,10 @@
         },
         {
             "device_name": "DV-20@Bahadurgarh",
-            "device_id": "eb0290f0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef35c7f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Dyke",
-            "device_key": "EK8NjYszMOIrNp3UXeBO",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "0sVfJD1SkQyKrDkNOt8W",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -18177,10 +18177,10 @@
         },
         {
             "device_name": "EntryGate@Bahadurgarh",
-            "device_id": "eb6bb300-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef3f8bf0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Barrier Gate",
-            "device_key": "1MaysXm4RJ5O7ysz5GBI",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "wqCkUDSGdrMrLK7WHPUB",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "BARRIER GATE OPEN STATUS",
@@ -18201,10 +18201,10 @@
         },
         {
             "device_name": "ExitGate@Bahadurgarh",
-            "device_id": "ebd76d20-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef455850-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Barrier Gate",
-            "device_key": "jT2LQGt67ZBEgPyFt2Kf",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "31jZwrMxir82knZnWeri",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "BARRIER GATE OPEN STATUS",
@@ -18225,10 +18225,10 @@
         },
         {
             "device_name": "1_Hooter Strobe for HCD in Field@Bahadurgarh",
-            "device_id": "ec415281-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef4cf970-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "wll4itYJhGjgHjfsnrn6",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Ux5I8pS1j1rQeI66r39j",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18239,10 +18239,10 @@
         },
         {
             "device_name": "2_Hooter strobe for TFMS in Field@Bahadurgarh",
-            "device_id": "ecadcff0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef547380-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "LUlSwsXl6GNvLwLdMGHa",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "8VNdik3uF0NBvBFzXh5g",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18253,10 +18253,10 @@
         },
         {
             "device_name": "3_Hooter strobe for TTL P/H in Field@Bahadurgarh",
-            "device_id": "ed174020-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef5e1070-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "MhACMcD7onPyMAu5MTux",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "itf4AB6RmNQFRryB2afL",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18267,10 +18267,10 @@
         },
         {
             "device_name": "4_Hooter strobe for TWL P/H in Field@Bahadurgarh",
-            "device_id": "ed854430-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef63b5c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "RJVzWQUFcLtILoqhT1Ih",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "vUs99tGYdjQSjhdAT1KZ",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18281,10 +18281,10 @@
         },
         {
             "device_name": "5_Hooter strobe for TFMS in Field@Bahadurgarh",
-            "device_id": "edfdcf90-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef6b7df0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "96nsAPDkI2QTmQXdm97t",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "KZ4pWYywJyw4Eqdtdgy0",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18295,10 +18295,10 @@
         },
         {
             "device_name": "6_HOOTER_FOR_ESD_CR@Bahadurgarh",
-            "device_id": "ee67b4f0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef72f800-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "3xEFpbBwEh5hFt3GUjww",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "cVYcmqv79z7E56715ba1",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18309,10 +18309,10 @@
         },
         {
             "device_name": "7_HOOTER_FOR_HC_CR@Bahadurgarh",
-            "device_id": "eee52250-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef7c94f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "MOWEOldFZVgNtwYXTJUE",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "JrMyg38we0zFdZh8B7IO",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18323,10 +18323,10 @@
         },
         {
             "device_name": "8_HOOTER_FOR_RIMSEAL_CR@Bahadurgarh",
-            "device_id": "ef4e9280-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef823a40-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "5aOnjW6GmiifWsCL8Ikz",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "2dKSYQ25CjjFfAlQG2BV",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18337,10 +18337,10 @@
         },
         {
             "device_name": "9_HOOTER_ACK_STATUS@Bahadurgarh",
-            "device_id": "efb65500-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef8a0270-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "ZW6aVnRzeGKf0qBp7zwB",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "cL5PIUpiCxCEa43IgHT0",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18351,10 +18351,10 @@
         },
         {
             "device_name": "10_HOOTER_RESET_STATUS@Bahadurgarh",
-            "device_id": "f022ab60-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef91f1b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "TneJao3liuC9aSp1VvRX",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "SE808U6BVs4rL0KWJSRH",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18365,10 +18365,10 @@
         },
         {
             "device_name": "11_HOOTER_ACK@Bahadurgarh",
-            "device_id": "f09199d0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "ef9944b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "EJauVnN6KEkzaWrwDSeX",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "P3Tb6EeOFleySmIqhu6d",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18379,10 +18379,10 @@
         },
         {
             "device_name": "12_HOOTER_RESET@Bahadurgarh",
-            "device_id": "f0ffc4f0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "efa0e5d0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "CnIchls7WKSN2gCxQLPe",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "PzE5BH5mq3EP1ktgyOzG",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18393,10 +18393,10 @@
         },
         {
             "device_name": "13_Hooter strobe for TFMS in Field@Bahadurgarh",
-            "device_id": "f16d2cc0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "efa886f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Hooter",
-            "device_key": "EWHBfShFQySUADhv6v4H",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "6HK9aqcf317lCCFQ7xCJ",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -18407,10 +18407,10 @@
         },
         {
             "device_name": "ESD-01_Res Cor HPCL@Bahadurgarh",
-            "device_id": "f1d9f851-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "efafd9f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "s9wc7rDBJEWZfW63VU6U",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Ji5z1xpoDle4UzQWicXH",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -18481,10 +18481,10 @@
         },
         {
             "device_name": "ESD-02_CONTROL ROOM@Bahadurgarh",
-            "device_id": "f247d550-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "efb7c930-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "U4M8XU490JQKfhVFTKq7",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "I69zRCTzyLq9YhLE68JP",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -18555,10 +18555,10 @@
         },
         {
             "device_name": "ESD-03_TLF GANTRY - 01@Bahadurgarh",
-            "device_id": "f2beb300-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "efbf6a50-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "HFFddAXKQcMIOpdg6sO5",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "B0IP3mf51eDFfDtWpUtC",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -18629,10 +18629,10 @@
         },
         {
             "device_name": "ESD-04_TLF GANTRY - 02@Bahadurgarh",
-            "device_id": "f3275fe0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "efc70b70-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "FfYKR32DwbWdHeXs3PVM",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "j0SbxnYlKkckbd9sSKiT",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -18703,10 +18703,10 @@
         },
         {
             "device_name": "ESD-05_TWG PUMP HOUSE@Bahadurgarh",
-            "device_id": "f3940460-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "efcefab0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "LoC1Lz9cXAKTiPvLaexh",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Xu4mm8yktuWbK3fHafsc",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -18777,10 +18777,10 @@
         },
         {
             "device_name": "ESD-06_ADMIN BUILDING@Bahadurgarh",
-            "device_id": "f3fcd850-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "efd674c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "MiGXSDjQAOckM9XN6ZXa",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "AgarSfPMzNPipSrjq1Qg",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -18851,10 +18851,10 @@
         },
         {
             "device_name": "ESD-07_TTL PUMP HOUSE@Bahadurgarh",
-            "device_id": "f469a3e0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "efdda0b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "0ICnae50rcMU4FIudqBC",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "TjCYN1pRfsR2mHzNETgF",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -18925,10 +18925,10 @@
         },
         {
             "device_name": "ESD-08_SECURITY GATE@Bahadurgarh",
-            "device_id": "f4d3b050-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "efe58ff0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "VNoYATfNvg6jH4zWuZV8",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "kyOOmVCTh8po6epUWa6z",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -18999,10 +18999,10 @@
         },
         {
             "device_name": "ESD-09_TLF GANTRY - 02 NEAR BAY - 09@Bahadurgarh",
-            "device_id": "f53d2080-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "efed3110-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "UYEUTN9U8y8KIbdvV4I9",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "OZwXCfvq5EPKGpyt22Bk",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19073,10 +19073,10 @@
         },
         {
             "device_name": "ESD-10_NEAR TANK 26@Bahadurgarh",
-            "device_id": "f5a61b80-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "eff74330-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "KKOXnF02e4Ty8TP2WyJL",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "R0y6tisvQ0c2CF5b5TYp",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19147,10 +19147,10 @@
         },
         {
             "device_name": "ESD-12_TWG GANTRY@Bahadurgarh",
-            "device_id": "f61494c0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "effce880-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "Woybnmr7mz1KV2SQTLdD",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "fNBq3ojkUmpjwHj1Z9cr",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19221,10 +19221,10 @@
         },
         {
             "device_name": "ESD-13_CENTRAL ESD@Bahadurgarh",
-            "device_id": "f67f6480-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f0043b80-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "qxQtSPM33RSJqNwNdSl1",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "TGRHc6ZIRet8qEyUUlCW",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19295,10 +19295,10 @@
         },
         {
             "device_name": "ESD-16_PIPELINE ESD@Bahadurgarh",
-            "device_id": "f6e922d0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f00c03b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "7zK3HgMgskyujDXx2OBj",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "0uceibtCpGRAJOP6IEjO",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19369,10 +19369,10 @@
         },
         {
             "device_name": "ESD-17_ATF GANTRY CATWALK UPSIDE@Bahadurgarh",
-            "device_id": "f7561570-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f0144110-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "tUMsNmBsxiO8HrAKRsHC",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "jhRfHSxuqCjVdGcSVea3",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19443,10 +19443,10 @@
         },
         {
             "device_name": "ESD-18_ATF GANTRY CATWALK DOWNSIDE@Bahadurgarh",
-            "device_id": "f7dea660-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f01bbb20-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "kt7ammwxDMS1Y7SUDK3Z",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "buv8ZfYmy6iJX4lTNRil",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19517,10 +19517,10 @@
         },
         {
             "device_name": "ESD-19_NEAR TANK 01@Bahadurgarh",
-            "device_id": "f84a8790-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f022c000-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "yDevrJUW54wvyOG7l27T",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "kZCxQ00CMUfp8EjOwIbB",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19591,10 +19591,10 @@
         },
         {
             "device_name": "ESD-20_BETWEEN TANK 05 AND TANK 13@Bahadurgarh",
-            "device_id": "f8b11190-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f02a6120-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "YxuaPJbay6CjZ5cJW9nS",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "dsf0up84rkagGaXdaDak",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19665,10 +19665,10 @@
         },
         {
             "device_name": "ESD-21_NEAR TANK 14@Bahadurgarh",
-            "device_id": "f9209c40-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f0325060-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "rk3mdcgZQsKKZpOj0TRy",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "tTNPdDw3wvWz48RnBOh9",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19739,10 +19739,10 @@
         },
         {
             "device_name": "ESD-22_NEAR TANK 25@Bahadurgarh",
-            "device_id": "f98be130-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f03bc640-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "Ck6RUGrGvT3yOB6g6scq",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "GzdYJHIfgQbCWwT74205",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19813,10 +19813,10 @@
         },
         {
             "device_name": "ESD-SOFT_SOFT FROM OIC@Bahadurgarh",
-            "device_id": "fa144b10-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f040f660-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "DSMniijOEMrRYchOc30k",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "T5B4XmfAdpIPn1KzaeUJ",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19887,10 +19887,10 @@
         },
         {
             "device_name": "RIM SEAL_ESD DUE TO RIMSEAL@Bahadurgarh",
-            "device_id": "fa8d72b0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f04933c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "ESD",
-            "device_key": "h4NtvMsfvpTD8enlvPAc",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "sMf4wIUUmZicrMYXSqAi",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -19961,10 +19961,10 @@
         },
         {
             "device_name": "LP 01_BC-01A_BS VI HSD@Bahadurgarh",
-            "device_id": "faf905c1-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f050d4e0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "Gv5nE07vYE8CgHCIwfwr",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "nTeK8cSLGTUyWl9IhVBv",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -20065,10 +20065,10 @@
         },
         {
             "device_name": "LP 02_BC-01B_BS VI HSD@Bahadurgarh",
-            "device_id": "fb69c8f0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f05a98e0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "1wtlgavc0t7Keqoc7nb2",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "SEiuEG2omYUqgiMl2lBb",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -20169,10 +20169,10 @@
         },
         {
             "device_name": "LP 03_BC-02A_MTO@Bahadurgarh",
-            "device_id": "fbd61f50-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f05fa1f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "ueXcPu2SCjACdEkxyi8K",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "BesOPiSxALa8S92iXvce",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -20273,10 +20273,10 @@
         },
         {
             "device_name": "LP 04_BC-02B_MTO@Bahadurgarh",
-            "device_id": "fc3f8f80-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f067b840-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "HvwtpLcgFepc28RxSsTD",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "bv86qqBfTk91xIV0nC82",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -20377,10 +20377,10 @@
         },
         {
             "device_name": "LP 05_BC-03A_BS VI HSD@Bahadurgarh",
-            "device_id": "fcaca930-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f06ee430-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "qoY4xGKLuWfuuS7PVvwc",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "0O9pcY3GebLimDs57zRT",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -20481,10 +20481,10 @@
         },
         {
             "device_name": "LP 06_BC-03B_BS VI HSD@Bahadurgarh",
-            "device_id": "fd1d1e40-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f076ac60-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "tuOT9zwS5F5maTupwoN2",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "w7lszQt8MkzOzEu7ovEr",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -20585,10 +20585,10 @@
         },
         {
             "device_name": "LP 07_BC-04A_BS VI HSD@Bahadurgarh",
-            "device_id": "fd8c81e0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f07e4d80-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "H5C8kWtSHHloKSo6Q1rS",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "FemgcIuosMuABi8mO0bQ",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -20689,10 +20689,10 @@
         },
         {
             "device_name": "LP 08_BC-04B_BS VI HSD@Bahadurgarh",
-            "device_id": "fdf7ede0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f085eea0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "i91L7aoQzz57fv0fLPmK",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "RJCZl0z8qNWofZiR4v5f",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -20793,10 +20793,10 @@
         },
         {
             "device_name": "LP 09_BC-05A_BS VI HSD@Bahadurgarh",
-            "device_id": "fe6380f0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f08ddde0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "vtOn4GvLU9QRKCaqYp8h",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "gAUJUwOEhCxfyPLYoZCf",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -20897,10 +20897,10 @@
         },
         {
             "device_name": "LP 10_BC-05B_BS VI MS@Bahadurgarh",
-            "device_id": "fed359c0-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f097c8f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "J8nz7qD7NGdtrYvHOjaC",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "NrGIUobmi3Obi7aVSFWK",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -21001,10 +21001,10 @@
         },
         {
             "device_name": "LP 11_BC-06A_BS VI HSD@Bahadurgarh",
-            "device_id": "ff433290-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f09d2020-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "RANWYsuWSO8Kg4Vz99QW",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "Sgw4eYm27DG6Fd03Ju1D",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -21105,10 +21105,10 @@
         },
         {
             "device_name": "LP 12_BC-06B_BS VI MS@Bahadurgarh",
-            "device_id": "ffb30b60-25ce-11f0-b475-bbbb14fdc372",
+            "device_id": "f0a4c140-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "TvcpYg7VOarOn47zhnEv",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "vMIIDGk8HfDW14u2vdpu",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -21209,10 +21209,10 @@
         },
         {
             "device_name": "LP 13_BC-07A_BS VI HSD@Bahadurgarh",
-            "device_id": "0021f9d0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f0acb080-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "tciHP0jm1rzDJs9LfYTN",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "7zbc5WtYmHdpDcJcr5D2",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -21313,10 +21313,10 @@
         },
         {
             "device_name": "LP 14_BC-07B_BS VI HSD@Bahadurgarh",
-            "device_id": "008ec560-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f0b3dc70-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "84B1LMXjZSXuV7rQwEHM",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "7QG802SRqcdja89fqc5i",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -21417,10 +21417,10 @@
         },
         {
             "device_name": "LP 15_BC-08A_BS VI HSD@Bahadurgarh",
-            "device_id": "010506d0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f0be15a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "wzTVk2x9eTAGlyKIx0iq",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "GYzZkrNmlZ4aIVDZRJmy",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -21521,10 +21521,10 @@
         },
         {
             "device_name": "LP 16_BC-08B_BS VI HSD@Bahadurgarh",
-            "device_id": "01713620-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f0c3baf0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "XLB5c8WTATsaTlNZbaT7",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "jK24yw9eWOn2vb7vVPPR",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -21625,10 +21625,10 @@
         },
         {
             "device_name": "LP 17_BC-09A_BS VI HSD@Bahadurgarh",
-            "device_id": "01e13600-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f0cabfd0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "4GhZXjzJ1BIaUpKwzkXU",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "uWapTalFuXJFgspq3qnS",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -21729,10 +21729,10 @@
         },
         {
             "device_name": "LP 18_BC-09B_BS VI MS@Bahadurgarh",
-            "device_id": "0251f930-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f0d2d620-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "ijVMYSO4vO16ovvSy0ct",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "lg9YbDzzWEqU8IpVrzLD",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -21833,10 +21833,10 @@
         },
         {
             "device_name": "LP 19_BC-10A_BS VI HSD@Bahadurgarh",
-            "device_id": "02d99fc0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f0da7740-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "b3PggIjdpQOA9X2qClCt",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "RRGrLC4f4XhE6hloIJqC",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -21937,10 +21937,10 @@
         },
         {
             "device_name": "LP 20_BC-10B_BS VI MS@Bahadurgarh",
-            "device_id": "0344e4b0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f0e21860-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "6TNw5xOoVhMXBx7C3XFi",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "NAK7b6U5TwRskiOPp8eu",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -22041,10 +22041,10 @@
         },
         {
             "device_name": "LP 21_BC-11A_BS VI HSD@Bahadurgarh",
-            "device_id": "03b7f1d0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f0e94450-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "yFx0Wv7UGdfAFUsDx9mk",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "sR2tAY8d9BDczHuB41wn",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -22145,10 +22145,10 @@
         },
         {
             "device_name": "LP 22_BC-11B_BS VI MS@Bahadurgarh",
-            "device_id": "04305620-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f0f3a490-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "k94zQ3Md5iPxjhKFcp5p",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "gfIlb733kXp4iIB2KWX4",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -22249,10 +22249,10 @@
         },
         {
             "device_name": "LP 23_BC-12A_BS VI HSD@Bahadurgarh",
-            "device_id": "04992a10-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f0f8d4b0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "1P0wFJBCBKsEz0V1I1dp",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "tkjxBrD6zn5KjGLrybe9",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -22353,10 +22353,10 @@
         },
         {
             "device_name": "LP 24_BC-12B_BS VI MS@Bahadurgarh",
-            "device_id": "050f9290-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1030de0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "j3lr0vK1vr1R0moFe0Bf",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "bQybUD24Fe5GLhYx3OI1",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -22457,10 +22457,10 @@
         },
         {
             "device_name": "LP 25_BC-13A_BS VI HSD@Bahadurgarh",
-            "device_id": "0580a3e0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1086510-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "FtmZsyrGUuQya5UfxGp6",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "wjRYEm2WAcIvFCGmzghn",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -22561,10 +22561,10 @@
         },
         {
             "device_name": "LP 26_BC-13B_BS VI MS@Bahadurgarh",
-            "device_id": "05edbd90-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1125020-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "rkP1yMo51p9iyycxlpb4",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "6T1hq6bfqaCNckJq31dX",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -22665,10 +22665,10 @@
         },
         {
             "device_name": "LP 27_BC-14A_BS VI HSD@Bahadurgarh",
-            "device_id": "065bc1a0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f117f570-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "xx0JLBCGwtRl5Yq9HcVL",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "0F2JxpgFv1unSlatFMdk",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -22769,10 +22769,10 @@
         },
         {
             "device_name": "LP 28_BC-14B_BS VI MS@Bahadurgarh",
-            "device_id": "06ccabe0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1219260-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "gINayaTwbJWNi2aXmyZf",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "oo2Pu2K2Oij7SFGN165d",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -22873,10 +22873,10 @@
         },
         {
             "device_name": "LP 29_BC-15A_MTO@Bahadurgarh",
-            "device_id": "0740f180-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1264d50-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "qYrwaKfJNmlmueOIizbB",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "gbqaR33UdigPjcKAVpnX",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -22977,10 +22977,10 @@
         },
         {
             "device_name": "LP 30_BC-15B_MTO@Bahadurgarh",
-            "device_id": "07afb8e0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f130ad90-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "pQgHSTi4h1DA0rAWQWvB",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "DnVQ6fLfTwulK9jl70LQ",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -23081,10 +23081,10 @@
         },
         {
             "device_name": "LP 31_BC-16A_BS VI HSD@Bahadurgarh",
-            "device_id": "083e1630-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f13827a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "DF1A5FI0fcrb4AfrliKY",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "aQS3kP6hmIldGq62FhOd",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -23185,10 +23185,10 @@
         },
         {
             "device_name": "LP 32_BC-16B_BS VI MS@Bahadurgarh",
-            "device_id": "08b36d40-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f13fefd0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "zzfMX5ArbZVdU5fpFjY0",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "QvZJzrp1aBNNugS5JxmC",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -23289,10 +23289,10 @@
         },
         {
             "device_name": "LP 33_BC-17A_ATF@Bahadurgarh",
-            "device_id": "0934d240-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f147b800-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "mRTXgR9HrR0kP1usCj5y",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "3LEASIU6VHrbOzV9YVZL",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -23393,10 +23393,10 @@
         },
         {
             "device_name": "LP 34_BC-17B_ATF@Bahadurgarh",
-            "device_id": "09a176c0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f14f5920-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "wFOpPOgbwSEFByTq7Vma",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "k5fjTF8TKioDeVSishIy",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -23497,10 +23497,10 @@
         },
         {
             "device_name": "LP 35_BC-18A_ATF@Bahadurgarh",
-            "device_id": "0a2350f0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1546230-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "lsp3qstMdJuGOweheF8c",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "c1sek0ga28PhipjgMaJx",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -23601,10 +23601,10 @@
         },
         {
             "device_name": "LP 36_BC-18B_ATF@Bahadurgarh",
-            "device_id": "0a946240-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f15bdc40-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "zjDmQZF2Kwn5L4ZPNiiR",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "teTnvXQAw8F0lqeQdLLz",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -23705,10 +23705,10 @@
         },
         {
             "device_name": "LP 37_BC-19A_ATF@Bahadurgarh",
-            "device_id": "0b023f40-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1661570-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "tc7tg4emkcWlsrXEVTrG",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "8nYeziJ0YytHL2UhW5K3",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -23809,10 +23809,10 @@
         },
         {
             "device_name": "LP 38_BC-19B_ATF@Bahadurgarh",
-            "device_id": "0b772120-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f16b1e80-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "F4REHvNHxfMnAcekc5Vi",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "MLCl7hcc61SAVDGdZNSv",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -23913,10 +23913,10 @@
         },
         {
             "device_name": "LP 39_BC-20A_ATF@Bahadurgarh",
-            "device_id": "0beb8dd0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1735be0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "UaDUMabxlBUSysHYTN2A",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "6d6mkjPs0nUQ9KYNuBjI",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -24017,10 +24017,10 @@
         },
         {
             "device_name": "LP 40_BC-20B_ATF@Bahadurgarh",
-            "device_id": "0c5720e0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f17ad5f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "wb4AUoLs4FO7UZTNcAhn",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "9AzNUgbBfBJNhzSdlP2k",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -24121,10 +24121,10 @@
         },
         {
             "device_name": "LP 41_BC-21A_ATF@Bahadurgarh",
-            "device_id": "0cc41380-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f18228f0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "OJJCar7IV2qbSOulFYfz",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "gvnLMJOzLTRZxjOGqhmk",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -24225,10 +24225,10 @@
         },
         {
             "device_name": "LP 42_BC-21B_ATF@Bahadurgarh",
-            "device_id": "0d2df8e0-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f18c8930-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "83p8yAbKe2UgpUbnFz5E",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "GLZsNrCBRsneQVSDdGev",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -24329,10 +24329,10 @@
         },
         {
             "device_name": "LP 43_BC-22A_ATF@Bahadurgarh",
-            "device_id": "0d9fa670-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1916b30-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "3KvpzKA0UCRimIY4irDW",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "ZCRYcJEPYGLregSGzmiZ",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -24433,10 +24433,10 @@
         },
         {
             "device_name": "LP 44_BC-22B_ATF@Bahadurgarh",
-            "device_id": "0e0a0100-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1990c50-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Loading Point",
-            "device_key": "TpIilO21cmxpYJZn6JAg",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "4Mq6SmeW67uGaZqBc1lV",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -24537,10 +24537,10 @@
         },
         {
             "device_name": "Gantry Permissive override@Bahadurgarh",
-            "device_id": "0e7211a1-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1a08660-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Gantry override",
-            "device_key": "cU3rdX2gJXSWZsXuG9ZR",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "KJJPOaJHqLCrYcU5923H",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "OVERRIDE STATUS",
@@ -24551,10 +24551,10 @@
         },
         {
             "device_name": "Gantry Permissive Write CMD status@Bahadurgarh",
-            "device_id": "0ee34a00-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1aae6a0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Gantry override",
-            "device_key": "6wG26AV71pK5aMPTAndo",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "ETa8HFREXUPn9CBFhFbL",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "OVERRIDE STATUS",
@@ -24565,10 +24565,10 @@
         },
         {
             "device_name": "ESD Write CMD status@Bahadurgarh",
-            "device_id": "0f563010-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1afa190-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Gantry override",
-            "device_key": "4pn0m02sIdlXh2lWeQ0u",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "5XM0Ypyg3VT7bVcuOBoZ",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "OVERRIDE STATUS",
@@ -24579,10 +24579,10 @@
         },
         {
             "device_name": "Two Fire Engine Running status@Bahadurgarh",
-            "device_id": "0fdac960-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1b769c0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Effect",
-            "device_key": "wxahFDviUr134fRhsdyq",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "FUWQllXVKZNfeWC1xOQi",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -24613,10 +24613,10 @@
         },
         {
             "device_name": "WATER Level below Ref. Volume@Bahadurgarh",
-            "device_id": "10460e50-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1bf0ae0-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Effect",
-            "device_key": "ytfmLOfXdjBD26OdpFbh",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "NqoYIDF0pPUh2zw531pM",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -24647,10 +24647,10 @@
         },
         {
             "device_name": "Main Fire Engines not in REMOTE@Bahadurgarh",
-            "device_id": "10b39d30-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1c6ac00-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Effect",
-            "device_key": "Jea8P19RdX4FrYUCvd6w",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "ZqvQ13TXNlQa8uAxZae8",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -24681,10 +24681,10 @@
         },
         {
             "device_name": "Gantry Permissive Off@Bahadurgarh",
-            "device_id": "111d5b80-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1ce4d20-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "Fire Effect",
-            "device_key": "4eJXqwNhYgWWjj28UgD0",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "ArmyHYeZdIoQaO9bqrFK",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -24715,10 +24715,10 @@
         },
         {
             "device_name": "LRC Switch Over@Bahadurgarh",
-            "device_id": "1188ee90-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1d5ee40-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "LRC Switchover",
-            "device_key": "zYdpEdrZ5PcRKJzToeN5",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "P5nyIFEsZOuLZkcRNWtF",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "LRC SWITCHOVER 30 DAYS STATUS",
@@ -24729,10 +24729,10 @@
         },
         {
             "device_name": "Operability Index@Bahadurgarh",
-            "device_id": "11f5e131-25cf-11f0-b475-bbbb14fdc372",
+            "device_id": "f1e04e80-46cb-11f0-a2b7-a912a2440fab",
             "device_type": "OI",
-            "device_key": "ro6TDf9qLaITAWE0QtRH",
-            "entity_id": "8fc9c0a0-25ce-11f0-b475-bbbb14fdc372",
+            "device_key": "jR2MbfZR91hCWHqboNSn",
+            "entity_id": "e9367110-46cb-11f0-a2b7-a912a2440fab",
             "sensors": [
                 {
                     "sensor_name": "Fire Engine1",

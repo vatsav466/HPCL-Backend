@@ -735,10 +735,17 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     device_id = device['id']['id']
                     required_kls, target_volume, available_water = fetch_device_data(self, device_id, key="water")
 
-                    percentage = 100 if available_water < required_kls else (available_water / target_volume) * 100
+                    percentage = (available_water / target_volume) * 100 if target_volume else 0
+
                     for rule in rules['rules']:
                         weightage = rule.get('weightage', 0)
-                        score = round((percentage * weightage) / 100, 2)
+                        
+                        # Updated logic
+                        if percentage >= 80:
+                            score = round(weightage, 2)
+                        else:
+                            score = 0
+
                         pi_score.append({
                             "name": rule['name'],
                             "score": score,
@@ -748,6 +755,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 except Exception as e:
                     print(f"Error processing device {device.get('name')}: {e}")
                     continue
+
 
         final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
         print("final_score ---> ", final_score)
@@ -788,12 +796,19 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
-                    required_foam, target_foam, available_foam = fetch_device_data(self, device_id, key="foam")
+                    required_kls, target_volume, available_water = fetch_device_data(self, device_id, key="foam")
 
-                    percentage = 100 if available_foam < required_foam else (available_foam / target_foam) * 100
+                    percentage = (available_water / target_volume) * 100 if target_volume else 0
+
                     for rule in rules['rules']:
                         weightage = rule.get('weightage', 0)
-                        score = round((percentage * weightage) / 100, 2)
+                        
+                        # Updated logic
+                        if percentage >= 80:
+                            score = round(weightage, 2)
+                        else:
+                            score = 0
+
                         pi_score.append({
                             "name": rule['name'],
                             "score": score,
@@ -803,6 +818,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 except Exception as e:
                     print(f"Error processing device {device.get('name')}: {e}")
                     continue
+
 
         final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
         print("final_score ---> ", final_score)
