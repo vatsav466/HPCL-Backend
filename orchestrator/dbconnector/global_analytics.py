@@ -5975,7 +5975,7 @@ class GlobalAnalytics:
                     zone,
                     interlock_name,
                     location_name,
-                    COUNT(distinct device_name) AS alert_count
+                    COUNT(*) AS alert_count
                 FROM alerts
                 WHERE bu = 'TAS' AND alert_section = 'TAS'
             """
