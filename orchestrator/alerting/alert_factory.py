@@ -223,6 +223,9 @@ class AlertFactory:
                 # Convert alert_data to a dictionary
                 alert_data_dict = alert_data.dict() if hasattr(alert_data, 'dict') else alert_data.__dict__
 
+                if "_sa_instance_state" in alert_data_dict.keys():
+                    del alert_data_dict["_sa_instance_state"]
+                    
                 # Modify the alert with the updated data             
                 alert_update = await hpcl_ceg_model.Alerts(**alert_data_dict).modify()
 
@@ -309,7 +312,7 @@ class AlertFactory:
 
                         if "_sa_instance_state" in il_data.keys():
                             del il_data["_sa_instance_state"]
-                            
+
                         il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                         data_obj = hpcl_ceg_model.Interlock(**il_data)
                         await data_obj.modify()
@@ -324,8 +327,8 @@ class AlertFactory:
                     al_data = await hpcl_ceg_model.Alerts.get(alert_data['alert_id'])
                     if not isinstance(al_data, dict):
                         al_data = al_data.__dict__
-                    if al_data.get('_sa_instance_state'): 
-                        del al_data['_sa_instance_state']
+                    if "_sa_instance_state" in al_data.keys():
+                        del al_data["_sa_instance_state"]
                     al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                     al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
                     al_data['closed_at'] = datetime.datetime.now()
