@@ -23,6 +23,9 @@ class SendVtsCommand:
         alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
+        
+        if "_sa_instance_state" in alert_data.keys():
+            del alert_data["_sa_instance_state"]
 
         if urdhva_base.context.context.exists():
             rpt = urdhva_base.context.context.get('rpt', {})
