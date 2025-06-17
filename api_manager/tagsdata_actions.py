@@ -142,6 +142,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
             total_tank_count = len(tank_devices)
 
             # Convert counts to final records
+            global_interlock = []
             for dev_type, device_names in location_counts.items():
                 count = 0
                 for device_name in device_names:
@@ -186,10 +187,16 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                         # Handle the case where equipment_name is a list
                         if isinstance(equipment, list):
                             if dev_type in equipment and maintenance_item["alert_category"] == system:
-                                interlocks.append(maintenance_item["interlock_name"])
+                                # interlocks.append(maintenance_item["interlock_name"])
+                                if maintenance_item["interlock_name"] not in global_interlock:
+                                    interlocks.append(maintenance_item["interlock_name"])
+                                    global_interlock.append(maintenance_item["interlock_name"])
                         # Handle the case where equipment_name is a string
                         elif dev_type.upper() == equipment.upper() and maintenance_item["alert_category"] == system:
-                            interlocks.append(maintenance_item["interlock_name"])
+                            # interlocks.append(maintenance_item["interlock_name"])
+                            if maintenance_item["interlock_name"] not in global_interlock:
+                                interlocks.append(maintenance_item["interlock_name"])
+                                global_interlock.append(maintenance_item["interlock_name"])
                     
                     # Check Fault array - similar logic
                     for fault_item in Fault:
@@ -197,10 +204,16 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                         # Handle the case where equipment_name is a list
                         if isinstance(equipment, list):
                             if dev_type in equipment and fault_item["alert_category"] == system:
-                                interlocks.append(fault_item["interlock_name"])
+                                if fault_item["interlock_name"] not in global_interlock:
+                                    interlocks.append(fault_item["interlock_name"])
+                                    global_interlock.append(fault_item["interlock_name"])
+                                # interlocks.append(fault_item["interlock_name"])
                         # Handle the case where equipment_name is a string
                         elif dev_type.upper() == equipment.upper() and fault_item["alert_category"] == system:
-                            interlocks.append(fault_item["interlock_name"])
+                            if fault_item["interlock_name"] not in global_interlock:
+                                interlocks.append(fault_item["interlock_name"])
+                                global_interlock.append(fault_item["interlock_name"])
+                            # interlocks.append(fault_item["interlock_name"])
                     
                     if interlocks:
                         # Create a proper SQL query with parameters

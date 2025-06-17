@@ -15,7 +15,8 @@ async def generate_sod_engineering_location_stats(sap_id):
     device_types = (
         'MOV', 'HCD', 'Dyke', 'Hooter', 'Primary Level', 'Jockey Pump', 'VFT',
         'PT', 'ROSOV', 'ESD', 'Pump', 'Radar', 'Fire Engine', 'Barrier Gate',
-        'Gantry BCU', 'MFM'
+        'Gantry BCU', 'MFM', 'RIMSEAL', 'Dyke Valve', 'OI Tags', 'LRC Switchover',
+        'PLC', 'Fire Effect', 'UPS', 'Gantry override', 'Power ESD', 'ESD Effect'
     )
 
     try:
@@ -29,49 +30,91 @@ async def generate_sod_engineering_location_stats(sap_id):
         if not resp:
             return {"status": False, "message": "No data found"}
 
-        # Mapping interlocks
+        global_interlock = set()  # Use a set to avoid duplicates
+        interlocks = []
         maintenance_map = {}
         fault_map = {}
 
-        for entry in Maintenance:
-            equipment_names = entry.get("equipment_name", [])
+        # Build maintenance map and populate global_interlock
+        for maintenance_item in Maintenance:
+            equipment_names = maintenance_item.get("equipment_name", [])
             if isinstance(equipment_names, str):
-                equipment_names = equipment_names.split(",")
+                equipment_names = [equipment_names]  # Ensure it's a list
 
             for equip in equipment_names:
-                maintenance_map.setdefault(equip.strip(), set()).add(entry["interlock_name"])
+                equip = equip.strip().upper()
+                # Avoid duplicates in global_interlock and interlocks
+                if maintenance_item["alert_category"] == 'Safety':
+                    if maintenance_item["interlock_name"] not in global_interlock:
+                        global_interlock.add(maintenance_item["interlock_name"])
+                        interlocks.append(maintenance_item["interlock_name"])
+                        maintenance_map.setdefault(equip, set()).add(maintenance_item["interlock_name"])
 
-        for entry in Fault:
-            equipment_names = entry.get("equipment_name", [])
+        # Build fault map and populate global_interlock
+        for fault_item in Fault:
+            equipment_names = fault_item.get("equipment_name", [])
             if isinstance(equipment_names, str):
-                equipment_names = equipment_names.split(",")
+                equipment_names = [equipment_names]
 
             for equip in equipment_names:
-                fault_map.setdefault(equip.strip(), set()).add(entry["interlock_name"])
+                equip = equip.strip().upper()
+                if fault_item["alert_category"] == 'Safety':
+                    if fault_item["interlock_name"] not in global_interlock:
+                        global_interlock.add(fault_item["interlock_name"])
+                        interlocks.append(fault_item["interlock_name"])
+                        fault_map.setdefault(equip, set()).add(fault_item["interlock_name"])
 
 
         df = pd.DataFrame(resp)
         df["count"] = pd.to_numeric(df["count"], errors="coerce").fillna(0).astype(int)
         grouped_df = df.groupby("device_type", as_index=False)["count"].sum()
 
+        # DEVICE_TYPE_MAPPING = {
+        #     "MOV": "MOV",
+        #     "HCD": "HCD",
+        #     "Dyke": "Dyke",
+        #     "Hooter": "Hooter",
+        #     "Primary Level": "Primary Radar",
+        #     "Jockey Pump": "Jockey Pump",
+        #     "VFT": "VFT",
+        #     "PT": "PT Hydrant",
+        #     "ROSOV": "Rosov",
+        #     "ESD": "ESD",
+        #     "Pump": "Pumps",
+        #     "Radar": "Secondary Radar",
+        #     "Fire Engine": "Fire Engine",
+        #     "Barrier Gate": "Barrier Gate",
+        #     "Gantry BCU": "Gantry BCU",
+        #     "MFM": "MFM"
+        # }
         DEVICE_TYPE_MAPPING = {
             "MOV": "MOV",
+            "RIMSEAL": "RIMSEAL",
+            "Dyke Valve": "Dyke Valve",
             "HCD": "HCD",
             "Dyke": "Dyke",
             "Hooter": "Hooter",
             "Primary Level": "Primary Radar",
+            "LRC Switchover": "LRC Switchover",
+            "PLC": "PLC",
             "Jockey Pump": "Jockey Pump",
+            "Fire Effect": "Fire Effect",
+            "UPS": "UPS",
+            "Gantry override": "Gantry override",
             "VFT": "VFT",
             "PT": "PT Hydrant",
             "ROSOV": "Rosov",
             "ESD": "ESD",
             "Pump": "Pumps",
+            "OI Tags": "OI Tags",
             "Radar": "Secondary Radar",
             "Fire Engine": "Fire Engine",
+            "ESD Effect": "ESD Effect",
             "Barrier Gate": "Barrier Gate",
+            "Power ESD": "Power ESD",
             "Gantry BCU": "Gantry BCU",
             "MFM": "MFM"
-        }
+        } 
 
         hardcoded_status = [
             {"id": "lrca", "name": "LRCA", "status": "standby"},
@@ -85,7 +128,7 @@ async def generate_sod_engineering_location_stats(sap_id):
         result_dict = {item["id"]: item for item in hardcoded_status}
 
         for _, row in grouped_df.iterrows():
-            device_name = row["device_type"]
+            device_name = row["device_type"].strip().upper()
             total = row["count"]
 
             mapped_name = DEVICE_TYPE_MAPPING.get(device_name, device_name)
@@ -120,20 +163,19 @@ async def get_alert_count_for_interlock_set(interlocks, equipment, sap_id):
     interlock_filter = ",".join(f"'{i}'" for i in interlocks)
     query = f"""
         sap_id = '{sap_id}'
-        AND equipment_name = '{equipment}' 
         AND interlock_name IN ({interlock_filter}) 
         AND alert_status = 'Open'
     """
     params = urdhva_base.queryparams.QueryParams()
     params.q = query
-    params.fields = ['tas_device_name']
+    params.fields = ['device_name']
     print("query --> ", query)
     result = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
     if not result.get("data"):
         return 0
 
     #Return number of distinct devices affected
-    return len({entry['tas_device_name'] for entry in result['data'] if 'tas_device_name' in entry})
+    return len({entry['device_name'] for entry in result['data'] if 'device_name' in entry})
 
 
 
