@@ -3,16 +3,16 @@ import asyncio
 import datetime
 import pandas as pd
 import hpcl_ceg_model
-from performance_score_lpg import LPGPerformanceScore
-from performance_score_sod import SODPerformanceScore
+import performance_score_lpg as pslpg
+import performance_score_sod as pssod
 import orchestrator.analytics.va_analysis as va_analysis
 
 
 def get_performance_score_instance(bu):
     if bu == 'LPG':
-        return LPGPerformanceScore()
+        return pslpg.LPGPerformanceScore()
     elif bu == 'TAS':
-        return SODPerformanceScore()
+        return pssod.SODPerformanceScore()
     return None
 
 
@@ -20,7 +20,8 @@ async def fetch_va_score(bu):
     resp = await va_analysis.get_ro_terminal_scores({'LocationType': bu,
                                                      'StartDate': datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")})
     if resp['status']:
-        va_score = {rec['LOCATION_ID']: rec for rec in resp['data']}
+        va_score = {rec.get('LOCATION_ID', '').split(',')[-1].strip(): rec for rec in resp.get('data', []) if rec.get('LOCATION_ID', '')}
+        return va_score
     return {}
 
 
