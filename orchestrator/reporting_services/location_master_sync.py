@@ -72,7 +72,7 @@ async def clear_existing_location_master(bu):
     
 
 async def insert_users(data):
-    total_record = len(data)
+    # total_record = len(data)
     for item in data:
         for key in ['sales_area_1']:
             if key in item.keys():
@@ -80,13 +80,13 @@ async def insert_users(data):
                     item[key] = []
                 elif isinstance(item[key], str):
                     item[key] = ast.literal_eval(item[key])
-    # await hpcl_ceg_model.LocationMaster.bulk_update(data, upsert=True)
-    count = 1
-    for location_master in data:
-        sys.stdout.write(f"\rInserting {count} / {total_record}   ")
-        sys.stdout.flush()
-        await hpcl_ceg_model.LocationMasterCreate(**location_master).create()
-        count += 1
+    await hpcl_ceg_model.LocationMaster.bulk_update(data, upsert=True)
+    # count = 1
+    # for location_master in data:
+    #     sys.stdout.write(f"\rInserting {count} / {total_record}   ")
+    #     sys.stdout.flush()
+    #     await hpcl_ceg_model.LocationMasterCreate(**location_master).create()
+    #     count += 1
 
 async def combine_roles(data, _id, role_name):
     """
