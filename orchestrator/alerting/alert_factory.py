@@ -320,6 +320,8 @@ class AlertFactory:
                     al_data = await hpcl_ceg_model.Alerts.get(alert_data['alert_id'])
                     if not isinstance(al_data, dict):
                         al_data = al_data.__dict__
+                    if al_data.get('_sa_instance_state'): 
+                        del al_data['_sa_instance_state']
                     al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                     al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
                     al_data['closed_at'] = datetime.datetime.now()
