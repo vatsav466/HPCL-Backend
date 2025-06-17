@@ -389,6 +389,9 @@ def fetch_alarm_data(self, device_id):
     return alarm_data
 
 def get_user_details(where_clause):
+    where_clause = []
+    if not urdhva_base.ctx.exists():
+        return where_clause
     rpt = urdhva_base.context.context.get('rpt', {})
     print("rpt: ", rpt)
     user_bu = rpt.get("bu", [])
