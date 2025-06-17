@@ -79,7 +79,7 @@ def generate_group_by_conditions(filters, cross_filters, cumulative=False, drill
     return group_by_filter
 
 
-def get_date_filters(filters, months_list = None,resp_type="months"):
+def get_date_filters(filters, months_list = None,cumulative = None,resp_type="months"):
     """
     Creates actual, history fiscal years and selected months
     :param filters:
@@ -153,8 +153,17 @@ def get_date_filters(filters, months_list = None,resp_type="months"):
     print("filters at end in get date filters",org_filters)
     if "table_month" in [x['key'].strip('"') for x in org_filters]:
         print("in req if")
-        months = [x['value'] for x in org_filters if x['key'].strip('"') == 'table_month']
-        print("months",months)
+        print("cumulative",cumulative)
+        if not cumulative:
+            months = [x['value'] for x in org_filters if x['key'].strip('"') == 'table_month']
+            
+        else:
+            req_month = [x['value'] for x in org_filters if x['key'].strip('"') == 'table_month'][0]
+            print("req_month",req_month)
+            print("months_list",months_list)
+            months = months_list[:months_list.index(req_month)+1]
+        print("months in table months",months)
+        
         return filters, fiscal_year_pre, fiscal_year_last, months    
     return filters, fiscal_year_pre, fiscal_year_last, [key.upper() for key in months]
 
@@ -877,7 +886,7 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     # Checking Cumulative enabled or not, On cumulative we should not group by month
     cumulative = False
     for condition in filters:
-        if condition['key'].strip('"') == "C":
+        if condition['key'].strip('"') == "C" or condition['key'].strip('"') == "cumulative":
             cumulative = True
             break
     # omc_compare = ["BPCL", "HPCL"]
@@ -899,7 +908,7 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
 
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
-    filters, fiscal_year_pre, fiscal_year_last, months = get_date_filters(filters)
+    filters, fiscal_year_pre, fiscal_year_last, months = get_date_filters(filters,months_list = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'],cumulative= cumulative)
     
     print("months from get_date_dfilters",months)
     #Added for the purpose of FY2025-2026 Apr ist
@@ -1413,6 +1422,12 @@ async def generate_omc_compare_data(filters, drill_state):
 
     # Getting all filters
     filters, fiscal_year_pre, fiscal_year_last, months_ = get_date_filters(filters)
+    print("filters after get_date ",filters)
+    print("months",months_)
+    if "ind_sbu_cumulative" in [x['key'].strip('"') for x in org_filters]:
+        if months:
+            months = months_
+        print("months in req check",months)        
     if not months:
         months = months_
     where_conditions = []
@@ -1496,6 +1511,7 @@ async def generate_omc_compare_data(filters, drill_state):
                     cumulative_data[key][co] += val
     if drill_state:
         structured_data = [cumulative_data] + structured_data
+    '''
     # Calculating Market Share
     for entry in structured_data:
         total_sales = sum(entry['Sales'].values())
@@ -1503,8 +1519,7 @@ async def generate_omc_compare_data(filters, drill_state):
         for company in entry['Sales']:
             entry['Market Share'][company] = round((entry['Sales'].get(company, 0) / total_sales) * 100, 2)
         for company in entry['History']:
-            entry['Market Share History'][company] = (
-                round((entry['History'].get(company, 0) / total_history_sales * 100), 2))
+            entry['Market Share History'][company] = (round((entry['History'].get(company, 0) / total_history_sales * 100), 2))
         for company in entry['Sales']:
             if entry['History'].get(company, 0):
                 entry['Growth'][company] = round(((entry['Sales'].get(company, 0) -entry['History'].get(company, 0)) /entry['History'].get(company, 0)) * 100, 1)
@@ -1513,7 +1528,41 @@ async def generate_omc_compare_data(filters, drill_state):
         for name in entry:
             if isinstance(entry[name], dict):
                 entry[name] = {key: value for key, value in entry[name].items() if key in required_companies}
+    '''
+    for entry in structured_data:
+        total_sales = sum(entry['Sales'].values())
+        total_history_sales = sum(entry['History'].values())
+        
+        # Check for division by zero
+        if total_sales != 0:
+            for company in entry['Sales']:
+                entry['Market Share'][company] = round((entry['Sales'].get(company, 0) / total_sales) * 100, 2)
+        else:
+            for company in entry['Sales']:
+                entry['Market Share'][company] = 0
+        
+        # Check for division by zero
+        if total_history_sales != 0:
+            for company in entry['History']:
+                entry['Market Share History'][company] = round((entry['History'].get(company, 0) / total_history_sales) * 100, 2)
+        else:
+            for company in entry['History']:
+                entry['Market Share History'][company] = 0
+        
+        for company in entry['Sales']:
+            if company in entry['History'] and entry['History'].get(company, 0) != 0:
+                entry['Growth'][company] = round(((entry['Sales'].get(company, 0) - entry['History'].get(company, 0)) / entry['History'].get(company, 0)) * 100, 1)
+            elif company in entry['History'] and entry['History'].get(company, 0) == 0 and entry['Sales'].get(company, 0) != 0:
+                entry['Growth'][company] = 100  # or some other value that makes sense for your use case
+            elif company in entry['History'] and entry['History'].get(company, 0) == 0 and entry['Sales'].get(company, 0) == 0:
+                entry['Growth'][company] = 0  # or some other value that makes sense for your use case
+            else:
+                entry['Growth'][company] = None  # or some other value that makes sense for your use case
 
+        for name in entry:
+            if isinstance(entry[name], dict):
+                entry[name] = {key: value for key, value in entry[name].items() if key in required_companies}
+    
     for rec in structured_data:
         if 'cumulative' in rec:
             del rec['cumulative']
