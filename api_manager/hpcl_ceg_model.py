@@ -400,6 +400,8 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     round_trip_distance: Mapped[typing.Optional[int]] = mapped_column("round_trip_distance", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     location_onboard: Mapped[typing.Optional[bool]] = mapped_column("location_onboard", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(bu, sap_id, name="location_master_bu_sap_id"),)
+
 
 class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'location_master'
@@ -448,7 +450,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = LocationMasterSchema
-        upsert_keys = []
+        upsert_keys = ['bu', 'sap_id']
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
@@ -499,7 +501,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = LocationMasterSchema
-        upsert_keys = []
+        upsert_keys = ['bu', 'sap_id']
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
