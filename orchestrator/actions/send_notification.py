@@ -716,6 +716,9 @@ class SendNotification:
         alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
         alert_data = alert_data.__dict__ if not isinstance(alert_data, dict) else alert_data
 
+        if "_sa_instance_state" in alert_data.keys():
+            del alert_data["_sa_instance_state"]
+
         allocated_time = alert_data.get('updated_at', datetime.datetime.now(datetime.timezone.utc))
         alert_history = alert_data.get('alert_history', []) if isinstance(alert_data, dict) else getattr(alert_data, 'alert_history', [])
         if alert_history and alert_history[-1].get("processed_time"):

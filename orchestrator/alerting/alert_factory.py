@@ -306,6 +306,10 @@ class AlertFactory:
                         il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
                         if not isinstance(il_data, dict):
                             il_data = il_data.__dict__
+
+                        if "_sa_instance_state" in il_data.keys():
+                            del il_data["_sa_instance_state"]
+                            
                         il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                         data_obj = hpcl_ceg_model.Interlock(**il_data)
                         await data_obj.modify()

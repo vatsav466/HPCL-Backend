@@ -1119,6 +1119,9 @@ class IndentDryOut:
 
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
+        
+        if alert_data.get('_sa_instance_state'): 
+            del alert_data['_sa_instance_state']
 
         if alert_data['indent_status'] != indent_status:  # type: ignore
             alert_data['indent_status'] = indent_status
