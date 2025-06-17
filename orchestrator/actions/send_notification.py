@@ -748,6 +748,9 @@ class SendNotification:
 
         print("before updating alert_data ---> ", alert_data)
 
+        if "_sa_instance_state" in alert_data.keys():
+            del alert_data["_sa_instance_state"]
+
         # Update the database
         await hpcl_ceg_model.Alerts(**alert_data).modify()
 
