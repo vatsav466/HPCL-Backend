@@ -56,7 +56,7 @@
             {
                 "name": "VTS Vehicle Wise Alerts",
                 "model": "vts_interlock",
-                "weightage": 40,
+                "weightage": 30,
                 "rules": [
                     {
                         "name": "Speed Violation",
@@ -111,12 +111,12 @@
             {
                 "name": "Active Vehicles",
                 "model": "vts_active_vehicles",
-                "weightage": 40
+                "weightage": 30
             },
             {
                 "name": "VTS Closure Status ",
                 "model": "vts_alerts",
-                "weightage": 50,
+                "weightage": 40,
                 "rules": [
                     {
                         "name": "Critical",
