@@ -726,6 +726,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         Raises:
             Exception: If an error occurs during data fetching for a device.
         """
+        WATER_THRESHOLD = 80
         all_devices = fetch_oi_devices(self, page_size=0, page=0)
         pi_score = []
 
@@ -739,28 +740,23 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
                     for rule in rules['rules']:
                         weightage = rule.get('weightage', 0)
-                        
-                        # Updated logic
-                        if percentage >= 80:
-                            score = round(weightage, 2)
-                        else:
-                            score = 0
+                        score = round(weightage, 2) if percentage >= WATER_THRESHOLD else 0
 
                         pi_score.append({
                             "name": rule['name'],
                             "score": score,
                             "weightage": weightage,
-                            "module": rules.get('name', name)
+                            "module": rules.get('name', 'Unknown Module')
                         })
                 except Exception as e:
                     print(f"Error processing device {device.get('name')}: {e}")
                     continue
 
-
         final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
+
         print("final_score ---> ", final_score)
         return {
-            "name": rules.get('name', name),
+            "name": rules.get('name', 'Unknown Module'),
             "score": final_score,
             "weightage": rules['weightage'],
             "results": pi_score
@@ -789,6 +785,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         Raises:
             Exception: If an error occurs during data fetching for a device.
         """
+        FOAM_THRESHOLD = 80
         all_devices = fetch_oi_devices(self, page_size=0, page=0)
         pi_score = []
 
@@ -802,28 +799,23 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
                     for rule in rules['rules']:
                         weightage = rule.get('weightage', 0)
-                        
-                        # Updated logic
-                        if percentage >= 80:
-                            score = round(weightage, 2)
-                        else:
-                            score = 0
+                        score = round(weightage, 2) if percentage >= FOAM_THRESHOLD else 0
 
                         pi_score.append({
                             "name": rule['name'],
                             "score": score,
                             "weightage": weightage,
-                            "module": rules.get('name', name)
+                            "module": rules.get('name', 'Unknown Module')
                         })
                 except Exception as e:
                     print(f"Error processing device {device.get('name')}: {e}")
                     continue
 
-
         final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
+
         print("final_score ---> ", final_score)
         return {
-            "name": rules.get('name', name),
+            "name": rules.get('name', 'Unknown Module'),
             "score": final_score,
             "weightage": rules['weightage'],
             "results": pi_score
@@ -859,6 +851,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     alarms_data = fetch_alarm_data(self, device_id)
                     score_percentage = 100.0
 
+                    # Check if any relevant alarm is active and unacknowledged
                     for alarm in alarms_data.get('data', []):
                         interlock_name = alarm.get('details', {}).get('additionalInfo', {}).get('interlockName')
                         status = alarm.get('status', '')
@@ -866,26 +859,28 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                             score_percentage = 0.0
                             break
 
-                    for rule in rules['rules']:
-                        weightage = rule['weightage']
+                    # Apply each rule using score_percentage
+                    for rule in rules.get('rules', []):
+                        weightage = rule.get('weightage', 0)
                         score = round((score_percentage * weightage) / 100, 2)
                         pi_score.append({
-                            "name": rule['name'],
+                            "name": rule.get('name', 'Unnamed Rule'),
                             "score": score,
                             "weightage": weightage,
-                            "module": rules.get('name', name)
+                            "module": rules.get('name', 'Unknown Module')
                         })
 
                 except Exception as e:
                     print(f"Error processing device {device.get('name', 'Unknown')}: {e}")
                     continue
 
-        final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
+        final_score = round(sum(r['score'] for r in pi_score) * rules.get('weightage', 100) / 100, 2)
         print("final_score ---> ", final_score)
+
         return {
-            "name": rules.get('name', name),
+            "name": rules.get('name', 'Unknown Module'),
             "score": final_score,
-            "weightage": rules['weightage'],
+            "weightage": rules.get('weightage', 100),
             "results": pi_score
         }
 
@@ -934,30 +929,33 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     pressure_score = 0.0 if hydrant_alarm_active else 2.5
                     jockey_score = 0.0 if jockey_alarm_active else 2.5
 
+                    module_name = rules.get('name', 'Unknown Module')
+
                     pi_score.extend([
                         {
                             'name': 'Pressurized Hydrant Line',
                             'score': pressure_score,
                             'weightage': 2.5,
-                            'module': rules.get('name', name)
+                            'module': module_name
                         },
                         {
                             'name': 'Jockey Pump',
                             'score': jockey_score,
                             'weightage': 2.5,
-                            'module': rules.get('name', name)
+                            'module': module_name
                         }
                     ])
                 except Exception as e:
-                    print(f"Error processing device {device.get('name')}: {e}")
+                    print(f"Error processing device {device.get('name', 'Unknown')}: {e}")
                     continue
 
-        final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
+        final_score = round(sum(r['score'] for r in pi_score) * rules.get('weightage', 100) / 100, 2)
         print("final_score ---> ", final_score)
+
         return {
-            "name": rules.get('name', name),
+            "name": rules.get('name', 'Unknown Module'),
             "score": final_score,
-            "weightage": rules['weightage'],
+            "weightage": rules.get('weightage', 100),
             "results": pi_score
         }
 
@@ -1007,6 +1005,11 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             }
 
             total_vehicles = 190  # Hardcoded total
+            df = pd.read_csv('/opt/ceg/algo/orchestrator/reporting_services/vehicle_master_count_of_tt_no.csv')
+            df = df[df['sap_id'] == int(location_id)]
+            
+            if not df.empty:
+                total_vehicles = df['count_of_tt_no'].sum()
             affected_vehicles = len(vehicles_with_critical_or_high)
             print("total_vehicles -->", total_vehicles)
             print("affected_vehicles -->", affected_vehicles)
