@@ -5,7 +5,6 @@ import sys
 sys.path.append("/opt/ceg/algo/api_manager")
 import requests
 import pandas as pd
-import hpcl_ceg_model
 
 
 def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete=False):
@@ -146,7 +145,7 @@ class ThingsBoardInterface:
         elif environment == 'uat':
             self.data_path = "/opt/ceg/algo/uat/"
         else:
-            self.data_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), "../things_board/device_data")
+            self.data_path = "/opt/ceg/algo/things_board/device_data"
 
     @staticmethod
     def get_auth_token():
