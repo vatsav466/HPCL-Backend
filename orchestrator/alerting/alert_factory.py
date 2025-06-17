@@ -105,6 +105,11 @@ class AlertFactory:
                 assigned_user_roles = ["RO Dealer"]
             else:
                 assigned_user_roles = []
+            if "alert_timestamp" in alert_data.keys():
+                try:
+                    alert_data['alert_timestamp'] = alert_data['alert_timestamp'].replace(tzinfo=None)
+                except:
+                    ...
             alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity').capitalize() if alert_data.get('severity') else "Medium",
                                                         'alert_category': alert_data.get('alert_category'),
@@ -136,8 +141,7 @@ class AlertFactory:
                                                         'indent_no': str(alert_data.get('indent_no', '')),
                                                         'workflow_datetime': alert_data.get(
                                                             'workflow_datetime',
-                                                            datetime.datetime.now(datetime.UTC)
-                                                            .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
+                                                            urdhva_base.utilities.get_present_time().replace(tzinfo=None).isoformat()
                                                         ),
                                                         'indent_raised_date': alert_data.get('indent_raised_date', None),
                                                         'dry_out_in_days': str(alert_data.get('dry_out_in_days', '1')),
@@ -150,7 +154,7 @@ class AlertFactory:
                                                         'vehicle_blocked_end_date': alert_data.get("vehicle_blocked_end_date", None),
                                                         'origin_altid': alert_data.get('origin_altid',''),
                                                         'mark_as_false': alert_data.get('mark_as_false', False),
-                                                        'external_timestamp': alert_data.get('alert_timestamp', urdhva_base.utilities.get_present_time().isoformat()),
+                                                        'external_timestamp': alert_data.get('alert_timestamp', urdhva_base.utilities.get_present_time().replace(tzinfo=None).isoformat()),
                                                         'tt_load_number': str(alert_data.get('tt_load_number', '')),
                                                         'cause_effect': alert_data.get('Cause_Effect', ''),
                                                         'workflow_url': alert_data.get('workflow_url', ''),
