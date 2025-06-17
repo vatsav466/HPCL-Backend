@@ -33,6 +33,9 @@ class UpdateStatus:
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
+            
+            if "_sa_instance_state" in alert_data.keys():
+                del alert_data["_sa_instance_state"]
 
             alert_data['role'] = ''
             alert_data['rolelist'] = []
