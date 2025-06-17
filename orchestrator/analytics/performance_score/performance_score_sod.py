@@ -658,12 +658,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                          f"bu='TAS' and alert_section='VTS' group by vehicle_number")
                 data = await hpcl_ceg_model.VTS.get_aggr_data(query)
                 alert_data = {}
-                for record in data['data']:
-                    for rule_ in rule.get('rules', []):
-                        if rule_['search_value'] in record['interlock_name']:
-                            if rule_['search_value'] not in alert_data:
-                                alert_data[rule_['search_value']] = 0
-                            alert_data[rule_['search_value']] += record['count']
+
+                inactive_vehicles = len(data['data'])
+                active_vehicles = total_vehicles - inactive_vehicles
+                resp = active_vehicles / total_vehicles if total_vehicles else 0
+                resp = round(resp * rule['weightage'], 2)
+                alert_score.append(resp)
             # Generating PI score base don total open and total close alerts
             elif rule['model'] == 'vts_alerts':
                 severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
