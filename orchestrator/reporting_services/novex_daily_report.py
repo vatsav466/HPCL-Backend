@@ -463,7 +463,7 @@ async def send_notification(notification_data):
     await ins.publish_message(
         subject="Novex Daily Report",
         recipients=["sanjayk@hpcl.in", "cvmallinath@hpcl.in", "debeshp@hpcl.in",
-                    "purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in"],
+                    "purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in", "gargam@hpcl.in", "rujutadoiphode@hpcl.in"],
         html_content=True,
         body=final_data,
         force_send=True
