@@ -849,8 +849,10 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
     # stats_resp['INDENT_EXECUTABLE_TIME'] = stats_resp['INDENT_EXECUTABLE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
     # stats_resp['PROD_ALLOT_TIME'] = stats_resp['PROD_ALLOT_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
     # stats_resp['LOADED_ON'] = stats_resp['LOADED_ON'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['AVGSALES_7DAYS'] = stats_resp['AVGSALES_7DAYS'].fillna(0.00)
+    stats_resp["QTY"] = stats_resp["QTY"].fillna(0.00)
     stats_resp = stats_resp.fillna("")
-    stats_resp = stats_resp.rename({"SEND_TO_JDE_TIME": "SENT_TO_SAP_TIME", "QTY": "QTY (KL)"})
+    stats_resp = stats_resp.rename(columns={"SEND_TO_JDE_TIME": "SENT_TO_SAP_TIME", "QTY": "QTY (KL)", "DRY_OUT_IN_DAYS": "DRY_OUT_TYPES"})
     return stats_resp.to_dict(orient='records')
 
 async def _get_on_hold_data(dry_out_in_days='1'):
