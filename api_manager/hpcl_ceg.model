@@ -274,8 +274,8 @@ Model TasActionLogs {
 }
 
 Model LocationMaster {
-    bu index_field BusinessUnit
-    sap_id index_field str
+    bu unique_field index_field BusinessUnit
+    sap_id unique_field index_field str
     bu_id optional str
     ro_id optional str
     name index_field str
