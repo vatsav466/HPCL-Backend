@@ -186,6 +186,16 @@ class Datetime(Base):
         return False
 
 
+class DatetimeWithoutTimeZone(Base):
+    def __init__(self, parent, x):
+        super().__init__()
+        self.parent = parent
+        self.sqlalchemy_name = 'DateTime(timezone=False)'
+
+    def has_params(self):
+        return False
+
+
 class Date(Base):
     def __init__(self, parent, x):
         super().__init__()

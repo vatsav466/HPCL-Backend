@@ -30,7 +30,7 @@ CustomType:
 ;
 
 BaseTypes:
-    IntSpec | FloatSpec | StrSpec | BoolSpec | DictSpec | EmailSpec | Datetime | Date | Time | IpAddressv4 | IpAddressv6 | Secret
+    IntSpec | FloatSpec | StrSpec | BoolSpec | DictSpec | EmailSpec | DatetimeWithoutTimeZone | Datetime | Date | Time | IpAddressv4 | IpAddressv6 | Secret
 ;
 
 IntSpec:
@@ -55,6 +55,10 @@ DictSpec:
 
 EmailSpec:
     x='email'
+;
+
+DatetimeWithoutTimeZone:
+    x='datetime_no_zone'
 ;
 
 Datetime:
