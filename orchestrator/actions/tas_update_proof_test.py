@@ -23,6 +23,9 @@ class TasUpdateProofTest:
             alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
+            
+            if "_sa_instance_state" in alert_data.keys():
+                del alert_data["_sa_instance_state"]
 
             # Extracting required parameters from alert data
             interlock_name = alert_data.get('interlock_name')
@@ -54,6 +57,9 @@ class TasUpdateProofTest:
                     AND location_name = '{location_name}'
                 """
                 existing_record = await hpcl_ceg_model.TasProofTest.get_aggr_data(query)
+            
+            else:
+                existing_record = {}
 
             if existing_record.get("data", []):
                 record = existing_record["data"][0]
