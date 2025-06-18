@@ -23,6 +23,7 @@ elif urdhva_base.settings.environment == 'uat':
 else:
     base_path = "/opt/ceg/algo/things_board/device_data/"
 
+# Action things_board_device_data
 @router.post('/things_board_device_data', tags=['TagsData'])
 async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
     try:    
@@ -304,7 +305,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         print(traceback.format_exc())
         return {"status": False, "message": f"Error: {str(e)}"}
 
-
+# Action get_tags_data
 @router.post('/get_tags_data', tags=['TagsData'])
 async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
     try:
@@ -376,15 +377,3 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": f"Error: {str(e)}"}
-
-
-# Action things_board_device_data
-@router.post('/things_board_device_data', tags=['TagsData'])
-async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
-    ...
-
-
-# Action get_tags_data
-@router.post('/get_tags_data', tags=['TagsData'])
-async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
-    ...
