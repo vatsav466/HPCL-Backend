@@ -61,7 +61,7 @@ class {{input.name}}Schema(UrdhvaPostgresBase):
     {% endfor -%}
     {% if table_args | length > 0 %}
 
-    __table_args__ = (UniqueConstraint({%- for k in table_args -%}{{k }}{% if not loop.last -%}, {% endif -%}{%- endfor -%}, name="{{convert_snake_case(input.name)}}_{{ table_args|join("_")| replace('UrdhvaPostgresBase.', '')}}"),)
+    __table_args__ = (UniqueConstraint({%- for k in table_args -%}{{k }}{% if not loop.last -%}, {% endif -%}{%- endfor -%}, name="{{generate_unique_id(input.name, table_args)}}"),)
     {%  endif %}
 {% endif %}
 {% endif %}
@@ -79,6 +79,8 @@ class {{input.name}}Create({%- if not input.is_internal -%}{{input.dbbase[1]}}{%
         {%- for attr in input.attrs %}{%- if attr.unique_field %}{%- set x = upsert_keys.keys.append(attr.name) -%}{%- endif  -%}{%- endfor -%}
     class Config:
         collection_name = '{{input.config.collection_name or 'data_flow'}}'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         {%- if 'postgresmodel' in input.dbbase[2] %}
         schema_class = {% if not input.config.parent_table %}{{input.name}}Schema{% else %}{{input.config.parent_table}}Schema{% endif %}
         upsert_keys = {{upsert_keys.keys}}
@@ -87,6 +89,12 @@ class {{input.name}}Create({%- if not input.is_internal -%}{{input.dbbase[1]}}{%
         {% endif -%}
         {% if input.config.engine_id_fields is defined and input.config.engine_id_fields -%}
         engine_id_fields = {{input.config.engine_id_fields.split(',')}}
+        {% endif -%}
+        {% if input.config.search_fields is defined and input.config.search_fields -%}
+        search_fields = {{input.config.search_fields.split(',')}}
+        {% endif -%}
+        {% if input.config.access_key_mapping is defined and input.config.access_key_mapping -%}
+        access_key_mapping = {{input.config.access_key_mapping.split(',')}}
         {% endif -%}
         {% if input.config.upsert_skip_keys is defined and input.config.upsert_skip_keys -%}
         upsert_skip_keys = {{input.config.upsert_skip_keys.split(',')}}
@@ -126,6 +134,8 @@ class {{input.name}}({{input.dbbase[2]}}):
         {%- for attr in input.attrs %}{%- if attr.unique_field %}{%- set x = upsert_keys.keys.append(attr.name) -%}{%- endif  -%}{%- endfor -%}
     class Config:
         collection_name = '{{input.config.collection_name or 'data_flow'}}'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         {%- if 'postgresmodel' in input.dbbase[2] %}
         schema_class = {% if not input.config.parent_table %}{{input.name}}Schema{% else %}{{input.config.parent_table}}Schema{% endif %}
         upsert_keys = {{upsert_keys.keys}}
@@ -134,6 +144,12 @@ class {{input.name}}({{input.dbbase[2]}}):
         {% endif -%}
         {% if input.config.engine_id_fields is defined and input.config.engine_id_fields -%}
         engine_id_fields = {{input.config.engine_id_fields.split(',')}}
+        {% endif -%}
+        {% if input.config.search_fields is defined and input.config.search_fields -%}
+        search_fields = {{input.config.search_fields.split(',')}}
+        {% endif -%}
+        {% if input.config.access_key_mapping is defined and input.config.access_key_mapping -%}
+        access_key_mapping = {{input.config.access_key_mapping.split(',')}}
         {% endif -%}
         {% if input.config.upsert_skip_keys is defined and input.config.upsert_skip_keys -%}
         upsert_skip_keys = {{input.config.upsert_skip_keys.split(',')}}
@@ -207,5 +223,8 @@ class {{input.name.title()}}_{{action.name.title()}}Params(pydantic.BaseModel):
     {% if not action.params %}
     pass
     {% endif %}
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 {%- endfor %}
 {% endif %}

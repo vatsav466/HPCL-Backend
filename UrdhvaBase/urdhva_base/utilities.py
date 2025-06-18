@@ -1,4 +1,5 @@
 import re
+import pytz
 import asyncio
 import datetime
 import functools
@@ -51,6 +52,13 @@ def run_once(func):
     return wrapper
 
 
+def generate_unique_id(name, table_args):
+    unique_constraint = f"{snake_case(name)}_{'_'.join(table_args).replace('UrdhvaPostgresBase.', '')}"
+    if len(unique_constraint) > 63:
+        unique_constraint = f"{snake_case(name)}_{'_'.join([args.replace('_', '')[0:5] for args in table_args]).replace('UrdhvaPostgresBase.', '')}"[0:62]
+    return unique_constraint
+
+
 def snake_case(s):
     """
     # Replace hyphens with spaces, then apply regular expression substitutions for title case conversion
@@ -61,4 +69,16 @@ def snake_case(s):
               return:- algo_fusion
     """
     return snakecase.convert(s)    
+
+
+def get_present_time(utc=False):
+    """
+    Function to get present time in utc or local format
+    :param utc:
+    :return:
+    """
+    time_stamp = datetime.datetime.now(datetime.timezone.utc)
+    if not utc:
+        time_stamp = time_stamp.astimezone(pytz.timezone('Asia/Kolkata'))
+    return time_stamp
 

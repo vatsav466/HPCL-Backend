@@ -70,6 +70,14 @@
 ##### Ex:- 
       name primary_key index_field unique_field str
 
+## For Datetime without timezone use datetime_no_zone 
+##### Ex:- 
+      external_timestamp optional datetime_no_zone
+
+## For Datetime with timezone use datetime 
+##### Ex:- 
+      timestamp optional datetime
+
 ## Config
 **1. Entity as Unique Key** 
 ####    Entity as unique will add entity_id to unique fields along with provided one  

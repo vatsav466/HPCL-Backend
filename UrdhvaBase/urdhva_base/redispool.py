@@ -8,7 +8,9 @@ from redis import asyncio as aioredis
 @urdhva_base.utilities.run_once
 async def get_redis_connection() -> aioredis.Redis:
     redis_url = urdhva_base.settings.db_urls['redis'][0]
-    pool = aioredis.ConnectionPool.from_url(url=redis_url.unicode_string(), max_connections=10, encoding='utf8')
+    pool = aioredis.ConnectionPool.from_url(url=redis_url.unicode_string(),
+                                            max_connections=urdhva_base.settings.max_redis_connections, encoding='utf8',
+                                            socket_timeout=10, retry_on_timeout=True)
     return aioredis.Redis.from_pool(pool)
 
 
@@ -16,7 +18,9 @@ async def get_redis_connection() -> aioredis.Redis:
 @urdhva_base.utilities.run_once
 def get_synchronous_redis_connection():
     redis_url = urdhva_base.settings.db_urls['redis'][0]
-    redis_pool = redis.ConnectionPool.from_url(url=redis_url.unicode_string(), max_connections=10, encoding='utf8')
+    redis_pool = redis.ConnectionPool.from_url(url=redis_url.unicode_string(),
+                                               max_connections=urdhva_base.settings.max_redis_connections,
+                                               encoding='utf8', socket_timeout=10, retry_on_timeout=True)
     return redis.StrictRedis(connection_pool=redis_pool)
 
 

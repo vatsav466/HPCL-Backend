@@ -30,7 +30,7 @@ CustomType:
 ;
 
 BaseTypes:
-    IntSpec | FloatSpec | StrSpec | BoolSpec | DictSpec | EmailSpec | Datetime | Date | Time | IpAddressv4 | IpAddressv6 | Secret
+    IntSpec | FloatSpec | StrSpec | BoolSpec | DictSpec | EmailSpec | DatetimeWithoutTimeZone | Datetime | Date | Time | IpAddressv4 | IpAddressv6 | Secret
 ;
 
 IntSpec:
@@ -55,6 +55,10 @@ DictSpec:
 
 EmailSpec:
     x='email'
+;
+
+DatetimeWithoutTimeZone:
+    x='datetime_no_zone'
 ;
 
 Datetime:
@@ -123,6 +127,8 @@ Config:
         ('foreign_keys='foreign_keys=STRING)?
         ('standard_query='standard_query=STRING)?
         ('engine_id_fields='engine_id_fields=STRING)?
+        ('search_fields='search_fields=STRING)?
+        ('access_key_mapping='access_key_mapping=STRING)?
         ('upsert_skip_keys='upsert_skip_keys=STRING)?
         (unique_on_entity?='unique_on_entity')?
         (bulkcreate?='bulkcreate')?

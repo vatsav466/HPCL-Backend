@@ -1,0 +1,575 @@
+{
+    "allowRemoteResourceManagement": true,
+    "policyEnforcementMode": "ENFORCING",
+    "decisionStrategy": "AFFIRMATIVE",
+    "resources": [
+        {
+            "name": "vts",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VTS",
+            "attributes": {},
+            "uris": [
+                "/api/vts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                },
+                {
+                    "name": "ingest_data_blocked_trucks"
+                },
+                {
+                    "name": "ingest_data_un_blocked_trucks"
+                }
+            ]
+        },
+        {
+            "name": "vts_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VTS_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vts_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VTS_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                },
+                {
+                    "name": "ingest_data_blocked_trucks"
+                },
+                {
+                    "name": "ingest_data_un_blocked_trucks"
+                }
+            ]
+        },
+        {
+            "name": "va",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VA",
+            "attributes": {},
+            "uris": [
+                "/api/va/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                },
+                {
+                    "name": "ingest_data_score"
+                },
+                {
+                    "name": "ingest_data_close"
+                }
+            ]
+        },
+        {
+            "name": "va_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VA_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/va/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "va_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VA_admin",
+            "attributes": {},
+            "uris": [
+                "/api/va/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                },
+                {
+                    "name": "ingest_data_score"
+                },
+                {
+                    "name": "ingest_data_close"
+                }
+            ]
+        },
+        {
+            "name": "cris",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CRIS",
+            "attributes": {},
+            "uris": [
+                "/api/cris/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                },
+                {
+                    "name": "api_ack"
+                }
+            ]
+        },
+        {
+            "name": "cris_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CRIS_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/cris/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "cris_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CRIS_admin",
+            "attributes": {},
+            "uris": [
+                "/api/cris/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                },
+                {
+                    "name": "api_ack"
+                }
+            ]
+        },
+        {
+            "name": "ims",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "IMS",
+            "attributes": {},
+            "uris": [
+                "/api/ims/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
+        },
+        {
+            "name": "ims_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "IMS_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/ims/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "ims_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "IMS_admin",
+            "attributes": {},
+            "uris": [
+                "/api/ims/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
+        },
+        {
+            "name": "emlock",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "EMLock",
+            "attributes": {},
+            "uris": [
+                "/api/emlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
+        },
+        {
+            "name": "emlock_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "EMLock_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/emlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "emlock_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "EMLock_admin",
+            "attributes": {},
+            "uris": [
+                "/api/emlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
+        },
+        {
+            "name": "taslistener",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasListener",
+            "attributes": {},
+            "uris": [
+                "/api/taslistener/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_data"
+                }
+            ]
+        },
+        {
+            "name": "taslistener_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasListener_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/taslistener/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_data"
+                }
+            ]
+        },
+        {
+            "name": "taslistener_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasListener_admin",
+            "attributes": {},
+            "uris": [
+                "/api/taslistener/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_data"
+                }
+            ]
+        }
+    ],
+    "policies": [
+        {
+            "name": "superAdminPolicy",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "roles": "[{\"id\":\"superAdmin\",\"required\":false}]"
+            }
+        },
+        {
+            "name": "superAdminPermission",
+            "type": "resource",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "defaultResourceType": "all",
+                "applyPolicies": "[\"superAdminPolicy\"]"
+            }
+        },
+        {
+            "name": "readOnlyPolicy",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "roles": "[{\"id\":\"readOnly\",\"required\":false}]"
+            }
+        },
+        {
+            "name": "readOnlyPermission",
+            "type": "resource",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "defaultResourceType": "readOnly",
+                "applyPolicies": "[\"readOnlyPolicy\"]"
+            }
+        },
+        {
+            "name": "adminPolicy",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "roles": "[{\"id\":\"admin\",\"required\":false}]"
+            }
+        },
+        {
+            "name": "adminPermission",
+            "type": "resource",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "defaultResourceType": "admin",
+                "applyPolicies": "[\"adminPolicy\"]"
+            }
+        }
+    ],
+    "scopes": [
+        {
+            "name": "create",
+            "displayName": "create"
+        },
+        {
+            "name": "update",
+            "displayName": "update"
+        },
+        {
+            "name": "read",
+            "displayName": "read"
+        },
+        {
+            "name": "delete",
+            "displayName": "delete"
+        },
+        {
+            "name": "ingest_data",
+            "displayName": "ingest_data"
+        },
+        {
+            "name": "ingest_data_blocked_trucks",
+            "displayName": "ingest_data_blocked_trucks"
+        },
+        {
+            "name": "ingest_data_un_blocked_trucks",
+            "displayName": "ingest_data_un_blocked_trucks"
+        },
+        {
+            "name": "ingest_data",
+            "displayName": "ingest_data"
+        },
+        {
+            "name": "ingest_data_score",
+            "displayName": "ingest_data_score"
+        },
+        {
+            "name": "ingest_data_close",
+            "displayName": "ingest_data_close"
+        },
+        {
+            "name": "ingest_data",
+            "displayName": "ingest_data"
+        },
+        {
+            "name": "api_ack",
+            "displayName": "api_ack"
+        },
+        {
+            "name": "ingest_data",
+            "displayName": "ingest_data"
+        },
+        {
+            "name": "ingest_data",
+            "displayName": "ingest_data"
+        },
+        {
+            "name": "get_data",
+            "displayName": "get_data"
+        }
+    ]
+}

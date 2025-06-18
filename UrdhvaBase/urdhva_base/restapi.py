@@ -19,7 +19,16 @@ import urdhva_base.settings
 import urdhva_base.redispool
 import urdhva_base.elasticmodel
 from pydantic.fields import Field
+from urllib.parse import urlparse
+from slowapi.extension import Limiter
 from cryptography.fernet import Fernet
+import urdhva_base.ttl_cache as ttl_cache
+from slowapi.util import get_remote_address
+from starlette.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+
 from mangum import Mangum
 from starlette.responses import RedirectResponse
 
@@ -27,6 +36,23 @@ logger = urdhva_base.Logger.getInstance("urdhva_api")
 
 app = fastapi.FastAPI()
 cookie_name = urdhva_base.settings.cookie_name
+
+@app.exception_handler(RateLimitExceeded)
+def rate_limit_exceeded_handler(request: fastapi.Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Rate limit exceeded. Try again later."}
+    )
+
+# Set a default limit (e.g., 1000 requests per minute)
+limiter = Limiter(key_func=get_remote_address, application_limits=["1000/second"])
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+# Add SlowAPI middleware (built-in middleware)
+app.add_middleware(SlowAPIMiddleware)
+
 
 
 # This function will give keycloak auth redirection url based on realm name given
@@ -78,11 +104,15 @@ async def get_baseurl(request: fastapi.Request, redirect_type="RedirectionUrl", 
 
 async def get_permission():
     rpt = urdhva_base.context.context.get('rpt', {})
-    data = {"me": ['read'], "logout": ["read"]}
-    data.update({permission['rsname'].lower().split("_")[0]: permission.get('scopes', []) for permission in
-                 rpt.get('authorization', {}).get('permissions', [])})
-    data['includes'] = rpt.get('includes', '')
-    data['excludes'] = rpt.get('excludes', '')
+    data = {"is_authenticated": False, "allowed_roles": []}
+    if rpt.get("username") and rpt.get("system_role") and rpt.get("novex_role"):
+        data['is_authenticated'] = True
+        data["allowed_roles"] = rpt.get("allowed_roles", [])
+    # data = {"me": ['read'], "logout": ["read"]}
+    # data.update({permission['rsname'].lower().split("_")[0]: permission.get('scopes', []) for permission in
+    #              rpt.get('authorization', {}).get('permissions', [])})
+    # data['includes'] = rpt.get('includes', '')
+    # data['excludes'] = rpt.get('excludes', '')
     return data
 
 
@@ -110,34 +140,108 @@ async def has_permission(method: str, path: str):
     return True if resource in permissions and operation in permissions[resource] else False
 
 
+async def get_vendor_authorization_details():
+    """Cache data loader"""
+    redis_ins = await urdhva_base.redispool.get_redis_connection()
+    vendor_details = {}
+    resp = await redis_ins.hgetall("vendor_auth")
+    for key, info in resp.items():
+        if isinstance(key, bytes):
+            key = key.decode()
+        if isinstance(info, bytes):
+            info = info.decode()
+        if key.endswith('_access_key'):
+            vendor = key.split("_access_key")[0]
+            if vendor not in vendor_details:
+                vendor_details[vendor] = {}
+            vendor_details[vendor]['access_key'] = info
+        elif key.endswith('_allowed_apis'):
+            vendor = key.split("_allowed_apis")[0]
+            if vendor not in vendor_details:
+                vendor_details[vendor] = {}
+            vendor_details[vendor]['allowed_apis'] = json.loads(info)
+    return vendor_details
+
+
+async def validate_header_based_authentication(request: fastapi.Request):
+    """
+        Validates the authentication of an incoming HTTP request based on headers.
+
+        Args:
+            request (fastapi.Request): The incoming HTTP request object.
+
+        Steps:
+        1. Extract the Authorization header from the request.
+        2. Check if the Authorization header is missing or malformed.
+        3. Validate the token (e.g., a JWT) from the Authorization header.
+        4. Return an appropriate response if the authentication fails.
+        5. If authentication is successful, allow the request to proceed.
+
+        Returns:
+            True, None: If the authentication is valid, the function does not return anything, and the request proceeds.
+            False, 403: If the authentication fails, an HTTP exception is raised with the appropriate status code and message.
+            False, None: If header based authentication not enabled or auth token not available in headers
+        """
+    if not urdhva_base.settings.enable_header_auth:
+        return False, None
+    headers = request.headers
+    access_key = headers.get("ceg-auth-token")
+    if access_key:
+        vendor = headers.get("vendor")
+        if vendor:
+            ins = ttl_cache.CacheDataInstance.get_instance("vendor_auth", get_vendor_authorization_details)
+            cache_data = await ins.get(vendor)
+            vendor_data = cache_data.get(vendor) if cache_data else {}
+            if not vendor_data or access_key != vendor_data.get('access_key'):
+                return False, fastapi.responses.JSONResponse("Invalid Authentication Credentials", 401)
+            if vendor_data.get('allowed_apis') and request.url.path not in vendor_data.get('allowed_apis'):
+                return False, fastapi.responses.JSONResponse("Permission Denied", 403)
+            return True, None
+            #
+            # redis_ins = await urdhva_base.redispool.get_redis_connection()
+            # # Validate Access key
+            # if await redis_ins.hexists("vendor_auth", f"{vendor}_access_key"):
+            #     db_access_key = await redis_ins.hget("vendor_auth", f"{vendor}_access_key")
+            #     if db_access_key and isinstance(db_access_key, bytes):
+            #         db_access_key = db_access_key.decode()
+            #     if db_access_key == access_key:
+            #         allowed_apis = json.loads(await redis_ins.hget("vendor_auth", f"{vendor}_allowed_apis"))
+            #         if allowed_apis and request.url.path not in allowed_apis:
+            #             return False, fastapi.responses.JSONResponse("Invalid permissions", 403)
+            #         return True, None
+            #     return False, fastapi.responses.JSONResponse("Invalid token", 403)
+    return False, None
+
+
+def add_security_headers(response):
+    # response.headers["Content-Security-Policy"] = "default-src 'self' style-src 'self' 'unsafe-inline'"
+    return response
+
+
 @app.middleware('http')
 async def authMiddleware(request: fastapi.Request, call_next):
+    status, resp = await validate_header_based_authentication(request)
+    if status:
+        return add_security_headers(await call_next(request))
+    elif not status and resp:
+        return add_security_headers(resp)
+    # return await call_next(request)
     response = fastapi.Response(None, 403)
-    if request.url.path in ['/docs', '/openapi.json', '/api/login'] + urdhva_base.settings.noauth_urls or \
+    if (request.url.path in ['/docs', '/openapi.json', '/api/login', '/api/session/me', '/api/users/login'] +
+            urdhva_base.settings.noauth_urls or \
             re.match(r"/api/[\S\s\w]*login\b(?![a-zA-Z])", request.url.path) \
-            or re.match(r"/api/[\S\s\w]*authorize", request.url.path):
-        return await call_next(request)
+            or re.match(r"/api/[\S\s\w]*authorize", request.url.path)):
+        return add_security_headers(await call_next(request))
     rpt = urdhva_base.context.context.get('rpt', {})
     cookie = request.cookies.get(cookie_name, None)
     if not cookie and not rpt:
         base_url = urdhva_base.ctx["base_url"]
         if not base_url:
             response = fastapi.responses.JSONResponse("Provided entity is Invalid", 403)
-            return response
-        org_extension = await get_customer_authentication_extension(urdhva_base.ctx["entity_id"])
-        redirect_url = f'https://{base_url}/{org_extension}/realms/{urdhva_base.ctx["entity_id"]}/protocol/' \
-                       f'openid-connect/auth?client_id={urdhva_base.ctx["entity_id"]}_client&' \
-                       f'response_type=code&redirect_uri={urdhva_base.ctx["oauth_redirect"]}&scope=email openid&state=123'
-        redis_client = await urdhva_base.redispool.get_redis_connection()
-        data = await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname)
-        if data:
-            temp_url = json.loads(data)["base_url"]
-            redirect_url = f'https://{temp_url}/{org_extension}/realms/{urdhva_base.ctx["entity_id"]}/protocol/' \
-                           f'openid-connect/auth?client_id={urdhva_base.ctx["entity_id"]}_client&' \
-                           f'response_type=code&redirect_uri={urdhva_base.ctx["oauth_redirect"]}' \
-                           f'&scope=email openid&state=123'
-        resp_dict = {"url": redirect_url}
-        response = fastapi.responses.JSONResponse(resp_dict, 401)
+            return add_security_headers(response)
+        # redirect_url = f"https://{request.base_url.hostname}/login"
+        # resp_dict = {"url": redirect_url}
+        response = fastapi.responses.HTMLResponse("", 401)
     elif cookie or rpt:
         if await has_permission(request.method, request.scope['path']):
             response: fastapi.responses.Response = await call_next(request)
@@ -146,15 +250,34 @@ async def authMiddleware(request: fastapi.Request, call_next):
                     if header[0].decode() == 'location' and header[1].decode().startswith('http://'):
                         url = header[1].decode().replace('http://', 'https://')
                         response.raw_headers[index] = ('location'.encode(), url.encode())
-    return response
+    return add_security_headers(response)
+
+
+def verify_security_policy(host_name, header_value):
+    if not urdhva_base.settings.origin_check_enabled or  not header_value:
+        return True
+    parsed_origin = urlparse(header_value)
+    return host_name == parsed_origin.netloc
 
 
 @app.middleware('http')
 async def contextMiddleware(request: fastapi.Request, call_next):
+    # Verifying Content Length, To avoid man in middle attack
+    # if request.headers.get("content-length"):
+    #     actual_body = await request.body()  # Read the request body
+    #     actual_length = len(actual_body)
+    #     if actual_length != len(request.headers.get("content-length")):
+    #         return fastapi.responses.Response("Content-Length mismatch", 400)
+    # Verifying request origin and hostname
+    if not verify_security_policy(request.base_url.hostname, request.headers.get('origin')):
+        return fastapi.responses.Response("Origin mismatch", 403)
+    # Verifying request referer and hostname
+    if not verify_security_policy(request.base_url.hostname, request.headers.get('referer')):
+        return fastapi.responses.Response("Refer mismatch", 403)
     data = {}
     cookie_id = request.cookies.get(cookie_name, None)
     redis_client = await urdhva_base.redispool.get_redis_connection()
-    entity_id = ""
+    entity_id = "Novex"
     if cookie_id:
         try:
             f = Fernet(urdhva_base.settings.fernet_key)
@@ -169,18 +292,23 @@ async def contextMiddleware(request: fastapi.Request, call_next):
             entity_id = request.headers.get("entity_id", "")
         elif not urdhva_base.settings.multi_tenant_support:
             entity_id = request.base_url.hostname.split('.')[0]
+        elif urdhva_base.settings.default_realm:
+            entity_id = urdhva_base.settings.default_realm
 
     data['domain'] = request.base_url
     data['entity_obj'] = urdhva_base.entity.Entity()
     data['entity_id'] = entity_id
     if cookie_id:
-        rkey = f"{entity_id}_SessionData_{cookie_id}"
+        rkey = f"Novex_SessionData_{cookie_id}"
         cookie = await redis_client.get(rkey)
         if cookie:
             if isinstance(cookie, bytes):
                 cookie = cookie.decode()
             cookie = cookie.split("$$_##_##_$$")
-            data['rpt'] = json.loads(base64.urlsafe_b64decode(cookie[0].split('.')[1] + '=====').decode())
+            if "=====" in cookie[0]:
+                data['rpt'] = json.loads(base64.urlsafe_b64decode(cookie[0].split('.')[1] + '=====').decode())
+            else:
+                data['rpt'] = json.loads(base64.urlsafe_b64decode(cookie[0]).decode())
             data['id_auth_token'] = cookie[1] if len(cookie) > 1 else ""
         else:
             data["base_url"] = await get_baseurl(request, "OAUTH_RedirectUrl", entity_id)
@@ -215,12 +343,12 @@ async def contextMiddleware(request: fastapi.Request, call_next):
     return resp
 
 
-@app.get("/api/login")
+# @app.get("/api/login")
 async def login_old(request: fastapi.Request, code: typing.Optional[str] = None):
     return await login(request, code, urdhva_base.ctx["entity_id"])
 
 
-@app.get("/api/{entity_id}/login")
+# @app.get("/api/{entity_id}/login")
 async def login(request: fastapi.Request, code: typing.Optional[str] = None,
                 entity_id: typing.Optional[str] = ""):
     base_url = ""
@@ -327,36 +455,21 @@ async def login(request: fastapi.Request, code: typing.Optional[str] = None,
 
 @app.get("/api/logout")
 async def logout(request: fastapi.Request):
-    org_extension = await get_customer_authentication_extension(urdhva_base.ctx['entity_id'])
-    redis_client = await urdhva_base.redispool.get_redis_connection()
-    if await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname):
-        data = await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname)
-        url = json.loads(data)["base_url"]
-        redirect_url = f"https://{url}/{org_extension}/realms/{urdhva_base.ctx['entity_id']}" \
-                       f"/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F" \
-                       f"{request.base_url.hostname}%2F"
-    else:
-        redirect_url = f"https://{await get_baseurl(request)}/{org_extension}/realms/" \
-                       f"{urdhva_base.ctx['entity_id']}/protocol/openid-connect/" \
-                       f"logout?post_logout_redirect_uri=https%3A%2F%2F{request.base_url.hostname}%2F"
-    id_auth_token = urdhva_base.context.context.get('id_auth_token', "")
-    if id_auth_token:
-        redirect_url += f"&id_token_hint={id_auth_token}"
-    response = fastapi.responses.JSONResponse({'url': redirect_url}, 401)
+    # {'url': f"https://{request.base_url.hostname}/login"}
+    response = fastapi.responses.HTMLResponse("", 401)
     cookie_id = request.cookies.get(cookie_name, None)
     if cookie_id:
         try:
             f = Fernet(urdhva_base.settings.fernet_key)
             d = json.loads(f.decrypt(cookie_id.encode()).decode())
-            # print(d)
-            entity_id = d["entity_id"]
             cookie_id = d["cookie_id"]
         except:
-            entity_id = request.base_url.hostname.split('.')[0]
+            ...
         redis_client = await urdhva_base.redispool.get_redis_connection()
-        rkey = f"{entity_id}_SessionData_{cookie_id}"
+        rkey = f"Novex_SessionData_{cookie_id}"
         await redis_client.delete(rkey)
-    response.delete_cookie(cookie_name)
+    response.delete_cookie(cookie_name, httponly = urdhva_base.settings.session_httponly,
+                           secure=urdhva_base.settings.session_secure, samesite=urdhva_base.settings.session_same_site)
     # todo:- Need to clear dashboard sessions
     return response
 
@@ -370,6 +483,10 @@ async def authorize(request: fastapi.Request, entity_id: str):
         data = await redis_client.hget(f"{entity_id}_domainMapping", request.base_url.hostname)
         url = json.loads(data)["base_url"]
         oauth_redirect_url = f'https://{request.base_url.hostname}/api/{entity_id}/login'
+    redis_client = await urdhva_base.redispool.get_redis_connection()
+    data = await redis_client.hget(f"{entity_id}_domainMapping", request.base_url.hostname)
+    if data:
+        base_url = json.loads(data)["base_url"]
     redirect_url = f'https://{base_url}/{await get_customer_authentication_extension(entity_id)}' \
                    f'/realms/{entity_id}/protocol/openid-connect/auth?client_id={entity_id}' \
                    f'_client&response_type=code&redirect_uri={oauth_redirect_url}&scope=email openid&state=123'
@@ -379,21 +496,20 @@ async def authorize(request: fastapi.Request, entity_id: str):
 @app.get("/api/session/me")
 async def me(request: fastapi.Request):
     rpt = urdhva_base.context.context.get('rpt', {})
-    resp = {'permissions': await get_permission(), 'given_name': rpt.get('given_name', '-'),
-            'family_name': rpt.get('family_name', '-'), 'email': rpt.get('email', '-'),
-            'entity_id': urdhva_base.ctx["entity_id"] if urdhva_base.ctx.exists() else '',
-            "base_url": "", "fqdn_ipaddress": "", "is_poc_user": False, "organizations_permitted": "",
-            "organizations_prohibited": "", "credentials_permitted": "", "credentials_prohibited": ""}
-    redis_client = await urdhva_base.redispool.get_redis_connection()
-    resp.update({"dateFormat": await redis_client.hget("dateformat_mapping", urdhva_base.ctx["entity_id"])})
-    if rpt.get('email') and await redis_client.hexists(f"access_restrictions_{urdhva_base.ctx['entity_id']}", rpt['email']):
-        data = json.loads(await redis_client.hget(f"access_restrictions_{urdhva_base.ctx['entity_id']}",
-                                                  rpt['email']))
-        for key in ["organizations_permitted", "organizations_prohibited", "credentials_permitted",
-                    "credentials_prohibited", "is_poc_user"]:
-            if key in data:
-                resp[key] = data[key]
+    resp = {"is_authenticated": False}
+    permission_data = await get_permission()
+    if permission_data["is_authenticated"]:
+        resp = {"permissions": permission_data["allowed_roles"], "is_authenticated": True}
+        base_keys = ["first_name", "last_name", "system_role", "allowed_roles", "email", "employee_id", "novex_role"]
+        permission_keys = ["bu", "region", "zone", "state", "sales_area", "sap_id"]
+        resp.update({key: rpt.get(key, '') for key in base_keys})
+        resp.update({key: rpt.get(key, []) for key in permission_keys})
     return resp
+
+
+@app.get("/api/ping")
+async def ping():
+    return "pong"
 
 
 def convert_role_dict(role_data):

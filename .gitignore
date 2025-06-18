@@ -1,0 +1,7 @@
+.idea
+*.pyc
+.DS_Store
+.alg_env
+api_manager/.algo_env
+.scannerwork/.sonar_lock
+.scannerwork/report-task.txt

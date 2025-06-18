@@ -1,0 +1,29 @@
+Metadata-Version: 2.1
+Name: urdhva_base
+Version: 1.0
+Summary: Code generator & runtime 
+Home-page: 
+Author: Venugopalnaidu Chandra(venu@algofusiontech.com)
+Author-email: 
+Requires-Dist: fastapi==0.115.4
+Requires-Dist: email-validator
+Requires-Dist: elasticsearch[async]==8.12.1
+Requires-Dist: httpx==0.26.0
+Requires-Dist: jinja2==3.1.4
+Requires-Dist: motor==3.3.2
+Requires-Dist: textx==4.0.1
+Requires-Dist: uvicorn==0.32.0
+Requires-Dist: pydantic-settings==2.6.1
+Requires-Dist: cryptography==43.0.3
+Requires-Dist: pandas==2.2.3
+Requires-Dist: numpy==2.1.3
+Requires-Dist: redis==5.2.0
+Requires-Dist: mangum==0.17.0
+Requires-Dist: python-keycloak==3.9.1
+Requires-Dist: SQLAlchemy==2.0.36
+Requires-Dist: SQLAlchemy-Utils==0.41.2
+Requires-Dist: asyncpg==0.30.0
+Requires-Dist: snakecase==1.0.1
+Requires-Dist: pymongo==4.8.0
+Requires-Dist: python-multipart==0.0.17
+Requires-Dist: setuptools

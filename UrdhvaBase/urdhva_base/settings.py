@@ -14,11 +14,13 @@ Db_Urls_Base = {
             "https://admin:password@localhost:9200"
         ],
         "postgres_async": [
-            # "postgresql+asyncpg://localhost/dataflow?user=postgres&password=password"
-            "postgresql+asyncpg://15.206.23.238/recon?user=santosh&password=7yUy9T5UGMBh"
+            "postgresql+asyncpg://localhost:5432/hpcl_ceg?user=ceg_user&password=TTNqetkiJLPM50jC"
         ],
         "redis": [
             "redis://localhost:6379"
+        ],
+        "tibco": [
+            "mysql+mysql://username:password@localhost:3306/db_name"
         ]
     }
 
@@ -40,10 +42,17 @@ def configure_db_urls(db_urls):
 class Settings(pydantic_settings.BaseSettings):
     model_config = pydantic_settings.SettingsConfigDict(env_file=EnvConfigFile, extra='ignore')
     # Domain defaults
-    app_name: str = "dataFusion"
-    cookie_name: str = "urdhva_data_fusion"
-    default_index: str = "urdhva_data_fusion"
+    app_name: str = "hpcl_novex"
+    cookie_name: str = "hpcl_novex"
+    default_index: str = "hpcl_novex"
     multi_tenant_support: bool = True
+    password_salt: str = "hpcl_novex_dnc"
+    max_redis_connections: int = 10
+    origin_check_enabled: bool = False
+    disable_api_extra_inputs: bool = False
+    environment: str = ""
+    # Header based authentication Enabled or Not
+    enable_header_auth: bool = False
 
     # Keycloak Auth Server
     keycloak_external_url: pydantic.AnyHttpUrl = 'https://localhost:8443'
@@ -53,10 +62,15 @@ class Settings(pydantic_settings.BaseSettings):
     keycloak_password: str = 'password'
     keycloak_db_password: str = 'admin'
     fernet_key: str = 'NjY5N2IwOWM5ZjE0MjMzN2M3YzA5Y2Y4ZDE4NTA2Mjk='
+    default_realm: str = 'hpcl'
+    server_ip: str = ""
+
+    # For RBAC
     roles_directories: typing.List[str] = []
+    rbac_keys: typing.List[str] = ['sap_id', 'bu', 'state', 'city', 'district', 'zone']
 
     # For Logger
-    log_base_dir: str = "/var/log/c2o_logs"
+    log_base_dir: str = "/var/log/ceg_logs"
     log_max_size: int = 10000000
     log_max_count: int = 5
 
@@ -64,6 +78,11 @@ class Settings(pydantic_settings.BaseSettings):
     db_multi_tenancy_model: MultiTenancyMode = MultiTenancyMode.SingleServerSingleDb
     login_count: int = 5
     base_path: str = ""
+    mft_path: str = "/opt/ceg/mft_path/"
+    ui_path: str = ""
+    download_path: str = "/opt/ceg/algo/orchestrator/masters"
+    template_path: str = "/opt/ceg/algo/orchestrator/notification_templates"
+    uploads: str = ""
     kibana_dashboard_header: str = 'osd-xsrf'
     db_urls: typing.Dict[str, typing.List[pydantic.AnyUrl]] = Db_Urls_Base
 
@@ -71,9 +90,14 @@ class Settings(pydantic_settings.BaseSettings):
     enable_echo: bool = True
 
     # Session configuration settings
-    session_same_site: str = 'lax'
+    session_same_site: str = 'Strict'
     session_secure: bool = True
     session_httponly: bool = True
+
+    # Master cache time
+    cache_gateway_port: int = 5920
+    cache_gateway_host: str = "localhost"
+    default_masters_cache_seconds: int = 15*60
 
     # For importing Urdhva framework packages
     import_paths: typing.Dict[str, str] = {}
@@ -90,6 +114,76 @@ class Settings(pydantic_settings.BaseSettings):
     superset_external_url: str = 'http://localhost:8088'
     superset_user: str = "admin"
     superset_password: str = 'password'
+
+    # SMTP
+    smtp_host: str = "smtp.hpcl.co.in"
+    smtp_port: int = 25
+    smtp_from_url: str = "novex@hpcl.co.in"
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_tls_enabled: bool = False
+    smtp_ssl_enabled: bool = False
+
+    # Whatsapp
+    whatsapp_creds: typing.Dict[str, str] = {}
+
+    # SMS
+    sms_creds: typing.Dict[str, str] = {}
+
+    # LDAP Settings
+    ldap_host: str = ""
+    ldap_port: str = ""
+    ldap_domain: str = ""
+    ldap_auth_enabled: bool = False
+
+    # camunda
+    # Default Camunda
+    camunda_url: str = 'http://10.90.38.167:8080'
+    open_ldap_url: str = ''
+    cris_interlock_disable_url: str = ''
+    camunda_default_config: typing.Dict[str, int] = {
+        "maxTasks": 10,
+        "lockDuration": 10000,
+        "asyncResponseTimeout": 5000,
+        "retries": 5,
+        "retryTimeout": 5000,
+        "sleepSeconds": 30
+    }
+    camunda_url_config: typing.Dict[str, typing.Dict] = {}
+    camunda_url_va_config: typing.Dict[str, typing.Dict] = {}
+
+    # For camunda configuration for non default one
+    # Creating separate configuration for each bu and keep applicable rules for those
+    # Sample {"TAS": [{"alert_section": "", "url": "", "sap_id": [],
+    # "zone": [], "sales_area": [], "region": [], "rule": "odd/even"}]}
+    camunda_configuration: typing.Dict[str, typing.List] = {}
+
+    # For DB Connection Mapping
+    db_connection_config: typing.Dict[str, str] = {}
+    db_connection_mapping: typing.Dict[str, typing.Dict] = {}
+
+    # RabbitMQ
+    rabbitmq_enabled: bool = False
+    rabbitmq_host: str = "localhost"
+    rabbitmq_port: int = 5672
+    rabbitmq_username: str = "hpcl_ceg"
+    rabbitmq_password: str = "algo@4321"
+    rabbitmq_vhost: str = "hpcl_ceg"
+    rabbitmq_queue: str = "tagsdata"
+    rabbitmq_auto_ack: bool = True
+
+
+    # ThingsBoard
+    things_board_url: str = "http://localhost:8080"
+    things_board_username: str = "admin"
+    things_board_password: str = "password"
+
+    # Max user password retries
+    max_password_retires: int = 3
+    lockout_time: int = 60
+
+    # Timezone settings
+    time_zone: str = "Asia/Kolkata"
 
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \

@@ -26,6 +26,7 @@ class Base:
 
     def render(self):
         templateEnv.globals.update(convert_snake_case=urdhva_base.utilities.snake_case)
+        templateEnv.globals.update(generate_unique_id=urdhva_base.utilities.generate_unique_id)
         return templateEnv.get_template(self.__class__.__name__.lower()).render(input=self)
 
 
@@ -95,7 +96,7 @@ class Attr(Base):
             elif isinstance(self.simpletype, BoolSpec):
                 self.default = False
             elif isinstance(self.simpletype, DictSpec):
-                self.default = {}
+                self.default = "pydantic.Field(default_factory=dict)"
             elif isinstance(self.simpletype, StrSpec):
                 self.default = '""'
 
@@ -180,6 +181,16 @@ class Datetime(Base):
         super().__init__()
         self.parent = parent
         self.sqlalchemy_name = 'DateTime(timezone=True)'
+
+    def has_params(self):
+        return False
+
+
+class DatetimeWithoutTimeZone(Base):
+    def __init__(self, parent, x):
+        super().__init__()
+        self.parent = parent
+        self.sqlalchemy_name = 'DateTime(timezone=False)'
 
     def has_params(self):
         return False
