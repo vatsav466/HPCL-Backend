@@ -107,7 +107,7 @@ async def generate_sod_engineering_location_stats(sap_id):
             "ESD": "ESD",
             "Pump": "Pumps",
             "OI Tags": "OI Tags",
-            "Radar": "Secondary Radar",
+            "RADAR": "Secondary Radar",
             "Fire Engine": "Fire Engine",
             "ESD Effect": "ESD Effect",
             "Barrier Gate": "Barrier Gate",
