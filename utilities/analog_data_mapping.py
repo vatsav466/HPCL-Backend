@@ -9,8 +9,7 @@ Maintenance = [
     {"sop_id": "SOP013", "interlock_name": "Fire engine_Under Maintenance", "alert_category": "Safety", "equipment_name": "Fire Engine"},
     {"sop_id": "SOP013", "interlock_name": "JockeyPump_Under Maintenance", "alert_category": "Safety", "equipment_name": "Jockey Pump"},
     {"sop_id": "SOP013", "interlock_name": "HydrantPT_Under Maintenance", "alert_category": "Safety", "equipment_name": "PT"},
-    {"sop_id": "SOP014", "interlock_name": "HCD_Under Maintenance", "alert_category": "Safety", "equipment_name": "Hcd"},
-    {"sop_id": "SOP035", "interlock_name": "Gantry Permissive_Override", "alert_category": "Gantry", "equipment_name": "Gantry Override"},
+    {"sop_id": "SOP014", "interlock_name": "HCD_Under Maintenance", "alert_category": "Safety", "equipment_name": "Hcd"}
 ]
 
 Fault = [
@@ -85,6 +84,7 @@ Normal = [
     # {"sop_id": "SOP031", "interlock_name": "Min 5% Manual Cross-check records", "alert_category": "Gantry", "equipment_name": "BCU"},
     {"sop_id": "SOP032", "interlock_name": "Primary Radar Guage_H alarm", "alert_category": "Process", "equipment_name": "Primary Level"},
     {"sop_id": "SOP032", "interlock_name": "Primary Radar Guage_HH alarm", "alert_category": "Process", "equipment_name": "Primary Level"},
+    {"sop_id": "SOP035", "interlock_name": "Gantry Permissive_Override", "alert_category": "Gantry", "equipment_name": "Gantry Override"},
     {"sop_id": "SOP061", "interlock_name": "Unauthorized flow_BCU", "alert_category": "Gantry", "equipment_name": "BCU"},
     {"sop_id": "SOP062", "interlock_name": "Cancel TT Reported", "alert_category": "Gantry", "equipment_name": "BCU"},
     {"sop_id": "SOP063", "interlock_name": "Manual FAN printed less than 5% of total TT loaded", "alert_category": "Gantry", "equipment_name": "BCU"},
