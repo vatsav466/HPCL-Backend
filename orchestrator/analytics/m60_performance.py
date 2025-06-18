@@ -919,6 +919,13 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             if '"month_name"' in group_by_filter and 'month_name' in target_data:
                 target_data['month_name'] = pd.CategoricalIndex(target_data['month_name'], ordered=True,
                                                                 categories=months)
+            # For I&C if the  values for the HFHSD is zero then drop that product
+            if "ProductName" in target_data.columns.tolist():
+                if  "HFHSD" in target_data['ProductName'].unique().tolist():
+                    if int(target_data[target_data['ProductName'] == 'HFHSD']['TARGET_TMT_SALES'].unique().tolist()[0]) == 0:
+                        target_data = target_data[target_data['ProductName'] != 'HFHSD']
+            print("writing tgt data to csv")
+            target_data.to_csv('/tmp/tgt_data.csv',index = False)
             target_data = target_data.to_dict(orient='records')
 
     # Data Retrival for current financial year
@@ -1110,6 +1117,31 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             if key not in merged_df:
                 merged_df[key] = ""
     merged_df.fillna(0, inplace=True)
+    #merged_df.to_csv('/tmp/nerged_df.csv',index = False)
+    print("merged columns",merged_df.columns.tolist())
+    
+    #If Lubes and DEF is present in the products list and the actuial,tgt sakes are zero tmt then drop the products from list
+    '''
+    if "ProductName" in merged_df.columns.tolist():
+        if "Lubes" in merged_df['ProductName'].unique().tolist():
+            
+            if int(merged_df[merged_df['ProductName'] == 'Lubes']['ACTUAL_TMT_SALES'].unique().tolist()[0]) == 0 and int(merged_df[merged_df['ProductName'] == 'Lubes']['ACTUAL_HISTORY_TMT_SALES'].unique().tolist()[0]) == 0:
+                print("came inside the req if")
+                merged_df = merged_df[merged_df['ProductName'] != 'Lubes']
+                print(merged_df[merged_df['ProductName'] == 'Lubes'])
+    '''
+    if "ProductName" in merged_df.columns.tolist():
+        if any(product in merged_df['ProductName'].unique().tolist() for product in ['Lubes', 'DEF']):
+            
+            for product in ['Lubes', 'DEF']:
+                if product in merged_df['ProductName'].unique().tolist():
+                    if (int(merged_df[merged_df['ProductName'] == product]['ACTUAL_TMT_SALES'].unique().tolist()[0]) == 0 and 
+                        int(merged_df[merged_df['ProductName'] == product]['ACTUAL_HISTORY_TMT_SALES'].unique().tolist()[0]) == 0):
+                        print(f"came inside the req if for {product}")
+                        merged_df = merged_df[merged_df['ProductName'] != product]
+                        print(merged_df[merged_df['ProductName'] == product])
+            print(merged_df['ProductName'].unique().tolist())     
+        
     if time_grain == 'top_zones':
              
         result = await get_top_and_bottom_3_zones_by_year_sbu(merged_df,filters, cross_filters, drill_state, time_grain, resp_format)
@@ -1428,7 +1460,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                         # Ensure numeric conversion
                                 df['ACTUAL_TMT_SALES'] = df['ACTUAL_TMT_SALES'].fillna(0).astype(float)
                                 df['ACTUAL_HISTORY_TMT_SALES'] = df['ACTUAL_HISTORY_TMT_SALES'].fillna(0).astype(float)
-
                                 # Group and aggregate
                                 grouped_df = df.groupby('ProductName', as_index=False).agg({
                                     'ACTUAL_TMT_SALES': 'sum',
