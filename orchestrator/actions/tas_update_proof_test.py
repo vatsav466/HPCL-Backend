@@ -57,6 +57,9 @@ class TasUpdateProofTest:
                     AND location_name = '{location_name}'
                 """
                 existing_record = await hpcl_ceg_model.TasProofTest.get_aggr_data(query)
+            
+            else:
+                existing_record = {}
 
             if existing_record.get("data", []):
                 record = existing_record["data"][0]
