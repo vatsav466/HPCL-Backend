@@ -623,22 +623,32 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     for condition in filters:
         if condition['key'].strip('"') == "A":
             actual = f"""ROUND(SUM("{DBNames['m60_ta']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" """
+            '''
             if time_grain in ['top_zones','top_regions','top_sales_area']:
                 #actual = f"""ROUND(SUM("{DBNames['m60_ta']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" ,"ProductName" """
                 if '"ProductName"' not in group_by_filter:
-                    group_by_filter.append('"ProductName"')
+                    if 'top_zones' not in time_grain :
+                        group_by_filter.append('"ProductName"')
+            '''
         elif condition['key'].strip('"') == "H":
             history = f"""ROUND(SUM("{DBNames['m60_h']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES" """
+            '''
             if time_grain in ['top_zones','top_regions','top_sales_area']:
                 #history = f"""ROUND(SUM("{DBNames['m60_h']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES","ProductName" """
                 if '"ProductName"' not in group_by_filter:
-                    group_by_filter.append('"ProductName"')
+                    
+                    if 'top_zones' not in time_grain :
+                        group_by_filter.append('"ProductName"')
+            '''
         elif condition['key'].strip('"') == "T":
             target = f""" ROUND(SUM("{DBNames['m60_ta']}"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES" """
+            '''
             if time_grain in ['top_zones','top_regions','top_sales_area']:
                 target = f""" ROUND(SUM("{DBNames['m60_ta']}"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES","ProductName" """
                 if '"ProductName"' not in group_by_filter:
-                    group_by_filter.append('"ProductName"')
+                    if 'top_zones' not in time_grain :
+                        group_by_filter.append('"ProductName"')
+            '''     
             
         elif condition['key'].strip('"') == "C" and '"T"' not in [x['key'] for x in filters]:
             continue
@@ -833,8 +843,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters.copy())
     if clause:
         where_conditions_history = [clause]
+    print("group_by_filter",group_by_filter)
+    print("filters",filters)
     # Data Retrival for target data
     if target:
+        
         group_keys = [key for key in group_by_filter]
         if '"month_name"' not in group_by_filter and '"C"' not in [x['key'] for x in filters]:
             group_keys.append("month_name")
@@ -919,6 +932,13 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             if '"month_name"' in group_by_filter and 'month_name' in target_data:
                 target_data['month_name'] = pd.CategoricalIndex(target_data['month_name'], ordered=True,
                                                                 categories=months)
+            # For I&C if the  values for the HFHSD is zero then drop that product
+            if "ProductName" in target_data.columns.tolist():
+                if  "HFHSD" in target_data['ProductName'].unique().tolist():
+                    if int(target_data[target_data['ProductName'] == 'HFHSD']['TARGET_TMT_SALES'].unique().tolist()[0]) == 0:
+                        target_data = target_data[target_data['ProductName'] != 'HFHSD']
+            print("writing tgt data to csv")
+            target_data.to_csv('/tmp/tgt_data.csv',index = False)
             target_data = target_data.to_dict(orient='records')
 
     # Data Retrival for current financial year
@@ -1110,6 +1130,31 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             if key not in merged_df:
                 merged_df[key] = ""
     merged_df.fillna(0, inplace=True)
+    #merged_df.to_csv('/tmp/nerged_df.csv',index = False)
+    print("merged columns",merged_df.columns.tolist())
+    
+    #If Lubes and DEF is present in the products list and the actuial,tgt sakes are zero tmt then drop the products from list
+    '''
+    if "ProductName" in merged_df.columns.tolist():
+        if "Lubes" in merged_df['ProductName'].unique().tolist():
+            
+            if int(merged_df[merged_df['ProductName'] == 'Lubes']['ACTUAL_TMT_SALES'].unique().tolist()[0]) == 0 and int(merged_df[merged_df['ProductName'] == 'Lubes']['ACTUAL_HISTORY_TMT_SALES'].unique().tolist()[0]) == 0:
+                print("came inside the req if")
+                merged_df = merged_df[merged_df['ProductName'] != 'Lubes']
+                print(merged_df[merged_df['ProductName'] == 'Lubes'])
+    '''
+    if "ProductName" in merged_df.columns.tolist():
+        if any(product in merged_df['ProductName'].unique().tolist() for product in ['Lubes', 'DEF']):
+            
+            for product in ['Lubes', 'DEF']:
+                if product in merged_df['ProductName'].unique().tolist():
+                    if (int(merged_df[merged_df['ProductName'] == product]['ACTUAL_TMT_SALES'].unique().tolist()[0]) == 0 and 
+                        int(merged_df[merged_df['ProductName'] == product]['ACTUAL_HISTORY_TMT_SALES'].unique().tolist()[0]) == 0):
+                        print(f"came inside the req if for {product}")
+                        merged_df = merged_df[merged_df['ProductName'] != product]
+                        print(merged_df[merged_df['ProductName'] == product])
+            print(merged_df['ProductName'].unique().tolist())     
+        
     if time_grain == 'top_zones':
              
         result = await get_top_and_bottom_3_zones_by_year_sbu(merged_df,filters, cross_filters, drill_state, time_grain, resp_format)
@@ -1769,7 +1814,7 @@ async def get_top_and_bottom_3_zones_by_year_sbu(merged_df, filters, cross_filte
             df = df[df["Zone_Name"].notna() & (df["Zone_Name"].str.strip() != "") & (df["Zone_Name"] != "-")]
 
             # Group and aggregate
-            zone_sales = df.groupby(["Zone_Name","ProductName"])["ACTUAL_TMT_SALES"].sum().reset_index()
+            zone_sales = df.groupby(["Zone_Name"])["ACTUAL_TMT_SALES"].sum().reset_index()
 
             # Sort and get top/bottom 3
             top_3_zones = zone_sales.sort_values("ACTUAL_TMT_SALES", ascending=False).head(3)
@@ -1840,7 +1885,7 @@ async def get_top_and_bottom_7_regions_by_year_sbu(merged_df, filters, cross_fil
             df = df[df["Region_Name"].notna() & (df["Region_Name"].str.strip() != "") & (df["Region_Name"] != "-")]
 
             # Group and aggregate
-            region_sales = df.groupby(["Region_Name","ProductName"])["ACTUAL_TMT_SALES"].sum().reset_index()
+            region_sales = df.groupby(["Region_Name"])["ACTUAL_TMT_SALES"].sum().reset_index()
 
             # Sort and get top/bottom regions based on the number of regions specified
             top_region = region_sales.sort_values("ACTUAL_TMT_SALES", ascending=False).head(num_top_bottom)
@@ -1912,7 +1957,7 @@ async def get_top_and_bottom_10_sales_area_by_year_sbu(merged_df, filters, cross
             df = df[df["SalesArea_Name"].notna() & (df["SalesArea_Name"].str.strip() != "") & (df["SalesArea_Name"] != "-")]
             print("df columns",df.columns)
             # Group and aggregate
-            sales_area_sales = df.groupby(["SalesArea_Name","ProductName"])["ACTUAL_TMT_SALES"].sum().reset_index()
+            sales_area_sales = df.groupby(["SalesArea_Name"])["ACTUAL_TMT_SALES"].sum().reset_index()
 
             # Sort and get top/bottom
             top_sales = sales_area_sales.sort_values("ACTUAL_TMT_SALES", ascending=False).head(num_top_bottom)
