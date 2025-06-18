@@ -1340,7 +1340,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     dry_out_in_days: Mapped[typing.Optional[str]] = mapped_column("dry_out_in_days", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     origin_altid: Mapped[typing.Optional[str]] = mapped_column("origin_altid", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_message: Mapped[typing.Optional[str]] = mapped_column("alert_message", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    external_timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("external_timestamp", DateTime(), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    external_timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("external_timestamp", DateTime(timezone=False), index=False, nullable=True, default=None, primary_key=False, unique=False)
     atg_ack: Mapped[typing.Optional[bool]] = mapped_column("atg_ack", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     emlock_ack: Mapped[typing.Optional[bool]] = mapped_column("emlock_ack", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     vts_return: Mapped[typing.Optional[bool]] = mapped_column("vts_return", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
