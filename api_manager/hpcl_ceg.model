@@ -1312,8 +1312,8 @@ Model VtsAlertHistory {
     location_type optional str
     tl_number index_field str
     report_duration optional str
-    vts_start_datetime optional datetime
-    vts_end_datetime optional datetime
+    vts_start_datetime optional datetime_no_zone
+    vts_end_datetime optional datetime_no_zone
     total_trips optional int
     stoppage_violations_count optional int
     route_deviation_count optional int
@@ -1363,7 +1363,7 @@ Model VaAlertHistory {
     alert_description optional str
     device_id optional str
     video_url optional str
-    alert_timestamp optional datetime
+    alert_timestamp optional datetime_no_zone
     status optional str
     acknowledged_by optional str
     closed_at optional datetime
@@ -2283,8 +2283,8 @@ Model CrisAlertHistory {
     nozzle_id optional str
     pump_no optional str
     alarm_id unique_field str
-    occurrence_date optional datetime
-    closure_date optional datetime
+    occurrence_date optional datetime_no_zone
+    closure_date optional datetime_no_zone
     indent_no optional str
     products optional list productsDetails
 
