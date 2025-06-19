@@ -75,6 +75,14 @@ async def product_map():
     #
     return alert_code_to_name
 
+
+def get_month_start_and_next(input_month: str):
+    # Parse input like '2025-06'
+    start_date = datetime.strptime(input_month, "%Y-%m").date().replace(day=1)
+    next_month_date = (start_date + relativedelta(months=1)).replace(day=1)
+
+    return start_date, next_month_date
+
 class GlobalAnalytics:        
     @staticmethod
     async def analytics(filters, cross_filters, drill_state):
@@ -9469,6 +9477,83 @@ class GlobalAnalytics:
         return {"status": True, "message": "Success", "data": resp_dict}
 
     @staticmethod
+    async def dry_out_bucket_trends(filters, cross_filters, drill_state):
+        _filters = []
+        _date = urdhva_base.utilities.get_present_time().strftime("%Y-%m")
+        daterange = f""" TO_CHAR(created_at, 'YYYY-MM') = '{_date}' """
+
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    _date = filter.value
+                    daterange = f""" TO_CHAR(created_at, 'YYYY-MM') = '{filter.value}' """
+                    continue
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        if filters:
+            for filter in filters:
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        # Construct WHERE clause
+        where_clauses = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status != 'Cancelled'", daterange]
+        if _filters:
+            where_clauses.extend(_filters)
+
+        where_clause = " AND ".join(where_clauses)
+        start_date, end_date = get_month_start_and_next(_date)
+        query = f"""WITH dryout_periods AS (
+                        SELECT
+                            sap_id,
+                            zone,
+                            region,
+                            sales_area,
+                            location_name,
+                            product_code,
+                            GREATEST(created_at, DATE '{start_date}') AS period_start,
+                            LEAST(updated_at, DATE '{end_date}') AS period_end
+                        FROM alerts
+                        WHERE
+                            created_at < DATE '{start_date}'
+                            AND updated_at >= DATE '{end_date}'
+                            AND {where_clause}
+                    ),
+                    durations AS (
+                        SELECT
+                            sap_id,
+                            zone,
+                            region,
+                            sales_area,
+                            location_name,
+                            product_code,
+                            period_end - period_start AS duration
+                        FROM dryout_periods
+                    )
+                    SELECT
+                        sap_id,
+                        zone,
+                        region,
+                        sales_area,
+                        location_name,
+                        product_code,
+                        FLOOR(SUM(EXTRACT(EPOCH FROM duration)) / 86400) AS total_days,
+                        FLOOR(MOD(SUM(EXTRACT(EPOCH FROM duration)), 86400) / 3600) AS total_hours,
+                        FLOOR(MOD(SUM(EXTRACT(EPOCH FROM duration)), 3600) / 60) AS total_minutes
+                    FROM durations
+                    GROUP BY sap_id, product_code, zone, region, sales_area, location_name
+                    ORDER BY sap_id, product_code, zone, region, sales_area, location_name;"""
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get("data", []))
+        if not data.empty:
+            data['product_code'] = data['product_code'].astype(str).map(await product_map())
+            return {
+                "status": True, "message": "Success",
+                "counts": data.to_dict(orient='records'),
+                "data": data.to_dict(orient='records')
+            }
+
+        return {"status": False, "message": "No Data Found", "counts": [], "data": []}
+
+    @staticmethod
     async def dry_out_trends(filters, cross_filters, drill_state):
         _filters = []
         daterange = f""" created_at::date = '{urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")}' """
@@ -9489,7 +9574,7 @@ class GlobalAnalytics:
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
-        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status != 'Cancelled'", daterange]
+        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status != 'Cancelled'", daterange, "mark_as_false = 'true'"]
         if _filters:
             where_clauses.extend(_filters)
 
@@ -9613,9 +9698,12 @@ class GlobalAnalytics:
             names=['month', 'product_code']
         )
 
-        monthly_counts = data.groupby(['month', 'product_code'])['dryout_count'].sum().reset_index()
-        monthly_counts = monthly_counts.set_index(['month', 'product_code']).reindex(full_index,
-                                                                                     fill_value=0).reset_index()
+        # monthly_counts = data.groupby(['month', 'product_code'])['dryout_count'].sum().reset_index()
+        # monthly_counts = monthly_counts.set_index(['month', 'product_code']).reindex(full_index,
+        #                                                                              fill_value=0).reset_index()
+        # monthly_counts['month'] = monthly_counts['month'].dt.strftime('%Y-%b')
+        monthly_counts = data.groupby(["sap_id", "product_code", "month"]).size().reset_index(name="dryout_count")
+        monthly_counts = monthly_counts.groupby(["product_code", "month"])["dryout_count"].sum().reset_index()
         monthly_counts['month'] = monthly_counts['month'].dt.strftime('%Y-%b')
 
         # Format raw data month as well
