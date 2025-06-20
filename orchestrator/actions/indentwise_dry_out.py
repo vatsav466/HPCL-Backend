@@ -6,6 +6,7 @@ import requests
 import pandas as pd
 import charts_actions
 import hpcl_ceg_model
+import dateutil.parser
 import urdhva_base.redispool
 import utilities.helpers as helpers
 from hpcl_ceg_enum import AlertState as AlertState
@@ -142,9 +143,17 @@ class IndentDryOut:
 
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         prod_code = self.params.get("product_code")
-        now = (pytz.timezone('UTC').localize(
-            datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
-            pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #now = (pytz.timezone('UTC').localize(
+        #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+        #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
         #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
@@ -277,9 +286,17 @@ class IndentDryOut:
             await self.get_connection_name()
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         prod_code = self.params.get("product_code")
-        now = (pytz.timezone('UTC').localize(
-            datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
-            pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #now = (pytz.timezone('UTC').localize(
+        #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+        #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
         #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
@@ -309,9 +326,17 @@ class IndentDryOut:
         indent_no = self.params.get("indent_no")
         camunda_host = connection_mapping.camunda_listener_mapping.get("camunda_dryout_01")
         camunda_url = f"http://{camunda_host['host']}:{camunda_host['port']}"
-        now = (pytz.timezone('UTC').localize(
-            datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
-            pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #now = (pytz.timezone('UTC').localize(
+        #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+        #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
         #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
@@ -355,9 +380,19 @@ class IndentDryOut:
             return await self.send_alert_action(is_raised=False)
         else:
             # Check if the string ends with 'Z'
-            workflow_date = (pytz.timezone('UTC').localize(
-                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
-                pytz.timezone('Asia/Kolkata')))
+            workflow_datetime = self.params.get("workflow_datetime")
+            if workflow_datetime.endswith("Z"):
+                workflow_date = (pytz.timezone('UTC').localize(
+                    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                    pytz.timezone('Asia/Kolkata')))
+            else:
+                workflow_date = (
+                    pytz.timezone("Asia/Kolkata")
+                    .localize(datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%f"))
+                )
+            #workflow_date = (pytz.timezone('UTC').localize(
+            #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+            #    pytz.timezone('Asia/Kolkata')))
             todays_date = datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
             if todays_date.date() > workflow_date.date():
                 if await self._is_indent_delivered():
@@ -535,9 +570,17 @@ class IndentDryOut:
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
         # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        now = (pytz.timezone('UTC').localize(
-            datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
-            pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #now = (pytz.timezone('UTC').localize(
+        #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+        #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
         #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
@@ -591,9 +634,17 @@ class IndentDryOut:
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
         # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        now = (pytz.timezone('UTC').localize(
-            datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
-            pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #now = (pytz.timezone('UTC').localize(
+        #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+        #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
         #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
@@ -656,9 +707,17 @@ class IndentDryOut:
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
         # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        now = (pytz.timezone('UTC').localize(
-            datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
-            pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #now = (pytz.timezone('UTC').localize(
+        #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+        #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
         #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
@@ -715,9 +774,17 @@ class IndentDryOut:
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
         # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        now = (pytz.timezone('UTC').localize(
-            datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
-            pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #now = (pytz.timezone('UTC').localize(
+        #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+        #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
         #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
@@ -779,9 +846,17 @@ class IndentDryOut:
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
         # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        now = (pytz.timezone('UTC').localize(
-            datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
-            pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #now = (pytz.timezone('UTC').localize(
+        #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+        #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
         #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
@@ -1063,10 +1138,18 @@ class IndentDryOut:
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
         # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         #now = (pytz.timezone('UTC').localize(
         #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
         #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
-        now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
         indent_no = "','".join(self.params.get("indent_no").split(","))
@@ -1274,10 +1357,18 @@ class IndentDryOut:
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
         # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         #now = (pytz.timezone('UTC').localize(
         #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
-        #   pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
-        now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
         indent_no = "','".join(self.params.get("indent_no").split(","))
@@ -1332,10 +1423,18 @@ class IndentDryOut:
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
         # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         #now = (pytz.timezone('UTC').localize(
         #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
         #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
-        now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
         indent_no = "','".join(self.params.get("indent_no").split(","))
@@ -1488,10 +1587,18 @@ class IndentDryOut:
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
         # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         #now = (pytz.timezone('UTC').localize(
         #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
         #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
-        now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
         query = f"""SELECT a."INDENT_NO" AS "indent_no", b."PROD" AS "product_nonumber" FROM "IMS_SAP"."INDENT_REQUEST" AS a, "IMS_SAP"."INDENT_PRODUCTS" AS b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' AND """ \
@@ -1751,10 +1858,18 @@ class IndentDryOut:
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
         # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        workflow_datetime = self.params.get("workflow_datetime")
+        # Ensure compatibility with or without the "Z"
+        if workflow_datetime.endswith("Z"):
+            now = (pytz.timezone('UTC').localize(
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+                pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        else:
+            now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         #now = (pytz.timezone('UTC').localize(
         #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
-        #   pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
-        now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
+        #    pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
         indent_no = "','".join(self.params.get("indent_no").split(","))
