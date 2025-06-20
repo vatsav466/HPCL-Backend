@@ -431,6 +431,11 @@ def get_and_insert_data(cursor, query, params=None):
     print(len(data))
     data.write_csv('/tmp/result_data.csv')
     print(data['NETWEIGHT_TMT'].unique().to_list())
+    data= data.with_columns(pl.col("ORGZONECD").replace("ORGZONECD").alias("col")
+                                                                         
+                                                                         )
+    #'EAS':'EZ' 'NOR':'NZ' 'SOU':'SZ' , 'WES':'WZ',
+    
     insertToDB(data, params["table_name"])
 
 
