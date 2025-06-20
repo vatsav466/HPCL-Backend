@@ -25,14 +25,14 @@ Finished_Lubes = ['Industrial Specialities','Industrial Greases','Automotive Oil
 Finished_Lubes_Consumer = ['Automotive Specialities','Automotive Greases','Automotive Oils']
 
 productOrders = {
-    "Retail": ["MS", "HSD", "CNG", "SKO", "Compressed Bio Gas (CBG)", "LPG BLK"],
+    "Retail": ["MS", "HSD", "CNG", "SKO", "Compressed Bio Gas (CBG)", "LPG BLK","HP DEF-Retail"],
     "Aviation": ["ATF"],
     "I&C": ["HSD", "LDO", "LSHS", "FO", "Naptha", 'Bitumen Blk', "Bitumen Pkd", "Bitumen Modified", "Solvent 2445",
             "Solvent 1425", "JBO", "Sulphur", "Propylene"],
     "LPG": ["LPG PKD - Domestic", "LPG PKD - Non Domestic", "LPG BLK", "BULK PROPANE", "BULK BUTANE"],
     "PETCHEM": ["PETCHEM"],
     "Lubes": ["LUBES RETAIL", "Automotive Oils", "Automotive Greases", "Automotive Specialities", "Industrial oils",
-              "Industrial Greases", "Industrial Specialities", "Base Oil","ALPROL","Lubes-Exports","HP DEF-Retail"],
+              "Industrial Greases", "Industrial Specialities", "Base Oil","ALPROL","Lubes-Exports","DEF/Diesel Exhaust Fluid"],
     "GAS":['CNG','LNG','CBG']
     
 }
@@ -40,11 +40,11 @@ productOrders = {
 AllProducts = {
     "Lubes": ["Industrial Greases", "DEF/Diesel Exhaust Fluid", "Automotive Greases", "Automotive Specialities",
               "Industrial oils", "Base Oil", "LUBES RETAIL", "Automotive Oils", "Industrial Specialities",
-              "Miscellaneous/Minor", "Marine Lubes","ALPROL","Lubes-Exports","HP DEF-Retail"],
+              "Miscellaneous/Minor", "Marine Lubes","ALPROL","Lubes-Exports"],
     "Aviation": ["ATF"],
     "Retail": ["LPG BLK", "MS", "Industrial Greases", "DEF/Diesel Exhaust Fluid", "HSD", "Automotive Greases",
                "Automotive Specialities", "Compressed Bio Gas ", "Industrial oils", "Automotive Oils",
-               "Industrial Specialities", "Miscellaneous/Minor", "CNG", "SKO", "Compressed Bio Gas (CBG)"],
+               "Industrial Specialities", "Miscellaneous/Minor", "CNG", "SKO", "Compressed Bio Gas (CBG)","HP DEF-Retail"],
    
     "I&C": ["MS", "Sulphur", "Solvent 2445", "LDO", "CBFS", "Hexane", "Solvent 1425", "FO", "JBO",
             "Propylene", "LSHS/HHS", "Naptha", "HSD", "Bitumen Pkd", "Bitumen Modified", "Bitumen Blk",
