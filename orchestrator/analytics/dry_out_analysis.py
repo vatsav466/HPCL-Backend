@@ -558,6 +558,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
         if key in data.columns:
             data[key] = data[key].fillna("").astype(str)
 
+    data['reported_date'] = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")
     if not insert_to_db:
         return data.to_dict(orient="records")
 
