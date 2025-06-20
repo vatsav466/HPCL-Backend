@@ -2,7 +2,7 @@ tas_role_mapping={
     "TAS": {
         "HHH alarm from VFT": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -19,7 +19,7 @@ tas_role_mapping={
         },
         "HHH alarm from Secondary Radar guage": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -36,7 +36,7 @@ tas_role_mapping={
         },
         "ROSOV_Close Status": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -53,7 +53,7 @@ tas_role_mapping={
         },
         "MOV_Close Status": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -70,7 +70,7 @@ tas_role_mapping={
         },
         "ROSOV_Close Status_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -87,7 +87,7 @@ tas_role_mapping={
         },
         "MOV_Close Status_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -104,7 +104,7 @@ tas_role_mapping={
         },
         "Plant ESD activated": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -121,7 +121,7 @@ tas_role_mapping={
         },
         "ESD Pushbutton Activated": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -138,7 +138,7 @@ tas_role_mapping={
         },
         "All ROSOVs Closed": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -155,7 +155,7 @@ tas_role_mapping={
         },
         "All ROSOVs Closed(Except PL Receipt)": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -172,7 +172,7 @@ tas_role_mapping={
         },
         "All ROSOVs closed": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -189,7 +189,7 @@ tas_role_mapping={
         },
         "Tanks in TTL Dispatch in Dormant Mode": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -206,7 +206,7 @@ tas_role_mapping={
         },
         "As Power ESD Activation in Main PMCC Panel after 120 Sec": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -223,7 +223,7 @@ tas_role_mapping={
         },
         "Hooter cum strobe for ESD activated in control room": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -240,7 +240,7 @@ tas_role_mapping={
         },
         "Siren Activated": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -257,7 +257,7 @@ tas_role_mapping={
         },
         "ESD Command To Process PLC": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -274,7 +274,7 @@ tas_role_mapping={
         },
         "All DBBVs Closed(Except PL Receipt)": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -291,7 +291,7 @@ tas_role_mapping={
         },
         "All DBBVs Closed": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -308,7 +308,7 @@ tas_role_mapping={
         },
         "All Tanks in Dormant Mode": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -325,7 +325,7 @@ tas_role_mapping={
         },
         "All TLF Product Pumps Stopped": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -342,7 +342,7 @@ tas_role_mapping={
         },
         "Gantry Permissive Off": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -359,7 +359,7 @@ tas_role_mapping={
         },
         "Barrier Gate opened": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -376,7 +376,7 @@ tas_role_mapping={
         },
         "TLF Gantry Permissive Power Off": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -393,7 +393,7 @@ tas_role_mapping={
         },
         "All ROSOVs Closed(Except PL Receipt)_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -410,7 +410,7 @@ tas_role_mapping={
         },
         "All ROSOVs Closed_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -427,7 +427,7 @@ tas_role_mapping={
         },
         "All DBBVs Closed_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -444,7 +444,7 @@ tas_role_mapping={
         },
         "Tanks in TTL Dispatch in Dormant Mode_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -461,7 +461,7 @@ tas_role_mapping={
         },
         "As Power ESD Activation in Main PMCC Panel after 120 Sec_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -478,7 +478,7 @@ tas_role_mapping={
         },
         "Hooter cum strobe for ESD activated in control room_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -495,7 +495,7 @@ tas_role_mapping={
         },
         "Siren Activated_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -512,7 +512,7 @@ tas_role_mapping={
         },
         "ESD Command To Process PLC_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -529,7 +529,7 @@ tas_role_mapping={
         },
         "All DBBVs Closed(Except PL Receipt)_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -546,7 +546,7 @@ tas_role_mapping={
         },
         "All Tanks in Dormant Mode_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -563,7 +563,7 @@ tas_role_mapping={
         },
         "All TLF Product Pumps Stopped_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -580,7 +580,7 @@ tas_role_mapping={
         },
         "Gantry Permissive Off_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -597,7 +597,7 @@ tas_role_mapping={
         },
         "Barrier Gate opened_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -614,7 +614,7 @@ tas_role_mapping={
         },
         "ESD ROSOV_Close Status_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -631,7 +631,7 @@ tas_role_mapping={
         },
         "ESD MOV_Close Status_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -648,7 +648,7 @@ tas_role_mapping={
         },
         "ROSOV in PL Receipt Mode": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -665,7 +665,7 @@ tas_role_mapping={
         },
         "ESD ROSOV_Close Status": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -682,7 +682,7 @@ tas_role_mapping={
         },
         "MOV in PL Receipt Mode": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -699,7 +699,7 @@ tas_role_mapping={
         },
         "ESD MOV_Close Status": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -716,7 +716,7 @@ tas_role_mapping={
         },
         "Proof Test_VFT_Failed": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -733,7 +733,7 @@ tas_role_mapping={
         },
         "Proof Test_Secondary Radar Guage_Failed": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -750,7 +750,7 @@ tas_role_mapping={
         },
         "Proof Test_VFT_Success": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -767,7 +767,7 @@ tas_role_mapping={
         },
         "Proof Test_Secondary Radar Guage_Success": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -784,7 +784,7 @@ tas_role_mapping={
         },
         "Rim Seal system_Fault activated": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -801,7 +801,7 @@ tas_role_mapping={
         },
         "HCD_20% LEL activated": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -818,7 +818,7 @@ tas_role_mapping={
         },
         "HCD_40% LEL activated": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -835,7 +835,7 @@ tas_role_mapping={
         },
         "HCD_20% LEL activated Hooter_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -852,7 +852,7 @@ tas_role_mapping={
         },
         "HCD_40% LEL activated Hooter_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -869,7 +869,7 @@ tas_role_mapping={
         },
         "Earthing Failure Alarm": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -886,7 +886,7 @@ tas_role_mapping={
         },
         "ESD Push button_Under Maintenance": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -903,7 +903,7 @@ tas_role_mapping={
         },
         "Rim Seal system_Under Maintenance": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -920,7 +920,7 @@ tas_role_mapping={
         },
         "HCD_Under Maintenance": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -937,7 +937,7 @@ tas_role_mapping={
         },
         "Tank_Under Maintenance": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -954,7 +954,7 @@ tas_role_mapping={
         },
         "ROSOV_Under Maintenance": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -971,7 +971,7 @@ tas_role_mapping={
         },
         "MOV_Under Maintenance": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -988,7 +988,7 @@ tas_role_mapping={
         },
         "VFT_Under Maintenance": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1005,7 +1005,7 @@ tas_role_mapping={
         },
         "Secondary Radar_Under Maintenance": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1022,7 +1022,7 @@ tas_role_mapping={
         },
         "Fire engine_Under Maintenance": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1039,7 +1039,7 @@ tas_role_mapping={
         },
         "JockeyPump_Under Maintenance": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1056,7 +1056,7 @@ tas_role_mapping={
         },
         "HydrantPT_Under Maintenance": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1073,7 +1073,7 @@ tas_role_mapping={
         },
         "Fire engine_ FailtoStart": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1090,7 +1090,7 @@ tas_role_mapping={
         },
         "Fireengine_LLOP": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1107,7 +1107,7 @@ tas_role_mapping={
         },
         "FireEngine_HWOT": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1124,7 +1124,7 @@ tas_role_mapping={
         },
         "FireEngine_Tripped": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1141,7 +1141,7 @@ tas_role_mapping={
         },
         "Jockeypump_ FailtoStart": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1158,7 +1158,7 @@ tas_role_mapping={
         },
         "Dykevalve_Activated": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1175,7 +1175,7 @@ tas_role_mapping={
         },
         "HCD_Fault activated": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1192,7 +1192,7 @@ tas_role_mapping={
         },
         "AirCompressor_Fault activated": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1209,7 +1209,7 @@ tas_role_mapping={
         },
         "ROSOV_FailtoClose": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1226,7 +1226,7 @@ tas_role_mapping={
         },
         "SafetyPLC_Communication fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1243,7 +1243,7 @@ tas_role_mapping={
         },
         "UPS_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1260,7 +1260,7 @@ tas_role_mapping={
         },
         "UPS_Lowbattery": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1277,7 +1277,7 @@ tas_role_mapping={
         },
         "ProcessPLC_Communication fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1294,7 +1294,7 @@ tas_role_mapping={
         },
         "LRC Master Switchover required in 30 days": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1311,7 +1311,7 @@ tas_role_mapping={
         },
         "Firefighting system parameter": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1328,7 +1328,7 @@ tas_role_mapping={
         },
         "Hooter Activated at control room": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1345,7 +1345,7 @@ tas_role_mapping={
         },
         "All TLF Product Pumps Stopped": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1362,7 +1362,7 @@ tas_role_mapping={
         },
         "TLF Header Line MOV Close": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1379,7 +1379,7 @@ tas_role_mapping={
         },
         "Gantry Permissive Off": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1396,7 +1396,7 @@ tas_role_mapping={
         },
         "All BCU Permissive Fail Status": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1413,7 +1413,7 @@ tas_role_mapping={
         },
         "Day End totaliser Mismatch": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1430,7 +1430,7 @@ tas_role_mapping={
         },
         "BCU vs MFM totalizer mismatch alarm": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1447,7 +1447,7 @@ tas_role_mapping={
         },
         "K Factor Change_BCU": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1464,7 +1464,7 @@ tas_role_mapping={
         },
         "K Factor Change_MFM": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1481,7 +1481,7 @@ tas_role_mapping={
         },
         "Pulse Security": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1498,7 +1498,7 @@ tas_role_mapping={
         },
         "K-Factors": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1515,7 +1515,7 @@ tas_role_mapping={
         },
         "No Flow alarm_BCU": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1532,7 +1532,7 @@ tas_role_mapping={
         },
         "Low Flow alarm_BCU": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1549,7 +1549,7 @@ tas_role_mapping={
         },
         "High Flow Alarm_BCU": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1566,7 +1566,7 @@ tas_role_mapping={
         },
         "Unauthorized Flow Alarm_BCU": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1583,7 +1583,7 @@ tas_role_mapping={
         },
         "Meter overrun Alarm_BCU": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1600,7 +1600,7 @@ tas_role_mapping={
         },
         "Blend overdose Alarm_BCU": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1617,7 +1617,7 @@ tas_role_mapping={
         },
         "Blend Underdose Alarm_BCU": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1634,7 +1634,7 @@ tas_role_mapping={
         },
         "Additive Overdose Alarm_BCU": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1651,7 +1651,7 @@ tas_role_mapping={
         },
         "Additive Underdose Alarm_BCU": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1668,7 +1668,7 @@ tas_role_mapping={
         },
         "BCU Permissive Off_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1685,7 +1685,7 @@ tas_role_mapping={
         },
         "BCU Permissive Off": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1702,7 +1702,7 @@ tas_role_mapping={
         },
         "Tank leakage alarm": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1719,7 +1719,7 @@ tas_role_mapping={
         },
         "Primary Radar Guage_H alarm": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1736,7 +1736,7 @@ tas_role_mapping={
         },
         "Primary Radar Guage_HH alarm": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1753,7 +1753,7 @@ tas_role_mapping={
         },
         "K Factor BCU Permissive Off_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1770,7 +1770,7 @@ tas_role_mapping={
         },
         "Local Loading BCU Permissive Off_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1787,7 +1787,7 @@ tas_role_mapping={
         },
         "MFM Factor BCU Permissive Off_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1804,7 +1804,7 @@ tas_role_mapping={
         },
         "BCU Permissive Off_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1821,7 +1821,7 @@ tas_role_mapping={
         },
         "BCU Permissive Off": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1838,7 +1838,7 @@ tas_role_mapping={
         },
         "Hooter Activated at control room_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1855,7 +1855,7 @@ tas_role_mapping={
         },
         "TLF Header Line MOV Close_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1872,7 +1872,7 @@ tas_role_mapping={
         },
         "TLF Gantry Permissive Power Off_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1889,7 +1889,7 @@ tas_role_mapping={
         },
         "Dykevalve_Activated Hooter_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1906,7 +1906,7 @@ tas_role_mapping={
         },
         "DayStartTotalizer_Gantry Permissive_Fail": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1923,7 +1923,7 @@ tas_role_mapping={
         },
         "Gantry Permissive Off_DNC": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1940,7 +1940,7 @@ tas_role_mapping={
         },
         "BCU Permissive Off_DNC": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
@@ -1957,7 +1957,126 @@ tas_role_mapping={
         },
         "Gantry Permissive Off_ACK from TAS": {
             "rolemailto": {
-                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD",
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "Day End totaliser Mismatch Blend": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "K Factor Change Blend_BCU": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "No Flow alarm Blend_BCU": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "Low Flow alarm Blend_BCU": {
+            "rolemailto": { 
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "High Flow Alarm Blend_BCU": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "Unauthorized Flow Alarm Blend_BCU": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
+                "1": "Zonal SOD,Zonal Manager SOD",
+                "2": "Zonal Operations Head SOD",
+                "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
+                "4": "Location In-Charge SOD"
+            },
+            "block_time": {
+                "0": "PT24H",
+                "1": "PT3S",
+                "2": "PT5S",
+                "3": "PT10S",
+                "4": "PT6H",
+                "5": "PT60S"
+            }
+        },
+        "Meter overrun Alarm Blend_BCU": {
+            "rolemailto": {
+                "0": "Planning Officer SOD,Maintenance Officer SOD,Safety Officer SOD,Location In-Charge SOD",
                 "1": "Zonal SOD,Zonal Manager SOD",
                 "2": "Zonal Operations Head SOD",
                 "3": "HQO General Manager SOD,HQO Head SOD,HQO Manager SOD",
