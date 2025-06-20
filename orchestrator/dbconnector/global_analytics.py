@@ -75,6 +75,14 @@ async def product_map():
     #
     return alert_code_to_name
 
+
+def get_month_start_and_next(input_month: str):
+    # Parse input like '2025-06'
+    start_date = datetime.strptime(input_month, "%Y-%m").date().replace(day=1)
+    next_month_date = (start_date + relativedelta(months=1)).replace(day=1)
+
+    return start_date, next_month_date
+
 class GlobalAnalytics:        
     @staticmethod
     async def analytics(filters, cross_filters, drill_state):
@@ -9084,263 +9092,103 @@ class GlobalAnalytics:
 
     @staticmethod
     async def mfmkfactor(filters, cross_filters, drill_state):
-        # try:
-        #     # Initialize date flag
-        #     date = False
-        #     if "date" in drill_state:
-        #         date = True
-        #     print("date --> ", date)
-            
-        #     # Extract filters
-        #     zone_filter = ''
-        #     plant_filter = ''
-        #     bcu_number = ''
-        #     if filters:
-        #         for filter in filters:
-        #             if "zone" in filter.key:
-        #                 zone_filter = filter.value
-        #             if "plant" in filter.key:
-        #                 plant_filter = filter.value
-        #             if "bcu_number" in filter.key:
-        #                 bcu_number = filter.value
-            
-        #     # Date filters
-        #     date_filter_applied = False
-        #     start_date = None
-        #     end_date = None
-        #     if cross_filters:
-        #         for filter in cross_filters:
-        #             if "DATE" in filter.key:
-        #                 date_parts = filter.value.split(',')
-        #                 start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-        #                 end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-        #                 date_filter_applied = True
-            
-        #     # SQL Query with CTE
-        #     query = """
-        #         WITH mfmfactor AS (
-        #             SELECT 
-        #                 DATE(created_at) AS created_date,
-        #                 zone,
-        #                 location_name,
-        #                 sap_id,
-        #                 bcu_number
-        #             FROM 
-        #                 host_mfm_factor
-        #             WHERE 1=1
-        #     """
-        #     if zone_filter:
-        #         query += f" AND zone IN ('{zone_filter}')"
-        #     if plant_filter:
-        #         query += f" AND sap_id IN ('{plant_filter}')"
-        #     if date_filter_applied and start_date and end_date:
-        #         query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
-            
-        #     query += """
-        #             GROUP BY 
-        #                 DATE(created_at), zone, location_name, sap_id, bcu_number
-        #         )
-        #         SELECT 
-        #             h.created_date,
-        #             h.zone,
-        #             h.location_name,
-        #             h.sap_id,
-        #             h.bcu_number,
-        #             COALESCE(
-        #                 (
-        #                     SELECT COUNT(*)::bigint 
-        #                     FROM alerts a 
-        #                     WHERE a.device_name = h.bcu_number 
-        #                     AND a.interlock_name = 'MFM factor Change'
-        #                     AND DATE(a.created_at) = h.created_date
-        #                 ), 0
-        #             ) AS alert_count
-        #         FROM 
-        #             mfmfactor h
-        #         ORDER BY 
-        #             h.created_date DESC, alert_count DESC
-        #     """
-            
-        #     print("query --> ", query)
-
-        #     try:
-        #         resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
-        #         resp = resp.get('data', '')
-        #     except Exception as e:
-        #         return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
-
-        #     if not resp:
-        #         return {"status": False, "message": "Data Not found", "data": {}}
-
-        #     resp_df = pl.DataFrame(resp)
-        #     if resp_df.is_empty():
-        #         return {"status": True, "data": {}}
-
-        #     resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
-
-        #     # Apply date filter in code if not added to SQL
-        #     if not date and date_filter_applied:
-        #         last_30_days = datetime.now() - timedelta(days=30)
-        #         resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
-
-        #     # Filter by BCU number if present
-        #     if bcu_number:
-        #         resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
-
-        #     # Aggregation
-        #     if date:
-        #         # Daily aggregation
-        #         group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number"]
-        #         grouped = resp_df.group_by(group_cols).agg(
-        #             pl.sum("alert_count").alias("total_alerts")
-        #         )
-
-        #         result = {}
-        #         for row in grouped.iter_rows(named=True):
-        #             created_date = str(row["created_date"])
-        #             entry = {
-        #                 "zone": row["zone"],
-        #                 "sap_id": row["sap_id"],
-        #                 "location_name": row["location_name"],
-        #                 "bcu_number": row["bcu_number"],
-        #                 "total_alerts": row["total_alerts"]
-        #             }
-        #             result.setdefault(created_date, []).append(entry)
-        #         return {"status": True, "message": "success", "daily_data": result}
-        #     else:
-        #         # Monthly aggregation
-        #         resp_df = resp_df.with_columns(
-        #             pl.col("created_date").dt.strftime("%b").alias("month_year")
-        #         )
-
-        #         group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
-        #         grouped_df = resp_df.group_by(group_cols).agg(
-        #             pl.sum("alert_count").alias("total_alerts")
-        #         ).sort("month_year", descending=False)
-
-        #         result = {}
-        #         for row in grouped_df.iter_rows(named=True):
-        #             month = row["month_year"]
-        #             entry = {
-        #                 "zone": row["zone"],
-        #                 "sap_id": row["sap_id"],
-        #                 "location_name": row["location_name"],
-        #                 "bcu_number": row["bcu_number"],
-        #                 "total_alerts": row["total_alerts"]
-        #             }
-        #             result.setdefault(month, []).append(entry)
-        #         return {"status": True, "message": "success", "monthly_data": result}
-
-        # except Exception as e:
-        #     print(traceback.format_exc())
-        #     return {"status": False, "message": f"Error: {str(e)}", "data": {}}
         try:
-            date = "date" in drill_state
-            
+            # Determine if date drill-down is applied
+            is_date_drill = "date" in drill_state
+
             # Extract filters
-            zone_filter = ''
-            plant_filter = ''
-            bcu_number = ''
-            if filters:
-                for filter in filters:
-                    if "zone" in filter.key:
-                        zone_filter = filter.value
-                    if "plant" in filter.key:
-                        plant_filter = filter.value
-                    if "bcu_number" in filter.key:
-                        bcu_number = filter.value
-            
-            # Date filters
+            def get_filter_value(key_part):
+                return next((f.value for f in filters if key_part in f.key), '')
+
+            zone_filter = get_filter_value("zone")
+            plant_filter = get_filter_value("plant")
+            bcu_number = get_filter_value("bcu_number")
+
+            # Date filter setup
             date_filter_applied = False
             start_date = None
             end_date = None
+
             if cross_filters:
-                for filter in cross_filters:
-                    if "DATE" in filter.key:
-                        date_parts = filter.value.split(',')
+                for f in cross_filters:
+                    if "DATE" in f.key:
+                        date_parts = f.value.split(',')
                         start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
                         end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                         date_filter_applied = True
                         break
-            
-            # SQL Query with CTE
-            query = """WITH mfmfactor AS (SELECT 
-                        DATE(created_at) AS created_date,
-                        zone,
-                        location_name,
-                        sap_id,
-                        bcu_number
-                    FROM 
-                        host_mfm_factor
-                    WHERE 1=1
-            """
-            if zone_filter:
-                query += f" AND zone IN ('{zone_filter}')"
-            if plant_filter:
-                query += f" AND sap_id IN ('{plant_filter}')"
-            if date_filter_applied and start_date and end_date:
-                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
-            
-            query += """
-                    GROUP BY 
-                        DATE(created_at), zone, location_name, sap_id, bcu_number
-                )
-                SELECT 
-                    h.created_date,
-                    h.zone,
-                    h.location_name,
-                    h.sap_id,
-                    h.bcu_number,
-                    COALESCE(count(a.id), 0) AS alert_count
-                FROM
-                    mfmfactor h
-                LEFT JOIN
-                    alerts a ON a.device_name = h.bcu_number
-                    AND a.interlock_name = 'MFM factor Change'
-                    AND DATE(a.created_at) = h.created_date
-                GROUP BY
-                    h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number
-                ORDER BY
-                    h.created_date DESC, alert_count DESC
-            """
-            
-            print("query --> ", query)
 
+            # Build SQL
+            query_parts = [
+                "WITH mfmfactor AS (",
+                "    SELECT",
+                "        DATE(created_at) AS created_date,",
+                "        zone, location_name, sap_id, bcu_number",
+                "    FROM host_mfm_factor",
+                "    WHERE 1=1"
+            ]
+            if zone_filter:
+                query_parts.append(f" AND zone = '{zone_filter}'")
+            if plant_filter:
+                query_parts.append(f" AND sap_id = '{plant_filter}'")
+            if date_filter_applied:
+                query_parts.append(f" AND created_at BETWEEN DATE '{start_date:%Y-%m-%d}' AND DATE '{end_date:%Y-%m-%d}'")
+            query_parts.append(")")
+
+            query_parts.extend([
+                "SELECT",
+                "    h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number,",
+                "    COALESCE(COUNT(a.id), 0) AS alert_count",
+                "FROM mfmfactor h",
+                "LEFT JOIN alerts a ON a.device_name = h.bcu_number",
+                "    AND a.interlock_name = 'MFM factor Change'",
+                "    AND DATE(a.created_at) = h.created_date",
+                "GROUP BY h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number",
+                "ORDER BY h.created_date DESC, alert_count DESC"
+            ])
+
+            query = "\n".join(query_parts)
+            print("query -->", query)
+
+            # Execute SQL
             try:
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=10000)
-                resp = resp.get('data', '')
+                data = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
-            if not resp:
+            if not data:
                 return {"status": False, "message": "Data Not found", "data": {}}
 
-            resp_df = pl.DataFrame(resp)
-            if resp_df.is_empty():
+            # Convert to Polars DataFrame
+            df = pl.DataFrame(data)
+            if df.shape[0] == 0:
                 return {"status": True, "data": {}}
 
-            resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
+            # Transform columns
+            df = df.with_columns([
+                pl.col("created_date").cast(pl.Date)
+            ])
 
-            # Apply date filter in code if not added to SQL
-            if not date and date_filter_applied:
-                last_30_days = datetime.now() - timedelta(days=30)
-                resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
+            # Apply additional filtering (if needed)
+            if not is_date_drill and date_filter_applied:
+                last_30_days = datetime.now().date() - timedelta(days=30)
+                df = df.filter(pl.col("created_date") >= last_30_days)
 
-            # Filter by BCU number if present
             if bcu_number:
-                resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
+                df = df.filter(pl.col("bcu_number") == bcu_number)
 
             # Aggregation
-            if date:
+            if is_date_drill:
                 # Daily aggregation
                 group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number"]
-                grouped = resp_df.group_by(group_cols).agg(
+                grouped = df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
 
                 result = {}
                 for row in grouped.iter_rows(named=True):
-                    created_date = str(row["created_date"])
+                    date_key = str(row["created_date"])
                     entry = {
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
@@ -9348,21 +9196,21 @@ class GlobalAnalytics:
                         "bcu_number": row["bcu_number"],
                         "total_alerts": row["total_alerts"]
                     }
-                    result.setdefault(created_date, []).append(entry)
+                    result.setdefault(date_key, []).append(entry)
                 return {"status": True, "message": "success", "daily_data": result}
+
             else:
                 # Monthly aggregation
-                resp_df = resp_df.with_columns(
+                df = df.with_columns([
                     pl.col("created_date").dt.strftime("%b").alias("month_year")
-                )
-
+                ])
                 group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
-                grouped_df = resp_df.group_by(group_cols).agg(
+                grouped = df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
-                ).sort("month_year", descending=False)
+                ).sort("month_year")
 
                 result = {}
-                for row in grouped_df.iter_rows(named=True):
+                for row in grouped.iter_rows(named=True):
                     month = row["month_year"]
                     entry = {
                         "zone": row["zone"],
@@ -9629,6 +9477,83 @@ class GlobalAnalytics:
         return {"status": True, "message": "Success", "data": resp_dict}
 
     @staticmethod
+    async def dry_out_bucket_trends(filters, cross_filters, drill_state):
+        _filters = []
+        _date = urdhva_base.utilities.get_present_time().strftime("%Y-%m")
+        daterange = f""" TO_CHAR(created_at, 'YYYY-MM') = '{_date}' """
+
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    _date = filter.value
+                    daterange = f""" TO_CHAR(created_at, 'YYYY-MM') = '{filter.value}' """
+                    continue
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        if filters:
+            for filter in filters:
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        # Construct WHERE clause
+        where_clauses = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status != 'Cancelled'", daterange]
+        if _filters:
+            where_clauses.extend(_filters)
+
+        where_clause = " AND ".join(where_clauses)
+        start_date, end_date = get_month_start_and_next(_date)
+        query = f"""WITH dryout_periods AS (
+                        SELECT
+                            sap_id,
+                            zone,
+                            region,
+                            sales_area,
+                            location_name,
+                            product_code,
+                            GREATEST(created_at, DATE '{start_date}') AS period_start,
+                            LEAST(updated_at, DATE '{end_date}') AS period_end
+                        FROM alerts
+                        WHERE
+                            created_at < DATE '{start_date}'
+                            AND updated_at >= DATE '{end_date}'
+                            AND {where_clause}
+                    ),
+                    durations AS (
+                        SELECT
+                            sap_id,
+                            zone,
+                            region,
+                            sales_area,
+                            location_name,
+                            product_code,
+                            period_end - period_start AS duration
+                        FROM dryout_periods
+                    )
+                    SELECT
+                        sap_id,
+                        zone,
+                        region,
+                        sales_area,
+                        location_name,
+                        product_code,
+                        FLOOR(SUM(EXTRACT(EPOCH FROM duration)) / 86400) AS total_days,
+                        FLOOR(MOD(SUM(EXTRACT(EPOCH FROM duration)), 86400) / 3600) AS total_hours,
+                        FLOOR(MOD(SUM(EXTRACT(EPOCH FROM duration)), 3600) / 60) AS total_minutes
+                    FROM durations
+                    GROUP BY sap_id, product_code, zone, region, sales_area, location_name
+                    ORDER BY sap_id, product_code, zone, region, sales_area, location_name;"""
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get("data", []))
+        if not data.empty:
+            data['product_code'] = data['product_code'].astype(str).map(await product_map())
+            return {
+                "status": True, "message": "Success",
+                "counts": data.to_dict(orient='records'),
+                "data": data.to_dict(orient='records')
+            }
+
+        return {"status": False, "message": "No Data Found", "counts": [], "data": []}
+
+    @staticmethod
     async def dry_out_trends(filters, cross_filters, drill_state):
         _filters = []
         daterange = f""" created_at::date = '{urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")}' """
@@ -9649,7 +9574,7 @@ class GlobalAnalytics:
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
-        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status != 'Cancelled'", daterange]
+        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status != 'Cancelled'", daterange, "mark_as_false = 'true'"]
         if _filters:
             where_clauses.extend(_filters)
 
@@ -9773,9 +9698,12 @@ class GlobalAnalytics:
             names=['month', 'product_code']
         )
 
-        monthly_counts = data.groupby(['month', 'product_code'])['dryout_count'].sum().reset_index()
-        monthly_counts = monthly_counts.set_index(['month', 'product_code']).reindex(full_index,
-                                                                                     fill_value=0).reset_index()
+        # monthly_counts = data.groupby(['month', 'product_code'])['dryout_count'].sum().reset_index()
+        # monthly_counts = monthly_counts.set_index(['month', 'product_code']).reindex(full_index,
+        #                                                                              fill_value=0).reset_index()
+        # monthly_counts['month'] = monthly_counts['month'].dt.strftime('%Y-%b')
+        monthly_counts = data.groupby(["sap_id", "product_code", "month"]).size().reset_index(name="dryout_count")
+        monthly_counts = monthly_counts.groupby(["product_code", "month"])["dryout_count"].sum().reset_index()
         monthly_counts['month'] = monthly_counts['month'].dt.strftime('%Y-%b')
 
         # Format raw data month as well

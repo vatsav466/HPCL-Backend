@@ -489,7 +489,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST"
                     WHERE 
-                        "PROD_REQD_DT" < CURRENT_DATE
+                        "PROD_REQD_DT" < CURRENT_DATE AND "PROD_REQD_DT" >= CURRENT_DATE - INTERVAL '5 days'
                         AND "TRUCK_REGNO" IS NULL
                         AND "CANCEL_INDENT" IS NULL
                         AND "VALID_INDENT" IN ('Y', 'H')
@@ -558,6 +558,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
         if key in data.columns:
             data[key] = data[key].fillna("").astype(str)
 
+    data['reported_date'] = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S")
     if not insert_to_db:
         return data.to_dict(orient="records")
 
