@@ -144,8 +144,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-03.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-03.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-03",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -359,8 +359,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-07.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-07.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-07",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -574,8 +574,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-11.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-11.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-11",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -789,8 +789,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-15.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-15.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-15",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -1004,8 +1004,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-19.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-19.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-19",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -1219,8 +1219,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-23.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-23.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-23",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -1434,8 +1434,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-27.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-27.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-27",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -1649,8 +1649,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-31.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-31.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-31",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -1864,8 +1864,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-35.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-35.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-35",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -2079,8 +2079,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-39.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-39.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-39",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -2294,8 +2294,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-43.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-43.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-43",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -2509,8 +2509,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-47.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-47.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-47",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -2724,8 +2724,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-51.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-51.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-51",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -2939,8 +2939,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-55.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-55.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-55",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -3154,8 +3154,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-59.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-59.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-59",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -3369,8 +3369,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-63.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-63.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-63",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -3584,8 +3584,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-66.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-66.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-66",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -3799,8 +3799,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-70.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-70.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-70",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -4014,7 +4014,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -4229,7 +4229,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -4444,7 +4444,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -4659,8 +4659,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-79.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-79.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-79",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -4874,8 +4874,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-82.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-82.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-82",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -5089,8 +5089,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-85.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-85.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-85",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -5304,8 +5304,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-88.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-88.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-88",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -5519,8 +5519,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-92.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-92.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-92",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -5734,8 +5734,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-96.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-96.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-96",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -5949,8 +5949,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-100.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-100.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-100",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -6164,8 +6164,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-104.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-104.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-104",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -6379,8 +6379,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-108.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-108.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-108",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -6594,8 +6594,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-111.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-111.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-111",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -6809,8 +6809,8 @@
                     "sensor_type": "ROSOV OL1"
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
-                    "sensor_tag": "MOV.ROSOV-114.FAILED_TO_OPEN",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
+                    "sensor_tag": "MOV.ROSOV-114.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-114",
                     "sensor_type": "ROSOV FAILED OL1"
@@ -7024,7 +7024,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -7239,7 +7239,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -7454,7 +7454,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -7669,7 +7669,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -7884,7 +7884,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -8099,7 +8099,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -8314,7 +8314,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -8529,7 +8529,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -8744,7 +8744,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -8959,7 +8959,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -9174,7 +9174,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -9389,7 +9389,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -9604,7 +9604,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -9819,7 +9819,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -10034,7 +10034,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL.1",
+                    "sensor_name": "ROSOV FAIL TO CLOSE STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
