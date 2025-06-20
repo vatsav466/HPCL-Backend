@@ -212,7 +212,7 @@ def insertToDB(data, table_name, indexing_col=()):
     except Exception as e:
         print("Error :", str(e))
         raise Exception(e)
-    exit()
+    
     
 
 
@@ -363,8 +363,14 @@ def get_and_insert_data(cursor, query, params=None):
     data.loc[(data['ORGSBUCD'] == '4000')&(data['MATERIAL_GROUP_CD'] =='031'),'ProductName'] = 'ALPROL'
     data.loc[(data['ORGSBUCD'] == '4000')&(~(data['MATERIAL_GROUP_CD'].isin(['031','038'])))&(data['DISTRIBUTION_CHANNEL_CD'].isin(['014','14'])),'ProductName'] = 'Lubes-Exports'
     data.loc[(data['ORGSBUCD'] == '4000')&(data['MATERIAL_GROUP_CD'] =='038')&(data['DISTRIBUTION_CHANNEL_CD'].isin(['011','11','012','12'])),'ProductName'] = 'HP DEF-Retail'
-    data = pl.from_pandas(data)
     
+    #data.loc[((data['MATERIAL_GROUP_CD'] =='038')&(data['DISTRIBUTION_CHANNEL_CD'].isin(['011','11','012','12']) &(data['ORGSBUCD'] == '4000')),'SBU_Name','ORGSBUCD'] = ['Retail','7000']        
+    data.loc[(data['MATERIAL_GROUP_CD'] == '038') & (data['DISTRIBUTION_CHANNEL_CD'].isin(['011', '11', '012', '12'])) & (data['ORGSBUCD'] == '4000'), ['SBU_Name', 'ORGSBUCD']] = ['Retail', '7000']
+    data.loc[data['ProductName'] == 'DEF/Diesel Exhaust Field',['ORGSBUCD','SBU_Name']] =['4000','Lubes']
+    data = pl.from_pandas(data)
+    data.write_csv("/tmp/industry_testing.csv")
+    print("Done Inserting")
+
     insertToDB(data, params["table_name"])
 
 
