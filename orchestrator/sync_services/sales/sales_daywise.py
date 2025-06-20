@@ -213,7 +213,6 @@ def insertToDB(data, table_name, indexing_col=()):
         print("Error :", str(e))
         raise Exception(e)
     
-    
 
 
 def get_and_insert_data(cursor, query, params=None):
@@ -235,22 +234,9 @@ def get_and_insert_data(cursor, query, params=None):
     print('Total Records :', len(data))
     columns = [column[0] for column in cursor.description]
     data = pd.DataFrame.from_records(data, columns=columns)
-    
-    data.to_csv('/tmp/actual_sales_data.csv',index = False)
-    print(len(data))
-    
-    print(len(data))
-    print(len(data.drop_duplicates()))
     data = data.drop_duplicates()
-    print(len(data))
-    data.to_csv('/tmp/data_org_drop.csv',index = False)
-    print(data['CURFISCALYEAR'].unique())
     data['CURFISCALYEAR'] = data['CURFISCALYEAR'].fillna('0').astype(str).apply(lambda x :x.split('.')[0] if '.' in x else x)
-    print(data['CURFISCALYEAR'].unique())
-    print(data.columns)
     data['fiscal_year'] = data['FISCALYEAR'].apply(lambda x:x.strip('FY').strip()if 'FY' in x else x)
-    print(data['fiscal_year'].unique())
-    print(data['ORGSBUNAME'].unique())
     data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None and len(x.split(' '))>2  else x )
 
     #data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None and len(x.split(' ') >2)  else x )
@@ -363,14 +349,16 @@ def get_and_insert_data(cursor, query, params=None):
     data.loc[(data['ORGSBUCD'] == '4000')&(data['MATERIAL_GROUP_CD'] =='031'),'ProductName'] = 'ALPROL'
     data.loc[(data['ORGSBUCD'] == '4000')&(~(data['MATERIAL_GROUP_CD'].isin(['031','038'])))&(data['DISTRIBUTION_CHANNEL_CD'].isin(['014','14'])),'ProductName'] = 'Lubes-Exports'
     data.loc[(data['ORGSBUCD'] == '4000')&(data['MATERIAL_GROUP_CD'] =='038')&(data['DISTRIBUTION_CHANNEL_CD'].isin(['011','11','012','12'])),'ProductName'] = 'HP DEF-Retail'
+    replacements = {'EAS':'EZ',
+                    'CEN':'CEN',
+                    'SOU':'SZ' ,'SWZ':'SWZ','WES':'WZ'}
+    data['ORGZONECD'] = data['ORGZONECD'].replace(replacements)
     
     #data.loc[((data['MATERIAL_GROUP_CD'] =='038')&(data['DISTRIBUTION_CHANNEL_CD'].isin(['011','11','012','12']) &(data['ORGSBUCD'] == '4000')),'SBU_Name','ORGSBUCD'] = ['Retail','7000']        
     data.loc[(data['MATERIAL_GROUP_CD'] == '038') & (data['DISTRIBUTION_CHANNEL_CD'].isin(['011', '11', '012', '12'])) & (data['ORGSBUCD'] == '4000'), ['SBU_Name', 'ORGSBUCD']] = ['Retail', '7000']
     data.loc[data['ProductName'] == 'DEF/Diesel Exhaust Field',['ORGSBUCD','SBU_Name']] =['4000','Lubes']
     data = pl.from_pandas(data)
-    data.write_csv("/tmp/industry_testing.csv")
-    print("Done Inserting")
-
+    
     insertToDB(data, params["table_name"])
 
 
