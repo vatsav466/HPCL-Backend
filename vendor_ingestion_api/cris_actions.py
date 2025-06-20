@@ -48,7 +48,7 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
         logger.error(f"Invalid data structure: data.data is not a list or is empty")
         return {"status": False, "message": "Invalid data", "data": []}
     for entry in enriched_data:
-        if entry['severity'] == 'Normal':
+        if entry['severity'] in ['Normal','NORMAL']:
             entry['severity'] = 'Medium'
         entry['occurrence_date'] = datetime.datetime.strptime(entry['occurrence_date'], "%Y%m%d%H%M%S")
         if entry.get("closure_date", ""):
@@ -71,7 +71,8 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
             if not await ro_analysis.check_alert_exists(entry['alarm_id'], entry['violation_type'], entry['sap_id']):
                 await alert_manager.create_alert({**entry, "alert_type": "RO"}, camunda_url=camunda_url)
             else:
-                print(f"Alert already exists")
+                logger.info(f"Alert already exists {entry['alarm_id']} - {entry['sap_id']}")
+                print(f"Alert already exists {entry['alarm_id']} - {entry['sap_id']}")
         else:
             query = (f"""select * from alerts where external_id = '{entry["alarm_id"]}'"""
                      f"and violation_type = '{entry["interlock_type"]}' and alert_status != 'Close'")
