@@ -213,6 +213,7 @@ def insertToDB(data, table_name, indexing_col=()):
         print("Error :", str(e))
         raise Exception(e)
     
+    
 
 
 def get_and_insert_data(cursor, query, params=None):
@@ -234,9 +235,22 @@ def get_and_insert_data(cursor, query, params=None):
     print('Total Records :', len(data))
     columns = [column[0] for column in cursor.description]
     data = pd.DataFrame.from_records(data, columns=columns)
+    
+    data.to_csv('/tmp/actual_sales_data.csv',index = False)
+    print(len(data))
+    
+    print(len(data))
+    print(len(data.drop_duplicates()))
     data = data.drop_duplicates()
+    print(len(data))
+    data.to_csv('/tmp/data_org_drop.csv',index = False)
+    print(data['CURFISCALYEAR'].unique())
     data['CURFISCALYEAR'] = data['CURFISCALYEAR'].fillna('0').astype(str).apply(lambda x :x.split('.')[0] if '.' in x else x)
+    print(data['CURFISCALYEAR'].unique())
+    print(data.columns)
     data['fiscal_year'] = data['FISCALYEAR'].apply(lambda x:x.strip('FY').strip()if 'FY' in x else x)
+    print(data['fiscal_year'].unique())
+    print(data['ORGSBUNAME'].unique())
     data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None and len(x.split(' '))>2  else x )
 
     #data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None and len(x.split(' ') >2)  else x )
@@ -352,6 +366,15 @@ def get_and_insert_data(cursor, query, params=None):
     replacements = {'EAS':'EZ',
                     'CEN':'CEN',
                     'SOU':'SZ' ,'SWZ':'SWZ','WES':'WZ'}
+    
+    mapping_dict = {
+    "West": "WZ",
+    "East": "EZ",
+    "North": "NZ",
+    "South": "SZ"
+    }
+    data["ORGZONECD"] = data["Zone_Name"].map(mapping_dict).combine_first(data["ORGZONECD"])
+    print("replacements",replacements)
     data['ORGZONECD'] = data['ORGZONECD'].replace(replacements)
     
     #data.loc[((data['MATERIAL_GROUP_CD'] =='038')&(data['DISTRIBUTION_CHANNEL_CD'].isin(['011','11','012','12']) &(data['ORGSBUCD'] == '4000')),'SBU_Name','ORGSBUCD'] = ['Retail','7000']        
