@@ -582,6 +582,16 @@ class Postgresql:
                         # Extract necessary fields from the record
                         if interlock_name != '' and interlock_name is not None:
                             
+                            bcu_number = record.get('bcu_number')
+                            mfm_number = record.get('mfm_number')
+
+                            # Skip creating alert if bcu_number is missing or empty
+                            if table_db_name == 'host_mfm_factor' and not bcu_number:
+                                # Don't create alert
+                                continue  # or return / break depending on your loop or function
+
+                            device_name = f"{mfm_number}_{bcu_number}" if mfm_number else bcu_number
+
                             alert_data = {
                                 'bu': 'TAS',
                                 'sop_id': sop_id,
@@ -589,13 +599,7 @@ class Postgresql:
                                 'interlock_name': interlock_name,
                                 'severity': severity,
                                 'alert_id': str(uuid.uuid1()),
-                                'device_name': (
-                                    record.get('bcu_number')
-                                    if table_db_name != 'host_mfm_factor'
-                                    else (
-                                        record.get('bcu_number') or record.get('mfm_number')
-                                    )
-                                ),    
+                                'device_name': device_name,
                                 'device_type': 'Gantry',
                                 'vehicle_number': record.get('truck_number', ''),
                                 'tt_load_number': record.get('load_number', ''),

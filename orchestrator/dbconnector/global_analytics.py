@@ -5720,7 +5720,9 @@ class GlobalAnalytics:
 
             # Get date range
             start = resp_df.select(pl.col("created_at").min()).to_series()[0].date()
-            end = resp_df.select(pl.col("created_at").max()).to_series()[0].date()
+            # end = resp_df.select(pl.col("created_at").max()).to_series()[0].date()
+            end = datetime.utcnow().date()  # Make sure to go till today
+
 
             def apply_carry_forward(result_dict, start, end, is_monthly):
                 def date_range(start, end, is_monthly):

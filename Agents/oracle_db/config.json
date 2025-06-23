@@ -72,7 +72,7 @@
       "HostBayReAssignment":"Bay reassignment",
       "HostManualBayAssigned":"Manual - bay assignment of more than 5% of total TT loaded",
       "HostSickTts":"SickTT Reported",
-      "HostMFMFactor": "MFM factor Change"
+      "HostMFMFactor": "MFM K Factor Change"
     },
 
     "severity": {
