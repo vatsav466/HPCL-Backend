@@ -76,7 +76,7 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
             params = dict(request.query_params)
             decrypted_params = {}
             try:
-                for key, value in params.items():
+                for key, _ in params.items():
                     encrypted_data = base64.b64decode(key+'==')
                     decrypted_string = cipher.decrypt(encrypted_data)
                     decrypted_params.update(json.loads(decrypted_string))
@@ -84,13 +84,12 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
                 print(f"Middleware error: {str(e)}")
                 return JSONResponse(
                     status_code=400,
-                    content={"error": f"Decryption failed: {str(e)}"}
+                    content={"error": "Invalid request body"}
                 )
             if decrypted_params:
-                if decrypted_params:
-                    # Reconstruct URL with decrypted params
-                    new_query = urlencode(decrypted_params, doseq=True)
-                    request.scope["query_string"] = new_query.encode()
+                # Reconstruct URL with decrypted params
+                new_query = urlencode(decrypted_params, doseq=True)
+                request.scope["query_string"] = new_query.encode()
         elif request.method in ["POST", "PUT", "PATCH"]:
             try:
                 body = await request.body()
@@ -104,7 +103,7 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
                 print(f"Middleware error: {str(e)}")
                 return JSONResponse(
                     status_code=400,
-                    content={"error": f"Invalid request body"}
+                    content={"error": "Invalid request body"}
                 )
     response = await call_next(request)
     return response
