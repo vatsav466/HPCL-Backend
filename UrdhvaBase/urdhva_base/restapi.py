@@ -22,13 +22,13 @@ from pydantic.fields import Field
 from urllib.parse import urlparse
 from slowapi.extension import Limiter
 from cryptography.fernet import Fernet
+from starlette.datastructures import URL
 import urdhva_base.ttl_cache as ttl_cache
 from slowapi.util import get_remote_address
 from starlette.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
+from urllib.parse import parse_qs, urlencode
 from slowapi.middleware import SlowAPIMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-
 from mangum import Mangum
 from starlette.responses import RedirectResponse
 
@@ -60,6 +60,56 @@ async def get_customer_authentication_extension(realm):
     return "auth"
 
 
+# Alternative implementation using FastAPI's middleware decorator
+@app.middleware("http")
+async def decrypt_middleware(request: fastapi.Request, call_next):
+    if (urdhva_base.settings.enable_encrypted_payload and
+            len(urdhva_base.settings.encryption_key) > 0):
+        # Initialize cipher (in production, get this from env or config)
+        key = urdhva_base.settings.encryption_key
+        if isinstance(key, str):
+            key = key.encode()
+        cipher = Fernet(key)
+
+        # Only process requests with encrypted payloads
+        if request.method in ["GET"]:
+            params = dict(request.query_params)
+            decrypted_params = {}
+            try:
+                for key, value in params.items():
+                    encrypted_data = base64.b64decode(key+'==')
+                    decrypted_string = cipher.decrypt(encrypted_data)
+                    decrypted_params.update(json.loads(decrypted_string))
+            except Exception as e:
+                print(f"Middleware error: {str(e)}")
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": f"Decryption failed: {str(e)}"}
+                )
+            if decrypted_params:
+                if decrypted_params:
+                    # Reconstruct URL with decrypted params
+                    new_query = urlencode(decrypted_params, doseq=True)
+                    request.scope["query_string"] = new_query.encode()
+        elif request.method in ["POST", "PUT", "PATCH"]:
+            try:
+                body = await request.body()
+                if body:
+                    # Decrypt the payload
+                    encrypted_data = base64.b64decode(body)
+                    decrypted_string = cipher.decrypt(encrypted_data)
+                    request._body = decrypted_string
+
+            except Exception as e:
+                print(f"Middleware error: {str(e)}")
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": f"Invalid request body"}
+                )
+    response = await call_next(request)
+    return response
+
+
 @app.on_event("startup")
 def onStart():
     for filename in glob.glob("**/*.py", recursive=True):
@@ -79,7 +129,6 @@ def onStart():
                 if not attr.startswith("_"):
                     symbol = getattr(mod, attr)
                     if isinstance(symbol, fastapi.APIRouter):
-                        # print("Loading module:", modname, " Route:",attr, [(x.path, x.name)  for x in symbol.routes])
                         app.include_router(symbol, prefix="/api")
     # print("Loaded modules:")
     # for route in app.routes:

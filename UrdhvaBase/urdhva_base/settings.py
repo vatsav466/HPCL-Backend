@@ -50,7 +50,10 @@ class Settings(pydantic_settings.BaseSettings):
     max_redis_connections: int = 10
     origin_check_enabled: bool = False
     disable_api_extra_inputs: bool = False
+    enable_encrypted_payload: bool = False
+    encryption_key: str = ""
     environment: str = ""
+
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
 
