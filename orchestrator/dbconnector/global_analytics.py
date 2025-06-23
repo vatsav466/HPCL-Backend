@@ -9428,6 +9428,7 @@ class GlobalAnalytics:
             cols_to_int = ['cf_indents', 'dryout_count', 'intra_day_dry_count', 'category_a_count']
             data[cols_to_int] = data[cols_to_int].astype(int)
             data['date'] = data['date'].dt.strftime('%Y-%b-%d')
+            data['other_cf_indents'] = data['cf_indents'] - (data['dryout_count'] + data['intra_day_dry_count'] + data['category_a_count'])
             print(data)
             return {"status": True, "message": "Success", "data": data.to_dict(orient='records')}
         return {"status": False, "message": "No Data Found", "data": []}
@@ -9464,9 +9465,9 @@ class GlobalAnalytics:
         if carry_fwd_data.empty:
             carry_fwd_data = pd.DataFrame({"dry_out_in_days": [], "category": []})
         resp_dict['carryForwardData'] = {
-            "Carry Fwd DryOut": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
-            "Carry Fwd IntraDay DryOut": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
-            "Carry Fwd CATA": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']) if len(carry_fwd_data) else 0,
+            "Carry Fwd DryOut Indents": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
+            "Carry Fwd IntraDay DryOut Indents": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
+            "Carry Fwd CATA Indents": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']) if len(carry_fwd_data) else 0,
         }
 
         resp_dict['totalCount'] = {
@@ -9474,6 +9475,10 @@ class GlobalAnalytics:
             "intraDryoutData": data.get("intra_dryout_total", 0),
             "carryForwardData": len(carry_fwd_data),
         }
+        resp_dict['carryForwardData']['Other Carry Fwd Indents'] = (resp_dict['totalCount']['carryForwardData'] -
+                                                            resp_dict['carryForwardData']['Carry Fwd DryOut Indents'] - 
+                                                            resp_dict['carryForwardData']['Carry Fwd IntraDay DryOut Indents'] -
+                                                            resp_dict['carryForwardData']['Carry Fwd CATA Indents'])
         return {"status": True, "message": "Success", "data": resp_dict}
 
     @staticmethod
