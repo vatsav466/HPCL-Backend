@@ -720,8 +720,12 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
         carry_fwd_data = pd.DataFrame(carry_fwd_data)
         pending_carry_fwd_data = await dry_out_analysis.get_previous_day_carry_fwd_indent()
+        other_cwf_count = (len(carry_fwd_data) - len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != ''])
+                           - len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']))
+        pending_cwf_other_count = (pending_carry_fwd_data.get("cf_indents", 0) - pending_carry_fwd_data.get("dryout_count", 0)
+                                   - pending_carry_fwd_data.get("category_a_count", 0))
         stats.extend([{
-            "section": "CarryFwd Indent",
+            "section": "Overall CarryFwd Indent",
             "value": len(carry_fwd_data),
             "serial": 15, "condition": "=", "group": "carry_fwd_indent"
         }, {
@@ -734,7 +738,11 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "value": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']) if len(carry_fwd_data) else 0,
             "serial": 17, "condition": "=", "group": "carry_fwd_indent"
         },{
-            "section": "Pending CarryFwd Indent",
+            "section": "Others CarryFwd Indent",
+            "value": other_cwf_count,
+            "serial": 18, "condition": "=", "group": "carry_fwd_indent"
+        },{
+            "section": "Pending Overall CarryFwd Indent",
             "value": pending_carry_fwd_data.get("cf_indents", 0),
             "serial": 15, "condition": "=", "group": "pending_carry_fwd_indent"
         }, {
@@ -745,6 +753,10 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "Pending CATA CarryFwd Indent",
             "value": pending_carry_fwd_data.get("category_a_count", 0),
             "serial": 17, "condition": "=", "group": "pending_carry_fwd_indent"
+        },{
+            "section": "Pending Others CarryFwd Indent",
+            "value": pending_cwf_other_count,
+            "serial": 18, "condition": "=", "group": "pending_carry_fwd_indent"
         }])
     else:
         stats.extend([{

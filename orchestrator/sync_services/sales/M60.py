@@ -358,7 +358,17 @@ def get_and_insert_data(cursor, query, params=None):
     data['SBU_Name'] = data['SBU_Name'].str.replace('PETROCHEMICALS SBU','PETCHEM').str.replace('GAS HQO','GAS')
     data.to_csv('/tmp/tibco_data.csv',index = False)
     data.loc[data['SBU_Name'] =='GAS','Zone_Name'] = 'HQO Customer'
+    print(data.columns.tolist())
+    mapping_dict = {
+    "West": "WZ",
+    "East": "EZ",
+    "North": "NZ",
+    "South": "SZ"
+    }
+    data["ORGZONECD"] = data["Zone_Name"].map(mapping_dict).combine_first(data["ORGZONECD"])
+
     data = pl.from_pandas(data)
+    
     print("*" * 50)
     print("Data Schema", data.schema)
     print("*" * 50)
@@ -431,6 +441,9 @@ def get_and_insert_data(cursor, query, params=None):
     print(len(data))
     data.write_csv('/tmp/result_data.csv')
     print(data['NETWEIGHT_TMT'].unique().to_list())
+    #data= data.with_columns(pl.col("ORGZONECD").replace("ORGZONECD").alias("col"))
+    #EAS':'EZ' 'NOR':'NZ' 'SOU':'SZ' , 'WES':'WZ',
+    
     insertToDB(data, params["table_name"])
 
 
