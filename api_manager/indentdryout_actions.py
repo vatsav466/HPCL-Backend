@@ -3,6 +3,7 @@ import hpcl_ceg_model
 import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
+import re
 import pytz
 import json
 import math
@@ -557,6 +558,15 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
 # Action get_dried_out_ro
 @router.post('/get_dried_out_ro', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParams):
+    for rec in data.filters:
+        for index, val in enumerate(rec.value):
+            if not val:
+                continue
+            if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                raise fastapi.HTTPException(
+                    status_code=422,
+                    detail=f"values[{index}] not matching criteria"
+                )
     top_x_axis = connection_mapping.dry_out_top_x_axis
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'", "mark_as_false = true"]
     where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
