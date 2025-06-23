@@ -5359,7 +5359,7 @@ class GlobalAnalytics:
                 "BCU Local Loading",
                 "Unauthorized flow_BCU",
                 "TT Overloaded",
-                "MFM factor Change",
+                "MFM K Factor Change",
             }
 
             # Filter interlocks for BCU and Loading Point
