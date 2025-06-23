@@ -856,11 +856,16 @@ async def sync_user_roles():
                     }
                 ]
             },
-            {
+{
                 "menu_name": "Sales Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Performance"
+                        "title": "Performance",
+                        "allowed_sub_menus": [
+                        {
+                        "title": "LPG Insights"
+                        }
+          ]
                     }
                 ]
             }
@@ -959,11 +964,16 @@ async def sync_user_roles():
                     }
                 ]
             },
-            {
-                "menu_name": "Performance",
+{
+                "menu_name": "Sales Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Sales Performance"
+                        "title": "Performance",
+                        "allowed_sub_menus": [
+                        {
+                        "title": "LPG Insights"
+                        }
+          ]
                     }
                 ]
             }
@@ -1174,11 +1184,16 @@ async def sync_user_roles():
                     }
                 ]
             },
-            {
-                "menu_name": "Performance",
+{
+                "menu_name": "Sales Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Sales Performance"
+                        "title": "Performance",
+                        "allowed_sub_menus": [
+                        {
+                        "title": "LPG Insights"
+                        }
+          ]
                     }
                 ]
             }
@@ -1305,11 +1320,16 @@ async def sync_user_roles():
                     }
                 ]
             },
-            {
-                "menu_name": "Performance",
+           {
+                "menu_name": "Sales Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Sales Performance"
+                        "title": "Performance",
+                        "allowed_sub_menus": [
+                        {
+                        "title": "Retail Insights"
+                        }
+          ]
                     }
                 ]
             }
@@ -1334,10 +1354,15 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Performance",
+                "menu_name": "Sales Performance",
                 "allowed_sub_menus": [
                     {
-                        "title": "Sales Performance"
+                        "title": "Performance",
+                        "allowed_sub_menus": [
+                        {
+                        "title": "Retail Insights"
+                        }
+          ]
                     }
                 ]
             }
@@ -1414,6 +1439,19 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Sales Performance",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Performance",
+                        "allowed_sub_menus": [
+                        {
+                        "title": "Retail Insights"
+                        }
+          ]
                     }
                 ]
             }
