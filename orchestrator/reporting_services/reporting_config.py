@@ -125,7 +125,7 @@ location_configs = [
                     EDW_DC_PLANT PLT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
                 WHERE 
-                    PLT.SBU='RET' AND CODE2 IN ('O&D','QC') AND ZLOC_TYPE!='66' AND FACILITY!='13';
+                    PLT.SBU='RET' AND ZLOC_TYPE IN ('15', '16') AND FACILITY!='13';
                 """,
         "reporting_office_query": """ 
                 SELECT
