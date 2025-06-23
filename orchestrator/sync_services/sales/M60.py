@@ -363,7 +363,11 @@ def get_and_insert_data(cursor, query, params=None):
     "West": "WZ",
     "East": "EZ",
     "North": "NZ",
-    "South": "SZ"
+    "South": "SZ",
+    "SOU":"SZ",
+    "WES":"WZ",
+    "NOR":"NZ",
+    "EAS":"EZ"
     }
     data["ORGZONECD"] = data["Zone_Name"].map(mapping_dict).combine_first(data["ORGZONECD"])
 
