@@ -207,7 +207,7 @@ async def get_dashboard_chart_form(data: Charts_Get_Dashboard_Chart_FormParams):
         "status": True, "message": "success", "data": await charts_functions.get_chart_data(data.unique_id)
     }
 
-
+# Action get_distinct_values
 @router.post('/get_distinct_values', tags=['Charts'])
 async def charts_get_distinct_values(data: Charts_Get_Distinct_ValuesParams):
     """
@@ -232,6 +232,8 @@ async def charts_get_distinct_values(data: Charts_Get_Distinct_ValuesParams):
         schema_name=data.schema, table_name=data.table, column_name=data.column,
         where_clause=[cond.dict() for cond in data.where_cond]
     )
+
+# Action get_product_values
 @router.post('/get_product_values', tags=['Charts'])
 async def charts_get_product_values(data: Charts_Get_Distinct_ValuesParams):
     """
@@ -877,16 +879,3 @@ async def charts_previous_present_month_amount_litres(data: Charts_Previous_Pres
             res[litres].setdefault(p_, 0)
 
     return {"status": True, "message": "success", "data": final_result}
-
-
-
-# Action get_distinct_values
-@router.post('/get_distinct_values', tags=['Charts'])
-async def charts_get_distinct_values(data: Charts_Get_Distinct_ValuesParams):
-    ...
-
-
-# Action get_product_values
-@router.post('/get_product_values', tags=['Charts'])
-async def charts_get_product_values(data: Charts_Get_Product_ValuesParams):
-    ...

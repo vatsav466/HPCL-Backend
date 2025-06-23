@@ -449,6 +449,9 @@ Model TASAssetMaster {
     Action=> download_template {
     }
 
+    Action=> download_report {
+        input_data dict
+    }
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,sap_id,region'

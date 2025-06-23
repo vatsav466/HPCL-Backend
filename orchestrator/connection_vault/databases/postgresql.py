@@ -504,6 +504,8 @@ class Postgresql(BaseAction):
                                     if cond in [' ', 'one-off', 'in']:
                                         value = "', '".join(map(str, value))
                                         where_query += f'''"{key}" {cond} ('{value}') AND '''
+                                    elif cond in ['ilike', 'like']:
+                                        where_query += f'''"{key}" {cond} '%{value}%' AND '''
                                     else:
                                         where_query += f'''"{key}" {cond} '{value}' AND '''
                             elif isinstance(condition, str):  # Handle shorthand single condition (string format)

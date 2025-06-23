@@ -135,3 +135,55 @@ async def tasassetmaster_download_template(data: Tasassetmaster_Download_Templat
         filename="tas_master_template.csv"
     )
 
+
+
+# Action download_report
+@router.post('/download_report', tags=['TASAssetMaster'])
+async def tasassetmaster_download_report(data: Tasassetmaster_Download_ReportParams):
+    alert_data_json = data.dict()
+
+    df = pl.DataFrame(alert_data_json)
+
+    # Rename for clarity
+    df = df.rename({
+        "created_date": "Date",
+        "device_name": "BCU no.",
+        "interlock_name": "Interlock name",
+        "alert_count": "Alert count"
+    })
+
+    # Ensure proper types
+    df = df.with_columns([
+        pl.col("Date").cast(pl.Date)
+    ])
+
+    # Generate Summary Table (Total per BCU)
+    summary_df = (
+        df.group_by("BCU no.")
+        .agg(pl.col("Alert count").sum().alias("Total count of alerts"))
+        .sort("BCU no.")
+    )
+
+    # Convert to Pandas for Excel
+    df_pd = df.sort(["Date", "BCU no.", "Interlock name"]).to_pandas()
+    summary_pd = summary_df.to_pandas()
+
+    # Export to Excel in memory
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        # Daily Detail
+        df_pd.to_excel(writer, sheet_name="Daily Alerts", index=False)
+
+        # Summary
+        summary_pd.to_excel(writer, sheet_name="Summary", index=False)
+
+        # Metadata Sheet (Optional)
+        meta = pd.DataFrame({
+            "Export date and time": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
+            "Total records": [len(df_pd)]
+        })
+        meta.to_excel(writer, sheet_name="Info", index=False)
+
+    output.seek(0)
+    return StreamingResponse(output, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                             headers={"Content-Disposition": "attachment; filename=alerts_summary.xlsx"})

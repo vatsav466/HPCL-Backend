@@ -882,6 +882,14 @@ class Tasassetmaster_Download_TemplateParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Tasassetmaster_Download_ReportParams(pydantic.BaseModel):
+    input_data: dict
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class LPGAssetMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'lpg_asset_master'
     

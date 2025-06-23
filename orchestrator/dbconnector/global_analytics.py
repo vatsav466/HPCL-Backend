@@ -5668,7 +5668,7 @@ class GlobalAnalytics:
             if sensor_id_filter:
                 query += f" AND sensor_id IN ('{sensor_id_filter}')"
             if equipment_name_filter:
-                query += f" AND equipment_name IN ('{equipment_name_filter}')"
+                query += f" AND equipment_name ilike ('%{equipment_name_filter}%')"
 
             query += """
                 GROUP BY created_at, zone, interlock_name, sap_id, location_name, sop_id, sensor_id, equipment_name, alert_status
