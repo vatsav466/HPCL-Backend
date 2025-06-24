@@ -114,7 +114,7 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
                     # Decrypt the payload
                     encrypted_data = base64.b64decode(body)
                     decrypted_string = cipher.decrypt(encrypted_data)
-                    request.scope["body"] = decrypted_string.decode()
+                    request.scope["body"] = decrypted_string
                     request._body = decrypted_string
             except Exception as e:
                 print(f"Middleware error: {str(e)}")
