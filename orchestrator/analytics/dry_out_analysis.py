@@ -1530,6 +1530,17 @@ async def get_tt_counts(condition):
             SELECT "TRUCK_REGNO", "CARD_STATUS", "LOADED_ON"
             FROM FilteredR1
             WHERE rn = 1;"""
+    current_data = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
+    query = f"""SELECT DISTINCT "TRUCK_REGNO"
+                FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP"
+                WHERE "CARD_STATUS" = 'R'
+                  AND "LOADED_ON"::date >= '{current_data}'
+                  AND "TRUCK_REGNO" NOT IN (
+                      SELECT "TRUCK_REGNO"
+                      FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP"
+                      WHERE "CARD_STATUS" = 'O'
+                        AND "LOADED_ON"::date >= '{current_data}'
+                  )"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'

@@ -8798,7 +8798,7 @@ class GlobalAnalytics:
             "carryForwardData": len(carry_fwd_data),
         }
         resp_dict['carryForwardData']['Other Carry Fwd Indents'] = (resp_dict['totalCount']['carryForwardData'] -
-                                                            resp_dict['carryForwardData']['Carry Fwd DryOut Indents'] - 
+                                                            resp_dict['carryForwardData']['Carry Fwd DryOut Indents'] -
                                                             resp_dict['carryForwardData']['Carry Fwd IntraDay DryOut Indents'] -
                                                             resp_dict['carryForwardData']['Carry Fwd CATA Indents'])
         return {"status": True, "message": "Success", "data": resp_dict}
