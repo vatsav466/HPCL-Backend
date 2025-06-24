@@ -234,7 +234,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP066", "interlock_name": "Bay reassignment", "workflow_name": ""},
                         {"sop_id": "SOP067", "interlock_name": "Manual Bay assignment of more than 5% of total TT loaded", "workflow_name": ""},
                         {"sop_id": "SOP068", "interlock_name": "SickTT Reported", "workflow_name": ""},
-                        {"sop_id": "SOP069", "interlock_name": "MFM factor Change", "workflow_name": ""},
+                        {"sop_id": "SOP069", "interlock_name": "MFM K Factor Change", "workflow_name": ""},
                         {"sop_id": "SOP073", "interlock_name": "Day End Report", "workflow_name": ""},
                         {"sop_id": "SOP074", "interlock_name": "TAS User access report", "workflow_name": ""},
                         {"sop_id": "SOP075", "interlock_name": "Local order/Standalone Order Entryt", "workflow_name": ""},
