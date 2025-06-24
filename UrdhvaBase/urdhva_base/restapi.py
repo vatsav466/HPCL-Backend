@@ -70,26 +70,35 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
         if isinstance(key, str):
             key = key.encode()
         cipher = Fernet(key)
+        path = request.url.path
 
         # Only process requests with encrypted payloads
         if request.method in ["GET"]:
-            params = dict(request.query_params)
-            decrypted_params = {}
-            try:
-                for key, _ in params.items():
-                    encrypted_data = base64.b64decode(key+'==')
-                    decrypted_string = cipher.decrypt(encrypted_data)
-                    decrypted_params.update(json.loads(decrypted_string))
-            except Exception as e:
-                print(f"Middleware error: {str(e)}")
-                return JSONResponse(
-                    status_code=400,
-                    content={"error": "Invalid request body"}
-                )
-            if decrypted_params:
-                # Reconstruct URL with decrypted params
-                new_query = urlencode(decrypted_params, doseq=True)
-                request.scope["query_string"] = new_query.encode()
+            if not request.query_params:
+                query_list = path.split('/')
+                query_id = query_list[-1]
+                decrypted_string = cipher.decrypt(query_id)
+                query_list[-1] = decrypted_string
+                request.scope["path"] = '/'.join(query_list)
+                print(request.url.path)
+            else:
+                params = dict(request.query_params)
+                decrypted_params = {}
+                try:
+                    for key, _ in params.items():
+                        encrypted_data = base64.b64decode(key+'==')
+                        decrypted_string = cipher.decrypt(encrypted_data)
+                        decrypted_params.update(json.loads(decrypted_string))
+                except Exception as e:
+                    print(f"Middleware error: {str(e)}")
+                    return JSONResponse(
+                        status_code=400,
+                        content={"error": "Invalid request body"}
+                    )
+                if decrypted_params:
+                    # Reconstruct URL with decrypted params
+                    new_query = urlencode(decrypted_params, doseq=True)
+                    request.scope["query_string"] = new_query.encode()
         elif request.method in ["POST", "PUT", "PATCH"]:
             try:
                 body = await request.body()
