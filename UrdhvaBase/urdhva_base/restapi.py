@@ -75,12 +75,20 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
         # Only process requests with encrypted payloads
         if request.method in ["GET"]:
             if not request.query_params:
-                query_list = path.split('/')
-                query_id = query_list[-1]
-                decrypted_string = cipher.decrypt(query_id)
-                query_list[-1] = decrypted_string
-                request.scope["path"] = '/'.join(query_list)
-                print(request.url.path)
+                if path not in ['/api/session/me']:
+                    query_list = path.split('/')
+                    query_id = query_list[-1]
+                    try:
+                        encrypted_data = base64.b64decode(query_id)
+                        decrypted_string = cipher.decrypt(encrypted_data)
+                        query_list[-1] = decrypted_string.decode()
+                        request.scope["path"] = '/'.join(query_list)
+                    except Exception as e:
+                        print(f"Middleware error: {str(e)}")
+                        return JSONResponse(
+                            status_code=400,
+                            content={"error": "Invalid request body"}
+                        )
             else:
                 params = dict(request.query_params)
                 decrypted_params = {}
@@ -106,8 +114,22 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
                     # Decrypt the payload
                     encrypted_data = base64.b64decode(body)
                     decrypted_string = cipher.decrypt(encrypted_data)
+                    request.scope["body"] = decrypted_string.decode()
                     request._body = decrypted_string
-
+            except Exception as e:
+                print(f"Middleware error: {str(e)}")
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": "Invalid request body"}
+                )
+        elif request.method in ["DELETE"]:
+            query_list = path.split('/')
+            query_id = query_list[-1]
+            try:
+                encrypted_data = base64.b64decode(query_id)
+                decrypted_string = cipher.decrypt(encrypted_data)
+                query_list[-1] = decrypted_string.decode()
+                request.scope["path"] = '/'.join(query_list)
             except Exception as e:
                 print(f"Middleware error: {str(e)}")
                 return JSONResponse(
