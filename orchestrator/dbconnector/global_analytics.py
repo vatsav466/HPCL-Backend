@@ -5330,7 +5330,7 @@ class GlobalAnalytics:
             #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             #     resp = await function(query=query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=100000)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -5507,6 +5507,7 @@ class GlobalAnalytics:
                     result[category][str(row["created_date"])][row["alert_type"]]["details"].append(detail_item)
                     # Update total count for this category, date, and alert_type
                     result[category][str(row["created_date"])][row["alert_type"]]["total"] += row["total"]
+                print({"daily_data": result})
                 return {"status": True, "message": "success", "daily_data": result}
 
             else:
@@ -5786,12 +5787,18 @@ class GlobalAnalytics:
 
             result_daily = apply_carry_forward(result_daily, start, end, is_monthly=False)
 
-            return {
-                "status": True,
-                "message": "success",
-                "monthly_data": result_monthly,
-                "daily_data": result_daily
-            }
+            if "date" in drill_state:
+                return {
+                    "status": True,
+                    "message": "success",
+                    "daily_data": result_daily
+                }
+            else:
+                return {
+                    "status": True,
+                    "message": "success",
+                    "monthly_data": result_monthly
+                }
 
         except Exception:
             print(traceback.format_exc())

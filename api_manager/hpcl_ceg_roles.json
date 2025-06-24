@@ -566,7 +566,7 @@
                     "name": "download_template"
                 },
                 {
-                    "name": "download_report"
+                    "name": "download_tas_report"
                 }
             ]
         },
@@ -617,7 +617,7 @@
                     "name": "download_template"
                 },
                 {
-                    "name": "download_report"
+                    "name": "download_tas_report"
                 }
             ]
         },
@@ -5316,8 +5316,8 @@
             "displayName": "download_template"
         },
         {
-            "name": "download_report",
-            "displayName": "download_report"
+            "name": "download_tas_report",
+            "displayName": "download_tas_report"
         },
         {
             "name": "upload_lpg_asset_master",

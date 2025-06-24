@@ -83,6 +83,7 @@ class Settings(pydantic_settings.BaseSettings):
     download_path: str = "/opt/ceg/algo/orchestrator/masters"
     template_path: str = "/opt/ceg/algo/orchestrator/notification_templates"
     uploads: str = ""
+    downloads: str = ""
     kibana_dashboard_header: str = 'osd-xsrf'
     db_urls: typing.Dict[str, typing.List[pydantic.AnyUrl]] = Db_Urls_Base
 

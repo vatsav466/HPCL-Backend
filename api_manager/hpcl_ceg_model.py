@@ -788,6 +788,13 @@ class Roassetmaster_Download_TemplateParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class WidgetFiltersCreate(pydantic.BaseModel):
+    key: str = pydantic.Field(**{'pattern': '^[a-zA-Z0-9_.\\-=" ]+$'})
+    cond: str
+    value: typing.Optional[str] = pydantic.Field("", **{'pattern': '^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$'})
+    val: typing.Optional[str] = pydantic.Field("", **{'pattern': '^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$'})
+
+
 class TASAssetMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'tas_asset_master'
     
@@ -882,8 +889,11 @@ class Tasassetmaster_Download_TemplateParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
-class Tasassetmaster_Download_ReportParams(pydantic.BaseModel):
-    input_data: dict
+class Tasassetmaster_Download_Tas_ReportParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    action: str
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
