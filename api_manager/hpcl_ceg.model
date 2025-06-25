@@ -364,6 +364,7 @@ Model LocationMaster {
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,zone,region,sales_area,sap_id'
+        search_fields='bu,sap_id,name,region,zone,terminal_plant_name'
     }
 }
 
