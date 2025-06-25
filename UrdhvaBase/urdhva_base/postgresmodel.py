@@ -364,11 +364,11 @@ class BasePostgresModel(pydantic.BaseModel):
             if hasattr(cls.Config, 'search_fields') and cls.Config.search_fields:
                 for field in cls.Config.search_fields:
                     search_text = params.search_text.strip()  # Strip leading/trailing whitespace
-                    print("search text --> ", search_text)
+                    # print("search text --> ", search_text)
                     search_conditions.append(f"{cls.__tablename__}.{field}::text ILIKE '%{search_text}%'")
 
             if search_conditions:
-                print("search_conditions --> ", search_conditions)
+                # print("search_conditions --> ", search_conditions)
                 query_params.append(f"({' OR '.join(search_conditions)})")        
         
         # Commented by Shrihari

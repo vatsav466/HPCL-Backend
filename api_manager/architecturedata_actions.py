@@ -79,7 +79,7 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
 
             json_path = os.path.join(base_path, f"{sap_id}.json")
             if not os.path.exists(json_path):
-                print(f"Skipping {sap_id}: File not found.")
+                # print(f"Skipping {sap_id}: File not found.")
                 continue
 
             try:

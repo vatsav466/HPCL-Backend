@@ -82,7 +82,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
 
             json_path = os.path.join(base_path, f"{sap_id}.json")
             if not os.path.exists(json_path):
-                print(f"Skipping {sap_id}: File not found.")
+                # print(f"Skipping {sap_id}: File not found.")
                 continue
 
             try:
