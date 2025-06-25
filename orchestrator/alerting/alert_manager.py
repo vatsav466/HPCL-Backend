@@ -463,6 +463,7 @@ class AlertAction:
                             "processed_time": processed_time.isoformat(), "action_type": input_data["action_type"],
                             "action_msg": input_data["action_msg"], "mail_sent_to": "",
                             "action_by": rpt.get("email", "NOVEX_USER"),
+                            "remarks": input_data.get("remarks", ""),
                             "ims_datetime": input_data.get("ims_datetime", ""),
                             "prod_reqd_dt": input_data.get("prod_reqd_dt", ""),
                             "doc_link": input_data.get("doc_link", ""),

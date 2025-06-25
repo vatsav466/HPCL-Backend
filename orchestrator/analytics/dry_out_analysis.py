@@ -482,18 +482,21 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
         cd_query = ""
     query = f"""WITH INDENT_DATA AS (
                     SELECT DISTINCT 
-                        SUBSTR("DEALER_CODE", 3, 8) AS sap_id, 
-                        "PROD_REQD_DT" AS prod_reqd_dt,
-                        "INDENT_NO" AS indent_no,
-                        "LOCN_CODE" AS locn_code
+                        SUBSTR(a."DEALER_CODE", 3, 8) AS sap_id, 
+                        a."PROD_REQD_DT" AS prod_reqd_dt,
+                        a."INDENT_NO" AS indent_no,
+                        a."LOCN_CODE" AS locn_code
                     FROM 
-                        "IMS_SAP"."INDENT_REQUEST"
+                        "IMS_SAP"."INDENT_REQUEST" a,
+                        "IMS_SAP"."INDENT_PRODUCTS" b
                     WHERE 
-                        "PROD_REQD_DT" < CURRENT_DATE AND "PROD_REQD_DT" >= CURRENT_DATE - INTERVAL '5 days'
-                        AND "TRUCK_REGNO" IS NULL
-                        AND "CANCEL_INDENT" IS NULL
-                        AND "VALID_INDENT" IN ('Y', 'H')
-                        AND SUBSTR("DEALER_CODE", 11, 7) = '7000111'
+                        a."PROD_REQD_DT" < CURRENT_DATE AND a."PROD_REQD_DT" >= CURRENT_DATE - INTERVAL '5 days'
+                        AND a."LOCN_CODE" = b."LOCN_CODE" AND a."INDENT_NO" = b."INDENT_NO"
+                        AND a."TRUCK_REGNO" IS NULL
+                        AND a."CANCEL_INDENT" IS NULL
+                        AND a."VALID_INDENT" IN ('Y', 'H')
+                        AND SUBSTR(a."DEALER_CODE", 11, 7) = '7000111'
+                        AND b."PROD" in ('2811000','2812000','3912000','2822000', '3672000','2816000','3373000')
                 ),
                 ALERT_DATA AS (
                     SELECT DISTINCT ON (sap_id, 
