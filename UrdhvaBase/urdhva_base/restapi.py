@@ -75,7 +75,8 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
         # Only process requests with encrypted payloads
         if request.method in ["GET"]:
             if not request.query_params:
-                if path not in ['/api/session/me', '/api/session/encryption-status', '/api/ping']:
+                if path not in ['/api/session/me', '/api/session/encryption-status', '/api/ping',
+                                '/docs', '/openapi.json']:
                     query_list = path.split('/')
                     query_id = query_list[-1]
                     try:
