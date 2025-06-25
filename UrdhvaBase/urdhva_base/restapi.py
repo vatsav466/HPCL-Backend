@@ -75,7 +75,7 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
         # Only process requests with encrypted payloads
         if request.method in ["GET"]:
             if not request.query_params:
-                if path not in ['/api/session/me']:
+                if path not in ['/api/session/me', '/api/session/encryption-status', '/api/ping']:
                     query_list = path.split('/')
                     query_id = query_list[-1]
                     try:
@@ -306,7 +306,8 @@ async def authMiddleware(request: fastapi.Request, call_next):
         return add_security_headers(resp)
     # return await call_next(request)
     response = fastapi.Response(None, 403)
-    if (request.url.path in ['/docs', '/openapi.json', '/api/login', '/api/session/me', '/api/users/login'] +
+    if (request.url.path in ['/docs', '/openapi.json', '/api/login', '/api/session/me', '/api/users/login',
+                             '/api/session/encryption-status', '/api/ping'] +
             urdhva_base.settings.noauth_urls or \
             re.match(r"/api/[\S\s\w]*login\b(?![a-zA-Z])", request.url.path) \
             or re.match(r"/api/[\S\s\w]*authorize", request.url.path)):
@@ -584,6 +585,13 @@ async def me(request: fastapi.Request):
         resp.update({key: rpt.get(key, '') for key in base_keys})
         resp.update({key: rpt.get(key, []) for key in permission_keys})
     return resp
+
+
+# API to give whether security/encryption module enabled or not
+@app.get("/api/session/encryption-status")
+async def encryption_enabled(request: fastapi.Request):
+    return "enabled" if urdhva_base.settings.enable_encrypted_payload and \
+                        len(urdhva_base.settings.encryption_key) > 0 else "disabled"
 
 
 @app.get("/api/ping")
