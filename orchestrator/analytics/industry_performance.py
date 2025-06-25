@@ -857,7 +857,7 @@ def get_mappers():
             { "name": "CPCL", "color": "#44403C" }, # Stone-700
             { "name": "HMEL", "color": "#052E16" }, # Green-950
             { "name": "NRL", "color": "#3B0764" }, # Purple-950
-            { "name": "NEL", "color": "#7C2D12" }, # Orange-900
+            { "name": "NEL", "color": "#0048A8" }, # nayarablue
             { "name": "OIL", "color": "#1F2937" }, # Gray-800
             { "name": "SMA", "color": "#4A044E" }, # Violet-900
             { "name": "BURL", "color": "#9D174D" } # Pink-800
