@@ -8,15 +8,18 @@ import hashlib
 import datetime
 import traceback
 import urdhva_base.redispool
+from openpyxl import Workbook
 from calendar import monthrange
 try:
     from secrets import choice
 except ImportError:
     from random import choice
+from utilities import sales_mapping
+from collections import defaultdict
 from dateutil.relativedelta import relativedelta
 from utilities import interlock_category_mapping
 import Thingsboard.bu_asset_master_new as tb_master
-from utilities import sales_mapping
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
 def month_short_to_number(short_name):
     # Parses the short month name (%b) and extracts the month as an integer.
@@ -470,3 +473,582 @@ def get_user_details(where_clause):
             print("where_clause: ", where_clause)
 
     return where_clause
+
+async def generate_trends_report(resp, output_file, report_type="daily", filters=None):
+    print("resp --> ", resp)
+    print("filters --> ", filters)
+    filters = filters or {}
+    selected_equipment = filters.get("equipment_name", None)
+
+    data_key = "daily_data" if report_type.lower() == "daily" else "monthly_data"
+    data = resp.get(data_key, {})
+    if not data:
+        print("No data found.")
+        return
+
+    # Apply case-insensitive filter
+    if selected_equipment:
+        selected_equipment_lower = selected_equipment.lower()
+        matched_key = next((key for key in data.keys() if key.lower() == selected_equipment_lower), None)
+        if matched_key:
+            filtered_data = {matched_key: data[matched_key]}
+        else:
+            filtered_data = {}
+    else:
+        filtered_data = data
+
+    print("filtered_data:", filtered_data)
+
+    # ---- Setup styling ----
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+
+    # ---- Organize data ----
+    all_data = []
+    for equipment_name, entries in filtered_data.items():
+        for entry in entries:
+            entry["equipment_name"] = equipment_name
+            all_data.append(entry)
+
+    if not all_data:
+        print("No matching entries after filtering.")
+        return
+
+    # ---- Sort data by date (descending) ----
+    if report_type.lower() == "daily":
+        date_key = "date"
+        date_format = "%Y-%m-%d"  # This matches '2025-04-15'
+    else:
+        date_key = "month"
+        date_format = "%b-%Y"     # This matches 'Apr-2025'
+
+    # Handle potential parsing issues
+    def parse_date_safe(entry):
+        date_str = entry.get(date_key, "")
+        try:
+            return datetime.datetime.strptime(date_str, date_format)
+        except ValueError:
+            return datetime.datetime.min  # Default for invalid format
+
+    all_data.sort(key=parse_date_safe, reverse=True)
+    # ---- Setup Excel ----
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Trends Report"
+
+    # ---- Title ----
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=6)
+    title_cell = ws.cell(row=1, column=1)
+    title_cell.value = f"{report_type.upper()} REPORT"
+    title_cell.font = Font(bold=True, size=14)
+    title_cell.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+    title_cell.border = thin_border
+
+    row = 3
+    first_entry = all_data[0]
+
+    metadata = {
+        "Export Date and Time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "Total Alert Count": sum(entry.get("count", 0) for entry in all_data),
+        "Data Type": f"{report_type.capitalize()} Equipment Alert",
+        "Equipment Name Selected": selected_equipment or "All",
+        "Zone": first_entry.get("zone", ""),
+        "Plant Name": first_entry.get("location_name", ""),
+        "SAP ID": first_entry.get("sap_id", "")
+    }
+
+    for key, val in metadata.items():
+        ws[f"A{row}"] = key
+        ws[f"A{row}"].font = Font(bold=True)
+        ws[f"A{row}"].fill = PatternFill(start_color="D8E4BC", end_color="D8E4BC", fill_type="solid")
+        ws[f"A{row}"].alignment = Alignment(horizontal="center")
+        ws[f"A{row}"].border = thin_border
+
+        ws[f"B{row}"] = val
+        ws[f"B{row}"].alignment = Alignment(horizontal="center")
+        ws[f"B{row}"].border = thin_border
+        row += 1
+
+    row += 1
+
+    # ---- Table Header ----
+    date_label = "Date" if report_type.lower() == "daily" else "Month"
+    headers = [date_label, "Equipment Name", "Alert Category", "Alert Type", "Count"]
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=row, column=col)
+        cell.value = header
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill(start_color="B7DEE8", end_color="B7DEE8", fill_type="solid")
+        cell.alignment = Alignment(horizontal="center")
+        cell.border = thin_border
+    row += 1
+
+    # ---- Write Data ----
+    for entry in all_data:
+        ws.cell(row=row, column=1).value = entry.get("date" if report_type == "daily" else "month", "")
+        ws.cell(row=row, column=2).value = entry.get("equipment_name", "")
+        ws.cell(row=row, column=3).value = entry.get("alert_category", "")
+        ws.cell(row=row, column=4).value = entry.get("alert_type", "")
+        ws.cell(row=row, column=5).value = entry.get("count", 0)
+        row += 1
+
+    # ---- Save ----
+    wb.save(output_file)
+    print(f"Saved {report_type} report to {output_file}")
+
+async def generate_equipment_report(resp, output_file, report_type="daily", filters=None):
+    print("resp --> ", resp)
+
+    # ---- Extract data from response ----
+    data = resp.get(f"{report_type}_data", {})
+    process_data = data.get("process", {})
+    gantry_data = data.get("gantry", {})
+    safety_data = data.get("safety", {})
+
+    all_data = {}
+
+    # ---- Styling ----
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    # ---- Helpers ----
+    def init_date_entry(date):
+        if date not in all_data:
+            all_data[date] = {
+                "Equipment": {"details": [], "total": 0}
+            }
+
+    def merge_section(section_data):
+        for date, content in section_data.items():
+            init_date_entry(date)
+            if "Equipment" in content:
+                all_data[date]["Equipment"]["details"].extend(content["Equipment"]["details"])
+                all_data[date]["Equipment"]["total"] += content["Equipment"]["total"]
+
+    # ---- Merge all sections ----
+    merge_section(process_data)
+    merge_section(gantry_data)
+    merge_section(safety_data)
+
+    # ---- Guard clause ----
+    if not all_data:
+        print("No data found.")
+        return
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Equipment Alerts"
+
+    def get_period_label(date_str, report_type):
+        if report_type == "daily":
+            return date_str
+        date_formats = ["%Y-%m-%d", "%b-%Y", "%B-%Y", "%Y-%m", "%m-%Y"]
+        for fmt in date_formats:
+            try:
+                parsed_date = datetime.datetime.strptime(date_str, fmt)
+                return parsed_date.strftime("%B %Y")
+            except ValueError:
+                continue
+        return date_str
+
+    filters = filters or {}
+
+    def matches_filters(detail):
+        for key in ["equipment_name", "sensor_id"]:
+            if key in filters and filters[key] is not None:
+                if str(detail.get(key)) != str(filters[key]):
+                    return False
+        return True
+
+    # ---- Sample record for metadata ----
+    sample = None
+    for entry in all_data.values():
+        if entry["Equipment"]["details"]:
+            sample = entry["Equipment"]["details"][0]
+            break
+
+    sample = sample or {}
+
+    # ---- Report Title ----
+    report_title = "WEEKLY / DATE RANGE REPORT" if report_type == "daily" else "MONTHLY REPORT"
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=4)
+    title_cell = ws.cell(row=1, column=1)
+    title_cell.value = report_title
+    title_cell.font = Font(bold=True, size=14, color="000000")
+    title_cell.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+    title_cell.border = thin_border
+
+    row = 3
+
+    # ---- Metadata ----
+    total_records = sum(
+        len([d for d in entry["Equipment"]["details"] if matches_filters(d)])
+        for entry in all_data.values()
+    )
+    total_alert_count = sum(
+        sum(d["count"] for d in entry["Equipment"]["details"] if d.get("type") != "carry_forward")
+        for entry in all_data.values()
+    )
+
+    selected_name = filters.get("equipment_name", "All")
+    selected_id = filters.get("sensor_id", "All")
+
+    metadata = {
+        "Export Date and Time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "Total Records": total_records,
+        "Total Alert Count": total_alert_count,
+        "Data Type": "Equipment Alert",
+        "Equipment Name Selected": selected_name,
+        "Equipment ID Selected": selected_id,
+        "Zone": sample.get("zone", ""),
+        "Plant Name": sample.get("location_name", ""),
+        "SAP ID": sample.get("sap_id", ""),
+        "Date Range": f"{min(all_data)} to {max(all_data)}" if all_data else "N/A"
+    }
+
+    for key, val in metadata.items():
+        cell_key = ws[f"A{row}"]
+        cell_val = ws[f"B{row}"]
+        cell_key.value = key
+        cell_key.font = Font(bold=True, color="000000")
+        cell_key.fill = PatternFill(start_color="D8E4BC", end_color="D8E4BC", fill_type="solid")
+        cell_key.alignment = Alignment(horizontal="center")
+        cell_key.border = thin_border
+        cell_val.value = val
+        cell_val.alignment = Alignment(horizontal="center")
+        cell_val.border = thin_border
+        row += 1
+
+    row += 1
+
+    # ---- Table Headers ----
+    headers = [
+        "Date" if report_type == "daily" else "Month",
+        "Equipment Name",
+        "Equipment ID",
+        "Alert Count"
+    ]
+
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=row, column=col)
+        cell.value = header
+        cell.font = Font(bold=True, color="000000")
+        cell.fill = PatternFill(start_color="B7DEE8", end_color="B7DEE8", fill_type="solid")
+        cell.alignment = Alignment(horizontal="center")
+        cell.border = thin_border
+    row += 1
+
+    # ---- Sort Dates (actual date sort) ----
+    def sort_key(date_str):
+        for fmt in ("%Y-%m-%d", "%Y-%m", "%b-%Y", "%B-%Y", "%m-%Y"):
+            try:
+                return datetime.datetime.strptime(date_str, fmt)
+            except ValueError:
+                continue
+        return date_str  # fallback as string
+
+    sorted_dates = sorted(all_data.keys(), key=sort_key)
+
+    summary = defaultdict(int)
+
+    for date_str in sorted_dates:
+        period_label = get_period_label(date_str, report_type)
+        equipment_details = all_data[date_str]["Equipment"]["details"]
+        total_cf_count = all_data[date_str]["Equipment"]["total"] if not equipment_details else 0
+
+        if equipment_details:
+            for detail in equipment_details:
+                if not matches_filters(detail):
+                    continue
+
+                alert_type = detail.get("type", "")
+                count = detail.get("count", 0)
+
+                ws.cell(row=row, column=1).value = period_label
+                ws.cell(row=row, column=2).value = detail.get("equipment_name", "")
+                ws.cell(row=row, column=3).value = detail.get("sensor_id", "")
+                ws.cell(row=row, column=4).value = count
+
+                if alert_type != "carry_forward":
+                    summary[(detail.get("equipment_name", ""), detail.get("sensor_id", ""))] += count
+
+                row += 1
+        else:
+            # Carry forward placeholder (even in monthly)
+            ws.cell(row=row, column=1).value = period_label
+            ws.cell(row=row, column=2).value = "Carry Forward"
+            ws.cell(row=row, column=3).value = ""
+            ws.cell(row=row, column=4).value = total_cf_count
+            row += 1
+
+    row += 2
+
+    # ---- Summary Section ----
+    ws.cell(row=row, column=1).value = "Equipment Summary"
+    ws.cell(row=row, column=1).font = Font(bold=True)
+    row += 1
+
+    ws.cell(row=row, column=1).value = "Equipment Name"
+    ws.cell(row=row, column=2).value = "Equipment ID"
+    ws.cell(row=row, column=3).value = "Total Alert Count"
+    ws.cell(row=row, column=1).font = Font(bold=True)
+    ws.cell(row=row, column=2).font = Font(bold=True)
+    ws.cell(row=row, column=3).font = Font(bold=True)
+    row += 1
+
+    for (equip_name, equip_id), count in sorted(summary.items(), key=lambda x: x[1], reverse=True):
+        ws.cell(row=row, column=1).value = equip_name
+        ws.cell(row=row, column=2).value = equip_id
+        ws.cell(row=row, column=3).value = count
+        row += 1
+
+    wb.save(output_file)
+    print(f"Saved Equipment report to {output_file}")
+
+
+async def write_interlock_excel(resp, output_file, report_type="daily", filters=None):
+    """Write interlock_name_count response to Excel in daily or monthly format."""
+    data = resp.get(f"{report_type}_data", {})
+    process_data = data.get("process", {})
+    gantry_data = data.get("gantry", {})
+    safety_data = data.get("safety", {})
+
+    all_data = {}
+
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    def init_date_entry(date):
+        if date not in all_data:
+            all_data[date] = {
+                "Normal": {"details": [], "total": 0},
+                "Fault": {"details": [], "total": 0},
+                "Maintenance": {"details": [], "total": 0},
+            }
+
+    def merge_section(section_data):
+        for date, content in section_data.items():
+            init_date_entry(date)
+            for status in ["Normal", "Fault", "Maintenance"]:
+                if status in content:
+                    all_data[date][status]["details"].extend(content[status]["details"])
+                    all_data[date][status]["total"] += content[status]["total"]
+
+    merge_section(process_data)
+    merge_section(gantry_data)
+    merge_section(safety_data)
+
+    if not all_data:
+        print("No data found in any section.")
+        return
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Interlock Alerts"
+
+    # Determine a sample record
+    sample = None
+    for entry in all_data.values():
+        for status in ["Normal", "Maintenance", "Fault"]:
+            if entry[status]["details"]:
+                sample = entry[status]["details"][0]
+                break
+        if sample:
+            break
+
+    if not sample:
+        raise ValueError("No valid details found")
+
+    filters = filters or {}
+
+    def matches_filters(detail):
+        for key in ["bcu_number", "equipment_name", "equipment_id", "assigned_bay"]:
+            if key in filters and filters[key] is not None:
+                if str(detail.get(key)) != str(filters[key]):
+                    return False
+        return True
+
+    # Dynamically detect primary and secondary keys
+    primary_key = None
+    secondary_key = None
+
+    for key in ["bcu_number", "equipment_name", "equipment_id", "assigned_bay"]:
+        found = any(
+            detail.get(key)
+            for entry in all_data.values()
+            for status in ["Normal", "Fault", "Maintenance"]
+            for detail in entry[status]["details"]
+        )
+        if found:
+            if not primary_key:
+                primary_key = key
+            elif not secondary_key:
+                secondary_key = key
+            if primary_key and secondary_key:
+                break
+
+    primary_key = primary_key or "bcu_number"
+    secondary_key = secondary_key or "interlock_name"
+
+    # ---- Report Title ----
+    report_title = "WEEKLY / DATE RANGE REPORT" if report_type == "daily" else "MONTHLY REPORT"
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=4)
+    title_cell = ws.cell(row=1, column=1)
+    title_cell.value = report_title
+    title_cell.font = Font(bold=True, size=14, color="000000")
+    title_cell.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+    title_cell.border = thin_border
+
+    row = 3
+
+    # ---- Metadata Construction ----
+    total_records = sum(
+        len([d for d in entry[status]["details"] if matches_filters(d)])
+        for entry in all_data.values() for status in ["Normal", "Maintenance", "Fault"]
+    )
+    total_alert_count = sum(
+        entry[status]["total"]
+        for entry in all_data.values() for status in ["Normal", "Maintenance", "Fault"]
+    )
+
+    # Display selected key in metadata
+    selected_key = next((k for k in ["bcu_number", "equipment_name", "equipment_id", "assigned_bay"] if filters.get(k)), None)
+    selected_label = selected_key.replace("_", " ").title() if selected_key else primary_key.replace("_", " ").title()
+    selected_value = filters.get(selected_key, "All") if selected_key else "All"
+
+    metadata = {
+        "Export Date and Time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "Total Records": total_records,
+        "Total Alert Count": total_alert_count,
+        "Data Type": "Interlock Alert",
+        f"{selected_label} Selected": selected_value,
+        "Zone": sample.get("zone", ""),
+        "Plant Name": sample.get("location_name", ""),
+        "SAP ID": sample.get("sap_id", ""),
+        "Date Range": f"{min(all_data)} to {max(all_data)}"
+    }
+
+
+    for key, val in metadata.items():
+        cell_key = ws[f"A{row}"]
+        cell_val = ws[f"B{row}"]
+        cell_key.value = key
+        cell_key.font = Font(bold=True, color="000000")
+        cell_key.fill = PatternFill(start_color="D8E4BC", end_color="D8E4BC", fill_type="solid")
+        cell_key.alignment = Alignment(horizontal="center")
+        cell_key.border = thin_border
+        cell_val.value = val
+        cell_val.alignment = Alignment(horizontal="center")
+        cell_val.border = thin_border
+        row += 1
+
+    row += 1
+
+    # ---- Table Headers ----
+    headers = [
+        "Date" if report_type == "daily" else "Month",
+        primary_key.replace("_", " ").title(),
+        secondary_key.replace("_", " ").title(),
+        "Alert count"
+    ]
+
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=row, column=col)
+        cell.value = header
+        cell.font = Font(bold=True, color="000000")
+        cell.fill = PatternFill(start_color="B7DEE8", end_color="B7DEE8", fill_type="solid")
+        cell.alignment = Alignment(horizontal="center")
+        cell.border = thin_border
+    row += 1
+
+    # ---- Main Table ----
+    summary = defaultdict(int)
+    interlock_summary = defaultdict(int)
+    sorted_dates = sorted(all_data.keys())
+
+    def get_period_label(date_str, report_type):
+        if report_type == "daily":
+            return date_str
+        
+        # Try different date formats for monthly conversion
+        date_formats = [
+            "%Y-%m-%d",    # 2025-06-10
+            "%b-%Y",       # Apr-2025
+            "%B-%Y",       # April-2025
+            "%Y-%m",       # 2025-04
+            "%m-%Y"        # 04-2025
+        ]
+        
+        for fmt in date_formats:
+            try:
+                parsed_date = datetime.datetime.strptime(date_str, fmt)
+                return parsed_date.strftime("%B %Y")  # Return "April 2025" format
+            except ValueError:
+                continue
+        
+        # If no format matches, return original string
+        return date_str
+    
+    for date_str in sorted_dates:
+        period_label = get_period_label(date_str, report_type)
+        
+        for detail in all_data[date_str].get("Normal", {}).get("details", []):
+            ws.cell(row=row, column=1).value = period_label
+            ws.cell(row=row, column=2).value = detail["bcu_number"]
+            ws.cell(row=row, column=3).value = detail["interlock_name"]
+            ws.cell(row=row, column=4).value = detail["count"]
+            
+            # Update summaries
+            summary[detail["bcu_number"]] += detail["count"]
+            interlock_summary[detail["interlock_name"]] += detail["count"]
+            row += 1
+
+    row += 2
+
+    # ---- BCU Summary ----
+    ws.cell(row=row, column=1).value = f"{primary_key.replace('_', ' ').title()} Summary"
+    ws.cell(row=row, column=1).font = Font(bold=True)
+    row += 1
+    ws.cell(row=row, column=1).value = primary_key.replace("_", " ").title()
+    ws.cell(row=row, column=2).value = "Total count of alerts"
+    ws.cell(row=row, column=1).font = Font(bold=True)
+    ws.cell(row=row, column=2).font = Font(bold=True)
+    row += 1
+
+    for key_val in sorted(summary.keys()):
+        ws.cell(row=row, column=1).value = key_val
+        ws.cell(row=row, column=2).value = summary[key_val]
+        row += 1
+
+    row += 2
+
+    # ---- Interlock Summary ----
+    ws.cell(row=row, column=1).value = f"{secondary_key.replace('_', ' ').title()} Summary"
+    ws.cell(row=row, column=1).font = Font(bold=True)
+    row += 1
+    ws.cell(row=row, column=1).value = secondary_key.replace("_", " ").title()
+    ws.cell(row=row, column=2).value = "Total count of alerts"
+    ws.cell(row=row, column=1).font = Font(bold=True)
+    ws.cell(row=row, column=2).font = Font(bold=True)
+    row += 1
+
+    for key_val in sorted(interlock_summary.keys(), key=lambda x: interlock_summary[x], reverse=True):
+        ws.cell(row=row, column=1).value = key_val
+        ws.cell(row=row, column=2).value = interlock_summary[key_val]
+        row += 1
+
+    wb.save(output_file)
+    print(f"Saved file to {output_file}")

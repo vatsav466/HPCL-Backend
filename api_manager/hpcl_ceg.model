@@ -427,6 +427,13 @@ Model ROAssetMaster {
     }
 }
 
+Model WidgetFilters internal {
+    key str regex="^[a-zA-Z0-9_.\-=\" ]+$"
+    cond str
+    value optional str regex="^[a-zA-Z0-9,\/+\[\]\{\}\(\)&><#_.\-=\" ]*$"
+    val optional str regex="^[a-zA-Z0-9,\/+\[\]\{\}\(\)&><#_.\-=\" ]*$"
+}
+
 Model TASAssetMaster {
     bu index_field BusinessUnit
     sap_id index_field str
@@ -449,8 +456,11 @@ Model TASAssetMaster {
     Action=> download_template {
     }
 
-    Action=> download_report {
-        input_data dict
+    Action=> download_tas_report {
+        filters optional list WidgetFilters
+        action str
+        drill_state optional str
+        cross_filters optional list WidgetFilters
     }
     Config=> {
         crud_operations='read'

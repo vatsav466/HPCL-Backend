@@ -1,14 +1,18 @@
 import urdhva_base
 from hpcl_ceg_enum import *
-from hpcl_ceg_model import *
+from hpcl_ceg_model import (
+    Tasassetmaster_Download_Tas_Asset_MasterParams,
+    Tasassetmaster_Download_TemplateParams,
+    Tasassetmaster_Download_Tas_ReportParams
+)
 import os
 import json
-import shutil
 import fastapi
-import traceback
 import polars as pl
+from datetime import datetime
+import utilities.helpers as helpers
 from fastapi.responses import FileResponse
-import utilities.bu_key_mapping as bu_key_mapping
+import orchestrator.dbconnector.global_analytics as global_analytics
 import orchestrator.masterdata.tas_master_upload as tas_master_upload
 
 router = fastapi.APIRouter(prefix='/tasassetmaster')
@@ -136,54 +140,116 @@ async def tasassetmaster_download_template(data: Tasassetmaster_Download_Templat
     )
 
 
+# Action download_tas_report
+@router.post('/download_tas_report', tags=['TASAssetMaster'])
+async def tasassetmaster_download_tas_report(data: Tasassetmaster_Download_Tas_ReportParams):
+    # Mapping of actions to their handler functions, filename prefixes, and Excel writer functions
+    print("data", data)
+    filter_dict = {f.key: f.value for f in data.filters}
 
-# Action download_report
-@router.post('/download_report', tags=['TASAssetMaster'])
-async def tasassetmaster_download_report(data: Tasassetmaster_Download_ReportParams):
-    alert_data_json = data.dict()
+    filters = {
+        "bcu_number": filter_dict.get("bcu_number"),
+        "equipment_name": filter_dict.get("equipment_name"),
+        "equipment_id": filter_dict.get("equipment_id"),
+        "assigned_bay": filter_dict.get("assigned_bay"),
+    }
+    action_config = {
+        "interlock_name_count": {
+            "function": global_analytics.GlobalAnalytics.interlock_name_count,
+            "filename_prefix": "BCU_Alarm_Parameters_Dashboard",
+            "excel_writer": helpers.write_interlock_excel,
+        },
+        "tas_maintenance_fault": {
+            "function": global_analytics.GlobalAnalytics.tas_maintenance_fault,
+            "filename_prefix": "TAS_Maintenance_Fault_Dashboard",
+            "excel_writer": helpers.generate_equipment_report,
+        },
+        "tas_normal_count": {
+            "function": global_analytics.GlobalAnalytics.tas_normal_count,
+            "filename_prefix": "Trends_and_Analytics_Dashboard",
+            "excel_writer": helpers.generate_trends_report,
+        },
+        "local_loaded": {
+            "function": global_analytics.GlobalAnalytics.local_loaded,
+            "filename_prefix": "Local_Loaded_Dashboard",
+            "excel_writer": helpers.write_interlock_excel,
+        },
+        "unauthorised_flow": {
+            "function": global_analytics.GlobalAnalytics.unauthorised_flow,
+            "filename_prefix": "Unauthorised_Flow_Dashboard",
+            "excel_writer": helpers.write_interlock_excel,
+        },
+        "sick_tts": {
+            "function": global_analytics.GlobalAnalytics.sick_tts,
+            "filename_prefix": "Sick_TTS_Dashboard",
+            "excel_writer": helpers.write_interlock_excel,
+        },
+        "cancelled_tts": {
+            "function": global_analytics.GlobalAnalytics.cancelled_tts,
+            "filename_prefix": "Cancelled_TTS_Dashboard",
+            "excel_writer": helpers.write_interlock_excel,
+        },
+        "kfactor": {
+            "function": global_analytics.GlobalAnalytics.kfactor,
+            "filename_prefix": "KFactor_Dashboard",
+            "excel_writer": helpers.write_interlock_excel,
+        },
+        "manualfanprinted": {
+            "function": global_analytics.GlobalAnalytics.manualfanprinted,
+            "filename_prefix": "Manual_Fan_Printed_Dashboard",
+            "excel_writer": helpers.write_interlock_excel,
+        },
+        "overloaded_tts": {
+            "function": global_analytics.GlobalAnalytics.overloaded_tts,
+            "filename_prefix": "Overloaded_TTS_Dashboard",
+            "excel_writer": helpers.write_interlock_excel,
+        },
+        "mfmkfactor": {
+            "function": global_analytics.GlobalAnalytics.mfmkfactor,
+            "filename_prefix": "MFM_KFactor_Dashboard",
+            "excel_writer": helpers.write_interlock_excel,
+        },
+        "bay_reassignment": {
+            "function": global_analytics.GlobalAnalytics.bay_reassignment,
+            "filename_prefix": "Bay_Reassignment_Dashboard",
+            "excel_writer": helpers.write_interlock_excel,
+        },
+    }
 
-    df = pl.DataFrame(alert_data_json)
 
-    # Rename for clarity
-    df = df.rename({
-        "created_date": "Date",
-        "device_name": "BCU no.",
-        "interlock_name": "Interlock name",
-        "alert_count": "Alert count"
-    })
+    # --- Execution block ---
 
-    # Ensure proper types
-    df = df.with_columns([
-        pl.col("Date").cast(pl.Date)
-    ])
+    # Get the action config
+    config = action_config.get(data.action)
 
-    # Generate Summary Table (Total per BCU)
-    summary_df = (
-        df.group_by("BCU no.")
-        .agg(pl.col("Alert count").sum().alias("Total count of alerts"))
-        .sort("BCU no.")
-    )
+    # If unknown action
+    if not config:
+        resp = {"status": False, "message": f"Unknown action {data.action}"}
+    else:
+        # Call the corresponding function
+        func = config["function"]
+        resp = await func(filters=data.filters, cross_filters=data.cross_filters, drill_state=data.drill_state)
 
-    # Convert to Pandas for Excel
-    df_pd = df.sort(["Date", "BCU no.", "Interlock name"]).to_pandas()
-    summary_pd = summary_df.to_pandas()
+        # If success, handle Excel writing
+        if resp.get("status"):
+            # Detect report type
+            if "monthly_data" in resp:
+                report_type = "monthly"
+            elif "daily_data" in resp:
+                report_type = "daily"
+            else:
+                report_type = "daily"  # fallback
 
-    # Export to Excel in memory
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        # Daily Detail
-        df_pd.to_excel(writer, sheet_name="Daily Alerts", index=False)
+            # Generate timestamped filename
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H%M")
+            filename = os.path.join(
+                urdhva_base.settings.downloads,
+                f"{config['filename_prefix']}_{timestamp}.xlsx"
+            )
+            print("resp --> ", resp)
+            # Call the corresponding Excel writer
+            await config["excel_writer"](resp, output_file=filename, report_type=report_type, filters=filters)
 
-        # Summary
-        summary_pd.to_excel(writer, sheet_name="Summary", index=False)
-
-        # Metadata Sheet (Optional)
-        meta = pd.DataFrame({
-            "Export date and time": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-            "Total records": [len(df_pd)]
-        })
-        meta.to_excel(writer, sheet_name="Info", index=False)
-
-    output.seek(0)
-    return StreamingResponse(output, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                             headers={"Content-Disposition": "attachment; filename=alerts_summary.xlsx"})
+            # Attach file path to response
+            resp["file_path"] = filename
+    return resp["file_path"]
