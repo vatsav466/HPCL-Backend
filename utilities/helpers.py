@@ -301,7 +301,7 @@ async def get_camunda_url(bu, sap_id, alert_section, location_data={}):
 
 async def get_doc_link(file_name: str):
     server_ip = urdhva_base.settings.server_ip
-    return f"https://{server_ip}/api/alerts/stored_document?file_name={file_name}"
+    return f"http://{server_ip}:8080/api/alerts/stored_document?file_name={file_name}"
 
 def map_device_category(interlock_name):
     for category, interlocks in interlock_category_mapping.interlock_to_category.items():
