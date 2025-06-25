@@ -572,6 +572,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
         extra_key_mapping={"sap_id": "terminal_plant_id"}, default_mapping={"bu": "RO"}))
     dry_out_in_days_query = '1'
+    tt_count_filter = {}
     for record in data.filters:
         if record.key == "progress_rate":
             if record.value:
@@ -582,6 +583,9 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                     dry_out_in_days_query = record.value[0]
                 if record.key == "plant":
                     record.key = "terminal_plant_id"
+                    tt_count_filter.update({record.key: record.value})
+                if record.key == "zone":
+                    tt_count_filter.update({record.key: record.value})
                 if len(record.value) == 1:
                     where_clause.append(f"{record.key}='{record.value[0]}'")
                 else:
@@ -631,7 +635,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     indent_not_raised_count = less_than_2_days + from_3_to_7_days + from_8_to_15_days + more_than_15_days
     count_50_klm = await dry_out_analysis.get_ro_count_less_50(conditions)
     tar_analysis = await dry_out_analysis.get_tar_analysis(conditions)
-    dealer_truck_count = await dry_out_analysis.get_tt_counts(conditions)
+    dealer_truck_count = await dry_out_analysis.get_tt_counts(tt_count_filter)
     closed_outlet = await dry_out_analysis.get_closed_outlet(dry_out_in_days=dry_out_in_days_query)
     nozzle_sales = await dry_out_analysis.get_nozzle_sales(dry_out_in_days=dry_out_in_days_query)
 

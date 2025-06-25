@@ -1499,7 +1499,23 @@ async def get_tt_counts(condition):
     # )
     # resp = pd.DataFrame(resp)
     # resp['sap_id'] = resp['sap_id'].astype(str)
-
+    locn_code = []
+    for key, value in condition.items():
+        if key == "zone":
+            if len(value) == 1:
+                value = f"('{value[0]}')"
+            else:
+                value = f"{tuple(value)}"
+            locn_code = await _get_distinct_plants("TAS", value)
+        if key == "terminal_plant_id":
+            locn_code = value
+    if locn_code:
+        if len(locn_code) == 1:
+            locn_code = f"AND \"LOCN_CODE\" in ('{locn_code[0]}')"
+        else:
+            locn_code = f"AND \"LOCN_CODE\" in {tuple(locn_code)}"
+    else:
+        locn_code = ""
     query = f"""WITH LatestR3 AS (
                 SELECT 
                     "TRUCK_REGNO", 
@@ -1538,6 +1554,7 @@ async def get_tt_counts(condition):
                 FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP"
                 WHERE "CARD_STATUS" = 'R'
                   AND "LOADED_ON"::date >= '{current_data}'
+                  {locn_code}
                   AND "TRUCK_REGNO" NOT IN (
                       SELECT "TRUCK_REGNO"
                       FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP"
@@ -1843,3 +1860,9 @@ async def get_nozzle_sales(dry_out_in_days='1'):
     site_data = pd.DataFrame(site_data)
     # print(site_data['erp_code'].unique().tolist())
     return len(site_data['erp_code'].unique().tolist()) if 'erp_code' in site_data.columns else 0
+
+async def _get_distinct_plants(bu, zone):
+    query = f"""select distinct sap_id from location_master where zone in {zone} and bu = '{bu}'"""
+    resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    resp = pd.DataFrame(resp.get("data", []))
+    return resp['sap_id'].unique().tolist() if 'sap_id' in resp.columns else []
