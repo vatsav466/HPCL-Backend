@@ -29,8 +29,10 @@ async def indent_sync_ro_daily_dryout():
             "product_grp": pl.String, "product_sap_color": pl.String
         }
         ro_data = pd.DataFrame(ro_data)
-        if 'receipt_grp' in ro_data.columns:
-            del ro_data['receipt_grp']
+        _list_column = ['site_type', 'is_abhyuday', 'receipt_grp']
+        for col in _list_column:
+            if col in ro_data.columns:
+                del ro_data[col]
         ro_data = pl.DataFrame(ro_data, schema=ro_data_schema)
         ist = pytz.timezone('Asia/Kolkata')
         sync_date = datetime.datetime.now(ist).strftime("%y%m%d-%H") + "00"
