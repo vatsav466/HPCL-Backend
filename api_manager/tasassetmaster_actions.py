@@ -256,4 +256,4 @@ async def tasassetmaster_download_tas_report(data: Tasassetmaster_Download_Tas_R
             resp["file_path"] = filename
     data_url = filename.replace(urdhva_base.settings.downloads, 
                                       urdhva_base.settings.downloads_url_base)
-    return {"status": True, "message": "Success", "data_url": data_url}
+    return {"status": True, "message": "Success", "file_path": data_url}
