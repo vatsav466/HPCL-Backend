@@ -247,9 +247,12 @@ async def tasassetmaster_download_tas_report(data: Tasassetmaster_Download_Tas_R
                 f"{config['filename_prefix']}_{timestamp}.xlsx"
             )
             print("resp --> ", resp)
+            
             # Call the corresponding Excel writer
             await config["excel_writer"](resp, output_file=filename, report_type=report_type, filters=filters)
 
             # Attach file path to response
             resp["file_path"] = filename
-    return resp["file_path"]
+    data_url = filename.replace(urdhva_base.settings.downloads, 
+                                      urdhva_base.settings.downloads_url_base)
+    return {"status": True, "message": "Success", "data_url": data_url}
