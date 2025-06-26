@@ -142,8 +142,8 @@ location_configs = [
         "query": """
                 SELECT
                     zca.customer AS PLANT, zcs.name1 AS PLANT_DESC, zca.sales_district, zso.sales_district_desc, zca.deliv_plant AS terminal_plant_id,
-                    zso.SALES_OFFICE_DESC, zso.SALES_GROUP_DESC, plt.ZZONE, zcs.CITY AS CITY1, zcs.POSTAL_CODE AS POST_CODE1, zcs.ADDRESS1, zcs.ADDRESS2, zcs.ADDRESS3, zcs.ADDRESS4,
-                    zcs.ADDRESS5, plt.PLANT_DESC AS terminal_plant_name, plt.STATE_NAME, zcs.first_telephone_number AS dealer_phone,
+                    zso.SALES_OFFICE_DESC, zso.SALES_GROUP_DESC, plt.ZZONE, zcs.CITY AS CITY1, zcs.POSTAL_CODE AS POST_CODE1, zcs.ADDRESS1, zcs.ADDRESS2,
+                    zcs.ADDRESS3, zcs.ADDRESS4, zcs.ADDRESS5, plt.PLANT_DESC AS terminal_plant_name, plt.STATE_NAME, zcs.first_telephone_number AS dealer_phone,
                     zcs.second_tel_no, zcs.email_id AS dealer_email, zca.inactive, zcs.OUTLET_TYPE, zcs.gstin, zcs.mrn, zcs.OUTLET_TYPE, zcs.gstin,
                     zcs.mrn, zcs.permanent_Account_number, zca.sales_grp
                 FROM ZSDCV_CUST_SA_STG zca 
