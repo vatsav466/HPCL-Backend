@@ -452,6 +452,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
         schema_class = LocationMasterSchema
         upsert_keys = ['bu', 'sap_id']
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
+        search_fields = ['bu', 'sap_id', 'name', 'region', 'zone', 'terminal_plant_name']
 
 
 class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
@@ -503,6 +504,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
         schema_class = LocationMasterSchema
         upsert_keys = ['bu', 'sap_id']
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
+        search_fields = ['bu', 'sap_id', 'name', 'region', 'zone', 'terminal_plant_name']
 
 
 class LocationMasterGetResp(pydantic.BaseModel):

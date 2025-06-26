@@ -724,8 +724,8 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
         carry_fwd_data = pd.DataFrame(carry_fwd_data)
         pending_carry_fwd_data = await dry_out_analysis.get_previous_day_carry_fwd_indent()
-        other_cwf_count = (len(carry_fwd_data) - len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != ''])
-                           - len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']))
+        other_cwf_count = (len(carry_fwd_data) - len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != '']) if len(carry_fwd_data) else 0
+                           - len(carry_fwd_data[carry_fwd_data['category'].fillna("") != ''])) if len(carry_fwd_data) else 0
         pending_cwf_other_count = (pending_carry_fwd_data.get("cf_indents", 0) - pending_carry_fwd_data.get("dryout_count", 0)
                                    - pending_carry_fwd_data.get("category_a_count", 0))
         stats.extend([{
@@ -923,7 +923,7 @@ async def indentdryout_generate_dryout_group_data(data: Indentdryout_Generate_Dr
             "prod_reqd_dt": "PROD_REQD_DT", "reported_date": "REPORTED_DATE",
             "dry_out_in_days": "DRY_OUT_IN_DAYS", "category": "CATEGORY", "indent_status": "INDENT_STATUS"
         }, inplace=True)
-        del carry_fwd_data['dried_out']
+        carry_fwd_data = carry_fwd_data.drop(["dried_out"], axis=1, errors="ignore")
         print("carry_fwd_data: ", carry_fwd_data)
         return carry_fwd_data.to_dict(orient="records")
 

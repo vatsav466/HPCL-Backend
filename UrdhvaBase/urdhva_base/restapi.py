@@ -118,11 +118,12 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
                     request.scope["body"] = decrypted_string
                     request._body = decrypted_string
             except Exception as e:
-                print(f"Middleware error: {str(e)}")
-                return JSONResponse(
-                    status_code=400,
-                    content={"error": "Invalid request body"}
-                )
+                if 'multipart/form-data' not in request.headers.get("content-type"):
+                    print(f"Middleware error: {str(e)}")
+                    return JSONResponse(
+                        status_code=400,
+                        content={"error": "Invalid request body"}
+                    )
         elif request.method in ["DELETE"]:
             query_list = path.split('/')
             query_id = query_list[-1]

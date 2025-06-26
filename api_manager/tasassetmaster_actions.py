@@ -1,6 +1,7 @@
 import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import (
+    TASAssetMaster,
     Tasassetmaster_Download_Tas_Asset_MasterParams,
     Tasassetmaster_Download_TemplateParams,
     Tasassetmaster_Download_Tas_ReportParams
@@ -247,9 +248,12 @@ async def tasassetmaster_download_tas_report(data: Tasassetmaster_Download_Tas_R
                 f"{config['filename_prefix']}_{timestamp}.xlsx"
             )
             print("resp --> ", resp)
+            
             # Call the corresponding Excel writer
             await config["excel_writer"](resp, output_file=filename, report_type=report_type, filters=filters)
 
             # Attach file path to response
             resp["file_path"] = filename
-    return resp["file_path"]
+    data_url = filename.replace(urdhva_base.settings.downloads, 
+                                      urdhva_base.settings.downloads_url_base)
+    return {"status": True, "message": "Success", "file_path": data_url}
