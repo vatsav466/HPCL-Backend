@@ -891,7 +891,9 @@ async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_N
     resp = pd.DataFrame(resp)
     # resp = [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()]
     result = {
-        "customer": [{"name": str(row['dealer_id']) + " - " + row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()],
+        "customer": [{"name": str(row['dealer_id']) + " - " + row['location_name'],
+                      "id": row['dealer_id']} for _, row in resp.iterrows()
+                     if row['dealer_id'] and row['location_name']],
         "plant": [{"name": row['terminal_plant_name'], "id": row['terminal_plant_id']} for _, row in resp.iterrows()]
     }
     return {"status": True, "message": "Success", "data": result}
