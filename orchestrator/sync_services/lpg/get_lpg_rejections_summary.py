@@ -284,6 +284,7 @@ def get_cs_rejections(params):
     data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
     data = data.with_columns(pl.col('updated_at').alias('created_at'))
     data = data.with_columns(pl.col('sap_id').alias('entity_id'))
+    data = data.with_columns(pl.col('plant').str.to_lowercase().alias('plant'))
         
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
@@ -357,6 +358,7 @@ def get_gd_rejections(params):
     data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
     data = data.with_columns(pl.col('updated_at').alias('created_at'))
     data = data.with_columns(pl.col('sap_id').alias('entity_id'))
+    data = data.with_columns(pl.col('plant').str.to_lowercase().alias('plant'))
         
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
@@ -430,6 +432,7 @@ def get_pt_rejections(params):
     data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
     data = data.with_columns(pl.col('updated_at').alias('created_at'))
     data = data.with_columns(pl.col('sap_id').alias('entity_id'))
+    data = data.with_columns(pl.col('plant').str.to_lowercase().alias('plant'))
     
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
@@ -455,9 +458,9 @@ def process_plant_rejections(plant):
         start_time = datetime.datetime.now()
         
         # Process all rejection types for this plant
-        cs_result = get_cs_rejections(params)
-        gd_result = get_gd_rejections(params)
-        pt_result = get_pt_rejections(params)
+        get_cs_rejections(params)
+        get_gd_rejections(params)
+        get_pt_rejections(params)
         
         processing_time = datetime.datetime.now() - start_time
         print(f"Plant {plant['PlantName']} processed in {processing_time.total_seconds():.2f} seconds")

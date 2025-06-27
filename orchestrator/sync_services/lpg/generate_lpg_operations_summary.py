@@ -1077,6 +1077,7 @@ def generate_summary():
                     data['updated_at'] = datetime.now()
                     data['created_at'] = data['updated_at']
                     data['entity_id'] = data["sap_id"]
+                    data['plant'] = data["short_name"]
                     insertToDB(data, "lpg_operations_summary")
                 current_date += timedelta(days=1)
     except Exception as e:
