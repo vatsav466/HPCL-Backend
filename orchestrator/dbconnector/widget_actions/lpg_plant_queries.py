@@ -1023,7 +1023,7 @@ LIMIT 10000;''',
     'productivity_overtime_vs_break_production': f'''  
                             SELECT 
                               "zone",
-                              "short_name" as "plant",
+                              "plant",
                               SUM("productivity_break_production")/1000 as break_production,
                               SUM("productivity_overtime_production")/1000 as overtime_production
                             FROM 
