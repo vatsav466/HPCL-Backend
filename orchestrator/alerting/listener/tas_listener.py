@@ -21,7 +21,13 @@ def load_device_data(sap_id):
         dict: The device data loaded from the json file
     """
     try:
-        data_path = f"/opt/ceg/algo/things_board/device_data/{sap_id}.json"
+        if urdhva_base.settings.environment == 'prod':
+            data_path = f"/opt/ceg/algo/prod/{sap_id}.json"
+        elif urdhva_base.settings.environment == 'uat':
+            data_path = f"/opt/ceg/algo/uat/{sap_id}.json"
+        else:
+            data_path = f"/opt/ceg/algo/things_board/device_data/{sap_id}.json"
+
         with open(data_path, 'r') as file:
             return json.load(file)
     except Exception as e:
@@ -106,7 +112,21 @@ async def tas_listener(rmsg):
             alertdata['severity'] = rmsg['severity']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
+            #Handle empty sensor_id case
+            if not alertdata.get('sensor_id'):
+                device_name = alertdata.get('device_name', '')
+                if device_name:
+                   if '_' in device_name:
+                       parts = device_name.split('_')
+                       if len(parts) >= 2:
+                         alertdata["sensor_id"] = parts[0].strip() # Extract the first part
+                   elif '@' in device_name:
+                        alertdata["sensor_id"] = device_name.split('@')[0].strip()
+                else:
+                      print("No valid separator found, sensor_id not assigned")
+  
             custom_data = rmsg['details']['additionalInfo'].get("customData", {})
+
             
             alertdata['message'] = ", ".join([f"{key}={value}" for key, value in custom_data.items()])
             logger.info("Create Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
