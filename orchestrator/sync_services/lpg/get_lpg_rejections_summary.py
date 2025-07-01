@@ -285,6 +285,7 @@ def get_cs_rejections(params):
     data = data.with_columns(pl.col('updated_at').alias('created_at'))
     data = data.with_columns(pl.col('sap_id').alias('entity_id'))
     data = data.with_columns(pl.col('plant').str.to_lowercase().alias('plant'))
+    data = data.with_columns(pl.lit('').alias('carousel_type'))
         
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
@@ -359,6 +360,7 @@ def get_gd_rejections(params):
     data = data.with_columns(pl.col('updated_at').alias('created_at'))
     data = data.with_columns(pl.col('sap_id').alias('entity_id'))
     data = data.with_columns(pl.col('plant').str.to_lowercase().alias('plant'))
+    data = data.with_columns(pl.lit('').alias('carousel_type'))
         
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
@@ -433,6 +435,7 @@ def get_pt_rejections(params):
     data = data.with_columns(pl.col('updated_at').alias('created_at'))
     data = data.with_columns(pl.col('sap_id').alias('entity_id'))
     data = data.with_columns(pl.col('plant').str.to_lowercase().alias('plant'))
+    data = data.with_columns(pl.lit('').alias('carousel_type'))
     
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
