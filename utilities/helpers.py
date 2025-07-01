@@ -309,7 +309,7 @@ def map_device_category(interlock_name):
             return category
     return "Unknown"
 
-def fetch_oi_devices(self, page_size=100, page=0):
+def fetch_oi_devices(page_size=100, page=0):
     """
     Fetch devices from ThingsBoard instance.
 
@@ -331,7 +331,7 @@ def fetch_oi_devices(self, page_size=100, page=0):
     return response.get("data", []) if response else []
 
 
-def fetch_device_data(self, device_id, key="water"):
+def fetch_device_data(device_id, key="water"):
     # Fetching server attributes
     attr_url = f"/api/plugins/telemetry/DEVICE/{device_id}/values/attributes/SERVER_SCOPE"
     attr_data = tb_master.ThingsBoardInterface().api_handler('GET', attr_url, {}, {})
@@ -385,7 +385,7 @@ def fetch_device_data(self, device_id, key="water"):
 
 
 
-def fetch_alarm_data(self, device_id):
+def fetch_alarm_data(device_id):
     alarm_url = f"/api/alarm/DEVICE/{device_id}?searchStatus=ACTIVE"
     params = {'pageSize': 100, 'page': 0}
     alarm_data = tb_master.ThingsBoardInterface().api_handler('GET', alarm_url, {}, params)

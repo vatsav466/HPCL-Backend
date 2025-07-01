@@ -727,14 +727,14 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             Exception: If an error occurs during data fetching for a device.
         """
         WATER_THRESHOLD = 80
-        all_devices = fetch_oi_devices(self, page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=0, page=0)
         pi_score = []
 
         for device in all_devices:
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
-                    required_kls, target_volume, available_water = fetch_device_data(self, device_id, key="water")
+                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="water")
 
                     percentage = (available_water / target_volume) * 100 if target_volume else 0
 
@@ -786,14 +786,14 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             Exception: If an error occurs during data fetching for a device.
         """
         FOAM_THRESHOLD = 80
-        all_devices = fetch_oi_devices(self, page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=0, page=0)
         pi_score = []
 
         for device in all_devices:
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
-                    required_kls, target_volume, available_water = fetch_device_data(self, device_id, key="foam")
+                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="foam")
 
                     percentage = (available_water / target_volume) * 100 if target_volume else 0
 
@@ -841,14 +841,14 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             dict: A dictionary containing the module's name, calculated score, weightage, 
                 and detailed results of each rule evaluation.
         """
-        all_devices = fetch_oi_devices(self, page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=0, page=0)
         pi_score = []
 
         for device in all_devices:
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
-                    alarms_data = fetch_alarm_data(self, device_id)
+                    alarms_data = fetch_alarm_data(device_id)
                     score_percentage = 100.0
 
                     # Check if any relevant alarm is active and unacknowledged
@@ -864,11 +864,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                         weightage = rule.get('weightage', 0)
                         score = round((score_percentage * weightage) / 100, 2)
                         pi_score.append({
-                            "name": rule.get('name', 'Unnamed Rule'),
+                            "name": rule.get('name', ''),
                             "score": score,
                             "weightage": weightage,
-                            "module": rules.get('name', 'Unknown Module')
+                            "module": rules.get('name', '')
                         })
+                        break
 
                 except Exception as e:
                     print(f"Error processing device {device.get('name', 'Unknown')}: {e}")
@@ -904,14 +905,14 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             dict: A dictionary containing the module's name, calculated score, weightage,
                 and detailed results of each rule evaluation.
         """
-        all_devices = fetch_oi_devices(self, page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=0, page=0)
         pi_score = []
 
         for device in all_devices:
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
-                    alarms_data = fetch_alarm_data(self, device_id)
+                    alarms_data = fetch_alarm_data(device_id)
 
                     hydrant_alarm_active = False
                     jockey_alarm_active = False
@@ -945,11 +946,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                             'module': module_name
                         }
                     ])
+                    break
                 except Exception as e:
                     print(f"Error processing device {device.get('name', 'Unknown')}: {e}")
                     continue
 
-        final_score = round(sum(r['score'] for r in pi_score) * rules.get('weightage', 100) / 100, 2)
+        final_score = round(sum(r['score'] for r in pi_score))
         print("final_score ---> ", final_score)
 
         return {
