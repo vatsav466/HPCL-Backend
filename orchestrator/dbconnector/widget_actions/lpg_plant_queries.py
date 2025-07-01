@@ -410,7 +410,7 @@ GROUP BY plant_name,
 ORDER BY COUNT(*) DESC
 LIMIT 10000;''',
 
-    "bottom_gd_plants": f'''SELECT plant_name AS plant_name,
+    "bottom_gd_plants": '''SELECT plant_name AS plant_name,
        system_id AS system_id,
        sum(sortoutpercentage) AS "Percentage Rejection"
 FROM
@@ -462,7 +462,7 @@ GROUP BY plant_name,
 ORDER BY "Percentage Rejection" DESC
 LIMIT 10000;''',
 
-    "bottom_pt_plants": f'''SELECT plant_name AS plant_name,
+    "bottom_pt_plants": '''SELECT plant_name AS plant_name,
        system_id AS system_id,
        sum(sortoutpercentage) AS "Percentage Rejection"
 FROM
@@ -514,7 +514,7 @@ GROUP BY plant_name,
 ORDER BY "Percentage Rejection" DESC
 LIMIT 10000;''',
 
-    "bottom_productivity_plants": f'''SELECT short_name AS short_name,
+    "bottom_productivity_plants": '''SELECT short_name AS short_name,
        AVG("productivity.normal.productivity") AS "Total Productivity"
 FROM public.lpg_consolidated_data
 WHERE (short_name NOT IN ('sitarganj',
@@ -523,7 +523,7 @@ GROUP BY short_name
 ORDER BY COUNT(*) DESC
 LIMIT 10000;''',
 
-    "productivity_by_zone": f'''SELECT DATE_TRUNC('day', process_date) AS process_date,
+    "productivity_by_zone": '''SELECT DATE_TRUNC('day', process_date) AS process_date,
        zone AS zone,
                sum("productivity.normal.productivity") AS "SUM(productivity.normal.productivity)"
 FROM public.lpg_consolidated_data
@@ -532,7 +532,7 @@ GROUP BY DATE_TRUNC('day', process_date),
 ORDER BY "SUM(productivity.normal.productivity)" DESC
 LIMIT 50000;''',
 
-    "productivity_by_location": f'''SELECT DATE_TRUNC('day', process_date) AS process_date,
+    "productivity_by_location": '''SELECT DATE_TRUNC('day', process_date) AS process_date,
        short_name AS short_name,
        sum("productivity.normal.productivity") AS "SUM(productivity.normal.productivity)"
 FROM public.lpg_consolidated_data
@@ -541,7 +541,7 @@ GROUP BY DATE_TRUNC('day', process_date),
 ORDER BY "SUM(productivity.normal.productivity)" DESC
 LIMIT 10000;''',
 
-    "consolidated_table": f'''SELECT DATE_TRUNC('day', process_date) AS process_date,
+    "consolidated_table": '''SELECT DATE_TRUNC('day', process_date) AS process_date,
        short_name AS short_name,
        carousel AS carousel,
        sum("bottling.14_2kg") AS "Bottling Summary(14.2KG)",
@@ -562,7 +562,7 @@ GROUP BY DATE_TRUNC('day', process_date),
 ORDER BY "Bottling Summary(14.2KG)" DESC
 LIMIT 10000;''',
 
-     "top_productivity_plants": f'''SELECT short_name AS short_name,
+     "top_productivity_plants": '''SELECT short_name AS short_name,
        AVG("productivity.normal.productivity") AS "Productivity"
 FROM public.lpg_consolidated_data
 WHERE short_name IN ('sitarganj',
@@ -574,47 +574,47 @@ GROUP BY short_name
 ORDER BY COUNT(*) DESC
 LIMIT 10000;''',
 
-    "high_alert_locations": f'''SELECT location_name, COUNT(*) AS alert_count
+    "high_alert_locations": '''SELECT location_name, COUNT(*) AS alert_count
                                 FROM public.alerts 
                                 WHERE severity = 'High'
                                 GROUP BY location_name 
                                 ORDER BY alert_count DESC''',
 
-    "critical_alert_locations": f'''SELECT location_name, COUNT(*) AS alert_count
+    "critical_alert_locations": '''SELECT location_name, COUNT(*) AS alert_count
                                 FROM public.alerts 
                                 WHERE severity = 'Critical'
                                 GROUP BY location_name 
                                 ORDER BY alert_count DESC''',
 
-    "sod_terminal": f'''SELECT severity, COUNT(*) AS alert_count 
+    "sod_terminal": '''SELECT severity, COUNT(*) AS alert_count 
                         FROM public.alerts 
                         GROUP BY severity 
                         ORDER BY alert_count DESC''',
 
-    "alert_categories": f'''SELECT severity, alert_status, COUNT(*) AS alert_count 
+    "alert_categories": '''SELECT severity, alert_status, COUNT(*) AS alert_count 
                             FROM public.alerts 
                             WHERE alert_status IN ('Open', 'Close')
                             GROUP BY severity, alert_status 
                             ORDER BY alert_count DESC''',
 
-    "tas_alerts": f'''SELECT bu, alert_section, COUNT(*) AS alert_count 
+    "tas_alerts": '''SELECT bu, alert_section, COUNT(*) AS alert_count 
                       FROM public.alerts 
                       WHERE alert_section NOT IN ('VA', 'VTS')
                       GROUP BY bu, alert_section 
                       ORDER BY alert_count DESC''',
 
-    "non_tas_alerts": f'''SELECT alert_section, COUNT(*) AS alert_count 
+    "non_tas_alerts": '''SELECT alert_section, COUNT(*) AS alert_count 
                           FROM public.alerts 
                           WHERE alert_section NOT IN ('TAS')
                           GROUP BY alert_section 
                           ORDER BY alert_count DESC''',
 
-    "no_of_terminals": f'''SELECT bu, COUNT(*) AS no_of_terminals 
+    "no_of_terminals": '''SELECT bu, COUNT(*) AS no_of_terminals 
                            FROM public.alerts 
                            GROUP BY bu 
                            ORDER BY no_of_terminals DESC''',
 
-    "alert_ageing": f'''SELECT DISTINCT bu, alert_section,
+    "alert_ageing": '''SELECT DISTINCT bu, alert_section,
                         CASE 
                             WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN '1 Day'
                             WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN '1 to 2 Days'
@@ -648,12 +648,12 @@ LIMIT 10000;''',
                     ORDER BY bu, alert_section,
                         alert_ageing_order''',
 
-    "alert_distributions": f'''SELECT severity, COUNT(*) AS alert_count 
+    "alert_distributions": '''SELECT severity, COUNT(*) AS alert_count 
                                FROM public.alerts 
                                GROUP BY severity 
                                ORDER BY alert_count DESC ;''',
         
-    "analytics": f'''SELECT 
+    "analytics": '''SELECT 
                         a.sap_id, a.interlock_name,
                         COUNT(a.severity) as severity_count, 
                         a.alert_status, 
@@ -665,7 +665,7 @@ LIMIT 10000;''',
 
     "no_of_locations": f'''SELECT COUNT(sap_id) FROM location_master''',
 
-    "day_wise_alerts": f'''SELECT 
+    "day_wise_alerts": '''SELECT 
                             DATE(created_at) AS alert_date,
                             interlock_name,
                             severity,
@@ -675,7 +675,7 @@ LIMIT 10000;''',
                         ORDER BY alert_date, severity;
                         ''',
     
-    "location_severity_count": f'''SELECT 
+    "location_severity_count": '''SELECT 
                                         b.name AS location_name,
                                         a.severity,
                                         COUNT(a.severity) AS alert_count
@@ -690,7 +690,7 @@ LIMIT 10000;''',
                                     ORDER BY 
                                         b.name, a.severity;''',
     
-    "severity_count": f'''SELECT 
+    "severity_count": '''SELECT 
                             lm.sap_id,
                             lm.bu,
                             lm.state,
@@ -714,7 +714,7 @@ LIMIT 10000;''',
                         GROUP BY 
                             lm.sap_id, lm.bu, lm.state, lm.region, lm.zone, lm.name, lm.latitude, lm.longitude;''',
     
-    "hourly_alerts": f'''SELECT 
+    "hourly_alerts": '''SELECT 
                                 DATE_TRUNC('hour', created_at) AS alert_hour, interlock_name,
                                 COUNT(*) AS alert_count
                             FROM 
@@ -726,7 +726,7 @@ LIMIT 10000;''',
                             ORDER BY 
                                 alert_hour;''',
     
-    "sales_performance": f'''SELECT "SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
+    "sales_performance": '''SELECT "SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
                                     "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "INVOICE_DT", 
                                     "TARGET_QTY_TMT", "FISCAL_YEAR", "NETWEIGHT_TMT", "FinalSum", 
                                     "FinalActualSum", "Rate_Per_Day_Required_MMT", "Rate_per_day_current_MMT", 
@@ -734,9 +734,9 @@ LIMIT 10000;''',
                                     "Product_Achievement"
                             FROM public."M60_LEVEL_METADATA"''',
 
-    "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_DATA" where "MOM_LEVEL_FINAL_DATA"."fiscal_year" in ('2023-2024','2024-2025') ''',
+    "sales_growth": '''SELECT * FROM public."MOM_LEVEL_FINAL_DATA" where "MOM_LEVEL_FINAL_DATA"."fiscal_year" in ('2023-2024','2024-2025') ''',
         
-    "carry_forward_analysis": f'''select 
+    "carry_forward_analysis": '''select 
                                         SUM(total_indents) as "total_indents", 
                                         SUM(indents_executed) as "indents_executed", 
                                         SUM(cf_indents) as "cf_indents", SUM(dry_out_locations) as "dry_out_locations",
@@ -744,7 +744,7 @@ LIMIT 10000;''',
                                   from 
                                         "carry_forward_indents"''',
 
-    "carry_fwd_indent": f'''SELECT 
+    "carry_fwd_indent": '''SELECT 
                                     reported_date::DATE AS execution_date,
                                     COUNT(*) AS cf_indents,
                                     COUNT(dry_out_in_days) AS dry_out_locations,
@@ -752,7 +752,7 @@ LIMIT 10000;''',
                                 FROM 
                                     public.carry_fwd_indent''',
     
-    "location_wise_distribution": f'''SELECT 
+    "location_wise_distribution": '''SELECT 
                                             bu,
                                             alert_section,
                                             interlock_name,
@@ -766,7 +766,7 @@ LIMIT 10000;''',
                                         ORDER BY 
                                         bu, alert_section, interlock_name, location_name, severity;''',
     
-    "lpg_cdcms_booking_vs_sales_vs_pending": f'''select sum("bookings_volume") as "Bookings",
+    "lpg_cdcms_booking_vs_sales_vs_pending": '''select sum("bookings_volume") as "Bookings",
                             sum("sales_volume") as "Sales",
                             sum("pendings_volume") as "Pending",
                             "ZOName",
@@ -778,7 +778,7 @@ LIMIT 10000;''',
                     from
                         "lpg_todays_cdcms_sales_summary"''',
     
-    "lpg_cdcms_sakhi_registrations": f''' SELECT 
+    "lpg_cdcms_sakhi_registrations": ''' SELECT 
                                             "Month",
                                             "Month_Number",
                                             SUM("SakhiRegisteredCount") AS "SakhiRegistered",
@@ -787,7 +787,7 @@ LIMIT 10000;''',
                                             "lpg_cdcms_sakhi_registrations"
                                     ''',
     
-    "lpg_cdcms_monthly_sales": f'''select
+    "lpg_cdcms_monthly_sales": '''select
                                 sum("sales_volume") as "Total Sales",
                                 "Month",
                                 "Month_Number",
@@ -800,7 +800,7 @@ LIMIT 10000;''',
                             from
                                 "lpg_monthly_cdcms_sales_summary"''',
     
-    "lpg_cdcms_bookings_order_source_wise": f'''select
+    "lpg_cdcms_bookings_order_source_wise": '''select
                                     "OrderSourceName",
                                     "DistributorName",
 	                                "ZOName",
@@ -812,7 +812,7 @@ LIMIT 10000;''',
                                 from
 	                                "lpg_todays_cdcms_sales_summary"''',
                                  
-    "lpg_cdcms_pending_cosumer_type_wise": f'''
+    "lpg_cdcms_pending_cosumer_type_wise": '''
                                 select 
                                     "ZOName",
                                     "ROName",
@@ -823,7 +823,7 @@ LIMIT 10000;''',
                                     sum("Total_Pending") as "Total_pending"
                                 from
                                     "lpg_todays_cdcms_sales_summary" ''',
-    "lpg_cdcms_ageing" : f'''
+    "lpg_cdcms_ageing" : '''
                         select 
                             "ZOName",
                             "ROName",
@@ -838,7 +838,7 @@ LIMIT 10000;''',
                         from
                             "lpg_todays_cdcms_sales_summary" ''',
     
-    "lpg_cdcms_current_financial_year_sales": f'''select
+    "lpg_cdcms_current_financial_year_sales": '''select
                                             "DistributorName",
                                             "ConsumerType",
                                             "ZOName",
@@ -848,7 +848,7 @@ LIMIT 10000;''',
                                         from
                                             "lpg_monthly_cdcms_sales_summary"''',
     
-    "lpg_cdcms_overall_ctc_statistics": f'''select
+    "lpg_cdcms_overall_ctc_statistics": '''select
                                         "Category",
                                         "JDEDistributorCode",
                                         "ZOName",
@@ -860,7 +860,7 @@ LIMIT 10000;''',
                                     from
                                         "LPG_CONSUMERS_SUMMARY"''',
     
-    'lpg_cdcms_daywise_overall_ctc_statistics': f''' 
+    'lpg_cdcms_daywise_overall_ctc_statistics': ''' 
                                         select 
                                             "ZoneNames" AS "ZOName",
                                             "ROName",
@@ -874,7 +874,7 @@ LIMIT 10000;''',
                                             "lpg_consumers_statistics_month_end_data"
                                                 ''',
 
-    "lpg_cdcms_safety_check_pending": f'''select
+    "lpg_cdcms_safety_check_pending": '''select
                                             "SubCategory",
                                             "JDEDistributorCode",
                                             "ZOName",
@@ -884,7 +884,7 @@ LIMIT 10000;''',
                                         from
                                             "LPG_CONSUMERS_SUMMARY"''',
 
-    'lpg_cdcms_actual_vs_historic_sales': f''' select 
+    'lpg_cdcms_actual_vs_historic_sales': ''' select 
                                             "Month",
                                             "Month_Number",
                                             "Financial_Year",
@@ -894,7 +894,7 @@ LIMIT 10000;''',
                                         from
                                             "lpg_monthly_cdcms_sales_summary" ''',
     
-    "lpg_cdcms_total_consumers": f''' select
+    "lpg_cdcms_total_consumers": ''' select
                                 "ZOName",
                                 "ROName",
                                 "SAName",
@@ -905,7 +905,7 @@ LIMIT 10000;''',
                             from
                                 "LPG_CONSUMERS_SUMMARY" ''',
                                 
-    "lpg_cdcms_backlogs": f''' SELECT 
+    "lpg_cdcms_backlogs": ''' SELECT 
                                     "DistributorName",
                                     "ZOName", "ROName", "SAName", "ConsumerType",
                                     SUM("TotalSalesYesterday") AS "TotalSalesYesterday" ,
@@ -913,21 +913,21 @@ LIMIT 10000;''',
                                 FROM
                                     "lpg_cdcms_last_three_months_summary" ''',
     
-    "lpg_cdcms_april_consumer_stats": f''' SELECT
+    "lpg_cdcms_april_consumer_stats": ''' SELECT
                                                 "DistributorName", "SubCategory", "ZOName",
                                                 "SAName", "ROName",
                                                 SUM("ConsumerCount") AS "ConsumerCount"
                                             FROM
                                                 "LPG_CONSUMER_APRIL" ''',
     
-    "lpg_cdcms_current_consumer_stats": f''' SELECT "JDEDistributorCode", "SubCategory", "ZOName",
+    "lpg_cdcms_current_consumer_stats": ''' SELECT "JDEDistributorCode", "SubCategory", "ZOName",
                                                     "SAName", "ROName",
                                                     SUM("ConsumerCount") AS "ConsumerCount"
                                                 FROM 
                                                     "LPG_CONSUMERS_SUMMARY"
                                                 ''',
                                                 
-                 "lpg_cdcms_pcc_sales": f''' SELECT 
+                 "lpg_cdcms_pcc_sales": ''' SELECT 
                                                 "DistributorName", "ConsumerType", "CylType", "ZOName",
                                                 "SAName", "ROName", 
                                                 SUM("TotalSalesYesterday") AS "TotalSalesYesterday"
@@ -958,7 +958,7 @@ LIMIT 10000;''',
                             FROM
                                 "lpg_cdcms_nc_data" ''',
     
-    "lpg_cdcms_backlogs_today": f''' SELECT
+    "lpg_cdcms_backlogs_today": ''' SELECT
                                         "DistributorName",
                                         "ZOName", "ROName", "SAName", "ConsumerType",
                                         SUM("TotalSalesYesterday") AS "TotalSalesYesterday",
@@ -966,9 +966,9 @@ LIMIT 10000;''',
                                     FROM
                                         "lpg_todays_cdcms_sales_summary" ''',
     
-    "sales_growth_ytd": f'''select * from "MOM_DAY_LEVEL_DATA" where "MOM_DAY_LEVEL_DATA"."fiscal_year" in ('2023-2024','2024-2025')''',
+    "sales_growth_ytd": '''select * from "MOM_DAY_LEVEL_DATA" where "MOM_DAY_LEVEL_DATA"."fiscal_year" in ('2023-2024','2024-2025')''',
     
-    "lpg_cdcms_total_suvidha": f'''select 
+    "lpg_cdcms_total_suvidha": '''select 
                             "ZOName",
                             "ROName",
                             "SAName",
@@ -978,7 +978,7 @@ LIMIT 10000;''',
                             sum("SuvidhaClub") as "SuvidhaClub" 
                         from
                             "LPG_CONSUMERS_SUMMARY" ''',
-    "lpg_cdcms_ekyc_statistics": f'''
+    "lpg_cdcms_ekyc_statistics": '''
                         SELECT
                             "ROName",
                             "SAName",
@@ -990,7 +990,7 @@ LIMIT 10000;''',
                             "LPG_CONSUMERS_SUMMARY"
                         ''',
     
-    "lpg_operations_productivity_zone": f'''   
+    "lpg_operations_productivity_zone": '''   
                         select 
                             "zone",
                             "short_name" AS "plant",
@@ -1000,7 +1000,7 @@ LIMIT 10000;''',
                             "lpg_operations_summary"
                         ''',
     
-    "lpg_operations_production_zone": f''' 
+    "lpg_operations_production_zone": ''' 
                         select 
                             "zone",
                             "short_name" AS "plant",
@@ -1011,7 +1011,7 @@ LIMIT 10000;''',
                         from 
                             "lpg_operations_summary" ''',
     
-    "lpg_operations_filled_cylinder": f''' 
+    "lpg_operations_filled_cylinder": ''' 
                         select 
                             sum("total") as "Handled",
                             sum("cylfilled") as "Cylinder_Filled",
@@ -1020,16 +1020,16 @@ LIMIT 10000;''',
                         from
                             "lpg_cs_rejections" ''',
     
-    'productivity_overtime_vs_break_production': f'''  
+    'productivity_overtime_vs_break_production': '''  
                             SELECT 
                               "zone",
-                              "short_name" as "plant",
+                              "plant",
                               SUM("productivity_break_production")/1000 as break_production,
                               SUM("productivity_overtime_production")/1000 as overtime_production
                             FROM 
                                 "lpg_operations_summary" ''',
     
-    'lpg_operations_daywise_productivity': f'''  
+    'lpg_operations_daywise_productivity': '''  
                                 SELECT 
                                 "zone",
                                 "short_name" AS "plant",
@@ -1038,7 +1038,7 @@ LIMIT 10000;''',
                                 DATE("process_date") AS "process_date"
                                 FROM "lpg_operations_summary" ''',
     
-    'lpg_operations_daywise_production': f'''  
+    'lpg_operations_daywise_production': '''  
                             SELECT 
                                 "zone",
                                 "short_name" AS "plant",
@@ -1048,7 +1048,7 @@ LIMIT 10000;''',
                                 DATE("process_date") AS "process_date"
                             FROM "lpg_operations_summary" ''',
     
-    'lpg_cdcms_daywise_subsidy_failure_statistics': f'''
+    'lpg_cdcms_daywise_subsidy_failure_statistics': '''
                                 SELECT
                                     "ZOName",
                                     "ROName",
@@ -1062,7 +1062,7 @@ LIMIT 10000;''',
                                     "lpg_cdcms_subsidy_failure_statistics"
                                     ''',
     
-    'lpg_cdcms_daywise_subsidy_failure_statistics_m': f'''
+    'lpg_cdcms_daywise_subsidy_failure_statistics_m': '''
                                 SELECT
                                     "ZOName",
                                     "ROName",
@@ -1077,7 +1077,7 @@ LIMIT 10000;''',
                                     ''',
     
     
-    'lpg_cdcms_daywise_subsidy_exception_statistics': f'''
+    'lpg_cdcms_daywise_subsidy_exception_statistics': '''
                                 SELECT
                                     "ZOName",
                                     "ROName",
@@ -1092,7 +1092,7 @@ LIMIT 10000;''',
                                     "lpg_cdcms_subsidy_exception_statistics"
                                     ''',
     
-    'lpg_cdcms_daywise_subsidy_exception_statistics_m': f''' SELECT
+    'lpg_cdcms_daywise_subsidy_exception_statistics_m': ''' SELECT
                                     "ZOName",
                                     "ROName",
                                     "SAName",
@@ -1104,7 +1104,7 @@ LIMIT 10000;''',
                                 FROM
                                     "lpg_cdcms_subsidy_exception_statistics" ''',
     
-    'lpg_operations_current_month_production': f'''
+    'lpg_operations_current_month_production': '''
                                                     SELECT 
                                                         ROUND(
                                                             (SUM(bottling_14_2kg) * 14.2 + SUM(bottling_19kg) * 19)::NUMERIC / 1000, 
@@ -1116,7 +1116,7 @@ LIMIT 10000;''',
                                                         DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE) 
                                                 ''',
                                                 
-    'lpg_operations_current_month_productivity': f'''
+    'lpg_operations_current_month_productivity': '''
                                                     SELECT
                                                         ROUND(AVG("productivity_normal_productivity"::numeric), 0) AS "Total Productivity"
                                                     FROM

@@ -5241,7 +5241,6 @@ class GlobalAnalytics:
                     key = key.replace('"','')
                     filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
             df = df.filter(filter_expr)
-        months = [month for month in calendar.month_name if month]
         data = {"zone": df["zone"].unique().to_list(), "plant": df["plant"].unique().to_list(),
                 "carousel_type": ["12H", "24H", "48H", "72H"]}
         return data

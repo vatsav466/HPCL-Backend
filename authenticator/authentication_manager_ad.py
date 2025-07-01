@@ -119,6 +119,18 @@ class AuthenticationManager:
         if not role['data']:
             print("-- Roles not found in database --")
             return False, "Access Restricted"
+
+        def unique_dicts(dict_list):
+            seen = set()
+            unique = []
+            for d in dict_list:
+                # Convert dict to a tuple of sorted items so it's hashable
+                items_tuple = tuple(sorted(d.items()))
+                if items_tuple not in seen:
+                    seen.add(items_tuple)
+                    unique.append(d)
+            return unique
+
         if role["data"]:
             allowed_roles = {}
             for role_data in role["data"]:
@@ -128,7 +140,7 @@ class AuthenticationManager:
                     else:
                         allowed_roles[menu['menu_name']]["allowed_sub_menus"].extend(menu['allowed_sub_menus'])
                         allowed_roles[menu['menu_name']]["allowed_sub_menus"] = (
-                            list(set(allowed_roles[menu['menu_name']]["allowed_sub_menus"])))
+                            unique_dicts(allowed_roles[menu['menu_name']]["allowed_sub_menus"]))
 
             user_info["allowed_roles"] = list(allowed_roles.values())
         # Adding session data

@@ -243,8 +243,14 @@ async def tasassetmaster_download_tas_report(data: Tasassetmaster_Download_Tas_R
 
             # Generate timestamped filename
             timestamp = datetime.now().strftime("%Y-%m-%d_%H%M")
+            downloads_path = urdhva_base.settings.downloads
+
+            #Ensure the directory exists
+            os.makedirs(downloads_path, exist_ok=True)
+
+            # Build the filename
             filename = os.path.join(
-                urdhva_base.settings.downloads,
+                downloads_path,
                 f"{config['filename_prefix']}_{timestamp}.xlsx"
             )
             print("resp --> ", resp)

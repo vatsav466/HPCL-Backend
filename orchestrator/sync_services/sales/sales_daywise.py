@@ -152,10 +152,12 @@ def insertToDB(data, table_name, indexing_col=()):
     print("table_create_sql :", table_create_sql)
     print("-" * 50)
     cur.execute(table_create_sql)
+    '''
     cur.execute(f"""
             CREATE UNIQUE INDEX IF NOT EXISTS engine_id_check ON "{table_name}" (engine_id);
 
     """)
+    '''
     '''
     try:
        cur.execute(f"""

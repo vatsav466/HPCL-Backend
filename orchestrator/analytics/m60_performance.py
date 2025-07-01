@@ -42,7 +42,7 @@ AllProducts = {
               "Industrial oils", "Base Oil", "LUBES RETAIL", "Automotive Oils", "Industrial Specialities",
               "Miscellaneous/Minor", "Marine Lubes","ALPROL","Lubes-Exports"],
     "Aviation": ["ATF"],
-    "Retail": ["LPG BLK", "MS", "Industrial Greases", "DEF/Diesel Exhaust Fluid", "HSD", "Automotive Greases",
+    "Retail": ["LPG BLK", "MS", "Industrial Greases", "HSD", "Automotive Greases",
                "Automotive Specialities", "Compressed Bio Gas ", "Industrial oils", "Automotive Oils",
                "Industrial Specialities", "Miscellaneous/Minor", "CNG", "SKO", "Compressed Bio Gas (CBG)","HP DEF-Retail"],
    

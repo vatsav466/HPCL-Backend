@@ -71,31 +71,46 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
             key = key.encode()
         cipher = Fernet(key)
         path = request.url.path
+        if path in ['/api/session/me', '/api/session/encryption-status', '/api/ping',
+                                '/docs', '/openapi.json', '/api/logout']:
+            response = await call_next(request)
+            return response
 
         # Only process requests with encrypted payloads
         if request.method in ["GET"]:
             if not request.query_params:
-                if path not in ['/api/session/me', '/api/session/encryption-status', '/api/ping',
-                                '/docs', '/openapi.json', '/api/logout']:
-                    query_list = path.split('/')
-                    query_id = query_list[-1]
-                    try:
-                        encrypted_data = base64.b64decode(query_id)
-                        decrypted_string = cipher.decrypt(encrypted_data)
-                        query_list[-1] = decrypted_string.decode()
-                        request.scope["path"] = '/'.join(query_list)
-                    except Exception as e:
-                        print(f"Middleware error: {str(e)}")
-                        return JSONResponse(
-                            status_code=400,
-                            content={"error": "Invalid request body"}
-                        )
+                query_list = path.split('/')
+                query_id = query_list[-1]
+                try:
+                    encrypted_data = base64.b64decode(query_id.replace('"', ''), validate=True)
+                    decrypted_string = cipher.decrypt(encrypted_data)
+                    query_list[-1] = decrypted_string.decode()
+                    request.scope["path"] = '/'.join(query_list)
+                except Exception as e:
+                    print(f"Middleware error: {str(e)}")
+                    return JSONResponse(
+                        status_code=400,
+                        content={"error": "Invalid request body"}
+                    )
             else:
                 params = dict(request.query_params)
                 decrypted_params = {}
                 try:
-                    for key, _ in params.items():
-                        encrypted_data = base64.b64decode(key+'==')
+                    for key, value in params.items():
+                        if len(value) > 0 and value not in ['=', '==']:
+                            return JSONResponse(
+                                status_code=400,
+                                content={"error": "Invalid request body"}
+                            )
+                        try:
+                            encrypted_data = base64.b64decode(key.replace('"', ''), validate=True)
+                        except Exception as e:
+                            try:
+                                encrypted_data = base64.b64decode(key.replace('"', '') + '=',
+                                                                  validate=True)
+                            except Exception as e:
+                                encrypted_data = base64.b64decode(key.replace('"', '') + '==',
+                                                                  validate=True)
                         decrypted_string = cipher.decrypt(encrypted_data)
                         decrypted_params.update(json.loads(decrypted_string))
                 except Exception as e:
@@ -113,7 +128,7 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
                 body = await request.body()
                 if body:
                     # Decrypt the payload
-                    encrypted_data = base64.b64decode(body)
+                    encrypted_data = base64.b64decode(body.decode().replace('"', ''), validate=True)
                     decrypted_string = cipher.decrypt(encrypted_data)
                     request.scope["body"] = decrypted_string
                     request._body = decrypted_string
@@ -128,7 +143,7 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
             query_list = path.split('/')
             query_id = query_list[-1]
             try:
-                encrypted_data = base64.b64decode(query_id)
+                encrypted_data = base64.b64decode(query_id.replace('"', ''), validate=True)
                 decrypted_string = cipher.decrypt(encrypted_data)
                 query_list[-1] = decrypted_string.decode()
                 request.scope["path"] = '/'.join(query_list)
