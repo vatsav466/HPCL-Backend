@@ -309,26 +309,76 @@ def map_device_category(interlock_name):
             return category
     return "Unknown"
 
-def fetch_oi_devices(page_size=100, page=0):
+# def fetch_oi_devices(page_size=100, page=0):
+#     """
+#     Fetch devices from ThingsBoard instance.
+
+#     Parameters
+#     ----------
+#     page_size : int
+#         Page size of the devices list.
+#     page : int
+#         Page number of the devices list.
+
+#     Returns
+#     -------
+#     list
+#         List of devices.
+#     """
+#     params = {'pageSize': 100, 'page': 0}
+#     print("params --> ", params)
+#     response = tb_master.ThingsBoardInterface().api_handler("GET", "/api/tenant/devices", {}, params)
+#     return response.get("data", []) if response else []
+
+def fetch_oi_devices(page_size=100):
     """
-    Fetch devices from ThingsBoard instance.
+    Fetch all OI devices from ThingsBoard using pagination.
 
     Parameters
     ----------
     page_size : int
-        Page size of the devices list.
-    page : int
-        Page number of the devices list.
+        Number of devices per page.
 
     Returns
     -------
     list
-        List of devices.
+        List of all OI devices.
     """
-    params = {'pageSize': 100, 'page': 0}
-    print("params --> ", params)
-    response = tb_master.ThingsBoardInterface().api_handler("GET", "/api/tenant/devices", {}, params)
-    return response.get("data", []) if response else []
+    all_devices = []
+    page = 0
+
+    while True:
+        params = {
+            'pageSize': page_size,
+            'page': page
+        }
+
+        print(f"[INFO] Fetching page {page} with size {page_size}...")
+
+        response = tb_master.ThingsBoardInterface().api_handler(
+            "GET", "/api/tenant/devices", {}, params
+        )
+
+        if not response:
+            print("[WARNING] No response received.")
+            break
+
+        devices = response.get("data", [])
+        has_next = response.get("hasNext", False)
+
+        print(f"[INFO] Retrieved {len(devices)} devices.")
+
+        # Filter only OI devices if needed
+        oi_devices = [d for d in devices if d.get("type") == "OI"]
+        all_devices.extend(oi_devices)
+
+        if not has_next:
+            break
+
+        page += 1
+
+    print(f"[SUCCESS] Total OI devices fetched: {len(all_devices)}")
+    return all_devices
 
 
 def fetch_device_data(device_id, key="water"):

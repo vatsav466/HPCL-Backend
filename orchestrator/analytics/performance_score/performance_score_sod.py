@@ -727,7 +727,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             Exception: If an error occurs during data fetching for a device.
         """
         WATER_THRESHOLD = 80
-        all_devices = fetch_oi_devices(page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
 
         for device in all_devices:
@@ -786,7 +786,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             Exception: If an error occurs during data fetching for a device.
         """
         FOAM_THRESHOLD = 80
-        all_devices = fetch_oi_devices(page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
 
         for device in all_devices:
@@ -841,7 +841,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             dict: A dictionary containing the module's name, calculated score, weightage, 
                 and detailed results of each rule evaluation.
         """
-        all_devices = fetch_oi_devices(page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
 
         for device in all_devices:
@@ -906,7 +906,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             dict: A dictionary containing the module's name, calculated score, weightage,
                 and detailed results of each rule evaluation.
         """
-        all_devices = fetch_oi_devices(page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
 
         for device in all_devices:
