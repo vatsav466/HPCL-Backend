@@ -5958,7 +5958,7 @@ class GlobalAnalytics:
 
             # Add plant/location filter if present
             if plant_filter:
-                query += f" AND location_name IN ('{plant_filter}')"
+                query += f" AND sap_id IN ('{plant_filter}')"
 
             # Add status filter if present
             if status:
@@ -6172,7 +6172,7 @@ class GlobalAnalytics:
             if zone_filter:
                 query += f" AND zone IN ('{zone_filter}')"
             if plant_filter:
-                query += f" AND location_name IN ('{plant_filter}')"
+                query += f" AND sap_id IN ('{plant_filter}')"
             if interlock_filter:
                 interlock_values = "','".join(interlock_filter.split(','))  # Handling multiple values
                 query += f" AND interlock_name IN ('{interlock_values}')"
