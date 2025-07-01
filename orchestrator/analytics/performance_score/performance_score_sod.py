@@ -870,12 +870,13 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                             "module": rules.get('name', '')
                         })
                         break
+                    break
 
                 except Exception as e:
                     print(f"Error processing device {device.get('name', 'Unknown')}: {e}")
                     continue
 
-        final_score = round(sum(r['score'] for r in pi_score) * rules.get('weightage', 100) / 100, 2)
+        final_score = round(sum(r['score'] for r in pi_score))
         print("final_score ---> ", final_score)
 
         return {
