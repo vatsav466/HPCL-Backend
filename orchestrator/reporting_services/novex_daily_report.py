@@ -232,9 +232,13 @@ async def fetch_sales_data():
         sbu_sales_data['yesterday_current'] = round_off(current, "")
         sbu_sales_data['yesterday_historical'] = round_off(hist, "")
         sbu_sales_data['yesterday_growth'] = get_growth_percentage(current, hist)
+        
 
         # For current month data
         month_start = helpers.get_time_stamp_by_delta(with_month_start_day=True)
+        if month_start.split('-')[-1] == '01':
+            yesterday_date = month_start
+        print("yesterday_date",yesterday_date)
         filters = {"filters": [actual, history, cumulative,
                                {"key": "\"DATE\"", "cond": "equals", "value": f"{month_start},{yesterday_date}"}],
                    "cross_filters": [], "drill_state": ""}
