@@ -1102,3 +1102,148 @@ async def write_interlock_excel(resp, output_file, report_type="daily", filters=
 
     wb.save(output_file)
     print(f"Saved file to {output_file}")
+
+
+async def critical_parameters_excel(resp, output_file, report_type="daily", filters=None):
+    data = resp.get(f"{report_type}_data", {})
+    if not data:
+        print("No data found in response.")
+        return
+
+    if isinstance(filters, list):
+        try:
+            filters = {f.key: f.value for f in filters if hasattr(f, 'key') and hasattr(f, 'value')}
+        except Exception:
+            filters = {}
+    filters = filters or {}
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Interlock Alerts"
+
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+
+    report_title = "WEEKLY / DATE RANGE REPORT" if report_type == "daily" else "MONTHLY REPORT"
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=4)
+    title_cell = ws.cell(row=1, column=1)
+    title_cell.value = report_title
+    title_cell.font = Font(bold=True, size=14, color="000000")
+    title_cell.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+    title_cell.border = thin_border
+
+    row = 3
+
+    first_record = next((entry[0] for entry in data.values() if entry), None)
+    if not first_record:
+        raise ValueError("No valid records found in the response data.")
+    
+    def record_matches_filters(detail):
+        for key in ["bcu_number", "assigned_bay"]:
+            if key in filters and filters[key] is not None:
+                if str(detail.get(key)) != str(filters[key]):
+                    return False
+        return True
+
+    selected_key = next((k for k in ["bcu_number", "equipment_name", "equipment_id", "assigned_bay"] if filters.get(k)), None)
+    selected_label = selected_key.replace("_", " ").title() if selected_key else "BCU Number"
+    selected_value = filters.get(selected_key, "All") if selected_key else "All"
+
+    total_records = sum(
+        1 for period in data.values() for record in period if record_matches_filters(record)
+    )
+    total_alerts = sum(
+        record["total_alerts"]
+        for period in data.values()
+        for record in period
+        if record_matches_filters(record)
+    )
+    metadata = {
+        "Export Date and Time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "Total Records": total_records,
+        "Total Alert Count": total_alerts,
+        "Data Type": "Interlock Alert",
+        f"{selected_label} Selected": selected_value,
+        "Zone": first_record.get("zone", ""),
+        "Plant Name": first_record.get("location_name", ""),
+        "SAP ID": first_record.get("sap_id", ""),
+        "Date Range": f"{min(data)} to {max(data)}"
+    }
+
+    for key, val in metadata.items():
+        cell_key = ws[f"A{row}"]
+        cell_val = ws[f"B{row}"]
+        cell_key.value = key
+        cell_key.font = Font(bold=True)
+        cell_key.fill = PatternFill(start_color="D8E4BC", end_color="D8E4BC", fill_type="solid")
+        cell_key.alignment = Alignment(horizontal="center")
+        cell_key.border = thin_border
+        cell_val.value = val
+        cell_val.alignment = Alignment(horizontal="center")
+        cell_val.border = thin_border
+        row += 1
+
+    row += 1
+
+    headers = [
+        "Date" if report_type == "daily" else "Month",
+        "BCU Number",
+        "Alert Count"
+    ]
+
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=row, column=col)
+        cell.value = header
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill(start_color="B7DEE8", end_color="B7DEE8", fill_type="solid")
+        cell.alignment = Alignment(horizontal="center")
+        cell.border = thin_border
+    row += 1
+
+    summary = defaultdict(int)
+    wrote_data = False
+
+    for period, records in sorted(data.items()):
+        for record in records:
+            if not record_matches_filters(record):
+                continue
+
+            try:
+                col1_val = period
+                col2_val = record.get("bcu_number", "N/A")
+                col3_val = record.get("total_alerts", "N/A")
+
+                ws.cell(row=row, column=1).value = col1_val
+                ws.cell(row=row, column=2).value = col2_val
+                ws.cell(row=row, column=3).value = col3_val
+
+                summary[col2_val] += col3_val if isinstance(col3_val, int) else 0
+                row += 1
+                wrote_data = True
+            except Exception as e:
+                print(f"Error writing row: {e}")
+
+    if not wrote_data:
+        print("No data rows written — possibly due to filters or missing fields.")
+
+    row += 2
+
+    ws.cell(row=row, column=1).value = "BCU Number Summary"
+    ws.cell(row=row, column=1).font = Font(bold=True)
+    row += 1
+    ws.cell(row=row, column=1).value = "BCU Number"
+    ws.cell(row=row, column=2).value = "Total Alerts"
+    ws.cell(row=row, column=1).font = Font(bold=True)
+    ws.cell(row=row, column=2).font = Font(bold=True)
+    row += 1
+
+    for bcu in sorted(summary):
+        ws.cell(row=row, column=1).value = bcu
+        ws.cell(row=row, column=2).value = summary[bcu]
+        row += 1
+
+    wb.save(output_file)
+    print(f"Excel saved to {output_file}")
