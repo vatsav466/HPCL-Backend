@@ -5265,14 +5265,17 @@ class GlobalAnalytics:
             zone_filter = ''
             plant_filter = ''
             bcu_number = ''
+            status = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
-                    if "plant" in filter.key:
+                    if "sap_id" in filter.key:
                         plant_filter = filter.value
                     if "bcu_number" in filter.key:
                         bcu_number = filter.value
+                    if "status" in filter.key:
+                        status = filter.value
             # Initialize date filter variables
             date_filter_applied = False
             start_date = None
@@ -5310,6 +5313,8 @@ class GlobalAnalytics:
             if plant_filter:
                 query += f" AND sap_id IN ('{plant_filter}')"
 
+            if status:
+                query += f" AND alert_status IN ('{status}')"
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
                 query += f" AND DATE(created_at) BETWEEN ('{start_date.strftime('%Y-%m-%d')}') AND ('{end_date.strftime('%Y-%m-%d')}')"
@@ -5638,7 +5643,7 @@ class GlobalAnalytics:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
-                    if "plant" in filter.key:
+                    if "sap_id" in filter.key:
                         plant_filter = filter.value
                     if "sensor_id" in filter.key:
                         sensor_id_filter = filter.value
@@ -5880,12 +5885,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
+            status = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
-                    if "plant" in filter.key:
+                    if "sap_id" in filter.key:
                         plant_filter = filter.value
+                    if "status" in filter.key:
+                        status = filter.value
             # Initialize date filter variables
             date_filter_applied = False
             start_date = None
@@ -5952,6 +5960,9 @@ class GlobalAnalytics:
             if plant_filter:
                 query += f" AND location_name IN ('{plant_filter}')"
 
+            # Add status filter if present
+            if status:
+                query += f" AND alert_status IN ('{status}')"
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
                 query += f" AND DATE(created_at) BETWEEN ('{start_date.strftime('%Y-%m-%d')}') AND ('{end_date.strftime('%Y-%m-%d')}')"
@@ -6291,7 +6302,7 @@ class GlobalAnalytics:
             #     for filter in filters:
             #         if "zone" in filter.key:
             #             zone_filter = filter.value
-            #         if "plant" in filter.key:
+            #         if "sap_id" in filter.key:
             #             plant_filter = filter.value
             #         if "bcu_number" in filter.key:
             #             bcu_number = filter.value
@@ -6453,7 +6464,7 @@ class GlobalAnalytics:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
-                    if "plant" in filter.key:
+                    if "sap_id" in filter.key:
                         plant_filter = filter.value
                     if "bcu_number" in filter.key:
                         bcu_number = filter.value
@@ -6618,7 +6629,7 @@ class GlobalAnalytics:
             #     for filter in filters:
             #         if "zone" in filter.key:
             #             zone_filter = filter.value
-            #         if "plant" in filter.key:
+            #         if "sap_id" in filter.key:
             #             plant_filter = filter.value
             #         if "bcu_number" in filter.key:
             #             bcu_number = filter.value
@@ -6779,7 +6790,7 @@ class GlobalAnalytics:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
-                    if "plant" in filter.key:
+                    if "sap_id" in filter.key:
                         plant_filter = filter.value
                     if "bcu_number" in filter.key:
                         bcu_number = filter.value
@@ -6929,7 +6940,7 @@ class GlobalAnalytics:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
-                    if "plant" in filter.key:
+                    if "sap_id" in filter.key:
                         plant_filter = filter.value
                     if "bcu_number" in filter.key:
                         bcu_number = filter.value
@@ -7094,7 +7105,7 @@ class GlobalAnalytics:
             #     for filter in filters:
             #         if "zone" in filter.key:
             #             zone_filter = filter.value
-            #         if "plant" in filter.key:
+            #         if "sap_id" in filter.key:
             #             plant_filter = filter.value
             #         if "load_number" in filter.key:
             #             load_number = filter.value
@@ -7287,7 +7298,7 @@ class GlobalAnalytics:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
-                    if "plant" in filter.key:
+                    if "sap_id" in filter.key:
                         plant_filter = filter.value
                     if "load_number" in filter.key:
                         load_number = filter.value
@@ -7491,7 +7502,7 @@ class GlobalAnalytics:
             #     for filter in filters:
             #         if "zone" in filter.key:
             #             zone_filter = filter.value
-            #         if "plant" in filter.key:
+            #         if "sap_id" in filter.key:
             #             plant_filter = filter.value
             #         if "bcu_number" in filter.key:
             #             bcu_number = filter.value
@@ -7646,7 +7657,7 @@ class GlobalAnalytics:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
-                    if "plant" in filter.key:
+                    if "sap_id" in filter.key:
                         plant_filter = filter.value
                     if "bcu_number" in filter.key:
                         bcu_number = filter.value
@@ -7919,7 +7930,7 @@ class GlobalAnalytics:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
-                    if "plant" in filter.key:
+                    if "sap_id" in filter.key:
                         plant_filter = filter.value
             
             # Initialize date filter variables
@@ -8090,7 +8101,7 @@ class GlobalAnalytics:
             #     for filter in filters:
             #         if "zone" in filter.key:
             #             zone_filter = filter.value
-            #         if "plant" in filter.key:
+            #         if "sap_id" in filter.key:
             #             plant_filter = filter.value
             #         if "bcu_number" in filter.key:
             #             bcu_number = filter.value
@@ -8263,7 +8274,7 @@ class GlobalAnalytics:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
-                    if "plant" in filter.key:
+                    if "sap_id" in filter.key:
                         plant_filter = filter.value
                     if "bcu_number" in filter.key:
                         bcu_number = filter.value
@@ -8569,7 +8580,7 @@ class GlobalAnalytics:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
-                    if "plant" in filter.key:
+                    if "sap_id" in filter.key:
                         plant_filter = filter.value
                     if "assigned_bay" in filter.key:
                         assigned_bay = filter.value
