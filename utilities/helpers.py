@@ -393,43 +393,43 @@ def fetch_device_data(device_id, key="water"):
     if isinstance(attr_data, list):
         for item in attr_data:
             # Handle water attributes
-            if key == "water":
+            if key == "Water Volume":
                 if item.get('key') == 'Required Water Volume':
                     required_kls = float(item.get('value'))
                 elif item.get('key') == 'Water Volume':
                     target_volume = float(item.get('value'))
             
             # Handle foam attributes
-            elif key == "foam":
+            elif key == "Foam Volume":
                 if item.get('key') == 'Required Foam Volume':
                     required_kls = float(item.get('value'))
                 elif item.get('key') == 'Foam Volume':
                     target_volume = float(item.get('value'))
     elif isinstance(attr_data, dict):
-        if key == "water":
+        if key == "Water Volume":
             required_kls = float(attr_data.get('Required Water Volume')) if 'Required Water Volume' in attr_data else None
             target_volume = float(attr_data.get('Water Volume')) if 'Water Volume' in attr_data else None
-        elif key == "foam":
+        elif key == "Foam Volume":
             required_kls = float(attr_data.get('Required Foam Volume')) if 'Required Foam Volume' in attr_data else None
             target_volume = float(attr_data.get('Foam Volume')) if 'Foam Volume' in attr_data else None
 
     # Raise an exception if either value is missing
     if required_kls is None or target_volume is None:
-        raise Exception(f"Missing '{key.capitalize()} Volume' or 'Required {key.capitalize()} Volume' in server attributes")
+        raise Exception(f"Missing '{key}' or 'Required {key}' in server attributes")
 
     # Fetching telemetry data for the device
     telemetry_url = f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries"
-    telemetry_params = {'keys': f'{key.capitalize()} Volume'}
+    telemetry_params = {'keys': f'{key}'}
     telemetry_data = tb_master.ThingsBoardInterface().api_handler('GET', telemetry_url, {}, telemetry_params)
 
     volume = None
-    if f'{key.capitalize()} Volume' in telemetry_data:
-        latest_entry = telemetry_data[f'{key.capitalize()} Volume'][-1]  # Get the latest entry
+    if f'{key}' in telemetry_data:
+        latest_entry = telemetry_data[f'{key}'][-1]  # Get the latest entry
         volume = float(latest_entry.get('value'))
 
     # Raise an exception if volume is missing
     if volume is None:
-        raise Exception(f"Missing '{key.capitalize()} Volume' telemetry")
+        raise Exception(f"Missing '{key}' telemetry")
 
     return required_kls, target_volume, volume
 

@@ -576,7 +576,7 @@ class Postgresql:
                         if interlock_name == 'Cancel TT Reported':
                             device_msg = f"For Compartment_Number: {record.get('compartment_number', '')}".strip()
                         
-                        elif interlock_name == 'Bay reasignment':
+                        elif interlock_name == 'Bay reassignment':
                             device_msg = f"For Load Number: {record.get('load_number', '')} the ReAssigned Bay: {record.get('reassigned_bay', '')}".strip()
 
                         # Extract necessary fields from the record
