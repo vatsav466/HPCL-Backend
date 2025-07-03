@@ -205,7 +205,8 @@ class TASAlertManager(alert_factory.AlertFactory):
                                     break
                                 elif r.status_code in {400, 403, 404}:
                                     logger.error(f"Non-retryable error: {r.status_code} - {r.text}")
-                                    break
+                                    logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} "
+                                            f"for alert_id {alert_data['id']}, business_key {alert_data['unique_id']}")
                                 else:
                                     logger.error(f"Attempt {attempt}: Error sending message to camunda: "
                                                 f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
