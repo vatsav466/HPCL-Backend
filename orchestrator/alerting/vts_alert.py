@@ -86,12 +86,20 @@ class VTSAlertManager(alert_factory.AlertFactory):
         vts_alert_data['transporter_code'] = alert_data['vendor_id']
         vts_alert_data['device_id'] = instance_data['instance']
         vts_alert_data['device_name'] = instance_data['instance']
-        vts_alert_data['vehicle_blocked_start_date'] = urdhva_base.utilities.get_present_time(True).isoformat()
-        vts_alert_data['vehicle_blocked_end_date'] = helpers.get_time_stamp_by_delta(
-            days=instance_data['block_duration'],
-            with_month_start_day=False,
-            ascending=True,
-            date_time_format=None).isoformat()
+        vts_alert_data['vehicle_blocked_start_date'] = (
+                urdhva_base.utilities.get_present_time() +
+                datetime.timedelta(days=1)
+        ).isoformat()
+        vts_alert_data['vehicle_blocked_end_date'] = (
+                urdhva_base.utilities.get_present_time() +
+                datetime.timedelta(days=instance_data['block_duration']) +
+                datetime.timedelta(days=1)
+        )
+        # vts_alert_data['vehicle_blocked_end_date'] = helpers.get_time_stamp_by_delta(
+        #     days=instance_data['block_duration'],
+        #     with_month_start_day=False,
+        #     ascending=True,
+        #     date_time_format=None).isoformat()
         vts_alert_data['mark_as_false'] = False
         tl_number = alert_data['tl_number']
         query = ""
