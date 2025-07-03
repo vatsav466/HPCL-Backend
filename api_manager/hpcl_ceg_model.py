@@ -451,8 +451,8 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LocationMasterSchema
         upsert_keys = ['bu', 'sap_id']
-        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
         search_fields = ['bu', 'sap_id', 'name', 'region', 'zone', 'terminal_plant_name']
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
@@ -503,8 +503,8 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LocationMasterSchema
         upsert_keys = ['bu', 'sap_id']
-        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
         search_fields = ['bu', 'sap_id', 'name', 'region', 'zone', 'terminal_plant_name']
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class LocationMasterGetResp(pydantic.BaseModel):
@@ -5856,8 +5856,8 @@ class HostPltDetailsSchema(UrdhvaPostgresBase):
     trans_end_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("trans_end_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     cum_start_gross_vol_kl: Mapped[typing.Optional[int]] = mapped_column("cum_start_gross_vol_kl", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     cum_end_gross_vol_kl: Mapped[typing.Optional[int]] = mapped_column("cum_end_gross_vol_kl", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    cum_start_mass_mt: Mapped[typing.Optional[str]] = mapped_column("cum_start_mass_mt", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    cum_end_mass_mt: Mapped[typing.Optional[str]] = mapped_column("cum_end_mass_mt", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    cum_start_mass_mt: Mapped[typing.Optional[int]] = mapped_column("cum_start_mass_mt", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    cum_end_mass_mt: Mapped[typing.Optional[int]] = mapped_column("cum_end_mass_mt", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     uncorr_vol_kl: Mapped[typing.Optional[int]] = mapped_column("uncorr_vol_kl", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     mass_mt: Mapped[typing.Optional[int]] = mapped_column("mass_mt", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -5880,8 +5880,8 @@ class HostPltDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     trans_end_time: typing.Optional[datetime.datetime] | None = None
     cum_start_gross_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
     cum_end_gross_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
-    cum_start_mass_mt: typing.Optional[str] = pydantic.Field("", **{})
-    cum_end_mass_mt: typing.Optional[str] = pydantic.Field("", **{})
+    cum_start_mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
+    cum_end_mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
     uncorr_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
     mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -5910,8 +5910,8 @@ class HostPltDetails(urdhva_base.postgresmodel.PostgresModel):
     trans_end_time: typing.Optional[datetime.datetime] | None = None
     cum_start_gross_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
     cum_end_gross_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
-    cum_start_mass_mt: typing.Optional[str] = pydantic.Field("", **{})
-    cum_end_mass_mt: typing.Optional[str] = pydantic.Field("", **{})
+    cum_start_mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
+    cum_end_mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
     uncorr_vol_kl: typing.Optional[int] = pydantic.Field(0, **{})
     mass_mt: typing.Optional[int] = pydantic.Field(0, **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
