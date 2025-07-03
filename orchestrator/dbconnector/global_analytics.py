@@ -8479,7 +8479,7 @@ class GlobalAnalytics:
                 "    h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number, h.mfm_number,",
                 "    COALESCE(COUNT(a.id), 0) AS alert_count",
                 "FROM mfmfactor h",
-                "LEFT JOIN alerts a ON a.device_name = CONCAT(h.mfm_number, '_', h.bcu_number)",
+                "LEFT JOIN alerts a ON (a.device_name = h.mfm_number OR a.device_name = h.bcu_number OR a.device_name = CONCAT(h.mfm_number, '_', h.bcu_number))",
                 "    AND a.interlock_name = 'MFM K Factor Change'",
                 "    AND DATE(a.created_at) = h.created_date",
                 "GROUP BY h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number, h.mfm_number",
