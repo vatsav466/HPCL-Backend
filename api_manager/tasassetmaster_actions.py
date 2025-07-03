@@ -173,47 +173,47 @@ async def tasassetmaster_download_tas_report(data: Tasassetmaster_Download_Tas_R
         "local_loaded": {
             "function": global_analytics.GlobalAnalytics.local_loaded,
             "filename_prefix": "Local_Loaded_Dashboard",
-            "excel_writer": helpers.write_interlock_excel,
+            "excel_writer": helpers.critical_parameters_excel,
         },
         "unauthorised_flow": {
             "function": global_analytics.GlobalAnalytics.unauthorised_flow,
             "filename_prefix": "Unauthorised_Flow_Dashboard",
-            "excel_writer": helpers.write_interlock_excel,
+            "excel_writer": helpers.critical_parameters_excel,
         },
         "sick_tts": {
             "function": global_analytics.GlobalAnalytics.sick_tts,
             "filename_prefix": "Sick_TTS_Dashboard",
-            "excel_writer": helpers.write_interlock_excel,
+            "excel_writer": helpers.critical_parameters_excel,
         },
         "cancelled_tts": {
             "function": global_analytics.GlobalAnalytics.cancelled_tts,
             "filename_prefix": "Cancelled_TTS_Dashboard",
-            "excel_writer": helpers.write_interlock_excel,
+            "excel_writer": helpers.critical_parameters_excel,
         },
         "kfactor": {
             "function": global_analytics.GlobalAnalytics.kfactor,
             "filename_prefix": "KFactor_Dashboard",
-            "excel_writer": helpers.write_interlock_excel,
+            "excel_writer": helpers.critical_parameters_excel,
         },
         "manualfanprinted": {
             "function": global_analytics.GlobalAnalytics.manualfanprinted,
             "filename_prefix": "Manual_Fan_Printed_Dashboard",
-            "excel_writer": helpers.write_interlock_excel,
+            "excel_writer": helpers.critical_parameters_excel,
         },
         "overloaded_tts": {
             "function": global_analytics.GlobalAnalytics.overloaded_tts,
             "filename_prefix": "Overloaded_TTS_Dashboard",
-            "excel_writer": helpers.write_interlock_excel,
+            "excel_writer": helpers.critical_parameters_excel,
         },
         "mfmkfactor": {
             "function": global_analytics.GlobalAnalytics.mfmkfactor,
             "filename_prefix": "MFM_KFactor_Dashboard",
-            "excel_writer": helpers.write_interlock_excel,
+            "excel_writer": helpers.critical_parameters_excel,
         },
         "bay_reassignment": {
             "function": global_analytics.GlobalAnalytics.bay_reassignment,
             "filename_prefix": "Bay_Reassignment_Dashboard",
-            "excel_writer": helpers.write_interlock_excel,
+            "excel_writer": helpers.critical_parameters_excel,
         },
     }
 

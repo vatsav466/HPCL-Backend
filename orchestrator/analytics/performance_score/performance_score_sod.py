@@ -727,20 +727,20 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             Exception: If an error occurs during data fetching for a device.
         """
         WATER_THRESHOLD = 80
-        all_devices = fetch_oi_devices(page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
 
         for device in all_devices:
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
-                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="water")
+                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="Water Volume")
 
                     percentage = (available_water / target_volume) * 100 if target_volume else 0
 
                     for rule in rules['rules']:
                         weightage = rule.get('weightage', 0)
-                        score = round(weightage, 2) if percentage >= WATER_THRESHOLD else 0
+                        score = round(weightage, 2) if percentage >= WATER_THRESHOLD else 100
 
                         pi_score.append({
                             "name": rule['name'],
@@ -786,20 +786,20 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             Exception: If an error occurs during data fetching for a device.
         """
         FOAM_THRESHOLD = 80
-        all_devices = fetch_oi_devices(page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
 
         for device in all_devices:
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
-                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="foam")
+                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="Foam Volume")
 
                     percentage = (available_water / target_volume) * 100 if target_volume else 0
 
                     for rule in rules['rules']:
                         weightage = rule.get('weightage', 0)
-                        score = round(weightage, 2) if percentage >= FOAM_THRESHOLD else 0
+                        score = round(weightage, 2) if percentage >= FOAM_THRESHOLD else 100
 
                         pi_score.append({
                             "name": rule['name'],
@@ -841,7 +841,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             dict: A dictionary containing the module's name, calculated score, weightage, 
                 and detailed results of each rule evaluation.
         """
-        all_devices = fetch_oi_devices(page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
 
         for device in all_devices:
@@ -870,12 +870,13 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                             "module": rules.get('name', '')
                         })
                         break
+                    break
 
                 except Exception as e:
                     print(f"Error processing device {device.get('name', 'Unknown')}: {e}")
                     continue
 
-        final_score = round(sum(r['score'] for r in pi_score) * rules.get('weightage', 100) / 100, 2)
+        final_score = round(sum(r['score'] for r in pi_score))
         print("final_score ---> ", final_score)
 
         return {
@@ -905,7 +906,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             dict: A dictionary containing the module's name, calculated score, weightage,
                 and detailed results of each rule evaluation.
         """
-        all_devices = fetch_oi_devices(page_size=0, page=0)
+        all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
 
         for device in all_devices:
