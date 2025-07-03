@@ -132,7 +132,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                 urdhva_base.queryparams.QueryParams(q=query, limit=100), resp_type='plain'
             )
             # status, loc_dt = await cache_api_actions.get_location_data(bu=alert_data['bu'], location_id=alert_data['sap_id'])
-
+            loc_dt = {}
             print("resp_data query : %s", query)
             print("resp_data :", resp_data)
             if len(resp_data['data']):
@@ -205,14 +205,14 @@ class TASAlertManager(alert_factory.AlertFactory):
                                     break
                                 elif r.status_code in {400, 403, 404}:
                                     logger.error(f"Non-retryable error: {r.status_code} - {r.text}")
-                                    logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} "
-                                            f"for alert_id {alert_data['id']}, business_key {alert_data['unique_id']}")
+                                    logger.error(f"Attempt {attempt}: Non-retryable error sending message to camunda: "
+                                            f"for alert_id {alert_id}, business_key {tas_alert_data['unique_id']}")
                                 else:
                                     logger.error(f"Attempt {attempt}: Error sending message to camunda: "
-                                                f"{r.status_code} - {r.text} - {alert_data['unique_id']}")
+                                                f"{r.status_code} - {r.text} - {tas_alert_data['unique_id']}")
                             except Exception as e:
                                 logger.error(f"Attempt {attempt}: Exception in closing camunda flow {e} "
-                                            f"for alert_id {alert_data['id']}, business_key {alert_data['unique_id']}")
+                                            f"for alert_id {alert_id}, business_key {tas_alert_data['unique_id']}")
 
                             if attempt < max_retries:
                                 backoff = min(initial_delay * (2 ** (attempt - 1)), max_backoff)
