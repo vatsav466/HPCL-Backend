@@ -119,7 +119,7 @@ async def close_alerts_by_vendor():
     return {"status": True, "message": "Alerts Closed"}
 
 async def is_alert_exists(alert_data):
-    query = (f"select * from alerts where vehicle_number = '{alert_data['truck_number']}' and alert_status != 'Close' and alert_section = 'EMLock' " 
+    query = (f"select id from alerts where vehicle_number = '{alert_data['truck_number']}' and alert_status != 'Close' and alert_section = 'EMLock' " 
             f"and external_id = '{alert_data['emlock_exception_id']}' and violation_type='{alert_data['exception_type']}' "
             f"and sap_id = '{alert_data['location_id']}' and bu='{alert_data['location_type']}'")
     print("query: ", query)
