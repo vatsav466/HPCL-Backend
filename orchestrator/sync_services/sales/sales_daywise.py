@@ -11,7 +11,8 @@ from dateutil.relativedelta import relativedelta
 import hashlib
 import urdhva_base
 import sys
-from orchestrator.notification_manager.notification_factory import get_notification_module
+
+import orchestrator.notification_manager.notification_factory
 import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -260,8 +261,7 @@ async def send_sales_sync_email(table_name: str, total_records: int):
     </html>
     """
 
-    ins = await get_notification_module("email")
-
+    ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
     await ins.publish_message(
         subject=f"Sales Sync - {formatted_time}",
         recipients=[
