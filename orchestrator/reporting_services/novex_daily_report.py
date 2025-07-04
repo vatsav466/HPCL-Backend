@@ -407,7 +407,7 @@ async def get_tas_alerts():
 
 async def get_alert_data(alert_section):
     # Making sure alerts considering only after May 31st in prod
-    date_filter ="created_at::DATE >= '2025-05-31'"
+    date_filter ="created_at::DATE > '2025-06-30'" # As per HPCL request changed the date on (04-07-2025)
     query = f"""SELECT count(alert_section), bu, alert_section, severity FROM alerts where alert_status='Open' and 
     alert_section='{alert_section}' and {date_filter} GROUP BY bu, alert_section, severity"""
     alerts = await hpcl_ceg_model.Alerts.get_aggr_data(query)
