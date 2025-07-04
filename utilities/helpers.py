@@ -1341,18 +1341,3 @@ async def critical_parameters_excel(resp, output_file, report_type="daily", filt
 
     wb.save(output_file)
     print(f"Excel saved to {output_file}")
-
-async def main():
-    """Main function."""
-    print("Checking PLC Device Status...")
-    
-    results = await check_plc_status()
-    
-    # Print results
-    print("\nFinal Results:")
-    print(json.dumps(results, indent=2))
-    
-    return results
-
-if __name__ == "__main__":
-    asyncio.run(main())
