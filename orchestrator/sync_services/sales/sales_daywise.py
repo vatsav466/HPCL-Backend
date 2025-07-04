@@ -11,6 +11,11 @@ from dateutil.relativedelta import relativedelta
 import hashlib
 import urdhva_base
 import sys
+
+import orchestrator.notification_manager.notification_factory
+import os
+from datetime import datetime
+from zoneinfo import ZoneInfo
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
 def get_db_connection(params):
@@ -210,10 +215,62 @@ def insertToDB(data, table_name, indexing_col=()):
         cur.close()
         if os.path.exists(f'/tmp/{table_name}.csv'):
             os.remove(f'/tmp/{table_name}.csv')
+    
         print(f"-- Data has been inserted to {table_name} --")
+        with pg_conn.cursor() as cur:
+             cur.execute(f'SELECT COUNT(*) FROM "{table_name}"')
+             row_count = cur.fetchone()[0]
+             print(f"Total records in {table_name}: {row_count}")
+
+    # call the async email from sync context
+        import asyncio
+        asyncio.run(send_sales_sync_email(table_name, row_count))
     except Exception as e:
         print("Error :", str(e))
         raise Exception(e)
+
+
+async def send_sales_sync_email(table_name: str, total_records: int):
+    now_ist = datetime.now(ZoneInfo("Asia/Kolkata"))
+    formatted_time = now_ist.strftime('%d-%m-%Y %I:%M %p IST')
+
+    df_summary = pd.DataFrame([{
+        "Table Name": table_name,
+        "Load Timestamp (IST)": formatted_time,
+        "Total Records": f"{total_records:,}"
+    }])
+
+    html_table = df_summary.to_html(
+        index=False,
+        border=1,
+        justify='center',
+        classes='sales-sync-table',
+        escape=False
+    )
+
+    html_body = f"""
+    <html>
+      <body>
+        <p>Hello,</p>
+        <p>The sales data sync job completed successfully.</p>
+        {html_table}
+        <br>
+        Regards,<br>
+        Sales Automation
+      </body>
+    </html>
+    """
+
+    ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
+    await ins.publish_message(
+        subject=f"Sales Sync - {formatted_time}",
+        recipients=[
+            "aditya@algofusiontech.com","gayathri.m@algofusiontech.com"
+        ],
+        html_content=True,
+        body=html_body,
+        force_send=True
+    )
     
     
 

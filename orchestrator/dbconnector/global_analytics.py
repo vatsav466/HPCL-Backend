@@ -5958,7 +5958,7 @@ class GlobalAnalytics:
 
             # Add plant/location filter if present
             if plant_filter:
-                query += f" AND location_name IN ('{plant_filter}')"
+                query += f" AND sap_id IN ('{plant_filter}')"
 
             # Add status filter if present
             if status:
@@ -6172,7 +6172,7 @@ class GlobalAnalytics:
             if zone_filter:
                 query += f" AND zone IN ('{zone_filter}')"
             if plant_filter:
-                query += f" AND location_name IN ('{plant_filter}')"
+                query += f" AND sap_id IN ('{plant_filter}')"
             if interlock_filter:
                 interlock_values = "','".join(interlock_filter.split(','))  # Handling multiple values
                 query += f" AND interlock_name IN ('{interlock_values}')"
@@ -8462,7 +8462,7 @@ class GlobalAnalytics:
                 "WITH mfmfactor AS (",
                 "    SELECT",
                 "        DATE(created_at) AS created_date,",
-                "        zone, location_name, sap_id, bcu_number",
+                "        zone, location_name, sap_id, bcu_number, mfm_number",
                 "    FROM host_mfm_factor",
                 "    WHERE 1=1"
             ]
@@ -8476,13 +8476,13 @@ class GlobalAnalytics:
 
             query_parts.extend([
                 "SELECT",
-                "    h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number,",
+                "    h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number, h.mfm_number,",
                 "    COALESCE(COUNT(a.id), 0) AS alert_count",
                 "FROM mfmfactor h",
-                "LEFT JOIN alerts a ON a.device_name = h.bcu_number",
-                "    AND a.interlock_name = 'MFM factor Change'",
+                "LEFT JOIN alerts a ON (a.device_name = h.mfm_number OR a.device_name = h.bcu_number OR a.device_name = CONCAT(h.mfm_number, '_', h.bcu_number))",
+                "    AND a.interlock_name = 'MFM K Factor Change'",
                 "    AND DATE(a.created_at) = h.created_date",
-                "GROUP BY h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number",
+                "GROUP BY h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number, h.mfm_number",
                 "ORDER BY h.created_date DESC, alert_count DESC"
             ])
 

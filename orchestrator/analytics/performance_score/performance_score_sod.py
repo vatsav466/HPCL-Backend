@@ -734,13 +734,13 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
-                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="water")
+                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="Water Volume")
 
                     percentage = (available_water / target_volume) * 100 if target_volume else 0
 
                     for rule in rules['rules']:
                         weightage = rule.get('weightage', 0)
-                        score = round(weightage, 2) if percentage >= WATER_THRESHOLD else 0
+                        score = round(weightage, 2) if percentage >= WATER_THRESHOLD else 100
 
                         pi_score.append({
                             "name": rule['name'],
@@ -793,13 +793,13 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
-                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="foam")
+                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="Foam Volume")
 
                     percentage = (available_water / target_volume) * 100 if target_volume else 0
 
                     for rule in rules['rules']:
                         weightage = rule.get('weightage', 0)
-                        score = round(weightage, 2) if percentage >= FOAM_THRESHOLD else 0
+                        score = round(weightage, 2) if percentage >= FOAM_THRESHOLD else 100
 
                         pi_score.append({
                             "name": rule['name'],

@@ -92,29 +92,37 @@ async def generate_sod_engineering_location_stats(sap_id):
             "RIMSEAL": "RIMSEAL",
             "Dyke Valve": "Dyke Valve",
             "HCD": "HCD",
-            "Dyke": "Dyke",
-            "Hooter": "Hooter",
-            "Primary Level": "Primary Radar",
-            "LRC Switchover": "LRC Switchover",
+            "DYKE": "Dyke",
+            "HOOTER": "Hooter",
+            "PRIMARY LEVEL": "Primary Radar",
+            "LRC SWITCHOVER": "LRC Switchover",
             "PLC": "PLC",
-            "Jockey Pump": "Jockey Pump",
-            "Fire Effect": "Fire Effect",
+            "JOCKEY PUMP": "Jockey Pump",
+            "FIRE EFFECT": "Fire Effect",
             "UPS": "UPS",
-            "Gantry override": "Gantry override",
+            "GANTRY OVERRIDE": "Gantry override",
             "VFT": "VFT",
             "PT": "PT Hydrant",
             "ROSOV": "Rosov",
             "ESD": "ESD",
-            "Pump": "Pumps",
-            "OI Tags": "OI Tags",
+            "PUMP": "Pumps",
+            "OI TAGS": "OI Tags",
             "RADAR": "Secondary Radar",
-            "Fire Engine": "Fire Engine",
+            "FIRE ENGINE": "Fire Engine",
             "ESD Effect": "ESD Effect",
-            "Barrier Gate": "Barrier Gate",
-            "Power ESD": "Power ESD",
-            "Gantry BCU": "Gantry BCU",
-            "MFM": "MFM"
+            "BARRIER GATE": "Barrier Gate",
+            "POWER ESD": "Power ESD",
+            "GANTRY BCU": "Gantry BCU",
+            "MFM": "MFM",
+            "AIR COMPRESSOR": "Air Compressor"
         } 
+
+        query = f"sap_id = '{sap_id}' and active_server_name in ('LRCA', 'LRCB')"
+        params = urdhva_base.queryparams.QueryParams()
+        params.limit = 1
+        params.q = query
+        params.sort = {"created_at": "desc"}
+        resp = await hpcl_ceg_model.MasterStatus.get_all(params, resp_type="plain")
 
         hardcoded_status = [
             {"id": "lrca", "name": "LRCA", "status": "standby"},
@@ -122,8 +130,18 @@ async def generate_sod_engineering_location_stats(sap_id):
             {"id": "safety_plc_a", "name": "PLC A", "status": "online"},
             {"id": "safety_plc_b", "name": "PLC B", "status": "standby"},
             {"id": "process_plc_a", "name": "PLC A", "status": "online"},
-            {"id": "process_plc_b", "name": "PLC B", "status": "standby"}
+            {"id": "process_plc_b", "name": "PLC B", "status": "standby"},
         ]
+
+        if resp.get("data"):
+            df = pl.DataFrame(resp["data"]).select(["active_server_name", "status"])
+            master_record = df.filter(pl.col("status") == 1).select("active_server_name")
+
+            if master_record.height > 0:
+                master_id = master_record[0, "active_server_name"].lower()
+                for server in hardcoded_status:
+                    if server["id"] in ["lrca", "lrcb"]:
+                        server["status"] = "master" if server["id"] == master_id else "slave"
 
         result_dict = {item["id"]: item for item in hardcoded_status}
 
