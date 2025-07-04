@@ -236,7 +236,7 @@ async def fetch_sales_data():
 
         # For current month data
         month_start = helpers.get_time_stamp_by_delta(with_month_start_day=True)
-        if month_start.split('-')[-1] == '01':
+        if month_start.split('-')[-1] == '01' and( datetime.datetime.today().strftime('%d-%m-%Y').split('-')[-1] == '01' or datetime.datetime.today().strftime('%d-%m-%Y').split('-')[-1] == '1'): 
             yesterday_date = month_start
         print("yesterday_date",yesterday_date)
         filters = {"filters": [actual, history, cumulative,
