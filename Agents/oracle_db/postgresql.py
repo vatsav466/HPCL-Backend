@@ -262,10 +262,10 @@ class Postgresql:
         dict: Status and message of the operation.
         """
         for record in sample_records:
-            if "cum_start_mass_mt" in record:
-                record["cum_start_mass_mt"] = str(record["cum_start_mass_mt"])
-            if "cum_end_mass_mt" in record:
-                record["cum_end_mass_mt"] = str(record["cum_end_mass_mt"])
+            if "cum_start_mass_mt" in record and record["cum_start_mass_mt"] is not None:
+                record["cum_start_mass_mt"] = int(record["cum_start_mass_mt"])
+            if "cum_end_mass_mt" in record and record["cum_end_mass_mt"] is not None:
+                record["cum_end_mass_mt"] = int(record["cum_end_mass_mt"])
             if "date" in record and isinstance(record["date"], str):
                 try:
                     record["date"] = date.fromisoformat(record["date"])

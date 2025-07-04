@@ -25,7 +25,7 @@ async def generate_dryout_report():
     to_email = ['gauravyadav1@hpcl.in', 'rameshyadav.p@hpcl.in', 'venu@algofusiontech.com']
     attachments = [f"/tmp/dry_out_report_{report_time}.xlsx", f"/tmp/intra_day_dry_out_report_{report_time}.xlsx"]
     notify_email = NotifyEMail()
-    data = {"report_time": report_time, "portal_link": "https://ceg.hpcl.co.in"}
+    data = {"report_time": report_time, "portal_link": "https://novex.hpcl.co.in"}
     resp = await notify_email.publish_message(
         **{
             'recipients': to_email,
