@@ -407,7 +407,7 @@ async def get_tas_alerts():
 
 async def get_alert_data(alert_section):
     # Making sure alerts considering only after May 31st in prod
-    date_filter ="created_at::DATE >= '2025-05-31'"
+    date_filter ="created_at::DATE > '2025-06-30'" # As per HPCL request changed the date on (04-07-2025)
     query = f"""SELECT count(alert_section), bu, alert_section, severity FROM alerts where alert_status='Open' and 
     alert_section='{alert_section}' and {date_filter} GROUP BY bu, alert_section, severity"""
     alerts = await hpcl_ceg_model.Alerts.get_aggr_data(query)
@@ -466,31 +466,19 @@ async def send_notification(notification_data):
         f.write(final_data)
     # Send email
     ins = await notification_factory.get_notification_module("email")
-    await ins.publish_message(
-        subject="Novex Daily Report",
-        recipients=["sanjayk@hpcl.in", "cvmallinath@hpcl.in", "debeshp@hpcl.in",
-                    "purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in",
-                    "gargam@hpcl.in"],
-        html_content=True,
-        body=final_data,
-        force_send=True
-    )
-    await ins.publish_message(
-        subject="Novex Daily Report",
-        recipients=["rujutadoiphode@hpcl.in"],
-        html_content=True,
-        body=final_data,
-        force_send=True
-    )
-    await ins.publish_message(
-        subject="Novex Daily Report",
-        recipients=["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com",
-                    "santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com"],
-        html_content=True,
-        body=final_data,
-        force_send=True
-    )
-    # print(resp)
+    for recipient in [
+        ["sanjayk@hpcl.in", "debeshp@hpcl.in","gargam@hpcl.in"],
+        ["cvmallinath@hpcl.in","purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in"],
+        ["rujutadoiphode@hpcl.in"],
+        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com"]
+        ]:
+        await ins.publish_message(
+            subject="Novex Daily Report",
+            recipients=recipient,
+            html_content=True,
+            body=final_data,
+            force_send=True
+        )
 
 
 if __name__ == "__main__":
