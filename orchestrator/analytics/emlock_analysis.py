@@ -117,3 +117,14 @@ async def close_alerts_by_vendor():
                 # Closing Alert Data.
                 await alert_factory.AlertFactory().close_alert(alert_data)
     return {"status": True, "message": "Alerts Closed"}
+
+async def is_alert_exists(alert_data):
+    query = (f"select * from alerts where vehicle_number = '{alert_data['truck_number']}' and alert_status != 'Close' and alert_section = 'EMLock' " 
+            f"and external_id = '{alert_data['emlock_exception_id']}' and violation_type='{alert_data['exception_type']}' "
+            f"and sap_id = '{alert_data['location_id']}' and bu='{alert_data['location_type']}'")
+    print("query: ", query)
+    emlock_alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+    print("emlock_alert_data: ", emlock_alert_data)
+    if emlock_alert_data.get("data", []):
+        return True
+    return False

@@ -5,6 +5,7 @@ import traceback
 import hpcl_ceg_model
 import utilities.helpers as helpers
 import orchestrator.alerting.alert_manager as alert_manager
+import orchestrator.analytics.emlock_analysis as emlock_analysis
 
 router = fastapi.APIRouter(prefix='/emlock')
 logger = urdhva_base.logger.Logger.getInstance("emlock_data_ingestion")
@@ -47,7 +48,11 @@ async def emlock_ingest_data(data: Emlock_Ingest_DataParams):
             await hpcl_ceg_model.EmLockAlertHistoryCreate(**entry).create()
             camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
                                                         alert_section="EMLock")
-            await alert_manager.create_alert({**entry, "alert_type": "EMLock"}, camunda_url=camunda_url)
+            if not await emlock_analysis.is_alert_exists(entry):
+                await alert_manager.create_alert({**entry, "alert_type": "EMLock"}, camunda_url=camunda_url)
+            else:
+                print(f"Alert already exists {entry}")
+                logger.info(f"Alert already exists {entry}")
 
         # redis_ins = await urdhva_base.redispool.get_redis_connection()
         # vendor = "hpcl_emlock"
