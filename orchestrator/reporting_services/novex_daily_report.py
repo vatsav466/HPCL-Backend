@@ -466,31 +466,19 @@ async def send_notification(notification_data):
         f.write(final_data)
     # Send email
     ins = await notification_factory.get_notification_module("email")
-    await ins.publish_message(
-        subject="Novex Daily Report",
-        recipients=["sanjayk@hpcl.in", "cvmallinath@hpcl.in", "debeshp@hpcl.in",
-                    "purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in",
-                    "gargam@hpcl.in"],
-        html_content=True,
-        body=final_data,
-        force_send=True
-    )
-    await ins.publish_message(
-        subject="Novex Daily Report",
-        recipients=["rujutadoiphode@hpcl.in"],
-        html_content=True,
-        body=final_data,
-        force_send=True
-    )
-    await ins.publish_message(
-        subject="Novex Daily Report",
-        recipients=["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com",
-                    "santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com"],
-        html_content=True,
-        body=final_data,
-        force_send=True
-    )
-    # print(resp)
+    for recipient in [
+        ["sanjayk@hpcl.in", "debeshp@hpcl.in","gargam@hpcl.in"],
+        ["cvmallinath@hpcl.in","purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in"],
+        ["rujutadoiphode@hpcl.in"],
+        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com"]
+        ]:
+        await ins.publish_message(
+            subject="Novex Daily Report",
+            recipients=recipient,
+            html_content=True,
+            body=final_data,
+            force_send=True
+        )
 
 
 if __name__ == "__main__":
