@@ -50,19 +50,19 @@ class Postgresql:
             raise ValueError("Configuration not loaded. Cannot proceed.")
         self.params = config['postgresql']
 
-    def get_connection(self):
-        """Establish a synchronous PostgreSQL connection."""
-        return psycopg2.connect(
-            host=self.params['host'],
-            port=self.params['port'],
-            user=self.params['user_name'],
-            password=self.params['password'],
-            dbname=self.params['database_name']
-        )
+    # def get_connection(self):
+    #     """Establish a synchronous PostgreSQL connection."""
+    #     return psycopg2.connect(
+    #         host=self.params['host'],
+    #         port=self.params['port'],
+    #         user=self.params['user_name'],
+    #         password=self.params['password'],
+    #         dbname=self.params['database_name']
+    #     )
 
-    def get_default_schema(self):
-        """Return the default schema."""
-        return "public"
+    # def get_default_schema(self):
+    #     """Return the default schema."""
+    #     return "public"
 
 
     async def cal_host_manual_fan_printed(self, data):
@@ -432,6 +432,17 @@ class Postgresql:
             if table_db_name == 'host_unauthorised_flow':
                 query = f"""select * from "{table_db_name}" where alert_created = false and sap_id = '{sap_id}' and net_totalizer > 0"""
 
+            if table_db_name == 'host_mfm_factor':
+                # Process MFM factor records
+                # Query to get records with non-zero last_k_factor
+                query = f"""SELECT * FROM "{table_db_name}" 
+                            WHERE last_k_factor IS NOT NULL
+                            AND current_k_factor::text IS DISTINCT FROM last_k_factor::text
+                            AND date::DATE = '{to_date}'
+                            AND sap_id = '{sap_id}' 
+                            AND alert_created = false 
+                            ORDER BY created_at ASC
+                """
             resp = await model.get_aggr_data(query)
 
             # Existing alert processing logic for manual_fan_printed
