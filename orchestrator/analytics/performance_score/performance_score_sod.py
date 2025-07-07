@@ -565,47 +565,53 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
     async def _compute_va_pi_score(self, name, rules, location_id):
         pi_score = []
+
         for rule in rules['rules']:
             score = 0
             rule_weightage = rule['weightage']
+            
             if rule['model'] == 'va_portal':
                 if self.va_data:
-                    score = round((float(self.va_data['OVERALL_SCORE']) * 10 * rules['weightage']) / 100, 2)
-                else:
-                    score = 0
-            elif rule['model'] == 'va_alerts':
-                severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
-                in_clause_raw = ", ".join(f"'{value}'" for value in severity)
-                # For all open alerts
-                query_open = (
-                    f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
-                    f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'VA' and "
-                    f"bu = 'TAS' group by severity")
-                data = await hpcl_ceg_model.Alerts.get_aggr_data(query_open)
-                open_alerts = {data['severity']: data['count'] for data in data['data']}
-
-                # For all closure alerts in last 24 hours
-                query_close = (
-                    f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
-                    f"sap_id = '{location_id}' and alert_status = 'Close' and alert_section = 'VA' and "
-                    f"bu = 'TAS' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
-                data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
-                close_alerts = {data['severity']: data['count'] for data in data['data']}
-                alert_score = []
-
-                for rule_ in rule['rules']:
-                    int_name = rule_['interlock_name']
-                    if int_name in open_alerts or int_name in close_alerts:
-                        close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
-                                                                 (close_alerts.get(int_name, 0) +
-                                                                  open_alerts.get(int_name, 0)))
-                        alert_score.append(close_percentage)
+                    raw_score = float(self.va_data.get('OVERALL_SCORE', 0))
+                    if raw_score == 0:
+                        score = round(rule_weightage, 2)  # full score if portal score is 0
                     else:
-                        alert_score.append(rule_['weightage'])
-                print(alert_score, rules['weightage'])
-                score = round((sum(alert_score) * rules['weightage']) / 100, 2)
-            else:
-                ...
+                        score = round((raw_score * 10 * rule_weightage) / 100, 2)
+                else:
+                    score = round(rule_weightage, 2)  # assume full score if data is missing
+            # elif rule['model'] == 'va_alerts':
+            #     severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
+            #     in_clause_raw = ", ".join(f"'{value}'" for value in severity)
+            #     # For all open alerts
+            #     query_open = (
+            #         f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
+            #         f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'VA' and "
+            #         f"bu = 'TAS' group by severity")
+            #     data = await hpcl_ceg_model.Alerts.get_aggr_data(query_open)
+            #     open_alerts = {data['severity']: data['count'] for data in data['data']}
+
+            #     # For all closure alerts in last 24 hours
+            #     query_close = (
+            #         f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
+            #         f"sap_id = '{location_id}' and alert_status = 'Close' and alert_section = 'VA' and "
+            #         f"bu = 'TAS' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
+            #     data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
+            #     close_alerts = {data['severity']: data['count'] for data in data['data']}
+            #     alert_score = []
+
+            #     for rule_ in rule['rules']:
+            #         int_name = rule_['interlock_name']
+            #         if int_name in open_alerts or int_name in close_alerts:
+            #             close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
+            #                                                      (close_alerts.get(int_name, 0) +
+            #                                                       open_alerts.get(int_name, 0)))
+            #             alert_score.append(close_percentage)
+            #         else:
+            #             alert_score.append(rule_['weightage'])
+            #     print(alert_score, rules['weightage'])
+            #     score = round((sum(alert_score) * rules['weightage']) / 100, 2)
+            # else:
+            #     ...
             pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
                              'module': rules.get('name', name)})
         print(" vts pi score -----> ", pi_score)
@@ -726,7 +732,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         Raises:
             Exception: If an error occurs during data fetching for a device.
         """
-        WATER_THRESHOLD = 80
+        WATER_THRESHOLD = 0
         all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
 
@@ -735,28 +741,32 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 try:
                     device_id = device['id']['id']
                     required_kls, target_volume, available_water = fetch_device_data(device_id, key="Water Volume")
-
-                    percentage = (available_water / target_volume) * 100 if target_volume else 0
+                    WATER_THRESHOLD = required_kls
+                    if available_water < WATER_THRESHOLD:
+                        percentage = 0
+                    else:
+                        percentage = (available_water / target_volume) * 100
 
                     for rule in rules['rules']:
                         weightage = rule.get('weightage', 0)
-                        score = round(weightage, 2) if percentage >= WATER_THRESHOLD else 100
+                        score = round((percentage * weightage)/100, 2)
 
                         pi_score.append({
                             "name": rule['name'],
                             "score": score,
                             "weightage": weightage,
-                            "module": rules.get('name', 'Unknown Module')
+                            "module": rules.get('name', '')
                         })
+                    break
                 except Exception as e:
                     print(f"Error processing device {device.get('name')}: {e}")
                     continue
 
-        final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
+        final_score = round(sum(r['score'] for r in pi_score),2)
 
         print("final_score ---> ", final_score)
         return {
-            "name": rules.get('name', 'Unknown Module'),
+            "name": rules.get('name', ''),
             "score": final_score,
             "weightage": rules['weightage'],
             "results": pi_score
@@ -785,7 +795,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         Raises:
             Exception: If an error occurs during data fetching for a device.
         """
-        FOAM_THRESHOLD = 80
+        FOAM_THRESHOLD = 0
         all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
 
@@ -794,28 +804,32 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 try:
                     device_id = device['id']['id']
                     required_kls, target_volume, available_water = fetch_device_data(device_id, key="Foam Volume")
-
-                    percentage = (available_water / target_volume) * 100 if target_volume else 0
+                    FOAM_THRESHOLD = required_kls
+                    if available_water < FOAM_THRESHOLD:
+                        percentage = 100
+                    else:
+                        percentage = (available_water / target_volume) * 100
 
                     for rule in rules['rules']:
                         weightage = rule.get('weightage', 0)
-                        score = round(weightage, 2) if percentage >= FOAM_THRESHOLD else 100
+                        score = round((percentage * weightage) / 100 , 2)
 
                         pi_score.append({
                             "name": rule['name'],
                             "score": score,
                             "weightage": weightage,
-                            "module": rules.get('name', 'Unknown Module')
+                            "module": rules.get('name', '')
                         })
+                    break
                 except Exception as e:
                     print(f"Error processing device {device.get('name')}: {e}")
                     continue
 
-        final_score = round(sum(r['score'] for r in pi_score) * rules['weightage'] / 100, 2)
+        final_score = round(sum(r['score'] for r in pi_score), 2)
 
         print("final_score ---> ", final_score)
         return {
-            "name": rules.get('name', 'Unknown Module'),
+            "name": rules.get('name', ''),
             "score": final_score,
             "weightage": rules['weightage'],
             "results": pi_score
