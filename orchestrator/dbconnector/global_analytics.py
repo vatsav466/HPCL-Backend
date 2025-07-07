@@ -5638,7 +5638,7 @@ class GlobalAnalytics:
             plant_filter = ''
             sensor_id_filter = ''
             equipment_name_filter = ''
-
+            status = 'Open'  # Default status to 'Open'
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
@@ -5649,6 +5649,8 @@ class GlobalAnalytics:
                         sensor_id_filter = filter.value
                     if "equipment_name" in filter.key:
                         equipment_name_filter = filter.value
+                    if "status" in filter.key:
+                        status = filter.value
 
             # Build query
             query = f"""SELECT created_at,
@@ -5664,6 +5666,8 @@ class GlobalAnalytics:
                         FROM alerts
                         WHERE bu = 'TAS' AND alert_section = 'TAS'"""
 
+            if status:
+                query += f" AND alert_status IN ('{status}')"
             if sop_ids:
                 query += f" AND sop_id IN ({', '.join(f"'{s}'" for s in sop_ids if s)})"
             if zone_filter:
@@ -8484,6 +8488,7 @@ class GlobalAnalytics:
                 "    AND a.interlock_name = 'MFM K Factor Change'",
                 "    AND DATE(a.created_at) = h.created_date",
                 "GROUP BY h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number, h.mfm_number",
+                "HAVING COUNT(a.id) > 0",
                 "ORDER BY h.created_date DESC, alert_count DESC"
             ])
 
