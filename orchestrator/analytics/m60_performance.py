@@ -1153,7 +1153,21 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         print(f"came inside the req if for {product}")
                         merged_df = merged_df[merged_df['ProductName'] != product]
                         print(merged_df[merged_df['ProductName'] == product])
-            print(merged_df['ProductName'].unique().tolist())     
+            print(merged_df['ProductName'].unique().tolist()) 
+            
+    if time_grain == "fiscal_year":
+        result = await sbu_sales_fiscal(
+            merged_df,
+            filters,
+            cross_filters,
+            drill_state,
+            time_grain,
+            resp_format
+        )
+        if result["status"]:
+            print("Result got executed came inside the level")
+            return result
+
         
     if time_grain == 'top_zones':
              
@@ -1993,3 +2007,55 @@ async def get_top_and_bottom_10_sales_area_by_year_sbu(merged_df, filters, cross
             "message": f"Error retrieving top and bottom sales areas: {str(e)}",
             "data": {}
         }
+
+async def sbu_sales_fiscal(conn, merged_df, filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    """
+    API to return SBU sales aggregated set-wise for a fiscal year,
+    ignoring NULL or 0 SBU names.
+    """
+    data = pd.DataFrame(merged_df)
+    print("DF", data)
+
+    fiscal_year = data['fiscal_year'].iloc[0]
+    try:
+        start_year, end_year = map(int, fiscal_year.split("-"))
+    except:
+        return {"error": "Invalid fiscal_year format, use YYYY-YYYY"}
+
+    results = []
+    SETS = [
+        ["Apr", "May", "Jun"],
+        ["Jul", "Aug", "Sep"],
+        ["Oct", "Nov", "Dec"],
+        ["Jan", "Feb", "Mar"]
+    ]
+
+    for idx, months in enumerate(SETS):
+        sql = """
+            SELECT 
+                "SBU_Name", 
+                SUM("NETWEIGHT_TMT") as total_netweight
+            FROM "MOM_DAY_LEVEL_DATA"
+            WHERE "month_name" = ANY($1)
+              AND "fiscal_year" = $2
+            GROUP BY "SBU_Name"
+            ORDER BY total_netweight DESC
+        """
+        rows = await conn.fetch(sql, months, fiscal_year)
+
+        set_data = []
+        for row in rows:
+            sbu = row["SBU_Name"]
+            if sbu is None or sbu.strip() == "" or sbu == "0":
+                continue
+            set_data.append({
+                "sbu": sbu,
+                "total_netweight": float(row["total_netweight"])
+            })
+        results.append({
+            "months": months,
+            "data": set_data
+        })
+
+    return results
+

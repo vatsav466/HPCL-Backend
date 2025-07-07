@@ -21,6 +21,7 @@ def get_industry_data():
     """
     #res = ind.fetch_industry_raw_data(actual=False,history=True)
     res = ind.fetch_industry_raw_data(actual=True,history=False)
+    # pd.DataFrame(res).to_csv('/tmp/res.csv',index = False)
     print(res.columns.tolist())
     print(res['VALUE'].sum())
     print(type(res))
@@ -100,6 +101,11 @@ def insert_industry_data(res):
         columns.append(i)
     res = res.with_columns([pl.col("productname").alias("productname_org")])
     res = res.with_columns([pl.col("prod1").alias("productname")])
+    res= res.with_columns([
+    pl.lit("").alias("entity_id"),
+    pl.lit(datetime.datetime.now()).alias("created_at"),
+    pl.lit(datetime.datetime.now()).alias("updated_at")
+])
     res = res.select(columns)
     pg_conn.commit()
     try:
