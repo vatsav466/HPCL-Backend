@@ -6,7 +6,7 @@
             {
                 "name": "VA Portal",
                 "model": "va_portal",
-                "weightage": 50
+                "weightage": 100
             },
             {
                 "name": "Alert Severity",
