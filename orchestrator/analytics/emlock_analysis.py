@@ -60,12 +60,14 @@ async def close_alerts_by_schedule():
     to_day = time_stamp.astimezone(pytz.timezone('Asia/Kolkata')) - datetime.timedelta(1)
 
     query = f"select id from alerts where alert_status != 'Close' and external_timestamp::date = '{to_day}' and alert_section = 'EMLock'"
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    alerts = await function(query=query)
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # alerts = await function(query=query)
+    alerts = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+    alerts = alerts.get("data", [])
     for alert in alerts:
         alert_data = await hpcl_ceg_model.Alerts.get(alert['id'])
         if not isinstance(alert_data, dict):
@@ -85,12 +87,14 @@ async def close_alerts_by_schedule():
 async def close_alerts_by_vendor():
     query = (f"select id, external_id from alerts where alert_section = 'EMLock' and alert_status != 'Close' and "
              f"created_at BETWEEN NOW() - INTERVAL '30 minutes' AND NOW();")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    alerts = await function(query=query)
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # alerts = await function(query=query)
+    alerts = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+    alerts = alerts.get("data", [])
     alert_mapping = {str(x['external_id']): str(x['id']) for x in alerts}
     creds = credential_loader.get_credentials("EM_LOCK")
     url = f"http://{creds['host']}:{creds['port']}/api/exceptionStatusCheck"

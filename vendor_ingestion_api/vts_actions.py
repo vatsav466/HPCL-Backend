@@ -31,32 +31,34 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
     - dict: Status message indicating the success of the data submission.
     """
     try:
-      logger.info(f"Received VTS data ingestion from vendor {data.dict()}")
-      # await alert_manager.create_alert({**data.dict(), "alert_type": "VTS"})
-      # return True, "Success"
-
-      # Ensure data.data is a list and contains items
-      if isinstance(data.data, list) and len(data.data) > 0:
-          enriched_data = [
-              {
-                  **entry.dict()
-              }
-              for entry in data.data
-          ]
-      else:
-          logger.error(f"Invalid data structure: data.data is not a list or is empty")
-          return {"status": False, "message": "Invalid data", "data": []}
-
-      for entry in enriched_data:
-          entry['auto_unblock'] = True
-          entry['violation_type'] = await vts_analysis.get_vts_violation(entry)
-          entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
-              lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
-          await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
-          if not await vts_analysis.is_alert_exists(entry['tl_number']):
-              await alert_manager.create_alert({**entry, "alert_type": "VTS"})
-      
-      return True, "Success"
+        logger.info(f"Received VTS data ingestion from vendor {data.dict()}")
+        # await alert_manager.create_alert({**data.dict(), "alert_type": "VTS"})
+        # return True, "Success"
+        #
+        # Ensure data.data is a list and contains items
+        if isinstance(data.data, list) and len(data.data) > 0:
+            enriched_data = [
+                {
+                    **entry.dict()
+                }
+            for entry in data.data
+            ]
+        else:
+            logger.error(f"Invalid data structure: data.data is not a list or is empty")
+            return {"status": False, "message": "Invalid data", "data": []}
+        redis_queue = urdhva_base.redispool.RedisQueue('vts_alerts_queue')
+        await redis_queue.put(json.dumps(enriched_data))
+        return True, "Success"
+        # for entry in enriched_data:
+        #     entry['auto_unblock'] = True
+        #     entry['violation_type'] = await vts_analysis.get_vts_violation(entry)
+        #     entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
+        #         lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
+        #     await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
+        #     if not await vts_analysis.is_alert_exists(entry['tl_number']):
+        #         await alert_manager.create_alert({**entry, "alert_type": "VTS"})
+        #
+        # return True, "Success"
 
     except Exception as e:
         print(traceback.format_exc())
