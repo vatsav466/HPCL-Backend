@@ -736,50 +736,58 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         all_devices = fetch_oi_devices(page_size=1000)
 
         #Filter only devices matching the location_id
-        location_devices = [d for d in all_devices if d.get("type") == "OI" and d.get("additionalInfo").get("location_id") == location_id]
+        location_devices = [
+            d for d in all_devices
+            if d.get("type") == "OI" and d.get("additionalInfo", {}).get("location_id") == location_id
+        ]
 
         pi_score = []
-        
-        for device in location_devices:
-            try:
-                device_id = device.get('id', {}).get('id')  # Safely get device_id
 
-                if not device_id:
-                    # Handle empty device ID — assign 100% score
-                    percentage = 100
-                else:
+        if not location_devices:
+            # ⚠️ No devices found for location → assign full score
+            percentage = 100
+            for rule in rules.get('rules', []):
+                weightage = rule.get('weightage', 0)
+                score = round((percentage * weightage) / 100, 2)
+                pi_score.append({
+                    "name": rule.get('name', ''),
+                    "score": score,
+                    "weightage": weightage,
+                    "module": rules.get('name', '')
+                })
+        else:
+            for device in location_devices:
+                try:
+                    device_id = device.get('id', {}).get('id')
                     required_kls, target_volume, available_water = fetch_device_data(device_id, key="Water Volume")
                     WATER_THRESHOLD = required_kls
-
                     if available_water < WATER_THRESHOLD:
-                        percentage = 100  # still assign 100% if under threshold (your original logic)
+                        percentage = 0
                     else:
                         percentage = (available_water / target_volume) * 100
 
-                for rule in rules['rules']:
-                    weightage = rule.get('weightage', 0)
-                    score = round((percentage * weightage) / 100, 2)
+                    for rule in rules.get('rules', []):
+                        weightage = rule.get('weightage', 0)
+                        score = round((percentage * weightage) / 100, 2)
+                        pi_score.append({
+                            "name": rule.get('name', ''),
+                            "score": score,
+                            "weightage": weightage,
+                            "module": rules.get('name', '')
+                        })
+                    break  # Only process the first matching device
+                except Exception as e:
+                    print(f"Error processing device {device.get('name', '')}: {e}")
+                    continue
 
-                    pi_score.append({
-                        "name": rule['name'],
-                        "score": score,
-                        "weightage": weightage,
-                        "module": rules.get('name', '')
-                    })
-
-                break  # Process only the first matching device
-
-            except Exception as e:
-                print(f"Error processing device {device.get('name')}: {e}")
-                continue
-
+        # Final score
         final_score = round(sum(r['score'] for r in pi_score), 2)
+        print("final_score --->", final_score)
 
-        print("final_score ---> ", final_score)
         return {
             "name": rules.get('name', ''),
             "score": final_score,
-            "weightage": rules['weightage'],
+            "weightage": rules.get('weightage', 100),
             "results": pi_score
         }
 
@@ -811,14 +819,23 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         location_devices = [d for d in all_devices if d.get("type") == "OI" and d.get("additionalInfo").get("location_id") == location_id]
         pi_score = []
 
-        for device in location_devices:
-            if device.get("type") == "OI":
-                try:
-                    device_id = device['id']['id']
-                    if not device_id:
-                    # Handle empty device ID — assign 100% score
-                        percentage = 100
-                    else:
+        if not location_devices:
+            # ⚠️ No devices found for location → assign full score
+            percentage = 100
+            for rule in rules.get('rules', []):
+                weightage = rule.get('weightage', 0)
+                score = round((percentage * weightage) / 100, 2)
+                pi_score.append({
+                    "name": rule.get('name', ''),
+                    "score": score,
+                    "weightage": weightage,
+                    "module": rules.get('name', '')
+                })
+        else:
+            for device in location_devices:
+                if device.get("type") == "OI":
+                    try:
+                        device_id = device['id']['id']
                         required_kls, target_volume, available_water = fetch_device_data(device_id, key="Foam Volume")
                         FOAM_THRESHOLD = required_kls
                         if available_water < FOAM_THRESHOLD:
@@ -826,20 +843,20 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                         else:
                             percentage = (available_water / target_volume) * 100
 
-                    for rule in rules['rules']:
-                        weightage = rule.get('weightage', 0)
-                        score = round((percentage * weightage) / 100 , 2)
+                        for rule in rules['rules']:
+                            weightage = rule.get('weightage', 0)
+                            score = round((percentage * weightage) / 100 , 2)
 
-                        pi_score.append({
-                            "name": rule['name'],
-                            "score": score,
-                            "weightage": weightage,
-                            "module": rules.get('name', '')
-                        })
-                    break
-                except Exception as e:
-                    print(f"Error processing device {device.get('name')}: {e}")
-                    continue
+                            pi_score.append({
+                                "name": rule['name'],
+                                "score": score,
+                                "weightage": weightage,
+                                "module": rules.get('name', '')
+                            })
+                        break
+                    except Exception as e:
+                        print(f"Error processing device {device.get('name')}: {e}")
+                        continue
 
         final_score = round(sum(r['score'] for r in pi_score), 2)
 
@@ -873,27 +890,46 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         """
         all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
-        location_devices = [d for d in all_devices if d.get("type") == "OI" and d.get("additionalInfo").get("location_id") == location_id]
-        for device in location_devices:
-            if device.get("type") == "OI":
+
+        # Filter devices for the given location
+        location_devices = [
+            d for d in all_devices
+            if d.get("type") == "OI" and d.get("additionalInfo", {}).get("location_id") == location_id
+        ]
+
+        if not location_devices:
+            # No devices found → assign full score
+            score_percentage = 100
+            for rule in rules.get('rules', []):
+                weightage = rule.get('weightage', 0)
+                score = round((score_percentage * weightage) / 100, 2)
+                pi_score.append({
+                    "name": rule.get('name', ''),
+                    "score": score,
+                    "weightage": weightage,
+                    "module": rules.get('name', '')
+                })
+        else:
+            for device in location_devices:
                 try:
-                    device_id = device['id']['id']
+                    device_id = device.get('id', {}).get('id')
+                    score_percentage = 100  # Start with full score
+
                     if not device_id:
-                    # Handle empty device ID — assign 100% score
-                        score_percentage = 100
+                        # If no device ID, still give full score
+                        pass
                     else:
                         alarms_data = fetch_alarm_data(device_id)
-                        score_percentage = 100
 
-                        # Check if any relevant alarm is active and unacknowledged
                         for alarm in alarms_data.get('data', []):
                             interlock_name = alarm.get('details', {}).get('additionalInfo', {}).get('interlockName')
                             status = alarm.get('status', '')
+
                             if interlock_name == 'Fire engine in local' and status == 'ACTIVE_UNACK':
                                 score_percentage = 0
                                 break
 
-                    # Apply each rule using score_percentage
+                    # Apply all rules using score_percentage
                     for rule in rules.get('rules', []):
                         weightage = rule.get('weightage', 0)
                         score = round((score_percentage * weightage) / 100, 2)
@@ -903,14 +939,15 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                             "weightage": weightage,
                             "module": rules.get('name', '')
                         })
-                        break
-                    break
+
+                    break  # Process only the first matching device
 
                 except Exception as e:
                     print(f"Error processing device {device.get('name', '')}: {e}")
                     continue
 
-        final_score = round(sum(r['score'] for r in pi_score))
+        # ✅ Final score calculation
+        final_score = round(sum(r['score'] for r in pi_score), 2)
         print("final_score ---> ", final_score)
 
         return {
@@ -948,55 +985,72 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             d for d in all_devices 
             if d.get("type") == "OI" and d.get("additionalInfo", {}).get("location_id") == location_id
         ]
+        if not location_devices:
+            # No devices found — assign full scores manually
+            module_name = rules.get('name', '')
+            pi_score.extend([
+                {
+                    'name': 'Pressurized Hydrant Line',
+                    'score': 2.5,
+                    'weightage': 2.5,
+                    'module': module_name
+                },
+                {
+                    'name': 'Jockey Pump',
+                    'score': 2.5,
+                    'weightage': 2.5,
+                    'module': module_name
+                }
+            ])
+        else:
+            for device in location_devices:
+                if device.get("type") == "OI":
+                    try:
+                        device_id = device.get('id', {}).get('id')  # Safely get device_id
 
-        for device in location_devices:
-            if device.get("type") == "OI":
-                try:
-                    device_id = device.get('id', {}).get('id')  # Safely get device_id
+                        if not device_id:
+                            # No device_id, assign full scores
+                            pressure_score = 2.5
+                            jockey_score = 2.5
+                        else:
+                            alarms_data = fetch_alarm_data(device_id)
 
-                    if not device_id:
-                        # No device_id, assign full scores
-                        pressure_score = 2.5
-                        jockey_score = 2.5
-                    else:
-                        alarms_data = fetch_alarm_data(device_id)
+                            hydrant_alarm_active = False
+                            jockey_alarm_active = False
 
-                        hydrant_alarm_active = False
-                        jockey_alarm_active = False
+                            for alarm in alarms_data.get('data', []):
+                                interlock_name = alarm.get('details', {}).get('additionalInfo', {}).get('interlockName')
+                                status = alarm.get('status', '')
+                                device_type = alarm.get('type', '')
 
-                        for alarm in alarms_data.get('data', []):
-                            interlock_name = alarm.get('details', {}).get('additionalInfo', {}).get('interlockName')
-                            status = alarm.get('status', '')
-                            device_type = alarm.get('type', '')
+                                if device_type == 'PT Alarm' and interlock_name == 'Hydrant Line PT is below 7 Kg' and status == 'ACTIVE_UNACK':
+                                    hydrant_alarm_active = True
+                                elif device_type == 'Jockey Alarm' and interlock_name == 'Jockey Pump not in Auto Remote' and status == 'ACTIVE_UNACK':
+                                    jockey_alarm_active = True
 
-                            if device_type == 'PT Alarm' and interlock_name == 'Hydrant Line PT is below 7 Kg' and status == 'ACTIVE_UNACK':
-                                hydrant_alarm_active = True
-                            elif device_type == 'Jockey Alarm' and interlock_name == 'Jockey Pump not in Auto Remote' and status == 'ACTIVE_UNACK':
-                                jockey_alarm_active = True
+                            pressure_score = 0.0 if hydrant_alarm_active else 2.5
+                            jockey_score = 0.0 if jockey_alarm_active else 2.5
 
-                        pressure_score = 0.0 if hydrant_alarm_active else 2.5
-                        jockey_score = 0.0 if jockey_alarm_active else 2.5
+                        module_name = rules.get('name', '')
 
-                    module_name = rules.get('name', '')
-
-                    pi_score.extend([
-                        {
-                            'name': 'Pressurized Hydrant Line',
-                            'score': pressure_score,
-                            'weightage': 2.5,
-                            'module': module_name
-                        },
-                        {
-                            'name': 'Jockey Pump',
-                            'score': jockey_score,
-                            'weightage': 2.5,
-                            'module': module_name
-                        }
-                    ])
-                    break  # Only the first matching device
-                except Exception as e:
-                    print(f"Error processing device {device.get('name', '')}: {e}")
-                    continue
+                        pi_score.extend([
+                            {
+                                'name': 'Pressurized Hydrant Line',
+                                'score': pressure_score,
+                                'weightage': 2.5,
+                                'module': module_name
+                            },
+                            {
+                                'name': 'Jockey Pump',
+                                'score': jockey_score,
+                                'weightage': 2.5,
+                                'module': module_name
+                            }
+                        ])
+                        break  # Only the first matching device
+                    except Exception as e:
+                        print(f"Error processing device {device.get('name', '')}: {e}")
+                        continue
 
         final_score = round(sum(r['score'] for r in pi_score), 2)
         print("final_score ---> ", final_score)
