@@ -7990,7 +7990,8 @@ class GlobalAnalytics:
                     AND DATE(a.created_at) = m.created_date
                     AND a.device_name = m.total_manual_fan_count::VARCHAR
                 WHERE 
-                    m.total_manual_fan_count != 0
+                    m.total_manual_fan_count != 0 and
+                    a.device_msg != ''
                 GROUP BY 
                     m.created_date, m.zone, m.location_name, m.sap_id, m.total_manual_fan_count, m.total_count
                 ORDER BY 

@@ -426,6 +426,7 @@ class AlertFactory:
                             alert['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                             alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
                             alert['interlock_name'] = alert_data.get('interlock_name', '')
+                            alert['closed_at'] = datetime.datetime.now()
                             
                             if il_data:
                                 alert['interlock_id'] = str(il_data[0]['id'])
