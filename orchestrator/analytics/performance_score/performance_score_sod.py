@@ -734,35 +734,38 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         """
         WATER_THRESHOLD = 0
         all_devices = fetch_oi_devices(page_size=1000)
+
+        #Filter only devices matching the location_id
+        location_devices = [d for d in all_devices if d.get("type") == "OI" and d.get("additionalInfo").get("location_id") == location_id]
+
         pi_score = []
 
-        for device in all_devices:
-            if device.get("type") == "OI":
-                try:
-                    device_id = device['id']['id']
-                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="Water Volume")
-                    WATER_THRESHOLD = required_kls
-                    if available_water < WATER_THRESHOLD:
-                        percentage = 0
-                    else:
-                        percentage = (available_water / target_volume) * 100
+        for device in location_devices:
+            try:
+                device_id = device['id']['id']
+                required_kls, target_volume, available_water = fetch_device_data(device_id, key="Water Volume")
+                WATER_THRESHOLD = required_kls
+                if available_water < WATER_THRESHOLD:
+                    percentage = 0
+                else:
+                    percentage = (available_water / target_volume) * 100
 
-                    for rule in rules['rules']:
-                        weightage = rule.get('weightage', 0)
-                        score = round((percentage * weightage)/100, 2)
+                for rule in rules['rules']:
+                    weightage = rule.get('weightage', 0)
+                    score = round((percentage * weightage) / 100, 2)
 
-                        pi_score.append({
-                            "name": rule['name'],
-                            "score": score,
-                            "weightage": weightage,
-                            "module": rules.get('name', '')
-                        })
-                    break
-                except Exception as e:
-                    print(f"Error processing device {device.get('name')}: {e}")
-                    continue
+                    pi_score.append({
+                        "name": rule['name'],
+                        "score": score,
+                        "weightage": weightage,
+                        "module": rules.get('name', '')
+                    })
+                break  # Process only the first matching device
+            except Exception as e:
+                print(f"Error processing device {device.get('name')}: {e}")
+                continue
 
-        final_score = round(sum(r['score'] for r in pi_score),2)
+        final_score = round(sum(r['score'] for r in pi_score), 2)
 
         print("final_score ---> ", final_score)
         return {
@@ -797,9 +800,10 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         """
         FOAM_THRESHOLD = 0
         all_devices = fetch_oi_devices(page_size=1000)
+        location_devices = [d for d in all_devices if d.get("type") == "OI" and d.get("additionalInfo").get("location_id") == location_id]
         pi_score = []
 
-        for device in all_devices:
+        for device in location_devices:
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
@@ -857,8 +861,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         """
         all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
-
-        for device in all_devices:
+        location_devices = [d for d in all_devices if d.get("type") == "OI" and d.get("additionalInfo").get("location_id") == location_id]
+        for device in location_devices:
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
@@ -887,14 +891,14 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     break
 
                 except Exception as e:
-                    print(f"Error processing device {device.get('name', 'Unknown')}: {e}")
+                    print(f"Error processing device {device.get('name', '')}: {e}")
                     continue
 
         final_score = round(sum(r['score'] for r in pi_score))
         print("final_score ---> ", final_score)
 
         return {
-            "name": rules.get('name', 'Unknown Module'),
+            "name": rules.get('name', ''),
             "score": final_score,
             "weightage": rules.get('weightage', 100),
             "results": pi_score
@@ -922,8 +926,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         """
         all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
-
-        for device in all_devices:
+        location_devices = [d for d in all_devices if d.get("type") == "OI" and d.get("additionalInfo").get("location_id") == location_id]
+        for device in location_devices:
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
@@ -945,7 +949,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     pressure_score = 0.0 if hydrant_alarm_active else 2.5
                     jockey_score = 0.0 if jockey_alarm_active else 2.5
 
-                    module_name = rules.get('name', 'Unknown Module')
+                    module_name = rules.get('name', '')
 
                     pi_score.extend([
                         {
@@ -963,14 +967,14 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     ])
                     break
                 except Exception as e:
-                    print(f"Error processing device {device.get('name', 'Unknown')}: {e}")
+                    print(f"Error processing device {device.get('name', '')}: {e}")
                     continue
 
         final_score = round(sum(r['score'] for r in pi_score))
         print("final_score ---> ", final_score)
 
         return {
-            "name": rules.get('name', 'Unknown Module'),
+            "name": rules.get('name', ''),
             "score": final_score,
             "weightage": rules.get('weightage', 100),
             "results": pi_score
