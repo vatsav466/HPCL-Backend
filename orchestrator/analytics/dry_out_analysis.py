@@ -551,11 +551,13 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                 ORDER BY 
                     cd.sap_id;"""
 
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    data = await function(query=query)
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # data = await function(query=query)
+    data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    data = data.get("data", [])
     data = pd.DataFrame(data)
     for key in ['dry_out_in_days', 'indent_no', 'category']:
         if key in data.columns:
@@ -576,11 +578,13 @@ async def ro_not_in_ims():
                     SELECT DISTINCT SUBSTR("DEALER_CODE", 3, 8)
                     FROM "IMS_SAP"."INDENT_REQUEST"
                 );"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    data = await function(query=query)
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # data = await function(query=query)
+    data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    data = data.get("data", [])
     data = pd.DataFrame(data)
     redis_cli = await urdhva_base.redispool.get_redis_connection()
     locations = {key.decode(): json.loads(value.decode())
@@ -828,14 +832,16 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     cd.rn = 1 or cd.rn is null
                 ORDER BY 
                     a.indent_no desc;"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    stats_resp = await function(
-        query=query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # stats_resp = await function(
+    #     query=query
+    # )
+    stats_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    stats_resp = stats_resp.get("data", [])
     stats_resp = pd.DataFrame(stats_resp)
     stats_resp['DRY_OUT_IN_DAYS'] = stats_resp['DRY_OUT_IN_DAYS'].fillna("").astype(str)
     stats_resp.replace({"DRY_OUT_IN_DAYS": {"1": "DRY_OUT", "2": "INTRA_DAY_DRY_OUT"}}, inplace=True)
@@ -888,12 +894,14 @@ async def _get_on_hold_data(dry_out_in_days='1'):
                             {conditions}
                             AND a.indent_status NOT IN ('Cancelled', 'Completed')
                         order by a.sap_id"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    stats_resp = await function(
-        query=stats_query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # stats_resp = await function(
+    #     query=stats_query
+    # )
+    stats_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=stats_query, limit=0)
+    stats_resp = stats_resp.get("data", [])
     stats_resp = pd.DataFrame(stats_resp)
     return stats_resp.to_dict(orient='records')
 
@@ -939,14 +947,16 @@ async def constant_dryout_ros(days=7):
     WHERE newstatus = 1
     """
 
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    stats_resp = await function(
-        query=query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # stats_resp = await function(
+    #     query=query
+    # )
+    stats_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    stats_resp = stats_resp.get("data", [])
     df = pl.DataFrame(stats_resp)
     df = df.with_columns(
         pl.col("run_id")
@@ -1001,14 +1011,16 @@ async def current_month_frequent_dryout_ros(data):
                             GROUP BY location_name, sap_id
                             ORDER BY "Total_Count" DESC '''
 
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    dryout_resp = await function(
-        query=dry_out_query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # dryout_resp = await function(
+    #     query=dry_out_query
+    # )
+    dryout_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=dry_out_query, limit=0)
+    dryout_resp = dryout_resp.get("data", [])
 
     return dryout_resp
 
@@ -1041,14 +1053,16 @@ async def current_month_frequent_drout_terminals(data):
                         GROUP BY location_name, terminal_plant_id, category
                         ORDER BY "Total_Count" DESC '''
 
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    dryout_resp = await function(
-        query=dry_out_query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # dryout_resp = await function(
+    #     query=dry_out_query
+    # )
+    dryout_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=dry_out_query, limit=0)
+    dryout_resp = dryout_resp.get("data", [])
     return dryout_resp
 
 async def get_atg_ack(sap_id: str, product_code: str):
@@ -1114,14 +1128,16 @@ async def update_dry_out_from_cris(records):
     records = records.astype(str)
 
     query = f"""select sap_id as rosapcode, product_code from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status != 'Close' and dry_out_in_days in ('1','2')"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    dryout_resp = await function(
-        query=query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # dryout_resp = await function(
+    #     query=query
+    # )
+    dryout_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    dryout_resp = dryout_resp.get("data", [])
     dryout_resp = pd.DataFrame(dryout_resp)
     dryout_resp = dryout_resp.astype(str)
     dryout_resp = dryout_resp.drop_duplicates(subset=["rosapcode", "product_code"])
@@ -1224,12 +1240,14 @@ async def dry_out_diff():
                    f"mark_as_false from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status != 'Close'")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    novex_resp = await function(
-        query=novex_query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # novex_resp = await function(
+    #     query=novex_query
+    # )
+    novex_resp = await hpcl_ceg_model.Alerts.get_aggr_data(novex_query, limit=10000)
+    novex_resp = novex_resp.get("data", [])
 
     cris_resp = pd.DataFrame(cris_resp)
     novex_resp = pd.DataFrame(novex_resp)
@@ -1260,14 +1278,16 @@ async def dry_out_report(dry_out_in_days='1'):
             AND indent_status NOT IN ('Cancelled', 'Completed')
             AND dry_out_in_days = '{dry_out_in_days}';
             """
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    alerts_resp = await function(
-        query=alerts_query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # alerts_resp = await function(
+    #     query=alerts_query
+    # )
+    alerts_resp = await hpcl_ceg_model.Alerts.get_aggr_data(alerts_query, limit=0)
+    alerts_resp = alerts_resp.get("data", [])
     alerts_resp = pd.DataFrame(alerts_resp)
 
     query_combined = f"""
@@ -1287,14 +1307,16 @@ async def dry_out_report(dry_out_in_days='1'):
                         AND substr(tse.run_id, 1, 6) = %s;
                     """
 
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    combined_resp = await function(
-        query=query_combined
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # combined_resp = await function(
+    #     query=query_combined
+    # )
+    combined_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query_combined, limit=0)
+    combined_resp = combined_resp.get("data", [])
     combined_resp = pd.DataFrame(combined_resp)
 
     query_sales = """
@@ -1312,14 +1334,16 @@ async def dry_out_report(dry_out_in_days='1'):
                     FROM "HPCL_HOS"."sch_inventory_forecast_dashboard"
                     WHERE run_id = '250317';
                     """
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    sales_resp = await function(
-        query=query_sales
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # sales_resp = await function(
+    #     query=query_sales
+    # )
+    sales_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query_sales, limit=0)
+    sales_resp = sales_resp.get("data", [])
     sales_resp = pd.DataFrame(sales_resp)
 
     final_df = alerts_resp.merge(
@@ -1350,14 +1374,16 @@ async def get_dryout_aging(conditions):
                 COUNT(CASE WHEN created_at >= NOW() - INTERVAL '15 days' AND created_at < NOW() - INTERVAL '7 days' THEN 1 END) AS "from_8_to_15_days",
                 COUNT(CASE WHEN created_at < NOW() - INTERVAL '15 days' THEN 1 END) AS "more_than_15_days"
             FROM distinct_alerts;"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # resp = await function(
+    #     query=query
+    # )
+    resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    resp = resp.get("data", [])
     return resp[0] if resp else {}
 
 async def get_ro_count_less_50(condition):
@@ -1385,14 +1411,16 @@ async def get_ro_count_less_50(condition):
     data['CUST_CD'] = data['CUST_CD'].astype(str)
 
     query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # resp = await function(
+    #     query=query
+    # )
+    resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    resp = resp.get("data", [])
     resp = pd.DataFrame(resp)
     if resp.empty:
         resp = pd.DataFrame({"sap_id": [], "created_at": []})
@@ -1446,14 +1474,16 @@ async def get_tar_analysis(condition):
     cust_resp['rosapcode'] = cust_resp['rosapcode'].astype(str)
 
     query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # resp = await function(
+    #     query=query
+    # )
+    resp = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
+    resp = resp.get("data", [])
     resp = pd.DataFrame(resp)
     if resp.empty:
         resp = pd.DataFrame({"sap_id": [], "created_at": []})
@@ -1476,14 +1506,16 @@ async def get_tar_analysis(condition):
 
 async def get_tt_counts(condition):
     query = f"""select truck_regnno, substr(dealer_code, 3, 8) as dealer_code from "IMS_SAP"."TRUCK_DETAILS" """
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    dealer_tt_resp = await function(
-        query=query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # dealer_tt_resp = await function(
+    #     query=query
+    # )
+    dealer_tt_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    dealer_tt_resp = dealer_tt_resp.get("data", [])
     dealer_tt_resp = pd.DataFrame(dealer_tt_resp)
     dealer_tt_resp['dealer_code'] = dealer_tt_resp['dealer_code'].fillna("")
     dealer_tt_resp['dealer_code'] = dealer_tt_resp['dealer_code'].astype(str)
@@ -1561,14 +1593,16 @@ async def get_tt_counts(condition):
                       WHERE "CARD_STATUS" = 'O'
                         AND "LOADED_ON"::date >= '{current_data}'
                   )"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # resp = await function(
+    #     query=query
+    # )
+    resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    resp = resp.get("data", [])
     resp = pd.DataFrame(resp)
     if resp.empty:
         resp = pd.DataFrame({"TRUCK_REGNO": []})
@@ -1666,14 +1700,16 @@ async def get_dryout_aging_data():
                         WHEN created_at < NOW() - INTERVAL '15 days' THEN 'More than 15 days'
                     END AS age_category
                 FROM distinct_alerts;"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # resp = await function(
+    #     query=query
+    # )
+    resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    resp = resp.get("data", [])
     resp = pd.DataFrame(resp)
     resp.rename(columns={
         "sap_id": "DEALER_CODE", "location_name": "LOCATION_NAME", "zone": "ZONE",
@@ -1686,14 +1722,16 @@ async def get_dryout_aging_data():
 async def generate_dry_out_report(records):
     records = pd.DataFrame(records)
     query = f"select * from location_master where bu = 'RO'"
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "hpcl_ceg", "1")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    location_data = await function(
-        query=query
-    )
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # location_data = await function(
+    #     query=query
+    # )
+    location_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    location_data = location_data.get("data", [])
     location_data = pd.DataFrame(location_data)
     records['rosapcode'] = records['rosapcode'].astype(str)
     records['status'] = records['status'].astype(str)

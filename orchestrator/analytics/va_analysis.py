@@ -6,6 +6,7 @@ import datetime
 import calendar
 import polars as pl
 import charts_actions
+import hpcl_ceg_model
 import dashboard_studio_model
 import utilities.va_alert_mapping as va_alert_mapping
 import utilities.lpg_role_configuration as lpg_role_configuration
@@ -177,10 +178,12 @@ async def get_va_alerts_count(bu: str, violation_type: str, sap_id: str):
                  f"violation_type = '{violation_type}' and "
                  f"sap_id = '{sap_id}' and "
                  f"created_at BETWEEN TO_DATE('{start_date}', 'YYYY-MM-DD') AND TO_DATE('{end_date}', 'YYYY-MM-DD')")
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-        resp = await function(query=query)
+        # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+        # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        # resp = await function(query=query)
+        resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+        resp = resp.get("data", [])
         if resp:
             resp = resp[0]
             return resp.get("count", 0)
@@ -199,10 +202,12 @@ async def get_lpg_alerts_count(bu: str, violation_type: str, sap_id: str):
                     f"violation_type = '{violation_type}' and "
                     f"sap_id = '{sap_id}' and "
                     f"created_at::DATE={date}")
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-            resp = await function(query=query)            
+            # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+            # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            # resp = await function(query=query)
+            resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            resp = resp.get("data", [])
             if not resp:
                 return count-1
             if count>3:

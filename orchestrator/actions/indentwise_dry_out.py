@@ -117,16 +117,6 @@ class IndentDryOut:
         }
         return True, msg_block
 
-    async def create_dry_out_summary(self):
-        schema_name = connection_mapping.schema_mapping.get("hpcl_ceg", "HPCL_HOS")
-        table_name = connection_mapping.table_mapping.get("dry_out", "sch_inventory_forecast_dashboard")
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
-            "hpcl_ceg", "1"
-        )
-        Charts_Connection_Vault_RoutingParams.action = 'get_data'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        records = await function(schema_name=schema_name, table_name=table_name, query=query)
-
     async def check_raised_indent(self, params: dict):
         if not self.params:
             self.params = params
@@ -1291,13 +1281,15 @@ class IndentDryOut:
             cris_resp = pd.DataFrame(cris_resp)
         # print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status", "product_grp"]])
 
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         query = f'''SELECT product_code, 
                     dry_out_in_days FROM public.alerts
                     where id = '{alert_id}' '''
-        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        ceg_resp = await function(query=query)
+        # function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # ceg_resp = await function(query=query)
+        ceg_resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+        ceg_resp = ceg_resp.get("data")
         ceg_resp = ceg_resp[0]
         product_code = ceg_resp.get("product_code")
         dry_out_in_days = ceg_resp.get("dry_out_in_days")
@@ -1818,13 +1810,15 @@ class IndentDryOut:
             cris_resp = pd.DataFrame(cris_resp)
         # print("cris_resp: ", cris_resp)
 
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         query = f'''SELECT product_code, 
                             dry_out_in_days FROM public.alerts
                             where id = '{alert_id}' '''
-        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        ceg_resp = await function(query=query)
+        # function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # ceg_resp = await function(query=query)
+        ceg_resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+        ceg_resp = ceg_resp.get("data")
         if not ceg_resp:
             print(f"{alert_id} Alerts not Present")
             return False
