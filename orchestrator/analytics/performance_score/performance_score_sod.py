@@ -739,16 +739,22 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         location_devices = [d for d in all_devices if d.get("type") == "OI" and d.get("additionalInfo").get("location_id") == location_id]
 
         pi_score = []
-
+        
         for device in location_devices:
             try:
-                device_id = device['id']['id']
-                required_kls, target_volume, available_water = fetch_device_data(device_id, key="Water Volume")
-                WATER_THRESHOLD = required_kls
-                if available_water < WATER_THRESHOLD:
-                    percentage = 0
+                device_id = device.get('id', {}).get('id')  # Safely get device_id
+
+                if not device_id:
+                    # Handle empty device ID — assign 100% score
+                    percentage = 100
                 else:
-                    percentage = (available_water / target_volume) * 100
+                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="Water Volume")
+                    WATER_THRESHOLD = required_kls
+
+                    if available_water < WATER_THRESHOLD:
+                        percentage = 100  # still assign 100% if under threshold (your original logic)
+                    else:
+                        percentage = (available_water / target_volume) * 100
 
                 for rule in rules['rules']:
                     weightage = rule.get('weightage', 0)
@@ -760,7 +766,9 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                         "weightage": weightage,
                         "module": rules.get('name', '')
                     })
+
                 break  # Process only the first matching device
+
             except Exception as e:
                 print(f"Error processing device {device.get('name')}: {e}")
                 continue
@@ -807,12 +815,16 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
-                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="Foam Volume")
-                    FOAM_THRESHOLD = required_kls
-                    if available_water < FOAM_THRESHOLD:
+                    if not device_id:
+                    # Handle empty device ID — assign 100% score
                         percentage = 100
                     else:
-                        percentage = (available_water / target_volume) * 100
+                        required_kls, target_volume, available_water = fetch_device_data(device_id, key="Foam Volume")
+                        FOAM_THRESHOLD = required_kls
+                        if available_water < FOAM_THRESHOLD:
+                            percentage = 100
+                        else:
+                            percentage = (available_water / target_volume) * 100
 
                     for rule in rules['rules']:
                         weightage = rule.get('weightage', 0)
@@ -866,16 +878,20 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             if device.get("type") == "OI":
                 try:
                     device_id = device['id']['id']
-                    alarms_data = fetch_alarm_data(device_id)
-                    score_percentage = 100.0
+                    if not device_id:
+                    # Handle empty device ID — assign 100% score
+                        score_percentage = 100
+                    else:
+                        alarms_data = fetch_alarm_data(device_id)
+                        score_percentage = 100
 
-                    # Check if any relevant alarm is active and unacknowledged
-                    for alarm in alarms_data.get('data', []):
-                        interlock_name = alarm.get('details', {}).get('additionalInfo', {}).get('interlockName')
-                        status = alarm.get('status', '')
-                        if interlock_name == 'Fire engine in local' and status == 'ACTIVE_UNACK':
-                            score_percentage = 0.0
-                            break
+                        # Check if any relevant alarm is active and unacknowledged
+                        for alarm in alarms_data.get('data', []):
+                            interlock_name = alarm.get('details', {}).get('additionalInfo', {}).get('interlockName')
+                            status = alarm.get('status', '')
+                            if interlock_name == 'Fire engine in local' and status == 'ACTIVE_UNACK':
+                                score_percentage = 0
+                                break
 
                     # Apply each rule using score_percentage
                     for rule in rules.get('rules', []):
@@ -926,28 +942,40 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         """
         all_devices = fetch_oi_devices(page_size=1000)
         pi_score = []
-        location_devices = [d for d in all_devices if d.get("type") == "OI" and d.get("additionalInfo").get("location_id") == location_id]
+
+        # Filter devices for given location_id
+        location_devices = [
+            d for d in all_devices 
+            if d.get("type") == "OI" and d.get("additionalInfo", {}).get("location_id") == location_id
+        ]
+
         for device in location_devices:
             if device.get("type") == "OI":
                 try:
-                    device_id = device['id']['id']
-                    alarms_data = fetch_alarm_data(device_id)
+                    device_id = device.get('id', {}).get('id')  # Safely get device_id
 
-                    hydrant_alarm_active = False
-                    jockey_alarm_active = False
+                    if not device_id:
+                        # No device_id, assign full scores
+                        pressure_score = 2.5
+                        jockey_score = 2.5
+                    else:
+                        alarms_data = fetch_alarm_data(device_id)
 
-                    for alarm in alarms_data.get('data', []):
-                        interlock_name = alarm.get('details', {}).get('additionalInfo', {}).get('interlockName')
-                        status = alarm.get('status', '')
-                        device_type = alarm.get('type', '')
+                        hydrant_alarm_active = False
+                        jockey_alarm_active = False
 
-                        if device_type == 'PT Alarm' and interlock_name == 'Hydrant Line PT is below 7 Kg' and status == 'ACTIVE_UNACK':
-                            hydrant_alarm_active = True
-                        elif device_type == 'Jockey Alarm' and interlock_name == 'Jockey Pump not in Auto Remote' and status == 'ACTIVE_UNACK':
-                            jockey_alarm_active = True
+                        for alarm in alarms_data.get('data', []):
+                            interlock_name = alarm.get('details', {}).get('additionalInfo', {}).get('interlockName')
+                            status = alarm.get('status', '')
+                            device_type = alarm.get('type', '')
 
-                    pressure_score = 0.0 if hydrant_alarm_active else 2.5
-                    jockey_score = 0.0 if jockey_alarm_active else 2.5
+                            if device_type == 'PT Alarm' and interlock_name == 'Hydrant Line PT is below 7 Kg' and status == 'ACTIVE_UNACK':
+                                hydrant_alarm_active = True
+                            elif device_type == 'Jockey Alarm' and interlock_name == 'Jockey Pump not in Auto Remote' and status == 'ACTIVE_UNACK':
+                                jockey_alarm_active = True
+
+                        pressure_score = 0.0 if hydrant_alarm_active else 2.5
+                        jockey_score = 0.0 if jockey_alarm_active else 2.5
 
                     module_name = rules.get('name', '')
 
@@ -965,12 +993,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                             'module': module_name
                         }
                     ])
-                    break
+                    break  # Only the first matching device
                 except Exception as e:
                     print(f"Error processing device {device.get('name', '')}: {e}")
                     continue
 
-        final_score = round(sum(r['score'] for r in pi_score))
+        final_score = round(sum(r['score'] for r in pi_score), 2)
         print("final_score ---> ", final_score)
 
         return {
