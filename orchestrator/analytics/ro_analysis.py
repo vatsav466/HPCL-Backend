@@ -67,12 +67,14 @@ async def get_ro_alerts_count(bu: str, violation_type: str, sap_id: str):
                  f"violation_type = '{violation_type}' and "
                  f"sap_id = '{sap_id}' and "
                  f"created_at BETWEEN TO_DATE('{start_date}', 'YYYY-MM-DD') AND TO_DATE('{end_date}', 'YYYY-MM-DD')")
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_actions.charts_connection_vault_routing(
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-        resp = await function(query=query)
+        # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+        # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_actions.charts_connection_vault_routing(
+        #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        # resp = await function(query=query)
         # print("Query: ", query)
+        resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+        resp = resp.get("data", [])
         print(resp)
         if resp:
             resp = resp[0]
@@ -101,11 +103,13 @@ async def get_ro_levels(bu: str, violation_type: str, sap_id: str):
 async def check_alert_exists(alert_id, violation_type, sap_id):
     query = (f"select external_id from alerts where external_id = '{alert_id}' and bu = 'RO' and "
              f"violation_type = '{violation_type}' and sap_id = '{sap_id}'")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    resp = await function(query=query)
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # resp = await function(query=query)
+    resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+    resp = resp.get("data", [])
     # print("Query: ", query)
     print("resp: ", resp)
     if resp:
