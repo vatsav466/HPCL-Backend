@@ -271,9 +271,9 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the location severity count data.
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         location_severity_count_query = lpg_plant_queries.lpg_plant_query.get("location_severity_count")
         location_severity_count_query_ = location_severity_count_query
@@ -291,7 +291,9 @@ class GlobalAnalytics:
                 # break
             location_severity_count_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(location_severity_count_query_, filters, drill_state)
         try:
-            resp = await function(query=location_severity_count_query_)
+            # resp = await function(query=location_severity_count_query_)
+            resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=location_severity_count_query_, limit=0)
+            resp = resp.get('data', [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_severity_count_query_)
         except psycopg2.errors.UndefinedColumn as e:
             print(e)
@@ -338,9 +340,9 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the severity count data.
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         severity_count_query = lpg_plant_queries.lpg_plant_query.get("severity_count")
         severity_count_query_ = severity_count_query
@@ -353,7 +355,9 @@ class GlobalAnalytics:
                     filter_.key = f'lm.{filter_.key}'
             severity_count_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(severity_count_query, filters, drill_state)
         try:
-            severity_count_data = await function(query=severity_count_query_)
+            # severity_count_data = await function(query=severity_count_query_)
+            severity_count_data = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=severity_count_query_, limit=0)
+            severity_count_data = severity_count_data.get('data', [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(severity_count_query_)
         except psycopg2.errors.UndefinedColumn as e:
             print(e)
@@ -375,9 +379,9 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the hourly alerts data.
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         hourly_alerts_query = lpg_plant_queries.lpg_plant_query.get("hourly_alerts")
         hourly_alerts_query_ = hourly_alerts_query
@@ -386,7 +390,9 @@ class GlobalAnalytics:
         if filters:
             hourly_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(hourly_alerts_query, filters, drill_state)
         try:
-            resp = await function(query=hourly_alerts_query_)
+            # resp = await function(query=hourly_alerts_query_)
+            resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=hourly_alerts_query_, limit=0)
+            resp = resp.get('data', [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query_)
         except psycopg2.errors.UndefinedColumn as e:
             print(e)
@@ -407,9 +413,9 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         month_mapping = {
                             "Jan": "January",
                             "Feb": "February",
@@ -486,7 +492,9 @@ class GlobalAnalytics:
                                       for rec in await hpcl_ceg_model.M60LevelMetaData.get_clause_conditions(formated=True)]
             sales_performance_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(sales_performance_query_, access_filters, drill_state)
             print("sales_performance_query_: ",sales_performance_query_)
-            resp = await function(query=sales_performance_query_)
+            # resp = await function(query=sales_performance_query_)
+            resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
+            resp = resp.get('data', [])
 
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -508,7 +516,9 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": resp}
 
         # Execute the query
-        resp = await function(query=sales_performance_query_)
+        # resp = await function(query=sales_performance_query_)
+        resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
+        resp = resp.get('data', [])
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
 
@@ -1113,9 +1123,9 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         '''
         df_pl = pl.read_excel("/opt/ceg/algo/Y2NE_Dec 24 FY2024-25_06.01.25.xlsx", sheet_name="Results", engine='xlsx2csv', engine_options={"skip_rows": 2})
         df = df_pl.to_pandas()    
@@ -1236,7 +1246,9 @@ class GlobalAnalytics:
 
             print("Generated Query:", sales_performance_query_)  # Debugging: Print the generated query
 
-            resp = await function(query=sales_performance_query_)
+            # resp = await function(query=sales_performance_query_)
+            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
             if 'H' in selected_keys:
@@ -1245,7 +1257,9 @@ class GlobalAnalytics:
                 select "fiscal_year","month_name","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
 
                 """
-                his_data = await function(query=sales_his_query)
+                # his_data = await function(query=sales_his_query)
+                his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_his_query, limit=0)
+                his_data = his_data.get("data", [])
                 his_data = pd.DataFrame(his_data)
                 his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                 his_data.to_csv('/tmp/datahis.csv',index = False)
@@ -1287,7 +1301,9 @@ class GlobalAnalytics:
                 select "fiscal_year","month_name","NETWEIGHT_TMT" FROM "MOM_DAY_LEVEL_DATA" where "FISCALYEAR" = 'FY {year_required}' and "DAY_ID" between '{from_date}' and '{to_date}'
                 """
                 print("date_day_query --> ", date_day_query)
-                day_data = await function(query=date_day_query)
+                # day_data = await function(query=date_day_query)
+                day_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(date_day_query, limit=0)
+                day_data = day_data.get("data", [])
                 day_data = pd.DataFrame(day_data)
                 day_data = day_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                 day_data.to_csv('/tmp/dataday.csv',index = False)
@@ -1425,7 +1441,9 @@ class GlobalAnalytics:
                 ORDER BY
                     "M60_LEVEL_METADATA"."fy_month" ASC;
             '''
-            resp = await function(query=sales_performance_query_)
+            # resp = await function(query=sales_performance_query_)
+            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
 
@@ -1446,7 +1464,9 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": resp}
 
         # Execute the query
-        resp = await function(query=sales_performance_query_)
+        # resp = await function(query=sales_performance_query_)
+        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+        resp = resp.get("data", [])
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
 
@@ -2083,7 +2103,9 @@ class GlobalAnalytics:
 
                     """
 
-                    his_data = await function(query=sales_his_query)
+                    # his_data = await function(query=sales_his_query)
+                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
@@ -2173,7 +2195,9 @@ class GlobalAnalytics:
                             month_name = month_filter.value if isinstance(month_filter.value, str) else month_filter.value[0]
                             sales_his_query += f""" and "month_name" = '{month_name[:3]}'"""
                     print("sales_his_query",sales_his_query)
-                    his_data = await function(query=sales_his_query)
+                    # his_data = await function(query=sales_his_query)
+                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
                     his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
@@ -2259,7 +2283,9 @@ class GlobalAnalytics:
                     """
                     if "month_name" in filter_keys:
                         sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
-                    his_data = await function(query=sales_his_query)
+                    # his_data = await function(query=sales_his_query)
+                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
                     his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
@@ -2367,7 +2393,9 @@ class GlobalAnalytics:
                     """
                     if "month_name" in filter_keys:
                         sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
-                    his_data = await function(query=sales_his_query)
+                    # his_data = await function(query=sales_his_query)
+                    his_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
                     his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
@@ -2458,7 +2486,9 @@ class GlobalAnalytics:
                     """
                     if "month_name" in filter_keys:
                         sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
-                    his_data = await function(query=sales_his_query)
+                    # his_data = await function(query=sales_his_query)
+                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
                     his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
@@ -2553,7 +2583,9 @@ class GlobalAnalytics:
                     """
                     if "month_name" in filter_keys:
                         sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
-                    his_data = await function(query=sales_his_query)
+                    # his_data = await function(query=sales_his_query)
+                    his_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
                     his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
@@ -2612,9 +2644,9 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         month_mapping = {
                             "Jan": "January",
                             "Feb": "February",
@@ -2694,7 +2726,10 @@ class GlobalAnalytics:
                                       for rec in await hpcl_ceg_model.MomLevelFinalMetaData.get_clause_conditions(formated=True)]
             sales_growth_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(sales_growth_query_, access_filters, drill_state)
             print("sales_growth_query_: ", sales_growth_query_)
-            resp = await function(query=sales_growth_query_)
+            # resp = await function(query=sales_growth_query_)
+            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_growth_query_, limit=0)
+            resp = resp.get("data", [])
+            print("resp: ", resp)
             month_map = {'Apr': '0', 'May': '1', 'Jun': '2', 'Jul': '3', 'Aug': '4', 'Sep': '5', 'Oct': '6', 'Nov': '7',
                          'Dec': '8', 'Jan': '9', 'Feb': '10', 'Mar': '11'}
             d = {"2023-2024": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0,
@@ -2713,7 +2748,9 @@ class GlobalAnalytics:
                     d['2023-2024'][month_map[rec['month_name']]] = rec['total_sales']
             return {"status": True, "message": "success", "data": d}
         
-        resp = await function(query=sales_growth_query_)
+        # resp = await function(query=sales_growth_query_)
+        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_growth_query_, limit=0)
+        resp = resp.get("data", [])
         resp = pd.DataFrame(resp)
         resp =resp.rename(columns = {'ORGSBUCD':'SBU','ORGSBUNAME':'SBU_Name','ORGZONECD':'ZONE','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
             'NETWEIGHT_TMT':'total_sales', 'ORGSANAME':'SalesArea_Name',"ORGSACD":"SA","ORGROCD":"REGION"})
@@ -2838,9 +2875,9 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         # Get the filter keys from the filters list
         filter_keys = [rec.key.strip('"') for rec in filters]
 
@@ -2883,7 +2920,9 @@ class GlobalAnalytics:
 
             '''
 
-            resp = await function(query=sales_performance_query_)
+            # resp = await function(query=sales_performance_query_)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
+            resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
 
@@ -2904,7 +2943,9 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": resp}
         
         # Execute the query
-        resp = await function(query=sales_performance_query_)
+        # resp = await function(query=sales_performance_query_)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
+        resp = resp.get("data", [])
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
 
@@ -2984,9 +3025,9 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         # Get the filter keys from the filters list
         filter_keys = [rec.key.strip('"') for rec in filters]
 
@@ -3073,7 +3114,9 @@ class GlobalAnalytics:
             
             print("Generated Query:", sales_performance_query_)  # Debugging: Print the generated query
 
-            resp = await function(query=sales_performance_query_)
+            # resp = await function(query=sales_performance_query_)
+            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
 
@@ -3102,7 +3145,9 @@ class GlobalAnalytics:
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" ASC
             '''
 
-            resp = await function(query=sales_performance_query_)
+            # resp = await function(query=sales_performance_query_)
+            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
 
@@ -3123,7 +3168,9 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": resp}
         
         # Execute the query
-        resp = await function(query=sales_performance_query_)
+        # resp = await function(query=sales_performance_query_)
+        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+        resp = resp.get("data", [])
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
 
@@ -3267,9 +3314,9 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         # Get the filter keys from the filters list
         filter_keys = [rec.key.strip('"') for rec in filters]
 
@@ -3314,7 +3361,9 @@ class GlobalAnalytics:
 
             '''
             
-            resp = await function(query=sales_yearly_growth_query_)
+            # resp = await function(query=sales_yearly_growth_query_)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_yearly_growth_query_, limit=0)
+            resp = resp.get("data", [])
             return {"status": True, "message": "success", "data": resp}
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3336,7 +3385,9 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": resp}
         
         # Execute the query
-        resp = await function(query=sales_yearly_growth_query_)
+        # resp = await function(query=sales_yearly_growth_query_)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_yearly_growth_query_, limit=0)
+        resp = resp.get("data", [])
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
 
@@ -3411,9 +3462,9 @@ class GlobalAnalytics:
     @staticmethod
     async def card_chart(filters, cross_filters, drill_state):
         try:            
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-            function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             card_query = lpg_plant_queries.lpg_plant_query.get(drill_state.split(",")[0])
             
             if cross_filters:
@@ -3473,7 +3524,9 @@ class GlobalAnalytics:
                                         for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
                 card_query =  await widget_actions.WidgetActions.apply_filter_drilldown(card_query, access_filters, drill_state)
             
-            resp = await function(query=card_query)
+            # resp = await function(query=card_query)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=card_query, limit=0)
+            resp = resp.get("data", [])
             resp = pd.DataFrame(resp)
             return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
         except Exception as e:
@@ -3489,9 +3542,9 @@ class GlobalAnalytics:
         :param drill_state:
         :return:
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         query = lpg_plant_queries.lpg_plant_query.get("carry_forward_analysis")
         query = lpg_plant_queries.lpg_plant_query.get("carry_fwd_indent")
         conditions = []
@@ -3508,14 +3561,16 @@ class GlobalAnalytics:
         if conditions:
             query += f" WHERE {' AND '.join(conditions)}"
         query += " GROUP BY execution_date::DATE"
-        resp = await function(query=query)
+        # resp = await function(query=query)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        resp = resp.get("data", [])
         return resp
 
     @staticmethod
     async def location_wise_distribution(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         location_wise_distribution_query = lpg_plant_queries.lpg_plant_query.get("location_wise_distribution")
         location_wise_distribution_query_ = location_wise_distribution_query
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -3523,7 +3578,9 @@ class GlobalAnalytics:
         if filters:
             location_wise_distribution_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(location_wise_distribution_query, filters, drill_state)
         try:
-            resp = await function(query=location_wise_distribution_query_)
+            # resp = await function(query=location_wise_distribution_query_)
+            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=location_wise_distribution_query_, limit=0)
+            resp = resp.get("data", [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query_)
         except psycopg2.errors.UndefinedColumn as e:
             print(e)
@@ -3534,9 +3591,9 @@ class GlobalAnalytics:
     
     @staticmethod
     async def cp_total_locations(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         cp_locations_query = lpg_plant_queries.lpg_plant_query.get('cp_total_locations')
         
@@ -3546,15 +3603,17 @@ class GlobalAnalytics:
             cp_locations_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_locations_query, filters, drill_state)
         
         print("query before execution: ", cp_locations_query)
-        resp = await function(query=cp_locations_query)
+        # resp = await function(query=cp_locations_query)
+        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_locations_query, limit=0)
+        resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
     
     @staticmethod
     async def cp_total_dus(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         cp_dus_query = lpg_plant_queries.lpg_plant_query.get('cp_total_dus')
         
@@ -3564,16 +3623,18 @@ class GlobalAnalytics:
             cp_dus_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_dus_query, filters, drill_state)
         
         print("query before execution: ", cp_dus_query)
-        resp = await function(query=cp_dus_query)
+        # resp = await function(query=cp_dus_query)
+        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_dus_query, limit=0)
+        resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
     
 
     @staticmethod
     async def cp_total_tanks(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         cp_dus_query = lpg_plant_queries.lpg_plant_query.get('cp_total_tanks')
         
@@ -3583,15 +3644,17 @@ class GlobalAnalytics:
             cp_dus_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_dus_query, filters, drill_state)
         
         print("query before execution: ", cp_dus_query)
-        resp = await function(query=cp_dus_query)
+        # resp = await function(query=cp_dus_query)
+        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_dus_query, limit=0)
+        resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
 
     @staticmethod
     async def cp_avg_monthly_consumption(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         cp_query = lpg_plant_queries.lpg_plant_query.get('cp_avg_monthly_consumption')
         
@@ -3601,15 +3664,17 @@ class GlobalAnalytics:
             cp_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_query, filters, drill_state)
         
         print("query before execution: ", cp_query)
-        resp = await function(query=cp_query)
+        # resp = await function(query=cp_query)
+        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
 
     @staticmethod
     async def cp_avg_monthly_consumption_by_location(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         cp_query = lpg_plant_queries.lpg_plant_query.get('cp_avg_monthly_consumption_by_location')
         
@@ -3619,15 +3684,17 @@ class GlobalAnalytics:
             cp_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_query, filters, drill_state)
         
         print("query before execution: ", cp_query)
-        resp = await function(query=cp_query)
+        # resp = await function(query=cp_query)
+        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
 
     @staticmethod
     async def cp_total_volume_consumption(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         cp_query = lpg_plant_queries.lpg_plant_query.get('cp_total_volume_consumption')
         
@@ -3637,15 +3704,16 @@ class GlobalAnalytics:
             cp_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_query, filters, drill_state)
         
         print("query before execution: ", cp_query)
-        resp = await function(query=cp_query)
-
+        # resp = await function(query=cp_query)
+        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = resp.get("data", [])
         return {"status": True, "message": "success", "data": resp}
 
     @staticmethod
     async def cp_total_volume_sales(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         cp_query = lpg_plant_queries.lpg_plant_query.get('cp_total_volume_sales')
         
@@ -3655,15 +3723,17 @@ class GlobalAnalytics:
             cp_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_query, filters, drill_state)
         
         print("query before execution: ", cp_query)
-        resp = await function(query=cp_query)
+        # resp = await function(query=cp_query)
+        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = resp.get("data", [])
         return {"status": True, "message": "success", "data": resp}
     
     
     @staticmethod
     async def lpg_operations_productivity_zone(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         current_date = datetime.now().strftime("%Y-%m-%d")
         productivity_zone_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_productivity_zone")
         _filters = []
@@ -3715,7 +3785,9 @@ class GlobalAnalytics:
             productivity_zone_query_ += ' GROUP BY "zone", "process_date", "filling_heads", "short_name" '
             
             print("productivity_zone_query_ :", productivity_zone_query_)
-            resp = await function(query=productivity_zone_query_)
+            # resp = await function(query=productivity_zone_query_)
+            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
+            resp = resp.get("data", [])
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
             if resp.empty:
@@ -3731,7 +3803,9 @@ class GlobalAnalytics:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
-        resp = await function(query=productivity_zone_query_)
+        # resp = await function(query=productivity_zone_query_)
+        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
+        resp = resp.get("data", [])
         if resp:
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
@@ -3757,9 +3831,9 @@ class GlobalAnalytics:
     
     @staticmethod
     async def lpg_operations_production_zone(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         _filters = []
         daterange = None
         if cross_filters:
@@ -3809,7 +3883,9 @@ class GlobalAnalytics:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
                         
-            resp = await function(query=production_zone_query_)
+            # resp = await function(query=production_zone_query_)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=production_zone_query_, limit=0)
+            resp = resp.get("data", [])
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
             if resp.empty:
@@ -3829,7 +3905,9 @@ class GlobalAnalytics:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
-        resp = await function(query=production_zone_query_)
+        # resp = await function(query=production_zone_query_)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=production_zone_query_, limit=0)
+        resp = resp.get("data", [])
         if resp:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3862,14 +3940,18 @@ class GlobalAnalytics:
     
     @staticmethod
     async def plants_connected(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         try:            
             lpg_query = f"SELECT DISTINCT(short_name) as plant_name FROM lpg_operations_summary where DATE(process_date)='{datetime.now().strftime('%Y-%m-%d')}'"
             master_query = "SELECT DISTINCT(plant) as plant_name FROM lpg_plant_operations_masters"
-            df = await function(query=lpg_query)
-            master_df = await function(query=master_query)
+            # df = await function(query=lpg_query)
+            # master_df = await function(query=master_query)
+            df = await urdhva_base.BasePostgresModel.get_aggr_data(query=lpg_query, limit=0)
+            master_df = await urdhva_base.BasePostgresModel.get_aggr_data(query=master_query, limit=0)
+            df = df.get("data", [])
+            master_df = master_df.get("data", [])
             df = pl.DataFrame(df)
             master_df = pl.DataFrame(master_df)
             master_df = master_df.with_columns(
@@ -3884,9 +3966,9 @@ class GlobalAnalytics:
     
     @staticmethod
     async def lpg_operations_filled_cylinder(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         _filters = []
         daterange = None
         if cross_filters:
@@ -3936,7 +4018,9 @@ class GlobalAnalytics:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
             
-            resp = await function(query=production_zone_query_)
+            # resp = await function(query=production_zone_query_)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=production_zone_query_, limit=0)
+            resp = resp.get("data", [])
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
             if resp.empty:
@@ -3954,7 +4038,9 @@ class GlobalAnalytics:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
-        resp = await function(query=production_zone_query_)
+        # resp = await function(query=production_zone_query_)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=production_zone_query_, limit=0)
+        resp = resp.get("data", [])
         if resp:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -4079,9 +4165,9 @@ class GlobalAnalytics:
     
     @staticmethod
     async def productivity_overtime_vs_break_production(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         productivity_overtime_query_ = lpg_plant_queries.lpg_plant_query.get("productivity_overtime_vs_break_production")        
         current_date = datetime.now().strftime("%Y-%m-%d")
         _filters = []
@@ -4127,7 +4213,9 @@ class GlobalAnalytics:
             elif daterange:
                 productivity_overtime_query_ += f' AND "process_date" BETWEEN {daterange} '
             productivity_overtime_query_ += ' GROUP BY "zone", "plant"'
-            resp = await function(query=productivity_overtime_query_)
+            # resp = await function(query=productivity_overtime_query_)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_overtime_query_, limit=0)
+            resp = resp.get("data", [])
             resp = pl.DataFrame(resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
@@ -4137,7 +4225,9 @@ class GlobalAnalytics:
                     ])
             return {"status": True, "message": "success", "data": resp.to_dicts()}
         try:
-            resp = await function(query=productivity_overtime_query_)
+            # resp = await function(query=productivity_overtime_query_)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_overtime_query_, limit=0)
+            resp = resp.get("data", [])
             resp = pl.DataFrame(resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
@@ -4173,9 +4263,9 @@ class GlobalAnalytics:
     
     @staticmethod
     async def lpg_operations_daywise_productivity(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         daywise_productivity_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_productivity")
         current_date = datetime.now().strftime("%Y-%m-%d")
         _filters = []
@@ -4225,7 +4315,9 @@ class GlobalAnalytics:
                 daywise_productivity_query_ += f' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
             daywise_productivity_query_ += ' GROUP BY DATE("process_date"), "zone", "short_name", "filling_heads" '
         try:
-            query_resp = await function(query=daywise_productivity_query_)
+            # query_resp = await function(query=daywise_productivity_query_)
+            query_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=daywise_productivity_query_, limit=0)
+            query_resp = query_resp.get("data", [])
             resp = pl.DataFrame(query_resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
@@ -4248,9 +4340,9 @@ class GlobalAnalytics:
     
     @staticmethod
     async def lpg_operations_daywise_production(filters ,cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         daywise_production_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_production")        
         current_date = datetime.now().strftime("%Y-%m-%d")
         _filters = []
@@ -4300,7 +4392,9 @@ class GlobalAnalytics:
                 daywise_production_query_ += f' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
             daywise_production_query_ += ' GROUP BY DATE("process_date"), "zone", "short_name", "filling_heads" '
         try:
-            query_resp = await function(query=daywise_production_query_)
+            # query_resp = await function(query=daywise_production_query_)
+            query_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=daywise_production_query_, limit=0)
+            query_resp = query_resp.get("data", [])
             resp = pl.DataFrame(query_resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
@@ -4324,9 +4418,9 @@ class GlobalAnalytics:
 
     @staticmethod
     async def sales_growth_ytd(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         sales_growth_ytd_query_ = lpg_plant_queries.lpg_plant_query.get("sales_growth_ytd")
         month_mapping = {
                             "Jan": "January",
@@ -4390,7 +4484,9 @@ class GlobalAnalytics:
                     "MOM_DAY_LEVEL_DATA"."fiscal_year" ASC;
             """
 
-            resp = await function(query=sales_growth_ytd_query_)
+            # resp = await function(query=sales_growth_ytd_query_)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_growth_ytd_query_, limit=0)
+            resp = resp.get("data", [])
             month_map = {'Apr': '0', 'May': '1', 'Jun': '2', 'Jul': '3', 'Aug': '4', 'Sep': '5', 'Oct': '6', 'Nov': '7',
                          'Dec': '8', 'Jan': '9', 'Feb': '10', 'Mar': '11'}
             d = {"2023-2024": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0,
@@ -4409,7 +4505,9 @@ class GlobalAnalytics:
                     d['2023-2024'][month_map[rec['month_name']]] = rec['total_sales']
             return {"status": True, "message": "success", "data": d}
         
-        resp = await function(query=sales_growth_ytd_query_)
+        # resp = await function(query=sales_growth_ytd_query_)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_growth_ytd_query_, limit=0)
+        resp = resp.get("data", [])
         resp = pd.DataFrame(resp)
         resp =resp.rename(columns = {'ORGSBUCD':'SBU','ORGSBUNAME':'SBU_Name','ORGZONECD':'ZONE','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
             'NETWEIGHT_TMT':'total_sales', 'ORGSANAME':'SalesArea_Name',"ORGSACD":"SA","ORGROCD":"REGION"})
@@ -4525,9 +4623,9 @@ class GlobalAnalytics:
     
     @staticmethod
     async def lpg_operations_rejections(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         current_date = datetime.now().strftime("%Y-%m-%d")
 
         cs_resp_ = lpg_plant_queries.lpg_plant_query.get("cs_query")
@@ -4614,9 +4712,16 @@ class GlobalAnalytics:
             pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
             gd_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
 
-            cs_resp = await function(query=cs_resp_)
-            pt_resp = await function(query=pt_resp_)
-            gd_resp = await function(query=gd_resp_)
+            # cs_resp = await function(query=cs_resp_)
+            # pt_resp = await function(query=pt_resp_)
+            # gd_resp = await function(query=gd_resp_)
+            cs_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cs_resp_, limit=0)
+            pt_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=pt_resp_, limit=0)
+            gd_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=gd_resp_, limit=0)
+
+            cs_resp = cs_resp.get("data", [])
+            pt_resp = pt_resp.get("data", [])
+            gd_resp = gd_resp.get("data", [])
 
             cs_df = pd.DataFrame(cs_resp)
             pt_df = pd.DataFrame(pt_resp)
@@ -4636,10 +4741,17 @@ class GlobalAnalytics:
 
             return {"status": True, "message": "success", "data": combined_df.to_dict(orient="records")}
 
-        cs_resp = await function(query=cs_resp_)
-        pt_resp = await function(query=pt_resp_)
-        gd_resp = await function(query=gd_resp_)
-        
+        # cs_resp = await function(query=cs_resp_)
+        # pt_resp = await function(query=pt_resp_)
+        # gd_resp = await function(query=gd_resp_)
+        cs_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cs_resp_, limit=0)
+        pt_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=pt_resp_, limit=0)
+        gd_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=gd_resp_, limit=0)
+
+        cs_resp = cs_resp.get("data", [])
+        pt_resp = pt_resp.get("data", [])
+        gd_resp = gd_resp.get("data", [])
+
         # Convert the responses to DataFrames
         cs_df = pd.DataFrame(cs_resp)
         pt_df = pd.DataFrame(pt_resp)
@@ -4691,11 +4803,13 @@ class GlobalAnalytics:
 
     @staticmethod
     async def sales_drop_down(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         _query = ''' select * from alerts '''
-        resp = await function(query=_query)
+        # resp = await function(query=_query)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=_query, limit=0)
+        resp = resp.get("data", [])
         df = pl.from_pandas(pd.DataFrame(resp))
         _filters = []
         if filters:
@@ -4718,9 +4832,9 @@ class GlobalAnalytics:
 
     @staticmethod
     async def present_previous_month_sales_by_product(filters, cross_filters, drill_state, limit, time_grain):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         present_month_sales = lpg_plant_queries.lpg_plant_query.get('i_previous_current_month_sales_by_product')
         cross_filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                           for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
@@ -4753,7 +4867,9 @@ class GlobalAnalytics:
         #         present_month_sales += f' LIMIT {limit}'
 
         pres_mon_sales_query = present_month_sales.format(time_grain=time_grain.lower())
-        pres_mon_sales_resp = await function(query=pres_mon_sales_query)
+        # pres_mon_sales_resp = await function(query=pres_mon_sales_query)
+        pres_mon_sales_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=pres_mon_sales_query, limit=0)
+        pres_mon_sales_resp = pres_mon_sales_resp.get("data", [])
         distinct_periods = list(set(item['period'] for item in pres_mon_sales_resp))
         print("distinct_periods--> ", distinct_periods)
         formatted_results = {}
@@ -4833,11 +4949,13 @@ class GlobalAnalytics:
             """
 
         # Execute query
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         
-        resp = await function(query=query)
+        # resp = await function(query=query)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        resp = resp.get("data", [])
         print("resp :", resp)
         resp = pl.DataFrame(resp)
         
@@ -4865,9 +4983,9 @@ class GlobalAnalytics:
 
     @staticmethod
     async def indent_dryout_counts(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         dryout_query = lpg_plant_queries.lpg_plant_query.get('i_dryout_ro_count')
         intraday_query = lpg_plant_queries.lpg_plant_query.get('i_intraday_dryout_ro_count')
         potential_query = lpg_plant_queries.lpg_plant_query.get('i_potential_dryout_ro_count')
@@ -4905,9 +5023,16 @@ class GlobalAnalytics:
         print("intraday_resp: ", intraday_query)
         print("potential_resp: ", potential_query)
 
-        dryout_resp = await function(query=dryout_query)
-        intraday_resp = await function(query=intraday_query)
-        potential_resp = await function(query=potential_query)
+        # dryout_resp = await function(query=dryout_query)
+        # intraday_resp = await function(query=intraday_query)
+        # potential_resp = await function(query=potential_query)
+        dryout_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=dryout_query, limit=0)
+        intraday_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=intraday_query, limit=0)
+        potential_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=potential_query, limit=0)
+
+        dryout_resp = dryout_resp.get("data", [])
+        intraday_resp = intraday_resp.get("data", [])
+        potential_resp = potential_resp.get("data", [])
         print("dryout_resp: ", dryout_resp)
         print("intraday_resp: ", intraday_resp)
         print("potential_resp: ", potential_resp)
@@ -4937,9 +5062,9 @@ class GlobalAnalytics:
             ]
         """
 
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         indent_status_query = lpg_plant_queries.lpg_plant_query.get('i_indent_status_summary')
 
         if filters:
@@ -4955,7 +5080,9 @@ class GlobalAnalytics:
             indent_status_query = await widget_actions.WidgetActions.apply_filter_drilldown(
                 indent_status_query, access_filters, drill_state)
         print("indent_status_query: ", indent_status_query)
-        indent_status_resp = await function(query=indent_status_query)
+        # indent_status_resp = await function(query=indent_status_query)
+        indent_status_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=indent_status_query, limit=0)
+        indent_status_resp = indent_status_resp.get("data", [])
         transformed_response = [
             {
                 'indent_status': item['indent_status'],
@@ -4983,9 +5110,9 @@ class GlobalAnalytics:
             ]
         """
 
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         dryout_by_prod_query = lpg_plant_queries.lpg_plant_query.get('i_dryout_summary_by_product')
 
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -5004,7 +5131,9 @@ class GlobalAnalytics:
         #     dryout_by_prod_query = await widget_actions.WidgetActions.apply_filter_drilldown(
         #         dryout_by_prod_query, access_filters, drill_state)
         print("dryout_by_prod_query: ", dryout_by_prod_query)
-        dryout_by_prod_resp = await function(query=dryout_by_prod_query)
+        # dryout_by_prod_resp = await function(query=dryout_by_prod_query)
+        dryout_by_prod_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=dryout_by_prod_query, limit=0)
+        dryout_by_prod_resp = dryout_by_prod_resp.get("data", [])
         # transformed_response = [
         #     {
         #         'product': item['product'],
@@ -5034,9 +5163,9 @@ class GlobalAnalytics:
         Returns:
 
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         detailed_dryout_query = lpg_plant_queries.lpg_plant_query.get('i_detailed_dryout_summary')
         conditions = []
         display_col = f''' "View 1"."zone" as "zone" '''
@@ -5070,7 +5199,9 @@ class GlobalAnalytics:
             detailed_dryout_query = splitted_query[0] + "MainFlow') AND " + ' AND '.join(conditions) + splitted_query[1]
 
         print("detailed_dryout_query: ", detailed_dryout_query)
-        detailed_dryout_resp = await function(query=detailed_dryout_query)
+        # detailed_dryout_resp = await function(query=detailed_dryout_query)
+        detailed_dryout_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=detailed_dryout_query, limit=0)
+        detailed_dryout_resp = detailed_dryout_resp.get("data", [])
         print("col_ value:", col_)
         # transformed_response = [
         #     {
@@ -5092,9 +5223,9 @@ class GlobalAnalytics:
 
     @staticmethod
     async def detailed_indent_status_summary(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         detailed_indent_status_query = lpg_plant_queries.lpg_plant_query.get('i_detailed_indent_status_summary')
 
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -5109,7 +5240,9 @@ class GlobalAnalytics:
             detailed_indent_status_query = splitted_query[0] + "MainFlow') AND " + ' AND '.join(conditions) + splitted_query[1]
 
         print("detailed_indent_status_query: ", detailed_indent_status_query)
-        detailed_indent_status_resp = await function(query=detailed_indent_status_query)
+        # detailed_indent_status_resp = await function(query=detailed_indent_status_query)
+        detailed_indent_status_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=detailed_indent_status_query, limit=0)
+        detailed_indent_status_resp = detailed_indent_status_resp.get("data", [])
         transformed_response = [
             {
                 'zone': item['zone'],
@@ -5125,9 +5258,9 @@ class GlobalAnalytics:
 
     @staticmethod
     async def dryout_product_report(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         detailed_indent_status_query = lpg_plant_queries.lpg_plant_query.get('i_product_report')
 
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -5143,15 +5276,17 @@ class GlobalAnalytics:
                                            splitted_query[1]
 
         print("detailed_indent_status_query: ", detailed_indent_status_query)
-        detailed_indent_status_resp = await function(query=detailed_indent_status_query)
+        # detailed_indent_status_resp = await function(query=detailed_indent_status_query)
+        detailed_indent_status_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=detailed_indent_status_query, limit=0)
+        detailed_indent_status_resp = detailed_indent_status_resp.get("data", [])
         df = pd.DataFrame(detailed_indent_status_resp)
         return {"status": True, "message": "success", "data": df.to_dict(orient='records')}
 
     @staticmethod
     async def dryout_indent_report(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         detailed_indent_status_query = lpg_plant_queries.lpg_plant_query.get('i_indent_report')
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                     for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
@@ -5166,15 +5301,17 @@ class GlobalAnalytics:
                                            splitted_query[1]
 
         print("detailed_indent_status_query: ", detailed_indent_status_query)
-        detailed_indent_status_resp = await function(query=detailed_indent_status_query)
+        # detailed_indent_status_resp = await function(query=detailed_indent_status_query)
+        detailed_indent_status_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=detailed_indent_status_query, limit=0)
+        detailed_indent_status_resp = detailed_indent_status_resp.get("data", [])
         df = pd.DataFrame(detailed_indent_status_resp)
         return {"status": True, "message": "success", "data": df.to_dict(orient='records')}
 
     @staticmethod
     async def product_quantity_by_location(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         prod_qty_query = lpg_plant_queries.lpg_plant_query.get('i_product_wise_quantity_by_location')
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                     for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
@@ -5184,7 +5321,9 @@ class GlobalAnalytics:
             prod_qty_query = splitted_query[0] + "MainFlow' AND " + ' AND '.join(conditions) + splitted_query[1]
 
         print("prod_qty_query: ", prod_qty_query)
-        prod_qty_resp = await function(query=prod_qty_query)
+        # prod_qty_resp = await function(query=prod_qty_query)
+        prod_qty_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=prod_qty_query, limit=0)
+        prod_qty_resp = prod_qty_resp.get("data", [])
         df = pl.DataFrame(prod_qty_resp)
         if not df.is_empty():
             result = df.pivot(
@@ -5197,9 +5336,9 @@ class GlobalAnalytics:
 
     @staticmethod
     async def ims_report(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         ims_report_query = lpg_plant_queries.lpg_plant_query.get('i_ims_report')
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                     for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
@@ -5213,7 +5352,9 @@ class GlobalAnalytics:
             ims_report_query = splitted_query[0] + "MainFlow' AND " + ' AND '.join(conditions) + splitted_query[1]
 
         print("ims_report_query: ", ims_report_query)
-        ims_report_resp = await function(query=ims_report_query)
+        # ims_report_resp = await function(query=ims_report_query)
+        ims_report_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=ims_report_query, limit=0)
+        ims_report_resp = ims_report_resp.get("data", [])
         df = pl.DataFrame(ims_report_resp)
         if not df.is_empty():
             return {"status": True, "message": "success", "data": df.to_dicts()}
@@ -5221,14 +5362,16 @@ class GlobalAnalytics:
     
     @staticmethod
     async def operations_dropdown(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         _query = ''' select * from lpg_plant_operations_masters '''
         access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
         _query =  await widget_actions.WidgetActions.apply_filter_drilldown(_query, access_filters, drill_state)
-        resp = await function(query=_query)
+        # resp = await function(query=_query)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=_query, limit=0)
+        resp = resp.get("data", [])
         df = pl.from_pandas(pd.DataFrame(resp))
         _filters = []
         if filters:
@@ -5335,7 +5478,7 @@ class GlobalAnalytics:
             #     resp = await function(query=query)
             try:
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=100000)
-                resp = resp.get('data', '')
+                resp = resp.get('data', [])
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -5834,11 +5977,13 @@ class GlobalAnalytics:
         - Exception: If there is an error during query execution, the function will raise an exception 
         which should be handled by the caller.
         """
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         _query = ''' select * from location_master where bu = 'TAS' '''
-        resp = await function(query=_query)
+        # resp = await function(query=_query)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=_query, limit=0)
+        resp = resp.get("data", [])
         df = pl.from_pandas(pd.DataFrame(resp))
         _filters = []
         if filters:
