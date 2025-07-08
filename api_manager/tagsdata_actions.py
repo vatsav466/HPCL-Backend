@@ -26,7 +26,7 @@ else:
 # Action things_board_device_data
 @router.post('/things_board_device_data', tags=['TagsData'])
 async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
-    try:    
+    try:
         # Setup connection
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -36,7 +36,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         location_query = "SELECT bu, zone, sap_id, name FROM location_master WHERE bu = 'TAS'"
         location_df = await execute_query(query=location_query)
         location_df = pd.DataFrame(location_df)
-        
+
         if location_df.empty:
             return {"status": False, "message": "No TAS locations found."}
         
@@ -79,7 +79,6 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
             sap_id = str(row['sap_id'])
             location_name = str(row['name'])
             zone = str(row['zone'])
-
             json_path = os.path.join(base_path, f"{sap_id}.json")
             if not os.path.exists(json_path):
                 # print(f"Skipping {sap_id}: File not found.")
@@ -93,7 +92,6 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 continue
 
             location_counts = defaultdict(list)
-
             for device in devices:
                 device_type = str(device.get('device_type', 'Unknown'))
                 sensors = device.get('sensors', [])
@@ -125,6 +123,12 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                                 if keyword.lower() in sensor_name:
                                     location_counts[mapped_type].append(device_name)
                                     break
+                elif device_type in ['PLC']:
+                    # Classify PLCs
+                    if 'SFT PLC' in device_name.upper():
+                        location_counts["Safety PLC"].append(device_name)
+                    elif 'GEPLC' in device_name.upper():
+                        location_counts["Process PLC"].append(device_name)
                 else:
                     location_counts[device_type].append(device_name)
 
