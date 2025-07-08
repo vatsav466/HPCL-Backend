@@ -238,7 +238,7 @@ async def fetch_sales_data():
         sales_data[f'top_performing_{sbu}_zones'] = create_data_list(top)
         sales_data[f'bottom_performing_{sbu}_zones'] = create_data_list(bottom)
     for sbu, dat in sbu_level_regions.items():
-        top, bottom = process_performance_data(dat, 2)
+        top, bottom = process_performance_data(dat, 3)
         sales_data[f'top_performing_{sbu}_regions'] = create_data_list(top)
         sales_data[f'bottom_performing_{sbu}_regions'] = create_data_list(bottom)
     filters = {"filters": [actual, history, cumulative,
@@ -453,7 +453,12 @@ async def get_tas_alerts():
 
 async def get_alert_data(alert_section):
     # Making sure alerts considering only after May 31st in prod
-    date_filter ="created_at::DATE > '2025-06-30'" # As per HPCL request changed the date on (04-07-2025)
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                               date_time_format="%Y-%m-%d")
+    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime("%Y-%m-%d")}'" # As per HPCL request changed the date to be in the present month
     query = f"""SELECT count(alert_section), bu, alert_section, severity FROM alerts where alert_status='Open' and 
     alert_section='{alert_section}' and {date_filter} GROUP BY bu, alert_section, severity"""
     alerts = await hpcl_ceg_model.Alerts.get_aggr_data(query)
@@ -486,7 +491,7 @@ async def publish_daily_novex_status_email():
                                                                           date_time_format='%d-%B-%Y'),
                    'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
     status_data.update(await fetch_sales_data())
-    print("status_data before :", status_data)
+    # print("status_data before :", status_data)
     status_data.update(await fetch_dryout_data())
     status_data.update(await get_lpg_rejection())
     status_data.update(await get_ro_alerts())
@@ -494,10 +499,10 @@ async def publish_daily_novex_status_email():
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data(alert_section))
-    print("-" * 50)
-    print("status_data :", json.dumps(status_data))
-    print("-" * 50)
-    print("-------->status_data",status_data)
+    # print("-" * 50)
+    # print("status_data :", json.dumps(status_data))
+    # print("-" * 50)
+    # print("-------->status_data",status_data)
     await send_notification(status_data)
 
 
