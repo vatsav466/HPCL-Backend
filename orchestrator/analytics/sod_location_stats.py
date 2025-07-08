@@ -141,7 +141,7 @@ async def generate_sod_engineering_location_stats(sap_id):
 
         if resp.get("data"):
             df = pl.DataFrame(resp["data"]).select(["active_server_name", "status"])
-            master_record = df.filter(pl.col("status") == 1).select("active_server_name")
+            master_record = df.filter(pl.col("status").cast(pl.Int32) == 1).select("active_server_name")
 
             if master_record.height > 0:
                 master_id = master_record[0, "active_server_name"].lower()
