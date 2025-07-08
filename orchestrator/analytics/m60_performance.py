@@ -843,11 +843,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters.copy())
     if clause:
         where_conditions_history = [clause]
-    print("group_by_filter",group_by_filter)
-    print("filters",filters)
     # Data Retrival for target data
     if target:
-        
         group_keys = [key for key in group_by_filter]
         if '"month_name"' not in group_by_filter and '"C"' not in [x['key'] for x in filters]:
             group_keys.append("month_name")
@@ -872,9 +869,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 group_keys.append('month_name')
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
-        elif '"DATE"' in [x['key'] for x in filters]:
-            
-            if "month_name" not in [x.strip('"') for x in group_keys]:
+        elif '"DATE"' in [x['key'] for x in filters] :
+        #and 'C' not in [x['key'].strip('"') for x in filters]:
+            print("came into date condition") 
+            if "month_name" not in [x.strip('"') for x in group_keys] : 
+            #and 'C' not in [x['key'].strip('"') for x in filters]:
                 group_keys.append("month_name")
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
@@ -939,6 +938,22 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         target_data = target_data[target_data['ProductName'] != 'HFHSD']
             print("writing tgt data to csv")
             target_data.to_csv('/tmp/tgt_data.csv',index = False)
+            #remove the month column frpm the data if the cumulkative option is present in the filter
+            if "C" in [x['key'].strip('"') for x in filters]:
+                
+                if 'month_name' in target_data.columns.tolist():
+                    print("came to month name del")
+                    print("group_by_filter",group_by_filter)
+                    if len(group_by_filter) ==1:
+                        if group_by_filter[0].strip('"') != 'month_name':
+                            del target_data['month_name']
+                    #del target_data['month_name']
+                    common_column = ['TARGET_TMT_SALES']
+                    existing_columns = [col for col in ["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"] if col in target_data.columns]
+                    if existing_columns:
+                        target_data = target_data.groupby(existing_columns, as_index=False)['TARGET_TMT_SALES'].sum().reset_index()
+                    target_data.to_csv('/tmp/tgt_data_latest.csv',index = False)
+
             target_data = target_data.to_dict(orient='records')
 
     # Data Retrival for current financial year
@@ -1153,10 +1168,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         print(f"came inside the req if for {product}")
                         merged_df = merged_df[merged_df['ProductName'] != product]
                         print(merged_df[merged_df['ProductName'] == product])
-            print(merged_df['ProductName'].unique().tolist()) 
             
     if time_grain == "fiscal_year":
-        result = await sbu_sales_fiscal(
+        result = await get_sbu_sales_fiscal(
             merged_df,
             filters,
             cross_filters,
@@ -1165,7 +1179,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             resp_format
         )
         if result["status"]:
-            print("Result got executed came inside the level")
             return result
 
         
@@ -1487,7 +1500,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                         # Ensure numeric conversion
                                 df['ACTUAL_TMT_SALES'] = df['ACTUAL_TMT_SALES'].fillna(0).astype(float)
                                 df['ACTUAL_HISTORY_TMT_SALES'] = df['ACTUAL_HISTORY_TMT_SALES'].fillna(0).astype(float)
-
                                 # Group and aggregate
                                 grouped_df = df.groupby('ProductName', as_index=False).agg({
                                     'ACTUAL_TMT_SALES': 'sum',
@@ -2007,8 +2019,7 @@ async def get_top_and_bottom_10_sales_area_by_year_sbu(merged_df, filters, cross
             "message": f"Error retrieving top and bottom sales areas: {str(e)}",
             "data": {}
         }
-
-async def sbu_sales_fiscal(conn, merged_df, filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+async def sbu_sales_fiscal(merged_df, filters, cross_filters, drill_state="", time_grain="", resp_format=""):
     """
     API to return SBU sales aggregated set-wise for a fiscal year,
     ignoring NULL or 0 SBU names.
