@@ -50,6 +50,12 @@ async def generate_sod_engineering_location_stats(sap_id):
                         interlocks.append(maintenance_item["interlock_name"])
                         maintenance_map.setdefault(equip, set()).add(maintenance_item["interlock_name"])
 
+                if maintenance_item["alert_category"] == 'Process':
+                    if maintenance_item["interlock_name"] not in global_interlock:
+                        global_interlock.add(maintenance_item["interlock_name"])
+                        interlocks.append(maintenance_item["interlock_name"])
+                        maintenance_map.setdefault(equip, set()).add(maintenance_item["interlock_name"])
+
         # Build fault map and populate global_interlock
         for fault_item in Fault:
             equipment_names = fault_item.get("equipment_name", [])
