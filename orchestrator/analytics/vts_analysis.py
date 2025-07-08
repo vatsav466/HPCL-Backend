@@ -1,6 +1,8 @@
 import pandas as pd
 import urdhva_base
 import typing
+import aiohttp
+import asyncio
 import requests
 import datetime
 import hpcl_ceg_model
@@ -381,7 +383,69 @@ async def create_vts_alerts(enriched_data):
         if not await is_alert_exists(entry['tl_number']):
             await alert_manager.create_alert({**entry, "alert_type": "VTS"})
 
-# Priority
+async def close_camunda_workflow(alert_id):
+    MAX_RETRIES = 5
+    RETRY_DELAY = 5
+    headers = {"Content-Type": "application/json"}
+    alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+
+    instance_id = alert_data.get("workflow_instance_id")
+    camunda_url = alert_data.get("workflow_url")
+    url = f"{camunda_url}/engine-rest/process-instance/{instance_id}"
+    async with aiohttp.ClientSession() as session:
+        for attempt in range(MAX_RETRIES):
+            try:
+                async with session.delete(url, headers=headers) as response:
+                    if response.status == 204:  # Success in Camunda
+                        print(f"{instance_id} Deleted successfully.")
+                        break
+                    else:
+                        error_text = await response.text()
+                        print(
+                            f"Error Deleting {alert_id} {instance_id} {camunda_url} (attempt {attempt + 1}): {response.status} - {error_text}")
+
+            except aiohttp.ClientError as e:
+                print(f"Request error for {camunda_url} {instance_id} {alert_id} (attempt {attempt + 1}): {e}")
+
+        # Retry logic with exponential backoff
+        if attempt < MAX_RETRIES - 1:
+            await asyncio.sleep(RETRY_DELAY * (2 ** attempt))
+        else:
+            print(f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries.")
+            return False
+    return True
+
+async def close_vts_alerts(alert_id):
+    alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+    alert_history = alert_data.get('alert_history', []) if isinstance(alert_data, dict) else getattr(alert_data,
+                                                                                                     'alert_history',
+                                                                                                     [])
+    allocated_time = alert_data.get('updated_at', datetime.datetime.now(datetime.timezone.utc))
+    if alert_history and alert_history[-1].get("processed_time"):
+        allocated_time = alert_history[-1]["processed_time"]
+    processed_time = datetime.datetime.now(datetime.timezone.utc)
+    alert_message = (
+        f"Vehicle Number: {alert_data['vehicle_number']} \n"
+        f"Violation Type: {alert_data['violation_type']} \n"
+        f"Vehicle Blocked Time: {alert_data['vehicle_blocked_start_date']} to {alert_data['vehicle_blocked_end_date']} \n"
+    )
+    alert_history.append(
+        {
+            'processed_time': processed_time.isoformat(),
+            'allocated_time': allocated_time,  # For first entry, allocated_time equals processed_time
+            'action_type': "Resolved",
+            'action_msg': alert_message,
+            "action_by": "VTS_VENDOR"
+        }
+    )
+    alert_data['alert_status'] = 'Close'
+    alert_data['alert_state'] = 'Resolved'
+    await hpcl_ceg_model.Alerts(**{"id": alert_id, "alert_history": alert_history, "alert_status": "Close", "alert_state": "Resolved"}).modify()
 
 # device_tamper_count
 # main_supply_removal_count

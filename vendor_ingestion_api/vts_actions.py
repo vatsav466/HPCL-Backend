@@ -94,7 +94,24 @@ async def vts_ingest_data_un_blocked_trucks(data: Vts_Ingest_Data_Un_Blocked_Tru
     try:
         logger.info(
             f"Received VTS data ingestion from TT UnBlocking {data.location_id}({data.location_type}) {data.dict()}")
-        return True, "Success"
+
+        for unlock_data in data.data:
+            if not isinstance(unlock_data, dict):
+                unlock_data = unlock_data.dict()
+            unlock_data['vehicle_blocked_start_date'] = (datetime.datetime.strptime
+                                                         (unlock_data['vehicle_blocked_start_date'],
+                                                          "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d"))
+            tl_number = unlock_data['tt_no']
+            query = (f"select id from alerts where vehicle_number = '{tl_number}' "
+                     f"and alert_status != 'Close' and alert_section = 'VTS' "
+                     f"and vehicle_blocked_start_date::date = '{unlock_data['vehicle_blocked_start_date']}' ")
+            vts_alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            if vts_alert_data.get("data", []):
+                alert_id = vts_alert_data['data'][0]['id']
+                if await vts_analysis.close_camunda_workflow(alert_id):
+                    await vts_analysis.close_vts_alerts(alert_id)
+                    return True, "Success"
+        return False, "Failed to Unblock TT"
     except Exception as e:
         print(traceback.format_exc())
         logger.error(e)
