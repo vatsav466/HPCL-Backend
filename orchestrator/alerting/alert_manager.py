@@ -55,8 +55,15 @@ async def close_alert(alert_data):
         dict: A dictionary containing the status, message and the closed alert document.
     """
     # print("alert_data for close alert", alert_data)
+    # alert_type = alert_data['alert_type']
+    # return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").close_bu_alert(alert_data)
     alert_type = alert_data['alert_type']
-    return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").close_bu_alert(alert_data)
+    module_name = f"orchestrator.alerting.{alert_type.lower()}_alert"
+    module = importlib.import_module(module_name)
+    class_name = f"{alert_type}AlertManager"
+    alert_class = getattr(module, class_name)
+    instance = alert_class()
+    return await instance.close_bu_alert(alert_data)
 
 
 async def get_function_mapping():
