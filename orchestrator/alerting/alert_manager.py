@@ -3,17 +3,18 @@ import re
 import json
 import httpx
 import datetime
+import importlib
 import hpcl_ceg_model
 from jinja2 import Template
 import utilities.helpers as helpers
-import orchestrator.alerting.ro_alert as ro_alert
-import orchestrator.alerting.va_alert as va_alert
-import orchestrator.alerting.vts_alert as vts_alert
-import orchestrator.alerting.tas_alert as tas_alert
-import orchestrator.alerting.lpg_alert as lpg_alert
+# import orchestrator.alerting.ro_alert as ro_alert
+# import orchestrator.alerting.va_alert as va_alert
+# import orchestrator.alerting.vts_alert as vts_alert
+# import orchestrator.alerting.tas_alert as tas_alert
+# import orchestrator.alerting.lpg_alert as lpg_alert
 import orchestrator.analytics.va_analysis as va_analysis
 import utilities.connection_mapping as connection_mapping
-import orchestrator.alerting.emlock_alert as emlock_alert
+# import orchestrator.alerting.emlock_alert as emlock_alert
 import orchestrator.analytics.vts_analysis as vts_analysis
 from orchestrator.notification_manager.notify_email import *
 import orchestrator.analytics.emlock_analysis as emlock_analysis
@@ -34,7 +35,13 @@ async def create_alert(alert_data, camunda_url=urdhva_base.settings.camunda_url)
     """
     # print("into create alert", alert_data)
     alert_type = alert_data['alert_type']
-    return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").create_bu_alert(alert_data, camunda_url)
+    module_name = f"orchestrator.alerting.{alert_type.lower()}_alert"
+    module = importlib.import_module(module_name)
+    class_name = f"{alert_type}AlertManager"
+    alert_class = getattr(module, class_name)
+    instance = alert_class()
+    return await instance.create_bu_alert(alert_data, camunda_url)
+    # return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").create_bu_alert(alert_data, camunda_url)
 
 
 async def close_alert(alert_data):
