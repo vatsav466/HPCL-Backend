@@ -948,13 +948,14 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     print("came to month name del")
                     print("group_by_filter",group_by_filter)
                     if len(group_by_filter) ==1:
-                        if group_by_filter[0].strip('"') != 'month_name':
+                        if "month_name" not in [x.strip('"') for x in group_by_filter] :
                             del target_data['month_name']
                     #del target_data['month_name']
                     common_column = ['TARGET_TMT_SALES']
                     existing_columns = [col for col in ["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"] if col in target_data.columns]
-                    if existing_columns:
-                        target_data = target_data.groupby(existing_columns, as_index=False)['TARGET_TMT_SALES'].sum().reset_index()
+                    if "month_name" not in [x.strip('"') for x in group_by_filter] :
+                        if existing_columns:
+                            target_data = target_data.groupby(existing_columns, as_index=False)['TARGET_TMT_SALES'].sum().reset_index()
                     target_data.to_csv('/tmp/tgt_data_latest.csv',index = False)
 
             target_data = target_data.to_dict(orient='records')
