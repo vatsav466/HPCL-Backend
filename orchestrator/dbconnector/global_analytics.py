@@ -292,7 +292,7 @@ class GlobalAnalytics:
             location_severity_count_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(location_severity_count_query_, filters, drill_state)
         try:
             # resp = await function(query=location_severity_count_query_)
-            resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=location_severity_count_query_, limit=0)
+            resp = urdhva_base.BasePostgresModel.get_aggr_data(query=location_severity_count_query_, limit=0)
             resp = resp.get('data', [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_severity_count_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -356,7 +356,7 @@ class GlobalAnalytics:
             severity_count_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(severity_count_query, filters, drill_state)
         try:
             # severity_count_data = await function(query=severity_count_query_)
-            severity_count_data = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=severity_count_query_, limit=0)
+            severity_count_data = urdhva_base.BasePostgresModel.get_aggr_data(query=severity_count_query_, limit=0)
             severity_count_data = severity_count_data.get('data', [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(severity_count_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -391,7 +391,7 @@ class GlobalAnalytics:
             hourly_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(hourly_alerts_query, filters, drill_state)
         try:
             # resp = await function(query=hourly_alerts_query_)
-            resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=hourly_alerts_query_, limit=0)
+            resp = urdhva_base.BasePostgresModel.get_aggr_data(query=hourly_alerts_query_, limit=0)
             resp = resp.get('data', [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -493,7 +493,7 @@ class GlobalAnalytics:
             sales_performance_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(sales_performance_query_, access_filters, drill_state)
             print("sales_performance_query_: ",sales_performance_query_)
             # resp = await function(query=sales_performance_query_)
-            resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
+            resp = urdhva_base.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
             resp = resp.get('data', [])
 
             # Convert the response to a DataFrame for further processing
@@ -517,7 +517,7 @@ class GlobalAnalytics:
 
         # Execute the query
         # resp = await function(query=sales_performance_query_)
-        resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
+        resp = urdhva_base.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
         resp = resp.get('data', [])
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
@@ -1247,7 +1247,7 @@ class GlobalAnalytics:
             print("Generated Query:", sales_performance_query_)  # Debugging: Print the generated query
 
             # resp = await function(query=sales_performance_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
             resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -1258,7 +1258,7 @@ class GlobalAnalytics:
 
                 """
                 # his_data = await function(query=sales_his_query)
-                his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_his_query, limit=0)
+                his_data = await urdhva_base.BasePostgresModel.get_aggr_data(sales_his_query, limit=0)
                 his_data = his_data.get("data", [])
                 his_data = pd.DataFrame(his_data)
                 his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
@@ -1302,7 +1302,7 @@ class GlobalAnalytics:
                 """
                 print("date_day_query --> ", date_day_query)
                 # day_data = await function(query=date_day_query)
-                day_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(date_day_query, limit=0)
+                day_data = await urdhva_base.BasePostgresModel.get_aggr_data(date_day_query, limit=0)
                 day_data = day_data.get("data", [])
                 day_data = pd.DataFrame(day_data)
                 day_data = day_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
@@ -1442,7 +1442,7 @@ class GlobalAnalytics:
                     "M60_LEVEL_METADATA"."fy_month" ASC;
             '''
             # resp = await function(query=sales_performance_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
             resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -1465,7 +1465,7 @@ class GlobalAnalytics:
 
         # Execute the query
         # resp = await function(query=sales_performance_query_)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
         resp = resp.get("data", [])
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
@@ -2104,7 +2104,7 @@ class GlobalAnalytics:
                     """
 
                     # his_data = await function(query=sales_his_query)
-                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
                     his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
@@ -2196,7 +2196,7 @@ class GlobalAnalytics:
                             sales_his_query += f""" and "month_name" = '{month_name[:3]}'"""
                     print("sales_his_query",sales_his_query)
                     # his_data = await function(query=sales_his_query)
-                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
                     his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
@@ -2284,7 +2284,7 @@ class GlobalAnalytics:
                     if "month_name" in filter_keys:
                         sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
                     # his_data = await function(query=sales_his_query)
-                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
                     his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
@@ -2487,7 +2487,7 @@ class GlobalAnalytics:
                     if "month_name" in filter_keys:
                         sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
                     # his_data = await function(query=sales_his_query)
-                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
                     his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
@@ -2727,7 +2727,7 @@ class GlobalAnalytics:
             sales_growth_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(sales_growth_query_, access_filters, drill_state)
             print("sales_growth_query_: ", sales_growth_query_)
             # resp = await function(query=sales_growth_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_growth_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_growth_query_, limit=0)
             resp = resp.get("data", [])
             print("resp: ", resp)
             month_map = {'Apr': '0', 'May': '1', 'Jun': '2', 'Jul': '3', 'Aug': '4', 'Sep': '5', 'Oct': '6', 'Nov': '7',
@@ -2749,7 +2749,7 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": d}
         
         # resp = await function(query=sales_growth_query_)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_growth_query_, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_growth_query_, limit=0)
         resp = resp.get("data", [])
         resp = pd.DataFrame(resp)
         resp =resp.rename(columns = {'ORGSBUCD':'SBU','ORGSBUNAME':'SBU_Name','ORGZONECD':'ZONE','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
@@ -3115,7 +3115,7 @@ class GlobalAnalytics:
             print("Generated Query:", sales_performance_query_)  # Debugging: Print the generated query
 
             # resp = await function(query=sales_performance_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
             resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3146,7 +3146,7 @@ class GlobalAnalytics:
             '''
 
             # resp = await function(query=sales_performance_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
             resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3169,7 +3169,7 @@ class GlobalAnalytics:
         
         # Execute the query
         # resp = await function(query=sales_performance_query_)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
         resp = resp.get("data", [])
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
@@ -3579,7 +3579,7 @@ class GlobalAnalytics:
             location_wise_distribution_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(location_wise_distribution_query, filters, drill_state)
         try:
             # resp = await function(query=location_wise_distribution_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=location_wise_distribution_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=location_wise_distribution_query_, limit=0)
             resp = resp.get("data", [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -3604,7 +3604,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_locations_query)
         # resp = await function(query=cp_locations_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_locations_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_locations_query, limit=0)
         resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
@@ -3624,7 +3624,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_dus_query)
         # resp = await function(query=cp_dus_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_dus_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_dus_query, limit=0)
         resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
@@ -3645,7 +3645,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_dus_query)
         # resp = await function(query=cp_dus_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_dus_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_dus_query, limit=0)
         resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
@@ -3665,7 +3665,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_query)
         # resp = await function(query=cp_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
         resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
@@ -3685,7 +3685,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_query)
         # resp = await function(query=cp_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
         resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
@@ -3705,7 +3705,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_query)
         # resp = await function(query=cp_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
         resp = resp.get("data", [])
         return {"status": True, "message": "success", "data": resp}
 
@@ -3724,7 +3724,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_query)
         # resp = await function(query=cp_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
         resp = resp.get("data", [])
         return {"status": True, "message": "success", "data": resp}
     
@@ -3786,7 +3786,7 @@ class GlobalAnalytics:
             
             print("productivity_zone_query_ :", productivity_zone_query_)
             # resp = await function(query=productivity_zone_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
             resp = resp.get("data", [])
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
@@ -3804,7 +3804,7 @@ class GlobalAnalytics:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
         # resp = await function(query=productivity_zone_query_)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
         resp = resp.get("data", [])
         if resp:
             resp = pd.DataFrame(resp)
