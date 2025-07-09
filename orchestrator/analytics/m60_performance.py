@@ -167,12 +167,15 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
         query += f" GROUP BY {','.join(group_by_filter)}"
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    #function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     print("query",query)
     access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.M60LevelMetaData.get_clause_conditions(formated=True)]
     query =  await widget_actions.WidgetActions.apply_filter_drilldown(query, access_filters, drilldown = '')
-    resp = await function(query=query)
+    #resp = await function(query=query)
+    resp = await hpcl_ceg_model.M60LevelMetaData.get_aggr_data(query, limit=1000)
+    if resp.get('data',[]):
+        resp = resp['data']
     return resp
 
 
