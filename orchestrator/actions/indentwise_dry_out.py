@@ -1906,7 +1906,7 @@ class IndentDryOut:
                 try:
                     response = requests.delete(url, headers=headers)
 
-                    if response.status_code == 204:  # Success in Camunda
+                    if response.status_code in [204,404]:  # Success in Camunda
                         print(f"{instance_id} Deleted successfully.")
                         logger.info(f"{instance_id} Deleted successfully.")
                         break
