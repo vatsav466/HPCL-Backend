@@ -99,12 +99,12 @@ class Workflows_Deletion:
                                 AND alert_status != 'Close'
                                 AND interlock_name = 'Dry Out Each Indent Wise MainFlow'
                                 AND created_at::DATE!=CURRENT_DATE"""
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-            resp = await function(query=query)
-            resp = pd.DataFrame(resp)
-            resp.to_csv("/opt/ceg/algo/running_instance.csv", index=False)
+            #dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+            #dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            #function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            #resp = await function(query=query)
+            #resp = pd.DataFrame(resp)
+            #resp.to_csv("/opt/ceg/algo/running_instance.csv", index=False)
 
     async def process_workflow_resp(self, workflow_resp):
         """
@@ -161,4 +161,3 @@ class Workflows_Deletion:
 if __name__ == "__main__":
     Workflow = Workflows_Deletion()
     asyncio.run(Workflow.instance_removal())
-
