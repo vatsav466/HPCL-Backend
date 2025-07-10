@@ -28,8 +28,8 @@ class CauseEffect:
             f"""sop_id in ({effect_sop_id}) and """
             f"""device_id = '{params.get("device_id")}' and """ 
             f""" alert_status != 'Close' and """
-            f"""cause_effect = 'Effect' and """
-            f"""created_at >= NOW() - INTERVAL '5 minutes'"""
+            f"""cause_effect = 'Effect'"""
+            # f"""created_at >= NOW() - INTERVAL '5 minutes'"""
         )
 
         query_params = urdhva_base.queryparams.QueryParams()
@@ -134,8 +134,8 @@ class CauseEffect:
             f"""sop_id = '{cause_sop_id}' and """
             f"""device_id = '{params.get("device_id")}' and """ 
             f""" alert_status != 'Close' and """
-            f"""cause_effect = 'Cause' and """
-            f"""created_at >= NOW() - INTERVAL '5 minutes'"""
+            f"""cause_effect = 'Cause'"""
+            # f"""created_at >= NOW() - INTERVAL '5 minutes'"""
         )
 
         query_params = urdhva_base.queryparams.QueryParams()
