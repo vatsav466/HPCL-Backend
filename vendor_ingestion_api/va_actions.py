@@ -56,16 +56,9 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
       enriched_data = enriched_data.to_dicts()
       for entry in enriched_data:
           entry['alert_section'] = entry['alert_type']
-          entry['alert_timestamp'] = datetime.datetime.strptime(entry['alert_timestamp'], "%m/%d/%Y %I:%M:%S %p")
-          utc = pytz.timezone("UTC")
-          ist = pytz.timezone("Asia/Kolkata")
-          # First localize to UTC
-          entry['alert_timestamp'] = utc.localize(entry['alert_timestamp'])
-          # Convert to IST
-          entry['alert_timestamp'] = entry['alert_timestamp'].astimezone(ist)
-          # ist = pytz.timezone("Asia/Kolkata")
-          # entry['alert_timestamp'] = entry['alert_timestamp'].astimezone(ist)
-          entry['alert_timestamp'] = entry['alert_timestamp'].isoformat()
+          entry['alert_timestamp'] = (
+              datetime.datetime.strptime(entry['alert_timestamp'], "%m/%d/%Y %I:%M:%S %p") + 
+              datetime.timedelta(hours=5, minutes=30))          
           await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
           # entry['vendor_alert_id'] = entry.pop("alert_id")
           camunda_url = urdhva_base.settings.camunda_url
