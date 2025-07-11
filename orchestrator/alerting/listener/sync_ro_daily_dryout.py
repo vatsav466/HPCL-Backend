@@ -29,7 +29,7 @@ async def indent_sync_ro_daily_dryout():
             "product_grp": pl.String, "product_sap_color": pl.String
         }
         ro_data = pd.DataFrame(ro_data)
-        _list_column = ['site_type', 'is_abhyuday', 'receipt_grp']
+        _list_column = ['site_type', 'is_abhyuday', 'receipt_grp', 'dead_stock']
         for col in _list_column:
             if col in ro_data.columns:
                 del ro_data[col]
