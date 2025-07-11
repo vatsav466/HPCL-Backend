@@ -112,6 +112,10 @@ async def tas_listener(rmsg):
             alertdata['severity'] = rmsg['severity']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
+            
+            if alertdata.get('interlock_name') in ["ROSOV_Close Status", "MOV_Close Status"]:
+                if not alertdata.get('sensor_id'):
+                    return False 
             #Handle empty sensor_id case
             if not alertdata.get('sensor_id'):
                 device_name = alertdata.get('device_name', '')
@@ -124,7 +128,7 @@ async def tas_listener(rmsg):
                         alertdata["sensor_id"] = device_name.split('@')[0].strip()
                 else:
                       print("No valid separator found, sensor_id not assigned")
-  
+
             custom_data = rmsg['details']['additionalInfo'].get("customData", {})
 
             
