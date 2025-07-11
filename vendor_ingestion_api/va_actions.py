@@ -3,6 +3,7 @@ from ingestion_api_enum import *
 from ingestion_api_model import *
 import fastapi
 import datetime
+import pytz
 import traceback
 import polars as pl
 import hpcl_ceg_model
@@ -56,6 +57,12 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
       for entry in enriched_data:
           entry['alert_section'] = entry['alert_type']
           entry['alert_timestamp'] = datetime.datetime.strptime(entry['alert_timestamp'], "%m/%d/%Y %I:%M:%S %p")
+          utc = pytz.timezone("UTC")
+          ist = pytz.timezone("Asia/Kolkata")
+          # First localize to UTC
+          entry['alert_timestamp'] = utc.localize(entry['alert_timestamp'])
+          # Convert to IST
+          entry['alert_timestamp'] = entry['alert_timestamp'].astimezone(ist)
           # ist = pytz.timezone("Asia/Kolkata")
           # entry['alert_timestamp'] = entry['alert_timestamp'].astimezone(ist)
           entry['alert_timestamp'] = entry['alert_timestamp'].isoformat()
