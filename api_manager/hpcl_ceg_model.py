@@ -7101,3 +7101,240 @@ class TASMonthlyOIScoresGetResp(pydantic.BaseModel):
     data: typing.List[TASMonthlyOIScores]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class SodInfraSchema(UrdhvaPostgresBase):
+    __tablename__ = 'sod_infra'
+    
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    address: Mapped[typing.Optional[str]] = mapped_column("address", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    company: Mapped[typing.Optional[str]] = mapped_column("company", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    type: Mapped[typing.Optional[str]] = mapped_column("type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    name: Mapped[typing.Optional[str]] = mapped_column("name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    region_ppac: Mapped[typing.Optional[str]] = mapped_column("region_ppac", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    ms: Mapped[typing.Optional[int]] = mapped_column("ms", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    sko: Mapped[typing.Optional[int]] = mapped_column("sko", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    hsd: Mapped[typing.Optional[int]] = mapped_column("hsd", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    total: Mapped[typing.Optional[int]] = mapped_column("total", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    mode_of_receipt: Mapped[typing.Optional[str]] = mapped_column("mode_of_receipt", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    latitude: Mapped[typing.Optional[float]] = mapped_column("latitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    longitude: Mapped[typing.Optional[float]] = mapped_column("longitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    updated_by: Mapped[typing.Optional[str]] = mapped_column("updated_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class SodInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'sod_infra'
+    
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    address: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    type: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    region_ppac: typing.Optional[str] = pydantic.Field("", **{})
+    ms: typing.Optional[int] = pydantic.Field(0, **{})
+    sko: typing.Optional[int] = pydantic.Field(0, **{})
+    hsd: typing.Optional[int] = pydantic.Field(0, **{})
+    total: typing.Optional[int] = pydantic.Field(0, **{})
+    mode_of_receipt: typing.Optional[str] = pydantic.Field("", **{})
+    latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = SodInfraSchema
+        upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+
+
+class SodInfra(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'sod_infra'
+    
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    address: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    type: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    region_ppac: typing.Optional[str] = pydantic.Field("", **{})
+    ms: typing.Optional[int] = pydantic.Field(0, **{})
+    sko: typing.Optional[int] = pydantic.Field(0, **{})
+    hsd: typing.Optional[int] = pydantic.Field(0, **{})
+    total: typing.Optional[int] = pydantic.Field(0, **{})
+    mode_of_receipt: typing.Optional[str] = pydantic.Field("", **{})
+    latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = SodInfraSchema
+        upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+
+
+class SodInfraGetResp(pydantic.BaseModel):
+    data: typing.List[SodInfra]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Sodinfra_Upload_Sod_FileParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Sodinfra_Get_All_Sod_Lpg_InfraParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Sodinfra_Get_Count_Company_InfraParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class LPGInfraSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_infra'
+    
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    address: Mapped[typing.Optional[str]] = mapped_column("address", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    company: Mapped[typing.Optional[str]] = mapped_column("company", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    name: Mapped[typing.Optional[str]] = mapped_column("name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    installed_bottling_capacity: Mapped[typing.Optional[float]] = mapped_column("installed_bottling_capacity", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    operating_bottling_capacity: Mapped[typing.Optional[float]] = mapped_column("operating_bottling_capacity", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    ccoe_tankage: Mapped[typing.Optional[float]] = mapped_column("ccoe_tankage", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    time_of_commissioning: Mapped[typing.Optional[str]] = mapped_column("time_of_commissioning", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    mode: Mapped[typing.Optional[str]] = mapped_column("mode", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    supply: Mapped[typing.Optional[str]] = mapped_column("supply", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    latitude: Mapped[typing.Optional[float]] = mapped_column("latitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    longitude: Mapped[typing.Optional[float]] = mapped_column("longitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    updated_by: Mapped[typing.Optional[str]] = mapped_column("updated_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class LPGInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_infra'
+    
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    address: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    installed_bottling_capacity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    operating_bottling_capacity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ccoe_tankage: typing.Optional[float] = pydantic.Field(0.0, **{})
+    time_of_commissioning: typing.Optional[str] = pydantic.Field("", **{})
+    mode: typing.Optional[str] = pydantic.Field("", **{})
+    supply: typing.Optional[str] = pydantic.Field("", **{})
+    latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = LPGInfraSchema
+        upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+
+
+class LPGInfra(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_infra'
+    
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    address: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    installed_bottling_capacity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    operating_bottling_capacity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ccoe_tankage: typing.Optional[float] = pydantic.Field(0.0, **{})
+    time_of_commissioning: typing.Optional[str] = pydantic.Field("", **{})
+    mode: typing.Optional[str] = pydantic.Field("", **{})
+    supply: typing.Optional[str] = pydantic.Field("", **{})
+    latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = LPGInfraSchema
+        upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+
+
+class LPGInfraGetResp(pydantic.BaseModel):
+    data: typing.List[LPGInfra]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Lpginfra_Upload_Lpg_FileParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

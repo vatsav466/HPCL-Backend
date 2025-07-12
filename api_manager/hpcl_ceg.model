@@ -2412,3 +2412,84 @@ Model TASMonthlyOIScores {
     weightage optional float
 }
 
+Model SodInfra {
+    sap_id index_field optional str
+    bu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    type optional str
+    location_name optional str
+    name optional str
+    region_ppac optional str
+    ms optional int
+    sko optional int
+    hsd optional int
+    total optional int
+    mode_of_receipt optional str
+    latitude optional float
+    longitude optional float
+    updated_by optional str
+
+    // File Upload
+    Action=> upload_sod_file {
+    }
+
+    Action=> get_all_sod_lpg_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Action=> get_count_company_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+
+
+    Config=> {
+        access_key_mapping='bu,zone,region,sap_id'
+    }
+}
+
+
+Model LPGInfra {
+    sap_id index_field optional str
+    bu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    location_name optional str
+    name optional str
+    installed_bottling_capacity optional float
+    operating_bottling_capacity optional float
+    ccoe_tankage optional float
+    time_of_commissioning optional str
+    mode optional str
+    supply optional str
+    latitude optional float
+    longitude optional float
+    updated_by optional str
+
+    // File Upload
+    Action=> upload_lpg_file {
+    }
+
+    Config=> {
+        access_key_mapping='bu,zone,region,sap_id'
+    }
+}

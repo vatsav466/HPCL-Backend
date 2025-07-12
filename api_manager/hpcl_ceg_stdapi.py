@@ -1490,3 +1490,53 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/tasmonthlyoiscores/{id}', tags=['TASMonthlyOIScores'])
 async def delete(id: str):
     return await TASMonthlyOIScores.delete(id)
+
+
+@router.post('/sodinfra', response_model=SodInfra, tags=['SodInfra'])
+async def create(inputObj: SodInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/sodinfra', response_model=SodInfra, tags=['SodInfra'])
+async def update(inputObj: SodInfra):
+    return await inputObj.modify()
+
+
+@router.get('/sodinfra/{id}', response_model=SodInfra, tags=['SodInfra'])
+async def get(id: str):
+    return await SodInfra.get(id, skip_secrets=True)
+
+
+@router.get('/sodinfra', response_model=SodInfraGetResp, tags=['SodInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await SodInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/sodinfra/{id}', tags=['SodInfra'])
+async def delete(id: str):
+    return await SodInfra.delete(id)
+
+
+@router.post('/lpginfra', response_model=LPGInfra, tags=['LPGInfra'])
+async def create(inputObj: LPGInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpginfra', response_model=LPGInfra, tags=['LPGInfra'])
+async def update(inputObj: LPGInfra):
+    return await inputObj.modify()
+
+
+@router.get('/lpginfra/{id}', response_model=LPGInfra, tags=['LPGInfra'])
+async def get(id: str):
+    return await LPGInfra.get(id, skip_secrets=True)
+
+
+@router.get('/lpginfra', response_model=LPGInfraGetResp, tags=['LPGInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LPGInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpginfra/{id}', tags=['LPGInfra'])
+async def delete(id: str):
+    return await LPGInfra.delete(id)

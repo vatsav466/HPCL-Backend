@@ -5129,6 +5129,162 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "sodinfra",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "SodInfra",
+            "attributes": {},
+            "uris": [
+                "/api/sodinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_sod_file"
+                },
+                {
+                    "name": "get_all_sod_lpg_infra"
+                },
+                {
+                    "name": "get_count_company_infra"
+                }
+            ]
+        },
+        {
+            "name": "sodinfra_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "SodInfra_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/sodinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_all_sod_lpg_infra"
+                },
+                {
+                    "name": "get_count_company_infra"
+                }
+            ]
+        },
+        {
+            "name": "sodinfra_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "SodInfra_admin",
+            "attributes": {},
+            "uris": [
+                "/api/sodinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_sod_file"
+                },
+                {
+                    "name": "get_all_sod_lpg_infra"
+                },
+                {
+                    "name": "get_count_company_infra"
+                }
+            ]
+        },
+        {
+            "name": "lpginfra",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LPGInfra",
+            "attributes": {},
+            "uris": [
+                "/api/lpginfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_lpg_file"
+                }
+            ]
+        },
+        {
+            "name": "lpginfra_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LPGInfra_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpginfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpginfra_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LPGInfra_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpginfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_lpg_file"
+                }
+            ]
         }
     ],
     "policies": [
@@ -5538,6 +5694,22 @@
         {
             "name": "update_ro_master_data",
             "displayName": "update_ro_master_data"
+        },
+        {
+            "name": "upload_sod_file",
+            "displayName": "upload_sod_file"
+        },
+        {
+            "name": "get_all_sod_lpg_infra",
+            "displayName": "get_all_sod_lpg_infra"
+        },
+        {
+            "name": "get_count_company_infra",
+            "displayName": "get_count_company_infra"
+        },
+        {
+            "name": "upload_lpg_file",
+            "displayName": "upload_lpg_file"
         }
     ]
 }
