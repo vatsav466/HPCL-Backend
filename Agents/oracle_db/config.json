@@ -116,6 +116,7 @@
         "REMARKS": "remarks",
         "CANCELLED_BY": "cancelled_by",
         "CANCELLED_DATE": "cancelled_date",
+        "SR_NUMBER": "sr_number",
         "BAY_NUMBER": "bay_number",
         "BCU_NUMBER": "bcu_number",
         "TIMESTAMP": "timestamp",

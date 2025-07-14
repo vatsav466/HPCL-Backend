@@ -1833,6 +1833,7 @@ Model HostKFactorChanges {
 }
 
 Model HostLocalLoadedTts {
+    sr_number optional unique_field int
     bay_number optional str
     bcu_number optional unique_field str
     recipe_name optional unique_field str
