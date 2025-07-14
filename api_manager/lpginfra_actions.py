@@ -13,14 +13,17 @@ router = fastapi.APIRouter(prefix='/lpginfra')
 async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
     try:
         df = pd.read_excel(data.file, sheet_name='LPG plants').fillna("")
+        df.columns = df.columns.str.strip().str.lower()
+        df['bu'] = 'LPG'
 
         df = df.rename(
-            columns={'Company': 'company', 'LOCATION': 'location_name',
-                     'INSTALLED BOTTLING CAPACITY    (TMTPA)': 'installed_bottling_capacity',
-                     'OPERATING BOTTLING CAPACITY    (TMTPA)': 'operating_bottling_capacity',
-                     'CCOE TANKAGE  (TMT)': 'ccoe_tankage', 'Time of commissioning': 'time_of_commissioning',
-                     'Mode': 'mode', 'Supply': 'supply', 'LOCATION': 'location_name',
-                     'Latitude': 'latitude', 'Longitude': 'longitude'
+            columns={'company': 'company', 'location': 'location_name', 'zone': 'zone', 'state': 'state',
+                     'district': 'district',
+                     'installed bottling capacity    (tmtpa)': 'installed_bottling_capacity',
+                     'operating bottling capacity    (tmtpa)': 'operating_bottling_capacity',
+                     'ccoe tankage  (tmt)': 'ccoe_tankage', 'time of commissioning': 'time_of_commissioning',
+                     'mode': 'mode', 'supply': 'supply', 'LOCATION': 'location_name',
+                     'latitude': 'latitude', 'longitude': 'longitude'
                      })
 
         query = ''' * FROM location_master'''
@@ -29,7 +32,7 @@ async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
         loc_df = pd.DataFrame(resp['data'])
         loc_df['updated_by'] = ''
         df['updated_by'] = ''
-        df['SAP code'] = df['SAP code'].apply(
+        df['sap code'] = df['sap code'].apply(
             lambda x: str(int(float(x))) if pd.notnull(x) and str(x).strip() != "" else ""
         )
         df['time_of_commissioning'] = df['time_of_commissioning'].astype(str)
@@ -46,10 +49,15 @@ async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
 
         merged_df = df.merge(
             loc_df[['sap_id', 'bu', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']],
-            left_on='SAP code',
+            left_on='sap code',
             right_on='sap_id',
             how='left', suffixes=('', '_Y')
         )
+
+        merged_df['sap_id'] = merged_df['sap_id'].fillna(merged_df['sap code'])
+
+        for col in ['bu', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']:
+            merged_df[col] = merged_df[col].fillna("")
 
         merged_df = merged_df[[
             'sap_id', 'bu', 'zone', 'state', 'district', 'city', 'address', 'region',
@@ -57,6 +65,7 @@ async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
             'ccoe_tankage',
             'time_of_commissioning', 'mode', 'supply', 'latitude', 'longitude', 'updated_by'
         ]]
+
         final_records = merged_df.fillna("").to_dict(orient="records")
         await LPGInfra.bulk_update(final_records, upsert=False)
         return 'Uploaded successfully'

@@ -15,12 +15,14 @@ router = fastapi.APIRouter(prefix='/sodinfra')
 async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
     try:
         df = pd.read_excel(data.file, sheet_name='SOD').fillna("")
+        df.columns = df.columns.str.strip().str.lower()
+        df['bu'] = 'TAS'
 
         df = df.rename(
             columns={
-                'Company': 'company', 'Type': 'type', 'Location Name': 'location_name', 'Region PPAC': 'region_ppac', 'MS (KL)': 'ms',
-                'SKO(KL)': 'sko', 'HSD(KL)': 'hsd', 'Total(KL)': 'total', 'Mode of reciept': 'mode_of_receipt',
-                'Latitude': 'latitude', 'Longitude': 'longitude'
+                'company': 'company', 'type': 'type', 'location name': 'location_name', 'region ppac': 'region_ppac', 'ms (kl)': 'ms',
+                'sko(kl)': 'sko', 'hsd(kl)': 'hsd', 'total(kl)': 'total', 'mode of reciept': 'mode_of_receipt',
+                'latitude': 'latitude', 'longitude': 'longitude'
             }
         )
 
@@ -30,7 +32,7 @@ async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
 
         loc_df['updated_by'] = ''
         df['updated_by'] = ''
-        df['Location code'] = df['Location code'].apply(
+        df['location code'] = df['location code'].apply(
             lambda x: str(int(float(x))) if pd.notnull(x) and str(x).strip() != "" else ""
         )
         df['ms'] = pd.to_numeric(df['ms'], errors='coerce').fillna(0).astype(int)
@@ -41,10 +43,15 @@ async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
 
         merged_df = df.merge(
             loc_df[['sap_id', 'bu', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']],
-            left_on='Location code',
+            left_on='location code',
             right_on='sap_id',
-            how='left'
+            how='left', suffixes=('', '_Y')
         )
+
+        merged_df['sap_id'] = merged_df['sap_id'].fillna(merged_df['location code'])
+
+        for col in ['bu', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']:
+            merged_df[col] = merged_df[col].fillna("")
 
         merged_df = merged_df[[
             'sap_id', 'bu', 'zone', 'state', 'district', 'city', 'address', 'region',
@@ -54,7 +61,6 @@ async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
         final_records = merged_df.fillna("").to_dict(orient="records")
 
         await SodInfra.bulk_update(final_records, upsert=False)
-
         return "Uploaded successfully"
 
     except Exception as e:
