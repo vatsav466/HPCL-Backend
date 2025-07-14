@@ -1540,3 +1540,53 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/lpginfra/{id}', tags=['LPGInfra'])
 async def delete(id: str):
     return await LPGInfra.delete(id)
+
+
+@router.post('/historicsodinfra', response_model=HistoricSodInfra, tags=['HistoricSodInfra'])
+async def create(inputObj: HistoricSodInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/historicsodinfra', response_model=HistoricSodInfra, tags=['HistoricSodInfra'])
+async def update(inputObj: HistoricSodInfra):
+    return await inputObj.modify()
+
+
+@router.get('/historicsodinfra/{id}', response_model=HistoricSodInfra, tags=['HistoricSodInfra'])
+async def get(id: str):
+    return await HistoricSodInfra.get(id, skip_secrets=True)
+
+
+@router.get('/historicsodinfra', response_model=HistoricSodInfraGetResp, tags=['HistoricSodInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HistoricSodInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/historicsodinfra/{id}', tags=['HistoricSodInfra'])
+async def delete(id: str):
+    return await HistoricSodInfra.delete(id)
+
+
+@router.post('/historiclpginfra', response_model=HistoricLPGInfra, tags=['HistoricLPGInfra'])
+async def create(inputObj: HistoricLPGInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/historiclpginfra', response_model=HistoricLPGInfra, tags=['HistoricLPGInfra'])
+async def update(inputObj: HistoricLPGInfra):
+    return await inputObj.modify()
+
+
+@router.get('/historiclpginfra/{id}', response_model=HistoricLPGInfra, tags=['HistoricLPGInfra'])
+async def get(id: str):
+    return await HistoricLPGInfra.get(id, skip_secrets=True)
+
+
+@router.get('/historiclpginfra', response_model=HistoricLPGInfraGetResp, tags=['HistoricLPGInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HistoricLPGInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/historiclpginfra/{id}', tags=['HistoricLPGInfra'])
+async def delete(id: str):
+    return await HistoricLPGInfra.delete(id)
