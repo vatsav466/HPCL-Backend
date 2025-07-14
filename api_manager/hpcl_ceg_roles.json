@@ -5285,6 +5285,132 @@
                     "name": "upload_lpg_file"
                 }
             ]
+        },
+        {
+            "name": "historicsodinfra",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricSodInfra",
+            "attributes": {},
+            "uris": [
+                "/api/historicsodinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "historicsodinfra_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricSodInfra_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/historicsodinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "historicsodinfra_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricSodInfra_admin",
+            "attributes": {},
+            "uris": [
+                "/api/historicsodinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "historiclpginfra",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricLPGInfra",
+            "attributes": {},
+            "uris": [
+                "/api/historiclpginfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "historiclpginfra_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricLPGInfra_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/historiclpginfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "historiclpginfra_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricLPGInfra_admin",
+            "attributes": {},
+            "uris": [
+                "/api/historiclpginfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

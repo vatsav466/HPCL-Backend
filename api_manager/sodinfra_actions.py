@@ -60,7 +60,12 @@ async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
         ]]
         final_records = merged_df.fillna("").to_dict(orient="records")
 
+        query = ''' DELETE FROM sod_infra '''
+        result = await urdhva_base.BasePostgresModel.execute_query(query)
+        print(result)
+
         await SodInfra.bulk_update(final_records, upsert=False)
+        await HistoricSodInfra.bulk_update(final_records, upsert=False)
         return "Uploaded successfully"
 
     except Exception as e:

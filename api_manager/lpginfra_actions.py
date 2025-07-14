@@ -67,7 +67,13 @@ async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
         ]]
 
         final_records = merged_df.fillna("").to_dict(orient="records")
+
+        query = ''' DELETE FROM lpg_infra '''
+        result = await urdhva_base.BasePostgresModel.execute_query(query)
+        print(result)
+
         await LPGInfra.bulk_update(final_records, upsert=False)
+        await HistoricLPGInfra.bulk_update(final_records, upsert=False)
         return 'Uploaded successfully'
 
     except Exception as e:

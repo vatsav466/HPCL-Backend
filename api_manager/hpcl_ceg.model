@@ -2493,3 +2493,61 @@ Model LPGInfra {
         access_key_mapping='bu,zone,region,sap_id'
     }
 }
+
+
+Model HistoricSodInfra {
+    sap_id index_field optional str
+    bu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    type optional str
+    location_name optional str
+    name optional str
+    region_ppac optional str
+    ms optional int
+    sko optional int
+    hsd optional int
+    total optional int
+    mode_of_receipt optional str
+    latitude optional float
+    longitude optional float
+    updated_by optional str
+
+
+
+    Config=> {
+        access_key_mapping='bu,zone,region,sap_id'
+    }
+}
+
+Model HistoricLPGInfra {
+    sap_id index_field optional str
+    bu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    location_name optional str
+    name optional str
+    installed_bottling_capacity optional float
+    operating_bottling_capacity optional float
+    ccoe_tankage optional float
+    time_of_commissioning optional str
+    mode optional str
+    supply optional str
+    latitude optional float
+    longitude optional float
+    updated_by optional str
+
+    Config=> {
+        access_key_mapping='bu,zone,region,sap_id'
+    }
+}
