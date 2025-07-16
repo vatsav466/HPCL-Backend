@@ -86,3 +86,11 @@ async def sodinfra_get_all_sod_lpg_infra(data: Sodinfra_Get_All_Sod_Lpg_InfraPar
 async def sodinfra_get_count_company_infra(data: Sodinfra_Get_Count_Company_InfraParams):
     return await infra_functions.get_count_company_info(filters=data.filters, cross_filters=data.cross_filters,
                                            drill_state=data.drill_state, limit=data.limit, time_grain=data.time_grain)
+
+
+# Action get_sod_lpg_infra
+@router.post('/get_sod_lpg_infra', tags=['SodInfra'])
+async def sodinfra_get_sod_lpg_infra(data: Sodinfra_Get_Sod_Lpg_InfraParams):
+    return await infra_functions.get_sod_lpg_info(filters=data.filters, cross_filters=data.cross_filters,
+                                                        drill_state=data.drill_state, limit=data.limit,
+                                                        time_grain=data.time_grain)

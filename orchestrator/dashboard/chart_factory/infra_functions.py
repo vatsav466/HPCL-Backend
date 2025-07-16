@@ -29,11 +29,18 @@ async def sod_infra(filters, cross_filters, drill_state, limit, time_grain):
         lpg_result = await urdhva_base.BasePostgresModel.get_aggr_data(lpg_query, limit=0, skip=0)
         lpg = lpg_result['data']
 
+        # company_color_map = {
+        #     'hpcl': '#00006B',
+        #     'iocl': '#02164F',
+        #     'bpcl': '#FFE000',
+        #     'hmel': '#RRGGBB'
+        # }
+
         company_color_map = {
-            'hpcl': '#00006B',
-            'iocl': '#02164F',
-            'bpcl': '#FFE000',
-            'hmel': '#RRGGBB'
+            'hpcl': '#1E90FF',  # Dodger Blue
+            'iocl': '#FF4500',  # Orange Red
+            'bpcl': '#32CD32',  # Lime Green
+            'hmel': '#8A2BE2'  # Blue Violet
         }
 
         # color_code to SOD data
@@ -90,6 +97,28 @@ async def get_count_company_info(filters, cross_filters, drill_state, limit, tim
 
         data = sod + lpg
         return {"status": True, "message": "success", "data": data}
+    except Exception as e:
+        print(f"Error while fetching SOD/LPG data: {e}")
+        return {"error": str(e)}
+
+
+async def get_sod_lpg_info(filters, cross_filters, drill_state, limit, time_grain):
+    try:
+        sod_query = ''' bu, location_name, company, ms, sko, hsd, total, mode_of_receipt from sod_infra '''
+        lpg_query = ''' bu, location_name, company, installed_bottling_capacity, operating_bottling_capacity, ccoe_tankage, mode, supply from lpg_infra '''
+
+        if filters:
+            sod_query = await widget_actions.WidgetActions.apply_filter_drilldown(sod_query, filters, drill_state)
+            lpg_query = await widget_actions.WidgetActions.apply_filter_drilldown(lpg_query, filters, drill_state)
+
+        sod_result = await urdhva_base.BasePostgresModel.get_aggr_data(sod_query, limit=0, skip=0)
+        sod = sod_result['data']
+        lpg_result = await urdhva_base.BasePostgresModel.get_aggr_data(lpg_query, limit=0, skip=0)
+        lpg = lpg_result['data']
+
+        data = sod + lpg
+        return {"status": True, "message": "success", "data": data}
+
     except Exception as e:
         print(f"Error while fetching SOD/LPG data: {e}")
         return {"error": str(e)}

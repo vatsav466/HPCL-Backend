@@ -2456,6 +2456,14 @@ Model SodInfra {
         time_grain optional str
     }
 
+    Action=> get_sod_lpg_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
 
 
     Config=> {
