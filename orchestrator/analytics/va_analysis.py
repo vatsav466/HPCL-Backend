@@ -1,6 +1,7 @@
 import urdhva_base
 import json
 import math
+import pytz
 import requests
 import datetime
 import calendar
@@ -150,8 +151,9 @@ async def get_period_datetime(period: str, today=None):
         end_of_month = today.replace(day=last_day, hour=23, minute=59, second=59, microsecond=999999)
         return start_of_month, end_of_month
     if period == 'fortnight':
+        ist = pytz.timezone('Asia/Kolkata')
         if not today:
-            today = datetime.datetime.now(datetime.timezone.utc)
+            today = datetime.datetime.now(ist)
         year, month = today.year, today.month
         first_half_start = datetime.datetime(year, month, 1, 0, 0, 0)
         first_half_end = datetime.datetime(year, month, 15, 23, 59, 59)
