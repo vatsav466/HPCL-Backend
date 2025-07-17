@@ -294,6 +294,13 @@ VA_Alert_Mapping = {
                     "escalation_role": "Location In-Charge SOD",
                     "escalation_time": "PT6H"
                 },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 10,
+                    "assign_role": "Zonal HSE SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT6H"
+                },
                 "level - 3": {
                     "condition": ">",
                     "value": 10,
@@ -455,6 +462,13 @@ VA_Alert_Mapping = {
                     "escalation_role": "Location In-Charge SOD",
                     "escalation_time": "PT1H"
                 },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 10,
+                    "assign_role": "Zonal HSE SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
+                },
                 "level - 3": {
                     "condition": ">",
                     "value": 10,
@@ -474,6 +488,13 @@ VA_Alert_Mapping = {
                     "value": 50,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
+                    "escalation_time": "PT1H"
+                },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 50,
+                    "assign_role": "Zonal HSE SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
@@ -525,6 +546,13 @@ VA_Alert_Mapping = {
                     "escalation_role": "Location In-Charge SOD",
                     "escalation_time": "PT1H"
                 },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "Zonal HSE SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
+                },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
@@ -544,6 +572,13 @@ VA_Alert_Mapping = {
                     "value": 25,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
+                    "escalation_time": "PT1H"
+                },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "Zonal HSE SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
@@ -595,6 +630,13 @@ VA_Alert_Mapping = {
                     "escalation_role": "Location In-Charge SOD",
                     "escalation_time": "PT1H"
                 },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "Zonal HSE SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
+                },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
@@ -614,6 +656,13 @@ VA_Alert_Mapping = {
                     "value": 50,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
+                    "escalation_time": "PT1H"
+                },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 50,
+                    "assign_role": "Zonal HSE SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
@@ -637,6 +686,13 @@ VA_Alert_Mapping = {
                     "escalation_role": "Location In-Charge SOD",
                     "escalation_time": "PT1H"
                 },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 50,
+                    "assign_role": "Zonal HSE SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
+                },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
@@ -656,6 +712,13 @@ VA_Alert_Mapping = {
                     "value": 70,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
+                    "escalation_time": "PT1H"
+                },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 70,
+                    "assign_role": "Zonal HSE SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
@@ -679,6 +742,13 @@ VA_Alert_Mapping = {
                     "escalation_role": "Location In-Charge SOD",
                     "escalation_time": "PT1H"
                 },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 75,
+                    "assign_role": "Zonal HSE SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
+                },
                 "level - 3": {
                     "condition": ">",
                     "value": 75,
@@ -699,6 +769,13 @@ VA_Alert_Mapping = {
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
                     "escalation_time": "PT6H"
+                },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 50,
+                    "assign_role": "Zonal HSE SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
@@ -721,6 +798,13 @@ VA_Alert_Mapping = {
                     "value": 25,
                     "assign_role": "Safety Officer LPG",
                     "escalation_role": "Location In-Charge LPG",
+                    "escalation_time": "PT6H"
+                },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "Zonal HSE LPG",
+                    "escalation_role": "Zonal Operations Head LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
@@ -826,6 +910,13 @@ VA_Alert_Mapping = {
                     "value": 10,
                     "assign_role": "Safety Officer LPG",
                     "escalation_role": "Location In-Charge LPG",
+                    "escalation_time": "PT6H"
+                },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 10,
+                    "assign_role": "Zonal HSE LPG",
+                    "escalation_role": "Zonal Operations Head LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
@@ -961,6 +1052,13 @@ VA_Alert_Mapping = {
                     "escalation_role": "Location In-Charge LPG",
                     "escalation_time": "PT6H"
                 },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 35,
+                    "assign_role": "Zonal HSE LPG",
+                    "escalation_role": "Zonal Operations Head LPG",
+                    "escalation_time": "PT6H"
+                },
                 "level - 3": {
                     "condition": ">",
                     "value": 35,
@@ -982,6 +1080,13 @@ VA_Alert_Mapping = {
                     "escalation_role": "Location In-Charge LPG",
                     "escalation_time": "PT6H"
                 },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "Zonal HSE LPG",
+                    "escalation_role": "Zonal Operations Head LPG",
+                    "escalation_time": "PT6H"
+                },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
@@ -1001,6 +1106,13 @@ VA_Alert_Mapping = {
                     "value": 50,
                     "assign_role": "Safety Officer LPG",
                     "escalation_role": "Location In-Charge LPG",
+                    "escalation_time": "PT6H"
+                },
+                "level - 2": {
+                    "condition": ">",
+                    "value": 50,
+                    "assign_role": "Zonal HSE LPG",
+                    "escalation_role": "Zonal Operations Head LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
