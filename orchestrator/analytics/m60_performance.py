@@ -127,12 +127,12 @@ def calculate_pro_rate(target_data, key, start_month=None, end_month=None):
     :return:
     """
     if not target_data or not all(isinstance(rec, dict) and 'month_name' in rec for rec in target_data):
-        print("No Data Present for Current Selection")
-        return {
+         print("No Data Present for Current Selection")
+         return {
                 "status": False,
-                "message": "No Zone Data Present for the Current Selection",
+                "message": "No  Data Present for the Current Selection",
                 "data": {}
-        }
+            }
 
     if not start_month and not end_month:
         return target_data
@@ -974,6 +974,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                             target_data = target_data.groupby(existing_columns, as_index=False)['TARGET_TMT_SALES'].sum().reset_index()
                     target_data.to_csv('/tmp/tgt_data_latest.csv',index = False)
 
+            if "C" in [x['key'].strip('"') for x in filters] and "month_name"  in target_data.columns.tolist() and "DATE"  in [x['key'].strip('"') for x in filters]:
+                print("came to month name del")
+                if 'TARGET_TMT_SALES' in target_data.columns.tolist():
+                    target_data = target_data.groupby("month_name", as_index=False)['TARGET_TMT_SALES'].sum().reset_index()
             target_data = target_data.to_dict(orient='records')
 
     # Data Retrival for current financial year
