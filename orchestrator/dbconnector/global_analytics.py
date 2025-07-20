@@ -5757,7 +5757,7 @@ class GlobalAnalytics:
         returned within the result dictionary.
         """
         try:
-            # Interlock mapping
+            # Interlock mapping (keeping existing code)
             maintenance_interlocks = {
                 item["interlock_name"]: {
                     "alert_category": item["alert_category"],
@@ -5777,7 +5777,7 @@ class GlobalAnalytics:
             sop_ids = {item.get("sop_id") for item in maintenance_interlocks.values()} | \
                     {item.get("sop_id") for item in fault_interlocks.values()}
 
-            # Build filters
+            # Build filters (keeping existing code)
             zone_filter = plant_filter = sensor_id_filter = equipment_name_filter = ''
             if filters:
                 for f in filters:
@@ -5790,84 +5790,33 @@ class GlobalAnalytics:
                     if "equipment_name" in f.key:
                         equipment_name_filter = f.value
 
-            # SQL Query - Get all alerts with their full lifecycle
+            # Get current date in IST
+            current_date = datetime.now().date()
+            yesterday = current_date - timedelta(days=1)
+
+            # Simplified SQL Query for day-wise alert counts
             query = f"""
-                WITH daily_alerts AS (
-                    SELECT 
-                        sap_id,
-                        zone,
-                        location_name,
-                        interlock_name,
-                        sensor_id,
-                        equipment_name,
-                        DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS created_date,
-                        DATE(closed_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS closed_date,
-                        alert_status,
-                        created_at,
-                        closed_at
-                    FROM alerts
-                    WHERE bu = 'TAS' AND alert_section = 'TAS'
-                    {f"AND sop_id IN ({', '.join(f'\'{s}\'' for s in sop_ids if s)})" if sop_ids else ''}
-                    {f"AND zone IN ('{zone_filter}')" if zone_filter else ''}
-                    {f"AND sap_id IN ('{plant_filter}')" if plant_filter else ''}
-                    {f"AND sensor_id IN ('{sensor_id_filter}')" if sensor_id_filter else ''}
-                    {f"AND equipment_name ILIKE ('%{equipment_name_filter}%')" if equipment_name_filter else ''}
-                ),
-                date_series AS (
-                    SELECT generate_series(
-                        (SELECT MIN(created_date) FROM daily_alerts),
-                        CURRENT_DATE,
-                        '1 day'::interval
-                    )::date AS report_date
-                ),
-                alert_status_per_day AS (
-                    SELECT 
-                        ds.report_date,
-                        da.sap_id,
-                        da.zone,
-                        da.location_name,
-                        da.interlock_name,
-                        da.sensor_id,
-                        da.equipment_name,
-                        da.created_date,
-                        da.closed_date,
-                        CASE 
-                            WHEN da.created_date = ds.report_date THEN 'opened_today'
-                            WHEN da.closed_date = ds.report_date THEN 'closed_today'
-                            WHEN da.created_date < ds.report_date AND (da.closed_date IS NULL OR da.closed_date > ds.report_date) THEN 'carry_forward'
-                            ELSE 'not_active'
-                        END AS daily_status
-                    FROM date_series ds
-                    CROSS JOIN daily_alerts da
-                    WHERE da.created_date <= ds.report_date
-                )
                 SELECT 
-                    report_date AS ist_created_date,
+                    DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS created_date,
+                    DATE(closed_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS closed_date,
                     sap_id,
                     zone,
                     location_name,
                     interlock_name,
                     sensor_id,
                     equipment_name,
-                    
-                    -- Carry forward count (alerts that were opened before today and still open)
-                    SUM(CASE WHEN daily_status = 'carry_forward' THEN 1 ELSE 0 END) AS open_alerts_current_carry_count,
-                    
-                    -- Alerts opened exactly today
-                    SUM(CASE WHEN daily_status = 'opened_today' THEN 1 ELSE 0 END) AS open_alerts_current_day,
-                    
-                    -- Alerts closed exactly today
-                    SUM(CASE WHEN daily_status = 'closed_today' THEN 1 ELSE 0 END) AS close_alerts_current_day
-                    
-                FROM alert_status_per_day
-                WHERE daily_status IN ('carry_forward', 'opened_today', 'closed_today')
-                GROUP BY 
-                    report_date, sap_id, zone, location_name, interlock_name, sensor_id, equipment_name
-                HAVING 
-                    SUM(CASE WHEN daily_status = 'carry_forward' THEN 1 ELSE 0 END) > 0 OR
-                    SUM(CASE WHEN daily_status = 'opened_today' THEN 1 ELSE 0 END) > 0 OR
-                    SUM(CASE WHEN daily_status = 'closed_today' THEN 1 ELSE 0 END) > 0
-                ORDER BY report_date ASC
+                    device_name,
+                    alert_status,
+                    created_at,
+                    closed_at
+                FROM alerts
+                WHERE bu = 'TAS' AND alert_section = 'TAS'
+                {f"AND sop_id IN ({', '.join(f'\'{s}\'' for s in sop_ids if s)})" if sop_ids else ''}
+                {f"AND zone IN ('{zone_filter}')" if zone_filter else ''}
+                {f"AND sap_id IN ('{plant_filter}')" if plant_filter else ''}
+                {f"AND sensor_id IN ('{sensor_id_filter}')" if sensor_id_filter else ''}
+                {f"AND equipment_name ILIKE ('%{equipment_name_filter}%')" if equipment_name_filter else ''}
+                ORDER BY created_at ASC
             """
 
             # Execute query
@@ -5878,6 +5827,7 @@ class GlobalAnalytics:
 
             df = pl.DataFrame(data)
 
+            # Add alert_category and clean up data
             df = df.with_columns([
                 pl.col("interlock_name").map_elements(
                     lambda name: maintenance_interlocks.get(name, fault_interlocks.get(name, {})).get("alert_category")
@@ -5886,17 +5836,15 @@ class GlobalAnalytics:
                 pl.col("interlock_name").map_elements(
                     lambda name: "Tank" if name == "Tank_Under Maintenance"
                     else maintenance_interlocks.get(name, fault_interlocks.get(name, {})).get("equipment_name", name)
-                ).alias("equipment_name"),
-                pl.col("ist_created_date").cast(pl.Date).alias("created_date"),
-                pl.col("ist_created_date").dt.strftime("%b-%Y").alias("month_year")
+                ).alias("mapped_equipment_name"),
+                pl.col("created_date").cast(pl.Date),
+                pl.col("closed_date").cast(pl.Date),
+                pl.col("created_date").dt.strftime("%b-%Y").alias("month_year")
             ])
 
+            # Filter out rows without alert_category
             df = df.filter(pl.col("alert_category").is_not_null())
 
-            # Calculate carry count summation up to yesterday
-            yesterday = datetime.now().date() - timedelta(days=1)
-            carry_count_df = df.filter(pl.col("created_date") <= yesterday)
-            
             # Apply additional filtering if equipment_name or sensor_id filters are provided
             if equipment_name_filter or sensor_id_filter:
                 filter_conditions = []
@@ -5909,83 +5857,326 @@ class GlobalAnalytics:
                     combined_filter = filter_conditions[0]
                     for condition in filter_conditions[1:]:
                         combined_filter = combined_filter & condition
-                    carry_count_df = carry_count_df.filter(combined_filter)
+                    df = df.filter(combined_filter)
 
-            # Calculate total carry count summation
-            total_carry_count = carry_count_df.select(
-                pl.sum("open_alerts_current_carry_count").alias("total_carry_count")
-            ).item()
-
-            # Initialize result
+            # Initialize results
             result_daily = {}
             result_monthly = {}
 
-            # Group by category, date, and alert_type first
-            grouped_df = df.group_by(["alert_category", "created_date", "alert_type"]).agg([
-                pl.col("sap_id").first(),
-                pl.col("zone").first(),
-                pl.col("location_name").first(),
-                pl.col("equipment_name").first(),
-                pl.col("sensor_id"),
-                pl.col("open_alerts_current_carry_count"),
-                pl.col("close_alerts_current_day"),
-                pl.col("open_alerts_current_day"),
-                pl.col("month_year").first()
-            ])
+            # DAILY PROCESSING - Fixed logic
+            # Get all unique dates from created_date and closed_date
+            all_dates = set()
+            
+            # Add created dates
+            created_dates = df.select(pl.col("created_date")).filter(pl.col("created_date").is_not_null()).to_series().to_list()
+            all_dates.update(created_dates)
+            
+            # Add closed dates  
+            closed_dates = df.select(pl.col("closed_date")).filter(pl.col("closed_date").is_not_null()).to_series().to_list()
+            all_dates.update(closed_dates)
+            
+            # Add last 7 days to ensure we show open alerts even if no activity
+            for i in range(7):
+                date_to_add = current_date - timedelta(days=i)
+                all_dates.add(date_to_add)
 
-            for row in grouped_df.iter_rows(named=True):
-                cat = row["alert_category"].lower()
-                date_key = str(row["created_date"])
-                month_key = row["month_year"]
-                alert_type = row["alert_type"]
-
-                # Calculate total carry count for this category/date/type
-                total_carry_count_for_group = sum(row["open_alerts_current_carry_count"])
-
-                # Create details list
-                details = []
-                for i in range(len(row["sensor_id"])):
-                    detail = {
-                        "sap_id": row["sap_id"],
-                        "zone": row["zone"],
-                        "location_name": row["location_name"],
-                        "equipment_name": row["equipment_name"],
-                        "sensor_id": row["sensor_id"][i],
-                        "open_alerts_current_carry_count": row["open_alerts_current_carry_count"][i],
-                        "close_alerts_current_day": row["close_alerts_current_day"][i],
-                        "open_alerts_current_day": row["open_alerts_current_day"][i]
-                    }
-                    details.append(detail)
-
-                # Daily result
-                if cat not in result_daily:
-                    result_daily[cat] = {}
-                if date_key not in result_daily[cat]:
-                    result_daily[cat][date_key] = {}
+            # Process each date
+            for date in sorted(all_dates):
+                date_key = str(date)
                 
-                result_daily[cat][date_key][alert_type] = {
-                    "open_alerts_current_carry_count": total_carry_count_for_group,
-                    "total": total_carry_count_for_group,
-                    "details": details
-                }
-
-                # Monthly result
-                if cat not in result_monthly:
-                    result_monthly[cat] = {}
-                if month_key not in result_monthly[cat]:
-                    result_monthly[cat][month_key] = {}
+                # Get alerts closed on this date
+                closed_today = df.filter(pl.col("closed_date") == date)
                 
-                if alert_type not in result_monthly[cat][month_key]:
-                    result_monthly[cat][month_key][alert_type] = {
-                        "open_alerts_current_carry_count": 0,
-                        "details": []
-                    }
+                # Get all alerts that are open on this date:
+                # 1. Created on or before this date AND (status is Open OR closed_date is null OR closed after this date)
+                open_alerts_on_date = df.filter(
+                    (pl.col("created_date") <= date) & 
+                    ((pl.col("alert_status") == "Open") | 
+                    (pl.col("closed_date").is_null()) | 
+                    (pl.col("closed_date") > date))
+                )
                 
-                # Aggregate monthly data
-                result_monthly[cat][month_key][alert_type]["open_alerts_current_carry_count"] += total_carry_count_for_group
-                result_monthly[cat][month_key][alert_type]["details"].extend(details)
+                # Separate carry forward (created before this date) and current day (created on this date)
+                carry_forward_alerts = open_alerts_on_date.filter(pl.col("created_date") < date)
+                current_day_alerts = open_alerts_on_date.filter(pl.col("created_date") == date)
 
-            # Sort result_daily by date
+                # Process closed alerts
+                if len(closed_today) > 0:
+                    closed_grouped = closed_today.group_by(["alert_category", "alert_type"]).agg([
+                        pl.col("device_name").n_unique().alias("unique_device_count"),
+                        pl.col("device_name").unique().alias("unique_device_names")
+                    ])
+                    
+                    for row in closed_grouped.iter_rows(named=True):
+                        cat = row["alert_category"].lower()
+                        alert_type = row["alert_type"]
+                        unique_count = row["unique_device_count"]
+                        
+                        # Create details for closed alerts
+                        details = []
+                        for device_name in row["unique_device_names"]:
+                            device_row = closed_today.filter(pl.col("device_name") == device_name).row(0, named=True)
+                            detail = {
+                                "sap_id": device_row["sap_id"],
+                                "zone": device_row["zone"],
+                                "location_name": device_row["location_name"],
+                                "equipment_name": device_row["equipment_name"],
+                                "device_name": device_name,
+                                "sensor_id": device_row["sensor_id"],
+                                "open_alerts_current_carry_count": 0,
+                                "close_alerts_current_day": 1
+                            }
+                            details.append(detail)
+                        
+                        # Initialize structure
+                        if cat not in result_daily:
+                            result_daily[cat] = {}
+                        if date_key not in result_daily[cat]:
+                            result_daily[cat][date_key] = {}
+                        if alert_type not in result_daily[cat][date_key]:
+                            result_daily[cat][date_key][alert_type] = {
+                                "open_alerts_current_carry_count": 0,
+                                "close_alerts_current_day": 0,
+                                "details": []
+                            }
+                        
+                        result_daily[cat][date_key][alert_type]["close_alerts_current_day"] = unique_count
+                        result_daily[cat][date_key][alert_type]["details"].extend(details)
+
+                # Process open alerts (carry forward + current day) - Always process even if no activity
+                # This ensures we show open alerts for last 7 days even with no new activity
+                open_grouped = open_alerts_on_date.group_by(["alert_category", "alert_type"]).agg([
+                    pl.col("device_name").n_unique().alias("unique_device_count"),
+                    pl.col("device_name").unique().alias("unique_device_names")
+                ]) if len(open_alerts_on_date) > 0 else pl.DataFrame()
+                
+                # If there are open alerts or we need to show last 7 days data
+                if len(open_alerts_on_date) > 0 or (current_date - date).days < 7:
+                    
+                    if len(open_grouped) > 0:
+                        for row in open_grouped.iter_rows(named=True):
+                            cat = row["alert_category"].lower()
+                            alert_type = row["alert_type"]
+                            total_open_count = row["unique_device_count"]
+                            
+                            # Calculate carry forward count for this specific category
+                            cat_carry_forward = carry_forward_alerts.filter(pl.col("alert_category") == row["alert_category"])
+                            carry_count = len(cat_carry_forward.select(pl.col("device_name")).unique()) if len(cat_carry_forward) > 0 else 0
+                            
+                            # Create details for all open alerts (both carry forward and current day)
+                            details = []
+                            for device_name in row["unique_device_names"]:
+                                device_row = open_alerts_on_date.filter(pl.col("device_name") == device_name).row(0, named=True)
+                                
+                                # Check if this is carry forward or current day
+                                is_carry_forward = device_row["created_date"] < date
+                                
+                                detail = {
+                                    "sap_id": device_row["sap_id"],
+                                    "zone": device_row["zone"],
+                                    "location_name": device_row["location_name"],
+                                    "equipment_name": device_row["equipment_name"],
+                                    "device_name": device_name,
+                                    "sensor_id": device_row["sensor_id"],
+                                    "open_alerts_current_carry_count": 1 if is_carry_forward else 0,
+                                    "close_alerts_current_day": 0
+                                }
+                                details.append(detail)
+                            
+                            # Initialize structure
+                            if cat not in result_daily:
+                                result_daily[cat] = {}
+                            if date_key not in result_daily[cat]:
+                                result_daily[cat][date_key] = {}
+                            if alert_type not in result_daily[cat][date_key]:
+                                result_daily[cat][date_key][alert_type] = {
+                                    "open_alerts_current_carry_count": 0,
+                                    "close_alerts_current_day": 0,
+                                    "details": []
+                                }
+                            
+                            result_daily[cat][date_key][alert_type]["open_alerts_current_carry_count"] = carry_count
+                            
+                            # Add details, avoiding duplicates
+                            existing_devices = {d["device_name"] for d in result_daily[cat][date_key][alert_type]["details"]}
+                            for detail in details:
+                                if detail["device_name"] not in existing_devices:
+                                    result_daily[cat][date_key][alert_type]["details"].append(detail)
+                    
+                    # If there are open alerts but no grouped data (edge case), still show the structure
+                    elif len(open_alerts_on_date) > 0:
+                        # Get unique categories from open alerts
+                        unique_categories = open_alerts_on_date.select(pl.col("alert_category")).unique().to_series().to_list()
+                        for alert_category in unique_categories:
+                            cat = alert_category.lower()
+                            alert_type = "Equipment"
+                            
+                            cat_open_alerts = open_alerts_on_date.filter(pl.col("alert_category") == alert_category)
+                            cat_carry_forward = carry_forward_alerts.filter(pl.col("alert_category") == alert_category)
+                            carry_count = len(cat_carry_forward.select(pl.col("device_name")).unique()) if len(cat_carry_forward) > 0 else 0
+                            
+                            # Create details
+                            details = []
+                            unique_devices = cat_open_alerts.select(pl.col("device_name")).unique().to_series().to_list()
+                            for device_name in unique_devices:
+                                device_row = cat_open_alerts.filter(pl.col("device_name") == device_name).row(0, named=True)
+                                is_carry_forward = device_row["created_date"] < date
+                                
+                                detail = {
+                                    "sap_id": device_row["sap_id"],
+                                    "zone": device_row["zone"],
+                                    "location_name": device_row["location_name"],
+                                    "equipment_name": device_row["equipment_name"],
+                                    "device_name": device_name,
+                                    "sensor_id": device_row["sensor_id"],
+                                    "open_alerts_current_carry_count": 1 if is_carry_forward else 0,
+                                    "close_alerts_current_day": 0
+                                }
+                                details.append(detail)
+                            
+                            # Initialize structure
+                            if cat not in result_daily:
+                                result_daily[cat] = {}
+                            if date_key not in result_daily[cat]:
+                                result_daily[cat][date_key] = {}
+                            if alert_type not in result_daily[cat][date_key]:
+                                result_daily[cat][date_key][alert_type] = {
+                                    "open_alerts_current_carry_count": 0,
+                                    "close_alerts_current_day": 0,
+                                    "details": []
+                                }
+                            
+                            result_daily[cat][date_key][alert_type]["open_alerts_current_carry_count"] = carry_count
+                            result_daily[cat][date_key][alert_type]["details"] = details
+
+            all_months = df.select(pl.col("month_year")).unique().to_series().to_list()
+
+            def parse_month(month_str):
+                return datetime.strptime(month_str, "%b-%Y")
+
+            all_months.sort(key=parse_month)
+
+            for month in all_months:
+                month_date = parse_month(month)
+                month_start = month_date.replace(day=1).date()
+                if month_date.month == 12:
+                    month_end = month_date.replace(year=month_date.year + 1, month=1, day=1).date() - timedelta(days=1)
+                else:
+                    month_end = month_date.replace(month=month_date.month + 1, day=1).date() - timedelta(days=1)
+
+                # Process each category separately
+                categories = df.select(pl.col("alert_category")).unique().filter(pl.col("alert_category").is_not_null()).to_series().to_list()
+                
+                for category in categories:
+                    cat = category.lower()
+                    alert_type = "Equipment"
+                    
+                    # Get ALL alerts for this category (no month filtering yet)
+                    category_alerts = df.filter(pl.col("alert_category") == category)
+                    
+                    if len(category_alerts) == 0:
+                        continue
+                    
+                    # Now separate into different buckets
+                    
+                    # 1. Alerts created in this month AND still open at month end
+                    created_this_month_and_open = category_alerts.filter(
+                        (pl.col("created_date") >= month_start) & 
+                        (pl.col("created_date") <= month_end) &
+                        (
+                            (pl.col("alert_status") == "Open") | 
+                            (pl.col("closed_date").is_null())
+                        )
+                    )
+                    
+                    # 2. Alerts closed in this month (regardless of when created)
+                    closed_this_month = category_alerts.filter(
+                        (pl.col("closed_date") >= month_start) & 
+                        (pl.col("closed_date") <= month_end)
+                    )
+                    
+                    # 3. Carry forward alerts (created before month and still open at month end)
+                    carry_forward = category_alerts.filter(
+                        (pl.col("created_date") < month_start) &
+                        (
+                            (pl.col("alert_status") == "Open") | 
+                            (pl.col("closed_date").is_null())
+                        )
+                    )
+                    
+                    # Get unique devices for each bucket
+                    created_and_open_devices = set()
+                    closed_devices = set() 
+                    carry_devices = set()
+                    
+                    if len(created_this_month_and_open) > 0:
+                        created_and_open_devices = set(created_this_month_and_open.select(pl.col("device_name")).unique().to_series().to_list())
+                        
+                    if len(closed_this_month) > 0:
+                        closed_devices = set(closed_this_month.select(pl.col("device_name")).unique().to_series().to_list())
+                        
+                    if len(carry_forward) > 0:
+                        carry_devices = set(carry_forward.select(pl.col("device_name")).unique().to_series().to_list())
+                    
+                    # Get all unique devices that had any activity
+                    all_devices = created_and_open_devices | closed_devices | carry_devices
+                    
+                    if not all_devices:
+                        continue
+                        
+                    details = []
+                    
+                    # Process each unique device
+                    for device_name in all_devices:
+                        # Get the most recent alert for this device in this category
+                        device_alerts = category_alerts.filter(pl.col("device_name") == device_name)
+                        device_row = device_alerts.sort("created_at", descending=True).row(0, named=True)
+                        
+                        # Determine flags for this device
+                        carry_forward_flag = 1 if device_name in carry_devices else 0
+                        current_month_flag = 1 if device_name in created_and_open_devices else 0
+                        closed_flag = 1 if device_name in closed_devices else 0
+                        
+                        detail = {
+                            "sap_id": device_row["sap_id"],
+                            "zone": device_row["zone"], 
+                            "location_name": device_row["location_name"],
+                            "equipment_name": device_row["equipment_name"],
+                            "device_name": device_name,
+                            "sensor_id": device_row["sensor_id"],
+                            "open_alerts_current_carry_count": carry_forward_flag,
+                            "open_alerts_current_day": current_month_flag,  # This is for current month
+                            "close_alerts_current_day": closed_flag
+                        }
+                        details.append(detail)
+                    
+                    # Calculate final counts
+                    carry_count = len(carry_devices)
+                    current_month_count = len(created_and_open_devices)  # Fixed: only alerts created this month AND still open
+                    closed_count = len(closed_devices)
+                    
+                    # Create result entry
+                    if details:
+                        if cat not in result_monthly:
+                            result_monthly[cat] = {}
+                        if month not in result_monthly[cat]:
+                            result_monthly[cat][month] = {}
+                        
+                        result_monthly[cat][month][alert_type] = {
+                            "open_alerts_current_carry_count": carry_count,
+                            "open_alerts_current_day": current_month_count,  # This represents current month count
+                            "close_alerts_current_day": closed_count,
+                            "details": details
+                        }
+                        
+                    print(f"Month: {month}, Category: {cat}")
+                    print(f"  Created this month and still open: {len(created_and_open_devices)} - {created_and_open_devices}")
+                    print(f"  Closed devices: {len(closed_devices)} - {closed_devices}")
+                    print(f"  Carry forward devices: {len(carry_devices)} - {carry_devices}")
+                    print(f"  Total unique devices: {len(all_devices)}")
+                    print(f"  Final counts - Carry: {carry_count}, Current Month: {current_month_count}, Closed: {closed_count}")
+                    print("---")
+            # Sort results
             for cat in result_daily:
                 result_daily[cat] = OrderedDict(
                     sorted(
@@ -5994,7 +6185,6 @@ class GlobalAnalytics:
                     )
                 )
 
-            # Sort result_monthly by month
             for cat in result_monthly:
                 result_monthly[cat] = OrderedDict(
                     sorted(
@@ -6007,14 +6197,13 @@ class GlobalAnalytics:
                 "status": True,
                 "message": "success",
                 "daily_data": result_daily if "date" in drill_state else {},
-                "monthly_data": result_monthly if "date" not in drill_state else {},
-                "total_carry_count_till_yesterday": total_carry_count or 0
+                "monthly_data": result_monthly if "date" not in drill_state else {}
             }
 
         except Exception:
             print(traceback.format_exc())
             return {"status": False, "message": "Internal error occurred", "data": {}}
-    
+
     @staticmethod
     async def tas_maintenance_fault_dropdown(filters, cross_filters, drill_state):
         """

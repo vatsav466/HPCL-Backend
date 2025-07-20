@@ -1,5 +1,6 @@
 import urdhva_base
 import re
+import pytz
 import json
 import uuid
 import asyncio
@@ -357,64 +358,136 @@ class Postgresql:
             # if table_db_name == 'host_unauthorised_flow':
             #     processed_data = [x for x in processed_data if x['nettotalizer'] > 0]
             
-            if table_db_name == 'host_manual_fan_printed':
-                # Step 1: Check if we need to process EOD record
-                current_hour = urdhva_base.utilities.get_present_time().strftime("%H")
-                current_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
-                is_eod = int(current_hour) == 18
+            # if table_db_name == 'host_manual_fan_printed':
+            #     # Step 1: Check if we need to process EOD record
+            #     current_hour = urdhva_base.utilities.get_present_time().strftime("%H")
+            #     current_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
+            #     is_eod = int(current_hour) == 18
                 
-                # Step 2: Get the latest record for this SAP ID from the database
-                check_query = f"""SELECT manual_fan_count 
+            #     # Step 2: Get the latest record for this SAP ID from the database
+            #     check_query = f"""SELECT manual_fan_count 
+            #         FROM "{table_db_name}" 
+            #         WHERE date::DATE = '{current_date}' 
+            #         AND sap_id = '{sap_id}' 
+            #         ORDER BY date_time DESC
+            #     """
+            #     latest_record_resp = await urdhva_base.BasePostgresModel.get_aggr_data(check_query)
+                
+            #     # Get the latest manual count from DB (if exists)
+            #     latest_db_count = None
+            #     if latest_record_resp.get("data") and latest_record_resp.get("data")[0]:
+            #         latest_db_count = latest_record_resp.get("data")[0].get("manual_fan_count")
+                
+            #     # Step 3: Process the current data
+            #     filtered_data = []
+            #     latest_processed_count = None
+                
+            #     # First, process non-zero records with count changes
+            #     for record in sap_id_data:
+            #         current_manual_count = record.get('manual_fan_count', 0)
+                    
+            #         # Case 1: Record has non-zero manual count that differs from latest DB record
+            #         if current_manual_count > 0:
+            #             if current_manual_count != latest_db_count and current_manual_count != latest_processed_count:
+            #                 filtered_data.append(record)
+            #                 latest_processed_count = current_manual_count
+                
+            #     # Then handle EOD case only if needed
+            #     if is_eod and not filtered_data:  # No records inserted yet
+            #         # Check if we have any non-zero records for today in DB
+            #         zero_check_query = f"""SELECT COUNT(*) 
+            #             FROM "{table_db_name}" 
+            #             WHERE date::DATE = '{current_date}' 
+            #             AND sap_id = '{sap_id}' 
+            #             AND manual_fan_count > 0
+            #         """
+            #         zero_check_resp = await urdhva_base.BasePostgresModel.get_aggr_data(zero_check_query)
+                    
+            #         record_count = 0
+            #         if zero_check_resp.get("data") and len(zero_check_resp.get("data")) > 0:
+            #             record_count = int(zero_check_resp.get("data")[0].get("count", 0))
+                    
+            #         # If no non-zero records exist for today, insert the latest zero record
+            #         # But only if the latest DB record isn't already zero
+            #         if record_count == 0 and latest_db_count != 0:
+            #             zero_records = [x for x in sap_id_data if x.get('manual_fan_count', 0) == 0]
+            #             if zero_records:
+            #                 zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
+            #                 filtered_data.append(zero_records[0])
+                
+            #     # After processing, update processed_data with our filtered results
+            #     processed_data = filtered_data
+            if table_db_name == 'host_manual_fan_printed':
+                current_time = urdhva_base.utilities.get_present_time()
+                # current_hour = int(current_time.strftime("%H"))
+                # current_date = current_time.strftime("%Y-%m-%d")
+                ist = pytz.timezone("Asia/Kolkata")
+
+                # Current time in IST
+                current_time = datetime.now(ist)
+                current_hour = int(current_time.strftime("%H"))
+                current_date = current_time.strftime("%Y-%m-%d")
+                is_eod = current_hour == 18
+                is_post_eod = current_hour > 18
+
+                # Step 1: Get latest manual_fan_count from DB
+                check_query = f"""
+                    SELECT manual_fan_count 
                     FROM "{table_db_name}" 
                     WHERE date::DATE = '{current_date}' 
                     AND sap_id = '{sap_id}' 
                     ORDER BY date_time DESC
                 """
                 latest_record_resp = await urdhva_base.BasePostgresModel.get_aggr_data(check_query)
-                
-                # Get the latest manual count from DB (if exists)
                 latest_db_count = None
                 if latest_record_resp.get("data") and latest_record_resp.get("data")[0]:
-                    latest_db_count = latest_record_resp.get("data")[0].get("manual_fan_count")
-                
-                # Step 3: Process the current data
+                    latest_db_count = latest_record_resp["data"][0].get("manual_fan_count")
+
+                # Step 2: Process sap_id_data
                 filtered_data = []
                 latest_processed_count = None
-                
-                # First, process non-zero records with count changes
+
                 for record in sap_id_data:
                     current_manual_count = record.get('manual_fan_count', 0)
-                    
-                    # Case 1: Record has non-zero manual count that differs from latest DB record
+
                     if current_manual_count > 0:
                         if current_manual_count != latest_db_count and current_manual_count != latest_processed_count:
                             filtered_data.append(record)
                             latest_processed_count = current_manual_count
-                
-                # Then handle EOD case only if needed
-                if is_eod and not filtered_data:  # No records inserted yet
-                    # Check if we have any non-zero records for today in DB
-                    zero_check_query = f"""SELECT COUNT(*) 
+
+                # Step 3: Handle EOD (18:00) – insert last known state if nothing else was added
+                if is_eod and not filtered_data:
+                    # Check if any non-zero records exist in DB today
+                    zero_check_query = f"""
+                        SELECT COUNT(*) 
                         FROM "{table_db_name}" 
                         WHERE date::DATE = '{current_date}' 
                         AND sap_id = '{sap_id}' 
                         AND manual_fan_count > 0
                     """
                     zero_check_resp = await urdhva_base.BasePostgresModel.get_aggr_data(zero_check_query)
-                    
-                    record_count = 0
-                    if zero_check_resp.get("data") and len(zero_check_resp.get("data")) > 0:
-                        record_count = int(zero_check_resp.get("data")[0].get("count", 0))
-                    
-                    # If no non-zero records exist for today, insert the latest zero record
-                    # But only if the latest DB record isn't already zero
+                    record_count = int(zero_check_resp.get("data", [{}])[0].get("count", 0))
+
                     if record_count == 0 and latest_db_count != 0:
+                        # No records in DB and DB's last value wasn't zero → insert last zero record
                         zero_records = [x for x in sap_id_data if x.get('manual_fan_count', 0) == 0]
                         if zero_records:
                             zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
                             filtered_data.append(zero_records[0])
-                
-                # After processing, update processed_data with our filtered results
+                    elif record_count > 0:
+                        # Even if count same as DB, insert final EOD record
+                        latest_input_record = sorted(sap_id_data, key=lambda x: x.get("date_time", ""), reverse=True)[0]
+                        if latest_input_record.get("manual_fan_count") == latest_db_count:
+                            filtered_data.append(latest_input_record)
+
+                # Step 4: Post-EOD (after 18:00) – insert if count changes after EOD
+                if is_post_eod:
+                    latest_input_record = sorted(sap_id_data, key=lambda x: x.get("date_time", ""), reverse=True)[0]
+                    current_manual_count = latest_input_record.get("manual_fan_count", 0)
+                    if current_manual_count != latest_db_count:
+                        filtered_data.append(latest_input_record)
+
+                # Final processed result
                 processed_data = filtered_data
             
             status, msg = await model.bulk_update(processed_data, upsert=True, upsert_skip_keys=['alert_created'])
