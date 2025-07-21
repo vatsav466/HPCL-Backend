@@ -3,6 +3,7 @@ from hpcl_ceg_model import *
 import urdhva_base
 import fastapi
 import pandas as pd
+import datetime
 import traceback
 from http.client import HTTPException
 import orchestrator.dashboard.chart_factory.infra_functions as infra_functions
@@ -15,9 +16,15 @@ router = fastapi.APIRouter(prefix='/sodinfra')
 async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
     try:
         df = pd.read_excel(data.file, sheet_name='SOD').fillna("")
+        save_path = "/opt/ceg/algo/orchestrator/masterdata/infra_inputs"
+        os.makedirs(save_path, exist_ok=True)
+        dt_str = datetime.datetime.now().strftime("%Y%m%d_%H-%M-%S") + f"_{datetime.datetime.now().microsecond}"
+        filename = f"SOD_{dt_str}.xlsx"
+        file_location = os.path.join(save_path, filename)
+        df.to_excel(file_location,sheet_name='SOD', index=False)
         df.columns = df.columns.str.strip().str.lower()
         df['bu'] = 'TAS'
-
+        df['filename'] = filename
         df = df.rename(
             columns={
                 'company': 'company', 'type': 'type', 'location name': 'location_name', 'region ppac': 'region_ppac', 'ms (kl)': 'ms',
@@ -56,8 +63,11 @@ async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
         merged_df = merged_df[[
             'sap_id', 'bu', 'zone', 'state', 'district', 'city', 'address', 'region',
             'company', 'type', 'location_name', 'name', 'region_ppac', 'ms', 'sko',
-            'hsd', 'total', 'mode_of_receipt', 'latitude', 'longitude','updated_by'
+            'hsd', 'total', 'mode_of_receipt', 'latitude', 'longitude','filename','updated_by'
         ]]
+        for col in merged_df.select_dtypes(include='object').columns:
+            merged_df[col] = merged_df[col].astype(str).str.strip()
+
         final_records = merged_df.fillna("").to_dict(orient="records")
 
         query = ''' DELETE FROM sod_infra '''
@@ -94,3 +104,9 @@ async def sodinfra_get_sod_lpg_infra(data: Sodinfra_Get_Sod_Lpg_InfraParams):
     return await infra_functions.get_sod_lpg_info(filters=data.filters, cross_filters=data.cross_filters,
                                                         drill_state=data.drill_state, limit=data.limit,
                                                         time_grain=data.time_grain)
+
+
+# Action get_distinct_sod_lpg_infra
+@router.post('/get_distinct_sod_lpg_infra', tags=['SodInfra'])
+async def sodinfra_get_distinct_sod_lpg_infra(data: Sodinfra_Get_Distinct_Sod_Lpg_InfraParams):
+    return await infra_functions.get_distinct_sod_lpg_info(data.bu,data.zone,data.state,data.district,data.company,data.location_name)
