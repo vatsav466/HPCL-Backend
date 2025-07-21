@@ -7129,6 +7129,7 @@ class SodInfraSchema(UrdhvaPostgresBase):
     mode_of_receipt: Mapped[typing.Optional[str]] = mapped_column("mode_of_receipt", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     latitude: Mapped[typing.Optional[float]] = mapped_column("latitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
     longitude: Mapped[typing.Optional[float]] = mapped_column("longitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    filename: Mapped[typing.Optional[str]] = mapped_column("filename", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     updated_by: Mapped[typing.Optional[str]] = mapped_column("updated_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
@@ -7155,6 +7156,7 @@ class SodInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
     mode_of_receipt: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
     updated_by: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
@@ -7189,6 +7191,7 @@ class SodInfra(urdhva_base.postgresmodel.PostgresModel):
     mode_of_receipt: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
     updated_by: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
@@ -7250,6 +7253,19 @@ class Sodinfra_Get_Sod_Lpg_InfraParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Sodinfra_Get_Distinct_Sod_Lpg_InfraParams(pydantic.BaseModel):
+    bu: str
+    company: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    state: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    district: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    location_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class LPGInfraSchema(UrdhvaPostgresBase):
     __tablename__ = 'lpg_infra'
     
@@ -7272,6 +7288,7 @@ class LPGInfraSchema(UrdhvaPostgresBase):
     supply: Mapped[typing.Optional[str]] = mapped_column("supply", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     latitude: Mapped[typing.Optional[float]] = mapped_column("latitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
     longitude: Mapped[typing.Optional[float]] = mapped_column("longitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    filename: Mapped[typing.Optional[str]] = mapped_column("filename", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     updated_by: Mapped[typing.Optional[str]] = mapped_column("updated_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
@@ -7297,6 +7314,7 @@ class LPGInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
     supply: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
     updated_by: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
@@ -7330,6 +7348,7 @@ class LPGInfra(urdhva_base.postgresmodel.PostgresModel):
     supply: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
     updated_by: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
@@ -7378,6 +7397,7 @@ class HistoricSodInfraSchema(UrdhvaPostgresBase):
     mode_of_receipt: Mapped[typing.Optional[str]] = mapped_column("mode_of_receipt", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     latitude: Mapped[typing.Optional[float]] = mapped_column("latitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
     longitude: Mapped[typing.Optional[float]] = mapped_column("longitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    filename: Mapped[typing.Optional[str]] = mapped_column("filename", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     updated_by: Mapped[typing.Optional[str]] = mapped_column("updated_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
@@ -7404,6 +7424,7 @@ class HistoricSodInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
     mode_of_receipt: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
     updated_by: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
@@ -7438,6 +7459,7 @@ class HistoricSodInfra(urdhva_base.postgresmodel.PostgresModel):
     mode_of_receipt: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
     updated_by: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
@@ -7477,6 +7499,7 @@ class HistoricLPGInfraSchema(UrdhvaPostgresBase):
     supply: Mapped[typing.Optional[str]] = mapped_column("supply", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     latitude: Mapped[typing.Optional[float]] = mapped_column("latitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
     longitude: Mapped[typing.Optional[float]] = mapped_column("longitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    filename: Mapped[typing.Optional[str]] = mapped_column("filename", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     updated_by: Mapped[typing.Optional[str]] = mapped_column("updated_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
@@ -7502,6 +7525,7 @@ class HistoricLPGInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
     supply: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
     updated_by: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
@@ -7535,6 +7559,7 @@ class HistoricLPGInfra(urdhva_base.postgresmodel.PostgresModel):
     supply: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
     updated_by: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
