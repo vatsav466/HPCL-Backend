@@ -13,8 +13,16 @@ router = fastapi.APIRouter(prefix='/lpginfra')
 async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
     try:
         df = pd.read_excel(data.file, sheet_name='LPG plants').fillna("")
+        save_path = "/opt/ceg/algo/orchestrator/masterdata/infra_inputs"
+        os.makedirs(save_path, exist_ok=True)
+        dt_str = datetime.datetime.now().strftime("%Y%m%d_%H-%M-%S") + f"_{datetime.datetime.now().microsecond}"
+        filename = f"LPG_{dt_str}.xlsx"
+        file_location = os.path.join(save_path, filename)
+        print('file_location: ',file_location)
+        df.to_excel(file_location, sheet_name='LPG', index=False)
         df.columns = df.columns.str.strip().str.lower()
         df['bu'] = 'LPG'
+        df['filename'] = filename
 
         df = df.rename(
             columns={'company': 'company', 'location': 'location_name', 'zone': 'zone', 'state': 'state',
@@ -63,8 +71,10 @@ async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
             'sap_id', 'bu', 'zone', 'state', 'district', 'city', 'address', 'region',
             'company', 'location_name', 'name', 'installed_bottling_capacity', 'operating_bottling_capacity',
             'ccoe_tankage',
-            'time_of_commissioning', 'mode', 'supply', 'latitude', 'longitude', 'updated_by'
+            'time_of_commissioning', 'mode', 'supply', 'latitude', 'longitude', 'filename', 'updated_by'
         ]]
+        for col in merged_df.select_dtypes(include='object').columns:
+            merged_df[col] = merged_df[col].astype(str).str.strip()
 
         final_records = merged_df.fillna("").to_dict(orient="records")
 
