@@ -112,7 +112,15 @@ async def monitor_remote_logs():
                 subject=f"SERVER 217 - Log Summary - {formatted_time}",
                 recipients=[
                     "yesu.p@algofusiontech.com",
-                    "vamsi.c@urdhvapay.com"
+                    "sreedhar.maddipati@algofusiontech.com",
+                    "venu@algofusiontech.com",
+                    "shrihari.b@algofusiontech.com",
+                    "santoshkumar.s@algofusiontech.com",
+                    "keerthesrep@algofusiontech.com",
+                    "moufikali@algofusiontech.com",
+                    "bala@algofusiontech.com",
+                    "manoj.m@algofusiontech.com",
+                    "manohar.v@algofusiontech.com"
                 ],
                 html_content=True,
                 body=html_body,

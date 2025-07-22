@@ -9,20 +9,6 @@ from zoneinfo import ZoneInfo
 import orchestrator.notification_manager.notification_factory
 
 LOG_DIR = "/var/log/ceg_logs"
-
-allowed_files = {
-    "va_data_ingestion.log",
-    "va_alert_processing.log",
-    "alert_factory_log.log",
-    "api_manager.log",
-    "workflow_process_log.log",
-    "vts_alert_processing.log",
-    "vts_data_ingestion.log",
-    "urdhva_api.log",
-    "dry-out-logging.log",
-    "dry_out_camunda_listener.log.log"
-}
-
 SLOTS = [
     (time(8, 0), "8AM"),
     (time(12, 0), "12PM"),
@@ -50,9 +36,6 @@ async def log_summary():
     log_blocks = []
 
     for log_file in Path(LOG_DIR).glob("*.log"):
-        if log_file.name not in allowed_files:
-            continue
-
         errors = []
         try:
             with open(log_file, "r", encoding="utf-8", errors="ignore") as file:
@@ -102,7 +85,16 @@ async def log_summary():
             await ins.publish_message(
                 subject=f"SERVER 212 - Log Error Summary - {formatted_time}",
                 recipients=[
-                    "yesu.p@algofusiontech.com"
+                    "yesu.p@algofusiontech.com",
+                    "sreedhar.maddipati@algofusiontech.com",
+                    "venu@algofusiontech.com",
+                    "shrihari.b@algofusiontech.com",
+                    "santoshkumar.s@algofusiontech.com",
+                    "keerthesrep@algofusiontech.com",
+                    "moufikali@algofusiontech.com",
+                    "bala@algofusiontech.com",
+                    "manoj.m@algofusiontech.com",
+                    "manohar.v@algofusiontech.com"
                 ],
                 html_content=True,
                 body=html_body,

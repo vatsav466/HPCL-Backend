@@ -85,7 +85,16 @@ async def log_summary():
             await ins.publish_message(
                 subject=f"SERVER 211 - Log Error Summary - {formatted_time}",
                 recipients=[
-                    "yesu.p@algofusiontech.com"
+                    "yesu.p@algofusiontech.com",
+                    "sreedhar.maddipati@algofusiontech.com",
+                    "venu@algofusiontech.com",
+                    "shrihari.b@algofusiontech.com",
+                    "santoshkumar.s@algofusiontech.com",
+                    "keerthesrep@algofusiontech.com",
+                    "moufikali@algofusiontech.com",
+                    "bala@algofusiontech.com",
+                    "manoj.m@algofusiontech.com",
+                    "manohar.v@algofusiontech.com"
                 ],
                 html_content=True,
                 body=html_body,
