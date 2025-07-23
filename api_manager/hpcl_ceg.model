@@ -231,7 +231,8 @@ Model DataFilters internal {
 }
 
 Enum TasLogAction str {
-    Shutdown='Shutdown'
+    GantryShutdown='GantryShutdown'
+    ESDShutdown='ESDShutdown'
     SignalClearOff='SignalClearOff'
 }
 
