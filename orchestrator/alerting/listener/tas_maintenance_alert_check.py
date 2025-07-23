@@ -22,6 +22,7 @@ async def maintenance_alert_check(alert_data):
     try:
         logger.info("alert_data ---> ", alert_data)
         related_equipment_names = ["VFT", "RADAR", "ROSOV", "MOV", "RIMSEAL"]
+        equipment_names_str = "', '".join(related_equipment_names)
         current_equipment_name = alert_data.get('equipment_name', '')
         original_device_name = alert_data.get('device_name', '')
 
@@ -45,14 +46,26 @@ async def maintenance_alert_check(alert_data):
             logger.debug(f"Checking for maintenance alerts for equipment: {current_equipment_name}")
             
             # Query for any alerts with the same equipment_name where interlock_name ends with "Maintenance"
-            equipment_maintenance_query = (
-                f"""bu = 'TAS' and """
-                f"""sap_id = '{alert_data.get('sap_id', '')}' and """
-                f"""alert_section = 'TAS' and """
-                f"""regexp_replace(tas_device_name, '_M$', '') = '{tas_device_name_for_query}' and """
-                f"""interlock_name LIKE '%Maintenance%' and """
-                f"""alert_status != 'Close'"""
-            )
+            if current_equipment_name in related_equipment_names and current_equipment_name is not None:
+                equipment_maintenance_query = (
+                    f"""bu = 'TAS' and """
+                    f"""sap_id = '{alert_data.get('sap_id', '')}' and """
+                    f"""alert_section = 'TAS' and """
+                    f"""regexp_replace(tas_device_name, '_M$', '') = '{tas_device_name_for_query}' and """
+                    f""" equipment_name = '{current_equipment_name}' and """
+                    f"""interlock_name LIKE '%Maintenance%' and """
+                    f"""alert_status != 'Close'"""
+                )
+            else:
+                equipment_maintenance_query = (
+                    f"""bu = 'TAS' and """
+                    f"""sap_id = '{alert_data.get('sap_id', '')}' and """
+                    f"""alert_section = 'TAS' and """
+                    f"""regexp_replace(tas_device_name, '_M$', '') = '{tas_device_name_for_query}' and """
+                    f"""equipment_name in ('{equipment_names_str}') and """
+                    f"""interlock_name LIKE '%Maintenance%' and """
+                    f"""alert_status != 'Close'"""
+                )
             logger.info(f"Equipment maintenance check query: {equipment_maintenance_query}")
             logger.debug(f"Equipment maintenance check query: {equipment_maintenance_query}")
             equipment_maintenance_params = urdhva_base.queryparams.QueryParams(q=equipment_maintenance_query)
