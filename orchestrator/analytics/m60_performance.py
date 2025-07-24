@@ -329,6 +329,15 @@ def get_group_by_filter_key(cross_filters, Base_Filters, resp_format_org, cumula
 
 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    if resp_format == "top_ic":
+        print("call thhe function")
+
+        status,results =  await top_ic(filters, cross_filters, drill_state, time_grain, resp_format)
+        if status:
+            print("status is returning")
+            print("result",results)
+            return {'status':status,'message':'Success','data':results}
+    print("came into m60 performance")
     def get_fiscal_year(date_ui, todays_date, same_year=False, key='YTDPM'):
 
         end_date_ = fiscal_year.FiscalDate.fromtimestamp(int(urdhva_base.utilities.get_present_time().strftime('%s')))
@@ -1671,7 +1680,11 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
             # Filtering cumulative_months
             cumulative_months = []
             if months.index(present_month) > 2:
-                cumulative_months = months[0:months.index(present_month) - 1]
+                print("months",months.index(present_month))
+                cumulative_months = months[0:months.index(present_month)+1]
+                non_cumulative_months = [cumulative_months[-1]] 
+                cumulative_months = cumulative_months[:-1]
+                print("cumulative_months--->", cumulative_months)
             else:
                 cumulative_months = ['Apr']
             # Summing data for cumulative data
@@ -1701,7 +1714,8 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                 df[df['month_name'].isin(cumulative_months)].groupby('SalesArea_Name', as_index=False)[sum_cols].sum()
             if len(cumulative_months) ==1 and cumulative_months[0] != 'Apr':
                 cumulative_data['month_name'] = 'Cum'
-                non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
+                if non_cumulative_data:
+                    non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
             else:
                 cumulative_data['month_name'] = 'Apr'
             df = pd.concat([cumulative_data, non_cumulative_data])
@@ -1715,7 +1729,8 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                 for i in df['month_name'].unique().tolist():
                     df_cum = df[df['month_name'] == 'Cum']
                     if len(df['month_name'].unique().tolist()) > 1:
-                        df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
+                        #df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
+                        df_prev = df[df['month_name'].isin(df['month_name'].unique().tolist()[:-1])]
                     if len(df["month_name"].unique().tolist()) >= 3:
                         df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
                     # df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
@@ -2097,3 +2112,286 @@ async def sbu_sales_fiscal(merged_df, filters, cross_filters, drill_state="", ti
 
     return results
 
+
+async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
+    MONTH_DAY_RANGES = {
+        "Apr": ("04", "30"),
+        "May": ("05", "31"),
+        "Jun": ("06", "30"),
+        "Jul": ("07", "31"),
+        "Aug": ("08", "31"),
+        "Sep": ("09", "30"),
+        "Oct": ("10", "31"),
+        "Nov": ("11", "30"),
+        "Dec": ("12", "31"),
+        "Jan": ("01", "31"),
+        "Feb": ("02", "28"),
+        "Mar": ("03", "31"),
+    }
+
+    def get_cumulative_months(selected_month):
+        months_order = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"]
+        if selected_month not in months_order:
+            return []
+        end_index = months_order.index(selected_month)
+        return months_order[: end_index + 1]
+
+    print("MONTH_DAY_RANGES", MONTH_DAY_RANGES)
+
+    def get_day_id_ranges(fy: str, selected_month: str, filters):
+        fiscal_start, fiscal_end = fy.split("-")
+
+        if selected_month:
+            mon_code, end_day = MONTH_DAY_RANGES.get(selected_month, ("04", "30"))
+
+            if selected_month in ["Jan", "Feb", "Mar"]:
+                cur_year = fiscal_end
+                hist_year = str(int(fiscal_end) - 1)
+            else:
+                cur_year = fiscal_start
+                hist_year = str(int(fiscal_start) - 1)
+
+            current_start = f"{cur_year}{mon_code}01"
+            current_end = f"{cur_year}{mon_code}{end_day}"
+            hist_start = f"{hist_year}{mon_code}01"
+            hist_end = f"{hist_year}{mon_code}{end_day}"
+        else:
+            from datetime import datetime, timedelta
+            today = datetime.today()
+            yesterday = today - timedelta(days=1)
+            current_start_dt = today.replace(day=1)
+            current_end_dt = yesterday
+
+            mon = today.month
+            if mon >= 4:
+                cur_year = fiscal_start
+                hist_year = str(int(fiscal_start) - 1)
+            else:
+                cur_year = fiscal_end
+                hist_year = str(int(fiscal_end) - 1)
+
+            current_start = current_start_dt.strftime("%Y%m%d")
+            current_end = current_end_dt.strftime("%Y%m%d")
+
+            hist_start_dt = current_start_dt.replace(year=int(hist_year))
+            hist_end_dt = current_end_dt.replace(year=int(hist_year))
+
+            hist_start = hist_start_dt.strftime("%Y%m%d")
+            hist_end = hist_end_dt.strftime("%Y%m%d")
+
+        return current_start, current_end, hist_start, hist_end
+
+    try:
+        print("came from day id ranges")
+        print("filters", filters)
+
+        # Safely get required_year and required_month or return error
+        required_year = next((x['value'].strip('"') for x in filters if x['key'].strip('"') == 'fiscal_year'), None)
+        required_month = next((x['value'].strip('"') for x in filters if x['key'].strip('"') == 'month_name'), None)
+
+        if not required_year or not required_month:
+            return False, "Missing required fiscal_year or month_name"
+
+        cur_start, cur_end, hist_start, hist_end = get_day_id_ranges(required_year, required_month, filters)
+        print("req_month", required_month)
+
+        base_query = f"""
+            SELECT
+                "Zone_Name" AS Zone_Name,
+                "Region_Name" AS Region_Name,
+                "SalesArea_Name" AS SalesArea_Name,
+                ROUND(SUM(CASE WHEN "DAY_ID" BETWEEN '{cur_start}' AND '{cur_end}' THEN "NETWEIGHT_TMT" ELSE 0 END)::numeric, 2) AS cur_sales,
+                ROUND(SUM(CASE WHEN "DAY_ID" BETWEEN '{hist_start}' AND '{hist_end}' THEN "NETWEIGHT_TMT" ELSE 0 END)::numeric, 2) AS his_sales
+            FROM public."MOM_DAY_LEVEL_DATA"
+            WHERE "SBU_Name" = 'I&C'
+              AND "Zone_Name" IS NOT NULL
+              AND "Region_Name" IS NOT NULL
+              AND "SalesArea_Name" IS NOT NULL
+        """
+
+        # Add filter conditions only if non-empty
+        conditions = []
+        if 'Zone_Name' in [x['key'].strip('"') for x in filters]:
+            req_zone = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'Zone_Name'][0]
+            if req_zone != "":
+                conditions.append(f'"Zone_Name" = \'{req_zone}\'')
+        if 'Region_Name' in [x['key'].strip('"') for x in filters]:
+            req_region = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'Region_Name'][0]
+            if req_region != "":
+                conditions.append(f'"Region_Name" = \'{req_region}\'')
+        if 'SalesArea_Name' in [x['key'].strip('"') for x in filters]:
+            req_salesarea = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'SalesArea_Name'][0]
+            if req_salesarea != "":
+                conditions.append(f'"SalesArea_Name" = \'{req_salesarea}\'')
+
+        if conditions:
+            base_query += " AND " + " AND ".join(conditions)
+
+        base_query += """
+            GROUP BY Zone_Name, Region_Name, SalesArea_Name
+            ORDER BY Zone_Name, Region_Name, SalesArea_Name
+        """
+
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(base_query, limit=0, skip=0)
+        data = result['data']
+        print("result", result)
+
+        fiscal_year_str = f"FY {required_year}" if not required_year.startswith("FY") else required_year
+        target_query = f"""
+            SELECT
+                "Zone_Name" AS Zone_Name,
+                "Region_Name" AS Region_Name,
+                "SalesArea_Name" AS SalesArea_Name,
+                SUM("TARGET_QTY_TMT") AS target
+            FROM public."M60_LEVEL_METADATA"
+            WHERE "SBU_Name" = 'I&C'
+              AND "FISCALYEAR" = '{fiscal_year_str}'
+              AND "month_name" = '{required_month}'
+              AND "Zone_Name" IS NOT NULL
+              AND "Region_Name" IS NOT NULL
+              AND "SalesArea_Name" IS NOT NULL
+        """
+        if conditions:
+            target_query += " AND " + " AND ".join(conditions)
+
+        target_query += """
+            GROUP BY "Zone_Name", "Region_Name", "SalesArea_Name"
+        """
+
+        target_rows = await urdhva_base.BasePostgresModel.get_aggr_data(target_query, limit=0, skip=0)
+        target_rows = target_rows['data']
+        print("target_rows", target_rows)
+
+        target_dict = {
+            (
+                r.get("Zone_Name") or r.get("zone_name"),
+                r.get("Region_Name") or r.get("region_name"),
+                r.get("SalesArea_Name") or r.get("salesarea_name")
+            ): float(r.get("target", 0))
+            for r in target_rows
+        }
+
+        cumulative_months = get_cumulative_months(required_month)
+        cumulative_ranges = [get_day_id_ranges(required_year, m, filters) for m in cumulative_months]
+
+        cur_conditions = " ".join(
+            [f"WHEN \"DAY_ID\" BETWEEN '{start}' AND '{end}' THEN \"NETWEIGHT_TMT\"" for start, end, _, _ in cumulative_ranges]
+        )
+        his_conditions = " ".join(
+            [f"WHEN \"DAY_ID\" BETWEEN '{hist_start}' AND '{hist_end}' THEN \"NETWEIGHT_TMT\"" for _, _, hist_start, hist_end in cumulative_ranges]
+        )
+
+        cumulative_query = f"""
+            SELECT
+                "Zone_Name" AS Zone_Name,
+                "Region_Name" AS Region_Name,
+                "SalesArea_Name" AS SalesArea_Name,
+                ROUND(SUM(CASE {cur_conditions} ELSE 0 END)::numeric, 2) AS cum_cur_sales,
+                ROUND(SUM(CASE {his_conditions} ELSE 0 END)::numeric, 2) AS cum_his_sales
+            FROM public."MOM_DAY_LEVEL_DATA"
+            WHERE "SBU_Name" = 'I&C'
+              AND "Zone_Name" IS NOT NULL
+              AND "Region_Name" IS NOT NULL
+              AND "SalesArea_Name" IS NOT NULL
+        """
+        if conditions:
+            cumulative_query += " AND " + " AND ".join(conditions)
+
+        cumulative_query += """
+            GROUP BY Zone_Name, Region_Name, SalesArea_Name
+            ORDER BY Zone_Name, Region_Name, SalesArea_Name
+        """
+
+        cumulative_result = await urdhva_base.BasePostgresModel.get_aggr_data(cumulative_query, limit=0, skip=0)
+        cum_data = cumulative_result.get('data', [])
+
+        cum_sales_dict = {
+            (r.get("zone_name"), r.get("region_name"), r.get("salesarea_name")): {
+                "cum_cur_sales": float(r.get("cum_cur_sales", 0)),
+                "cum_his_sales": float(r.get("cum_his_sales", 0))
+            }
+            for r in cum_data
+        }
+
+        cumulative_target_dict = {}
+        if cumulative_months:
+            cumulative_target_query = f"""
+                SELECT
+                    "Zone_Name" AS Zone_Name,
+                    "Region_Name" AS Region_Name,
+                    "SalesArea_Name" AS SalesArea_Name,
+                    SUM("TARGET_QTY_TMT") AS target
+                FROM public."M60_LEVEL_METADATA"
+                WHERE "SBU_Name" = 'I&C'
+                  AND "FISCALYEAR" = '{fiscal_year_str}'
+                  AND "month_name" IN ({','.join([f"'{m}'" for m in cumulative_months])})
+                  AND "Zone_Name" IS NOT NULL
+                  AND "Region_Name" IS NOT NULL
+                  AND "SalesArea_Name" IS NOT NULL
+            """
+            if conditions:
+                cumulative_target_query += " AND " + " AND ".join(conditions)
+
+            cumulative_target_query += """
+                GROUP BY "Zone_Name", "Region_Name", "SalesArea_Name"
+            """
+
+            cumulative_target_rows = await urdhva_base.BasePostgresModel.get_aggr_data(cumulative_target_query, limit=0, skip=0)
+            cumulative_target_rows = cumulative_target_rows.get('data', [])
+
+            cumulative_target_dict = {
+                (
+                    r.get("Zone_Name") or r.get("zone_name"),
+                    r.get("Region_Name") or r.get("region_name"),
+                    r.get("SalesArea_Name") or r.get("salesarea_name")
+                ): float(r.get("target", 0))
+                for r in cumulative_target_rows
+            }
+
+        results = []
+        for idx, row in enumerate(data, start=1):
+            z = row.get("zone_name")
+            r = row.get("region_name")
+            s = row.get("salesarea_name")
+
+            cur_sales = float(row.get("cur_sales", 0) or 0)
+            his_sales = float(row.get("his_sales", 0) or 0)
+            target = target_dict.get((z, r, s), 0.0)
+
+            cum_cur = cum_sales_dict.get((z, r, s), {}).get("cum_cur_sales", 0.0)
+            cum_his = cum_sales_dict.get((z, r, s), {}).get("cum_his_sales", 0.0)
+            cum_target = cumulative_target_dict.get((z, r, s), 0.0)
+
+            monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
+            monthly_target_diff = round((cur_sales / target) * 100, 2) if target != 0 else None
+
+            cumulative_diff_value = round(((cum_cur - cum_his) / cum_his) * 100, 2) if cum_his != 0 else None
+            cumulative_target_diff = round((cum_cur / cum_target) * 100, 2) if cum_target != 0 else None
+            results.append({
+                "id": idx,
+                "region": r,
+                "icSalesArea": s,
+                "monthly": {
+                    "cur": cur_sales,
+                    "his": his_sales,
+                    "target": target,
+                    "diff_value": monthly_diff_value,
+                    "target_diff": monthly_target_diff
+                },
+                "cumulative": {
+                    "cur": round(cum_cur, 2),
+                    "his": round(cum_his, 2),
+                    "cumulativeTarget": round(cum_target, 2),
+                    "diff_value": cumulative_diff_value,
+                    "target_diff": cumulative_target_diff
+                }
+            })
+
+        print("results are here", results)
+
+        # Always return a tuple
+        return True, results if results else []
+
+    except Exception as e:
+        print("Error:", e)
+        return False, str(e)
