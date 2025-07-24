@@ -5160,6 +5160,12 @@
                 },
                 {
                     "name": "get_count_company_infra"
+                },
+                {
+                    "name": "get_sod_lpg_infra"
+                },
+                {
+                    "name": "get_distinct_sod_lpg_infra"
                 }
             ]
         },
@@ -5181,6 +5187,12 @@
                 },
                 {
                     "name": "get_count_company_infra"
+                },
+                {
+                    "name": "get_sod_lpg_infra"
+                },
+                {
+                    "name": "get_distinct_sod_lpg_infra"
                 }
             ]
         },
@@ -5214,6 +5226,12 @@
                 },
                 {
                     "name": "get_count_company_infra"
+                },
+                {
+                    "name": "get_sod_lpg_infra"
+                },
+                {
+                    "name": "get_distinct_sod_lpg_infra"
                 }
             ]
         },
@@ -5832,6 +5850,14 @@
         {
             "name": "get_count_company_infra",
             "displayName": "get_count_company_infra"
+        },
+        {
+            "name": "get_sod_lpg_infra",
+            "displayName": "get_sod_lpg_infra"
+        },
+        {
+            "name": "get_distinct_sod_lpg_infra",
+            "displayName": "get_distinct_sod_lpg_infra"
         },
         {
             "name": "upload_lpg_file",

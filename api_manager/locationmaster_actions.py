@@ -8,6 +8,7 @@ import fastapi
 import traceback
 import polars as pl
 import urdhva_base.redispool
+import utilities.helpers as helpers
 from fastapi.responses import FileResponse
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.analytics.sod_location_stats as sod_location_stats
@@ -239,15 +240,13 @@ async def locationmaster_location_command_control(data: Locationmaster_Location_
     rpt = urdhva_base.context.context.get('rpt', {})
     user_name = rpt.get("username")
     employee_id = rpt.get("employee_id")
-    if data.sap_id not in ['1128']:
+    status, location_data = await helpers.get_location_details('TAS', data.sap_id)
+    if not status or not location_data or not location_data.get('location_onboard'):
         return False, "Location not onboarded"
-    query_params = urdhva_base.queryparams.QueryParams(q=f"sap_id='{data.sap_id}'")
-    resp = await LocationMaster.get_all(query_params, resp_type="plain")
-    if not resp["data"]:
-        return False, f"data not found for respective {data.sap_id}"
-    bu = resp["data"][0].bu
-    location_name = resp["data"][0].name
-    return await tas_command_control.publish_command(data.sap_id, data.action, bu, location_name, user_name, employee_id, "1")
+    bu = location_data['bu']
+    location_name = location_data.get('name', '')
+    return await tas_command_control.publish_command(data.sap_id, data.action, bu,
+                                                     location_name, user_name, employee_id, "1")
 
 
 # Action get_dist_loc_details

@@ -1,5 +1,6 @@
 import urdhva_base
 import re
+import pytz
 import json
 import uuid
 import asyncio
@@ -416,7 +417,6 @@ class Postgresql:
                 
                 # After processing, update processed_data with our filtered results
                 processed_data = filtered_data
-            
             status, msg = await model.bulk_update(processed_data, upsert=True, upsert_skip_keys=['alert_created'])
 
             # Alert processing logic remains the same, but with SAP ID specific filtering

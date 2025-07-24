@@ -167,7 +167,8 @@ class IndentStatus(str, enum.Enum):
 
 
 class TasLogAction(str, enum.Enum):
-    Shutdown = 'Shutdown'
+    GantryShutdown = 'GantryShutdown'
+    ESDShutdown = 'ESDShutdown'
     SignalClearOff = 'SignalClearOff'
 
 

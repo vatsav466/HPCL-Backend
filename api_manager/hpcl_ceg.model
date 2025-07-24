@@ -231,7 +231,8 @@ Model DataFilters internal {
 }
 
 Enum TasLogAction str {
-    Shutdown='Shutdown'
+    GantryShutdown='GantryShutdown'
+    ESDShutdown='ESDShutdown'
     SignalClearOff='SignalClearOff'
 }
 
@@ -2434,6 +2435,7 @@ Model SodInfra {
     mode_of_receipt optional str
     latitude optional float
     longitude optional float
+    filename optional str
     updated_by optional str
 
     // File Upload
@@ -2456,6 +2458,22 @@ Model SodInfra {
         time_grain optional str
     }
 
+    Action=> get_sod_lpg_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Action=> get_distinct_sod_lpg_infra {
+        bu str
+        company optional list str
+        zone optional list str
+        state optional list str
+        district optional list str
+        location_name optional list str
+    }
 
 
     Config=> {
@@ -2484,6 +2502,7 @@ Model LPGInfra {
     supply optional str
     latitude optional float
     longitude optional float
+    filename optional str
     updated_by optional str
 
     // File Upload
@@ -2517,6 +2536,7 @@ Model HistoricSodInfra {
     mode_of_receipt optional str
     latitude optional float
     longitude optional float
+    filename optional str
     updated_by optional str
 
 
@@ -2546,6 +2566,7 @@ Model HistoricLPGInfra {
     supply optional str
     latitude optional float
     longitude optional float
+    filename optional str
     updated_by optional str
 
     Config=> {

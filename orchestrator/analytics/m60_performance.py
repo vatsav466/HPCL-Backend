@@ -116,6 +116,7 @@ async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_res
     return filter_dates, day_filter_dates
 
 
+
 def calculate_pro_rate(target_data, key, start_month=None, end_month=None):
     """
     Calculating YTD data for target
@@ -125,6 +126,14 @@ def calculate_pro_rate(target_data, key, start_month=None, end_month=None):
     :param end_month:
     :return:
     """
+    if not target_data or not all(isinstance(rec, dict) and 'month_name' in rec for rec in target_data):
+         print("No Data Present for Current Selection")
+         return {
+                "status": False,
+                "message": "No  Data Present for the Current Selection",
+                "data": {}
+            }
+
     if not start_month and not end_month:
         return target_data
     if start_month:
@@ -903,6 +912,13 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     target_data = [x.update({'month_name': end_month}) or x for x in target_data]  
                 '''
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
+                if target_data.empty:
+                  return {
+                         "status": False,
+                         "message": "No Data Present for the Current Selection",
+                         "data": {}
+                        }
+                
                 #if "C"  in [x['key'].strip('"') for x in filters]:
                 #    del target_data['month_name']
                 if "month_name" in target_data.columns.tolist():
@@ -957,8 +973,15 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         if existing_columns:
                             target_data = target_data.groupby(existing_columns, as_index=False)['TARGET_TMT_SALES'].sum().reset_index()
                     target_data.to_csv('/tmp/tgt_data_latest.csv',index = False)
-
+            print("filters at latest", filters)
+            if "C" in [x['key'].strip('"') for x in filters] and "month_name" not  in target_data.columns.tolist() and "DATE"  in [x['key'].strip('"') for x in filters]:
+                print("came to month name del")
+                if 'TARGET_TMT_SALES' in target_data.columns.tolist() and "ProductName" in target_data.columns.tolist():                    
+                    target_data = target_data.groupby("ProductName", as_index=False)['TARGET_TMT_SALES'].sum().reset_index()                  
+            target_data.to_csv('/tmp/tgt_data_latest_latest.csv',index = False)
             target_data = target_data.to_dict(orient='records')
+            
+            
 
     # Data Retrival for current financial year
     if actual:
