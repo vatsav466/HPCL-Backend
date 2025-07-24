@@ -3888,7 +3888,7 @@
                     "sensor_type": "ROSOV OL"
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "MOV.ROSOV-03.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-03",
@@ -3984,7 +3984,7 @@
                     "sensor_type": "ROSOV OL"
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "MOV.ROSOV-06.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-06",
@@ -4080,7 +4080,7 @@
                     "sensor_type": "ROSOV OL"
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "MOV.ROSOV-09.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-09",
@@ -4176,7 +4176,7 @@
                     "sensor_type": "ROSOV OL"
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "MOV.ROSOV-12.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-12",
@@ -4272,7 +4272,7 @@
                     "sensor_type": "ROSOV OL"
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "MOV.ROSOV-15.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-15",
@@ -4368,7 +4368,7 @@
                     "sensor_type": "ROSOV OL"
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "MOV.ROSOV-18.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-18",
@@ -4464,7 +4464,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -4560,7 +4560,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -4656,7 +4656,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -4752,7 +4752,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -4848,7 +4848,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -4944,7 +4944,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -5040,7 +5040,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -5136,7 +5136,7 @@
                     "sensor_type": "ROSOV OL"
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "MOV.ROSOV-21.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-21",
@@ -5232,7 +5232,7 @@
                     "sensor_type": "ROSOV OL"
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "MOV.ROSOV-24.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-24",
@@ -5328,7 +5328,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -5424,7 +5424,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -5520,7 +5520,7 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -5616,7 +5616,7 @@
                     "sensor_type": "ROSOV OL"
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "MOV.ROSOV-27.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-27",
@@ -5712,7 +5712,7 @@
                     "sensor_type": "ROSOV OL"
                 },
                 {
-                    "sensor_name": "ROSOV Maintenance Status RCL",
+                    "sensor_name": "ROSOV MAINTENANCE RCL",
                     "sensor_tag": "MOV.ROSOV-30.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-30",
@@ -6777,6 +6777,134 @@
             ]
         },
         {
+            "device_name": "Farthest Point PT_WATER Pressure_FIRE HYDRANT@Hazira",
+            "device_id": "539a35d0-65fa-11f0-8b6d-91651a4240f8",
+            "device_type": "Fire Pump",
+            "device_key": "6mkB76VlQUQIxTVy6R7o",
+            "entity_id": "8738a850-6248-11f0-a31c-2ffdd645082b",
+            "sensors": [
+                {
+                    "sensor_name": "PUMP ON STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "PUMP OFF STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "PUMP LR STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP MAINTENANCE",
+                    "sensor_tag": "PressureTransmitter.FPT-01.MAINTENANCE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 1",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 2",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 3",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START STANDBY",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP TRIPPED FAULT",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP LLOP ALARM",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP HWT ALARM",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                }
+            ]
+        },
+        {
+            "device_name": "Nearest Point PT_WATER Pressure_FIRE HYDRANT@Hazira",
+            "device_id": "53ab4cd0-65fa-11f0-8b6d-91651a4240f8",
+            "device_type": "Fire Pump",
+            "device_key": "mtFnG6DM8acXCyGvU0cD",
+            "entity_id": "8738a850-6248-11f0-a31c-2ffdd645082b",
+            "sensors": [
+                {
+                    "sensor_name": "PUMP ON STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "PUMP OFF STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "PUMP LR STATUS",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP MAINTENANCE",
+                    "sensor_tag": "PressureTransmitter.FPT-02.MAINTENANCE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 1",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 2",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START 3",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP FAIL TO START STANDBY",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP TRIPPED FAULT",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP LLOP ALARM",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "FIRE PUMP HWT ALARM",
+                    "sensor_tag": "",
+                    "normal_value": "0"
+                }
+            ]
+        },
+        {
             "device_name": "UPS-01_Control Room@Hazira",
             "device_id": "895c4ba0-6248-11f0-a31c-2ffdd645082b",
             "device_type": "UPS",
@@ -7698,7 +7826,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -7772,7 +7900,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -7846,7 +7974,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -7920,7 +8048,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -7994,7 +8122,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8068,7 +8196,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8142,7 +8270,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8216,7 +8344,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8290,7 +8418,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8364,7 +8492,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8438,7 +8566,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8512,7 +8640,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8586,7 +8714,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8660,7 +8788,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8734,7 +8862,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8808,7 +8936,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8882,7 +9010,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
@@ -8903,7 +9031,8 @@
                     "sensor_name": "ESD MAINTENANCE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
-                },{
+                },
+                {
                     "sensor_name": "All ROSOVs closed",
                     "sensor_tag": "PLC.SFTPLC.EFFECT_ALL_ROSOV_CLOSED",
                     "normal_value": "0"
@@ -8955,7 +9084,7 @@
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "PLC.SFTPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 }
             ]
