@@ -122,7 +122,7 @@ async def va_ingest_data_close(data: Va_Ingest_Data_CloseParams):
         alert_data['alert_history'].append({
             "action_type": "Resolved", "alert_status": "Close", "action_msg": data.action_code,
             "remarks": data.action_description, "action_by": data.acknowledged_by,
-            "processed_time": datetime.datetime.strptime(data.closed_at, "%Y-%m-%dT%H:%M:%S").isoformat()
+            "processed_time": datetime.datetime.strptime(data.closed_at, "%m/%d/%Y %I:%M:%S %p").isoformat()
         })
         await hpcl_ceg_model.Alerts(**alert_data).modify()
         camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['bu'],
