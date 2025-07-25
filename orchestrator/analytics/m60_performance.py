@@ -2219,12 +2219,12 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
         if 'Region_Name' in [x['key'].strip('"') for x in filters]:
             req_region = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'Region_Name'][0]
             # if req_region != "":
-            if req_zone not in ["", "All"]:
+            if req_region not in ["", "All"]:
                 conditions.append(f'"Region_Name" = \'{req_region}\'')
         if 'SalesArea_Name' in [x['key'].strip('"') for x in filters]:
             req_salesarea = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'SalesArea_Name'][0]
             # if req_salesarea != "":
-            if req_zone not in ["", "All"]:
+            if req_salesarea not in ["", "All"]:
                 conditions.append(f'"SalesArea_Name" = \'{req_salesarea}\'')
 
         if conditions:
