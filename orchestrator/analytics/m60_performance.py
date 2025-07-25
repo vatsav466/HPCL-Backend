@@ -2213,15 +2213,18 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
         conditions = []
         if 'Zone_Name' in [x['key'].strip('"') for x in filters]:
             req_zone = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'Zone_Name'][0]
-            if req_zone != "":
+            # if req_zone != "":
+            if req_zone not in ["", "All"]:
                 conditions.append(f'"Zone_Name" = \'{req_zone}\'')
         if 'Region_Name' in [x['key'].strip('"') for x in filters]:
             req_region = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'Region_Name'][0]
-            if req_region != "":
+            # if req_region != "":
+            if req_zone not in ["", "All"]:
                 conditions.append(f'"Region_Name" = \'{req_region}\'')
         if 'SalesArea_Name' in [x['key'].strip('"') for x in filters]:
             req_salesarea = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'SalesArea_Name'][0]
-            if req_salesarea != "":
+            # if req_salesarea != "":
+            if req_zone not in ["", "All"]:
                 conditions.append(f'"SalesArea_Name" = \'{req_salesarea}\'')
 
         if conditions:
@@ -2234,7 +2237,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
 
         result = await urdhva_base.BasePostgresModel.get_aggr_data(base_query, limit=0, skip=0)
         data = result['data']
-        print("result", result)
+        # print("result", result)
 
         fiscal_year_str = f"FY {required_year}" if not required_year.startswith("FY") else required_year
         target_query = f"""
@@ -2260,7 +2263,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
 
         target_rows = await urdhva_base.BasePostgresModel.get_aggr_data(target_query, limit=0, skip=0)
         target_rows = target_rows['data']
-        print("target_rows", target_rows)
+        # print("target_rows", target_rows)
 
         target_dict = {
             (
@@ -2387,7 +2390,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 }
             })
 
-        print("results are here", results)
+        # print("results are here", results)
 
         # Always return a tuple
         return True, results if results else []
