@@ -10,6 +10,7 @@ import dateutil.parser as parser
 import utilities.connection_mapping as connection_mapping
 import utilities.helpers as helpers
 
+logger = urdhva_base.logger.Logger.getInstance("cris_sales_sync_log")
 
 async def indent_dryout_sync_ro_daily_sales(since, until):
     try:
@@ -106,6 +107,7 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
             )
         return until #tr_daily_sales.sort("transaction_date", desc)[0]
     except Exception as e:
+        logger.error(f"Exception in retrieving daily ro sales: {e}")
         print(traceback.format_exc())
         print("Exception in retrieving daily ro sales: ", str(e))
         return None

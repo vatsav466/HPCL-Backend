@@ -9,6 +9,7 @@ import charts_actions
 import dashboard_studio_model
 import utilities.connection_mapping as connection_mapping
 
+logger = urdhva_base.logger.Logger.getInstance("ims_dealer_details_sync")
 
 async def sync_ims_dealer_details():
     try:
@@ -112,6 +113,7 @@ async def sync_ims_dealer_details():
         return {"status": True, "message": "Data Synced Successfully", "data": []}
     except Exception as e:
         print(traceback.format_exc())
+        logger.error(f"Error in sync_ims_dealer_details: {e}")
         return {"status": False, "message": "Data Sync Failed", "data": e}
 
 if __name__ == "__main__":
