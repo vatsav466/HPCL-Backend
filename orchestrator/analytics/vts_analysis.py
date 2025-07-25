@@ -1,5 +1,5 @@
-import pandas as pd
 import urdhva_base
+import pandas as pd
 import typing
 import aiohttp
 import asyncio
@@ -13,6 +13,8 @@ import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.dbconnector.credential_loader as credential_loader
+
+logger = urdhva_base.logger.Logger.getInstance('vts_alert_log')
 
 default_headers = {"Content-Type": "application/json"}
 
@@ -374,14 +376,17 @@ async def get_vts_instance(tt_number: str):
     return instance, violation_name, violations_ids
 
 async def create_vts_alerts(enriched_data):
-    for entry in enriched_data:
-        entry['auto_unblock'] = True
-        entry['violation_type'] = await get_vts_violation(entry)
-        entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
-            lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
-        await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
-        if not await is_alert_exists(entry['tl_number']):
-            await alert_manager.create_alert({**entry, "alert_type": "VTS"})
+    try:
+        for entry in enriched_data:
+            entry['auto_unblock'] = True
+            entry['violation_type'] = await get_vts_violation(entry)
+            entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
+                lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
+            await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
+            if not await is_alert_exists(entry['tl_number']):
+                await alert_manager.create_alert({**entry, "alert_type": "VTS"})
+    except Exception as e:
+        logger.error(f"Error creating VTS Alert : {str(e)}")
 
 async def close_camunda_workflow(alert_id):
     MAX_RETRIES = 5

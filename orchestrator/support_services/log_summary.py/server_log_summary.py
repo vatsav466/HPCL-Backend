@@ -207,7 +207,8 @@ async def main():
             '212': 'remote',
             '217': 'remote',
             '218': 'remote',
-            '219': 'remote'
+            '219': 'remote',
+            '222': 'remote'
         }
         for server, server_type in servers.items():
             print(f"Processing server {server} of type {server_type}")
