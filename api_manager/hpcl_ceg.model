@@ -1381,7 +1381,7 @@ Model VaAlertHistory {
     alert_timestamp optional datetime_no_zone
     status optional str
     acknowledged_by optional str
-    closed_at optional datetime
+    closed_at optional datetime_no_zone
     action_description optional str
     action_code optional str
     action_reason optional str

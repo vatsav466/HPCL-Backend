@@ -9,6 +9,7 @@ import charts_actions
 import dashboard_studio_model
 import utilities.connection_mapping as connection_mapping
 
+logger = urdhva_base.logger.Logger.getInstance("dry_out_sync")
 
 async def indent_sync_ro_daily_dryout():
     try:
@@ -50,6 +51,7 @@ async def indent_sync_ro_daily_dryout():
         )
         return {"status": True, "message": "Data Synced Successfully", "data": []}
     except Exception as e:
+        logger.error(f"Data Sync Failed {e}")
         print(traceback.format_exc())
         return {"status": False, "message": "Data Sync Failed", "data": e}
 

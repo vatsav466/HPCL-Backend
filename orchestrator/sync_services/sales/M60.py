@@ -16,6 +16,8 @@ import urdhva_base
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
 
+logger = urdhva_base.logger.Logger.getInstance('M60_data_sync_log')
+
 def get_db_connection(params):
     """
     Establish a database connection
@@ -217,6 +219,7 @@ def insertToDB(data, table_name, indexing_col=()):
             os.remove(f'/tmp/{table_name}.csv')
         print(f"-- Data has been inserted to {table_name} --")
     except Exception as e:
+        logger.error(f"Error while inserting data to {table_name}")
         print("Error :", str(e))
         raise Exception(e)
     exit()
@@ -325,6 +328,7 @@ def insertToDB(data, table_name, indexing_col=()):
             os.remove(f'/tmp/{table_name}.csv')
         print(f"-- Data has been inserted to {table_name} --")
     except Exception as e:
+        logger.error(f"Error while inserting data to {table_name}")
         print("Error :", str(e))
         raise Exception(e)
 

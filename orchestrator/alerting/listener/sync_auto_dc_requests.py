@@ -9,6 +9,7 @@ import charts_actions
 import dashboard_studio_model
 import utilities.connection_mapping as connection_mapping
 
+logger = urdhva_base.logger.Logger.getInstance("auto_dc_requests_sync")
 
 async def sync_auto_dc_requests():
     try:
@@ -81,6 +82,7 @@ async def sync_auto_dc_requests():
         return {"status": True, "message": "Data Synced Successfully", "data": []}
     except Exception as e:
         print(traceback.format_exc())
+        logger.error(f"Error in syncing data: {e}, Traceback: {traceback.format_exc()}")
         return {"status": False, "message": "Data Sync Failed", "data": str(e)}
 
 

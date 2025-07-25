@@ -95,13 +95,16 @@ async def va_ingest_data_score(data: Va_Ingest_Data_ScoreParams):
 @router.post('/ingest_data_close', tags=['VA'])
 async def va_ingest_data_close(data: Va_Ingest_Data_CloseParams):
     try:
+        logger.info(f"Received VA data ingestion data close {data}")
         va_query = f"select * from va_alert_history where alert_id = '{data.alert_id}'"
         va_alert = await hpcl_ceg_model.VaAlertHistory.get_aggr_data(va_query, limit=0)
         if va_alert.get("data", []):
             va_alert = va_alert.get("data", [])[0]
             va_alert['status'] = data.status
             va_alert['acknowledged_by'] = data.acknowledged_by
-            va_alert['closed_at'] = data.closed_at
+            va_alert['closed_at'] = (
+                datetime.datetime.strptime(data.closed_at, "%m/%d/%Y %I:%M:%S %p") + 
+                datetime.timedelta(hours=5, minutes=30))
             va_alert['action_description'] = data.action_description
             va_alert['action_code'] = data.action_code
             va_alert['action_reason'] = data.action_reason

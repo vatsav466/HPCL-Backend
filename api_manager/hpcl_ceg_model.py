@@ -3384,7 +3384,7 @@ class VaAlertHistorySchema(UrdhvaPostgresBase):
     alert_timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("alert_timestamp", DateTime(timezone=False), index=False, nullable=True, default=None, primary_key=False, unique=False)
     status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     acknowledged_by: Mapped[typing.Optional[str]] = mapped_column("acknowledged_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    closed_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closed_at", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    closed_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closed_at", DateTime(timezone=False), index=False, nullable=True, default=None, primary_key=False, unique=False)
     action_description: Mapped[typing.Optional[str]] = mapped_column("action_description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     action_code: Mapped[typing.Optional[str]] = mapped_column("action_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     action_reason: Mapped[typing.Optional[str]] = mapped_column("action_reason", String, index=False, nullable=True, default="", primary_key=False, unique=False)
