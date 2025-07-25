@@ -53,7 +53,7 @@ class AlertEscalationCheck:
                 f"""alert_section = 'TAS' and """
                 f"""regexp_replace(tas_device_name, '_M$', '') = '{interlock_name_for_query}' and """
                 f"""interlock_name LIKE '%Maintenance%' and """
-                f"""alert_id != '{current_alert_id}'"""  # Exclude the current alert
+                f"""id != '{current_alert_id}'"""  # Exclude the current alert
             )
 
             print(f"Maintenance alert check query: {maintenance_query}")
