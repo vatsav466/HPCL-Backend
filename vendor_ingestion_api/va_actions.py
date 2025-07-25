@@ -111,7 +111,12 @@ async def va_ingest_data_close(data: Va_Ingest_Data_CloseParams):
             va_alert['action_category'] = data.action_category
             await hpcl_ceg_model.VaAlertHistory(**va_alert).modify()
 
-        alert_query = f"select * from alerts where alert_section = 'VA' and external_id = '{data.alert_id}'"
+        alert_query = f"select * from alerts where alert_section = 'VA' and external_id = '{data.alert_id}' and alert_status = 'Close'"
+        alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(alert_query, limit=0)
+        if alert_data.get("data", []):
+            return {"status": True, "message": "Alert already Closed in Novex", "data": []}
+        
+        alert_query = f"select * from alerts where alert_section = 'VA' and external_id = '{data.alert_id}' and alert_status != 'Close'"
         alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(alert_query, limit=0)
         if not alert_data.get("data", []):
             return {"status": False, "message": "Alert not found", "data": []}
@@ -122,7 +127,9 @@ async def va_ingest_data_close(data: Va_Ingest_Data_CloseParams):
         alert_data['alert_history'].append({
             "action_type": "Resolved", "alert_status": "Close", "action_msg": data.action_code,
             "remarks": data.action_description, "action_by": data.acknowledged_by,
-            "processed_time": datetime.datetime.strptime(data.closed_at, "%m/%d/%Y %I:%M:%S %p").isoformat()
+            "processed_time": (
+                datetime.datetime.strptime(data.closed_at, "%m/%d/%Y %I:%M:%S %p") + 
+                datetime.timedelta(hours=5, minutes=30)).isoformat()
         })
         await hpcl_ceg_model.Alerts(**alert_data).modify()
         camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['bu'],
