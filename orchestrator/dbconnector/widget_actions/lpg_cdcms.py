@@ -1241,7 +1241,7 @@ class LPGCDCMSActions:
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             dbc_enrollments_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(dbc_enrollments_query_, access_filters, drill_state)
             dbc_enrollments_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
+            dbc_enrollments_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -1250,12 +1250,12 @@ class LPGCDCMSActions:
                 dbc_enrollments_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             else:
                 dbc_enrollments_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
+            dbc_enrollments_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
         resp = await function(query=dbc_enrollments_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
         resp = pl.from_pandas(resp)
-        numerical_columns = ["Month_Number", "DBCIssued"]
+        numerical_columns = ["month_number", "DBCIssued"]
         string_columns = ["Month", "ZOName", "ROName", "SAName"]
 
         for col in numerical_columns:
@@ -1271,30 +1271,30 @@ class LPGCDCMSActions:
             if "Month" in filter_keys and "ZOName" not in filter_keys:
                 grouped_resp = resp.group_by(["Month", "ZOName"]).agg([
                     pl.sum("DBCIssued").alias("DBCIssued"),
-                    pl.sum("Month_Number").alias("Month_Number"),
+                    pl.sum("month_number").alias("month_number"),
                 ])
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
                 grouped_resp = resp.group_by(["Month", "ZOName", "ROName"]).agg([
                     pl.sum("DBCIssued").alias("DBCIssued"),
-                    pl.sum("Month_Number").alias("Month_Number"),
+                    pl.sum("month_number").alias("month_number"),
                 ])
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
                 grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName"]).agg([
                     pl.sum("DBCIssued").alias("DBCIssued"),
-                    pl.sum("Month_Number").alias("Month_Number"),
+                    pl.sum("month_number").alias("month_number"),
                 ])
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
                 grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName", "DistributorName"]).agg([
                     pl.sum("DBCIssued").alias("DBCIssued"),
-                    pl.sum("Month_Number").alias("Month_Number"),
+                    pl.sum("month_number").alias("month_number"),
                 ])
             if grouped_resp is not None:    
                 return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
         resp = resp.group_by(["Month"]).agg([
                 pl.sum("DBCIssued").alias("DBCIssued"),
-                pl.first("Month_Number").alias("Month_Number"),
+                pl.first("month_number").alias("month_number"),
             ])
-        resp = resp.sort("Month_Number")
+        resp = resp.sort("month_number")
         return {"status": True, "message": "success", "data": resp.to_dicts()}
     
     
