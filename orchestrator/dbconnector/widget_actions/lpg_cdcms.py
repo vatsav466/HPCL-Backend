@@ -1217,8 +1217,6 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
-        # hard_code
-        financial_year = '2024-2025'
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -1306,8 +1304,6 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
-        # hard_code
-        financial_year = '2024-2025'
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -2445,9 +2441,6 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        # hard_code
-        if not _fy:
-            financial_year = '2024-2025'
         lpg_cdcms_subsidy_central_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_consumers")
         if filters:
             conditions = []
@@ -2560,9 +2553,6 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        # hard_code
-        if not _fy:
-            financial_year = '2024-2025'
         lpg_cdcms_subsidy_central_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_transaction")
         if filters:
             conditions = []
@@ -2674,9 +2664,6 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        # hard_code
-        if not _fy:
-            financial_year = '2024-2025'
         lpg_cdcms_subsidy_central_amount_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_amount")
         if filters:
             conditions = []
@@ -2788,9 +2775,6 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        # hard_code
-        if not _fy:
-            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_consumers")
         if filters:
             conditions = []
@@ -2902,9 +2886,6 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        # hard_code
-        if not _fy:
-            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_consumers")
         if filters:
             conditions = []
@@ -2990,9 +2971,6 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        # hard_code
-        if not _fy:
-            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_transaction")
         if filters:
             conditions = []
@@ -3104,9 +3082,6 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        # hard_code
-        if not _fy:
-            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_transaction")
         if filters:
             conditions = []
@@ -3192,9 +3167,6 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        # hard_code
-        if not _fy:
-            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_amount_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_amount")
         if filters:
             conditions = []
@@ -3306,9 +3278,6 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        # hard_code
-        if not _fy:
-            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_amount_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_amount")
         if filters:
             conditions = []
@@ -3514,7 +3483,6 @@ class LPGCDCMSActions:
             
             financial_year = await get_financial_year()
             # hard_code table to be replaced with lpg_consumers_summary_april
-            financial_year = '2024-2025'
             financial_start_date = financial_year.split("-")[0] + "-04-01"
             _filters = []
             if cross_filters:
