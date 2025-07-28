@@ -918,7 +918,7 @@ LIMIT 10000;''',
                                                 "SAName", "ROName",
                                                 SUM("ConsumerCount") AS "ConsumerCount"
                                             FROM
-                                                "LPG_CONSUMER_APRIL" ''',
+                                                "lpg_consumers_summary_april" ''',
     
     "lpg_cdcms_current_consumer_stats": ''' SELECT "JDEDistributorCode", "SubCategory", "ZOName",
                                                     "SAName", "ROName",
@@ -940,11 +940,11 @@ LIMIT 10000;''',
                                         "SAName",
                                         "DistributorName",
                                         "Month",
-                                        "Month_Number",
+                                        "month_number",
                                         "ConsumerType",
                                         sum("DBCIssuedCount") as "DBCIssued"
                                     from
-                                        "lpg_cdcms_dbc_enrollment" ''',
+                                        "lpg_cdcms_dbc_enrollment_data" ''',
     
     "lpg_cdcms_nc_query": '''SELECT 
                                 "ZOName" ,
