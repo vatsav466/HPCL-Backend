@@ -2550,6 +2550,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             print('ic', results['icSalesArea'].unique().tolist())
             print("enrich",enriched_df['icSalesArea'].unique().tolist())
             results = results.merge(enriched_df[['icSalesArea','Name']], how='left', left_on='icSalesArea', right_on='icSalesArea')
+            if 'SalesOfficer' in results.columns:
+                results['Officer'] = results['Name']
             results = results[results['Name'].notna()]
             results.to_csv('/tmp/res_updated.csv',index = False)
             print('results columns', results.columns)
