@@ -119,13 +119,18 @@ location_configs = [
         "bu": "tas",
         "query": """
                 SELECT
-                    PLT.PLANT, PLT.PLANT_DESC, PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1,PLT.STREET,
-                    PLT.STR_SUPPL1, PLT.REPORTING_OFFICE, PLT.STATE_NAME
+                    DISTINCT PLT.PLANT, zca.SALES_ORG, zps.ZLOC_TYPE, PLT.PLANT_DESC,
+                    PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1, PLT.STREET,PLT.STR_SUPPL1,
+                    PLT.REPORTING_OFFICE, PLT.STATE_NAME
                 FROM
                     EDW_DC_PLANT PLT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
-                WHERE 
-                    ZLOC_TYPE IN ('15', '16') AND FACILITY!='13';
+                    INNER JOIN ZMMCV_PLANT_STG zps  ON PLT.PLANT = zps.PLANT
+                    INNER JOIN ZSDCV_AY_INV3_STG zca  ON zca.SUPPLY_LOC = zps.PLANT
+                WHERE
+                    (zca.SALES_ORG='7000' AND zps.ZLOC_TYPE IN ('11','15','16','18','19','44','51','52','53')
+                    AND zca.INVOICE_DATE >= DATE_SUB(NOW(), INTERVAL 1 YEAR) AND zca.INVOICE_DATE <= NOW()) OR 
+                    PLT.PLANT IN ('1187')
                 """,
         "reporting_office_query": """ 
                 SELECT
