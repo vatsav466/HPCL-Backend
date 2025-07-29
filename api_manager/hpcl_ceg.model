@@ -2416,7 +2416,7 @@ Model TASMonthlyOIScores {
 
 Model SodInfra {
     sap_id index_field optional str
-    bu index_field optional str
+    sbu index_field optional str
     zone index_field optional str
     state optional str
     district optional str
@@ -2467,7 +2467,7 @@ Model SodInfra {
     }
 
     Action=> get_distinct_sod_lpg_infra {
-        bu str
+        sbu str
         company optional list str
         zone optional list str
         state optional list str
@@ -2475,16 +2475,22 @@ Model SodInfra {
         location_name optional list str
     }
 
+    Action=> get_all_sod_infra {
+        }
+
+    Action=> download_template {
+        sbu str
+    }
 
     Config=> {
-        access_key_mapping='bu,zone,region,sap_id'
+        access_key_mapping='sbu,zone,region,sap_id'
     }
 }
 
 
 Model LPGInfra {
     sap_id index_field optional str
-    bu index_field optional str
+    sbu index_field optional str
     zone index_field optional str
     state optional str
     district optional str
@@ -2509,15 +2515,18 @@ Model LPGInfra {
     Action=> upload_lpg_file {
     }
 
+    Action=> get_all_lpg_infra {
+    }
+
     Config=> {
-        access_key_mapping='bu,zone,region,sap_id'
+        access_key_mapping='sbu,zone,region,sap_id'
     }
 }
 
 
 Model HistoricSodInfra {
     sap_id index_field optional str
-    bu index_field optional str
+    sbu index_field optional str
     zone index_field optional str
     state optional str
     district optional str
@@ -2542,13 +2551,13 @@ Model HistoricSodInfra {
 
 
     Config=> {
-        access_key_mapping='bu,zone,region,sap_id'
+        access_key_mapping='sbu,zone,region,sap_id'
     }
 }
 
 Model HistoricLPGInfra {
     sap_id index_field optional str
-    bu index_field optional str
+    sbu index_field optional str
     zone index_field optional str
     state optional str
     district optional str
@@ -2570,6 +2579,6 @@ Model HistoricLPGInfra {
     updated_by optional str
 
     Config=> {
-        access_key_mapping='bu,zone,region,sap_id'
+        access_key_mapping='sbu,zone,region,sap_id'
     }
 }

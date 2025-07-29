@@ -7110,7 +7110,7 @@ class SodInfraSchema(UrdhvaPostgresBase):
     __tablename__ = 'sod_infra'
     
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    sbu: Mapped[typing.Optional[str]] = mapped_column("sbu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -7137,7 +7137,7 @@ class SodInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'sod_infra'
     
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
-    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
@@ -7165,14 +7165,14 @@ class SodInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = SodInfraSchema
         upsert_keys = []
-        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+        access_key_mapping = ['sbu', 'zone', 'region', 'sap_id']
 
 
 class SodInfra(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'sod_infra'
     
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
-    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
@@ -7200,7 +7200,7 @@ class SodInfra(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = SodInfraSchema
         upsert_keys = []
-        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+        access_key_mapping = ['sbu', 'zone', 'region', 'sap_id']
 
 
 class SodInfraGetResp(pydantic.BaseModel):
@@ -7254,7 +7254,7 @@ class Sodinfra_Get_Sod_Lpg_InfraParams(pydantic.BaseModel):
 
 
 class Sodinfra_Get_Distinct_Sod_Lpg_InfraParams(pydantic.BaseModel):
-    bu: str
+    sbu: str
     company: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     state: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -7266,11 +7266,27 @@ class Sodinfra_Get_Distinct_Sod_Lpg_InfraParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Sodinfra_Get_All_Sod_InfraParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Sodinfra_Download_TemplateParams(pydantic.BaseModel):
+    sbu: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class LPGInfraSchema(UrdhvaPostgresBase):
     __tablename__ = 'lpg_infra'
     
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    sbu: Mapped[typing.Optional[str]] = mapped_column("sbu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -7296,7 +7312,7 @@ class LPGInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'lpg_infra'
     
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
-    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
@@ -7323,14 +7339,14 @@ class LPGInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LPGInfraSchema
         upsert_keys = []
-        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+        access_key_mapping = ['sbu', 'zone', 'region', 'sap_id']
 
 
 class LPGInfra(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'lpg_infra'
     
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
-    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
@@ -7357,7 +7373,7 @@ class LPGInfra(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LPGInfraSchema
         upsert_keys = []
-        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+        access_key_mapping = ['sbu', 'zone', 'region', 'sap_id']
 
 
 class LPGInfraGetResp(pydantic.BaseModel):
@@ -7374,11 +7390,19 @@ class Lpginfra_Upload_Lpg_FileParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Lpginfra_Get_All_Lpg_InfraParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class HistoricSodInfraSchema(UrdhvaPostgresBase):
     __tablename__ = 'historic_sod_infra'
     
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    sbu: Mapped[typing.Optional[str]] = mapped_column("sbu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -7405,7 +7429,7 @@ class HistoricSodInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'historic_sod_infra'
     
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
-    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
@@ -7433,14 +7457,14 @@ class HistoricSodInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = HistoricSodInfraSchema
         upsert_keys = []
-        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+        access_key_mapping = ['sbu', 'zone', 'region', 'sap_id']
 
 
 class HistoricSodInfra(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'historic_sod_infra'
     
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
-    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
@@ -7468,7 +7492,7 @@ class HistoricSodInfra(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = HistoricSodInfraSchema
         upsert_keys = []
-        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+        access_key_mapping = ['sbu', 'zone', 'region', 'sap_id']
 
 
 class HistoricSodInfraGetResp(pydantic.BaseModel):
@@ -7481,7 +7505,7 @@ class HistoricLPGInfraSchema(UrdhvaPostgresBase):
     __tablename__ = 'historic_lpg_infra'
     
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    sbu: Mapped[typing.Optional[str]] = mapped_column("sbu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -7507,7 +7531,7 @@ class HistoricLPGInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'historic_lpg_infra'
     
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
-    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
@@ -7534,14 +7558,14 @@ class HistoricLPGInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = HistoricLPGInfraSchema
         upsert_keys = []
-        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+        access_key_mapping = ['sbu', 'zone', 'region', 'sap_id']
 
 
 class HistoricLPGInfra(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'historic_lpg_infra'
     
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
-    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
@@ -7568,7 +7592,7 @@ class HistoricLPGInfra(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = HistoricLPGInfraSchema
         upsert_keys = []
-        access_key_mapping = ['bu', 'zone', 'region', 'sap_id']
+        access_key_mapping = ['sbu', 'zone', 'region', 'sap_id']
 
 
 class HistoricLPGInfraGetResp(pydantic.BaseModel):
