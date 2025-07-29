@@ -7,6 +7,8 @@ import datetime
 import traceback
 from http.client import HTTPException
 import orchestrator.dashboard.chart_factory.infra_functions as infra_functions
+from fastapi.responses import FileResponse, JSONResponse
+import polars as pl
 
 router = fastapi.APIRouter(prefix='/sodinfra')
 
@@ -23,11 +25,12 @@ async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
         file_location = os.path.join(save_path, filename)
         df.to_excel(file_location,sheet_name='SOD', index=False)
         df.columns = df.columns.str.strip().str.lower()
-        df['bu'] = 'TAS'
+        df['sbu'] = 'SOD'
         df['filename'] = filename
         df = df.rename(
             columns={
-                'company': 'company', 'type': 'type', 'location name': 'location_name', 'region ppac': 'region_ppac', 'ms (kl)': 'ms',
+                'company': 'company', 'type': 'type', 'location name': 'location_name', 'region ppac': 'region_ppac',
+                'ms (kl)': 'ms',
                 'sko(kl)': 'sko', 'hsd(kl)': 'hsd', 'total(kl)': 'total', 'mode of reciept': 'mode_of_receipt',
                 'latitude': 'latitude', 'longitude': 'longitude'
             }
@@ -49,7 +52,7 @@ async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
         loc_df['sap_id'] = loc_df['sap_id'].astype(str)
 
         merged_df = df.merge(
-            loc_df[['sap_id', 'bu', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']],
+            loc_df[['sap_id', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']],
             left_on='location code',
             right_on='sap_id',
             how='left', suffixes=('', '_Y')
@@ -57,13 +60,13 @@ async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
 
         merged_df['sap_id'] = merged_df['sap_id'].fillna(merged_df['location code'])
 
-        for col in ['bu', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']:
+        for col in ['sbu', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']:
             merged_df[col] = merged_df[col].fillna("")
 
         merged_df = merged_df[[
-            'sap_id', 'bu', 'zone', 'state', 'district', 'city', 'address', 'region',
+            'sap_id', 'sbu', 'zone', 'state', 'district', 'city', 'address', 'region',
             'company', 'type', 'location_name', 'name', 'region_ppac', 'ms', 'sko',
-            'hsd', 'total', 'mode_of_receipt', 'latitude', 'longitude','filename','updated_by'
+            'hsd', 'total', 'mode_of_receipt', 'latitude', 'longitude', 'filename', 'updated_by'
         ]]
         for col in merged_df.select_dtypes(include='object').columns:
             merged_df[col] = merged_df[col].astype(str).str.strip()
@@ -83,30 +86,52 @@ async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
 
-
 # Action get_all_sod_lpg_infra
 @router.post('/get_all_sod_lpg_infra', tags=['SodInfra'])
 async def sodinfra_get_all_sod_lpg_infra(data: Sodinfra_Get_All_Sod_Lpg_InfraParams):
     # return await infra_functions.sod_infra(data)
-    return await infra_functions.sod_infra(filters=data.filters, cross_filters=data.cross_filters, drill_state=data.drill_state, limit=data.limit, time_grain=data.time_grain)
+    return await infra_functions.sod_infra(filters=data.filters, cross_filters=data.cross_filters,
+                                           drill_state=data.drill_state, limit=data.limit, time_grain=data.time_grain)
 
 
 # Action get_count_company_infra
 @router.post('/get_count_company_infra', tags=['SodInfra'])
 async def sodinfra_get_count_company_infra(data: Sodinfra_Get_Count_Company_InfraParams):
     return await infra_functions.get_count_company_info(filters=data.filters, cross_filters=data.cross_filters,
-                                           drill_state=data.drill_state, limit=data.limit, time_grain=data.time_grain)
+                                                        drill_state=data.drill_state, limit=data.limit,
+                                                        time_grain=data.time_grain)
 
 
 # Action get_sod_lpg_infra
 @router.post('/get_sod_lpg_infra', tags=['SodInfra'])
 async def sodinfra_get_sod_lpg_infra(data: Sodinfra_Get_Sod_Lpg_InfraParams):
     return await infra_functions.get_sod_lpg_info(filters=data.filters, cross_filters=data.cross_filters,
-                                                        drill_state=data.drill_state, limit=data.limit,
-                                                        time_grain=data.time_grain)
+                                                  drill_state=data.drill_state, limit=data.limit,
+                                                  time_grain=data.time_grain)
 
 
 # Action get_distinct_sod_lpg_infra
 @router.post('/get_distinct_sod_lpg_infra', tags=['SodInfra'])
 async def sodinfra_get_distinct_sod_lpg_infra(data: Sodinfra_Get_Distinct_Sod_Lpg_InfraParams):
-    return await infra_functions.get_distinct_sod_lpg_info(data.bu,data.zone,data.state,data.district,data.company,data.location_name)
+    return await infra_functions.get_distinct_sod_lpg_info(data.sbu, data.zone, data.state, data.district, data.company,
+                                                           data.location_name)
+
+
+# Action get_all_sod_infra
+@router.post('/get_all_sod_infra', tags=['SodInfra'])
+async def sodinfra_get_all_sod_infra(data: Sodinfra_Get_All_Sod_InfraParams):
+    try:
+        params = urdhva_base.queryparams.QueryParams()
+        params.fields = []
+        params.limit = 0
+        resp = await SodInfra.get_all(params, resp_type="plain")
+        return resp
+    except Exception as e:
+        print(f"Error in get_all_sod_infra: {e}")
+        return JSONResponse(status_code=500, content={"detail": f"Internal Server Error: {str(e)}"})
+
+
+# Action download_template
+@router.post('/download_template', tags=['SodInfra'])
+async def sodinfra_download_template(data: Sodinfra_Download_TemplateParams):
+    return await infra_functions.get_download_template_info(data.sbu)

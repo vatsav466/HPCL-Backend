@@ -2,6 +2,8 @@ from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import urdhva_base
 import json
+import os
+import polars as pl
 import uuid
 import typing
 import importlib
@@ -12,6 +14,7 @@ import utilities.helpers
 import re
 from decimal import Decimal
 from datetime import datetime, timedelta
+from fastapi.responses import FileResponse, JSONResponse
 from orchestrator.dbconnector.widget_actions import widget_actions
 
 
@@ -29,23 +32,33 @@ async def sod_infra(filters, cross_filters, drill_state, limit, time_grain):
         lpg_result = await urdhva_base.BasePostgresModel.get_aggr_data(lpg_query, limit=0, skip=0)
         lpg = lpg_result['data']
 
+        # company_color_map = {
+        #     'hpcl': '#1E90FF',  # Dodger Blue
+        #     'iocl': '#FF4500',  # Orange Red
+        #     'bpcl': '#32CD32',  # Lime Green
+        #     'hmel': '#8A2BE2'   # Blue Violet
+        # }
 
         company_color_map = {
-            'hpcl': '#1E90FF',  # Dodger Blue
-            'iocl': '#FF4500',  # Orange Red
-            'bpcl': '#32CD32',  # Lime Green
-            'hmel': '#8A2BE2'  # Blue Violet
+            'hpcl': '#00006B',
+            'iocl': '#FC4C02',
+            'bpcl': '#FFE000',
+            'hmel': '#00A651'
         }
 
-        # color_code to SOD data
-        for item in sod:
-            company = item.get('company', '').lower()
-            item['color_code'] = company_color_map.get(company, '#CCCCCC')
+        exclude_keys = {"filename", "updated_by", "id", "created_at", "updated_at", "entity_id"}
 
-        # color_code to LPG data
-        for item in lpg:
-            company = item.get('company', '').lower()
-            item['color_code'] = company_color_map.get(company, '#CCCCCC')
+        # Add color_code and filter keys for SOD
+        for i in range(len(sod)):
+            company = sod[i].get('company', '').lower()
+            sod[i]['color_code'] = company_color_map.get(company, '#CCCCCC')
+            sod[i] = {k: v for k, v in sod[i].items() if k not in exclude_keys}
+
+        # Add color_code and filter keys for LPG
+        for i in range(len(lpg)):
+            company = lpg[i].get('company', '').lower()
+            lpg[i]['color_code'] = company_color_map.get(company, '#CCCCCC')
+            lpg[i] = {k: v for k, v in lpg[i].items() if k not in exclude_keys}
 
         return {"status": True, "message": "success", "data": sod + lpg}
 
@@ -60,9 +73,9 @@ async def get_count_company_info(filters, cross_filters, drill_state, limit, tim
         combined_query = '''
              company, COUNT(*) as count 
             FROM (
-                SELECT bu,company,zone,state,district,location_name FROM sod_infra
+                SELECT sbu,company,zone,state,district,location_name FROM sod_infra
                 UNION ALL
-                SELECT bu,company,zone,state,district,location_name FROM lpg_infra
+                SELECT sbu,company,zone,state,district,location_name FROM lpg_infra
             ) AS combined
             GROUP BY company
         '''
@@ -81,8 +94,8 @@ async def get_count_company_info(filters, cross_filters, drill_state, limit, tim
 
 async def get_sod_lpg_info(filters, cross_filters, drill_state, limit, time_grain):
     try:
-        sod_query = ''' bu, location_name, company, ms, sko, hsd, total, mode_of_receipt from sod_infra '''
-        lpg_query = ''' bu, location_name, company, installed_bottling_capacity, operating_bottling_capacity, ccoe_tankage, mode, supply from lpg_infra '''
+        sod_query = ''' sap_id, sbu, location_name, company, ms, sko, hsd, total, mode_of_receipt from sod_infra '''
+        lpg_query = ''' sap_id, sbu, location_name, company, installed_bottling_capacity, operating_bottling_capacity, ccoe_tankage, mode, supply from lpg_infra '''
 
         if filters:
             sod_query = await widget_actions.WidgetActions.apply_filter_drilldown(sod_query, filters, drill_state)
@@ -101,22 +114,22 @@ async def get_sod_lpg_info(filters, cross_filters, drill_state, limit, time_grai
         return {"error": str(e)}
 
 
-async def get_distinct_sod_lpg_info(bu: str = "", zone=None, state=None, district=None, company=None, location_name=None):
+async def get_distinct_sod_lpg_info(sbu: str = "", zone=None, state=None, district=None, company=None, location_name=None):
     try:
 
         query = '''
-            SELECT DISTINCT bu, zone, state, district, company, location_name
+            SELECT DISTINCT sbu, zone, state, district, company, location_name
             FROM (
-                SELECT bu, zone, state, district, company, location_name FROM sod_infra
+                SELECT sbu, zone, state, district, company, location_name FROM sod_infra
                 UNION
-                SELECT bu, zone, state, district, company, location_name FROM lpg_infra
+                SELECT sbu, zone, state, district, company, location_name FROM lpg_infra
             ) AS combined_infra
         '''
 
         conditions = []
 
-        if bu:
-            conditions.append(f"bu = '{bu}'")
+        if sbu:
+            conditions.append(f"sbu = '{sbu}'")
         if zone:
             zone_str = "', '".join(zone)
             conditions.append(f"zone IN ('{zone_str}')")
@@ -139,7 +152,7 @@ async def get_distinct_sod_lpg_info(bu: str = "", zone=None, state=None, distric
         result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
         rows = result.get("data", [])
 
-        bu_set =set()
+        sbu_set =set()
         zone_set = set()
         state_set = set()
         district_set = set()
@@ -147,8 +160,8 @@ async def get_distinct_sod_lpg_info(bu: str = "", zone=None, state=None, distric
         location_name_set = set()
 
         for row in rows:
-            if row.get("bu") and row["bu"].strip():
-                bu_set.add(row["bu"].strip())
+            if row.get("sbu") and row["sbu"].strip():
+                sbu_set.add(row["sbu"].strip())
             if row.get("zone") and row["zone"].strip():
                 zone_set.add(row["zone"].strip())
             if row.get("state") and row["state"].strip():
@@ -162,7 +175,7 @@ async def get_distinct_sod_lpg_info(bu: str = "", zone=None, state=None, distric
 
         return {"status": True, "message": "success",
             "data": {
-                "bu": sorted(bu_set),
+                "sbu": sorted(sbu_set),
                 "company": sorted(company_set),
                 "zone": sorted(zone_set),
                 "state": sorted(state_set),
@@ -173,3 +186,27 @@ async def get_distinct_sod_lpg_info(bu: str = "", zone=None, state=None, distric
     except Exception as e:
         print(f"Error while fetching SOD/LPG data: {e}")
         return {"error": str(e)}
+
+async def get_download_template_info(sbu):
+    try:
+        download_path = urdhva_base.settings.download_path
+        downloadpath = os.path.join(download_path)
+        template_file_path = os.path.join(download_path, f"{sbu}_Infra_template.xlsx")
+        source_file = os.path.join(downloadpath, f"{sbu}_Infra.xlsx")
+
+        if not os.path.exists(source_file):
+            return JSONResponse(status_code=404,
+                                content={"detail": f"Source CSV for '{sbu}' not found at {source_file}"})
+
+        df = pl.read_excel(source_file)
+        template_df = pl.DataFrame({col: [] for col in df.columns})
+        # template_df.write_excel(template_file_path, sheet_name=f"{sbu}")
+        temp = template_df.to_pandas()
+        temp.to_excel(template_file_path, index=False, sheet_name=f"{sbu}")
+
+        return FileResponse(path=template_file_path, media_type="application/octet-stream",
+                            filename=f"{sbu}_template.xlsx")
+
+    except Exception as e:
+        print(f"Error generating template for {sbu}: {e}")
+        return JSONResponse(status_code=500, content={"detail": f"Internal Server Error: {str(e)}"})

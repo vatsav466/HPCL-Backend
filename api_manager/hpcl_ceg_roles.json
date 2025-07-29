@@ -5166,6 +5166,12 @@
                 },
                 {
                     "name": "get_distinct_sod_lpg_infra"
+                },
+                {
+                    "name": "get_all_sod_infra"
+                },
+                {
+                    "name": "download_template"
                 }
             ]
         },
@@ -5193,6 +5199,9 @@
                 },
                 {
                     "name": "get_distinct_sod_lpg_infra"
+                },
+                {
+                    "name": "get_all_sod_infra"
                 }
             ]
         },
@@ -5232,6 +5241,12 @@
                 },
                 {
                     "name": "get_distinct_sod_lpg_infra"
+                },
+                {
+                    "name": "get_all_sod_infra"
+                },
+                {
+                    "name": "download_template"
                 }
             ]
         },
@@ -5259,6 +5274,9 @@
                 },
                 {
                     "name": "upload_lpg_file"
+                },
+                {
+                    "name": "get_all_lpg_infra"
                 }
             ]
         },
@@ -5274,6 +5292,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_all_lpg_infra"
                 }
             ]
         },
@@ -5301,6 +5322,9 @@
                 },
                 {
                     "name": "upload_lpg_file"
+                },
+                {
+                    "name": "get_all_lpg_infra"
                 }
             ]
         },
@@ -5860,8 +5884,20 @@
             "displayName": "get_distinct_sod_lpg_infra"
         },
         {
+            "name": "get_all_sod_infra",
+            "displayName": "get_all_sod_infra"
+        },
+        {
+            "name": "download_template",
+            "displayName": "download_template"
+        },
+        {
             "name": "upload_lpg_file",
             "displayName": "upload_lpg_file"
+        },
+        {
+            "name": "get_all_lpg_infra",
+            "displayName": "get_all_lpg_infra"
         }
     ]
 }

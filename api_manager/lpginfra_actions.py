@@ -4,7 +4,7 @@ import fastapi
 import pandas as pd
 import traceback
 from http.client import HTTPException
-
+from fastapi.responses import FileResponse, JSONResponse
 router = fastapi.APIRouter(prefix='/lpginfra')
 
 
@@ -21,7 +21,7 @@ async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
         print('file_location: ',file_location)
         df.to_excel(file_location, sheet_name='LPG', index=False)
         df.columns = df.columns.str.strip().str.lower()
-        df['bu'] = 'LPG'
+        df['sbu'] = 'LPG'
         df['filename'] = filename
 
         df = df.rename(
@@ -56,7 +56,7 @@ async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
         df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce').fillna(0).astype(float)
 
         merged_df = df.merge(
-            loc_df[['sap_id', 'bu', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']],
+            loc_df[['sap_id', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']],
             left_on='sap code',
             right_on='sap_id',
             how='left', suffixes=('', '_Y')
@@ -64,11 +64,11 @@ async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
 
         merged_df['sap_id'] = merged_df['sap_id'].fillna(merged_df['sap code'])
 
-        for col in ['bu', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']:
+        for col in ['sbu', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']:
             merged_df[col] = merged_df[col].fillna("")
 
         merged_df = merged_df[[
-            'sap_id', 'bu', 'zone', 'state', 'district', 'city', 'address', 'region',
+            'sap_id', 'sbu', 'zone', 'state', 'district', 'city', 'address', 'region',
             'company', 'location_name', 'name', 'installed_bottling_capacity', 'operating_bottling_capacity',
             'ccoe_tankage',
             'time_of_commissioning', 'mode', 'supply', 'latitude', 'longitude', 'filename', 'updated_by'
@@ -89,3 +89,17 @@ async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+
+# Action get_all_lpg_infra
+@router.post('/get_all_lpg_infra', tags=['LPGInfra'])
+async def lpginfra_get_all_lpg_infra(data: Lpginfra_Get_All_Lpg_InfraParams):
+    try:
+        params = urdhva_base.queryparams.QueryParams()
+        params.fields = []
+        params.limit = 0
+        resp = await LPGInfra.get_all(params, resp_type="plain")
+        return resp
+    except Exception as e:
+        print(f"Error in get_all_lpg_infra: {e}")
+        return JSONResponse(status_code=500, content={"detail": f"Internal Server Error: {str(e)}"})
