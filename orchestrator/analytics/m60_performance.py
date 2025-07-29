@@ -335,7 +335,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         status,results =  await top_ic(filters, cross_filters, drill_state, time_grain, resp_format)
         if status:
             print("status is returning")
-            print("result",results)
             return {'status':status,'message':'Success','data':results}
     print("came into m60 performance")
     def get_fiscal_year(date_ui, todays_date, same_year=False, key='YTDPM'):
@@ -542,7 +541,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
     if "fiscal_year" in [x['key'].strip('"') for x in filters]:
         fiscal_year_ui = [x['value'] for x in filters if x['key'].strip('"') == "fiscal_year"][0]
-        print("str(datetime.date.today())", str(datetime.date.today()))
         todays_date = str(datetime.date.today())
         if todays_date.split('-')[0] == fiscal_year_ui.split('-')[0]:
             if "YTD" in [x['key'].strip('"') for x in filters]:
@@ -982,15 +980,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         if existing_columns:
                             target_data = target_data.groupby(existing_columns, as_index=False)['TARGET_TMT_SALES'].sum().reset_index()
                     target_data.to_csv('/tmp/tgt_data_latest.csv',index = False)
-            print("filters at latest", filters)
             if "C" in [x['key'].strip('"') for x in filters] and "month_name" not  in target_data.columns.tolist() and "DATE"  in [x['key'].strip('"') for x in filters]:
-                print("came to month name del")
                 if 'TARGET_TMT_SALES' in target_data.columns.tolist() and "ProductName" in target_data.columns.tolist():                    
                     target_data = target_data.groupby("ProductName", as_index=False)['TARGET_TMT_SALES'].sum().reset_index()                  
             target_data.to_csv('/tmp/tgt_data_latest_latest.csv',index = False)
             target_data = target_data.to_dict(orient='records')
-            
-            
 
     # Data Retrival for current financial year
     if actual:
@@ -1357,10 +1351,13 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if resp_format == 'heat_map':
             hist_xaxis = []
             tgt_xaxis = []
-            # xAxis.extend([x['title'].split('_')[0]+'_'+x['title'].split('_')[1] for x in growth_details if '_' in x else x.split()[0]])
-            # hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
-            # hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower()
-            #                   else x for x in growth_details if isinstance(x, dict) and 'title' in x])
+            #xAxis.extend([x['title'].split('_')[0]+'_'+x['title'].split('_')[1] for x in growth_details if '_' in x else x.split()[0]])
+            #print("xaxiz",xAxis)
+            #hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
+            #hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower()
+            #                   else x for x in hist_growth_details if isinstance(x, dict) and 'title' in x])
+            print("hist_growth_details",hist_growth_details)
+            print("tgt_growth_details",tgt_growth_details)
             hist_xaxis.extend(
                 ['_'.join(x['title'].split('_')[:2]) for x in hist_growth_details if 'hist' in x['title'].lower()])
             li = None
@@ -1376,7 +1373,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 if len(hist_xaxis)!= 2:
                     req_str = '(' + li_req[0] + '-' + li_req[-1] + ')'
                     hist_xaxis[0] = hist_xaxis[0] + req_str
-                
                     
             if '"T"' in [x['key'] for x in filters]:
                 tgt_xaxis.extend(
@@ -1393,7 +1389,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         tgt_xaxis[0] = tgt_xaxis[0] + req_str
                 # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower() else x['title'].split()[0] if 'tgt' in x['title'].lower()
                 #               else x for x in growth_details if isinstance(x, dict) and 'title' in x])
-                # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower() else x['title'].split()[0] if 'tgt' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
             # xAxis.extend(['YTD'])
             if len(tgt_xaxis) > 0:
                 return {"status": True, "message": "Success",
@@ -1694,14 +1689,24 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                 if 'SALES' in col:
                     df[col] = df[col].fillna(0).astype(float)
                     sum_cols.append(col)
-
             cumulative_data = {}
             non_cumulative_data = pd.DataFrame()
             if drill_state.strip('"') == 'SBU_Name':
                 # cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[sum_cols].sum()
                 if resp_format == "heat_map":
-                    cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[
+                    cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby(['Zone_Name'], as_index=False)[
                         sum_cols].sum()
+                    #.reset_index(drop=True)
+                    
+                    print("cummu columns",cumulative_data.columns)
+                    if non_cumulative_months:
+                        non_cumulative_data = df[df['month_name'].isin(non_cumulative_months)]
+                    sample = df[df['month_name'].isin(cumulative_months)]
+                    sample.to_csv('/tmp/sample.csv',index = False)
+                    print("came here in sbu_name heatmap")
+                    print("cumulative_months",cumulative_months)
+                    print("cumulative_data",cumulative_data)
+                    cumulative_data.to_csv('/tmp/cumulative_data.csv',index = False)
                 else:
                     cumulative_data = \
                     df[df['month_name'].isin(cumulative_months)].groupby('ProductName', as_index=False)[sum_cols].sum()
@@ -1717,7 +1722,11 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                 if non_cumulative_data:
                     non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
             else:
-                cumulative_data['month_name'] = 'Apr'
+                #if len(cumulative_data['month_name'].unique().tolist()) != 1:
+                    cumulative_data['month_name'] = 'Apr-Jun'
+            
+            print("cummulative_data",cumulative_data)
+            print("non cumu data",non_cumulative_data)
             df = pd.concat([cumulative_data, non_cumulative_data])
             # making zonal summary above the exisiting heatmap
             if "month_name" in df.columns.tolist():
@@ -2113,6 +2122,106 @@ async def sbu_sales_fiscal(merged_df, filters, cross_filters, drill_state="", ti
     return results
 
 
+
+# def filter_and_map_sales_area(results, excel_path, sheet_name):
+#     import pandas as pd
+
+#     # Convert your results list to DataFrame
+#     results_df = pd.DataFrame(results)
+
+#     # Load Excel data
+#     mapping_df = pd.read_excel(excel_path, sheet_name=sheet_name)
+#     print("mapping_df types",mapping_df.dtypes)
+#     print("resuylt types",results_df.dtypes)
+#     # Perform the join on 'icSalesArea' and 'IC Sales Area Name'
+#     merged_df = results_df.merge(mapping_df, how='left', left_on='icSalesArea', right_on='IC Sales Area Name')
+
+#     # Split into matched and unmatched
+#     matched_df = merged_df[~merged_df['IC Sales Area code'].isna()].copy()
+#     # unmatched_df = merged_df[merged_df['IC Sales Area code'].isna()].copy()
+
+#     # Drop extra columns if needed
+#     matched_df.drop(columns=['IC Sales Area Name'], inplace=True, errors='ignore')
+#     # unmatched_df.drop(columns=['IC Sales Area Name'], inplace=True, errors='ignore')
+
+#     return matched_df
+
+
+def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path, second_sheet_name):
+    import pandas as pd
+
+    # Helper to clean and normalize spaces
+    def normalize_spaces(series):
+        return series.astype(str).str.replace(r'\s+', ' ', regex=True).str.strip()
+
+    # Step 1: Convert results to DataFrame
+    results_df = pd.DataFrame(results)
+
+    # Step 2: Load Excel 1 - Contains IC Sales Area Name and Code
+    mapping_df = pd.read_excel(excel_path, sheet_name=sheet_name)
+
+    # Step 3: Merge results with mapping file using 'icSalesArea'
+    merged_df = results_df.merge(
+        mapping_df,
+        how='left',
+        left_on='icSalesArea',
+        right_on='IC Sales Area Name'
+    )
+
+    # Step 4: Filter matched rows only
+    matched_df = merged_df[~merged_df['IC Sales Area code'].isna()].copy()
+    matched_df.drop(columns=['IC Sales Area Name'], inplace=True, errors='ignore')
+    print("matched df columns",matched_df.columns)
+    # Step 5: Load Excel 2 - Contains actual month-wise performance
+    additional_df = pd.read_excel(second_excel_path, sheet_name=second_sheet_name, header=1)
+    print("Second Excel Columns:", additional_df.columns.tolist())
+
+    # Step 6: Normalize sales area names in both DataFrames
+    #matched_df['icSalesArea'] = normalize_spaces(matched_df['icSalesArea'])
+    #additional_df['IC Sales Area'] = normalize_spaces(additional_df['IC Sales Area'])
+    matched_df['icSalesArea']  = matched_df['icSalesArea'].str.strip()
+    additional_df['IC Sales Area'] = additional_df['IC Sales Area'].str.strip()
+    print("matcheed df SA",matched_df['icSalesArea'].unique().tolist())
+    print("matcheed df SA",additional_df['IC Sales Area'].unique().tolist())
+    additional_df['IC Sales Area'] = additional_df['IC Sales Area'].fillna('').astype(str).apply(lambda x :x.replace('S/A','DS SA'))
+    additional_df['IC Sales Area'] = additional_df['IC Sales Area'].str.upper()
+    ''' 
+    # Step 7: Show unmatched sales area names (for debug)
+    unmatched = matched_df[~matched_df['icSalesArea'].isin(additional_df['IC Sales Area'])]
+    if not unmatched.empty:
+        print(" Warning: Some 'icSalesArea' values not found in second Excel:")
+        print(unmatched['icSalesArea'].unique())
+    print(len(matched_df))
+    print(len(additional_df))
+    matched_df.to_csv('/tmp/matched_df.csv',index = False)
+    '''
+    # Step 8: Merge with performance data
+    enriched_df = matched_df.merge(
+        additional_df,
+        how='left',
+        left_on='icSalesArea',
+        right_on='IC Sales Area',
+        indicator  = True
+        
+    )
+    enriched_df.to_csv('/tmp/enriched_df.csv',index = False)
+
+    # Step 9: Drop duplicate column
+    #enriched_df.drop(columns=['IC Sales Area'], inplace=True, errors='ignore')
+
+    # Final Output
+    print(" Final Enriched Data:")
+    print(enriched_df)
+    print(f"Total Matched Records: {len(enriched_df)}")
+
+    return enriched_df
+
+
+
+
+
+
+
 async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
     MONTH_DAY_RANGES = {
         "Apr": ("04", "30"),
@@ -2356,7 +2465,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             z = row.get("zone_name")
             r = row.get("region_name")
             s = row.get("salesarea_name")
-
+            n = row.get('Name','')
             cur_sales = float(row.get("cur_sales", 0) or 0)
             his_sales = float(row.get("his_sales", 0) or 0)
             target = target_dict.get((z, r, s), 0.0)
@@ -2374,12 +2483,14 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 "id": idx,
                 "region": r,
                 "icSalesArea": s,
+                "SalesOfficer":n,
                 "monthly": {
                     "cur": cur_sales,
                     "his": his_sales,
                     "target": target,
                     "diff_value": monthly_diff_value,
-                    "target_diff": monthly_target_diff
+                    "target_diff": monthly_target_diff,
+                    "month_name":required_month
                 },
                 "cumulative": {
                     "cur": round(cum_cur, 2),
@@ -2389,12 +2500,116 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                     "target_diff": cumulative_target_diff
                 }
             })
+ 
+        # if results:
+        #     print("results are here", results)
+        #     print(f"Number of  records: {len(results)}")
 
-        # print("results are here", results)
 
-        # Always return a tuple
-        return True, results if results else []
+        #     # Call your filter_and_map_sales_area function here
+        #     excel_path = "/tmp/Data_names.xlsx"   # <-- put your real path here
+        #     sheet_name = "Sheet1"                          # <-- your actual sheet name
+            
+        #     matched_df = filter_and_map_sales_area(results, excel_path, sheet_name)
 
+        #     # If you want to return the filtered DataFrame as a dict or list of dicts, convert it:
+        #     results = matched_df.to_dict(orient='records')
+        #     for record in results:
+        #         print(f"Number of  records: {len(results)}")
+            
+        #     # Return only matched records
+        #     return True, results
+
+        # else:
+        #     return False, "No data for current selection"
+        
+        if results:
+            print("results are here", results)
+            print(f"Total records before matching: {len(results)}")
+
+            # Excel path and sheet
+            excel_path = "/tmp/Data_names.xlsx"
+            sheet_name = "Sheet1"
+            
+            second_excel_path = "/tmp/IC_SA_Perf_Monitor.xlsx"
+            second_sheet_name = "SA_Wise_Monthly_Targets"
+            
+
+            
+            # Filter results using Excel mapping
+            enriched_df = filter_and_map_sales_area(
+                        results,
+                        excel_path,
+                        sheet_name,
+                        second_excel_path,
+                        second_sheet_name
+                    )
+
+            print("enriched df len",len(enriched_df))
+            results = pd.DataFrame(results)
+            print('ic', results['icSalesArea'].unique().tolist())
+            print("enrich",enriched_df['icSalesArea'].unique().tolist())
+            results = results.merge(enriched_df[['icSalesArea','Name']], how='left', left_on='icSalesArea', right_on='icSalesArea')
+            if 'SalesOfficer' in results.columns:
+                results['Officer'] = results['Name']
+            results = results[results['Name'].notna()]
+            results.to_csv('/tmp/res_updated.csv',index = False)
+            print('results columns', results.columns)
+            import ast
+            #results["monthly"] = results["monthly"].apply(ast.literal_eval)
+            results["month_name"] = results["monthly"].apply(lambda x: x.get("month_name", "").strip())
+            results["month_column"] = results["month_name"].str.upper()
+            def get_updated_month_value(row):
+                monthly_data = row["monthly"].copy()
+                area = row["icSalesArea"]
+                #print("area",area)
+                month_col = row["month_column"]
+                
+                monitor_df_clean = pd.read_excel('/tmp/IC_SA_Perf_Monitor.xlsx', sheet_name='SA_Wise_Monthly_Targets',skiprows = 1)
+                
+                results["icSalesArea"] = results["icSalesArea"].astype(str)
+                
+                monitor_df_clean["IC Sales Area"] = monitor_df_clean["IC Sales Area"].astype(str)
+                #print("before calculating match")
+                monitor_df_clean["IC Sales Area"] = monitor_df_clean["IC Sales Area"].str.replace("S/A","DS SA").str.upper()
+                #print("monitor_df_clean sa columns",monitor_df_clean["IC Sales Area"].unique().tolist())
+                
+                match = monitor_df_clean[monitor_df_clean["IC Sales Area"].str.strip() == area.strip()]
+                #print("month_col",month_col)
+                #print("cols",match.columns)
+                #print("match",match)
+                
+                if not match.empty and month_col in match.columns:
+                    monthly_data["target"] = match.iloc[0][month_col]
+                
+                
+                return monthly_data
+            
+            results["monthly_updated"] = results.apply(get_updated_month_value, axis=1)
+            results['monthly'] = results["monthly_updated"]
+            del results["monthly_updated"]
+            #print("cal completed")
+            #results.to_csv('/tmp/results_updasted.csv', index=False)
+            #enriched_df.to_csv('/tmp/enriched_df.csv', index=False)
+            # Replace 'results' with only matched records
+            #enriched_df = enriched_df.fillna('')
+            print("dict conversion done")
+            results = results.fillna('')
+            results = results.to_dict(orient='records')
+            
+            print(f"Matched Records (final results): {len(results)}")
+            #for r in results:
+            #    print(r)
+            for idx, row in enumerate(results, start=1):
+                row["id"] = idx
+            return True, results
+
+        else:
+            return False, "No data for current selection"
+
+        
+
+        
     except Exception as e:
         print("Error:", e)
         return False, str(e)
