@@ -396,6 +396,8 @@ class AlertFactory:
 
                 # Handle case where both Interlock and Alert are not found
                 if not alert_data_list and not il_data:
+                    print("alert_data_list ", alert_data_list)
+                    print("il_data ", il_data)
                     logger.warning("Both Interlock and Alert records not found. Skipping closure.")
                     return False, {"status": "Error", "message": "No matching interlock or alert records found"}
 
@@ -450,7 +452,7 @@ class AlertFactory:
                     logger.warning("Failed to close any alerts or interlocks")
                     return False, {"status": "Warning", "message": "Failed to close any alerts or interlocks"}
 
-            return True, {"status": "Success", "message": "Alert Closed"}
+            return True, {"status": "Success", "message": "Alert Closed", "alert_closed": alert_closed, "interlock_closed": interlock_closed}
             
         except Exception as e:
             logger.error(f"Error in alert closure: {str(e)}")
