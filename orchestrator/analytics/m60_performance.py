@@ -2485,19 +2485,19 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 "icSalesArea": s,
                 "SalesOfficer":n,
                 "monthly": {
-                    "cur": cur_sales,
-                    "his": his_sales,
+                    "cur": round(cur_sales * 1000, 2),
+                    "his": round(his_sales * 1000, 2),
                     "target": target,
                     "diff_value": monthly_diff_value,
-                    "target_diff": monthly_target_diff,
+                    "target_achieved": monthly_target_diff,
                     "month_name":required_month
                 },
                 "cumulative": {
-                    "cur": round(cum_cur, 2),
-                    "his": round(cum_his, 2),
+                    "cur": round(cum_cur * 1000, 2),
+                    "his": round(cum_his * 1000, 2),
                     "cumulativeTarget": round(cum_target, 2),
                     "diff_value": cumulative_diff_value,
-                    "target_diff": cumulative_target_diff
+                    "target_achieved": cumulative_target_diff
                 }
             })
  
@@ -2528,10 +2528,10 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             print(f"Total records before matching: {len(results)}")
 
             # Excel path and sheet
-            excel_path = "/home/novex/Data_names.xlsx"
+            excel_path = "/tmp/Data_names.xlsx"
             sheet_name = "Sheet1"
             
-            second_excel_path = "/home/novex/IC_SA_Perf_Monitor.xlsx"
+            second_excel_path = "/tmp/IC_SA_Perf_Monitor.xlsx"
             second_sheet_name = "SA_Wise_Monthly_Targets"
             
 
@@ -2559,31 +2559,91 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             #results["monthly"] = results["monthly"].apply(ast.literal_eval)
             results["month_name"] = results["monthly"].apply(lambda x: x.get("month_name", "").strip())
             results["month_column"] = results["month_name"].str.upper()
+            monitor_df_clean = pd.read_excel('/tmp/IC_SA_Perf_Monitor.xlsx', sheet_name='SA_Wise_Monthly_Targets', skiprows=1)
+            monitor_df_clean["IC Sales Area"] = (
+                monitor_df_clean["IC Sales Area"]
+                .astype(str)
+                .str.replace("S/A", "DS SA")
+                .str.upper()
+            )
+
+            # Ensure results column is string too
+            results["icSalesArea"] = results["icSalesArea"].astype(str)
+
+
             def get_updated_month_value(row):
                 monthly_data = row["monthly"].copy()
-                area = row["icSalesArea"]
-                #print("area",area)
+                area = row["icSalesArea"].strip().upper()
                 month_col = row["month_column"]
-                
-                monitor_df_clean = pd.read_excel('/tmp/IC_SA_Perf_Monitor.xlsx', sheet_name='SA_Wise_Monthly_Targets',skiprows = 1)
-                
-                results["icSalesArea"] = results["icSalesArea"].astype(str)
-                
-                monitor_df_clean["IC Sales Area"] = monitor_df_clean["IC Sales Area"].astype(str)
-                #print("before calculating match")
-                monitor_df_clean["IC Sales Area"] = monitor_df_clean["IC Sales Area"].str.replace("S/A","DS SA").str.upper()
-                #print("monitor_df_clean sa columns",monitor_df_clean["IC Sales Area"].unique().tolist())
-                
-                match = monitor_df_clean[monitor_df_clean["IC Sales Area"].str.strip() == area.strip()]
-                #print("month_col",month_col)
-                #print("cols",match.columns)
-                #print("match",match)
-                
+
+                match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+
                 if not match.empty and month_col in match.columns:
-                    monthly_data["target"] = match.iloc[0][month_col]
-                
-                
+                    try:
+                        new_target = float(match.iloc[0][month_col])
+                    except:
+                        new_target = 0.0
+
+                    monthly_data["target"] = new_target
+                    cur = monthly_data.get("cur", 0.0)
+
+                    if new_target != 0:
+                        monthly_data["target_achieved"] = round((cur / new_target) * 100, 2)
+                    else:
+                        monthly_data["target_achieved"] = None
+
                 return monthly_data
+
+
+            def get_updated_cumulative_value(row):
+                cumulative_data = row["cumulative"].copy()
+                area = row["icSalesArea"].strip().upper()
+                selected_month = row["month_column"]
+
+                match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+
+                if not match.empty:
+                    month_order = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
+                    if selected_month in month_order:
+                        idx = month_order.index(selected_month)
+                        cumulative_months = month_order[:idx + 1]
+
+                        try:
+                            new_cum_target = sum(
+                                float(match.iloc[0][m]) if m in match.columns and pd.notnull(match.iloc[0][m]) else 0.0
+                                for m in cumulative_months
+                            )
+                        except:
+                            new_cum_target = 0.0
+
+                        cumulative_data["cumulativeTarget"] = round(new_cum_target, 2)
+                        cum_cur = cumulative_data.get("cur", 0.0)
+
+                        if new_cum_target != 0:
+                            cumulative_data["target_achieved"] = round((cum_cur / new_cum_target) * 100, 2)
+                        else:
+                            cumulative_data["target_achieved"] = None
+
+                return cumulative_data
+
+
+            # Apply to results
+            results["monthly"] = results.apply(get_updated_month_value, axis=1)
+            results["cumulative"] = results.apply(get_updated_cumulative_value, axis=1)
+
+        #print("cal completed")
+        #results.to_csv('/tmp/results_updasted.csv', index=False)
+        #enriched_df.to_csv('/tmp/enriched_df.csv', index=False)
+        # Replace 'results' with only matched records
+        #enriched_df = enriched_df.fillna('')
+        #results = results.fillna('')
+        #results = results.to_dict(orient='records')
+        #print(f"Matched Records (final results): {len(results)}")
+        #for r in results:
+        #    print(r)
+        #for idx, row in enumerate(results, start=1):
+        #    row["id"] = idx
+
             
             results["monthly_updated"] = results.apply(get_updated_month_value, axis=1)
             results['monthly'] = results["monthly_updated"]
