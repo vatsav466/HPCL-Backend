@@ -333,6 +333,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         print("call thhe function")
 
         status,results =  await top_ic(filters, cross_filters, drill_state, time_grain, resp_format)
+        if isinstance(results,str):
+            return False, "No data for current selection"
         if status:
             print("status is returning")
             return {'status':status,'message':'Success','data':results}
@@ -2146,7 +2148,6 @@ async def sbu_sales_fiscal(merged_df, filters, cross_filters, drill_state="", ti
 
 #     return matched_df
 
-
 def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path, second_sheet_name):
     import pandas as pd
 
@@ -2167,11 +2168,11 @@ def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path
         left_on='icSalesArea',
         right_on='IC Sales Area Name'
     )
-
     # Step 4: Filter matched rows only
-    matched_df = merged_df[~merged_df['IC Sales Area code'].isna()].copy()
-    matched_df.drop(columns=['IC Sales Area Name'], inplace=True, errors='ignore')
-    print("matched df columns",matched_df.columns)
+    matched_df = merged_df.copy()
+    #matched_df = merged_df[~merged_df['IC Sales Area code'].isna()].copy()
+    #matched_df.drop(columns=['IC Sales Area Name'], inplace=True, errors='ignore')
+    
     # Step 5: Load Excel 2 - Contains actual month-wise performance
     additional_df = pd.read_excel(second_excel_path, sheet_name=second_sheet_name, header=1)
     print("Second Excel Columns:", additional_df.columns.tolist())
@@ -2180,11 +2181,20 @@ def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path
     #matched_df['icSalesArea'] = normalize_spaces(matched_df['icSalesArea'])
     #additional_df['IC Sales Area'] = normalize_spaces(additional_df['IC Sales Area'])
     matched_df['icSalesArea']  = matched_df['icSalesArea'].str.strip()
+    
+    matched_df['icSalesArea'] = matched_df['icSalesArea'].apply(lambda x: ' '.join(x.split()) if '-' not in x else x)
     additional_df['IC Sales Area'] = additional_df['IC Sales Area'].str.strip()
-    print("matcheed df SA",matched_df['icSalesArea'].unique().tolist())
-    print("matcheed df SA",additional_df['IC Sales Area'].unique().tolist())
+
     additional_df['IC Sales Area'] = additional_df['IC Sales Area'].fillna('').astype(str).apply(lambda x :x.replace('S/A','DS SA'))
     additional_df['IC Sales Area'] = additional_df['IC Sales Area'].str.upper()
+    additional_df['IC Sales Area'] = additional_df['IC Sales Area'].apply(lambda x: ' '.join(x.split()) if '-' not in x else x)
+    
+    
+    
+   
+    ic_sales_area_list = matched_df['icSalesArea'].tolist()
+    ic_additional = additional_df['IC Sales Area'].tolist()
+    
     ''' 
     # Step 7: Show unmatched sales area names (for debug)
     unmatched = matched_df[~matched_df['icSalesArea'].isin(additional_df['IC Sales Area'])]
@@ -2204,20 +2214,11 @@ def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path
         indicator  = True
         
     )
-    enriched_df.to_csv('/tmp/enriched_df.csv',index = False)
 
     # Step 9: Drop duplicate column
     #enriched_df.drop(columns=['IC Sales Area'], inplace=True, errors='ignore')
 
-    # Final Output
-    print(" Final Enriched Data:")
-    print(enriched_df)
-    print(f"Total Matched Records: {len(enriched_df)}")
-
     return enriched_df
-
-
-
 
 
 
@@ -2525,13 +2526,13 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
         
         if results:
             print("results are here", results)
-            print(f"Total records before matching: {len(results)}")
+           
 
             # Excel path and sheet
-            excel_path = "/tmp/Data_names.xlsx"
+            excel_path = "/home/novex/Data_names.xlsx"
             sheet_name = "Sheet1"
             
-            second_excel_path = "/tmp/IC_SA_Perf_Monitor.xlsx"
+            second_excel_path = "/home/novex/IC_SA_Perf_Monitor.xlsx"
             second_sheet_name = "SA_Wise_Monthly_Targets"
             
 
@@ -2545,21 +2546,28 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                         second_sheet_name
                     )
 
-            print("enriched df len",len(enriched_df))
+            # print("enriched df len",len(enriched_df))
+            if enriched_df.empty:
+                print("No data for current selection")
+                return False, "No data for current selection"
             results = pd.DataFrame(results)
-            print('ic', results['icSalesArea'].unique().tolist())
-            print("enrich",enriched_df['icSalesArea'].unique().tolist())
-            results = results.merge(enriched_df[['icSalesArea','Name']], how='left', left_on='icSalesArea', right_on='icSalesArea')
+            # print("Filtered results length----->>>>:", len(results))
+            # print('ic', results['icSalesArea'].unique().tolist())
+          
+            #results = results.merge(enriched_df[['icSalesArea','Name']], how='left', left_on='icSalesArea', right_on='icSalesArea')
+            results = enriched_df
             if 'SalesOfficer' in results.columns:
                 results['Officer'] = results['Name']
-            results = results[results['Name'].notna()]
-            results.to_csv('/tmp/res_updated.csv',index = False)
-            print('results columns', results.columns)
+            # results = results[results['Name'].notna()]
+            # print("results len",len(results))
+            results.to_csv('/Users/apple/Downloads/res_updated.csv',index = False)
+            # print('results columns', results.columns)
+            
             import ast
             #results["monthly"] = results["monthly"].apply(ast.literal_eval)
             results["month_name"] = results["monthly"].apply(lambda x: x.get("month_name", "").strip())
             results["month_column"] = results["month_name"].str.upper()
-            monitor_df_clean = pd.read_excel('/tmp/IC_SA_Perf_Monitor.xlsx', sheet_name='SA_Wise_Monthly_Targets', skiprows=1)
+            monitor_df_clean = pd.read_excel('/Users/apple/Downloads/IC_SA_Perf_Monitor.xlsx', sheet_name='SA_Wise_Monthly_Targets', skiprows=1)
             monitor_df_clean["IC Sales Area"] = (
                 monitor_df_clean["IC Sales Area"]
                 .astype(str)
@@ -2569,6 +2577,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
 
             # Ensure results column is string too
             results["icSalesArea"] = results["icSalesArea"].astype(str)
+            print("results---->",len(results))
 
 
             def get_updated_month_value(row):
@@ -2645,16 +2654,18 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
         #    row["id"] = idx
 
             
-            results["monthly_updated"] = results.apply(get_updated_month_value, axis=1)
-            results['monthly'] = results["monthly_updated"]
-            del results["monthly_updated"]
+            # results["monthly_updated"] = results.apply(get_updated_month_value, axis=1)
+            # results['monthly'] = results["monthly_updated"]
+            # del results["monthly_updated"]
             #print("cal completed")
             #results.to_csv('/tmp/results_updasted.csv', index=False)
             #enriched_df.to_csv('/tmp/enriched_df.csv', index=False)
             # Replace 'results' with only matched records
             #enriched_df = enriched_df.fillna('')
             print("dict conversion done")
+            results = results.astype({col: str for col in results.select_dtypes(include='category').columns})
             results = results.fillna('')
+            # results.to_csv('/Users/apple/Downloads/res_upd.csv', index=False) 
             results = results.to_dict(orient='records')
             
             print(f"Matched Records (final results): {len(results)}")
@@ -2662,6 +2673,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             #    print(r)
             for idx, row in enumerate(results, start=1):
                 row["id"] = idx
+            
             return True, results
 
         else:
