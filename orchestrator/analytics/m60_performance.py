@@ -2528,10 +2528,10 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             print(f"Total records before matching: {len(results)}")
 
             # Excel path and sheet
-            excel_path = "/tmp/Data_names.xlsx"
+            excel_path = "/home/novex/Data_names.xlsx"
             sheet_name = "Sheet1"
             
-            second_excel_path = "/tmp/IC_SA_Perf_Monitor.xlsx"
+            second_excel_path = "/home/novex/IC_SA_Perf_Monitor.xlsx"
             second_sheet_name = "SA_Wise_Monthly_Targets"
             
 
