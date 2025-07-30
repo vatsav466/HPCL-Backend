@@ -480,33 +480,33 @@ class Postgresql:
                             is_close_alert, interlock_name, device_msg = result
                             # Now proceed to create alert
                         
-                        print("device_msg --> ", device_msg)
-                        # Prepare alert data
-                        if interlock_name != '' and interlock_name is not None:
-                            alert_data = {
-                                'bu': 'TAS',
-                                'sop_id': sop_id,
-                                'sap_id': record.get('sap_id'),
-                                'interlock_name': interlock_name,
-                                'severity': severity,
-                                'alert_id': str(uuid.uuid1()),
-                                'device_name': str(record.get('manual_fan_count', '')),
-                                'device_type': 'Gantry',
-                                'vehicle_number': record.get('truck_number', ''),
-                                'message': device_msg,
-                                'alert_section': 'TAS'
-                            }
+                            print("device_msg --> ", device_msg)
+                            # Prepare alert data
+                            if interlock_name != '' and interlock_name is not None:
+                                alert_data = {
+                                    'bu': 'TAS',
+                                    'sop_id': sop_id,
+                                    'sap_id': record.get('sap_id'),
+                                    'interlock_name': interlock_name,
+                                    'severity': severity,
+                                    'alert_id': str(uuid.uuid1()),
+                                    'device_name': str(record.get('manual_fan_count', '')),
+                                    'device_type': 'Gantry',
+                                    'vehicle_number': record.get('truck_number', ''),
+                                    'message': device_msg,
+                                    'alert_section': 'TAS'
+                                }
 
-                            # Create alert for non-zero records
-                            success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-                            
-                            # Close alert if needed
-                            if is_close_alert:
-                                await self.close_created_alert(alert_data=alert_data)
+                                # Create alert for non-zero records
+                                success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
                                 
-                            # Mark record as processed
-                            query = f"UPDATE {table_db_name} SET alert_created = true WHERE id = {record['id']}"
-                            await model.update_by_query(query)
+                                # Close alert if needed
+                                if is_close_alert:
+                                    await self.close_created_alert(alert_data=alert_data)
+                                    
+                                # Mark record as processed
+                                query = f"UPDATE {table_db_name} SET alert_created = true WHERE id = {record['id']}"
+                                await model.update_by_query(query)
                     
                     return {"status": "Table updated and alerts processed for non-zero records"}
                 else:
