@@ -2074,8 +2074,8 @@ Model HostPltDetails {
     trans_end_time optional datetime
     cum_start_gross_vol_kl optional int
     cum_end_gross_vol_kl optional int
-    cum_start_mass_mt optional int
-    cum_end_mass_mt optional int
+    cum_start_mass_mt optional str
+    cum_end_mass_mt optional str
     uncorr_vol_kl optional int
     mass_mt optional int
     sap_id optional unique_field str
