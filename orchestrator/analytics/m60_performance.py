@@ -2488,7 +2488,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 "monthly": {
                     "cur": round(cur_sales * 1000, 2),
                     "his": round(his_sales * 1000, 2),
-                    "target": target,
+                    #"target": target,
+                    "target":round(target * 1000,2),
                     "diff_value": monthly_diff_value,
                     "target_achieved": monthly_target_diff,
                     "month_name":required_month
