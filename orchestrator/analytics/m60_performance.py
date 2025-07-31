@@ -2470,38 +2470,51 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             cur_sales = float(row.get("cur_sales", 0) or 0)
             his_sales = float(row.get("his_sales", 0) or 0)
             target = target_dict.get((z, r, s), 0.0)
+            
 
             cum_cur = cum_sales_dict.get((z, r, s), {}).get("cum_cur_sales", 0.0)
             cum_his = cum_sales_dict.get((z, r, s), {}).get("cum_his_sales", 0.0)
             cum_target = cumulative_target_dict.get((z, r, s), 0.0)
+            cur_sales_mt = cur_sales * 1000
+            his_sales_mt = his_sales * 1000
+            target_mt = target * 1000
+            cum_cur_mt = cum_cur * 1000
+            cum_his_mt = cum_his * 1000
+            cum_target_mt = cum_target * 1000
 
-            monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
-            monthly_target_diff = round((cur_sales / target) * 100, 2) if target != 0 else None
+            # monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
+            # monthly_target_diff = round((cur_sales / target) * 100, 2) if target != 0 else None
+            
+            monthly_diff_value = round(((cur_sales_mt - his_sales_mt) / his_sales_mt) * 100, 2) if his_sales_mt != 0 else None
+            monthly_target_diff = round((cur_sales_mt / target_mt) * 100, 2) if target_mt != 0 else None
 
-            cumulative_diff_value = round(((cum_cur - cum_his) / cum_his) * 100, 2) if cum_his != 0 else None
-            cumulative_target_diff = round((cum_cur / cum_target) * 100, 2) if cum_target != 0 else None
+            # cumulative_diff_value = round(((cum_cur - cum_his) / cum_his) * 100, 2) if cum_his != 0 else None
+            # cumulative_target_diff = round((cum_cur / cum_target) * 100, 2) if cum_target != 0 else None
+            cumulative_diff_value = round(((cum_cur_mt - cum_his_mt) / cum_his_mt) * 100, 2) if cum_his_mt != 0 else None
+            cumulative_target_diff = round((cum_cur_mt / cum_target_mt) * 100, 2) if cum_target_mt != 0 else None
             results.append({
                 "id": idx,
                 "region": r,
                 "icSalesArea": s,
-                "SalesOfficer":n,
+                "SalesOfficer": n,
                 "monthly": {
-                    "cur": round(cur_sales * 1000, 2),
-                    "his": round(his_sales * 1000, 2),
-                    #"target": target,
-                    "target":round(target * 1000,2),
+                    "cur": round(cur_sales_mt, 2),
+                    "his": round(his_sales_mt, 2),
+                    "target": round(target_mt, 2),
                     "diff_value": monthly_diff_value,
                     "target_achieved": monthly_target_diff,
-                    "month_name":required_month
+                    "month_name": required_month
                 },
                 "cumulative": {
-                    "cur": round(cum_cur * 1000, 2),
-                    "his": round(cum_his * 1000, 2),
-                    "cumulativeTarget": round(cum_target, 2),
+                    "cur": round(cum_cur_mt, 2),
+                    "his": round(cum_his_mt, 2),
+                    "cumulativeTarget": round(cum_target_mt, 2),
                     "diff_value": cumulative_diff_value,
                     "target_achieved": cumulative_target_diff
                 }
             })
+            
+ 
  
         # if results:
         #     print("results are here", results)
@@ -2568,7 +2581,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             #results["monthly"] = results["monthly"].apply(ast.literal_eval)
             results["month_name"] = results["monthly"].apply(lambda x: x.get("month_name", "").strip())
             results["month_column"] = results["month_name"].str.upper()
-            monitor_df_clean = pd.read_excel('/Users/apple/Downloads/IC_SA_Perf_Monitor.xlsx', sheet_name='SA_Wise_Monthly_Targets', skiprows=1)
+            monitor_df_clean = pd.read_excel('/home/novex/IC_SA_Perf_Monitor.xlsx', sheet_name='SA_Wise_Monthly_Targets', skiprows=1)
             monitor_df_clean["IC Sales Area"] = (
                 monitor_df_clean["IC Sales Area"]
                 .astype(str)
