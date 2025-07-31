@@ -2574,7 +2574,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 results['Officer'] = results['Name']
             # results = results[results['Name'].notna()]
             # print("results len",len(results))
-            results.to_csv('/Users/apple/Downloads/res_updated.csv',index = False)
+            # results.to_csv('/Users/apple/Downloads/res_updated.csv',index = False)
             # print('results columns', results.columns)
             
             import ast
