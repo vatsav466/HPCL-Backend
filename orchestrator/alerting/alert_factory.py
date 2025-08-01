@@ -304,6 +304,9 @@ class AlertFactory:
                 
             # Get redis connection for later use
             redis_ins = await urdhva_base.redispool.get_redis_connection()
+
+            interlock_closed = False
+            alert_closed = False
             
             # Handle case with explicit interlock_id
             if 'interlock_id' in alert_data:
@@ -347,6 +350,8 @@ class AlertFactory:
                     # Update the alert record
                     data_obj = hpcl_ceg_model.Alerts(**al_data)
                     await data_obj.modify()
+                    interlock_closed = True
+                    alert_closed = True
                     logger.info(f"Closed alert with ID: {alert_data['alert_id']}")
                 except Exception as e:
                     print(traceback.format_exc())
