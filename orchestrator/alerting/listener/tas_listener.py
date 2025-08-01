@@ -140,7 +140,10 @@ async def tas_listener(rmsg):
             is_duplicate = await duplicates_check.duplicate_check(alertdata)
             
             if is_duplicate:
-                logger.info(f"Alert already exists (duplicate) for: {alertdata}")
+                if alertdata['interlock_name'] in ["BCU Permissive Off", "BCU Permissive Off_Fail"]:
+                    await create_alert(alertdata)
+                else:
+                    logger.info(f"Alert already exists (duplicate) for: {alertdata}")
             else:
                 logger.info("*"*100)
                 logger.info(f"alertdata ------> {alertdata}")

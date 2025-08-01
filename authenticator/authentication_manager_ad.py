@@ -42,6 +42,41 @@ class AuthenticationManager:
             return False
 
     @classmethod
+    def get_access_token(cls):
+        """
+        Get access token using Basic Authentication
+
+        Returns:
+            True if token obtained successfully, False otherwise
+        """
+        try:
+            token_url = urdhva_base.settings.openldap_token_url
+            client_username = urdhva_base.settings.openldap_client_username
+            client_password = urdhva_base.settings.openldap_client_password
+
+            credentials = base64.b64encode(f"{client_username}:{client_password}".encode()).decode()
+            headers = {
+                'Authorization': f'Basic {credentials}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
+            }
+            token_data = {'grant_type': 'client_credentials'}
+            response = requests.post(
+                token_url,
+                data=token_data,
+                headers=headers,
+                timeout=30
+            )
+            response.raise_for_status()
+            token_response = response.json()
+            access_token = token_response.get('access_token')           
+            return access_token
+        
+        except Exception as e:
+            print(f"Error getting token: {e}")
+            return False
+
+    @classmethod
     async def validate_open_ldap_auth(cls, username, password):
         """
 
@@ -52,14 +87,38 @@ class AuthenticationManager:
         Returns:
 
         """
-        url = urdhva_base.settings.open_ldap_url
-        headers = {'Content-Type': 'application/json'}
-        response = requests.post(url, data=json.dumps({"user_id": username, "password": password}), headers=headers, timeout=15)
-        if int(response.status_code // 200) == 1:
-            resp = response.json()
-            if resp.get('success') in ('true', True):
-                return True
-        return False
+        auth_url = urdhva_base.settings.openldap_auth_url
+        access_token = cls.get_access_token()
+        if not access_token:
+            return False
+        try:
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+            auth_data = {
+                'user_id': username,
+                'password': password
+            }
+
+            response = requests.post(
+                auth_url,
+                headers=headers,
+                json=auth_data,
+                timeout=30
+            )
+            response.raise_for_status()
+            result = response.json()
+
+            if isinstance(result, dict):
+                if result.get('success') in ('true', True):
+                    return True
+            return False
+        except Exception as e:
+            print(f"Error checking authentication: {e}")
+            return False
+        
 
     @classmethod
     async def login(cls, username, password, login_type):
