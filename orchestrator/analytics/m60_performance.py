@@ -2182,6 +2182,9 @@ def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path
     # Step 6: Normalize sales area names in both DataFrames
     #matched_df['icSalesArea'] = normalize_spaces(matched_df['icSalesArea'])
     #additional_df['IC Sales Area'] = normalize_spaces(additional_df['IC Sales Area'])
+    matched_df['icSalesArea'] = matched_df['icSalesArea'].apply(
+                lambda x: ' '.join(x.split()).upper() if x != x.upper() and '-' not in x else x.upper()
+            )
     matched_df['icSalesArea']  = matched_df['icSalesArea'].str.strip()
     
     matched_df['icSalesArea'] = matched_df['icSalesArea'].apply(lambda x: ' '.join(x.split()) if '-' not in x else x)
@@ -2590,6 +2593,9 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 return False, "No data for current selection"
             results = pd.DataFrame(results)
             results['icSalesArea'] = results['icSalesArea'].apply(lambda x: ' '.join(x.split()) if '-' not in x else x)
+            results['icSalesArea'] = results['icSalesArea'].apply(
+                lambda x: ' '.join(x.split()).upper() if x != x.upper() and '-' not in x else x.upper()
+            )
             # results["icSalesArea"] = results["icSalesArea"].apply(
             #     lambda x: x if "DS SA" in x else f"{x} DS SA"
             # )

@@ -281,12 +281,18 @@ async def fetch_sales_data():
         
 
         # For current month data
-        month_start = helpers.get_time_stamp_by_delta(with_month_start_day=True)
-        if month_start.split('-')[-1] == '01' and( datetime.datetime.today().strftime('%d-%m-%Y').split('-')[-1] == '01' or datetime.datetime.today().strftime('%d-%m-%Y').split('-')[-1] == '1'): 
-            yesterday_date = month_start
-        print("yesterday_date",yesterday_date)
+       # month_start = helpers.get_time_stamp_by_delta(with_month_start_day=True)
+
+        date = urdhva_base.utilities.get_present_time()
+        date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                   date_time_format=None)
+        month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                                   date_time_format="%Y-%m-%d")
+        #if month_start.split('-')[-1] == '01' and( datetime.datetime.today().strftime('%d-%m-%Y').split('-')[0] == '01' or datetime.datetime.today().strftime('%d-%m-%Y').split('-')[0] == '1'): 
+        #    yesterday_temp_date = month_start
+        #print("yesterday_date",yesterday_temp_date)
         filters = {"filters": [actual, history, cumulative,
-                               {"key": "\"DATE\"", "cond": "equals", "value": f"{month_start},{yesterday_date}"}],
+                               {"key": "\"DATE\"", "cond": "equals", "value": f"{month_start},{date_yes}"}],
                    "cross_filters": [], "drill_state": ""}
         
         if sbu_filter:
@@ -458,7 +464,7 @@ async def get_alert_data(alert_section):
                                                date_time_format=None)
     month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
                                                date_time_format="%Y-%m-%d")
-    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime("%Y-%m-%d")}'" # As per HPCL request changed the date to be in the present month
+    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'" # As per HPCL request changed the date to be in the present month
     query = f"""SELECT count(alert_section), bu, alert_section, severity FROM alerts where alert_status='Open' and 
     alert_section='{alert_section}' and {date_filter} GROUP BY bu, alert_section, severity"""
     alerts = await hpcl_ceg_model.Alerts.get_aggr_data(query)
@@ -478,9 +484,18 @@ async def get_alert_data(alert_section):
 async def publish_daily_novex_status_email():
     date = urdhva_base.utilities.get_present_time()
     date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                         date_time_format=None)
+                                                       date_time_format=None)
     report_generated_time = date.strftime('%I:%M %p')
-    status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
+    if date.strftime('%Y-%m-%d').split('-')[-1] == '01' or date.strftime('%Y-%m-%d').split('-')[-1] == '1':
+        print("datde inside if",date)
+        status_yes_date = date
+        tmp_date = urdhva_base.utilities.get_present_time()
+        tmp_date_yes = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+        tmp_date_start = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=True,
+                                               date_time_format=None)
+
+        status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
                    'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
                                                                                date_time_format='%d-%B-%Y'),
                    'today_week': date.strftime('%A'), 'yesterday_week':
@@ -489,7 +504,21 @@ async def publish_daily_novex_status_email():
                    'today': date.strftime('%d-%B-%Y'),
                    'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
                                                                           date_time_format='%d-%B-%Y'),
+                   'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
+                  # 'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
+    else:
+         status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
+                   'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                               date_time_format='%d-%B-%Y'),
+                   'today_week': date.strftime('%A'), 'yesterday_week':
+                       helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                 date_time_format='%A'),
+                   'today': date.strftime('%d-%B-%Y'),
+                   'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                          date_time_format='%d-%B-%Y'),
+                  # 'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
                    'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
+
     status_data.update(await fetch_sales_data())
     # print("status_data before :", status_data)
     status_data.update(await fetch_dryout_data())
