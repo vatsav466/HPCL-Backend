@@ -2175,7 +2175,9 @@ def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path
     
     # Step 5: Load Excel 2 - Contains actual month-wise performance
     additional_df = pd.read_excel(second_excel_path, sheet_name=second_sheet_name, header=1)
-    print("Second Excel Columns:", additional_df.columns.tolist())
+    
+    # print('additional_df', additional_df['IC Sales Area'].unique().tolist())
+    # print("Second Excel Columns:", additional_df.columns.tolist())
 
     # Step 6: Normalize sales area names in both DataFrames
     #matched_df['icSalesArea'] = normalize_spaces(matched_df['icSalesArea'])
@@ -2214,9 +2216,12 @@ def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path
         indicator  = True
         
     )
+    print('additional_df--->', additional_df['IC Sales Area'].unique().tolist())
 
     # Step 9: Drop duplicate column
     #enriched_df.drop(columns=['IC Sales Area'], inplace=True, errors='ignore')
+    # print("Final enriched_df full data:\n", enriched_df)
+    # print('enriched_df', enriched_df['IC Sales Area'].unique().tolist())    
 
     return enriched_df
 
@@ -2292,7 +2297,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
         return current_start, current_end, hist_start, hist_end
 
     try:
-        print("came from day id ranges")
+        # print("came from day id ranges")
         print("filters", filters)
 
         # Safely get required_year and required_month or return error
@@ -2321,21 +2326,38 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
 
         # Add filter conditions only if non-empty
         conditions = []
-        if 'Zone_Name' in [x['key'].strip('"') for x in filters]:
-            req_zone = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'Zone_Name'][0]
-            # if req_zone != "":
-            if req_zone not in ["", "All"]:
-                conditions.append(f'"Zone_Name" = \'{req_zone}\'')
-        if 'Region_Name' in [x['key'].strip('"') for x in filters]:
-            req_region = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'Region_Name'][0]
-            # if req_region != "":
-            if req_region not in ["", "All"]:
-                conditions.append(f'"Region_Name" = \'{req_region}\'')
-        if 'SalesArea_Name' in [x['key'].strip('"') for x in filters]:
-            req_salesarea = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'SalesArea_Name'][0]
-            # if req_salesarea != "":
-            if req_salesarea not in ["", "All"]:
-                conditions.append(f'"SalesArea_Name" = \'{req_salesarea}\'')
+        # if 'Zone_Name' in [x['key'].strip('"') for x in filters]:
+        #     req_zone = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'Zone_Name'][0]
+        #     # if req_zone != "":
+        #     if req_zone not in ["", "All"]:
+        #         conditions.append(f'"Zone_Name" = \'{req_zone}\'')
+        # if 'Region_Name' in [x['key'].strip('"') for x in filters]:
+        #     req_region = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'Region_Name'][0]
+        #     # if req_region != "":
+        #     if req_region not in ["", "All"]:
+        #         conditions.append(f'"Region_Name" = \'{req_region}\'')
+        # if 'SalesArea_Name' in [x['key'].strip('"') for x in filters]:
+        #     req_salesarea = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'SalesArea_Name'][0]
+        #     # if req_salesarea != "":
+        #     if req_salesarea not in ["", "All"]:
+        #         conditions.append(f'"SalesArea_Name" = \'{req_salesarea}\'')
+        for col in ['Zone_Name', 'Region_Name', 'SalesArea_Name']:
+            for f in filters:
+                key = f['key'].strip('"')
+                cond = f.get('cond', '').lower()
+                value = f.get('value', '').strip()
+
+                if key == col:
+                    if cond == 'in':
+                        val_list = [v.strip() for v in value.split(',') if v not in ["", "All"]]
+                        if val_list:
+                            in_clause = ", ".join(f"'{v}'" for v in val_list)
+                            conditions.append(f'"{col}" IN ({in_clause})')
+                    elif cond == 'equals':
+                        if value not in ["", "All"]:
+                            conditions.append(f'"{col}" = \'{value}\'')
+
+
 
         if conditions:
             base_query += " AND " + " AND ".join(conditions)
@@ -2546,8 +2568,10 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             excel_path = "/home/novex/Data_names.xlsx"
             sheet_name = "Sheet1"
             
-            second_excel_path = "/home/novex/IC_SA_Perf_Monitor.xlsx"
+            # second_excel_path = "/home/novex/IC_SA_Perf_Monitor.xlsx"
+            second_excel_path = "/home/novex/Copy_IC_SA.xlsx"
             second_sheet_name = "SA_Wise_Monthly_Targets"
+            
             
 
             
@@ -2565,11 +2589,16 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 print("No data for current selection")
                 return False, "No data for current selection"
             results = pd.DataFrame(results)
+            results['icSalesArea'] = results['icSalesArea'].apply(lambda x: ' '.join(x.split()) if '-' not in x else x)
+            # results["icSalesArea"] = results["icSalesArea"].apply(
+            #     lambda x: x if "DS SA" in x else f"{x} DS SA"
+            # )
             # print("Filtered results length----->>>>:", len(results))
             # print('ic', results['icSalesArea'].unique().tolist())
           
-            #results = results.merge(enriched_df[['icSalesArea','Name']], how='left', left_on='icSalesArea', right_on='icSalesArea')
-            results = enriched_df
+            results = results.merge(enriched_df[['icSalesArea','Name']], how='left', left_on='icSalesArea', right_on='icSalesArea')
+            
+            # results = enriched_df
             if 'SalesOfficer' in results.columns:
                 results['Officer'] = results['Name']
             # results = results[results['Name'].notna()]
@@ -2581,7 +2610,10 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             #results["monthly"] = results["monthly"].apply(ast.literal_eval)
             results["month_name"] = results["monthly"].apply(lambda x: x.get("month_name", "").strip())
             results["month_column"] = results["month_name"].str.upper()
-            monitor_df_clean = pd.read_excel('/home/novex/IC_SA_Perf_Monitor.xlsx', sheet_name='SA_Wise_Monthly_Targets', skiprows=1)
+            # print("Converted month_column to uppercase:\n", results["month_column"].unique())
+            
+            monitor_df_clean = pd.read_excel('/home/novex/Copy_IC_SA.xlsx', sheet_name='SA_Wise_Monthly_Targets', skiprows=1)
+            # print("Monitor sheet loaded:", monitor_df_clean.shape)
             monitor_df_clean["IC Sales Area"] = (
                 monitor_df_clean["IC Sales Area"]
                 .astype(str)
@@ -2591,7 +2623,9 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
 
             # Ensure results column is string too
             results["icSalesArea"] = results["icSalesArea"].astype(str)
-            print("results---->",len(results))
+            # print("results---->",len(results))
+            # print("Results DataFrame row count:", len(results))
+            # print("Unique icSalesArea in results:\n", results["icSalesArea"].unique()[:5])
 
 
             def get_updated_month_value(row):
@@ -2676,7 +2710,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             #enriched_df.to_csv('/tmp/enriched_df.csv', index=False)
             # Replace 'results' with only matched records
             #enriched_df = enriched_df.fillna('')
-            print("dict conversion done")
+            # print("dict conversion done")
             results = results.astype({col: str for col in results.select_dtypes(include='category').columns})
             results = results.fillna('')
             # results.to_csv('/Users/apple/Downloads/res_upd.csv', index=False) 
