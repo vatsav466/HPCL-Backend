@@ -1379,9 +1379,9 @@ ORDER BY
                                         "ZOName" IS NOT NULL ''',        
 
     'lpg_operations_current_month_cylinder_filled': ''' SELECT
-                                                            ROUND(SUM("cylfilled"::numeric)/100000, 2) AS "Cylinders_Filled"
+                                                            (SUM(bottling_14_2kg) + SUM(bottling_19kg)) AS "Cylinders_Filled"
                                                         FROM
-                                                            "lpg_cs_rejections"
+                                                            "lpg_operations_summary"
                                                         WHERE
                                                             DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
 
