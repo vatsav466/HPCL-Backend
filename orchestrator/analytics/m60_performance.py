@@ -2318,14 +2318,23 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 "Zone_Name" AS Zone_Name,
                 "Region_Name" AS Region_Name,
                 "SalesArea_Name" AS SalesArea_Name,
-                ROUND(SUM(CASE WHEN "DAY_ID" BETWEEN '{cur_start}' AND '{cur_end}' THEN "NETWEIGHT_TMT" ELSE 0 END)::numeric, 2) AS cur_sales,
-                ROUND(SUM(CASE WHEN "DAY_ID" BETWEEN '{hist_start}' AND '{hist_end}' THEN "NETWEIGHT_TMT" ELSE 0 END)::numeric, 2) AS his_sales
+                ROUND(
+                    SUM(ROUND("NETWEIGHT_TMT"::numeric, 2)) FILTER (
+                        WHERE "DAY_ID" BETWEEN '{cur_start}' AND '{cur_end}'
+                    ) * 1000, 2
+                ) AS cur_sales,
+                ROUND(
+                    SUM(ROUND("NETWEIGHT_TMT"::numeric, 2)) FILTER (
+                        WHERE "DAY_ID" BETWEEN '{hist_start}' AND '{hist_end}'
+                    ) * 1000, 2
+                ) AS his_sales
             FROM public."MOM_DAY_LEVEL_DATA"
             WHERE "SBU_Name" = 'I&C'
-              AND "Zone_Name" IS NOT NULL
-              AND "Region_Name" IS NOT NULL
-              AND "SalesArea_Name" IS NOT NULL
-        """
+            AND "Zone_Name" IS NOT NULL
+            AND "Region_Name" IS NOT NULL
+            AND "SalesArea_Name" IS NOT NULL
+            
+            """
 
         # Add filter conditions only if non-empty
         conditions = []
@@ -2500,18 +2509,20 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             cum_cur = cum_sales_dict.get((z, r, s), {}).get("cum_cur_sales", 0.0)
             cum_his = cum_sales_dict.get((z, r, s), {}).get("cum_his_sales", 0.0)
             cum_target = cumulative_target_dict.get((z, r, s), 0.0)
-            cur_sales_mt = cur_sales * 1000
-            his_sales_mt = his_sales * 1000
-            target_mt = target * 1000
-            cum_cur_mt = cum_cur * 1000
-            cum_his_mt = cum_his * 1000
-            cum_target_mt = cum_target * 1000
+            # cur_sales_mt = cur_sales 
+            # his_sales_mt = his_sales 
+            target_mt = target 
+            cum_cur_mt = cum_cur 
+            cum_his_mt = cum_his 
+            cum_target_mt = cum_target 
+            # print("cur_sales: ", cur_sales_mt, "his_sales: ", his_sales_mt, "target: ", target_mt, "cum_cur: ", cum_cur_mt, "cum_his: ", cum_his_mt, "cum_target: ", cum_target_mt)
+            # print("cur_sales:----------- ", cur_sales, "his_sales:------------- ", his_sales, "target:--------------- ", target, "cum_cur: -----------", cum_cur, "cum_his:------- ", cum_his, "cum_target:---------- ", cum_target)
 
             # monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
             # monthly_target_diff = round((cur_sales / target) * 100, 2) if target != 0 else None
             
-            monthly_diff_value = round(((cur_sales_mt - his_sales_mt) / his_sales_mt) * 100, 2) if his_sales_mt != 0 else None
-            monthly_target_diff = round((cur_sales_mt / target_mt) * 100, 2) if target_mt != 0 else None
+            monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
+            monthly_target_diff = round((cur_sales / target_mt) * 100, 2) if target_mt != 0 else None
 
             # cumulative_diff_value = round(((cum_cur - cum_his) / cum_his) * 100, 2) if cum_his != 0 else None
             # cumulative_target_diff = round((cum_cur / cum_target) * 100, 2) if cum_target != 0 else None
@@ -2523,8 +2534,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 "icSalesArea": s,
                 "SalesOfficer": n,
                 "monthly": {
-                    "cur": round(cur_sales_mt, 2),
-                    "his": round(his_sales_mt, 2),
+                    "cur": round(cur_sales, 2),
+                    "his": round(his_sales, 2),
                     "target": round(target_mt, 2),
                     "diff_value": monthly_diff_value,
                     "target_achieved": monthly_target_diff,
