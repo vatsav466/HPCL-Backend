@@ -224,7 +224,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP029", "interlock_name": "Tank leakage alarm", "workflow_name": "TANK LEAKAGE"},
                         {"sop_id": "SOP032", "interlock_name": "Primary Radar Guage_H alarm", "workflow_name": "TANK PRIMARY RADAR GAUGE HAND HH"},
                         {"sop_id": "SOP032", "interlock_name": "Primary Radar Guage_HH alarm", "workflow_name": "TANK PRIMARY RADAR GAUGE HAND HH"},
-                        {"sop_id": "SOP035", "interlock_name": "Gantry Permissive_Override", "workflow_name": ""},
+                        {"sop_id": "SOP035", "interlock_name": "Gantry Permissive_Override", "workflow_name": "Gantry Permessive Ovveride SOP035"},
                         {"sop_id": "SOP291", "interlock_name": "Indent Dry Out", "workflow_name": ""},
                         {"sop_id": "SOP061", "interlock_name": "Unauthorized flow_BCU", "workflow_name": ""},
                         {"sop_id": "SOP062", "interlock_name": "Cancel TT Reported", "workflow_name": ""},
