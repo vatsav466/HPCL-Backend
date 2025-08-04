@@ -186,6 +186,8 @@ def insertToDB(data, table_name, indexing_col=()):
     columns = []
     for i in column_names:
         columns.append(i)
+    if 'plant_cd' not in data.columns:
+        data = data.with_columns(pl.lit("").cast(pl.Utf8).alias("plant_cd"))
     data = data.select(columns)
     #data.write_csv('/tmp/sales_data.csv')
     print(data)
