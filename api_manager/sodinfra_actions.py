@@ -15,9 +15,10 @@ router = fastapi.APIRouter(prefix='/sodinfra')
 
 # Action upload_sod_file
 @router.post('/upload_sod_file', tags=['SodInfra'])
-async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
+async def sodinfra_upload_sod_file(file: fastapi.UploadFile):
+    print("------enter----------")
     try:
-        df = pd.read_excel(data.file, sheet_name='SOD').fillna("")
+        df = pd.read_excel(file.file, sheet_name='SOD').fillna("")
         save_path = "/opt/ceg/algo/orchestrator/masterdata/infra_inputs"
         os.makedirs(save_path, exist_ok=True)
         dt_str = datetime.datetime.now().strftime("%Y%m%d_%H-%M-%S") + f"_{datetime.datetime.now().microsecond}"
@@ -49,6 +50,7 @@ async def sodinfra_upload_sod_file(data: fastapi.UploadFile):
         df['sko'] = pd.to_numeric(df['sko'], errors='coerce').fillna(0).astype(int)
         df['hsd'] = pd.to_numeric(df['hsd'], errors='coerce').fillna(0).astype(int)
         df['total'] = pd.to_numeric(df['total'], errors='coerce').fillna(0).astype(int)
+        df['state'] = df['state'].astype(str).str.replace(r"&", "and", regex=True)
         loc_df['sap_id'] = loc_df['sap_id'].astype(str)
 
         merged_df = df.merge(
@@ -125,6 +127,7 @@ async def sodinfra_get_all_sod_infra(data: Sodinfra_Get_All_Sod_InfraParams):
         params.fields = []
         params.limit = 0
         resp = await SodInfra.get_all(params, resp_type="plain")
+        print('resp: ', resp)
         return resp
     except Exception as e:
         print(f"Error in get_all_sod_infra: {e}")
@@ -135,3 +138,19 @@ async def sodinfra_get_all_sod_infra(data: Sodinfra_Get_All_Sod_InfraParams):
 @router.post('/download_template', tags=['SodInfra'])
 async def sodinfra_download_template(data: Sodinfra_Download_TemplateParams):
     return await infra_functions.get_download_template_info(data.sbu)
+
+
+# Action get_sales_infra
+@router.post('/get_sales_infra', tags=['SodInfra'])
+async def sodinfra_get_sales_infra(data: Sodinfra_Get_Sales_InfraParams):
+    return await infra_functions.get_sales_info(filters=data.filters, cross_filters=data.cross_filters,
+                                                  drill_state=data.drill_state, limit=data.limit,
+                                                  time_grain=data.time_grain)
+
+
+# Action get_sales_officer_infra
+@router.post('/get_sales_officer_infra', tags=['SodInfra'])
+async def sodinfra_get_sales_officer_infra(data: Sodinfra_Get_Sales_Officer_InfraParams):
+    return await infra_functions.get_sales_officer_info(filters=data.filters, cross_filters=data.cross_filters,
+                                                drill_state=data.drill_state, limit=data.limit,
+                                                time_grain=data.time_grain)

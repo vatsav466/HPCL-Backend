@@ -2482,6 +2482,22 @@ Model SodInfra {
         sbu str
     }
 
+    Action=> get_sales_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Action=> get_sales_officer_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
@@ -2516,6 +2532,73 @@ Model LPGInfra {
     }
 
     Action=> get_all_lpg_infra {
+    }
+
+    Config=> {
+        access_key_mapping='sbu,zone,region,sap_id'
+    }
+}
+
+Model AVIATIONInfra {
+    sap_id index_field optional str
+    sbu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    location_name optional str
+    name optional str
+    operation_status optional str
+    tankage optional float
+    mode optional str
+    pincode optional str
+    status optional str
+    latitude optional float
+    longitude optional float
+    filename optional str
+    updated_by optional str
+
+    // File Upload
+    Action=> upload_aviation_file {
+    }
+
+    Action=> get_all_aviation_infra {
+    }
+
+    Config=> {
+        access_key_mapping='sbu,zone,region,sap_id'
+    }
+}
+
+
+Model LUBESInfra {
+    sap_id index_field optional str
+    sbu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    location_name optional str
+    name optional str
+    base_oil_tankages optional float
+    landline optional str
+    status optional str
+    latitude optional float
+    longitude optional float
+    filename optional str
+    updated_by optional str
+
+    // File Upload
+    Action=> upload_lubes_file {
+    }
+
+    Action=> get_all_lubes_infra {
     }
 
     Config=> {
@@ -2573,6 +2656,58 @@ Model HistoricLPGInfra {
     time_of_commissioning optional str
     mode optional str
     supply optional str
+    latitude optional float
+    longitude optional float
+    filename optional str
+    updated_by optional str
+
+    Config=> {
+        access_key_mapping='sbu,zone,region,sap_id'
+    }
+}
+
+Model HistoricAVIATIONInfra {
+    sap_id index_field optional str
+    sbu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    location_name optional str
+    name optional str
+    operation_status optional str
+    tankage optional float
+    mode optional str
+    pincode optional str
+    status optional str
+    latitude optional float
+    longitude optional float
+    filename optional str
+    updated_by optional str
+
+    Config=> {
+        access_key_mapping='sbu,zone,region,sap_id'
+    }
+}
+
+Model HistoricLUBESInfra {
+    sap_id index_field optional str
+    sbu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    location_name optional str
+    name optional str
+    base_oil_tankages optional float
+    landline optional str
+    status optional str
     latitude optional float
     longitude optional float
     filename optional str

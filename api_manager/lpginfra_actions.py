@@ -10,9 +10,9 @@ router = fastapi.APIRouter(prefix='/lpginfra')
 
 # Action upload_lpg_file
 @router.post('/upload_lpg_file', tags=['LPGInfra'])
-async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
+async def lpginfra_upload_lpg_file(file: fastapi.UploadFile):
     try:
-        df = pd.read_excel(data.file, sheet_name='LPG plants').fillna("")
+        df = pd.read_excel(file.file, sheet_name='LPG').fillna("")
         save_path = "/opt/ceg/algo/orchestrator/masterdata/infra_inputs"
         os.makedirs(save_path, exist_ok=True)
         dt_str = datetime.datetime.now().strftime("%Y%m%d_%H-%M-%S") + f"_{datetime.datetime.now().microsecond}"
@@ -54,7 +54,7 @@ async def lpginfra_upload_lpg_file(data: fastapi.UploadFile):
         df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce').fillna(
             0).astype(float)
         df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce').fillna(0).astype(float)
-
+        df['state'] = df['state'].astype(str).str.replace(r"&", "and", regex=True)
         merged_df = df.merge(
             loc_df[['sap_id', 'zone', 'state', 'district', 'city', 'address', 'region', 'name']],
             left_on='sap code',

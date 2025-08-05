@@ -337,6 +337,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             return False, "No data for current selection"
         if status:
             print("status is returning")
+            df = pd.DataFrame(results)  
+            df.to_csv('/opt/ceg/algo/final_data.csv', index=False)
             return {'status':status,'message':'Success','data':results}
     print("came into m60 performance")
     def get_fiscal_year(date_ui, todays_date, same_year=False, key='YTDPM'):
@@ -2148,7 +2150,7 @@ async def sbu_sales_fiscal(merged_df, filters, cross_filters, drill_state="", ti
 
 #     return matched_df
 
-def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path, second_sheet_name):
+def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path, second_sheet_name,second_sheet_name_second):
     import pandas as pd
 
     # Helper to clean and normalize spaces
@@ -2193,7 +2195,11 @@ def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path
     additional_df['IC Sales Area'] = additional_df['IC Sales Area'].fillna('').astype(str).apply(lambda x :x.replace('S/A','DS SA'))
     additional_df['IC Sales Area'] = additional_df['IC Sales Area'].str.upper()
     additional_df['IC Sales Area'] = additional_df['IC Sales Area'].apply(lambda x: ' '.join(x.split()) if '-' not in x else x)
-    
+    additional_df['IC Sales Area'] = additional_df['IC Sales Area'].replace({
+    'BANGALORE DS SA': 'BANGALORE-1 DS SA',
+    'TRIVANDRUM DS SA': 'ERNAKULAM-1 DS SA',
+    'KOZHIKODE DS SA': 'ERNAKULAM-2 DS SA',
+    })
     
     
    
@@ -2220,12 +2226,40 @@ def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path
         
     )
     print('additional_df--->', additional_df['IC Sales Area'].unique().tolist())
+    master_data_df = pd.read_excel(second_excel_path, sheet_name=second_sheet_name_second)
+    # print('matched_df--->', matched_df['IC Sales Area code ID'].unique().tolist())
+    print('master_data_df--->', master_data_df['IC Sales Area code'].unique().tolist())
+    master_data_df = master_data_df.drop_duplicates(subset=['IC Sales Area code'])
+    
 
     # Step 9: Drop duplicate column
     #enriched_df.drop(columns=['IC Sales Area'], inplace=True, errors='ignore')
     # print("Final enriched_df full data:\n", enriched_df)
     # print('enriched_df', enriched_df['IC Sales Area'].unique().tolist())    
 
+    enriched_df = enriched_df.merge(
+        master_data_df,
+        how='left',
+        left_on='IC Sales Area code',              # SAP ID in enriched_df
+        right_on='IC Sales Area code' # IC Sales Area code in Master Data
+    )
+    print('enriched_df--->', enriched_df['IC Sales Area code'].unique().tolist())
+    # areas_to_remove = [
+    # 'I&C HQO',
+    # 'DEHRADUN LPG SA',
+    # 'CHENNAI MARINE DS SA',
+    # 'NAVI MUMBAI CON-LUB'
+    # ]
+
+    # # Print sample values to verify matching
+    # print(enriched_df['IC Sales Area'].unique())
+
+    # # Apply filtering on 'icSalesArea' (or change to correct column)
+    # enriched_df = enriched_df[~enriched_df['IC Sales Area'].isin(areas_to_remove)]
+
+
+    enriched_df.to_csv('/tmp/heelo.csv',index = False)
+    
     return enriched_df
 
 
@@ -2500,7 +2534,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             z = row.get("zone_name")
             r = row.get("region_name")
             s = row.get("salesarea_name")
-            n = row.get('Name','')
+            n = row.get('Name_x','')
             cur_sales = float(row.get("cur_sales", 0) or 0)
             his_sales = float(row.get("his_sales", 0) or 0)
             target = target_dict.get((z, r, s), 0.0)
@@ -2585,6 +2619,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             # second_excel_path = "/home/novex/IC_SA_Perf_Monitor.xlsx"
             second_excel_path = "/home/novex/Copy_IC_SA.xlsx"
             second_sheet_name = "SA_Wise_Monthly_Targets"
+            second_sheet_name_second = "Master Data"
+            
             
             
 
@@ -2595,7 +2631,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                         excel_path,
                         sheet_name,
                         second_excel_path,
-                        second_sheet_name
+                        second_sheet_name,
+                        second_sheet_name_second
                     )
 
             # print("enriched df len",len(enriched_df))
@@ -2613,11 +2650,29 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             # print("Filtered results length----->>>>:", len(results))
             # print('ic', results['icSalesArea'].unique().tolist())
           
-            results = results.merge(enriched_df[['icSalesArea','Name']], how='left', left_on='icSalesArea', right_on='icSalesArea')
+            results = results.merge(enriched_df[['icSalesArea','Name_x']], how='left', left_on='icSalesArea', right_on='icSalesArea')
+            print("results",results)
+            # Your areas to remove
+            areas_to_remove = [
+                'I&C HQO',
+                'DEHRADUN LPG SA',
+                'CHENNAI MARINE DS SA',
+                'NAVI MUMBAI CON-LUB'
+            ]
+
+            # Normalize column to uppercase and strip spaces for reliable filtering
+            results['icSalesArea'] = results['icSalesArea'].astype(str).str.strip().str.upper()
+            print("areas_to_remove", areas_to_remove)
+            areas_to_remove_upper = [x.upper() for x in areas_to_remove]
+            print("areas_to_remove---------->", areas_to_remove)
+
+            # Filter out unwanted sales areas from merged results
+            results = results[~results['icSalesArea'].isin(areas_to_remove_upper)]
+
             
             # results = enriched_df
             if 'SalesOfficer' in results.columns:
-                results['Officer'] = results['Name']
+                results['Officer'] = results['Name_x']
             # results = results[results['Name'].notna()]
             # print("results len",len(results))
             # results.to_csv('/Users/apple/Downloads/res_updated.csv',index = False)
