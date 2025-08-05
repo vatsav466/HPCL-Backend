@@ -4,6 +4,7 @@ import urdhva_base
 import json
 import os
 import polars as pl
+import pandas as pd
 import uuid
 import typing
 import importlib
@@ -20,24 +21,12 @@ from orchestrator.dbconnector.widget_actions import widget_actions
 
 async def sod_infra(filters, cross_filters, drill_state, limit, time_grain):
     try:
-        sod_query = ''' * from sod_infra '''
-        lpg_query = ''' * from lpg_infra '''
-
-        if filters:
-            sod_query = await widget_actions.WidgetActions.apply_filter_drilldown(sod_query, filters, drill_state)
-            lpg_query = await widget_actions.WidgetActions.apply_filter_drilldown(lpg_query, filters, drill_state)
-
-        sod_result = await urdhva_base.BasePostgresModel.get_aggr_data(sod_query, limit=0, skip=0)
-        sod = sod_result['data']
-        lpg_result = await urdhva_base.BasePostgresModel.get_aggr_data(lpg_query, limit=0, skip=0)
-        lpg = lpg_result['data']
-
-        # company_color_map = {
-        #     'hpcl': '#1E90FF',  # Dodger Blue
-        #     'iocl': '#FF4500',  # Orange Red
-        #     'bpcl': '#32CD32',  # Lime Green
-        #     'hmel': '#8A2BE2'   # Blue Violet
-        # }
+        sbu_configs = [
+            {"name": "SOD", "table": "sod_infra"},
+            {"name": "LPG", "table": "lpg_infra"},
+            {"name": "AVIATION", "table": "aviation_infra"},
+            {"name": "LUBES", "table": "lubes_infra"},
+        ]
 
         company_color_map = {
             'hpcl': '#00006B',
@@ -47,35 +36,43 @@ async def sod_infra(filters, cross_filters, drill_state, limit, time_grain):
         }
 
         exclude_keys = {"filename", "updated_by", "id", "created_at", "updated_at", "entity_id"}
+        all_data = []
+        for sbu in sbu_configs:
+            query = f'''SELECT * FROM {sbu["table"]}'''
+            if filters:
+                query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+            result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+            records = result.get("data", [])
 
-        # Add color_code and filter keys for SOD
-        for i in range(len(sod)):
-            company = sod[i].get('company', '').lower()
-            sod[i]['color_code'] = company_color_map.get(company, '#CCCCCC')
-            sod[i] = {k: v for k, v in sod[i].items() if k not in exclude_keys}
+            for i in range(len(records)):
+                company = records[i].get('company', '').lower()
+                records[i]['color_code'] = company_color_map.get(company, '#CCCCCC')
+                records[i] = {k: v for k, v in records[i].items() if k not in exclude_keys}
 
-        # Add color_code and filter keys for LPG
-        for i in range(len(lpg)):
-            company = lpg[i].get('company', '').lower()
-            lpg[i]['color_code'] = company_color_map.get(company, '#CCCCCC')
-            lpg[i] = {k: v for k, v in lpg[i].items() if k not in exclude_keys}
+            all_data.extend(records)
 
-        return {"status": True, "message": "success", "data": sod + lpg}
+        return {
+            "status": True, "message": "success", "data": all_data}
 
     except Exception as e:
-        print(f"Error while fetching SOD/LPG data: {e}")
+        import logging
+        logging.exception("Error while fetching SBU infra data")
         return {"error": str(e)}
 
 
 
 async def get_count_company_info(filters, cross_filters, drill_state, limit, time_grain):
     try:
-        combined_query = '''
+        sbu_tables = ["sod_infra", "lpg_infra", "aviation_infra", "lubes_infra"]
+
+        select_columns = "sbu, company, zone, state, district, location_name"
+        union_queries = [f"SELECT {select_columns} FROM {table}" for table in sbu_tables]
+        combined_subquery = "\nUNION ALL\n".join(union_queries)
+
+        combined_query = f'''
              company, COUNT(*) as count 
             FROM (
-                SELECT sbu,company,zone,state,district,location_name FROM sod_infra
-                UNION ALL
-                SELECT sbu,company,zone,state,district,location_name FROM lpg_infra
+                {combined_subquery}
             ) AS combined
             GROUP BY company
         '''
@@ -84,45 +81,79 @@ async def get_count_company_info(filters, cross_filters, drill_state, limit, tim
             combined_query = await widget_actions.WidgetActions.apply_filter_drilldown(combined_query, filters, drill_state)
 
         result = await urdhva_base.BasePostgresModel.get_aggr_data(combined_query, limit=0, skip=0)
-        data = result['data']
+        data = result.get('data', [])
 
         return {"status": True, "message": "success", "data": data}
+
     except Exception as e:
-        print(f"Error while fetching combined SOD/LPG data: {e}")
+        import logging
+        logging.exception("Error while fetching combined SBU company count")
         return {"status": False, "error": str(e)}
+
 
 
 async def get_sod_lpg_info(filters, cross_filters, drill_state, limit, time_grain):
     try:
-        sod_query = ''' sap_id, sbu, location_name, company, ms, sko, hsd, total, mode_of_receipt from sod_infra '''
-        lpg_query = ''' sap_id, sbu, location_name, company, installed_bottling_capacity, operating_bottling_capacity, ccoe_tankage, mode, supply from lpg_infra '''
+        # Configuration for each SBU:
+        sbu_configs = [
+            {
+                "name": "SOD",
+                "table": "sod_infra",
+                "columns": "sap_id, sbu, location_name, company, ms, sko, hsd, total, mode_of_receipt"
+            },
+            {
+                "name": "LPG",
+                "table": "lpg_infra",
+                "columns": "sap_id, sbu, location_name, company, installed_bottling_capacity, operating_bottling_capacity, ccoe_tankage, mode, supply"
+            },
+            {
+                "name": "AVIATION",
+                "table": "aviation_infra",
+                "columns": "sap_id, sbu, location_name, company, operation_status, tankage, mode, pincode, status"
+            },
+            {
+                "name": "LUBES",
+                "table": "lubes_infra",
+                "columns": "sap_id, sbu, location_name, company, base_oil_tankages, landline, status"
+            }
+        ]
 
-        if filters:
-            sod_query = await widget_actions.WidgetActions.apply_filter_drilldown(sod_query, filters, drill_state)
-            lpg_query = await widget_actions.WidgetActions.apply_filter_drilldown(lpg_query, filters, drill_state)
+        all_data = []
 
-        sod_result = await urdhva_base.BasePostgresModel.get_aggr_data(sod_query, limit=0, skip=0)
-        sod = sod_result['data']
-        lpg_result = await urdhva_base.BasePostgresModel.get_aggr_data(lpg_query, limit=0, skip=0)
-        lpg = lpg_result['data']
+        for config in sbu_configs:
+            query = f'''
+                SELECT {config["columns"]}
+                FROM {config["table"]}
+            '''
 
-        data = sod + lpg
-        return {"status": True, "message": "success", "data": data}
+            if filters:
+                query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+
+            result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+            records = result.get('data', [])
+            all_data.extend(records)
+
+        return {"status": True, "message": "success", "data": all_data}
 
     except Exception as e:
-        print(f"Error while fetching SOD/LPG data: {e}")
+        import logging
+        logging.exception("Error while fetching SOD/LPG/Aviation/Lubes data")
         return {"error": str(e)}
+
 
 
 async def get_distinct_sod_lpg_info(sbu: str = "", zone=None, state=None, district=None, company=None, location_name=None):
     try:
+        sbu_tables = ["sod_infra", "lpg_infra", "aviation_infra", "lubes_infra"]
+        select_columns = "sbu, zone, state, district, company, location_name"
 
-        query = '''
-            SELECT DISTINCT sbu, zone, state, district, company, location_name
+        union_queries = [f"SELECT {select_columns} FROM {table}" for table in sbu_tables]
+        union_block = "\nUNION\n".join(union_queries)
+
+        query = f'''
+            DISTINCT {select_columns}
             FROM (
-                SELECT sbu, zone, state, district, company, location_name FROM sod_infra
-                UNION
-                SELECT sbu, zone, state, district, company, location_name FROM lpg_infra
+                {union_block}
             ) AS combined_infra
         '''
 
@@ -152,28 +183,23 @@ async def get_distinct_sod_lpg_info(sbu: str = "", zone=None, state=None, distri
         result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
         rows = result.get("data", [])
 
-        sbu_set =set()
-        zone_set = set()
-        state_set = set()
-        district_set = set()
-        company_set = set()
-        location_name_set = set()
+        def add_if_valid(val, target_set):
+            if val and val.strip():
+                target_set.add(val.strip())
+
+        sbu_set, zone_set, state_set, district_set, company_set, location_name_set = set(), set(), set(), set(), set(), set()
 
         for row in rows:
-            if row.get("sbu") and row["sbu"].strip():
-                sbu_set.add(row["sbu"].strip())
-            if row.get("zone") and row["zone"].strip():
-                zone_set.add(row["zone"].strip())
-            if row.get("state") and row["state"].strip():
-                state_set.add(row["state"].strip())
-            if row.get("district") and row["district"].strip():
-                district_set.add(row["district"].strip())
-            if row.get("company") and row["company"].strip():
-                company_set.add(row["company"].strip())
-            if row.get("location_name") and row["location_name"].strip():
-                location_name_set.add(row["location_name"].strip())
+            add_if_valid(row.get("sbu"), sbu_set)
+            add_if_valid(row.get("zone"), zone_set)
+            add_if_valid(row.get("state"), state_set)
+            add_if_valid(row.get("district"), district_set)
+            add_if_valid(row.get("company"), company_set)
+            add_if_valid(row.get("location_name"), location_name_set)
 
-        return {"status": True, "message": "success",
+        return {
+            "status": True,
+            "message": "success",
             "data": {
                 "sbu": sorted(sbu_set),
                 "company": sorted(company_set),
@@ -183,8 +209,10 @@ async def get_distinct_sod_lpg_info(sbu: str = "", zone=None, state=None, distri
                 "location_name": sorted(location_name_set)
             }
         }
+
     except Exception as e:
-        print(f"Error while fetching SOD/LPG data: {e}")
+        import logging
+        logging.exception("Error while fetching distinct infra info")
         return {"error": str(e)}
 
 async def get_download_template_info(sbu):
@@ -210,3 +238,43 @@ async def get_download_template_info(sbu):
     except Exception as e:
         print(f"Error generating template for {sbu}: {e}")
         return JSONResponse(status_code=500, content={"detail": f"Internal Server Error: {str(e)}"})
+
+async def get_sales_info(filters, cross_filters, drill_state, limit, time_grain):
+
+    query = f'''WITH base_data AS (
+                    SELECT "SBU_Name" AS sbu,
+                           plant_cd AS sap_id,
+                            "SalesArea_Name" AS sales_area,
+                           fiscal_year,
+                           "NETWEIGHT_TMT" AS "NETWEIGHT (TMT)"
+                    FROM "MOM_DAY_LEVEL_DATA"
+                )
+                SELECT sbu,
+                       sap_id,
+                        sales_area,
+                       fiscal_year,
+                      ROUND(SUM("NETWEIGHT (TMT)")::numeric, 4) AS "NETWEIGHT (TMT)"
+                FROM base_data
+                GROUP BY sbu, sap_id,sales_area, fiscal_year
+                    '''
+
+    if filters:
+        query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+    print(query)
+
+    result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+    rows = result.get("data", [])
+
+
+    # print('rows: ',rows)
+    return rows
+
+async def get_sales_officer_info(filters, cross_filters, drill_state, limit, time_grain):
+
+    query = 'select * from users'
+    result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+    rows = result.get("data", [])
+
+    sod_query = 'select * from sod_infra'
+    sod_query = await urdhva_base.BasePostgresModel.get_aggr_data(sod_query, limit=0, skip=0)
+    rows = sod_query.get("data", [])

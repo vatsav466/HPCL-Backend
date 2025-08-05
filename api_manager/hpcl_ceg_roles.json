@@ -5172,6 +5172,12 @@
                 },
                 {
                     "name": "download_template"
+                },
+                {
+                    "name": "get_sales_infra"
+                },
+                {
+                    "name": "get_sales_officer_infra"
                 }
             ]
         },
@@ -5202,6 +5208,12 @@
                 },
                 {
                     "name": "get_all_sod_infra"
+                },
+                {
+                    "name": "get_sales_infra"
+                },
+                {
+                    "name": "get_sales_officer_infra"
                 }
             ]
         },
@@ -5247,6 +5259,12 @@
                 },
                 {
                     "name": "download_template"
+                },
+                {
+                    "name": "get_sales_infra"
+                },
+                {
+                    "name": "get_sales_officer_infra"
                 }
             ]
         },
@@ -5325,6 +5343,162 @@
                 },
                 {
                     "name": "get_all_lpg_infra"
+                }
+            ]
+        },
+        {
+            "name": "aviationinfra",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "AVIATIONInfra",
+            "attributes": {},
+            "uris": [
+                "/api/aviationinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_aviation_file"
+                },
+                {
+                    "name": "get_all_aviation_infra"
+                }
+            ]
+        },
+        {
+            "name": "aviationinfra_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "AVIATIONInfra_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/aviationinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_all_aviation_infra"
+                }
+            ]
+        },
+        {
+            "name": "aviationinfra_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "AVIATIONInfra_admin",
+            "attributes": {},
+            "uris": [
+                "/api/aviationinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_aviation_file"
+                },
+                {
+                    "name": "get_all_aviation_infra"
+                }
+            ]
+        },
+        {
+            "name": "lubesinfra",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LUBESInfra",
+            "attributes": {},
+            "uris": [
+                "/api/lubesinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_lubes_file"
+                },
+                {
+                    "name": "get_all_lubes_infra"
+                }
+            ]
+        },
+        {
+            "name": "lubesinfra_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LUBESInfra_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lubesinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_all_lubes_infra"
+                }
+            ]
+        },
+        {
+            "name": "lubesinfra_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LUBESInfra_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lubesinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_lubes_file"
+                },
+                {
+                    "name": "get_all_lubes_infra"
                 }
             ]
         },
@@ -5438,6 +5612,132 @@
             "attributes": {},
             "uris": [
                 "/api/historiclpginfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "historicaviationinfra",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricAVIATIONInfra",
+            "attributes": {},
+            "uris": [
+                "/api/historicaviationinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "historicaviationinfra_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricAVIATIONInfra_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/historicaviationinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "historicaviationinfra_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricAVIATIONInfra_admin",
+            "attributes": {},
+            "uris": [
+                "/api/historicaviationinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "historiclubesinfra",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricLUBESInfra",
+            "attributes": {},
+            "uris": [
+                "/api/historiclubesinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "historiclubesinfra_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricLUBESInfra_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/historiclubesinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "historiclubesinfra_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricLUBESInfra_admin",
+            "attributes": {},
+            "uris": [
+                "/api/historiclubesinfra/*"
             ],
             "scopes": [
                 {
@@ -5892,12 +6192,36 @@
             "displayName": "download_template"
         },
         {
+            "name": "get_sales_infra",
+            "displayName": "get_sales_infra"
+        },
+        {
+            "name": "get_sales_officer_infra",
+            "displayName": "get_sales_officer_infra"
+        },
+        {
             "name": "upload_lpg_file",
             "displayName": "upload_lpg_file"
         },
         {
             "name": "get_all_lpg_infra",
             "displayName": "get_all_lpg_infra"
+        },
+        {
+            "name": "upload_aviation_file",
+            "displayName": "upload_aviation_file"
+        },
+        {
+            "name": "get_all_aviation_infra",
+            "displayName": "get_all_aviation_infra"
+        },
+        {
+            "name": "upload_lubes_file",
+            "displayName": "upload_lubes_file"
+        },
+        {
+            "name": "get_all_lubes_infra",
+            "displayName": "get_all_lubes_infra"
         }
     ]
 }
