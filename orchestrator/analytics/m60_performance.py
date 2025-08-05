@@ -337,7 +337,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             return False, "No data for current selection"
         if status:
             print("status is returning")
-            results.to_csv('/opt/ceg/algo/final_data.csv',index = False)
+            df = pd.DataFrame(results)  
+            df.to_csv('/opt/ceg/algo/final_data.csv', index=False)
             return {'status':status,'message':'Success','data':results}
     print("came into m60 performance")
     def get_fiscal_year(date_ui, todays_date, same_year=False, key='YTDPM'):
