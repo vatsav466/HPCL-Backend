@@ -306,7 +306,7 @@ async def get_instance(tt_number: str, sap_id: str, bu: str, get_raw_data=False)
             "truck_regno": tt_number,
             "sap_id": sap_id,
             "bu": bu,
-            "truck_status": "UNBLOCKED" 
+            "truck_status": "UNBLOCKED", 
             "violation_type": "",
             "block_start_datetime": None,
             "block_end_datetime": None, 
