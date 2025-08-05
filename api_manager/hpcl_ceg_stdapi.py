@@ -1497,9 +1497,10 @@ async def create(inputObj: SodInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/sodinfra', response_model=SodInfra, tags=['SodInfra'])
+@router.put('/sodinfra', response_model=dict, tags=['SodInfra'])
 async def update(inputObj: SodInfra):
-    return await inputObj.modify()
+    result, res = await inputObj.modify()
+    return {"message": "UPDATED"}
 
 
 @router.get('/sodinfra/{id}', response_model=SodInfra, tags=['SodInfra'])
@@ -1522,9 +1523,10 @@ async def create(inputObj: LPGInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/lpginfra', response_model=LPGInfra, tags=['LPGInfra'])
+@router.put('/lpginfra', response_model=dict, tags=['LPGInfra'])
 async def update(inputObj: LPGInfra):
-    return await inputObj.modify()
+    result, res = await inputObj.modify()
+    return {"message": "UPDATED"}
 
 
 @router.get('/lpginfra/{id}', response_model=LPGInfra, tags=['LPGInfra'])
@@ -1540,6 +1542,58 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/lpginfra/{id}', tags=['LPGInfra'])
 async def delete(id: str):
     return await LPGInfra.delete(id)
+
+
+@router.post('/aviationinfra', response_model=AVIATIONInfra, tags=['AVIATIONInfra'])
+async def create(inputObj: AVIATIONInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/aviationinfra', response_model=dict, tags=['AVIATIONInfra'])
+async def update(inputObj: AVIATIONInfra):
+    result, res = await inputObj.modify()
+    return {"message": "UPDATED"}
+
+
+@router.get('/aviationinfra/{id}', response_model=AVIATIONInfra, tags=['AVIATIONInfra'])
+async def get(id: str):
+    return await AVIATIONInfra.get(id, skip_secrets=True)
+
+
+@router.get('/aviationinfra', response_model=AVIATIONInfraGetResp, tags=['AVIATIONInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await AVIATIONInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/aviationinfra/{id}', tags=['AVIATIONInfra'])
+async def delete(id: str):
+    return await AVIATIONInfra.delete(id)
+
+
+@router.post('/lubesinfra', response_model=LUBESInfra, tags=['LUBESInfra'])
+async def create(inputObj: LUBESInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/lubesinfra', response_model=dict, tags=['LUBESInfra'])
+async def update(inputObj: LUBESInfra):
+    result, res = await inputObj.modify()
+    return {"message": "UPDATED"}
+
+
+@router.get('/lubesinfra/{id}', response_model=LUBESInfra, tags=['LUBESInfra'])
+async def get(id: str):
+    return await LUBESInfra.get(id, skip_secrets=True)
+
+
+@router.get('/lubesinfra', response_model=LUBESInfraGetResp, tags=['LUBESInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LUBESInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lubesinfra/{id}', tags=['LUBESInfra'])
+async def delete(id: str):
+    return await LUBESInfra.delete(id)
 
 
 @router.post('/historicsodinfra', response_model=HistoricSodInfra, tags=['HistoricSodInfra'])
@@ -1590,3 +1644,53 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/historiclpginfra/{id}', tags=['HistoricLPGInfra'])
 async def delete(id: str):
     return await HistoricLPGInfra.delete(id)
+
+
+@router.post('/historicaviationinfra', response_model=HistoricAVIATIONInfra, tags=['HistoricAVIATIONInfra'])
+async def create(inputObj: HistoricAVIATIONInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/historicaviationinfra', response_model=HistoricAVIATIONInfra, tags=['HistoricAVIATIONInfra'])
+async def update(inputObj: HistoricAVIATIONInfra):
+    return await inputObj.modify()
+
+
+@router.get('/historicaviationinfra/{id}', response_model=HistoricAVIATIONInfra, tags=['HistoricAVIATIONInfra'])
+async def get(id: str):
+    return await HistoricAVIATIONInfra.get(id, skip_secrets=True)
+
+
+@router.get('/historicaviationinfra', response_model=HistoricAVIATIONInfraGetResp, tags=['HistoricAVIATIONInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HistoricAVIATIONInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/historicaviationinfra/{id}', tags=['HistoricAVIATIONInfra'])
+async def delete(id: str):
+    return await HistoricAVIATIONInfra.delete(id)
+
+
+@router.post('/historiclubesinfra', response_model=HistoricLUBESInfra, tags=['HistoricLUBESInfra'])
+async def create(inputObj: HistoricLUBESInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/historiclubesinfra', response_model=HistoricLUBESInfra, tags=['HistoricLUBESInfra'])
+async def update(inputObj: HistoricLUBESInfra):
+    return await inputObj.modify()
+
+
+@router.get('/historiclubesinfra/{id}', response_model=HistoricLUBESInfra, tags=['HistoricLUBESInfra'])
+async def get(id: str):
+    return await HistoricLUBESInfra.get(id, skip_secrets=True)
+
+
+@router.get('/historiclubesinfra', response_model=HistoricLUBESInfraGetResp, tags=['HistoricLUBESInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HistoricLUBESInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/historiclubesinfra/{id}', tags=['HistoricLUBESInfra'])
+async def delete(id: str):
+    return await HistoricLUBESInfra.delete(id)
