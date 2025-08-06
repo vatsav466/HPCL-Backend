@@ -2543,12 +2543,11 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             cum_cur = cum_sales_dict.get((z, r, s), {}).get("cum_cur_sales", 0.0)
             cum_his = cum_sales_dict.get((z, r, s), {}).get("cum_his_sales", 0.0)
             cum_target = cumulative_target_dict.get((z, r, s), 0.0)
-            # cur_sales_mt = cur_sales 
-            # his_sales_mt = his_sales 
-            target_mt = target 
-            cum_cur_mt = cum_cur 
-            cum_his_mt = cum_his 
-            cum_target_mt = cum_target 
+            target_mt = target * 1000
+            cum_cur_mt = cum_cur * 1000
+            cum_his_mt = cum_his *1000
+            cum_target_mt = cum_target *1000
+        
             # print("cur_sales: ", cur_sales_mt, "his_sales: ", his_sales_mt, "target: ", target_mt, "cum_cur: ", cum_cur_mt, "cum_his: ", cum_his_mt, "cum_target: ", cum_target_mt)
             # print("cur_sales:----------- ", cur_sales, "his_sales:------------- ", his_sales, "target:--------------- ", target, "cum_cur: -----------", cum_cur, "cum_his:------- ", cum_his, "cum_target:---------- ", cum_target)
 
