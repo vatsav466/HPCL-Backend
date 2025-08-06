@@ -327,8 +327,37 @@ def get_group_by_filter_key(cross_filters, Base_Filters, resp_format_org, cumula
         group_by_filter.append('"month_name"')
     return group_by_filter
 
-
+import pandas as pd
+import datetime
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    if resp_format == "file_download":
+        file_path = '/downloads/final_data.csv' 
+        return {
+                'status': 'True',
+                'message': 'Success',
+                'data': 'File Downloaded Successfully',
+                'file_path': file_path
+            }
+        print("call the function")
+        status,results =  await top_ic(filters, cross_filters, drill_state, time_grain, resp_format)
+        if isinstance(results,str):
+            return False, "No data for current selection"
+        if status:
+            print("status is returning")
+            df = pd.DataFrame(results)  
+            # df.to_csv('/opt/ceg/algo/final_data.csv', index=False)
+            # return {'status':status,'message':'Success','data':results}
+            file_path = '/opt/downloads/final_data.csv'  # define file_path here
+            df.to_csv(file_path, index=False)
+            return {
+                'status': status,
+                'message': 'Success',
+                'data': results,
+                'file_path': file_path
+            }
+
+
+    
     if resp_format == "top_ic":
         print("call thhe function")
 
