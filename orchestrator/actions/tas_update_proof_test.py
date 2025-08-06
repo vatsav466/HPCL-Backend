@@ -35,6 +35,10 @@ class TasUpdateProofTest:
             created_at = alert_data.get('created_at')
             sap_id = alert_data.get('sap_id')
 
+            failed_proof_interlocks = ["Proof Test_VFT_Failed", "Proof Test_Secondary Radar Guage_Fail"]
+            if interlock_name in failed_proof_interlocks:
+                return True ,{"Moved to next block"}
+
             if not (interlock_name and equipment_name and sap_id and created_at and device_id and location_name): 
                 print("Missing required fields")
 
