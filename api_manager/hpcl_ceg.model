@@ -174,6 +174,7 @@ Model Users {
     is_ad_user bool
     status bool
     manual_user bool
+    contact_number optional str
 
     // API to list out created users
     Action=> fetch_users {
