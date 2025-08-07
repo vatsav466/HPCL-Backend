@@ -2583,13 +2583,21 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             # monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
             # monthly_target_diff = round((cur_sales / target) * 100, 2) if target != 0 else None
             
-            monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
-            monthly_target_diff = round((cur_sales / target_mt) * 100, 2) if target_mt != 0 else None
+            # monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
+            # monthly_target_diff = round((cur_sales / target_mt) * 100, 2) if target_mt != 0 else None
+            
+            monthly_diff_value = min(round(((cur_sales - his_sales) / his_sales) * 100, 2), 100) if his_sales != 0 else None
+
+            monthly_target_diff = min(round((cur_sales / target_mt) * 100, 2), 100) if target_mt != 0 else None
+
+            cumulative_diff_value = min(round(((cum_cur_mt - cum_his_mt) / cum_his_mt) * 100, 2), 100) if cum_his_mt != 0 else None
+
+            cumulative_target_diff = min(round((cum_cur_mt / cum_target_mt) * 100, 2), 100) if cum_target_mt != 0 else None
 
             # cumulative_diff_value = round(((cum_cur - cum_his) / cum_his) * 100, 2) if cum_his != 0 else None
             # cumulative_target_diff = round((cum_cur / cum_target) * 100, 2) if cum_target != 0 else None
-            cumulative_diff_value = round(((cum_cur_mt - cum_his_mt) / cum_his_mt) * 100, 2) if cum_his_mt != 0 else None
-            cumulative_target_diff = round((cum_cur_mt / cum_target_mt) * 100, 2) if cum_target_mt != 0 else None
+            # cumulative_diff_value = round(((cum_cur_mt - cum_his_mt) / cum_his_mt) * 100, 2) if cum_his_mt != 0 else None
+            # cumulative_target_diff = round((cum_cur_mt / cum_target_mt) * 100, 2) if cum_target_mt != 0 else None
             results.append({
                 "id": idx,
                 "region": r,
