@@ -2723,6 +2723,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
 
             # Ensure results column is string too
             results["icSalesArea"] = results["icSalesArea"].astype(str)
+            results["icSalesArea"] = results["icSalesArea"].astype(str).str.replace("S/A", "DS SA").str.upper().str.strip()
             # print("results---->",len(results))
             # print("Results DataFrame row count:", len(results))
             # print("Unique icSalesArea in results:\n", results["icSalesArea"].unique()[:5])
@@ -2733,7 +2734,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 area = row["icSalesArea"].strip().upper()
                 month_col = row["month_column"]
 
-                match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+                # match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+                match = enriched_df[enriched_df["icSalesArea"] == area]
 
                 if not match.empty and month_col in match.columns:
                     try:
@@ -2745,7 +2747,11 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                     cur = monthly_data.get("cur", 0.0)
 
                     if new_target != 0:
-                        monthly_data["target_achieved"] = round((cur / new_target) * 100, 2)
+                        # monthly_data["target_achieved"] = round((cur / new_target) * 100, 2)
+                        target_achieved = round((cur / new_target) * 100, 2)
+                        target_achieved = min(target_achieved, 100)  # Cap at 100%
+                        monthly_data["target_achieved"] = target_achieved
+
                     else:
                         monthly_data["target_achieved"] = None
 
@@ -2757,7 +2763,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 area = row["icSalesArea"].strip().upper()
                 selected_month = row["month_column"]
 
-                match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+                # match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+                match = enriched_df[enriched_df["icSalesArea"] == area]
 
                 if not match.empty:
                     month_order = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -2777,7 +2784,10 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                         cum_cur = cumulative_data.get("cur", 0.0)
 
                         if new_cum_target != 0:
-                            cumulative_data["target_achieved"] = round((cum_cur / new_cum_target) * 100, 2)
+                            # cumulative_data["target_achieved"] = round((cum_cur / new_cum_target) * 100, 2)
+                            target_achieved = round((cum_cur / new_cum_target) * 100, 2)
+                            target_achieved = min(target_achieved, 100)
+                            cumulative_data["target_achieved"] = target_achieved
                         else:
                             cumulative_data["target_achieved"] = None
 
