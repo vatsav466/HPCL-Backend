@@ -6083,7 +6083,7 @@
                 },
                 {
                     "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HCD-01.MAINTENANCE_CALL",
+                    "sensor_tag": "GDS.HCD-01.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6122,7 +6122,7 @@
                 },
                 {
                     "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HCD-02.MAINTENANCE_CALL",
+                    "sensor_tag": "GDS.HCD-02.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6161,7 +6161,7 @@
                 },
                 {
                     "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HCD-03.MAINTENANCE_CALL",
+                    "sensor_tag": "GDS.HCD-03.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6200,7 +6200,7 @@
                 },
                 {
                     "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HCD-04.MAINTENANCE_CALL",
+                    "sensor_tag": "GDS.HCD-04.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6239,7 +6239,7 @@
                 },
                 {
                     "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HCD-05.MAINTENANCE_CALL",
+                    "sensor_tag": "GDS.HCD-05.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6278,7 +6278,7 @@
                 },
                 {
                     "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HCD-06.MAINTENANCE_CALL",
+                    "sensor_tag": "GDS.HCD-06.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6317,7 +6317,7 @@
                 },
                 {
                     "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HCD-07.MAINTENANCE_CALL",
+                    "sensor_tag": "GDS.HCD-07.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6356,7 +6356,7 @@
                 },
                 {
                     "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HCD-08.MAINTENANCE_CALL",
+                    "sensor_tag": "GDS.HCD-08.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6395,7 +6395,7 @@
                 },
                 {
                     "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HCD-09.MAINTENANCE_CALL",
+                    "sensor_tag": "GDS.HCD-09.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6434,7 +6434,7 @@
                 },
                 {
                     "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HCD-10.MAINTENANCE_CALL",
+                    "sensor_tag": "GDS.HCD-10.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
