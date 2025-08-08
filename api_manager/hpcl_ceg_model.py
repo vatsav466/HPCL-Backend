@@ -115,6 +115,7 @@ class UsersSchema(UrdhvaPostgresBase):
     is_ad_user: Mapped[bool] = mapped_column("is_ad_user", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     manual_user: Mapped[bool] = mapped_column("manual_user", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    contact_number: Mapped[typing.Optional[str]] = mapped_column("contact_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(username, employee_id, name="users_username_employee_id"),)
 
@@ -141,6 +142,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     is_ad_user: bool
     status: bool
     manual_user: bool
+    contact_number: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -172,6 +174,7 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
     is_ad_user: typing.Optional[bool] | None = None
     status: typing.Optional[bool] | None = None
     manual_user: typing.Optional[bool] | None = None
+    contact_number: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'

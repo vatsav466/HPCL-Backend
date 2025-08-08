@@ -327,8 +327,37 @@ def get_group_by_filter_key(cross_filters, Base_Filters, resp_format_org, cumula
         group_by_filter.append('"month_name"')
     return group_by_filter
 
-
+import pandas as pd
+import datetime
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    if resp_format == "file_download":
+        file_path = '/downloads/final_data.csv' 
+        return {
+                'status': 'True',
+                'message': 'Success',
+                'data': 'File Downloaded Successfully',
+                'file_path': file_path
+            }
+        print("call the function")
+        status,results =  await top_ic(filters, cross_filters, drill_state, time_grain, resp_format)
+        if isinstance(results,str):
+            return False, "No data for current selection"
+        if status:
+            print("status is returning")
+            df = pd.DataFrame(results)  
+            # df.to_csv('/opt/ceg/algo/final_data.csv', index=False)
+            # return {'status':status,'message':'Success','data':results}
+            file_path = '/opt/downloads/final_data.csv'  # define file_path here
+            df.to_csv(file_path, index=False)
+            return {
+                'status': status,
+                'message': 'Success',
+                'data': results,
+                'file_path': file_path
+            }
+
+
+    
     if resp_format == "top_ic":
         print("call thhe function")
 
@@ -338,7 +367,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if status:
             print("status is returning")
             df = pd.DataFrame(results)  
-            df.to_csv('/opt/ceg/algo/final_data.csv', index=False)
+            df.to_csv('/opt/downloads/final_data.csv', index=False)
             return {'status':status,'message':'Success','data':results}
     print("came into m60 performance")
     def get_fiscal_year(date_ui, todays_date, same_year=False, key='YTDPM'):
@@ -2352,16 +2381,14 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 "Zone_Name" AS Zone_Name,
                 "Region_Name" AS Region_Name,
                 "SalesArea_Name" AS SalesArea_Name,
-                ROUND(
-                    SUM(ROUND("NETWEIGHT_TMT"::numeric, 2)) FILTER (
-                        WHERE "DAY_ID" BETWEEN '{cur_start}' AND '{cur_end}'
-                    ) * 1000, 2
-                ) AS cur_sales,
-                ROUND(
-                    SUM(ROUND("NETWEIGHT_TMT"::numeric, 2)) FILTER (
+                    SUM("NETWEIGHT_TMT")FILTER (
+                        WHERE "DAY_ID" BETWEEN'{cur_start}' AND '{cur_end}'
+                    )
+                 AS cur_sales,
+                SUM("NETWEIGHT_TMT") FILTER (
                         WHERE "DAY_ID" BETWEEN '{hist_start}' AND '{hist_end}'
-                    ) * 1000, 2
-                ) AS his_sales
+                    )
+                AS his_sales
             FROM public."MOM_DAY_LEVEL_DATA"
             WHERE "SBU_Name" = 'I&C'
             AND "Zone_Name" IS NOT NULL
@@ -2467,8 +2494,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 "Zone_Name" AS Zone_Name,
                 "Region_Name" AS Region_Name,
                 "SalesArea_Name" AS SalesArea_Name,
-                ROUND(SUM(CASE {cur_conditions} ELSE 0 END)::numeric, 2) AS cum_cur_sales,
-                ROUND(SUM(CASE {his_conditions} ELSE 0 END)::numeric, 2) AS cum_his_sales
+                SUM(CASE {cur_conditions} ELSE 0 END) AS cum_cur_sales,
+                SUM(CASE {his_conditions} ELSE 0 END) AS cum_his_sales
             FROM public."MOM_DAY_LEVEL_DATA"
             WHERE "SBU_Name" = 'I&C'
               AND "Zone_Name" IS NOT NULL
@@ -2542,26 +2569,37 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
 
             cum_cur = cum_sales_dict.get((z, r, s), {}).get("cum_cur_sales", 0.0)
             cum_his = cum_sales_dict.get((z, r, s), {}).get("cum_his_sales", 0.0)
+            monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
             cum_target = cumulative_target_dict.get((z, r, s), 0.0)
-            # cur_sales_mt = cur_sales 
-            # his_sales_mt = his_sales 
-            target_mt = target 
-            cum_cur_mt = cum_cur 
-            cum_his_mt = cum_his 
-            cum_target_mt = cum_target 
+            cur_sales = cur_sales * 1000
+            his_sales = his_sales * 1000
+            target_mt = target * 1000
+            cum_cur_mt = cum_cur * 1000
+            cum_his_mt = cum_his *1000
+            cum_target_mt = cum_target *1000
+        
             # print("cur_sales: ", cur_sales_mt, "his_sales: ", his_sales_mt, "target: ", target_mt, "cum_cur: ", cum_cur_mt, "cum_his: ", cum_his_mt, "cum_target: ", cum_target_mt)
             # print("cur_sales:----------- ", cur_sales, "his_sales:------------- ", his_sales, "target:--------------- ", target, "cum_cur: -----------", cum_cur, "cum_his:------- ", cum_his, "cum_target:---------- ", cum_target)
 
-            # monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
-            # monthly_target_diff = round((cur_sales / target) * 100, 2) if target != 0 else None
-            
-            monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
-            monthly_target_diff = round((cur_sales / target_mt) * 100, 2) if target_mt != 0 else None
 
-            # cumulative_diff_value = round(((cum_cur - cum_his) / cum_his) * 100, 2) if cum_his != 0 else None
-            # cumulative_target_diff = round((cum_cur / cum_target) * 100, 2) if cum_target != 0 else None
-            cumulative_diff_value = round(((cum_cur_mt - cum_his_mt) / cum_his_mt) * 100, 2) if cum_his_mt != 0 else None
-            cumulative_target_diff = round((cum_cur_mt / cum_target_mt) * 100, 2) if cum_target_mt != 0 else None
+            monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
+            monthly_target_diff = round((cur_sales / target) * 100, 2) if target != 0 else None
+            
+            # monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
+            # monthly_target_diff = round((cur_sales / target_mt) * 100, 2) if target_mt != 0 else None
+            
+            # monthly_diff_value = min(round(((cur_sales - his_sales) / his_sales) * 100, 2), 100) if his_sales != 0 else None
+
+            # monthly_target_diff = min(round((cur_sales / target_mt) * 100, 2), 100) if target_mt != 0 else None
+
+            # cumulative_diff_value = min(round(((cum_cur_mt - cum_his_mt) / cum_his_mt) * 100, 2), 100) if cum_his_mt != 0 else None
+
+            # cumulative_target_diff = min(round((cum_cur_mt / cum_target_mt) * 100, 2), 100) if cum_target_mt != 0 else None
+
+            cumulative_diff_value = round(((cum_cur - cum_his) / cum_his) * 100, 2) if cum_his != 0 else None
+            cumulative_target_diff = round((cum_cur / cum_target) * 100, 2) if cum_target != 0 else None
+            # cumulative_diff_value = round(((cum_cur_mt - cum_his_mt) / cum_his_mt) * 100, 2) if cum_his_mt != 0 else None
+            # cumulative_target_diff = round((cum_cur_mt / cum_target_mt) * 100, 2) if cum_target_mt != 0 else None
             results.append({
                 "id": idx,
                 "region": r,
@@ -2695,6 +2733,7 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
 
             # Ensure results column is string too
             results["icSalesArea"] = results["icSalesArea"].astype(str)
+            results["icSalesArea"] = results["icSalesArea"].astype(str).str.replace("S/A", "DS SA").str.upper().str.strip()
             # print("results---->",len(results))
             # print("Results DataFrame row count:", len(results))
             # print("Unique icSalesArea in results:\n", results["icSalesArea"].unique()[:5])
@@ -2705,7 +2744,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 area = row["icSalesArea"].strip().upper()
                 month_col = row["month_column"]
 
-                match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+                # match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+                match = enriched_df[enriched_df["icSalesArea"] == area]
 
                 if not match.empty and month_col in match.columns:
                     try:
@@ -2718,6 +2758,10 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
 
                     if new_target != 0:
                         monthly_data["target_achieved"] = round((cur / new_target) * 100, 2)
+                        # target_achieved = round((cur / new_target) * 100, 2)
+                        # target_achieved = min(target_achieved, 100)  # Cap at 100%
+                        # monthly_data["target_achieved"] = target_achieved
+
                     else:
                         monthly_data["target_achieved"] = None
 
@@ -2729,7 +2773,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 area = row["icSalesArea"].strip().upper()
                 selected_month = row["month_column"]
 
-                match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+                # match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+                match = enriched_df[enriched_df["icSalesArea"] == area]
 
                 if not match.empty:
                     month_order = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
@@ -2750,6 +2795,9 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
 
                         if new_cum_target != 0:
                             cumulative_data["target_achieved"] = round((cum_cur / new_cum_target) * 100, 2)
+                            # target_achieved = round((cum_cur / new_cum_target) * 100, 2)
+                            # target_achieved = min(target_achieved, 100)
+                            # cumulative_data["target_achieved"] = target_achieved
                         else:
                             cumulative_data["target_achieved"] = None
 

@@ -113,7 +113,7 @@ async def combine_roles(data, _id, role_name):
 async def process_data(data, bu):
     novex_model_col = ["username", "email", "first_name", "last_name", "password", "employee_id",
                        "employee_number", "bu", "sap_id", "system_role", "novex_role", "region",
-                       "state", "zone", "sales_area", "is_ad_user", "status","manual_user"]
+                       "state", "zone", "sales_area", "is_ad_user", "status","manual_user", "contact_number"]
     data.rename(columns={"EMPLOYEE_NUMBER": "username", "EMPLOYEE_NAME": "first_name",
                                 "EMP_EMAIL": "email", "PLANT_CODE": "sap_id", "PLANT_DESC": "region",
                                 "Zone": "zone", "ROLE_NAME": "system_role"}, inplace=True)
@@ -162,7 +162,9 @@ async def process_data(data, bu):
     for col in novex_model_col:
         if not col in data.columns:
             data[col] = ""
+    data["contact_number"] = data["contact_number"].astype(str)
     data = data[novex_model_col]
+
     return data
 
 
