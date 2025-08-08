@@ -5,3 +5,4 @@
 api_manager/.algo_env
 .scannerwork/.sonar_lock
 .scannerwork/report-task.txt
+/UrdhvaBase/urdhva_base.egg-info
