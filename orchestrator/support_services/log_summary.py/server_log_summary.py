@@ -74,8 +74,8 @@ async def log_summary():
 async def monitor_remote_logs(server):
     print("Monitoring all logs on remote server...")
     REMOTE_HOST = f"10.90.38.{server}"
-    REMOTE_USER = "novex"
-    REMOTE_PASSWORD = "Hpcl@123"
+    REMOTE_USER = urdhva_base.settings.novex_user
+    REMOTE_PASSWORD = urdhva_base.settings.novex_password
     REMOTE_LOG_DIR = "/var/log/ceg_logs"
 
     now_ist = datetime.now(ZoneInfo("Asia/Kolkata"))

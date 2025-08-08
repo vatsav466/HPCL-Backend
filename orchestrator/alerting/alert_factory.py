@@ -159,6 +159,7 @@ class AlertFactory:
                                                         'cause_effect': alert_data.get('Cause_Effect', ''),
                                                         'workflow_url': alert_data.get('workflow_url', ''),
                                                         'workflow_port': alert_data.get('workflow_port', ''),
+                                                        'vts_alert_history_ids': alert_data.get('vts_alert_history_ids',[]),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()

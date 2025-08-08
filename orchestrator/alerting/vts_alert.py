@@ -46,7 +46,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         f"for bu {alert_data['location_type']} - {location_details}")
             location_details = {'name': ""}
 
-        instance_data, violation_name, vts_alert_history_ids = await vts_analysis.get_vts_instance(alert_data['tl_number'])
+        instance_data, violation_name, vts_alert_history_ids = await vts_analysis.get_vts_instance(alert_data['tl_number'],alert_data['location_id'],alert_data['location_type'])
         if not instance_data:
             logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
             return
@@ -104,11 +104,16 @@ class VTSAlertManager(alert_factory.AlertFactory):
         tl_number = alert_data['tl_number']
         query = ""
         if instance_data['instance'] == 'Instance - 1':
-            query = f"update vts_truck_details set instance_1 = 1, truck_status = 'BLOCKED' where truck_regno = '{tl_number}'"
+            query = (f"update vts_truck_details set instance_1 = 1, truck_status = 'BLOCKED', block_start_datetime = '{vts_alert_data['vehicle_blocked_start_date']}', block_end_datetime = '{vts_alert_data['vehicle_blocked_end_date']}' "
+                        f"where truck_regno = '{tl_number}'")
         if instance_data['instance'] == 'Instance - 2':
-            query = f"update vts_truck_details set instance_2 = 1, truck_status = 'BLOCKED' where truck_regno = '{tl_number}'"
+            #query = f"update vts_truck_details set instance_2 = 1, truck_status = 'BLOCKED' where truck_regno = '{tl_number}'"
+            query = (f"update vts_truck_details set instance_2 = 1, truck_status = 'BLOCKED', block_start_datetime = '{vts_alert_data['vehicle_blocked_start_date']}', block_end_datetime = '{vts_alert_data['vehicle_blocked_end_date']}' "
+                        f"where truck_regno = '{tl_number}'")
         if instance_data['instance'] == 'Instance - 3':
-            query = f"update vts_truck_details set instance_3 = 1, truck_status = 'BLOCKED' where truck_regno = '{tl_number}'"
+            #query = f"update vts_truck_details set instance_3 = 1, truck_status = 'BLOCKED' where truck_regno = '{tl_number}'"
+            query = (f"update vts_truck_details set instance_3 = 1, truck_status = 'BLOCKED', block_start_datetime = '{vts_alert_data['vehicle_blocked_start_date']}', block_end_datetime = '{vts_alert_data['vehicle_blocked_end_date']}' "
+                        f"where truck_regno = '{tl_number}'")
         if query:
             await hpcl_ceg_model.VtsTruckDetails.update_by_query(query)
         camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=alert_data['location_id'],

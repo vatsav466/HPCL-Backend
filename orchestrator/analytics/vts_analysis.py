@@ -296,12 +296,27 @@ async def insert_truck_details(data):
     await hpcl_ceg_model.VtsTruckDetails.bulk_update(data.to_dict(orient="records"), upsert=True)
 
 
-async def get_instance(tt_number: str, get_raw_data=False):
+async def get_instance(tt_number: str, sap_id: str, bu: str, get_raw_data=False):
     query = f"select * from vts_truck_details where truck_regno = '{tt_number}'"
     vts_truck_data = await hpcl_ceg_model.VtsTruckDetails.get_aggr_data(query, limit=0)
     if get_raw_data:
         return vts_truck_data.get("data", [])
     if not vts_truck_data.get("data", []):
+        vts_truck_record = {
+            "truck_regno": tt_number,
+            "sap_id": sap_id,
+            "bu": bu,
+            "truck_status": "UNBLOCKED", 
+            "violation_type": "",
+            "block_start_datetime": None,
+            "block_end_datetime": None, 
+            "instance_1": 0, 
+            "instance_2": 0,
+            "instance_3": 0,
+            "alert_id": ""
+        }
+        #print("vts_truck_record",vts_truck_record)
+        await hpcl_ceg_model.VtsTruckDetailsCreate(**vts_truck_record).create()
         return "0"
     vts_truck_data = vts_truck_data.get("data", [])[0]
     print(vts_truck_data)
@@ -320,15 +335,34 @@ async def is_alert_exists(tl_number: str):
         return True
     return False
 
+async def last_closed_at(tt_number: str):
+    query = f"vehicle_number = '{tt_number}' and alert_status = 'Close' and alert_section = 'VTS'"
+    print("query: ", query)
+    vts_alert_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query,limit=5),resp_type='plain')
+    #print("vts_alert_data: ", vts_alert_data)
+    if len(vts_alert_data['data']):
+        return vts_alert_data['data'][0]['updated_at']
+    return None
 
-async def get_vts_instance(tt_number: str):
+
+async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
     vts_map = vts_mapping.vts_interlock_mapping
     start_date, end_date = await va_analysis.get_period_datetime(period='fortnight')
     start_date = start_date.strftime("%Y-%m-%d")
     end_date = end_date.strftime("%Y-%m-%d")
-    query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_alert_history where tl_number = '{tt_number}' "
-             f"and vts_end_datetime::date between '{start_date}' and '{end_date}'")
-    vts_alert_data = await hpcl_ceg_model.VtsAlertHistory.get_aggr_data(query, limit=0)
+    vts_closed_alert_data = await last_closed_at(tt_number)
+    if vts_closed_alert_data:
+        last_updated_at_ist = vts_closed_alert_data + datetime.timedelta(hours=5, minutes=30)
+        start_date_ = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date_ = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+        if start_date_ <= last_updated_at_ist.date() <= end_date_:
+            query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_alert_history where tl_number = '{tt_number}' "
+                    f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and created_at > '{vts_closed_alert_data}'")
+            vts_alert_data = await hpcl_ceg_model.VtsAlertHistory.get_aggr_data(query, limit=0)
+    else:
+        query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_alert_history where tl_number = '{tt_number}' "
+                f"and vts_end_datetime::date between '{start_date}' and '{end_date}'")
+        vts_alert_data = await hpcl_ceg_model.VtsAlertHistory.get_aggr_data(query, limit=0)
     if not vts_alert_data:
         return False
     vts_alert_data = vts_alert_data.get("data", [])
@@ -339,37 +373,37 @@ async def get_vts_instance(tt_number: str):
     instance = {}
     violation_name = ""
     if "device_tamper_count" in violation_counts.keys() and violation_counts['device_tamper_count'] > 0:
-        instance = vts_map["device_tamper_count"]['alerting_rules'][await get_instance(tt_number)]
+        instance = vts_map["device_tamper_count"]['alerting_rules'][await get_instance(tt_number,sap_id,bu)]
         instance['severity'] = vts_map["device_tamper_count"]["severity"]
         violation_name = "device_tamper_count"
 
     elif "main_supply_removal_count" in violation_counts.keys() and violation_counts['main_supply_removal_count'] > 0:
-        instance = vts_map["main_supply_removal_count"]['alerting_rules'][await get_instance(tt_number)]
+        instance = vts_map["main_supply_removal_count"]['alerting_rules'][await get_instance(tt_number,sap_id,bu)]
         instance['severity'] = vts_map["main_supply_removal_count"]["severity"]
         violation_name = "main_supply_removal_count"
 
     elif "route_deviation_count" in violation_counts.keys() and violation_counts['route_deviation_count'] > 5:
-        instance = vts_map["route_deviation_count"]['alerting_rules'][await get_instance(tt_number)]
+        instance = vts_map["route_deviation_count"]['alerting_rules'][await get_instance(tt_number,sap_id,bu)]
         instance['severity'] = vts_map["route_deviation_count"]["severity"]
         violation_name = "route_deviation_count"
 
     elif "stoppage_violations_count" in violation_counts.keys() and violation_counts['stoppage_violations_count'] > 5:
-        instance = vts_map["stoppage_violations_count"]['alerting_rules'][await get_instance(tt_number)]
+        instance = vts_map["stoppage_violations_count"]['alerting_rules'][await get_instance(tt_number,sap_id,bu)]
         instance['severity'] = vts_map["stoppage_violations_count"]["severity"]
         violation_name = "stoppage_violations_count"
 
     elif "speed_violation_count" in violation_counts.keys() and violation_counts['speed_violation_count'] > 3:
-        instance = vts_map["speed_violation_count"]['alerting_rules'][await get_instance(tt_number)]
+        instance = vts_map["speed_violation_count"]['alerting_rules'][await get_instance(tt_number,sap_id,bu)]
         instance['severity'] = vts_map["speed_violation_count"]["severity"]
         violation_name = "speed_violation_count"
 
     elif "night_driving_count" in violation_counts.keys() and violation_counts['night_driving_count'] > 3:
-        instance = vts_map["night_driving_count"]['alerting_rules'][await get_instance(tt_number)]
+        instance = vts_map["night_driving_count"]['alerting_rules'][await get_instance(tt_number,sap_id,bu)]
         instance['severity'] = vts_map["night_driving_count"]["severity"]
         violation_name = "night_driving_count"
 
     elif "continuous_driving_count" in violation_counts.keys() and violation_counts['continuous_driving_count'] > 3:
-        instance = vts_map["continuous_driving_count"]['alerting_rules'][await get_instance(tt_number)]
+        instance = vts_map["continuous_driving_count"]['alerting_rules'][await get_instance(tt_number,sap_id,bu)]
         instance['severity'] = vts_map["continuous_driving_count"]["severity"]
         violation_name = "continuous_driving_count"
 
