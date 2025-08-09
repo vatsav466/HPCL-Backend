@@ -351,6 +351,7 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
     start_date = start_date.strftime("%Y-%m-%d")
     end_date = end_date.strftime("%Y-%m-%d")
     vts_closed_alert_data = await last_closed_at(tt_number)
+    vts_alert_data = []
     if vts_closed_alert_data:
         last_updated_at_ist = vts_closed_alert_data + datetime.timedelta(hours=5, minutes=30)
         start_date_ = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
