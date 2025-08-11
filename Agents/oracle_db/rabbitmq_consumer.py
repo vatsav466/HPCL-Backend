@@ -72,11 +72,8 @@ class RabbitMQConsumer:
                     # Convert to DataFrame
                     df = pd.DataFrame(renamed_records)
                     if new_table_name == "HostLocalLoadedTts":
-                          
-                          df = df.drop_duplicates(
-                                subset=['transaction_end_time', 'loaded_qty', 'end_totalizer', 'start_totalizer', 'card_number', 'recipe_name', 'truck_number'],
-                                keep = 'first'
-                                )
+                         compare_cols = [col for col in df.columns if col != 'SR_NUMBER']
+                         df = df.drop_duplicates(subset=compare_cols, keep='first')
                     # Convert all float to float, int to int, str to str, datetime to datetime, and handle NaN/Null values
                     for col in df.columns:
                         if df[col].dtype == np.float64 or df[col].dtype == np.float32:
