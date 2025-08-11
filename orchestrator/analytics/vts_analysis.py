@@ -351,6 +351,7 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
     start_date = start_date.strftime("%Y-%m-%d")
     end_date = end_date.strftime("%Y-%m-%d")
     vts_closed_alert_data = await last_closed_at(tt_number)
+    vts_alert_data = []
     if vts_closed_alert_data:
         last_updated_at_ist = vts_closed_alert_data + datetime.timedelta(hours=5, minutes=30)
         start_date_ = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -358,6 +359,10 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
         if start_date_ <= last_updated_at_ist.date() <= end_date_:
             query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_alert_history where tl_number = '{tt_number}' "
                     f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and created_at > '{vts_closed_alert_data}'")
+            vts_alert_data = await hpcl_ceg_model.VtsAlertHistory.get_aggr_data(query, limit=0)
+        else:
+            query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_alert_history where tl_number = '{tt_number}' "
+                    f"and vts_end_datetime::date between '{start_date}' and '{end_date}'")
             vts_alert_data = await hpcl_ceg_model.VtsAlertHistory.get_aggr_data(query, limit=0)
     else:
         query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_alert_history where tl_number = '{tt_number}' "
