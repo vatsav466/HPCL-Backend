@@ -732,6 +732,7 @@ Model Alerts {
     vehicle_blocked_start_date optional datetime
     vehicle_blocked_end_date optional datetime
     mark_as_false optional bool
+    vts_alert_history_ids optional list str
 
     Action=> alert_action {
         bu optional str

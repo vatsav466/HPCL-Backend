@@ -5,6 +5,8 @@ import traceback
 import pandas as pd
 import charts_actions
 import dashboard_studio_model
+import time
+from requests.exceptions import RequestException, ConnectionError
 
 class Workflows_Deletion:
 
@@ -14,40 +16,58 @@ class Workflows_Deletion:
 
         Args:
             camunda_url (str): The base URL of the Camunda engine.
+            business_key (str): The business key for the process.
             instance_id (str): The ID of the process instance to be deleted.
+            alert_id (int): The alert ID to verify before deletion.
 
-        Raises:
-            requests.exceptions.RequestException: If there is an error during the deletion request.
+        Returns:
+            list: Status messages.
         """
 
+        def retry_request(method, url, retries=3, **kwargs):
+            delay = 2
+            for attempt in range(1, retries + 1):
+                try:
+                    response = method(url, **kwargs)
+                    response.raise_for_status()
+                    return response
+                except requests.exceptions.RequestException as e:
+                    if attempt == retries:
+                        raise
+                    sleep_time = delay * (2 ** (attempt - 1)) + random.uniform(0, 1)
+                    print(f"Retrying {method.__name__.upper()} {url} in {sleep_time:.1f}s due to: {e}")
+                    time.sleep(sleep_time)
+
         query_url = f"{camunda_url}/engine-rest/process-instance?businessKey={business_key}"
-    
+        
         try:
-            response = requests.get(query_url)
-            response.raise_for_status()
+            response = retry_request(requests.get, query_url)
             instances = response.json()
             if not instances:
                 return [f"No running instances found for instance_id: {instance_id}"]
-            
+
             for instance in instances:
                 process_instance_id = instance["id"]
                 if process_instance_id != instance_id:
                     continue
-                # Fetch variables for each instance
+
+                # Fetch variables
                 variables_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}/variables"
-                var_response = requests.get(variables_url)
-                var_response.raise_for_status()
+                var_response = retry_request(requests.get, variables_url)
                 variables = var_response.json()
-                # Extract 'priority' value
+
                 alerting_id = variables.get("alert_id", {}).get("value", None)
                 if int(alerting_id) == alert_id:
                     delete_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}"
-                    delete_response = requests.delete(delete_url)
-                    delete_response.raise_for_status()
+                    retry_request(requests.delete, delete_url)
                     print(f"Deleted instance {instance_id} from {camunda_url}")
+                    return [f"Deleted instance {instance_id} from {camunda_url}"]
+
+            return [f"Matching alert_id {alert_id} not found for instance_id {instance_id}"]
 
         except requests.exceptions.RequestException as e:
             print(f"Error deleting instance {instance_id}: {e}")
+            return [f"Failed to delete instance {instance_id} due to: {str(e)}"]
     
     async def get_camunda_urls(self,alert_section):
         """
@@ -60,12 +80,6 @@ class Workflows_Deletion:
             list: A list of URLs corresponding to the specified alert section.
         """
         urls = []
-        if alert_section in ["RO"]:
-            camunda_config = urdhva_base.settings.camunda_url_config
-            for key, services in camunda_config.items():
-                url = f"http://{services['host']}:{services['port']}"
-                urls.append(url)
-
         camunda_configuration = urdhva_base.settings.camunda_configuration
         for key, services in camunda_configuration.items():
             for service in services:
@@ -73,43 +87,69 @@ class Workflows_Deletion:
                     urls.append(service["url"])
         return urls
     
-    async def get_running_instances_in_urls(self,camunda_urls):
+    async def get_running_instances_in_urls(self, camunda_urls, max_retries=3, backoff_factor=1):
         """
-        Fetches running instances from multiple Camunda URLs.
+        Fetches running instances from multiple Camunda URLs with retry support.
 
         Args:
-            camunda_urls (list): A list of Camunda URLs to fetch running instances from.
+            camunda_urls (list): List of Camunda base URLs.
+            max_retries (int): Max retries per request on failure.
+            backoff_factor (int): Base delay in seconds for exponential backoff.
 
         Returns:
-            dict: A dictionary of business keys mapped to their respective instance IDs and URLs.
+            dict: Map of businessKey -> {id, url, alert_id}
         """
         instance_map = {}
+
         for camunda_url in camunda_urls:
             url = f"{camunda_url}/engine-rest/process-instance"
-            try:
-                response = requests.get(url)
-                response.raise_for_status()
-                instances = response.json()
 
-                # Overwrite previous businessKey entries with the latest from the last URL processed
-                for instance in instances:
-                    if "businessKey" in instance and instance["businessKey"]:
-                        instance_id = instance["id"]
-                        variables_url = f"{camunda_url}/engine-rest/process-instance/{instance_id}/variables"
-                        variables_response = requests.get(variables_url)
-                        variables_response.raise_for_status()
-                        variables = variables_response.json()
+            for attempt in range(1, max_retries + 1):
+                try:
+                    response = requests.get(url, timeout=10)
+                    response.raise_for_status()
+                    instances = response.json()
+                    break  # Exit retry loop if successful
+
+                except (RequestException, ConnectionError) as e:
+                    if attempt == max_retries:
+                        print(f"[ERROR] Max retries reached for {url}. Skipping. Reason: {e}")
+                        instances = []
+                    else:
+                        sleep_time = backoff_factor * (2 ** (attempt - 1))
+                        print(f"[WARN] Attempt {attempt} failed for {url}: {e}. Retrying in {sleep_time} sec...")
+                        time.sleep(sleep_time)
+
+            for instance in instances:
+                business_key = instance.get("businessKey")
+                if not business_key:
+                    continue
+
+                instance_id = instance["id"]
+                variables_url = f"{camunda_url}/engine-rest/process-instance/{instance_id}/variables"
+
+                for attempt in range(1, max_retries + 1):
+                    try:
+                        var_response = requests.get(variables_url, timeout=10)
+                        var_response.raise_for_status()
+                        variables = var_response.json()
                         alert_id = variables.get("alert_id", {}).get("value", None)
 
-                        #print("variablees--->",variables)
-                        instance_map[instance["businessKey"]] = {
-                                "id": instance_id,
-                                "url": camunda_url,
-                                "alert_id": int(alert_id)  # Store variables
+                        instance_map[business_key] = {
+                            "id": instance_id,
+                            "url": camunda_url,
+                            "alert_id": int(alert_id) if alert_id else None
                         }
+                        break  # Successful, break out of retry
 
-            except requests.exceptions.RequestException as e:
-                print(f"Error fetching running instances: {e}")
+                    except (RequestException, ConnectionError) as e:
+                        if attempt == max_retries:
+                            print(f"[ERROR] Failed to fetch variables for {instance_id} at {variables_url}: {e}")
+                        else:
+                            sleep_time = backoff_factor * (2 ** (attempt - 1))
+                            print(f"[WARN] Attempt {attempt} failed for {variables_url}: {e}. Retrying in {sleep_time} sec...")
+                            time.sleep(sleep_time)
+
         return instance_map
 
     async def delete_running_instances(self, present_alert_ids_in_db, alert_section):
@@ -131,13 +171,16 @@ class Workflows_Deletion:
         camunda_urls = list(set(camunda_urls))
         print("camuda_urls--->",camunda_urls)
         runnig_instances_in_urls = await self.get_running_instances_in_urls(camunda_urls)
+        print("runnig_instances_in_urls",len(runnig_instances_in_urls))
         for key,details in runnig_instances_in_urls.items():
             if details["alert_id"] not in present_alert_ids_in_db:
                 business_keys.append(details["alert_id"])
-                if details["url"] in camunda_urls:
-                    await self.delete_instance(details["url"],key,details["id"],details["alert_id"])
+                #if details["url"] in camunda_urls:
+                    #await self.delete_instance(details["url"],key,details["id"],details["alert_id"])
             else:
                 present_keys.append(details["alert_id"])
+        print("len of business_keys Keys",len(business_keys))
+        print("len of present_keys Keys",len(present_keys))
         present_keys = ", ".join(f"'{id}'" for id in present_keys)
         test = pd.DataFrame({'ListValue': business_keys})
         test.to_csv("/opt/ceg/algo/ListValues.csv", index=False)
@@ -175,7 +218,7 @@ class Workflows_Deletion:
         It then deletes the running instances in Camunda that do not exist in the database.
         """
         for idx,record in workflow_resp.iterrows():
-            if record["alert_section"] in ["TAS"]:
+            if record["alert_section"] in ["VA"]:
                 # continue
                 query = (f"select * from alerts where alert_section='{record['alert_section']}' and alert_status!='Close'")
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
