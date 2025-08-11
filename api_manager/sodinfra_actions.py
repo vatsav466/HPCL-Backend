@@ -151,6 +151,4 @@ async def sodinfra_get_sales_infra(data: Sodinfra_Get_Sales_InfraParams):
 # Action get_sales_officer_infra
 @router.post('/get_sales_officer_infra', tags=['SodInfra'])
 async def sodinfra_get_sales_officer_infra(data: Sodinfra_Get_Sales_Officer_InfraParams):
-    return await infra_functions.get_sales_officer_info(filters=data.filters, cross_filters=data.cross_filters,
-                                                drill_state=data.drill_state, limit=data.limit,
-                                                time_grain=data.time_grain)
+    return await infra_functions.get_sales_officer_info(data.sbu, data.sap_id)

@@ -2492,11 +2492,8 @@ Model SodInfra {
     }
 
     Action=> get_sales_officer_infra {
-        filters optional list WidgetFilters
-        drill_state optional str
-        cross_filters optional list WidgetFilters
-        limit optional int
-        time_grain optional str
+    sbu str
+    sap_id optional str
     }
 
     Config=> {

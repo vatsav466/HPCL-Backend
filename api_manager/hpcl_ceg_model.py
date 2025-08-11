@@ -7298,11 +7298,8 @@ class Sodinfra_Get_Sales_InfraParams(pydantic.BaseModel):
 
 
 class Sodinfra_Get_Sales_Officer_InfraParams(pydantic.BaseModel):
-    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
-    drill_state: typing.Optional[str] = pydantic.Field("", **{})
-    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
-    limit: typing.Optional[int] = pydantic.Field(0, **{})
-    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: str
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
