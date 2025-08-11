@@ -203,7 +203,7 @@ class AuthenticationManager:
 
             user_info["allowed_roles"] = list(allowed_roles.values())
         # Adding session data
-        return True, await cls.generate_cookie(user_info)
+        return True, await cls.generate_cookie(user_info), user_info
 
     @classmethod
     async def verify_locked_check(cls, username):

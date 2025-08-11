@@ -31,6 +31,7 @@ from urllib.parse import parse_qs, urlencode
 from slowapi.middleware import SlowAPIMiddleware
 from mangum import Mangum
 from starlette.responses import RedirectResponse
+from hpcl_ceg_model import UserLoginAudit
 
 logger = urdhva_base.Logger.getInstance("urdhva_api")
 
@@ -552,7 +553,7 @@ async def login(request: fastapi.Request, code: typing.Optional[str] = None,
 
 @app.get("/api/logout")
 async def logout(request: fastapi.Request):
-    # {'url': f"https://{request.base_url.hostname}/login"}
+    # {'url': f"https://{request.base_url.hostname}/login"}    
     response = fastapi.responses.HTMLResponse("", 401)
     cookie_id = request.cookies.get(cookie_name, None)
     if cookie_id:
@@ -562,12 +563,26 @@ async def logout(request: fastapi.Request):
             cookie_id = d["cookie_id"]
         except:
             ...
+        
+        audit = await UserLoginAudit.get_all(
+            urdhva_base.queryparams.QueryParams(q=f"login_id='{cookie_id}'"),
+            resp_type='plain')
+
+        if audit["data"]:
+            await UserLoginAudit(
+                **{
+                    "id": audit["data"][0]["id"], 
+                    "login_status": "Logged Out", 
+                    "logout_time": urdhva_base.utilities.get_present_time()
+                    }
+            ).modify()
+
         redis_client = await urdhva_base.redispool.get_redis_connection()
         rkey = f"Novex_SessionData_{cookie_id}"
         await redis_client.delete(rkey)
     response.delete_cookie(cookie_name, httponly = urdhva_base.settings.session_httponly,
                            secure=urdhva_base.settings.session_secure, samesite=urdhva_base.settings.session_same_site)
-    # todo:- Need to clear dashboard sessions
+    # todo:- Need to clear dashboard sessions    
     return response
 
 

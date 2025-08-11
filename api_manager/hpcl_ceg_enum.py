@@ -31,6 +31,16 @@ class DeviceType(str, enum.Enum):
 
 
 
+class LoginStatus(str, enum.Enum):
+    login = 'Logged In'
+    logout = 'Logged Out'
+
+
+
+
+
+
+
 class NotificationLevel(str, enum.Enum):
     InitialNotification = 'InitialNotification'
     InitialEscalation = 'InitialEscalation'

@@ -93,6 +93,74 @@ class Roles_Get_All_PagesParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class UserLoginAuditSchema(UrdhvaPostgresBase):
+    __tablename__ = 'user_login_audit'
+    
+    employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    email: Mapped[str] = mapped_column("email", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    role: Mapped[str] = mapped_column("role", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    login_id: Mapped[str] = mapped_column("login_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    login_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("login_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    logout_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("logout_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    login_status: Mapped[typing.Optional[typing.Any]] = mapped_column("login_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    failure_reason: Mapped[typing.Optional[str]] = mapped_column("failure_reason", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    auth_method: Mapped[str] = mapped_column("auth_method", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    user_agent: Mapped[typing.Optional[str]] = mapped_column("user_agent", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class UserLoginAuditCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'user_login_audit'
+    
+    employee_id: str
+    email: str
+    role: str
+    login_id: str
+    login_time: typing.Optional[datetime.datetime] | None = None
+    logout_time: typing.Optional[datetime.datetime] | None = None
+    login_status: typing.Optional[hpcl_ceg_enum.LoginStatus] | None = None
+    failure_reason: typing.Optional[str] = pydantic.Field("", **{})
+    auth_method: str
+    user_agent: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = UserLoginAuditSchema
+        upsert_keys = []
+
+
+class UserLoginAudit(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'user_login_audit'
+    
+    employee_id: typing.Optional[str] | None = None
+    email: typing.Optional[str] | None = None
+    role: typing.Optional[str] | None = None
+    login_id: typing.Optional[str] | None = None
+    login_time: typing.Optional[datetime.datetime] | None = None
+    logout_time: typing.Optional[datetime.datetime] | None = None
+    login_status: typing.Optional[hpcl_ceg_enum.LoginStatus] | None = None
+    failure_reason: typing.Optional[str] = pydantic.Field("", **{})
+    auth_method: typing.Optional[str] | None = None
+    user_agent: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = UserLoginAuditSchema
+        upsert_keys = []
+
+
+class UserLoginAuditGetResp(pydantic.BaseModel):
+    data: typing.List[UserLoginAudit]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class UsersSchema(UrdhvaPostgresBase):
     __tablename__ = 'users'
     

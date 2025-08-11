@@ -88,6 +88,69 @@
             ]
         },
         {
+            "name": "userloginaudit",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "UserLoginAudit",
+            "attributes": {},
+            "uris": [
+                "/api/userloginaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "userloginaudit_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "UserLoginAudit_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/userloginaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "userloginaudit_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "UserLoginAudit_admin",
+            "attributes": {},
+            "uris": [
+                "/api/userloginaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "users",
             "type": "all",
             "ownerManagedAccess": false,
