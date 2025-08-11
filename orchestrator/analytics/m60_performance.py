@@ -329,6 +329,7 @@ def get_group_by_filter_key(cross_filters, Base_Filters, resp_format_org, cumula
 
 import pandas as pd
 import datetime
+import numpy as np 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
     if resp_format == "file_download":
         file_path = '/downloads/final_data.csv' 
@@ -360,16 +361,25 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     
     if resp_format == "top_ic":
         print("call thhe function")
-
-        status,results =  await top_ic(filters, cross_filters, drill_state, time_grain, resp_format)
-        if isinstance(results,str):
+        status, results = await top_ic(filters, cross_filters, drill_state, time_grain, resp_format)
+        if isinstance(results, str):
             return False, "No data for current selection"
+
         if status:
-            print("status is returning")
-            df = pd.DataFrame(results)  
+            df = pd.DataFrame(results)
+
+            # Clean empty/NaN/inf
+            df = df.replace(r'^\s*$', np.nan, regex=True)
+            df = df.replace([np.nan, np.inf, -np.inf], 0)
+
+            # Ensure all data is JSON serializable
+            df = df.astype(object).where(pd.notnull(df), None)
+
+            # Save CSV for debugging
             df.to_csv('/opt/downloads/final_data.csv', index=False)
-            return {'status':status,'message':'Success','data':results}
-    print("came into m60 performance")
+
+            # Return JSON-safe dict
+            return {'status': status,'message': 'Success','data': json.loads(df.to_json(orient='records'))}
     def get_fiscal_year(date_ui, todays_date, same_year=False, key='YTDPM'):
 
         end_date_ = fiscal_year.FiscalDate.fromtimestamp(int(urdhva_base.utilities.get_present_time().strftime('%s')))
@@ -2273,6 +2283,18 @@ def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path
         right_on='IC Sales Area code' # IC Sales Area code in Master Data
     )
     print('enriched_df--->', enriched_df['IC Sales Area code'].unique().tolist())
+    if 'IC Sales Area code' in enriched_df.columns:
+        enriched_df['IC Sales Area code'] = (
+        enriched_df['IC Sales Area code']
+        .replace(r'^\s*$', np.nan, regex=True)  # blank → NaN
+        .replace(['nan', 'NaN'], np.nan)        # text nan → NaN
+    )
+        enriched_df['IC Sales Area code'] = (
+        pd.to_numeric(enriched_df['IC Sales Area code'], errors='coerce')
+        .fillna(0)
+        .astype(int)
+    )
+
     # areas_to_remove = [
     # 'I&C HQO',
     # 'DEHRADUN LPG SA',
