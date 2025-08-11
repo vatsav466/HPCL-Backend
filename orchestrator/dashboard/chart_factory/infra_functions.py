@@ -239,42 +239,76 @@ async def get_download_template_info(sbu):
         print(f"Error generating template for {sbu}: {e}")
         return JSONResponse(status_code=500, content={"detail": f"Internal Server Error: {str(e)}"})
 
+
 async def get_sales_info(filters, cross_filters, drill_state, limit, time_grain):
-
-    query = f'''WITH base_data AS (
-                    SELECT "SBU_Name" AS sbu,
-                           plant_cd AS sap_id,
-                            "SalesArea_Name" AS sales_area,
-                           fiscal_year,
-                           "NETWEIGHT_TMT" AS "NETWEIGHT (TMT)"
-                    FROM "MOM_DAY_LEVEL_DATA"
-                )
-                SELECT sbu,
-                       sap_id,
-                        sales_area,
+    try:
+        query = f'''
+            WITH base_data AS (
+                SELECT "SBU_Name" AS sbu,
+                       plant_cd AS sap_id,
+                       "SalesArea_Name" AS sales_area,
                        fiscal_year,
-                      ROUND(SUM("NETWEIGHT (TMT)")::numeric, 4) AS "NETWEIGHT (TMT)"
-                FROM base_data
-                GROUP BY sbu, sap_id,sales_area, fiscal_year
-                    '''
+                       "NETWEIGHT_TMT" AS "NETWEIGHT (TMT)"
+                FROM "MOM_DAY_LEVEL_DATA"
+            )
+            SELECT sbu,
+                   sap_id,
+                   sales_area,
+                   fiscal_year,
+                   ROUND(SUM("NETWEIGHT (TMT)")::numeric, 4) AS "NETWEIGHT (TMT)"
+            FROM base_data
+            GROUP BY sbu, sap_id, sales_area, fiscal_year
+        '''
 
-    if filters:
-        query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
-    print(query)
+        if filters:
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
 
-    result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
-    rows = result.get("data", [])
+        print(query)
 
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        rows = result.get("data", [])
 
-    # print('rows: ',rows)
-    return rows
+        return {"status": True, "message": "success", "data": rows}
 
-async def get_sales_officer_info(filters, cross_filters, drill_state, limit, time_grain):
+    except Exception as e:
+        print(f"Error in get_sales_info: {str(e)}")
+        return {"status": False, "message": f"Error: {str(e)}", "data": []}
 
-    query = 'select * from users'
-    result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
-    rows = result.get("data", [])
+async def get_sales_officer_info(sbu, sap_id):
+    try:
+        query = f'''   
+                SELECT 
+                    u.username, 
+                    u.first_name, 
+                    u.last_name, 
+                    u.novex_role,
+                    u.contact_number,
+                    sbu.sap_id
+                FROM {sbu}_infra sbu
+                LEFT JOIN users u 
+                    ON sbu.sap_id = ANY(u.sap_id)
+                WHERE sbu.sbu = '{sbu}' 
+                  AND sbu.sap_id = '{sap_id}' 
+                  AND (
+                    u.username IS NOT NULL 
+                    OR u.first_name IS NOT NULL 
+                    OR u.last_name IS NOT NULL 
+                    OR u.novex_role IS NOT NULL
+                  )
+        '''
 
-    sod_query = 'select * from sod_infra'
-    sod_query = await urdhva_base.BasePostgresModel.get_aggr_data(sod_query, limit=0, skip=0)
-    rows = sod_query.get("data", [])
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        records = result.get("data", [])
+
+        return {
+            "status": True,
+            "message": "Sales Officer Info fetched successfully",
+            "data": records
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": f"Error fetching Sales Officer Info: {str(e)}",
+            "data": []
+        }
