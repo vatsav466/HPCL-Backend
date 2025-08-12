@@ -99,7 +99,7 @@ class UserLoginAuditSchema(UrdhvaPostgresBase):
     employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     email: Mapped[str] = mapped_column("email", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     role: Mapped[str] = mapped_column("role", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    login_id: Mapped[str] = mapped_column("login_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    login_id: Mapped[str] = mapped_column("login_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     login_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("login_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     logout_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("logout_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     login_status: Mapped[typing.Optional[typing.Any]] = mapped_column("login_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)

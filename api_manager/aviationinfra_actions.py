@@ -83,7 +83,6 @@ async def aviationinfra_get_all_aviation_infra(data: Aviationinfra_Get_All_Aviat
         params.fields = []
         params.limit = 0
         resp = await AVIATIONInfra.get_all(params, resp_type="plain")
-        print('resp: ',resp)
         return resp
     except Exception as e:
         print(f"Error in get_all_aviation_infra': {e}")

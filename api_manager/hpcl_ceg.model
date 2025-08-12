@@ -158,7 +158,7 @@ Model UserLoginAudit {
     employee_id index_field str
     email index_field str
     role str
-    login_id str
+    login_id index_field str
     login_time optional datetime
     logout_time optional datetime
     login_status optional LoginStatus
