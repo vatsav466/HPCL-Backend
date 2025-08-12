@@ -166,6 +166,13 @@ Model UserLoginAudit {
     auth_method str // SSO or Password
     user_agent optional str // request.headers.get("user-agent", "Unknown")
     remarks optional str
+
+    Action=> fetch_login_audit {
+        search_string optional str
+        limit optional default=100 int
+        skip optional default=0 int
+    }
+
 }
 
 Model Users {

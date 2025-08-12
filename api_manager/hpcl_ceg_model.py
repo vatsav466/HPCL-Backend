@@ -161,6 +161,16 @@ class UserLoginAuditGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class Userloginaudit_Fetch_Login_AuditParams(pydantic.BaseModel):
+    search_string: typing.Optional[str] = pydantic.Field("", **{})
+    limit: typing.Optional[int] = pydantic.Field(100, **{})
+    skip: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class UsersSchema(UrdhvaPostgresBase):
     __tablename__ = 'users'
     

@@ -108,6 +108,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "fetch_login_audit"
                 }
             ]
         },
@@ -147,6 +150,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "fetch_login_audit"
                 }
             ]
         },
@@ -5905,6 +5911,10 @@
         {
             "name": "get_all_pages",
             "displayName": "get_all_pages"
+        },
+        {
+            "name": "fetch_login_audit",
+            "displayName": "fetch_login_audit"
         },
         {
             "name": "fetch_users",
