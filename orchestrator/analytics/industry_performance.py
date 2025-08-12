@@ -90,6 +90,8 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         fiscal_year = None
         product_filter = None
         product_cond = None
+        company_filter = None
+
         for f in filters:
             key = f["key"].strip('"').lower()
             val = f["value"].strip()
@@ -109,6 +111,9 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
                 else:
                     product_filter = None
                     product_cond = None
+                    
+            elif key == "coname" and val and val.strip() != "" and val.upper() != "ALL":
+                company_filter = val
         # Check if product_filter is set but empty string (or blank)
         if product_filter is not None and product_filter.strip() == "":
             # Return early with no data message
@@ -162,13 +167,15 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
     
         zone_cond = f"AND zone_name = '{zone_filter}'" if zone_filter else ""
         region_cond = f"AND region_name = '{region_filter}'" if region_filter and region_filter.strip() != "" else ""
+        company_cond = f"AND coname = '{company_filter}'" if company_filter else ""
+
 
 
         # Zones current sales query
         zones_curr_query = f"""
             SELECT zone_name, ROUND(COALESCE(SUM(netweight_tmt),0),2) AS total_sales
             FROM industry_performance
-            WHERE {base_where} {zone_cond} {region_cond} {product_sql} AND fiscal_year = '{curr_year}'
+            WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond} AND fiscal_year = '{curr_year}'
             GROUP BY zone_name
             ORDER BY total_sales DESC
         """
@@ -176,8 +183,8 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         # Zones historical sales query
         zones_his_query = f"""
             SELECT zone_name, ROUND(COALESCE(SUM(netweight_tmt),0),2) AS total_sales
-            FROM industry_performance
-            WHERE {base_where} {zone_cond} {region_cond} {product_sql} AND fiscal_year = '{his_year}'
+            FROM industry_performance 
+            WHERE {base_where} {zone_cond} {region_cond} {product_sql}  {company_cond} AND fiscal_year = '{his_year}'
             GROUP BY zone_name
             ORDER BY total_sales DESC
         """
@@ -186,7 +193,7 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         regions_curr_query = f"""
           SELECT region_name, ROUND(COALESCE(SUM(netweight_tmt),0),2) AS total_sales
             FROM industry_performance
-            WHERE {base_where} {zone_cond} {region_cond} {product_sql} 
+            WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond}
             AND fiscal_year = '{curr_year}'
             AND region_name IS NOT NULL
             AND TRIM(region_name) <> ''
@@ -200,7 +207,7 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         regions_his_query = f"""
             SELECT region_name, ROUND(COALESCE(SUM(netweight_tmt),0),2) AS total_sales
             FROM industry_performance
-            WHERE {base_where} {zone_cond} {region_cond} {product_sql} 
+            WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond}
             AND fiscal_year = '{his_year}'
             AND region_name IS NOT NULL
             AND TRIM(region_name) <> ''
@@ -325,7 +332,7 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
 
         if not zones_list and not regions_list:
             return False, {"zones": [], "regions": []}, None
-        file_path = "/Users/apple/Downloads/final_data.csv"
+        file_path = "/opt/downloads/final_data.csv"
         combined_df = pd.concat([zones_output, regions_output], axis=0, ignore_index=True)
         combined_df.to_csv(file_path, index=False)
 
