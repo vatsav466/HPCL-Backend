@@ -1522,10 +1522,9 @@ async def create(inputObj: SodInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/sodinfra', response_model=dict, tags=['SodInfra'])
+@router.put('/sodinfra', response_model=SodInfra, tags=['SodInfra'])
 async def update(inputObj: SodInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/sodinfra/{id}', response_model=SodInfra, tags=['SodInfra'])
@@ -1548,10 +1547,9 @@ async def create(inputObj: LPGInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/lpginfra', response_model=dict, tags=['LPGInfra'])
+@router.put('/lpginfra', response_model=LPGInfra, tags=['LPGInfra'])
 async def update(inputObj: LPGInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/lpginfra/{id}', response_model=LPGInfra, tags=['LPGInfra'])
@@ -1574,10 +1572,9 @@ async def create(inputObj: AVIATIONInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/aviationinfra', response_model=dict, tags=['AVIATIONInfra'])
+@router.put('/aviationinfra', response_model=AVIATIONInfra, tags=['AVIATIONInfra'])
 async def update(inputObj: AVIATIONInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/aviationinfra/{id}', response_model=AVIATIONInfra, tags=['AVIATIONInfra'])
@@ -1600,10 +1597,9 @@ async def create(inputObj: LUBESInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/lubesinfra', response_model=dict, tags=['LUBESInfra'])
+@router.put('/lubesinfra', response_model=LUBESInfra, tags=['LUBESInfra'])
 async def update(inputObj: LUBESInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/lubesinfra/{id}', response_model=LUBESInfra, tags=['LUBESInfra'])
