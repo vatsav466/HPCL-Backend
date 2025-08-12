@@ -26,6 +26,10 @@ zone_map = {
     "CEN": "CEN"
 }
 
+novex_model_col = ["username", "email", "first_name", "last_name", "password", "employee_id",
+                       "employee_number", "bu", "sap_id", "system_role", "novex_role", "region",
+                       "state", "zone", "sales_area", "is_ad_user", "status","manual_user", "contact_number"]
+
 # Add required roles in novex_role_master.csv
 lpg_query = """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL, EPL.ZLOC_TYPE,
                     ZE.EMP_BU_CODE,ZE.PLANT_DESC,ZE.SALES_GRP, ZSA.SALES_GROUP_DESC,ZR.ROLE_NAME as ROLE_NAME, EPL.ZZONE as Zone, ZE.PLANT_CODE AS PLANT_CODE,

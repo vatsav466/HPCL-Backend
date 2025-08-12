@@ -17,6 +17,31 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await Roles.get_all(params, skip_secrets=True)
 
 
+@router.post('/userloginaudit', response_model=UserLoginAudit, tags=['UserLoginAudit'])
+async def create(inputObj: UserLoginAuditCreate):
+    return await inputObj.create()
+
+
+@router.put('/userloginaudit', response_model=UserLoginAudit, tags=['UserLoginAudit'])
+async def update(inputObj: UserLoginAudit):
+    return await inputObj.modify()
+
+
+@router.get('/userloginaudit/{id}', response_model=UserLoginAudit, tags=['UserLoginAudit'])
+async def get(id: str):
+    return await UserLoginAudit.get(id, skip_secrets=True)
+
+
+@router.get('/userloginaudit', response_model=UserLoginAuditGetResp, tags=['UserLoginAudit'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await UserLoginAudit.get_all(params, skip_secrets=True)
+
+
+@router.delete('/userloginaudit/{id}', tags=['UserLoginAudit'])
+async def delete(id: str):
+    return await UserLoginAudit.delete(id)
+
+
 @router.get('/users/{id}', response_model=Users, tags=['Users'])
 async def get(id: str):
     return await Users.get(id, skip_secrets=True)
@@ -1497,10 +1522,9 @@ async def create(inputObj: SodInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/sodinfra', response_model=dict, tags=['SodInfra'])
+@router.put('/sodinfra', response_model=SodInfra, tags=['SodInfra'])
 async def update(inputObj: SodInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/sodinfra/{id}', response_model=SodInfra, tags=['SodInfra'])
@@ -1523,10 +1547,9 @@ async def create(inputObj: LPGInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/lpginfra', response_model=dict, tags=['LPGInfra'])
+@router.put('/lpginfra', response_model=LPGInfra, tags=['LPGInfra'])
 async def update(inputObj: LPGInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/lpginfra/{id}', response_model=LPGInfra, tags=['LPGInfra'])
@@ -1549,10 +1572,9 @@ async def create(inputObj: AVIATIONInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/aviationinfra', response_model=dict, tags=['AVIATIONInfra'])
+@router.put('/aviationinfra', response_model=AVIATIONInfra, tags=['AVIATIONInfra'])
 async def update(inputObj: AVIATIONInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/aviationinfra/{id}', response_model=AVIATIONInfra, tags=['AVIATIONInfra'])
@@ -1575,10 +1597,9 @@ async def create(inputObj: LUBESInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/lubesinfra', response_model=dict, tags=['LUBESInfra'])
+@router.put('/lubesinfra', response_model=LUBESInfra, tags=['LUBESInfra'])
 async def update(inputObj: LUBESInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/lubesinfra/{id}', response_model=LUBESInfra, tags=['LUBESInfra'])

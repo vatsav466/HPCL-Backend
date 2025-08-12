@@ -88,6 +88,75 @@
             ]
         },
         {
+            "name": "userloginaudit",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "UserLoginAudit",
+            "attributes": {},
+            "uris": [
+                "/api/userloginaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "fetch_login_audit"
+                }
+            ]
+        },
+        {
+            "name": "userloginaudit_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "UserLoginAudit_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/userloginaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "userloginaudit_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "UserLoginAudit_admin",
+            "attributes": {},
+            "uris": [
+                "/api/userloginaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "fetch_login_audit"
+                }
+            ]
+        },
+        {
             "name": "users",
             "type": "all",
             "ownerManagedAccess": false,
@@ -5842,6 +5911,10 @@
         {
             "name": "get_all_pages",
             "displayName": "get_all_pages"
+        },
+        {
+            "name": "fetch_login_audit",
+            "displayName": "fetch_login_audit"
         },
         {
             "name": "fetch_users",

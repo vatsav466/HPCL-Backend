@@ -16,6 +16,11 @@ Enum DeviceType str {
     ATG='ATG'
 }
 
+Enum LoginStatus str {
+    login='Logged In'
+    logout='Logged Out'
+}
+
 Enum NotificationLevel str {
     InitialNotification='InitialNotification'
     InitialEscalation='InitialEscalation'
@@ -147,6 +152,27 @@ Model Roles {
     Config=> {
         crud_operations='read'
     }
+}
+
+Model UserLoginAudit {
+    employee_id index_field str
+    email index_field str
+    role str
+    login_id str
+    login_time optional datetime
+    logout_time optional datetime
+    login_status optional LoginStatus
+    failure_reason optional str
+    auth_method str // SSO or Password
+    user_agent optional str // request.headers.get("user-agent", "Unknown")
+    remarks optional str
+
+    Action=> fetch_login_audit {
+        search_string optional str
+        limit optional default=100 int
+        skip optional default=0 int
+    }
+
 }
 
 Model Users {
