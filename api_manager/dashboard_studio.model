@@ -250,6 +250,7 @@ Model Charts {
         time_grain optional str
         resp_format optional str regex="^([a-zA-Z0-9_. ]+|)$" // stacked for stacked data, else keep as empty
         resp_level  optional str // this is to get the graphs at sbu level in industry_performance
+        payload optional dict
     }
 
     Action=> enable_cross_filter {
