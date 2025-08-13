@@ -103,3 +103,26 @@ async def lpginfra_get_all_lpg_infra(data: Lpginfra_Get_All_Lpg_InfraParams):
     except Exception as e:
         print(f"Error in get_all_lpg_infra: {e}")
         return JSONResponse(status_code=500, content={"detail": f"Internal Server Error: {str(e)}"})
+
+
+# Action update_lpg_data
+@router.post('/update_lpg_data', tags=['LPGInfra'])
+async def lpginfra_update_lpg_data(data: Lpginfra_Update_Lpg_DataParams):
+    try:
+        lpg_data = data.lpg_data
+        q = f"id='{lpg_data.unique_id}'"
+        existing = await LPGInfra.get_all(urdhva_base.QueryParams(q=q, limit=1), resp_type="plain")
+        if existing["data"]:
+            lpg_data = lpg_data.dict()
+            lpg_data["id"] = existing["data"][0].get("id")
+        else:
+            return {"status": False, "message": f"No record found for ID {lpg_data.unique_id}"}
+
+        await LPGInfra(**lpg_data).modify()
+        return {"status": True, "message": "LPG Data Updated Successfully"}
+
+    except Exception as e:
+        print("Error in update_lpg_data:", str(e))
+        traceback.print_exc()
+        return {"status": False, "message": "An error occurred while updating LPG data", "error": str(e)}
+

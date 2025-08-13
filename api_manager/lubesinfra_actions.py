@@ -90,3 +90,25 @@ async def lubesinfra_get_all_lubes_infra(data: Lubesinfra_Get_All_Lubes_InfraPar
     except Exception as e:
         print(f"Error in get_all_lubes_infra': {e}")
         return JSONResponse(status_code=500, content={"detail": f"Internal Server Error: {str(e)}"})
+
+
+# Action update_lubes_data
+@router.post('/update_lubes_data', tags=['LUBESInfra'])
+async def lubesinfra_update_lubes_data(data: Lubesinfra_Update_Lubes_DataParams):
+    try:
+        lubes_data = data.lubes_data
+        q = f"id='{lubes_data.unique_id}'"
+        existing = await LUBESInfra.get_all(urdhva_base.QueryParams(q=q, limit=1), resp_type="plain")
+        if existing["data"]:
+            lubes_data = lubes_data.dict()
+            lubes_data["id"] = existing["data"][0].get("id")
+        else:
+            return {"status": False, "message": f"No record found for ID {lubes_data.unique_id}"}
+
+        await LUBESInfra(**lubes_data).modify()
+        return {"status": True, "message": "LUBES Data Updated Successfully"}
+
+    except Exception as e:
+        print("Error in update_lubes_data:", str(e))
+        traceback.print_exc()
+        return {"status": False, "message": "An error occurred while updating LUBES data", "error": str(e)}
