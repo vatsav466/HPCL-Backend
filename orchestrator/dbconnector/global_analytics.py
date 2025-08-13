@@ -9335,10 +9335,10 @@ class GlobalAnalytics:
 
         # Final query
         query = (
-            f"SELECT zone, sap_id, location_name, terminal_plant_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count "
+            f"SELECT zone, sap_id, location_name, terminal_plant_id, product_code, created_at, count(sap_id) total_count "
             f"FROM alerts "
             f"WHERE {where_clause} "
-            f"GROUP BY zone, sap_id, product_code, location_name, terminal_plant_id "
+            f"GROUP BY zone, sap_id, product_code, location_name, terminal_plant_id, created_at "
             f"ORDER BY zone, sap_id, product_code"
         )
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
