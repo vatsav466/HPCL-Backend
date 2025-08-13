@@ -5253,6 +5253,12 @@
                 },
                 {
                     "name": "get_sales_officer_infra"
+                },
+                {
+                    "name": "get_download_data"
+                },
+                {
+                    "name": "update_sod_data"
                 }
             ]
         },
@@ -5289,6 +5295,9 @@
                 },
                 {
                     "name": "get_sales_officer_infra"
+                },
+                {
+                    "name": "get_download_data"
                 }
             ]
         },
@@ -5340,6 +5349,12 @@
                 },
                 {
                     "name": "get_sales_officer_infra"
+                },
+                {
+                    "name": "get_download_data"
+                },
+                {
+                    "name": "update_sod_data"
                 }
             ]
         },
@@ -5370,6 +5385,9 @@
                 },
                 {
                     "name": "get_all_lpg_infra"
+                },
+                {
+                    "name": "update_lpg_data"
                 }
             ]
         },
@@ -5418,6 +5436,9 @@
                 },
                 {
                     "name": "get_all_lpg_infra"
+                },
+                {
+                    "name": "update_lpg_data"
                 }
             ]
         },
@@ -5448,6 +5469,9 @@
                 },
                 {
                     "name": "get_all_aviation_infra"
+                },
+                {
+                    "name": "update_aviation_data"
                 }
             ]
         },
@@ -5496,6 +5520,9 @@
                 },
                 {
                     "name": "get_all_aviation_infra"
+                },
+                {
+                    "name": "update_aviation_data"
                 }
             ]
         },
@@ -5526,6 +5553,9 @@
                 },
                 {
                     "name": "get_all_lubes_infra"
+                },
+                {
+                    "name": "update_lubes_data"
                 }
             ]
         },
@@ -5574,6 +5604,9 @@
                 },
                 {
                     "name": "get_all_lubes_infra"
+                },
+                {
+                    "name": "update_lubes_data"
                 }
             ]
         },
@@ -5826,6 +5859,267 @@
                 },
                 {
                     "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "plantroinfra",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "PlantRoInfra",
+            "attributes": {},
+            "uris": [
+                "/api/plantroinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_plant_ro_file"
+                },
+                {
+                    "name": "get_all_plant_ro_infra"
+                },
+                {
+                    "name": "get_plant_ro_count_infra"
+                },
+                {
+                    "name": "get_retail_company_infra"
+                }
+            ]
+        },
+        {
+            "name": "plantroinfra_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "PlantRoInfra_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/plantroinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_all_plant_ro_infra"
+                },
+                {
+                    "name": "get_plant_ro_count_infra"
+                },
+                {
+                    "name": "get_retail_company_infra"
+                }
+            ]
+        },
+        {
+            "name": "plantroinfra_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "PlantRoInfra_admin",
+            "attributes": {},
+            "uris": [
+                "/api/plantroinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_plant_ro_file"
+                },
+                {
+                    "name": "get_all_plant_ro_infra"
+                },
+                {
+                    "name": "get_plant_ro_count_infra"
+                },
+                {
+                    "name": "get_retail_company_infra"
+                }
+            ]
+        },
+        {
+            "name": "plantcnginfra",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "PlantCngInfra",
+            "attributes": {},
+            "uris": [
+                "/api/plantcnginfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_plant_cng_file"
+                },
+                {
+                    "name": "get_plant_cng_count_infra"
+                },
+                {
+                    "name": "get_retail_company_cng_infra"
+                }
+            ]
+        },
+        {
+            "name": "plantcnginfra_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "PlantCngInfra_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/plantcnginfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_plant_cng_count_infra"
+                },
+                {
+                    "name": "get_retail_company_cng_infra"
+                }
+            ]
+        },
+        {
+            "name": "plantcnginfra_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "PlantCngInfra_admin",
+            "attributes": {},
+            "uris": [
+                "/api/plantcnginfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_plant_cng_file"
+                },
+                {
+                    "name": "get_plant_cng_count_infra"
+                },
+                {
+                    "name": "get_retail_company_cng_infra"
+                }
+            ]
+        },
+        {
+            "name": "plantevinfra",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "PlantEvInfra",
+            "attributes": {},
+            "uris": [
+                "/api/plantevinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_plant_ev_file"
+                },
+                {
+                    "name": "get_plant_ev_count_infra"
+                }
+            ]
+        },
+        {
+            "name": "plantevinfra_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "PlantEvInfra_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/plantevinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_plant_ev_count_infra"
+                }
+            ]
+        },
+        {
+            "name": "plantevinfra_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "PlantEvInfra_admin",
+            "attributes": {},
+            "uris": [
+                "/api/plantevinfra/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_plant_ev_file"
+                },
+                {
+                    "name": "get_plant_ev_count_infra"
                 }
             ]
         }
@@ -6283,12 +6577,24 @@
             "displayName": "get_sales_officer_infra"
         },
         {
+            "name": "get_download_data",
+            "displayName": "get_download_data"
+        },
+        {
+            "name": "update_sod_data",
+            "displayName": "update_sod_data"
+        },
+        {
             "name": "upload_lpg_file",
             "displayName": "upload_lpg_file"
         },
         {
             "name": "get_all_lpg_infra",
             "displayName": "get_all_lpg_infra"
+        },
+        {
+            "name": "update_lpg_data",
+            "displayName": "update_lpg_data"
         },
         {
             "name": "upload_aviation_file",
@@ -6299,12 +6605,56 @@
             "displayName": "get_all_aviation_infra"
         },
         {
+            "name": "update_aviation_data",
+            "displayName": "update_aviation_data"
+        },
+        {
             "name": "upload_lubes_file",
             "displayName": "upload_lubes_file"
         },
         {
             "name": "get_all_lubes_infra",
             "displayName": "get_all_lubes_infra"
+        },
+        {
+            "name": "update_lubes_data",
+            "displayName": "update_lubes_data"
+        },
+        {
+            "name": "upload_plant_ro_file",
+            "displayName": "upload_plant_ro_file"
+        },
+        {
+            "name": "get_all_plant_ro_infra",
+            "displayName": "get_all_plant_ro_infra"
+        },
+        {
+            "name": "get_plant_ro_count_infra",
+            "displayName": "get_plant_ro_count_infra"
+        },
+        {
+            "name": "get_retail_company_infra",
+            "displayName": "get_retail_company_infra"
+        },
+        {
+            "name": "upload_plant_cng_file",
+            "displayName": "upload_plant_cng_file"
+        },
+        {
+            "name": "get_plant_cng_count_infra",
+            "displayName": "get_plant_cng_count_infra"
+        },
+        {
+            "name": "get_retail_company_cng_infra",
+            "displayName": "get_retail_company_cng_infra"
+        },
+        {
+            "name": "upload_plant_ev_file",
+            "displayName": "upload_plant_ev_file"
+        },
+        {
+            "name": "get_plant_ev_count_infra",
+            "displayName": "get_plant_ev_count_infra"
         }
     ]
 }

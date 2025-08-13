@@ -1715,3 +1715,78 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/historiclubesinfra/{id}', tags=['HistoricLUBESInfra'])
 async def delete(id: str):
     return await HistoricLUBESInfra.delete(id)
+
+
+@router.post('/plantroinfra', response_model=PlantRoInfra, tags=['PlantRoInfra'])
+async def create(inputObj: PlantRoInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/plantroinfra', response_model=PlantRoInfra, tags=['PlantRoInfra'])
+async def update(inputObj: PlantRoInfra):
+    return await inputObj.modify()
+
+
+@router.get('/plantroinfra/{id}', response_model=PlantRoInfra, tags=['PlantRoInfra'])
+async def get(id: str):
+    return await PlantRoInfra.get(id, skip_secrets=True)
+
+
+@router.get('/plantroinfra', response_model=PlantRoInfraGetResp, tags=['PlantRoInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await PlantRoInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/plantroinfra/{id}', tags=['PlantRoInfra'])
+async def delete(id: str):
+    return await PlantRoInfra.delete(id)
+
+
+@router.post('/plantcnginfra', response_model=PlantCngInfra, tags=['PlantCngInfra'])
+async def create(inputObj: PlantCngInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/plantcnginfra', response_model=PlantCngInfra, tags=['PlantCngInfra'])
+async def update(inputObj: PlantCngInfra):
+    return await inputObj.modify()
+
+
+@router.get('/plantcnginfra/{id}', response_model=PlantCngInfra, tags=['PlantCngInfra'])
+async def get(id: str):
+    return await PlantCngInfra.get(id, skip_secrets=True)
+
+
+@router.get('/plantcnginfra', response_model=PlantCngInfraGetResp, tags=['PlantCngInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await PlantCngInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/plantcnginfra/{id}', tags=['PlantCngInfra'])
+async def delete(id: str):
+    return await PlantCngInfra.delete(id)
+
+
+@router.post('/plantevinfra', response_model=PlantEvInfra, tags=['PlantEvInfra'])
+async def create(inputObj: PlantEvInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/plantevinfra', response_model=PlantEvInfra, tags=['PlantEvInfra'])
+async def update(inputObj: PlantEvInfra):
+    return await inputObj.modify()
+
+
+@router.get('/plantevinfra/{id}', response_model=PlantEvInfra, tags=['PlantEvInfra'])
+async def get(id: str):
+    return await PlantEvInfra.get(id, skip_secrets=True)
+
+
+@router.get('/plantevinfra', response_model=PlantEvInfraGetResp, tags=['PlantEvInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await PlantEvInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/plantevinfra/{id}', tags=['PlantEvInfra'])
+async def delete(id: str):
+    return await PlantEvInfra.delete(id)
