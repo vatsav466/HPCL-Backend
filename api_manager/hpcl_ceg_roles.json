@@ -191,6 +191,9 @@
                     "name": "login"
                 },
                 {
+                    "name": "applogin"
+                },
+                {
                     "name": "logout"
                 }
             ]
@@ -243,6 +246,9 @@
                 },
                 {
                     "name": "login"
+                },
+                {
+                    "name": "applogin"
                 },
                 {
                     "name": "logout"
@@ -6225,6 +6231,10 @@
         {
             "name": "login",
             "displayName": "login"
+        },
+        {
+            "name": "applogin",
+            "displayName": "applogin"
         },
         {
             "name": "logout",

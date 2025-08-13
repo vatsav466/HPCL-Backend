@@ -319,6 +319,16 @@ class Users_LoginParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Users_ApploginParams(pydantic.BaseModel):
+    username: str = pydantic.Field(**{'pattern': '^[a-zA-Z0-9_.-]+$'})
+    password: str
+    login_type: typing.Optional[str] = pydantic.Field("employee", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Users_LogoutParams(pydantic.BaseModel):
     pass
 

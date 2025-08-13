@@ -25,6 +25,7 @@ marshmallow==3.23.1
 geopy==2.4.1
 aiofiles==24.1.0
 slowapi==0.1.9
+python-jose==3.5.0
 ###############################
 ##    Base Framework End     ##
 ###############################

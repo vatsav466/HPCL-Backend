@@ -71,6 +71,23 @@ async def users_login(request: fastapi.Request, data: Users_LoginParams):
     return response
 
 
+# Action applogin
+@router.post('/applogin', tags=['Users'])
+async def users_applogin(data: Users_ApploginParams):
+    status, resp = await auth_manager.AuthenticationManager.login(data.username, data.password, data.otp, jwt_auth=True)
+    if not status:
+        response = fastapi.responses.JSONResponse({"status": False, "msg": resp}, 401)
+    else:
+        response = fastapi.responses.JSONResponse({
+            "message": "Logged in Successfully",
+            "access_token": resp.get("jwt_token", ""),
+            "token_type": "bearer",
+            "expires_in": urdhva_base.settings.jwt_expiration_hours * 3600,
+            "user": resp.get("user_data", "")
+        })
+    return response
+    
+
 # Action update_user_status
 @router.post('/update_user_status', tags=['Users'])
 async def users_update_user_status(request: fastapi.Request, data: Users_Update_User_StatusParams):
