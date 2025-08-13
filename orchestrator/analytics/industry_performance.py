@@ -91,6 +91,8 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         product_filter = None
         product_cond = None
         company_filter = None
+        district_filter = None
+        district_cond = None
 
         for f in filters:
             key = f["key"].strip('"').lower()
@@ -111,6 +113,14 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
                 else:
                     product_filter = None
                     product_cond = None
+            elif key == "distname":
+                if val and val.upper() != "ALL":
+                    district_filter = val
+                    district_cond = f["cond"].lower()
+                else:
+                    district_filter = None
+                    district_cond = None
+
                     
             elif key == "coname" and val and val.strip() != "" and val.upper() != "ALL":
                 company_filter = val
@@ -163,6 +173,16 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
                 if vals:
                     vals_sql = ", ".join(f"'{v}'" for v in vals)
                     product_sql = f"AND productname IN ({vals_sql})"
+                    
+        district_sql = ""
+        if district_filter:
+            if district_cond == "equals":
+                district_sql = f"AND distname = '{district_filter}'"
+            elif district_cond == "in":
+                vals = [v.strip() for v in district_filter.split(",") if v.strip()]
+                if vals:
+                    vals_sql = ", ".join(f"'{v}'" for v in vals)
+                    district_sql = f"AND distname IN ({vals_sql})"
 
     
         zone_cond = f"AND zone_name = '{zone_filter}'" if zone_filter else ""
@@ -175,7 +195,7 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         zones_curr_query = f"""
             SELECT zone_name, ROUND(COALESCE(SUM(netweight_tmt),0),2) AS total_sales
             FROM industry_performance
-            WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond} AND fiscal_year = '{curr_year}'
+            WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond} {district_sql} AND fiscal_year = '{curr_year}'
             GROUP BY zone_name
             ORDER BY total_sales DESC
         """
@@ -184,7 +204,7 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         zones_his_query = f"""
             SELECT zone_name, ROUND(COALESCE(SUM(netweight_tmt),0),2) AS total_sales
             FROM industry_performance 
-            WHERE {base_where} {zone_cond} {region_cond} {product_sql}  {company_cond} AND fiscal_year = '{his_year}'
+            WHERE {base_where} {zone_cond} {region_cond} {product_sql}  {company_cond} {district_sql} AND fiscal_year = '{his_year}'
             GROUP BY zone_name
             ORDER BY total_sales DESC
         """
@@ -193,7 +213,7 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         regions_curr_query = f"""
           SELECT region_name, ROUND(COALESCE(SUM(netweight_tmt),0),2) AS total_sales
             FROM industry_performance
-            WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond}
+            WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond} {district_sql}
             AND fiscal_year = '{curr_year}'
             AND region_name IS NOT NULL
             AND TRIM(region_name) <> ''
@@ -207,7 +227,7 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         regions_his_query = f"""
             SELECT region_name, ROUND(COALESCE(SUM(netweight_tmt),0),2) AS total_sales
             FROM industry_performance
-            WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond}
+            WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond} {district_sql}
             AND fiscal_year = '{his_year}'
             AND region_name IS NOT NULL
             AND TRIM(region_name) <> ''
@@ -215,6 +235,32 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
             GROUP BY region_name
             ORDER BY total_sales DESC
         """
+        
+        districts_curr_query = f"""
+            SELECT distname AS district_name, ROUND(COALESCE(SUM(netweight_tmt),0),2) AS total_sales
+            FROM industry_performance
+            WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond} {district_sql}
+            AND fiscal_year = '{curr_year}'
+            AND distname IS NOT NULL
+            AND TRIM(distname) <> ''
+            AND TRIM(distname) <> '-'
+            GROUP BY distname
+            ORDER BY total_sales DESC
+        """
+
+        districts_his_query = f"""
+            SELECT distname AS district_name, ROUND(COALESCE(SUM(netweight_tmt),0),2) AS total_sales
+            FROM industry_performance
+            WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond} {district_sql}
+            AND fiscal_year = '{his_year}'
+            AND distname IS NOT NULL
+            AND TRIM(distname) <> ''
+            AND TRIM(distname) <> '-'
+            GROUP BY distname
+            ORDER BY total_sales DESC
+        """
+
+        print("zones_curr_query",zones_curr_query)
         print("regions_curr_query",regions_curr_query)
         print("regions_his_query",regions_his_query)
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -226,6 +272,9 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         zones_his_resp = await function(query=zones_his_query)
         regions_curr_resp = await function(query=regions_curr_query)
         regions_his_resp = await function(query=regions_his_query)
+        districts_curr_resp = await function(query=districts_curr_query)
+        districts_his_resp = await function(query=districts_his_query)
+
 
         # Convert to DataFrames
         zones_curr_df = pd.DataFrame(zones_curr_resp) if zones_curr_resp else pd.DataFrame(columns=["zone_name", "total_sales"])
@@ -233,6 +282,9 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
 
         regions_curr_df = pd.DataFrame(regions_curr_resp) if regions_curr_resp else pd.DataFrame(columns=["region_name", "total_sales"])
         regions_his_df = pd.DataFrame(regions_his_resp) if regions_his_resp else pd.DataFrame(columns=["region_name", "total_sales"])
+        districts_curr_df = pd.DataFrame(districts_curr_resp) if districts_curr_resp else pd.DataFrame(columns=["district_name", "total_sales"])
+        districts_his_df = pd.DataFrame(districts_his_resp) if districts_his_resp else pd.DataFrame(columns=["district_name", "total_sales"])
+
         # Calculate correct total sales denominators for market share
 
         # Grand total current year sales (without zone or region filters)
@@ -274,6 +326,12 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
             on="region_name", how="outer",
             suffixes=('_curr', '_his')
         ).fillna(0)
+        
+        districts_merged = pd.merge(
+            districts_curr_df, districts_his_df,
+            on="district_name", how="outer",
+            suffixes=('_curr', '_his')
+        ).fillna(0)
 
         # Convert Decimal columns to float to avoid unsupported operand errors
         zones_merged["total_sales_curr"] = zones_merged["total_sales_curr"].astype(float)
@@ -291,6 +349,14 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         
         zones_merged["gain_loss"] = (zones_merged["curr_mkt"] - zones_merged["his_mkt"]).round(2)
         regions_merged["gain_loss"] = (regions_merged["curr_mkt"] - regions_merged["his_mkt"]).round(2)
+        
+        districts_merged["total_sales_curr"] = districts_merged["total_sales_curr"].astype(float)
+        districts_merged["total_sales_his"] = districts_merged["total_sales_his"].astype(float)
+
+        districts_merged["curr_mkt"] = (districts_merged["total_sales_curr"] / float(grand_total_curr) * 100).round(2) if grand_total_curr > 0 else 0
+        districts_merged["his_mkt"] = (districts_merged["total_sales_his"] / float(grand_total_his) * 100).round(2) if grand_total_his > 0 else 0
+
+        districts_merged["gain_loss"] = (districts_merged["curr_mkt"] - districts_merged["his_mkt"]).round(2)
 
 
 
@@ -327,18 +393,30 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         # if sort_ascending:
         #     zones_output = zones_output.head(10)
         #     regions_output = regions_output.head(10)
+        districts_output = districts_merged.rename(columns={
+            "total_sales_curr": "total_sales",
+            "curr_mkt": "curr_mkt",
+            "his_mkt": "his_mkt",
+            "gain_loss": "gain_loss"
+        })[["district_name", "total_sales", "curr_mkt", "his_mkt", "gain_loss"]].sort_values(by="total_sales", ascending=sort_ascending)
+
+        districts_output = districts_output.head(10)  # Apply top/bottom 10
+
+              
         zones_list = json.loads(zones_output.to_json(orient="records"))
         regions_list = json.loads(regions_output.to_json(orient="records"))
+        districts_list = json.loads(districts_output.to_json(orient="records"))
 
-        if not zones_list and not regions_list:
-            return False, {"zones": [], "regions": []}, None
-        file_path = "/opt/downloads/final_data.csv"
-        combined_df = pd.concat([zones_output, regions_output], axis=0, ignore_index=True)
+        if not zones_list and not regions_list and not districts_list:
+            return False, {"zones": [], "regions": [], "districts": []}, None
+        file_path = "/opt/downloads/final_data_indus.csv"
+        combined_df = pd.concat([zones_output, regions_output,districts_output], axis=0, ignore_index=True)
         combined_df.to_csv(file_path, index=False)
 
         return True, {
             "zones": json.loads(zones_output.to_json(orient="records")),
-            "regions": json.loads(regions_output.to_json(orient="records"))
+            "regions": json.loads(regions_output.to_json(orient="records")),
+            "districts": json.loads(districts_output.to_json(orient="records"))
         }, file_path
 
     except Exception as e:
@@ -1138,6 +1216,62 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     print("going to top ")
 
     resp_format_lower = resp_format.lower()
+    if resp_format_lower == "file_download":
+    # Get the data first
+        status, results, _ = await get_zones_and_regions(filters, cross_filters, drill_state, time_grain, resp_format_lower)
+
+        if not status:
+            return {
+                'status': False,
+                'message': "No data present for current selection",
+                'data': [],
+                'file_path': None
+            }
+
+        # Convert each part of results to DataFrame separately
+        zones_df = pd.DataFrame(results.get("zones", []))
+        regions_df = pd.DataFrame(results.get("regions", []))
+        districts_df = pd.DataFrame(results.get("districts", []))
+
+        # Combine all into a single DataFrame
+        df = pd.concat([zones_df, regions_df, districts_df], ignore_index=True)
+
+        # Clean empty/NaN/inf
+        df = df.replace(r'^\s*$', np.nan, regex=True)
+        df = df.replace([np.nan, np.inf, -np.inf], 0)
+
+        # Save CSV in /downloads
+        file_path = '/downloads/final_data_indus.csv'
+        # df.to_csv('/opt/'+file_path, index=False)
+
+        # return {
+        #     'status': True,
+        #     'message': 'Success',
+        #     'data': 'File Downloaded Successfully',
+        #     'file_path': file_path
+        # }
+        with open('/opt/' + file_path, 'w', newline='') as f:
+            # Write zones
+            f.write("zone_name,total_sales,curr_mkt,his_mkt,gain_loss\n")
+            zones_df.to_csv(f, index=False, header=False)
+            f.write("\n\n")  # Blank lines between tables
+
+            # Write regions
+            f.write("region_name,total_sales,curr_mkt,his_mkt,gain_loss\n")
+            regions_df.to_csv(f, index=False, header=False)
+            f.write("\n\n")
+
+            # Write districts
+            f.write("dist_name,total_sales,curr_mkt,his_mkt,gain_loss\n")
+            districts_df.to_csv(f, index=False, header=False)
+
+        return {
+            'status': True,
+            'message': 'Success',
+            'data': 'File Downloaded Successfully',
+            'file_path': file_path
+        }
+   
 
     if resp_format_lower in ("top_performers", "bottom_performers"):
         status, results, file_path = await get_zones_and_regions(filters, cross_filters, drill_state, time_grain, resp_format_lower)
@@ -1156,12 +1290,6 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
             'file_path': file_path
         }
 
-    return {
-        'status': False,
-        'message': "Unsupported resp_format",
-        'data': [],
-        'file_path': None
-    }
 
 
     if len(filters) ==1 :
