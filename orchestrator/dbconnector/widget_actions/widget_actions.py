@@ -3,7 +3,7 @@ import re
 import polars as pl
 pl.Config(set_fmt_float="full")
 from orchestrator.dbconnector import global_analytics
-from orchestrator.dbconnector.widget_actions import lpg_plant, lpg_cdcms, model_mapping, lpg_plant_queries
+from orchestrator.dbconnector.widget_actions import lpg_plant, lpg_cdcms, model_mapping, lpg_plant_queries, lpg_plant_operations
 import hpcl_ceg_model
 
 lpg_dashboard_actions = [
@@ -233,11 +233,11 @@ class WidgetActions:
     @staticmethod
     # Safely resolve the module and function
     async def execute_widget_action(func_name, filters, cross_filters, drill_state, limit=0, time_grain="Monthly",
-                                    resp_format='',resp_level=''):
+                                    resp_format='',resp_level='', payload={}):
         try:                       
             # Debugging: Log the input function name
             print(f"Received func_name: {func_name}")
-
+            lp_operation = False
             # Determine the module containing the function
             if hasattr(lpg_plant.LPGPlantActions, func_name):
                 module = lpg_plant.LPGPlantActions
@@ -245,27 +245,15 @@ class WidgetActions:
             elif hasattr(lpg_cdcms.LPGCDCMSActions, func_name):
                 module = lpg_cdcms.LPGCDCMSActions
                 print(f"Function {func_name} found in LPGCDCMSActions.")
+            elif hasattr(lpg_plant_operations.LPGOperationsActions, func_name):
+                module = lpg_plant_operations.LPGOperationsActions
+                lp_operation = True
+                print(f"Function {func_name} found in LPGOperationsActions.")
             elif hasattr(global_analytics.GlobalAnalytics, func_name):
                 module = global_analytics.GlobalAnalytics
                 print(f"Function {func_name} found in GlobalAnalytics.")
             else:
-                # List available functions in each module for debugging
-                #print(f"Available functions in LPGPlantActions: {dir(lpg_plant.LPGPlantActions)}")
-                #print(f"Available functions in GlobalAnalytics: {dir(global_analytics.GlobalAnalytics)}")
                 raise AttributeError(f"Function {func_name} not found in either module.")
-
-            action_query = lpg_plant_queries.lpg_plant_query.get(func_name)
-            # for model_, model_actions in model_mapping.modelMapping.items():
-            #     if func_name in model_actions:
-            #         where_clause = await eval(f"hpcl_ceg_model.{model_}.get_clause_conditions(formated=True)")
-            #         print("where_clause: ", where_clause)
-            #         print("query before: ",action_query)
-            #         widget_mapping[func_name] = {'filter_applied': action_query}
-            #         if where_clause:
-            #             action_query = await WidgetActions.get_not_join_query(action_query, where_clause,"")
-            #         lpg_plant_queries.lpg_plant_query[func_name] = action_query
-            #         print("query after: ", lpg_plant_queries.lpg_plant_query[func_name],'\n','%'*50)
-
 
             # Retrieve the function from the resolved module
             func = getattr(module, func_name)
@@ -279,9 +267,10 @@ class WidgetActions:
                                  time_grain=time_grain, resp_format=resp_format,resp_level=resp_level)
             elif func_name in ['dry_out_ro_loss']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, resp_level=resp_level)
+            elif lp_operation:
+                res = await func(data=payload)
             else:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
-            # lpg_plant_queries.lpg_plant_query[func_name] = widget_mapping[func_name].get('filter_applied', action_query)
             return res
         
         except AttributeError as e:
