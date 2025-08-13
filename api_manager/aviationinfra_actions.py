@@ -83,8 +83,29 @@ async def aviationinfra_get_all_aviation_infra(data: Aviationinfra_Get_All_Aviat
         params.fields = []
         params.limit = 0
         resp = await AVIATIONInfra.get_all(params, resp_type="plain")
-        print('resp: ',resp)
         return resp
     except Exception as e:
         print(f"Error in get_all_aviation_infra': {e}")
         return JSONResponse(status_code=500, content={"detail": f"Internal Server Error: {str(e)}"})
+
+
+# Action update_aviation_data
+@router.post('/update_aviation_data', tags=['AVIATIONInfra'])
+async def aviationinfra_update_aviation_data(data: Aviationinfra_Update_Aviation_DataParams):
+    try:
+        aviation_data = data.aviation_data
+        q = f"id='{aviation_data.unique_id}'"
+        existing = await AVIATIONInfra.get_all(urdhva_base.QueryParams(q=q, limit=1), resp_type="plain")
+        if existing["data"]:
+            aviation_data = aviation_data.dict()
+            aviation_data["id"] = existing["data"][0].get("id")
+        else:
+            return {"status": False, "message": f"No record found for ID {aviation_data.unique_id}"}
+
+        await AVIATIONInfra(**aviation_data).modify()
+        return {"status": True, "message": "AVIATION Data Updated Successfully"}
+
+    except Exception as e:
+        print("Error in update_aviation_data:", str(e))
+        traceback.print_exc()
+        return {"status": False, "message": "An error occurred while updating AVIATION data", "error": str(e)}

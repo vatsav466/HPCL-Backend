@@ -17,6 +17,31 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await Roles.get_all(params, skip_secrets=True)
 
 
+@router.post('/userloginaudit', response_model=UserLoginAudit, tags=['UserLoginAudit'])
+async def create(inputObj: UserLoginAuditCreate):
+    return await inputObj.create()
+
+
+@router.put('/userloginaudit', response_model=UserLoginAudit, tags=['UserLoginAudit'])
+async def update(inputObj: UserLoginAudit):
+    return await inputObj.modify()
+
+
+@router.get('/userloginaudit/{id}', response_model=UserLoginAudit, tags=['UserLoginAudit'])
+async def get(id: str):
+    return await UserLoginAudit.get(id, skip_secrets=True)
+
+
+@router.get('/userloginaudit', response_model=UserLoginAuditGetResp, tags=['UserLoginAudit'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await UserLoginAudit.get_all(params, skip_secrets=True)
+
+
+@router.delete('/userloginaudit/{id}', tags=['UserLoginAudit'])
+async def delete(id: str):
+    return await UserLoginAudit.delete(id)
+
+
 @router.get('/users/{id}', response_model=Users, tags=['Users'])
 async def get(id: str):
     return await Users.get(id, skip_secrets=True)
@@ -1497,10 +1522,9 @@ async def create(inputObj: SodInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/sodinfra', response_model=dict, tags=['SodInfra'])
+@router.put('/sodinfra', response_model=SodInfra, tags=['SodInfra'])
 async def update(inputObj: SodInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/sodinfra/{id}', response_model=SodInfra, tags=['SodInfra'])
@@ -1523,10 +1547,9 @@ async def create(inputObj: LPGInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/lpginfra', response_model=dict, tags=['LPGInfra'])
+@router.put('/lpginfra', response_model=LPGInfra, tags=['LPGInfra'])
 async def update(inputObj: LPGInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/lpginfra/{id}', response_model=LPGInfra, tags=['LPGInfra'])
@@ -1549,10 +1572,9 @@ async def create(inputObj: AVIATIONInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/aviationinfra', response_model=dict, tags=['AVIATIONInfra'])
+@router.put('/aviationinfra', response_model=AVIATIONInfra, tags=['AVIATIONInfra'])
 async def update(inputObj: AVIATIONInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/aviationinfra/{id}', response_model=AVIATIONInfra, tags=['AVIATIONInfra'])
@@ -1575,10 +1597,9 @@ async def create(inputObj: LUBESInfraCreate):
     return await inputObj.create()
 
 
-@router.put('/lubesinfra', response_model=dict, tags=['LUBESInfra'])
+@router.put('/lubesinfra', response_model=LUBESInfra, tags=['LUBESInfra'])
 async def update(inputObj: LUBESInfra):
-    result, res = await inputObj.modify()
-    return {"message": "UPDATED"}
+    return await inputObj.modify()
 
 
 @router.get('/lubesinfra/{id}', response_model=LUBESInfra, tags=['LUBESInfra'])
@@ -1694,3 +1715,78 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/historiclubesinfra/{id}', tags=['HistoricLUBESInfra'])
 async def delete(id: str):
     return await HistoricLUBESInfra.delete(id)
+
+
+@router.post('/plantroinfra', response_model=PlantRoInfra, tags=['PlantRoInfra'])
+async def create(inputObj: PlantRoInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/plantroinfra', response_model=PlantRoInfra, tags=['PlantRoInfra'])
+async def update(inputObj: PlantRoInfra):
+    return await inputObj.modify()
+
+
+@router.get('/plantroinfra/{id}', response_model=PlantRoInfra, tags=['PlantRoInfra'])
+async def get(id: str):
+    return await PlantRoInfra.get(id, skip_secrets=True)
+
+
+@router.get('/plantroinfra', response_model=PlantRoInfraGetResp, tags=['PlantRoInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await PlantRoInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/plantroinfra/{id}', tags=['PlantRoInfra'])
+async def delete(id: str):
+    return await PlantRoInfra.delete(id)
+
+
+@router.post('/plantcnginfra', response_model=PlantCngInfra, tags=['PlantCngInfra'])
+async def create(inputObj: PlantCngInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/plantcnginfra', response_model=PlantCngInfra, tags=['PlantCngInfra'])
+async def update(inputObj: PlantCngInfra):
+    return await inputObj.modify()
+
+
+@router.get('/plantcnginfra/{id}', response_model=PlantCngInfra, tags=['PlantCngInfra'])
+async def get(id: str):
+    return await PlantCngInfra.get(id, skip_secrets=True)
+
+
+@router.get('/plantcnginfra', response_model=PlantCngInfraGetResp, tags=['PlantCngInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await PlantCngInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/plantcnginfra/{id}', tags=['PlantCngInfra'])
+async def delete(id: str):
+    return await PlantCngInfra.delete(id)
+
+
+@router.post('/plantevinfra', response_model=PlantEvInfra, tags=['PlantEvInfra'])
+async def create(inputObj: PlantEvInfraCreate):
+    return await inputObj.create()
+
+
+@router.put('/plantevinfra', response_model=PlantEvInfra, tags=['PlantEvInfra'])
+async def update(inputObj: PlantEvInfra):
+    return await inputObj.modify()
+
+
+@router.get('/plantevinfra/{id}', response_model=PlantEvInfra, tags=['PlantEvInfra'])
+async def get(id: str):
+    return await PlantEvInfra.get(id, skip_secrets=True)
+
+
+@router.get('/plantevinfra', response_model=PlantEvInfraGetResp, tags=['PlantEvInfra'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await PlantEvInfra.get_all(params, skip_secrets=True)
+
+
+@router.delete('/plantevinfra/{id}', tags=['PlantEvInfra'])
+async def delete(id: str):
+    return await PlantEvInfra.delete(id)

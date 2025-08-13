@@ -242,6 +242,7 @@ async def insert_ro_dealer(cursor):
                 data[col] = True
             for col in data.columns:
                 data[col] = data[col].fillna("")
+            data = data[reporting_config.novex_model_col]
             await insert_users(data.to_dict(orient="records"))
 
 

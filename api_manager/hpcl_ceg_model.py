@@ -93,6 +93,84 @@ class Roles_Get_All_PagesParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class UserLoginAuditSchema(UrdhvaPostgresBase):
+    __tablename__ = 'user_login_audit'
+    
+    employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    email: Mapped[str] = mapped_column("email", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    role: Mapped[str] = mapped_column("role", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    login_id: Mapped[str] = mapped_column("login_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    login_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("login_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    logout_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("logout_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    login_status: Mapped[typing.Optional[typing.Any]] = mapped_column("login_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    failure_reason: Mapped[typing.Optional[str]] = mapped_column("failure_reason", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    auth_method: Mapped[str] = mapped_column("auth_method", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    user_agent: Mapped[typing.Optional[str]] = mapped_column("user_agent", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class UserLoginAuditCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'user_login_audit'
+    
+    employee_id: str
+    email: str
+    role: str
+    login_id: str
+    login_time: typing.Optional[datetime.datetime] | None = None
+    logout_time: typing.Optional[datetime.datetime] | None = None
+    login_status: typing.Optional[hpcl_ceg_enum.LoginStatus] | None = None
+    failure_reason: typing.Optional[str] = pydantic.Field("", **{})
+    auth_method: str
+    user_agent: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = UserLoginAuditSchema
+        upsert_keys = []
+
+
+class UserLoginAudit(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'user_login_audit'
+    
+    employee_id: typing.Optional[str] | None = None
+    email: typing.Optional[str] | None = None
+    role: typing.Optional[str] | None = None
+    login_id: typing.Optional[str] | None = None
+    login_time: typing.Optional[datetime.datetime] | None = None
+    logout_time: typing.Optional[datetime.datetime] | None = None
+    login_status: typing.Optional[hpcl_ceg_enum.LoginStatus] | None = None
+    failure_reason: typing.Optional[str] = pydantic.Field("", **{})
+    auth_method: typing.Optional[str] | None = None
+    user_agent: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = UserLoginAuditSchema
+        upsert_keys = []
+
+
+class UserLoginAuditGetResp(pydantic.BaseModel):
+    data: typing.List[UserLoginAudit]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Userloginaudit_Fetch_Login_AuditParams(pydantic.BaseModel):
+    search_string: typing.Optional[str] = pydantic.Field("", **{})
+    limit: typing.Optional[int] = pydantic.Field(100, **{})
+    skip: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class UsersSchema(UrdhvaPostgresBase):
     __tablename__ = 'users'
     
@@ -7109,6 +7187,32 @@ class TASMonthlyOIScoresGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class SodInfraDataCreate(pydantic.BaseModel):
+    unique_id: str
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    address: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    type: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    region_ppac: typing.Optional[str] = pydantic.Field("", **{})
+    ms: typing.Optional[int] = pydantic.Field(0, **{})
+    sko: typing.Optional[int] = pydantic.Field(0, **{})
+    hsd: typing.Optional[int] = pydantic.Field(0, **{})
+    total: typing.Optional[int] = pydantic.Field(0, **{})
+    mode_of_receipt: typing.Optional[str] = pydantic.Field("", **{})
+    latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class SodInfraSchema(UrdhvaPostgresBase):
     __tablename__ = 'sod_infra'
     
@@ -7298,15 +7402,53 @@ class Sodinfra_Get_Sales_InfraParams(pydantic.BaseModel):
 
 
 class Sodinfra_Get_Sales_Officer_InfraParams(pydantic.BaseModel):
-    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
-    drill_state: typing.Optional[str] = pydantic.Field("", **{})
-    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
-    limit: typing.Optional[int] = pydantic.Field(0, **{})
-    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: str
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class Sodinfra_Get_Download_DataParams(pydantic.BaseModel):
+    sbu: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Sodinfra_Update_Sod_DataParams(pydantic.BaseModel):
+    sod_data: SodInfraDataCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class LpgInfraDataCreate(pydantic.BaseModel):
+    unique_id: str
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    address: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    installed_bottling_capacity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    operating_bottling_capacity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ccoe_tankage: typing.Optional[float] = pydantic.Field(0.0, **{})
+    time_of_commissioning: typing.Optional[str] = pydantic.Field("", **{})
+    mode: typing.Optional[str] = pydantic.Field("", **{})
+    supply: typing.Optional[str] = pydantic.Field("", **{})
+    latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class LPGInfraSchema(UrdhvaPostgresBase):
@@ -7425,6 +7567,38 @@ class Lpginfra_Get_All_Lpg_InfraParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Lpginfra_Update_Lpg_DataParams(pydantic.BaseModel):
+    lpg_data: LpgInfraDataCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class AviationInfraDataCreate(pydantic.BaseModel):
+    unique_id: str
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    address: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    operation_status: typing.Optional[str] = pydantic.Field("", **{})
+    tankage: typing.Optional[float] = pydantic.Field(0.0, **{})
+    mode: typing.Optional[str] = pydantic.Field("", **{})
+    pincode: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class AVIATIONInfraSchema(UrdhvaPostgresBase):
     __tablename__ = 'aviation_infra'
     
@@ -7538,6 +7712,36 @@ class Aviationinfra_Get_All_Aviation_InfraParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Aviationinfra_Update_Aviation_DataParams(pydantic.BaseModel):
+    aviation_data: AviationInfraDataCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class LubesInfraDataCreate(pydantic.BaseModel):
+    unique_id: str
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    address: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    base_oil_tankages: typing.Optional[float] = pydantic.Field(0.0, **{})
+    landline: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    filename: typing.Optional[str] = pydantic.Field("", **{})
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class LUBESInfraSchema(UrdhvaPostgresBase):
     __tablename__ = 'lubes_infra'
     
@@ -7639,6 +7843,14 @@ class Lubesinfra_Upload_Lubes_FileParams(pydantic.BaseModel):
 
 class Lubesinfra_Get_All_Lubes_InfraParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Lubesinfra_Update_Lubes_DataParams(pydantic.BaseModel):
+    lubes_data: LubesInfraDataCreate
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -8034,3 +8246,318 @@ class HistoricLUBESInfraGetResp(pydantic.BaseModel):
     data: typing.List[HistoricLUBESInfra]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class PlantRoInfraSchema(UrdhvaPostgresBase):
+    __tablename__ = 'plant_ro_infra'
+    
+    sbu: Mapped[typing.Optional[str]] = mapped_column("sbu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    company: Mapped[typing.Optional[str]] = mapped_column("company", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    ro_status: Mapped[typing.Optional[str]] = mapped_column("ro_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    retail_outlet: Mapped[typing.Optional[float]] = mapped_column("retail_outlet", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    ros_commissioned: Mapped[typing.Optional[float]] = mapped_column("ros_commissioned", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    ros_decommissioned: Mapped[typing.Optional[float]] = mapped_column("ros_decommissioned", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    start_date: Mapped[typing.Optional[str]] = mapped_column("start_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    to_date: Mapped[typing.Optional[str]] = mapped_column("to_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class PlantRoInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'plant_ro_infra'
+    
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    ro_status: typing.Optional[str] = pydantic.Field("", **{})
+    retail_outlet: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ros_commissioned: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ros_decommissioned: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    to_date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PlantRoInfraSchema
+        upsert_keys = []
+        access_key_mapping = ['sbu', 'zone']
+
+
+class PlantRoInfra(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'plant_ro_infra'
+    
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    ro_status: typing.Optional[str] = pydantic.Field("", **{})
+    retail_outlet: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ros_commissioned: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ros_decommissioned: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    to_date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PlantRoInfraSchema
+        upsert_keys = []
+        access_key_mapping = ['sbu', 'zone']
+
+
+class PlantRoInfraGetResp(pydantic.BaseModel):
+    data: typing.List[PlantRoInfra]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Plantroinfra_Upload_Plant_Ro_FileParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Plantroinfra_Get_All_Plant_Ro_InfraParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Plantroinfra_Get_Plant_Ro_Count_InfraParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Plantroinfra_Get_Retail_Company_InfraParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class PlantCngInfraSchema(UrdhvaPostgresBase):
+    __tablename__ = 'plant_cng_infra'
+    
+    sbu: Mapped[typing.Optional[str]] = mapped_column("sbu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    company: Mapped[typing.Optional[str]] = mapped_column("company", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    cng_outlet: Mapped[typing.Optional[float]] = mapped_column("cng_outlet", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    ros_commissioned: Mapped[typing.Optional[float]] = mapped_column("ros_commissioned", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    ros_decommissioned: Mapped[typing.Optional[float]] = mapped_column("ros_decommissioned", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    start_date: Mapped[typing.Optional[str]] = mapped_column("start_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    to_date: Mapped[typing.Optional[str]] = mapped_column("to_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class PlantCngInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'plant_cng_infra'
+    
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    cng_outlet: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ros_commissioned: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ros_decommissioned: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    to_date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PlantCngInfraSchema
+        upsert_keys = []
+        access_key_mapping = ['sbu', 'zone']
+
+
+class PlantCngInfra(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'plant_cng_infra'
+    
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    cng_outlet: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ros_commissioned: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ros_decommissioned: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    to_date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PlantCngInfraSchema
+        upsert_keys = []
+        access_key_mapping = ['sbu', 'zone']
+
+
+class PlantCngInfraGetResp(pydantic.BaseModel):
+    data: typing.List[PlantCngInfra]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Plantcnginfra_Upload_Plant_Cng_FileParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Plantcnginfra_Get_Plant_Cng_Count_InfraParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Plantcnginfra_Get_Retail_Company_Cng_InfraParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class PlantEvInfraSchema(UrdhvaPostgresBase):
+    __tablename__ = 'plant_ev_infra'
+    
+    sbu: Mapped[typing.Optional[str]] = mapped_column("sbu", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    company: Mapped[typing.Optional[str]] = mapped_column("company", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    ro_name: Mapped[typing.Optional[str]] = mapped_column("ro_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    battery_swapping_stations: Mapped[typing.Optional[float]] = mapped_column("battery_swapping_stations", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    vehicle_charging_stations: Mapped[typing.Optional[float]] = mapped_column("vehicle_charging_stations", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    fame_status: Mapped[typing.Optional[str]] = mapped_column("fame_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    non_fame_status: Mapped[typing.Optional[str]] = mapped_column("non_fame_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    date: Mapped[typing.Optional[str]] = mapped_column("date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class PlantEvInfraCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'plant_ev_infra'
+    
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    ro_name: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    battery_swapping_stations: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_charging_stations: typing.Optional[float] = pydantic.Field(0.0, **{})
+    fame_status: typing.Optional[str] = pydantic.Field("", **{})
+    non_fame_status: typing.Optional[str] = pydantic.Field("", **{})
+    date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PlantEvInfraSchema
+        upsert_keys = []
+        access_key_mapping = ['sbu', 'zone']
+
+
+class PlantEvInfra(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'plant_ev_infra'
+    
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    company: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    ro_name: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    battery_swapping_stations: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_charging_stations: typing.Optional[float] = pydantic.Field(0.0, **{})
+    fame_status: typing.Optional[str] = pydantic.Field("", **{})
+    non_fame_status: typing.Optional[str] = pydantic.Field("", **{})
+    date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PlantEvInfraSchema
+        upsert_keys = []
+        access_key_mapping = ['sbu', 'zone']
+
+
+class PlantEvInfraGetResp(pydantic.BaseModel):
+    data: typing.List[PlantEvInfra]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Plantevinfra_Upload_Plant_Ev_FileParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Plantevinfra_Get_Plant_Ev_Count_InfraParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
