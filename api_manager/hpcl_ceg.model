@@ -2441,6 +2441,33 @@ Model TASMonthlyOIScores {
     weightage optional float
 }
 
+Model SodInfraData internal {
+    unique_id str
+    sap_id index_field optional str
+    sbu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    type optional str
+    location_name optional str
+    name optional str
+    region_ppac optional str
+    ms optional int
+    sko optional int
+    hsd optional int
+    total optional int
+    mode_of_receipt optional str
+    latitude optional float
+    longitude optional float
+    filename optional str
+    updated_by optional str
+
+    }
+
 Model SodInfra {
     sap_id index_field optional str
     sbu index_field optional str
@@ -2518,8 +2545,16 @@ Model SodInfra {
     }
 
     Action=> get_sales_officer_infra {
-    sbu str
-    sap_id optional str
+        sbu str
+        sap_id optional str
+    }
+
+    Action=> get_download_data {
+        sbu str
+    }
+
+    Action=> update_sod_data {
+        sod_data SodInfraData
     }
 
     Config=> {
@@ -2527,6 +2562,31 @@ Model SodInfra {
     }
 }
 
+
+Model LpgInfraData internal {
+    unique_id str
+    sap_id index_field optional str
+    sbu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    location_name optional str
+    name optional str
+    installed_bottling_capacity optional float
+    operating_bottling_capacity optional float
+    ccoe_tankage optional float
+    time_of_commissioning optional str
+    mode optional str
+    supply optional str
+    latitude optional float
+    longitude optional float
+    filename optional str
+    updated_by optional str
+    }
 
 Model LPGInfra {
     sap_id index_field optional str
@@ -2558,10 +2618,38 @@ Model LPGInfra {
     Action=> get_all_lpg_infra {
     }
 
+    Action=> update_lpg_data {
+        lpg_data LpgInfraData
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
 }
+
+Model AviationInfraData internal {
+    unique_id str
+    sap_id index_field optional str
+    sbu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    location_name optional str
+    name optional str
+    operation_status optional str
+    tankage optional float
+    mode optional str
+    pincode optional str
+    status optional str
+    latitude optional float
+    longitude optional float
+    filename optional str
+    updated_by optional str
+    }
 
 Model AVIATIONInfra {
     sap_id index_field optional str
@@ -2592,11 +2680,37 @@ Model AVIATIONInfra {
     Action=> get_all_aviation_infra {
     }
 
+    Action=> update_aviation_data {
+        aviation_data AviationInfraData
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
 }
 
+Model LubesInfraData internal {
+    unique_id str
+    sap_id index_field optional str
+    sbu index_field optional str
+    zone index_field optional str
+    state optional str
+    district optional str
+    city optional str
+    address optional str
+    region index_field optional str
+    company optional str
+    location_name optional str
+    name optional str
+    base_oil_tankages optional float
+    landline optional str
+    status optional str
+    latitude optional float
+    longitude optional float
+    filename optional str
+    updated_by optional str
+
+    }
 
 Model LUBESInfra {
     sap_id index_field optional str
@@ -2623,6 +2737,10 @@ Model LUBESInfra {
     }
 
     Action=> get_all_lubes_infra {
+    }
+
+    Action=> update_lubes_data {
+        lubes_data LubesInfraData
     }
 
     Config=> {
@@ -2739,5 +2857,126 @@ Model HistoricLUBESInfra {
 
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
+    }
+}
+
+
+
+Model PlantRoInfra {
+    sbu index_field optional str
+    zone index_field optional str
+    state optional str
+    company optional str
+    category optional str
+    status optional str
+    ro_status optional str
+    retail_outlet optional float
+    ros_commissioned optional float
+    ros_decommissioned optional float
+    start_date optional str
+    to_date optional str
+
+    // File Upload
+    Action=> upload_plant_ro_file {
+    }
+
+    Action=> get_all_plant_ro_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Action=> get_plant_ro_count_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Action=> get_retail_company_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Config=> {
+        access_key_mapping='sbu,zone'
+    }
+}
+
+Model PlantCngInfra {
+    sbu index_field optional str
+    zone index_field optional str
+    state optional str
+    company optional str
+    category optional str
+    status optional str
+    cng_outlet optional float
+    ros_commissioned optional float
+    ros_decommissioned optional float
+    start_date optional str
+    to_date optional str
+
+    // File Upload
+    Action=> upload_plant_cng_file {
+    }
+
+    Action=> get_plant_cng_count_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Action=> get_retail_company_cng_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Config=> {
+        access_key_mapping='sbu,zone'
+    }
+}
+
+
+
+Model PlantEvInfra {
+    sbu index_field optional str
+    zone index_field optional str
+    state optional str
+    company optional str
+    category optional str
+    status optional str
+    ro_name optional str
+    city optional str
+    battery_swapping_stations optional float
+    vehicle_charging_stations optional float
+    fame_status optional str
+    non_fame_status optional str
+    date optional str
+
+    // File Upload
+    Action=> upload_plant_ev_file {
+    }
+
+    Action=> get_plant_ev_count_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Config=> {
+        access_key_mapping='sbu,zone'
     }
 }

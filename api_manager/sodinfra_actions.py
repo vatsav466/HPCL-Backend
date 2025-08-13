@@ -152,3 +152,30 @@ async def sodinfra_get_sales_infra(data: Sodinfra_Get_Sales_InfraParams):
 @router.post('/get_sales_officer_infra', tags=['SodInfra'])
 async def sodinfra_get_sales_officer_infra(data: Sodinfra_Get_Sales_Officer_InfraParams):
     return await infra_functions.get_sales_officer_info(data.sbu, data.sap_id)
+
+# Action get_download_data
+@router.post('/get_download_data', tags=['SodInfra'])
+async def sodinfra_get_download_data(data: Sodinfra_Get_Download_DataParams, background_tasks: fastapi.BackgroundTasks):
+    return await infra_functions.get_download_info(data.sbu, background_tasks)
+
+
+# Action update_sod_data
+@router.post('/update_sod_data', tags=['SodInfra'])
+async def sodinfra_update_sod_data(data: Sodinfra_Update_Sod_DataParams):
+    try:
+        sod_data = data.sod_data
+        q = f"id='{sod_data.unique_id}'"
+        existing = await SodInfra.get_all(urdhva_base.QueryParams(q=q, limit=1), resp_type="plain")
+        if existing["data"]:
+            sod_data = sod_data.dict()
+            sod_data["id"] = existing["data"][0].get("id")
+        else:
+            return {"status": False, "message": f"No record found for ID {sod_data.unique_id}"}
+
+        await SodInfra(**sod_data).modify()
+        return {"status": True, "message": "SOD Data Updated Successfully"}
+
+    except Exception as e:
+        print("Error in update_sod_data:", str(e))
+        traceback.print_exc()
+        return {"status": False, "message": "An error occurred while updating user data", "error": str(e)}
