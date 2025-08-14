@@ -74,11 +74,12 @@ async def users_login(request: fastapi.Request, data: Users_LoginParams):
 # Action applogin
 @router.post('/applogin', tags=['Users'])
 async def users_applogin(data: Users_ApploginParams):
-    status, resp = await auth_manager.AuthenticationManager.login(data.username, data.password, data.otp, jwt_auth=True)
+    status, resp = await auth_manager.AuthenticationManager.login(data.username, data.password, data.login_type, jwt_auth=True)
     if not status:
         response = fastapi.responses.JSONResponse({"status": False, "msg": resp}, 401)
     else:
         response = fastapi.responses.JSONResponse({
+            "status": True,
             "message": "Logged in Successfully",
             "access_token": resp.get("jwt_token", ""),
             "token_type": "bearer",

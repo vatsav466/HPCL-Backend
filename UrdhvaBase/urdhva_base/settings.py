@@ -77,6 +77,11 @@ class Settings(pydantic_settings.BaseSettings):
     log_max_size: int = 10000000
     log_max_count: int = 5
 
+    # JWT
+    jwt_secret_key: str = ""
+    jwt_algorithm: str = "HS256"
+    jwt_expiration_hours: int = 24
+
     # DB Multi-tenancy model
     db_multi_tenancy_model: MultiTenancyMode = MultiTenancyMode.SingleServerSingleDb
     login_count: int = 5
