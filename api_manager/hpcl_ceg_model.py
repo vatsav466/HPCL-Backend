@@ -7436,6 +7436,14 @@ class Sodinfra_Update_Sod_DataParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Sodinfra_Add_Sod_DataParams(pydantic.BaseModel):
+    sod_data: SodInfraDataCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class LpgInfraDataCreate(pydantic.BaseModel):
     unique_id: str
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -7578,6 +7586,14 @@ class Lpginfra_Get_All_Lpg_InfraParams(pydantic.BaseModel):
 
 
 class Lpginfra_Update_Lpg_DataParams(pydantic.BaseModel):
+    lpg_data: LpgInfraDataCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Lpginfra_Add_Lpg_DataParams(pydantic.BaseModel):
     lpg_data: LpgInfraDataCreate
 
     class Config:
@@ -7730,6 +7746,14 @@ class Aviationinfra_Update_Aviation_DataParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Aviationinfra_Add_Aviation_DataParams(pydantic.BaseModel):
+    aviation_data: AviationInfraDataCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class LubesInfraDataCreate(pydantic.BaseModel):
     unique_id: str
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -7860,6 +7884,14 @@ class Lubesinfra_Get_All_Lubes_InfraParams(pydantic.BaseModel):
 
 
 class Lubesinfra_Update_Lubes_DataParams(pydantic.BaseModel):
+    lubes_data: LubesInfraDataCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Lubesinfra_Add_Lubes_DataParams(pydantic.BaseModel):
     lubes_data: LubesInfraDataCreate
 
     class Config:
@@ -8369,6 +8401,18 @@ class Plantroinfra_Get_Retail_Company_InfraParams(pydantic.BaseModel):
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Plantroinfra_Get_Distinct_Ro_Retail_InfraParams(pydantic.BaseModel):
+    sbu: str
+    company: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    state: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    status: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

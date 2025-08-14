@@ -14,9 +14,9 @@ router = fastapi.APIRouter(prefix='/sodinfra')
 
 
 # Action upload_sod_file
+
 @router.post('/upload_sod_file', tags=['SodInfra'])
 async def sodinfra_upload_sod_file(file: fastapi.UploadFile):
-    print("------enter----------")
     try:
         df = pd.read_excel(file.file, sheet_name='SOD').fillna("")
         save_path = "/opt/ceg/algo/orchestrator/masterdata/infra_inputs"
@@ -24,17 +24,14 @@ async def sodinfra_upload_sod_file(file: fastapi.UploadFile):
         dt_str = datetime.datetime.now().strftime("%Y%m%d_%H-%M-%S") + f"_{datetime.datetime.now().microsecond}"
         filename = f"SOD_{dt_str}.xlsx"
         file_location = os.path.join(save_path, filename)
-        df.to_excel(file_location,sheet_name='SOD', index=False)
+        df.to_excel(file_location, sheet_name='SOD', index=False)
         df.columns = df.columns.str.strip().str.lower()
         df['sbu'] = 'SOD'
         df['filename'] = filename
         df = df.rename(
-            columns={
-                'company': 'company', 'type': 'type', 'location name': 'location_name', 'region ppac': 'region_ppac',
-                'ms (kl)': 'ms',
-                'sko(kl)': 'sko', 'hsd(kl)': 'hsd', 'total(kl)': 'total', 'mode of reciept': 'mode_of_receipt',
-                'latitude': 'latitude', 'longitude': 'longitude'
-            }
+            columns={'company': 'company', 'type': 'type', 'location name': 'location_name', 'region ppac': 'region_ppac', 'ms (kl)': 'ms', 'sko(kl)': 'sko',
+                     'hsd(kl)': 'hsd', 'total(kl)': 'total', 'mode of reciept': 'mode_of_receipt', 'latitude': 'latitude', 'longitude': 'longitude'
+                     }
         )
 
         query = ''' * FROM location_master'''
@@ -75,12 +72,28 @@ async def sodinfra_upload_sod_file(file: fastapi.UploadFile):
 
         final_records = merged_df.fillna("").to_dict(orient="records")
 
-        query = ''' DELETE FROM sod_infra '''
-        result = await urdhva_base.BasePostgresModel.execute_query(query)
-        print(result)
+        today_str = datetime.datetime.now().strftime("%Y-%m-%d")
+        current_data = await SodInfra.get_all(urdhva_base.QueryParams(limit=0), resp_type="plain")
+        existing_records = current_data.get("data", [])
+        print('existing_records count: ', len(existing_records))
 
+        if existing_records:
+            print("----Moving current SodInfra to Historic before inserting new data----")
+
+            numeric_fields = [ "latitude", "longitude"]
+            for rec in existing_records:
+                rec["snapshot_date"] = today_str
+                for field in numeric_fields:
+                    try:
+                        rec[field] = float(rec[field]) if rec[field] not in ("", None) else 0.0
+                    except:
+                        rec[field] = 0.0
+
+            await HistoricSodInfra.bulk_update(existing_records, upsert=False)
+
+        await urdhva_base.BasePostgresModel.execute_query("DELETE FROM sod_infra")
         await SodInfra.bulk_update(final_records, upsert=False)
-        await HistoricSodInfra.bulk_update(final_records, upsert=False)
+
         return "Uploaded successfully"
 
     except Exception as e:
@@ -91,7 +104,6 @@ async def sodinfra_upload_sod_file(file: fastapi.UploadFile):
 # Action get_all_sod_lpg_infra
 @router.post('/get_all_sod_lpg_infra', tags=['SodInfra'])
 async def sodinfra_get_all_sod_lpg_infra(data: Sodinfra_Get_All_Sod_Lpg_InfraParams):
-    # return await infra_functions.sod_infra(data)
     return await infra_functions.sod_infra(filters=data.filters, cross_filters=data.cross_filters,
                                            drill_state=data.drill_state, limit=data.limit, time_grain=data.time_grain)
 
@@ -179,3 +191,19 @@ async def sodinfra_update_sod_data(data: Sodinfra_Update_Sod_DataParams):
         print("Error in update_sod_data:", str(e))
         traceback.print_exc()
         return {"status": False, "message": "An error occurred while updating user data", "error": str(e)}
+
+
+# Action add_sod_data
+@router.post('/add_sod_data', tags=['SodInfra'])
+async def sodinfra_add_sod_data(data: Sodinfra_Add_Sod_DataParams):
+    try:
+        sod_data = data.sod_data.dict()
+        sod_data["id"] = None
+        await SodInfra(**sod_data).create()
+        await HistoricSodInfra(**sod_data).create()
+        return {"status": True, "message": "SOD Data Created Successfully"}
+    except Exception as e:
+        print("Error in add_sod_data:", str(e))
+        traceback.print_exc()
+        return {"status": False, "message": "An error occurred while creating SOD data", "error": str(e)
+}
