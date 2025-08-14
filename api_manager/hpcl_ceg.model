@@ -2563,6 +2563,10 @@ Model SodInfra {
         sod_data SodInfraData
     }
 
+    Action=> add_sod_data {
+        sod_data SodInfraData
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
@@ -2628,6 +2632,10 @@ Model LPGInfra {
         lpg_data LpgInfraData
     }
 
+    Action=> add_lpg_data {
+        lpg_data LpgInfraData
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
@@ -2690,6 +2698,10 @@ Model AVIATIONInfra {
         aviation_data AviationInfraData
     }
 
+    Action=> add_aviation_data {
+        aviation_data AviationInfraData
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
@@ -2746,6 +2758,10 @@ Model LUBESInfra {
     }
 
     Action=> update_lubes_data {
+        lubes_data LubesInfraData
+    }
+
+    Action=> add_lubes_data {
         lubes_data LubesInfraData
     }
 
@@ -2908,6 +2924,14 @@ Model PlantRoInfra {
         cross_filters optional list WidgetFilters
         limit optional int
         time_grain optional str
+    }
+
+    Action=> get_distinct_ro_retail_infra {
+        sbu str
+        company optional list str
+        zone optional list str
+        state optional list str
+        status optional list str
     }
 
     Config=> {
