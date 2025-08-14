@@ -424,6 +424,71 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
 
 
 
+import pandas as pd
+
+ALL_MONTHS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
+
+async def get_region_monthly_performance(region_name: str, sbu_name: str = "RETAIL", coname: str = "HPCL"):
+    # Build query dynamically using filters
+    query = f"""
+    SELECT fiscal_year, month_name, ROUND(COALESCE(SUM(netweight_tmt), 0), 2) AS total_sales
+    FROM industry_performance
+    WHERE region_name = '{region_name}'
+      AND sbu_name = '{sbu_name}'
+      AND coname = '{coname}'
+      AND distname IS NOT NULL AND TRIM(distname) <> '' AND TRIM(distname) <> '-'
+      AND zone_name IS NOT NULL AND TRIM(zone_name) <> '' AND TRIM(zone_name) <> '-'
+    GROUP BY fiscal_year, month_name
+    ORDER BY fiscal_year DESC;
+    """
+    print("query",query)
+    # Execute query via your connection method
+    Charts_Connection_Vault_RoutingParams.connection_id = "1"  # example
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+
+    # Convert to DataFrame for easier processing
+    df = pd.DataFrame(resp)
+    df.columns = [str(col).strip() for col in df.columns]
+
+
+    # Check if fiscal_year exists
+    if "fiscal_year" not in df.columns:
+        print("Columns in df:", df.columns)
+        return {
+            "status": False,
+            "message": "fiscal_year column not found in data",
+            "data": []
+        }
+
+    # Group by fiscal year
+    response = []
+    for year, year_df in df.groupby("fiscal_year"):
+        total_sales = year_df["total_sales"].sum()
+        months_list = []
+
+        for month in ALL_MONTHS:
+            month_row = year_df[year_df["month_name"] == month]
+            sales = float(month_row["total_sales"].values[0]) if not month_row.empty else 0.0
+            months_list.append({
+                "month": month,
+                "fiscal_year": year,
+                "total_sales": sales
+            })
+
+        response.append({
+            "Year": year,
+            "Total_sales": float(total_sales),
+            "months": months_list
+        })
+
+    return {
+        "status": True,
+        "message": "Success",
+        "data": response
+    }
+
 
 def get_date_filters(filters, months_list = None,cumulative = None,resp_type="months"):
     """
@@ -1214,7 +1279,29 @@ def get_mappers():
     
 async def industry_performance(filters, cross_filters, drill_state="", time_grain="", resp_format="", resp_level=""):
     print("going to top ")
+    if resp_format == "month_wise":
+        filters_dict = {f["key"].replace('"', ''): f["value"] for f in filters}
 
+        # Call your function to get month-wise region performance
+        results = await get_region_monthly_performance(
+            region_name=filters_dict.get("region_name"),
+            sbu_name=filters_dict.get("sbu_name"),
+            coname=filters_dict.get("coname")
+        )
+
+        if not results:
+            return {
+                'status': False,
+                'message': "No data present for current selection",
+                'data': [],
+            }
+
+        return {
+            'status': True,
+            'message': "Success",
+            'data': results
+        }
+            
     resp_format_lower = resp_format.lower()
     if resp_format_lower == "file_download":
     # Get the data first
