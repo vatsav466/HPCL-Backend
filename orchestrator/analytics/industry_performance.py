@@ -465,21 +465,24 @@ async def get_region_monthly_performance(region_name: str, sbu_name: str = "RETA
     # Group by fiscal year
     response = []
     for year, year_df in df.groupby("fiscal_year"):
-        total_sales = year_df["total_sales"].sum()
+        total_sales = float(year_df["total_sales"].sum())  # Cast to float
         months_list = []
 
         for month in ALL_MONTHS:
             month_row = year_df[year_df["month_name"] == month]
             sales = float(month_row["total_sales"].values[0]) if not month_row.empty else 0.0
+            market_share_percentage = (sales / total_sales * 100) if total_sales > 0 else 0.0
+
             months_list.append({
                 "month": month,
                 "fiscal_year": year,
-                "total_sales": sales
+                "total_sales": sales,
+                "market_share_percentage": round(market_share_percentage, 2)  # Added here
             })
 
         response.append({
             "Year": year,
-            "Total_sales": float(total_sales),
+            "Total_sales": total_sales,
             "months": months_list
         })
 
