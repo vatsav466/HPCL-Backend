@@ -7444,6 +7444,14 @@ class Sodinfra_Add_Sod_DataParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Sodinfra_Delete_Sod_DataParams(pydantic.BaseModel):
+    unique_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class LpgInfraDataCreate(pydantic.BaseModel):
     unique_id: str
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -7595,6 +7603,14 @@ class Lpginfra_Update_Lpg_DataParams(pydantic.BaseModel):
 
 class Lpginfra_Add_Lpg_DataParams(pydantic.BaseModel):
     lpg_data: LpgInfraDataCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Lpginfra_Delete_Lpg_DataParams(pydantic.BaseModel):
+    unique_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -7754,6 +7770,14 @@ class Aviationinfra_Add_Aviation_DataParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Aviationinfra_Delete_Aviation_DataParams(pydantic.BaseModel):
+    unique_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class LubesInfraDataCreate(pydantic.BaseModel):
     unique_id: str
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -7893,6 +7917,14 @@ class Lubesinfra_Update_Lubes_DataParams(pydantic.BaseModel):
 
 class Lubesinfra_Add_Lubes_DataParams(pydantic.BaseModel):
     lubes_data: LubesInfraDataCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Lubesinfra_Delete_Lubes_DataParams(pydantic.BaseModel):
+    unique_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
