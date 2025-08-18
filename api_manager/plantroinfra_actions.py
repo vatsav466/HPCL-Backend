@@ -7,6 +7,7 @@ import datetime
 import traceback
 from http.client import HTTPException
 import orchestrator.dashboard.chart_factory.infra_functions as infra_functions
+import orchestrator.dashboard.chart_factory.plant_retail_functions as plant_retail_functions
 from fastapi.responses import FileResponse, JSONResponse
 import polars as pl
 
@@ -126,7 +127,7 @@ async def plantroinfra_upload_plant_ro_file(file: fastapi.UploadFile):
                 })
 
     final_df = pd.DataFrame(records)
-    final_df['sbu'] = 'RETAIL'
+    final_df['sbu'] = 'RO'
     numeric_cols = ["retail_outlet", "ros_commissioned", "ros_decommissioned"]
     final_df[numeric_cols] = final_df[numeric_cols].apply(pd.to_numeric, errors='coerce').fillna(0).astype(float)
 
@@ -147,14 +148,14 @@ async def plantroinfra_upload_plant_ro_file(file: fastapi.UploadFile):
 # Action get_all_plant_ro_infra
 @router.post('/get_all_plant_ro_infra', tags=['PlantRoInfra'])
 async def plantroinfra_get_all_plant_ro_infra(data: Plantroinfra_Get_All_Plant_Ro_InfraParams):
-    return await infra_functions.get_all_plant_ro_info(filters=data.filters, cross_filters=data.cross_filters,
+    return await plant_retail_functions.get_all_plant_ro_info(filters=data.filters, cross_filters=data.cross_filters,
                                            drill_state=data.drill_state, limit=data.limit, time_grain=data.time_grain)
 
 
 # Action get_plant_ro_count_infra
 @router.post('/get_plant_ro_count_infra', tags=['PlantRoInfra'])
 async def plantroinfra_get_plant_ro_count_infra(data: Plantroinfra_Get_Plant_Ro_Count_InfraParams):
-    return await infra_functions.get_plant_ro_count_info(filters=data.filters, cross_filters=data.cross_filters,
+    return await plant_retail_functions.get_plant_ro_count_info(filters=data.filters, cross_filters=data.cross_filters,
                                                        drill_state=data.drill_state, limit=data.limit,
                                                        time_grain=data.time_grain)
 
@@ -162,6 +163,12 @@ async def plantroinfra_get_plant_ro_count_infra(data: Plantroinfra_Get_Plant_Ro_
 # Action get_retail_company_infra
 @router.post('/get_retail_company_infra', tags=['PlantRoInfra'])
 async def plantroinfra_get_retail_company_infra(data: Plantroinfra_Get_Retail_Company_InfraParams):
-    return await infra_functions.get_retail_company_info(filters=data.filters, cross_filters=data.cross_filters,
+    return await plant_retail_functions.get_retail_company_info(filters=data.filters, cross_filters=data.cross_filters,
                                                        drill_state=data.drill_state, limit=data.limit,
                                                        time_grain=data.time_grain)
+
+
+# Action get_distinct_ro_retail_infra
+@router.post('/get_distinct_ro_retail_infra', tags=['PlantRoInfra'])
+async def plantroinfra_get_distinct_ro_retail_infra(data: Plantroinfra_Get_Distinct_Ro_Retail_InfraParams):
+    return await plant_retail_functions.get_distinct_ro_retail_info(data.sbu, data.company, data.zone, data.state,data.status)
