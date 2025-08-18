@@ -125,9 +125,43 @@ async def lubesinfra_add_lubes_data(data: Lubesinfra_Add_Lubes_DataParams):
         lubes_data = data.lubes_data.dict()
         lubes_data["id"] = None
         await LUBESInfra(**lubes_data).create()
-        await HistoricLUBESInfra(**lubes_data).create()
         return {"status": True, "message": "LUBES Data Created Successfully"}
     except Exception as e:
         print("Error in add_lubes_data:", str(e))
         traceback.print_exc()
         return {"status": False, "message": "An error occurred while creating LUBES data", "error": str(e)}
+
+
+# Action delete_lubes_data
+@router.post('/delete_lubes_data', tags=['LUBESInfra'])
+async def lubesinfra_delete_lubes_data(data: Lubesinfra_Delete_Lubes_DataParams):
+    try:
+        unique_ids = data.unique_id or []
+        if not unique_ids:
+            return {"status": False, "message": "No unique_id(s) provided for deletion"}
+
+        deleted_ids = []
+        not_found_ids = []
+
+        for uid in unique_ids:
+            q = f"id='{uid}'"
+            existing = await LUBESInfra.get_all( urdhva_base.QueryParams(q=q, limit=1), resp_type="plain")
+
+            if existing["data"]:
+                record_id = existing["data"][0].get("id")
+                await LUBESInfra.delete(record_id)
+                deleted_ids.append(uid)
+                print(f"Deleted LUBES record with ID: {uid}")
+            else:
+                not_found_ids.append(uid)
+                print(f"No LUBES record found for ID: {uid}")
+
+        print(f"Total LUBES deleted: {len(deleted_ids)}, Not found: {len(not_found_ids)}")
+
+        return {
+            "status": True, "message": f"LUBES Data Deleted Successfully. Deleted: {len(deleted_ids)}, Not Found: {len(not_found_ids)}", "deleted_ids": deleted_ids, "not_found_ids": not_found_ids}
+
+    except Exception as e:
+        print("Error in delete_lubes_data:", str(e))
+        traceback.print_exc()
+        return {"status": False, "message": "An error occurred while deleting LUBES data", "error": str(e)}

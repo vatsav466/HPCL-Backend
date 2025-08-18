@@ -2567,6 +2567,11 @@ Model SodInfra {
         sod_data SodInfraData
     }
 
+
+    Action=> delete_sod_data {
+        unique_id optional list str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
@@ -2636,6 +2641,10 @@ Model LPGInfra {
         lpg_data LpgInfraData
     }
 
+    Action=> delete_lpg_data {
+        unique_id optional list str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
@@ -2702,6 +2711,10 @@ Model AVIATIONInfra {
         aviation_data AviationInfraData
     }
 
+    Action=> delete_aviation_data {
+        unique_id optional list str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
@@ -2763,6 +2776,10 @@ Model LUBESInfra {
 
     Action=> add_lubes_data {
         lubes_data LubesInfraData
+    }
+
+    Action=> delete_lubes_data {
+        unique_id optional list str
     }
 
     Config=> {
