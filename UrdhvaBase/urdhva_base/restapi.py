@@ -17,6 +17,7 @@ import urdhva_base.entity
 import urdhva_base.context
 import urdhva_base.settings
 import urdhva_base.redispool
+from jose import jwt, JWTError
 import urdhva_base.elasticmodel
 from pydantic.fields import Field
 from urllib.parse import urlparse
@@ -385,6 +386,19 @@ async def contextMiddleware(request: fastapi.Request, call_next):
             cookie_id = d["cookie_id"]
         except:
             pass
+    else:
+        # JWT-based login flow
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            try:
+                payload = jwt.decode(token, urdhva_base.settings.jwt_secret_key, 
+                                     algorithms=urdhva_base.settings.jwt_algorithm)
+                entity_id = payload.get("entity_id", entity_id)
+                data['base_url'] = payload.get("base_url", '')
+                data['rpt'] = payload
+            except JWTError as e:
+                print(f"JWT decode error: {e}")
     if not entity_id:
         if request.headers.get("entity_id", ""):
             entity_id = request.headers.get("entity_id", "")

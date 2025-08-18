@@ -241,6 +241,12 @@ Model Users {
         login_type optional default='employee' str
     }
 
+    Action=> applogin {
+        username str regex="^[a-zA-Z0-9_.-]+$"
+        password str
+        login_type optional default='employee' str
+    }
+
     // API for user logout
     Action=> logout {
     }
@@ -2557,6 +2563,15 @@ Model SodInfra {
         sod_data SodInfraData
     }
 
+    Action=> add_sod_data {
+        sod_data SodInfraData
+    }
+
+
+    Action=> delete_sod_data {
+        unique_id optional list str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
@@ -2622,6 +2637,14 @@ Model LPGInfra {
         lpg_data LpgInfraData
     }
 
+    Action=> add_lpg_data {
+        lpg_data LpgInfraData
+    }
+
+    Action=> delete_lpg_data {
+        unique_id optional list str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
@@ -2684,6 +2707,14 @@ Model AVIATIONInfra {
         aviation_data AviationInfraData
     }
 
+    Action=> add_aviation_data {
+        aviation_data AviationInfraData
+    }
+
+    Action=> delete_aviation_data {
+        unique_id optional list str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
@@ -2741,6 +2772,14 @@ Model LUBESInfra {
 
     Action=> update_lubes_data {
         lubes_data LubesInfraData
+    }
+
+    Action=> add_lubes_data {
+        lubes_data LubesInfraData
+    }
+
+    Action=> delete_lubes_data {
+        unique_id optional list str
     }
 
     Config=> {
@@ -2902,6 +2941,14 @@ Model PlantRoInfra {
         cross_filters optional list WidgetFilters
         limit optional int
         time_grain optional str
+    }
+
+    Action=> get_distinct_ro_retail_infra {
+        sbu str
+        company optional list str
+        zone optional list str
+        state optional list str
+        status optional list str
     }
 
     Config=> {

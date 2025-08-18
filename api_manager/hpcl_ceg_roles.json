@@ -191,6 +191,9 @@
                     "name": "login"
                 },
                 {
+                    "name": "applogin"
+                },
+                {
                     "name": "logout"
                 }
             ]
@@ -243,6 +246,9 @@
                 },
                 {
                     "name": "login"
+                },
+                {
+                    "name": "applogin"
                 },
                 {
                     "name": "logout"
@@ -5253,6 +5259,12 @@
                 },
                 {
                     "name": "update_sod_data"
+                },
+                {
+                    "name": "add_sod_data"
+                },
+                {
+                    "name": "delete_sod_data"
                 }
             ]
         },
@@ -5349,6 +5361,12 @@
                 },
                 {
                     "name": "update_sod_data"
+                },
+                {
+                    "name": "add_sod_data"
+                },
+                {
+                    "name": "delete_sod_data"
                 }
             ]
         },
@@ -5382,6 +5400,12 @@
                 },
                 {
                     "name": "update_lpg_data"
+                },
+                {
+                    "name": "add_lpg_data"
+                },
+                {
+                    "name": "delete_lpg_data"
                 }
             ]
         },
@@ -5433,6 +5457,12 @@
                 },
                 {
                     "name": "update_lpg_data"
+                },
+                {
+                    "name": "add_lpg_data"
+                },
+                {
+                    "name": "delete_lpg_data"
                 }
             ]
         },
@@ -5466,6 +5496,12 @@
                 },
                 {
                     "name": "update_aviation_data"
+                },
+                {
+                    "name": "add_aviation_data"
+                },
+                {
+                    "name": "delete_aviation_data"
                 }
             ]
         },
@@ -5517,6 +5553,12 @@
                 },
                 {
                     "name": "update_aviation_data"
+                },
+                {
+                    "name": "add_aviation_data"
+                },
+                {
+                    "name": "delete_aviation_data"
                 }
             ]
         },
@@ -5550,6 +5592,12 @@
                 },
                 {
                     "name": "update_lubes_data"
+                },
+                {
+                    "name": "add_lubes_data"
+                },
+                {
+                    "name": "delete_lubes_data"
                 }
             ]
         },
@@ -5601,6 +5649,12 @@
                 },
                 {
                     "name": "update_lubes_data"
+                },
+                {
+                    "name": "add_lubes_data"
+                },
+                {
+                    "name": "delete_lubes_data"
                 }
             ]
         },
@@ -5889,6 +5943,9 @@
                 },
                 {
                     "name": "get_retail_company_infra"
+                },
+                {
+                    "name": "get_distinct_ro_retail_infra"
                 }
             ]
         },
@@ -5913,6 +5970,9 @@
                 },
                 {
                     "name": "get_retail_company_infra"
+                },
+                {
+                    "name": "get_distinct_ro_retail_infra"
                 }
             ]
         },
@@ -5949,6 +6009,9 @@
                 },
                 {
                     "name": "get_retail_company_infra"
+                },
+                {
+                    "name": "get_distinct_ro_retail_infra"
                 }
             ]
         },
@@ -6225,6 +6288,10 @@
         {
             "name": "login",
             "displayName": "login"
+        },
+        {
+            "name": "applogin",
+            "displayName": "applogin"
         },
         {
             "name": "logout",
@@ -6575,6 +6642,14 @@
             "displayName": "update_sod_data"
         },
         {
+            "name": "add_sod_data",
+            "displayName": "add_sod_data"
+        },
+        {
+            "name": "delete_sod_data",
+            "displayName": "delete_sod_data"
+        },
+        {
             "name": "upload_lpg_file",
             "displayName": "upload_lpg_file"
         },
@@ -6585,6 +6660,14 @@
         {
             "name": "update_lpg_data",
             "displayName": "update_lpg_data"
+        },
+        {
+            "name": "add_lpg_data",
+            "displayName": "add_lpg_data"
+        },
+        {
+            "name": "delete_lpg_data",
+            "displayName": "delete_lpg_data"
         },
         {
             "name": "upload_aviation_file",
@@ -6599,6 +6682,14 @@
             "displayName": "update_aviation_data"
         },
         {
+            "name": "add_aviation_data",
+            "displayName": "add_aviation_data"
+        },
+        {
+            "name": "delete_aviation_data",
+            "displayName": "delete_aviation_data"
+        },
+        {
             "name": "upload_lubes_file",
             "displayName": "upload_lubes_file"
         },
@@ -6609,6 +6700,14 @@
         {
             "name": "update_lubes_data",
             "displayName": "update_lubes_data"
+        },
+        {
+            "name": "add_lubes_data",
+            "displayName": "add_lubes_data"
+        },
+        {
+            "name": "delete_lubes_data",
+            "displayName": "delete_lubes_data"
         },
         {
             "name": "upload_plant_ro_file",
@@ -6625,6 +6724,10 @@
         {
             "name": "get_retail_company_infra",
             "displayName": "get_retail_company_infra"
+        },
+        {
+            "name": "get_distinct_ro_retail_infra",
+            "displayName": "get_distinct_ro_retail_infra"
         },
         {
             "name": "upload_plant_cng_file",
