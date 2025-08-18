@@ -492,6 +492,81 @@ async def get_region_monthly_performance(region_name: str, sbu_name: str = "RETA
         "data": response
     }
 
+async def get_fiscal_sales(filters: list, cross_filters: list, resp_format: str):
+    conditions = []
+    for f in filters:
+        key = f["key"].replace('"', '')
+        cond = f["cond"].lower()
+        values = f["value"]
+
+        # Skip "All", empty string, None, or empty list
+        if values in ["All", ["All"], "", None, []]:
+            continue
+
+        if isinstance(values, list) and cond == "in":
+            values_str = ",".join([f"'{str(v)}'" for v in values if v not in ["", None]])
+            if values_str:  # only add if list is not empty after cleaning
+                conditions.append(f"{key} IN ({values_str})")
+
+        elif cond == "in" and isinstance(values, str):
+            conditions.append(f"{key} IN ('{values}')")
+
+        elif cond == "equals":
+            conditions.append(f"{key} = '{str(values)}'")
+
+        else:
+            conditions.append(f"{key} {cond.upper()} '{values}'")
+
+    where_clause = " AND ".join(conditions) if conditions else "1=1"
+
+    query = f"""
+        SELECT fiscal_year, month_name, ROUND(COALESCE(SUM(netweight_tmt), 0), 2) AS total_sales
+        FROM industry_performance
+        WHERE {where_clause}
+          AND distname IS NOT NULL AND TRIM(distname) <> '' AND TRIM(distname) <> '-'
+          AND zone_name IS NOT NULL AND TRIM(zone_name) <> '' AND TRIM(zone_name) <> '-'
+        GROUP BY fiscal_year, month_name
+        ORDER BY fiscal_year DESC;
+    """
+    print("query", query)
+
+    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+
+    df = pd.DataFrame(resp)
+    df.columns = [str(col).strip() for col in df.columns]
+
+    if "fiscal_year" not in df.columns:
+        return {"status": False, "message": "fiscal_year column not found", "data": []}
+
+    response = []
+    for year, year_df in df.groupby("fiscal_year"):
+        total_sales = float(year_df["total_sales"].sum())
+        months_list = []
+
+        for month in ALL_MONTHS:
+            month_row = year_df[year_df["month_name"] == month]
+            sales = float(month_row["total_sales"].values[0]) if not month_row.empty else 0.0
+            market_share_percentage = (sales / total_sales * 100) if total_sales > 0 else 0.0
+
+            months_list.append({
+                "month": month,
+                "fiscal_year": year,
+                "total_sales": sales,
+                "market_share_percentage": round(market_share_percentage, 2)
+            })
+
+        response.append({
+            "Year": year,
+            "Total_sales": total_sales,
+            "months": months_list
+        })
+
+    return {"status": True, "message": "Success", "data": response}
+
+
 
 def get_date_filters(filters, months_list = None,cumulative = None,resp_type="months"):
     """
@@ -1303,6 +1378,27 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
             'status': True,
             'message': "Success",
             'data': results
+        }
+        
+    if resp_format == "historical_years":
+    # Call new function to get last 6 fiscal years (with multi-select filters support)
+        results = await get_fiscal_sales(
+            filters=filters,
+            cross_filters=cross_filters,
+            resp_format=resp_format
+        )
+
+        if not results or not results.get("data"):
+            return {
+                'status': False,
+                'message': "No historical data present for current selection",
+                'data': [],
+            }
+
+        return {
+            'status': True,
+            'message': "Success",
+            'data': results["data"]
         }
             
     resp_format_lower = resp_format.lower()
