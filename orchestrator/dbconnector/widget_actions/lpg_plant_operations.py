@@ -660,7 +660,7 @@ class LPGOperationsActions:
             ot_production[carousal] = await LPGOperationsActions.get_ot_production_period(carousal, data)
         return ot_production
     
-    async def get_productivity(data : dict):
+    async def get_productivity(data: dict):
         bottling_data = await LPGOperationsActions.bottling_data(data)
         production_hours_data = await LPGOperationsActions.production_hours_data(data)
         ot_production_time = await LPGOperationsActions.ot_production_time(data)
@@ -688,4 +688,120 @@ class LPGOperationsActions:
                 else:
                     productivityData[key][phase]['productivity'] = round(float(totalProduction) / float(productivityData[key][phase]['net_hours']), 2)
         return productivityData    
-    ############################################################
+    
+    ##########################  Filling Accuracy  ################################
+    async def get_filling_accuracy(data: dict):
+        cyl_types = ",".join(map(str, lpg_config.cyl_types))
+        carousal = await LPGOperationsActions.get_carousals('string', data["sap_id"])
+        from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
+        to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
+        query = f"""
+            SELECT
+            system_id,
+            MAX(sap_id) AS sap_id,
+            SUM(CASE WHEN
+                        ((cyl_type = 1) AND (check_net - 14200) = 0)
+                        OR
+                        ((cyl_type = 2) AND (check_net - 19000) = 0)
+                    THEN 1
+                    ELSE 0
+                END) AS nil_var,
+            SUM(CASE WHEN
+                        ((cyl_type = 1) AND (check_net - 14200) > 0 AND (check_net - 14200) <= 50)
+                        OR
+                        ((cyl_type = 1) AND (check_net - 14200) < 0 AND (check_net - 14200) >= -50)
+                        OR
+                        ((cyl_type = 2) AND (check_net - 19000) > 0 AND (check_net - 19000) <= 50)
+                        OR
+                        ((cyl_type = 2) AND (check_net - 19000) < 0 AND (check_net - 19000) >= -50)
+                    THEN 1
+                    ELSE 0
+                END) AS zero_fifty,
+            SUM(CASE WHEN
+                        ((cyl_type = 1) AND (check_net - 14200) > 50 AND (check_net - 14200) <= 100)
+                        OR
+                        ((cyl_type = 1) AND (check_net - 14200) < -50 AND (check_net - 14200) >= -100)
+                        OR
+                        ((cyl_type = 2) AND (check_net - 19000) > 50 AND (check_net - 19000) <= 100)
+                        OR
+                        ((cyl_type = 2) AND (check_net - 19000) < -50 AND (check_net - 19000) >= -100)
+                    THEN 1
+                    ELSE 0
+                END) AS fifty_hundred,
+            SUM(CASE WHEN
+                        ((cyl_type = 1) AND (check_net - 14200) > 100 AND (check_net - 14200) <= 200)
+                        OR
+                        ((cyl_type = 1) AND (check_net - 14200) < -100 AND (check_net - 14200) >= -200)
+                        OR
+                        ((cyl_type = 2) AND (check_net - 19000) > 100 AND (check_net - 14200) <= 200)
+                        OR
+                        ((cyl_type = 2) AND (check_net - 19000) < -100 AND (check_net - 14200) >= -200)
+                    THEN 1
+                    ELSE 0
+                END) AS hundred_plus,
+            SUM(CASE WHEN ((check_net - 14200) >= -200 AND (check_net - 14200) <= 200) THEN (check_net - 14200)
+            WHEN ((check_net - 14200) < -200) THEN -200
+            WHEN ((check_net - 14200) > 200) THEN 200
+            ELSE 0 END)/(COUNT(production_log_id)::float) AS average,
+            COUNT(production_log_id) AS count,
+            STDDEV_POP(CASE WHEN ((check_net - 14200) >= -200 AND (check_net - 14200) <= 200) THEN (check_net - 14200)
+            WHEN ((check_net - 14200) < -200) THEN -200
+            WHEN ((check_net - 14200) > 200) THEN 200
+            ELSE 0 END) AS stddev
+            FROM production_log
+            WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+            AND system_id IN ({carousal})
+            AND process_id IN (2, 22)
+            AND cyl_type IN ({cyl_types})
+            AND process_status IN (0, 1040, 2064)
+            AND sap_id = '{data['sap_id']}'
+            GROUP BY system_id
+            ORDER BY system_id ASC;
+            """
+        stats = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+        if stats['data']:
+            return stats['data']
+        return {}
+    
+    async def get_bottling_summary(data: dict):
+        excludedStatuses = ", ".join(
+            map(str, lpg_config.process_statuses['negativeTare'] + lpg_config.process_statuses['positiveTare'])
+            )
+        from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
+        to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
+        
+        carousal = await LPGOperationsActions.get_carousals('string', data["sap_id"])
+        queryString = f"""SELECT
+                system_id as carousal,
+                SUM(CASE
+                    WHEN (cyl_type = 1)
+                    THEN 1
+                    ELSE 0
+                    END) AS production_14_2,
+                SUM(CASE
+                    WHEN (cyl_type = 2)
+                    THEN 1
+                    ELSE 0
+                    END) AS production_19
+                FROM production_log
+                WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                    AND process_id IN (2,22)
+                    AND system_id IN ({carousal})
+                    AND cyl_type IN (1,2)
+                    AND process_status NOT IN ({excludedStatuses})
+                GROUP BY system_id 
+                ORDER BY system_id;"""        
+
+        bottling_data = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
+        if bottling_data['data']:
+            bottling_data = bottling_data['data']
+        carousals = await LPGOperationsActions.get_carousals('array', data["sap_id"])
+        result = {}
+
+        if(bottling_data and (bottling_data[0]["production_14_2"] > 0 or bottling_data[0]["production_19"] > 0)):
+            for d in bottling_data:
+                for c in carousals:
+                    if c == d["carousal"]:
+                        result[c] = d
+            return result
+        return None
