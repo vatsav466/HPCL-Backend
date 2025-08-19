@@ -171,3 +171,12 @@ async def plantroinfra_get_retail_company_infra(data: Plantroinfra_Get_Retail_Co
 @router.post('/get_distinct_ro_retail_infra', tags=['PlantRoInfra'])
 async def plantroinfra_get_distinct_ro_retail_infra(data: Plantroinfra_Get_Distinct_Ro_Retail_InfraParams):
     return await plant_retail_functions.get_distinct_ro_retail_info(data.sbu, data.company, data.zone, data.state,data.status)
+
+
+# Action get_top_five_ro_infra
+@router.post('/get_top_five_ro_infra', tags=['PlantRoInfra'])
+async def plantroinfra_get_top_five_ro_infra(data: Plantroinfra_Get_Top_Five_Ro_InfraParams):
+    return await plant_retail_functions.get_top_five_ro_info(filters=data.filters,
+                                                              cross_filters=data.cross_filters,
+                                                              drill_state=data.drill_state, limit=data.limit,
+                                                              time_grain=data.time_grain)
