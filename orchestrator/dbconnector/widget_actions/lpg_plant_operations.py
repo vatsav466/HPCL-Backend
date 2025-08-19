@@ -762,3 +762,46 @@ class LPGOperationsActions:
         if stats['data']:
             return stats['data']
         return {}
+    
+    async def get_bottling_summary(data: dict):
+        excludedStatuses = ", ".join(
+            map(str, lpg_config.process_statuses['negativeTare'] + lpg_config.process_statuses['positiveTare'])
+            )
+        from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
+        to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
+        
+        carousal = await LPGOperationsActions.get_carousals('string', data["sap_id"])
+        queryString = f"""SELECT
+                system_id as carousal,
+                SUM(CASE
+                    WHEN (cyl_type = 1)
+                    THEN 1
+                    ELSE 0
+                    END) AS production_14_2,
+                SUM(CASE
+                    WHEN (cyl_type = 2)
+                    THEN 1
+                    ELSE 0
+                    END) AS production_19
+                FROM production_log
+                WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                    AND process_id IN (2,22)
+                    AND system_id IN ({carousal})
+                    AND cyl_type IN (1,2)
+                    AND process_status NOT IN ({excludedStatuses})
+                GROUP BY system_id 
+                ORDER BY system_id;"""        
+
+        bottling_data = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
+        if bottling_data['data']:
+            bottling_data = bottling_data['data']
+        carousals = await LPGOperationsActions.get_carousals('array', data["sap_id"])
+        result = {}
+
+        if(bottling_data and (bottling_data[0]["production_14_2"] > 0 or bottling_data[0]["production_19"] > 0)):
+            for d in bottling_data:
+                for c in carousals:
+                    if c == d["carousal"]:
+                        result[c] = d
+            return result
+        return None
