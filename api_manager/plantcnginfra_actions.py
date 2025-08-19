@@ -150,3 +150,19 @@ async def plantcnginfra_get_retail_company_cng_infra(data: Plantcnginfra_Get_Ret
     return await plant_retail_functions.get_retail_company_cng_info(filters=data.filters, cross_filters=data.cross_filters,
                                                           drill_state=data.drill_state, limit=data.limit,
                                                           time_grain=data.time_grain)
+
+
+# Action get_top_five_cng_infra
+@router.post('/get_top_five_cng_infra', tags=['PlantCngInfra'])
+async def plantcnginfra_get_top_five_cng_infra(data: Plantcnginfra_Get_Top_Five_Cng_InfraParams):
+    return await plant_retail_functions.get_top_five_cng_info(filters=data.filters,
+                                                                    cross_filters=data.cross_filters,
+                                                                    drill_state=data.drill_state, limit=data.limit,
+                                                                    time_grain=data.time_grain)
+
+
+# Action get_distinct_cng_retail_infra
+@router.post('/get_distinct_cng_retail_infra', tags=['PlantCngInfra'])
+async def plantcnginfra_get_distinct_cng_retail_infra(data: Plantcnginfra_Get_Distinct_Cng_Retail_InfraParams):
+    return await plant_retail_functions.get_distinct_cng_retail_info(data.sbu, data.company, data.zone, data.state,
+                                                                    data.status)

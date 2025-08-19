@@ -2951,6 +2951,14 @@ Model PlantRoInfra {
         status optional list str
     }
 
+    Action=> get_top_five_ro_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone'
     }
@@ -2981,7 +2989,23 @@ Model PlantCngInfra {
         time_grain optional str
     }
 
+    Action=> get_distinct_cng_retail_infra {
+        sbu str
+        company optional list str
+        zone optional list str
+        state optional list str
+        status optional list str
+    }
+
     Action=> get_retail_company_cng_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Action=> get_top_five_cng_infra {
         filters optional list WidgetFilters
         drill_state optional str
         cross_filters optional list WidgetFilters
