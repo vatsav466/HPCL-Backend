@@ -5946,6 +5946,9 @@
                 },
                 {
                     "name": "get_distinct_ro_retail_infra"
+                },
+                {
+                    "name": "get_top_five_ro_infra"
                 }
             ]
         },
@@ -5973,6 +5976,9 @@
                 },
                 {
                     "name": "get_distinct_ro_retail_infra"
+                },
+                {
+                    "name": "get_top_five_ro_infra"
                 }
             ]
         },
@@ -6012,6 +6018,9 @@
                 },
                 {
                     "name": "get_distinct_ro_retail_infra"
+                },
+                {
+                    "name": "get_top_five_ro_infra"
                 }
             ]
         },
@@ -6044,7 +6053,13 @@
                     "name": "get_plant_cng_count_infra"
                 },
                 {
+                    "name": "get_distinct_cng_retail_infra"
+                },
+                {
                     "name": "get_retail_company_cng_infra"
+                },
+                {
+                    "name": "get_top_five_cng_infra"
                 }
             ]
         },
@@ -6065,7 +6080,13 @@
                     "name": "get_plant_cng_count_infra"
                 },
                 {
+                    "name": "get_distinct_cng_retail_infra"
+                },
+                {
                     "name": "get_retail_company_cng_infra"
+                },
+                {
+                    "name": "get_top_five_cng_infra"
                 }
             ]
         },
@@ -6098,7 +6119,13 @@
                     "name": "get_plant_cng_count_infra"
                 },
                 {
+                    "name": "get_distinct_cng_retail_infra"
+                },
+                {
                     "name": "get_retail_company_cng_infra"
+                },
+                {
+                    "name": "get_top_five_cng_infra"
                 }
             ]
         },
@@ -6730,6 +6757,10 @@
             "displayName": "get_distinct_ro_retail_infra"
         },
         {
+            "name": "get_top_five_ro_infra",
+            "displayName": "get_top_five_ro_infra"
+        },
+        {
             "name": "upload_plant_cng_file",
             "displayName": "upload_plant_cng_file"
         },
@@ -6738,8 +6769,16 @@
             "displayName": "get_plant_cng_count_infra"
         },
         {
+            "name": "get_distinct_cng_retail_infra",
+            "displayName": "get_distinct_cng_retail_infra"
+        },
+        {
             "name": "get_retail_company_cng_infra",
             "displayName": "get_retail_company_cng_infra"
+        },
+        {
+            "name": "get_top_five_cng_infra",
+            "displayName": "get_top_five_cng_infra"
         },
         {
             "name": "upload_plant_ev_file",
