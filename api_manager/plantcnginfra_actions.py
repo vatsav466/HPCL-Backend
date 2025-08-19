@@ -6,6 +6,7 @@ import pandas as pd
 import datetime
 import traceback
 from http.client import HTTPException
+import orchestrator.dashboard.chart_factory.plant_retail_functions as plant_retail_functions
 import orchestrator.dashboard.chart_factory.infra_functions as infra_functions
 from fastapi.responses import FileResponse, JSONResponse
 import polars as pl
@@ -138,7 +139,7 @@ async def plantcnginfra_upload_plant_cng_file(file: fastapi.UploadFile):
 # Action get_plant_cng_count_infra
 @router.post('/get_plant_cng_count_infra', tags=['PlantCngInfra'])
 async def plantcnginfra_get_plant_cng_count_infra(data: Plantcnginfra_Get_Plant_Cng_Count_InfraParams):
-    return await infra_functions.get_plant_cng_count_info(filters=data.filters, cross_filters=data.cross_filters,
+    return await plant_retail_functions.get_plant_cng_count_info(filters=data.filters, cross_filters=data.cross_filters,
                                                          drill_state=data.drill_state, limit=data.limit,
                                                          time_grain=data.time_grain)
 
@@ -146,6 +147,6 @@ async def plantcnginfra_get_plant_cng_count_infra(data: Plantcnginfra_Get_Plant_
 # Action get_retail_company_cng_infra
 @router.post('/get_retail_company_cng_infra', tags=['PlantCngInfra'])
 async def plantcnginfra_get_retail_company_cng_infra(data: Plantcnginfra_Get_Retail_Company_Cng_InfraParams):
-    return await infra_functions.get_retail_company_cng_info(filters=data.filters, cross_filters=data.cross_filters,
+    return await plant_retail_functions.get_retail_company_cng_info(filters=data.filters, cross_filters=data.cross_filters,
                                                           drill_state=data.drill_state, limit=data.limit,
                                                           time_grain=data.time_grain)

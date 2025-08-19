@@ -135,10 +135,9 @@ async def plantroinfra_upload_plant_ro_file(file: fastapi.UploadFile):
 
     query = ''' DELETE FROM plant_ro_infra '''
     result = await urdhva_base.BasePostgresModel.execute_query(query)
-    print(result)
 
     await PlantRoInfra.bulk_update(final_df, upsert=False)
-    # await HistoricAVIATIONInfra.bulk_update(final_df, upsert=False)
+
     return 'Uploaded successfully'
 
 
