@@ -107,10 +107,17 @@ async def get_all_plant_ro_info(filters, cross_filters, drill_state, limit, time
 
 async def get_plant_ro_count_info(filters, cross_filters, drill_state, limit, time_grain):
     try:
-        query = ''' SUM(CAST(retail_outlet AS INT)) AS retail_outlet,
-                          SUM(CAST(ros_commissioned AS INT)) AS ros_commissioned,
-                          SUM(CAST(ros_decommissioned AS INT)) AS ros_decommissioned
-                   FROM plant_ro_infra'''
+        query = '''  
+                    SUM(CAST(retail_outlet AS INT)) AS retail_outlet,
+                    SUM(CAST(ros_commissioned AS INT)) AS ros_commissioned,
+                    SUM(CAST(ros_decommissioned AS INT)) AS ros_decommissioned,
+                    SUM(CAST(ros_commissioned AS INT)) - SUM(CAST(ros_decommissioned AS INT)) AS netGrowth,
+                    SUM(CAST(retail_outlet AS INT)) * 1.0 / COUNT(DISTINCT zone) AS avg_outlets_per_zone,
+                    SUM(CASE WHEN ro_status = 'Rural' THEN CAST(retail_outlet AS INT) ELSE 0 END) * 1.0 /
+                    NULLIF(SUM(CASE WHEN ro_status = 'Regular' THEN CAST(retail_outlet AS INT) ELSE 0 END), 0) 
+                    AS rural_regular_ratio
+                FROM plant_ro_infra
+                '''
 
         if filters:
             query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
@@ -146,7 +153,9 @@ async def get_plant_cng_count_info(filters, cross_filters, drill_state, limit, t
     try:
         query = ''' SUM(CAST(cng_outlet AS INT)) AS cng_outlet,
                           SUM(CAST(ros_commissioned AS INT)) AS ros_commissioned,
-                          SUM(CAST(ros_decommissioned AS INT)) AS ros_decommissioned
+                          SUM(CAST(ros_decommissioned AS INT)) AS ros_decommissioned,
+                          SUM(CAST(ros_commissioned AS INT)) - SUM(CAST(ros_decommissioned AS INT)) AS netGrowth,
+                          ROUND(SUM(CAST(cng_outlet AS INT)) * 1.0 / COUNT(DISTINCT zone), 0) AS avg_outlets_per_zone
                    FROM plant_cng_infra'''
 
         if filters:
