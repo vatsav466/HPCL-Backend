@@ -116,6 +116,7 @@ async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_res
     return filter_dates, day_filter_dates
 
 
+
 def calculate_pro_rate(target_data, key, start_month=None, end_month=None):
     """
     Calculating YTD data for target
@@ -125,6 +126,14 @@ def calculate_pro_rate(target_data, key, start_month=None, end_month=None):
     :param end_month:
     :return:
     """
+    if not target_data or not all(isinstance(rec, dict) and 'month_name' in rec for rec in target_data):
+         print("No Data Present for Current Selection")
+         return {
+                "status": False,
+                "message": "No  Data Present for the Current Selection",
+                "data": {}
+            }
+
     if not start_month and not end_month:
         return target_data
     if start_month:
@@ -167,12 +176,15 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
         query += f" GROUP BY {','.join(group_by_filter)}"
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    #function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     print("query",query)
     access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.M60LevelMetaData.get_clause_conditions(formated=True)]
     query =  await widget_actions.WidgetActions.apply_filter_drilldown(query, access_filters, drilldown = '')
-    resp = await function(query=query)
+    #resp = await function(query=query)
+    resp = await hpcl_ceg_model.M60LevelMetaData.get_aggr_data(query, limit=1000)
+    if resp.get('data',[]):
+        resp = resp['data']
     return resp
 
 
@@ -315,8 +327,59 @@ def get_group_by_filter_key(cross_filters, Base_Filters, resp_format_org, cumula
         group_by_filter.append('"month_name"')
     return group_by_filter
 
-
+import pandas as pd
+import datetime
+import numpy as np 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    if resp_format == "file_download":
+        file_path = '/downloads/final_data.csv' 
+        return {
+                'status': 'True',
+                'message': 'Success',
+                'data': 'File Downloaded Successfully',
+                'file_path': file_path
+            }
+        print("call the function")
+        status,results =  await top_ic(filters, cross_filters, drill_state, time_grain, resp_format)
+        if isinstance(results,str):
+            return False, "No data for current selection"
+        if status:
+            print("status is returning")
+            df = pd.DataFrame(results)  
+            # df.to_csv('/opt/ceg/algo/final_data.csv', index=False)
+            # return {'status':status,'message':'Success','data':results}
+            file_path = '/opt/downloads/final_data.csv'  # define file_path here
+            df.to_csv(file_path, index=False)
+            return {
+                'status': status,
+                'message': 'Success',
+                'data': results,
+                'file_path': file_path
+            }
+
+
+    
+    if resp_format == "top_ic":
+        print("call thhe function")
+        status, results = await top_ic(filters, cross_filters, drill_state, time_grain, resp_format)
+        if isinstance(results, str):
+            return False, "No data for current selection"
+
+        if status:
+            df = pd.DataFrame(results)
+
+            # Clean empty/NaN/inf
+            df = df.replace(r'^\s*$', np.nan, regex=True)
+            df = df.replace([np.nan, np.inf, -np.inf], 0)
+
+            # Ensure all data is JSON serializable
+            df = df.astype(object).where(pd.notnull(df), None)
+
+            # Save CSV for debugging
+            df.to_csv('/opt/downloads/final_data.csv', index=False)
+
+            # Return JSON-safe dict
+            return {'status': status,'message': 'Success','data': json.loads(df.to_json(orient='records'))}
     def get_fiscal_year(date_ui, todays_date, same_year=False, key='YTDPM'):
 
         end_date_ = fiscal_year.FiscalDate.fromtimestamp(int(urdhva_base.utilities.get_present_time().strftime('%s')))
@@ -521,7 +584,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
     if "fiscal_year" in [x['key'].strip('"') for x in filters]:
         fiscal_year_ui = [x['value'] for x in filters if x['key'].strip('"') == "fiscal_year"][0]
-        print("str(datetime.date.today())", str(datetime.date.today()))
         todays_date = str(datetime.date.today())
         if todays_date.split('-')[0] == fiscal_year_ui.split('-')[0]:
             if "YTD" in [x['key'].strip('"') for x in filters]:
@@ -900,6 +962,13 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     target_data = [x.update({'month_name': end_month}) or x for x in target_data]  
                 '''
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
+                if target_data.empty:
+                  return {
+                         "status": False,
+                         "message": "No Data Present for the Current Selection",
+                         "data": {}
+                        }
+                
                 #if "C"  in [x['key'].strip('"') for x in filters]:
                 #    del target_data['month_name']
                 if "month_name" in target_data.columns.tolist():
@@ -945,15 +1014,19 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     print("came to month name del")
                     print("group_by_filter",group_by_filter)
                     if len(group_by_filter) ==1:
-                        if group_by_filter[0].strip('"') != 'month_name':
+                        if "month_name" not in [x.strip('"') for x in group_by_filter] :
                             del target_data['month_name']
                     #del target_data['month_name']
                     common_column = ['TARGET_TMT_SALES']
                     existing_columns = [col for col in ["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"] if col in target_data.columns]
-                    if existing_columns:
-                        target_data = target_data.groupby(existing_columns, as_index=False)['TARGET_TMT_SALES'].sum().reset_index()
+                    if "month_name" not in [x.strip('"') for x in group_by_filter] :
+                        if existing_columns:
+                            target_data = target_data.groupby(existing_columns, as_index=False)['TARGET_TMT_SALES'].sum().reset_index()
                     target_data.to_csv('/tmp/tgt_data_latest.csv',index = False)
-
+            if "C" in [x['key'].strip('"') for x in filters] and "month_name" not  in target_data.columns.tolist() and "DATE"  in [x['key'].strip('"') for x in filters]:
+                if 'TARGET_TMT_SALES' in target_data.columns.tolist() and "ProductName" in target_data.columns.tolist():                    
+                    target_data = target_data.groupby("ProductName", as_index=False)['TARGET_TMT_SALES'].sum().reset_index()                  
+            target_data.to_csv('/tmp/tgt_data_latest_latest.csv',index = False)
             target_data = target_data.to_dict(orient='records')
 
     # Data Retrival for current financial year
@@ -1321,10 +1394,13 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if resp_format == 'heat_map':
             hist_xaxis = []
             tgt_xaxis = []
-            # xAxis.extend([x['title'].split('_')[0]+'_'+x['title'].split('_')[1] for x in growth_details if '_' in x else x.split()[0]])
-            # hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
-            # hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower()
-            #                   else x for x in growth_details if isinstance(x, dict) and 'title' in x])
+            #xAxis.extend([x['title'].split('_')[0]+'_'+x['title'].split('_')[1] for x in growth_details if '_' in x else x.split()[0]])
+            #print("xaxiz",xAxis)
+            #hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
+            #hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower()
+            #                   else x for x in hist_growth_details if isinstance(x, dict) and 'title' in x])
+            print("hist_growth_details",hist_growth_details)
+            print("tgt_growth_details",tgt_growth_details)
             hist_xaxis.extend(
                 ['_'.join(x['title'].split('_')[:2]) for x in hist_growth_details if 'hist' in x['title'].lower()])
             li = None
@@ -1340,7 +1416,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 if len(hist_xaxis)!= 2:
                     req_str = '(' + li_req[0] + '-' + li_req[-1] + ')'
                     hist_xaxis[0] = hist_xaxis[0] + req_str
-                
                     
             if '"T"' in [x['key'] for x in filters]:
                 tgt_xaxis.extend(
@@ -1357,7 +1432,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         tgt_xaxis[0] = tgt_xaxis[0] + req_str
                 # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower() else x['title'].split()[0] if 'tgt' in x['title'].lower()
                 #               else x for x in growth_details if isinstance(x, dict) and 'title' in x])
-                # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower() else x['title'].split()[0] if 'tgt' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
             # xAxis.extend(['YTD'])
             if len(tgt_xaxis) > 0:
                 return {"status": True, "message": "Success",
@@ -1644,7 +1718,11 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
             # Filtering cumulative_months
             cumulative_months = []
             if months.index(present_month) > 2:
-                cumulative_months = months[0:months.index(present_month) - 1]
+                print("months",months.index(present_month))
+                cumulative_months = months[0:months.index(present_month)+1]
+                non_cumulative_months = [cumulative_months[-1]] 
+                cumulative_months = cumulative_months[:-1]
+                print("cumulative_months--->", cumulative_months)
             else:
                 cumulative_months = ['Apr']
             # Summing data for cumulative data
@@ -1654,14 +1732,24 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                 if 'SALES' in col:
                     df[col] = df[col].fillna(0).astype(float)
                     sum_cols.append(col)
-
             cumulative_data = {}
             non_cumulative_data = pd.DataFrame()
             if drill_state.strip('"') == 'SBU_Name':
                 # cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[sum_cols].sum()
                 if resp_format == "heat_map":
-                    cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[
+                    cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby(['Zone_Name'], as_index=False)[
                         sum_cols].sum()
+                    #.reset_index(drop=True)
+                    
+                    print("cummu columns",cumulative_data.columns)
+                    if non_cumulative_months:
+                        non_cumulative_data = df[df['month_name'].isin(non_cumulative_months)]
+                    sample = df[df['month_name'].isin(cumulative_months)]
+                    sample.to_csv('/tmp/sample.csv',index = False)
+                    print("came here in sbu_name heatmap")
+                    print("cumulative_months",cumulative_months)
+                    print("cumulative_data",cumulative_data)
+                    cumulative_data.to_csv('/tmp/cumulative_data.csv',index = False)
                 else:
                     cumulative_data = \
                     df[df['month_name'].isin(cumulative_months)].groupby('ProductName', as_index=False)[sum_cols].sum()
@@ -1674,9 +1762,14 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                 df[df['month_name'].isin(cumulative_months)].groupby('SalesArea_Name', as_index=False)[sum_cols].sum()
             if len(cumulative_months) ==1 and cumulative_months[0] != 'Apr':
                 cumulative_data['month_name'] = 'Cum'
-                non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
+                if non_cumulative_data:
+                    non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
             else:
-                cumulative_data['month_name'] = 'Apr'
+                #if len(cumulative_data['month_name'].unique().tolist()) != 1:
+                    cumulative_data['month_name'] = 'Apr-Jun'
+            
+            print("cummulative_data",cumulative_data)
+            print("non cumu data",non_cumulative_data)
             df = pd.concat([cumulative_data, non_cumulative_data])
             # making zonal summary above the exisiting heatmap
             if "month_name" in df.columns.tolist():
@@ -1688,7 +1781,8 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                 for i in df['month_name'].unique().tolist():
                     df_cum = df[df['month_name'] == 'Cum']
                     if len(df['month_name'].unique().tolist()) > 1:
-                        df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
+                        #df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
+                        df_prev = df[df['month_name'].isin(df['month_name'].unique().tolist()[:-1])]
                     if len(df["month_name"].unique().tolist()) >= 3:
                         df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
                     # df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
@@ -2070,3 +2164,714 @@ async def sbu_sales_fiscal(merged_df, filters, cross_filters, drill_state="", ti
 
     return results
 
+
+
+# def filter_and_map_sales_area(results, excel_path, sheet_name):
+#     import pandas as pd
+
+#     # Convert your results list to DataFrame
+#     results_df = pd.DataFrame(results)
+
+#     # Load Excel data
+#     mapping_df = pd.read_excel(excel_path, sheet_name=sheet_name)
+#     print("mapping_df types",mapping_df.dtypes)
+#     print("resuylt types",results_df.dtypes)
+#     # Perform the join on 'icSalesArea' and 'IC Sales Area Name'
+#     merged_df = results_df.merge(mapping_df, how='left', left_on='icSalesArea', right_on='IC Sales Area Name')
+
+#     # Split into matched and unmatched
+#     matched_df = merged_df[~merged_df['IC Sales Area code'].isna()].copy()
+#     # unmatched_df = merged_df[merged_df['IC Sales Area code'].isna()].copy()
+
+#     # Drop extra columns if needed
+#     matched_df.drop(columns=['IC Sales Area Name'], inplace=True, errors='ignore')
+#     # unmatched_df.drop(columns=['IC Sales Area Name'], inplace=True, errors='ignore')
+
+#     return matched_df
+
+def filter_and_map_sales_area(results, excel_path, sheet_name, second_excel_path, second_sheet_name,second_sheet_name_second):
+    import pandas as pd
+
+    # Helper to clean and normalize spaces
+    def normalize_spaces(series):
+        return series.astype(str).str.replace(r'\s+', ' ', regex=True).str.strip()
+
+    # Step 1: Convert results to DataFrame
+    results_df = pd.DataFrame(results)
+
+    # Step 2: Load Excel 1 - Contains IC Sales Area Name and Code
+    mapping_df = pd.read_excel(excel_path, sheet_name=sheet_name)
+
+    # Step 3: Merge results with mapping file using 'icSalesArea'
+    merged_df = results_df.merge(
+        mapping_df,
+        how='left',
+        left_on='icSalesArea',
+        right_on='IC Sales Area Name'
+    )
+    # Step 4: Filter matched rows only
+    matched_df = merged_df.copy()
+    #matched_df = merged_df[~merged_df['IC Sales Area code'].isna()].copy()
+    #matched_df.drop(columns=['IC Sales Area Name'], inplace=True, errors='ignore')
+    
+    # Step 5: Load Excel 2 - Contains actual month-wise performance
+    additional_df = pd.read_excel(second_excel_path, sheet_name=second_sheet_name, header=1)
+    
+    # print('additional_df', additional_df['IC Sales Area'].unique().tolist())
+    # print("Second Excel Columns:", additional_df.columns.tolist())
+
+    # Step 6: Normalize sales area names in both DataFrames
+    #matched_df['icSalesArea'] = normalize_spaces(matched_df['icSalesArea'])
+    #additional_df['IC Sales Area'] = normalize_spaces(additional_df['IC Sales Area'])
+    matched_df['icSalesArea'] = matched_df['icSalesArea'].apply(
+                lambda x: ' '.join(x.split()).upper() if x != x.upper() and '-' not in x else x.upper()
+            )
+    matched_df['icSalesArea']  = matched_df['icSalesArea'].str.strip()
+    
+    matched_df['icSalesArea'] = matched_df['icSalesArea'].apply(lambda x: ' '.join(x.split()) if '-' not in x else x)
+    additional_df['IC Sales Area'] = additional_df['IC Sales Area'].str.strip()
+
+    additional_df['IC Sales Area'] = additional_df['IC Sales Area'].fillna('').astype(str).apply(lambda x :x.replace('S/A','DS SA'))
+    additional_df['IC Sales Area'] = additional_df['IC Sales Area'].str.upper()
+    additional_df['IC Sales Area'] = additional_df['IC Sales Area'].apply(lambda x: ' '.join(x.split()) if '-' not in x else x)
+    additional_df['IC Sales Area'] = additional_df['IC Sales Area'].replace({
+    'BANGALORE DS SA': 'BANGALORE-1 DS SA',
+    'TRIVANDRUM DS SA': 'ERNAKULAM-1 DS SA',
+    'KOZHIKODE DS SA': 'ERNAKULAM-2 DS SA',
+    })
+    
+    
+   
+    ic_sales_area_list = matched_df['icSalesArea'].tolist()
+    ic_additional = additional_df['IC Sales Area'].tolist()
+    
+    ''' 
+    # Step 7: Show unmatched sales area names (for debug)
+    unmatched = matched_df[~matched_df['icSalesArea'].isin(additional_df['IC Sales Area'])]
+    if not unmatched.empty:
+        print(" Warning: Some 'icSalesArea' values not found in second Excel:")
+        print(unmatched['icSalesArea'].unique())
+    print(len(matched_df))
+    print(len(additional_df))
+    matched_df.to_csv('/tmp/matched_df.csv',index = False)
+    '''
+    # Step 8: Merge with performance data
+    enriched_df = matched_df.merge(
+        additional_df,
+        how='left',
+        left_on='icSalesArea',
+        right_on='IC Sales Area',
+        indicator  = True
+        
+    )
+    print('additional_df--->', additional_df['IC Sales Area'].unique().tolist())
+    master_data_df = pd.read_excel(second_excel_path, sheet_name=second_sheet_name_second)
+    # print('matched_df--->', matched_df['IC Sales Area code ID'].unique().tolist())
+    print('master_data_df--->', master_data_df['IC Sales Area code'].unique().tolist())
+    master_data_df = master_data_df.drop_duplicates(subset=['IC Sales Area code'])
+    
+
+    # Step 9: Drop duplicate column
+    #enriched_df.drop(columns=['IC Sales Area'], inplace=True, errors='ignore')
+    # print("Final enriched_df full data:\n", enriched_df)
+    # print('enriched_df', enriched_df['IC Sales Area'].unique().tolist())    
+
+    enriched_df = enriched_df.merge(
+        master_data_df,
+        how='left',
+        left_on='IC Sales Area code',              # SAP ID in enriched_df
+        right_on='IC Sales Area code' # IC Sales Area code in Master Data
+    )
+    print('enriched_df--->', enriched_df['IC Sales Area code'].unique().tolist())
+    if 'IC Sales Area code' in enriched_df.columns:
+        enriched_df['IC Sales Area code'] = (
+        enriched_df['IC Sales Area code']
+        .replace(r'^\s*$', np.nan, regex=True)  # blank → NaN
+        .replace(['nan', 'NaN'], np.nan)        # text nan → NaN
+    )
+        enriched_df['IC Sales Area code'] = (
+        pd.to_numeric(enriched_df['IC Sales Area code'], errors='coerce')
+        .fillna(0)
+        .astype(int)
+    )
+
+    # areas_to_remove = [
+    # 'I&C HQO',
+    # 'DEHRADUN LPG SA',
+    # 'CHENNAI MARINE DS SA',
+    # 'NAVI MUMBAI CON-LUB'
+    # ]
+
+    # # Print sample values to verify matching
+    # print(enriched_df['IC Sales Area'].unique())
+
+    # # Apply filtering on 'icSalesArea' (or change to correct column)
+    # enriched_df = enriched_df[~enriched_df['IC Sales Area'].isin(areas_to_remove)]
+
+
+    enriched_df.to_csv('/tmp/heelo.csv',index = False)
+    
+    return enriched_df
+
+
+
+
+async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
+    MONTH_DAY_RANGES = {
+        "Apr": ("04", "30"),
+        "May": ("05", "31"),
+        "Jun": ("06", "30"),
+        "Jul": ("07", "31"),
+        "Aug": ("08", "31"),
+        "Sep": ("09", "30"),
+        "Oct": ("10", "31"),
+        "Nov": ("11", "30"),
+        "Dec": ("12", "31"),
+        "Jan": ("01", "31"),
+        "Feb": ("02", "28"),
+        "Mar": ("03", "31"),
+    }
+
+    def get_cumulative_months(selected_month):
+        months_order = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"]
+        if selected_month not in months_order:
+            return []
+        end_index = months_order.index(selected_month)
+        return months_order[: end_index + 1]
+
+    print("MONTH_DAY_RANGES", MONTH_DAY_RANGES)
+
+    def get_day_id_ranges(fy: str, selected_month: str, filters):
+        fiscal_start, fiscal_end = fy.split("-")
+
+        if selected_month:
+            mon_code, end_day = MONTH_DAY_RANGES.get(selected_month, ("04", "30"))
+
+            if selected_month in ["Jan", "Feb", "Mar"]:
+                cur_year = fiscal_end
+                hist_year = str(int(fiscal_end) - 1)
+            else:
+                cur_year = fiscal_start
+                hist_year = str(int(fiscal_start) - 1)
+
+            current_start = f"{cur_year}{mon_code}01"
+            current_end = f"{cur_year}{mon_code}{end_day}"
+            hist_start = f"{hist_year}{mon_code}01"
+            hist_end = f"{hist_year}{mon_code}{end_day}"
+        else:
+            from datetime import datetime, timedelta
+            today = datetime.today()
+            yesterday = today - timedelta(days=1)
+            current_start_dt = today.replace(day=1)
+            current_end_dt = yesterday
+
+            mon = today.month
+            if mon >= 4:
+                cur_year = fiscal_start
+                hist_year = str(int(fiscal_start) - 1)
+            else:
+                cur_year = fiscal_end
+                hist_year = str(int(fiscal_end) - 1)
+
+            current_start = current_start_dt.strftime("%Y%m%d")
+            current_end = current_end_dt.strftime("%Y%m%d")
+
+            hist_start_dt = current_start_dt.replace(year=int(hist_year))
+            hist_end_dt = current_end_dt.replace(year=int(hist_year))
+
+            hist_start = hist_start_dt.strftime("%Y%m%d")
+            hist_end = hist_end_dt.strftime("%Y%m%d")
+
+        return current_start, current_end, hist_start, hist_end
+
+    try:
+        # print("came from day id ranges")
+        print("filters", filters)
+
+        # Safely get required_year and required_month or return error
+        required_year = next((x['value'].strip('"') for x in filters if x['key'].strip('"') == 'fiscal_year'), None)
+        required_month = next((x['value'].strip('"') for x in filters if x['key'].strip('"') == 'month_name'), None)
+
+        if not required_year or not required_month:
+            return False, "Missing required fiscal_year or month_name"
+
+        cur_start, cur_end, hist_start, hist_end = get_day_id_ranges(required_year, required_month, filters)
+        print("req_month", required_month)
+
+        base_query = f"""
+            SELECT
+                "Zone_Name" AS Zone_Name,
+                "Region_Name" AS Region_Name,
+                "SalesArea_Name" AS SalesArea_Name,
+                    SUM("NETWEIGHT_TMT")FILTER (
+                        WHERE "DAY_ID" BETWEEN'{cur_start}' AND '{cur_end}'
+                    )
+                 AS cur_sales,
+                SUM("NETWEIGHT_TMT") FILTER (
+                        WHERE "DAY_ID" BETWEEN '{hist_start}' AND '{hist_end}'
+                    )
+                AS his_sales
+            FROM public."MOM_DAY_LEVEL_DATA"
+            WHERE "SBU_Name" = 'I&C'
+            AND "Zone_Name" IS NOT NULL
+            AND "Region_Name" IS NOT NULL
+            AND "SalesArea_Name" IS NOT NULL
+            
+            """
+
+        # Add filter conditions only if non-empty
+        conditions = []
+        # if 'Zone_Name' in [x['key'].strip('"') for x in filters]:
+        #     req_zone = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'Zone_Name'][0]
+        #     # if req_zone != "":
+        #     if req_zone not in ["", "All"]:
+        #         conditions.append(f'"Zone_Name" = \'{req_zone}\'')
+        # if 'Region_Name' in [x['key'].strip('"') for x in filters]:
+        #     req_region = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'Region_Name'][0]
+        #     # if req_region != "":
+        #     if req_region not in ["", "All"]:
+        #         conditions.append(f'"Region_Name" = \'{req_region}\'')
+        # if 'SalesArea_Name' in [x['key'].strip('"') for x in filters]:
+        #     req_salesarea = [x['value'].strip('"') for x in filters if x['key'].strip('"') == 'SalesArea_Name'][0]
+        #     # if req_salesarea != "":
+        #     if req_salesarea not in ["", "All"]:
+        #         conditions.append(f'"SalesArea_Name" = \'{req_salesarea}\'')
+        for col in ['Zone_Name', 'Region_Name', 'SalesArea_Name']:
+            for f in filters:
+                key = f['key'].strip('"')
+                cond = f.get('cond', '').lower()
+                value = f.get('value', '').strip()
+
+                if key == col:
+                    if cond == 'in':
+                        val_list = [v.strip() for v in value.split(',') if v not in ["", "All"]]
+                        if val_list:
+                            in_clause = ", ".join(f"'{v}'" for v in val_list)
+                            conditions.append(f'"{col}" IN ({in_clause})')
+                    elif cond == 'equals':
+                        if value not in ["", "All"]:
+                            conditions.append(f'"{col}" = \'{value}\'')
+
+
+
+        if conditions:
+            base_query += " AND " + " AND ".join(conditions)
+
+        base_query += """
+            GROUP BY Zone_Name, Region_Name, SalesArea_Name
+            ORDER BY Zone_Name, Region_Name, SalesArea_Name
+        """
+
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(base_query, limit=0, skip=0)
+        data = result['data']
+        # print("result", result)
+
+        fiscal_year_str = f"FY {required_year}" if not required_year.startswith("FY") else required_year
+        target_query = f"""
+            SELECT
+                "Zone_Name" AS Zone_Name,
+                "Region_Name" AS Region_Name,
+                "SalesArea_Name" AS SalesArea_Name,
+                SUM("TARGET_QTY_TMT") AS target
+            FROM public."M60_LEVEL_METADATA"
+            WHERE "SBU_Name" = 'I&C'
+              AND "FISCALYEAR" = '{fiscal_year_str}'
+              AND "month_name" = '{required_month}'
+              AND "Zone_Name" IS NOT NULL
+              AND "Region_Name" IS NOT NULL
+              AND "SalesArea_Name" IS NOT NULL
+        """
+        if conditions:
+            target_query += " AND " + " AND ".join(conditions)
+
+        target_query += """
+            GROUP BY "Zone_Name", "Region_Name", "SalesArea_Name"
+        """
+
+        target_rows = await urdhva_base.BasePostgresModel.get_aggr_data(target_query, limit=0, skip=0)
+        target_rows = target_rows['data']
+        # print("target_rows", target_rows)
+
+        target_dict = {
+            (
+                r.get("Zone_Name") or r.get("zone_name"),
+                r.get("Region_Name") or r.get("region_name"),
+                r.get("SalesArea_Name") or r.get("salesarea_name")
+            ): float(r.get("target", 0))
+            for r in target_rows
+        }
+
+        cumulative_months = get_cumulative_months(required_month)
+        cumulative_ranges = [get_day_id_ranges(required_year, m, filters) for m in cumulative_months]
+
+        cur_conditions = " ".join(
+            [f"WHEN \"DAY_ID\" BETWEEN '{start}' AND '{end}' THEN \"NETWEIGHT_TMT\"" for start, end, _, _ in cumulative_ranges]
+        )
+        his_conditions = " ".join(
+            [f"WHEN \"DAY_ID\" BETWEEN '{hist_start}' AND '{hist_end}' THEN \"NETWEIGHT_TMT\"" for _, _, hist_start, hist_end in cumulative_ranges]
+        )
+
+        cumulative_query = f"""
+            SELECT
+                "Zone_Name" AS Zone_Name,
+                "Region_Name" AS Region_Name,
+                "SalesArea_Name" AS SalesArea_Name,
+                SUM(CASE {cur_conditions} ELSE 0 END) AS cum_cur_sales,
+                SUM(CASE {his_conditions} ELSE 0 END) AS cum_his_sales
+            FROM public."MOM_DAY_LEVEL_DATA"
+            WHERE "SBU_Name" = 'I&C'
+              AND "Zone_Name" IS NOT NULL
+              AND "Region_Name" IS NOT NULL
+              AND "SalesArea_Name" IS NOT NULL
+        """
+        if conditions:
+            cumulative_query += " AND " + " AND ".join(conditions)
+
+        cumulative_query += """
+            GROUP BY Zone_Name, Region_Name, SalesArea_Name
+            ORDER BY Zone_Name, Region_Name, SalesArea_Name
+        """
+
+        cumulative_result = await urdhva_base.BasePostgresModel.get_aggr_data(cumulative_query, limit=0, skip=0)
+        cum_data = cumulative_result.get('data', [])
+
+        cum_sales_dict = {
+            (r.get("zone_name"), r.get("region_name"), r.get("salesarea_name")): {
+                "cum_cur_sales": float(r.get("cum_cur_sales", 0)),
+                "cum_his_sales": float(r.get("cum_his_sales", 0))
+            }
+            for r in cum_data
+        }
+
+        cumulative_target_dict = {}
+        if cumulative_months:
+            cumulative_target_query = f"""
+                SELECT
+                    "Zone_Name" AS Zone_Name,
+                    "Region_Name" AS Region_Name,
+                    "SalesArea_Name" AS SalesArea_Name,
+                    SUM("TARGET_QTY_TMT") AS target
+                FROM public."M60_LEVEL_METADATA"
+                WHERE "SBU_Name" = 'I&C'
+                  AND "FISCALYEAR" = '{fiscal_year_str}'
+                  AND "month_name" IN ({','.join([f"'{m}'" for m in cumulative_months])})
+                  AND "Zone_Name" IS NOT NULL
+                  AND "Region_Name" IS NOT NULL
+                  AND "SalesArea_Name" IS NOT NULL
+            """
+            if conditions:
+                cumulative_target_query += " AND " + " AND ".join(conditions)
+
+            cumulative_target_query += """
+                GROUP BY "Zone_Name", "Region_Name", "SalesArea_Name"
+            """
+
+            cumulative_target_rows = await urdhva_base.BasePostgresModel.get_aggr_data(cumulative_target_query, limit=0, skip=0)
+            cumulative_target_rows = cumulative_target_rows.get('data', [])
+
+            cumulative_target_dict = {
+                (
+                    r.get("Zone_Name") or r.get("zone_name"),
+                    r.get("Region_Name") or r.get("region_name"),
+                    r.get("SalesArea_Name") or r.get("salesarea_name")
+                ): float(r.get("target", 0))
+                for r in cumulative_target_rows
+            }
+
+        results = []
+        for idx, row in enumerate(data, start=1):
+            z = row.get("zone_name")
+            r = row.get("region_name")
+            s = row.get("salesarea_name")
+            n = row.get('Name_x','')
+            cur_sales = float(row.get("cur_sales", 0) or 0)
+            his_sales = float(row.get("his_sales", 0) or 0)
+            target = target_dict.get((z, r, s), 0.0)
+            
+
+            cum_cur = cum_sales_dict.get((z, r, s), {}).get("cum_cur_sales", 0.0)
+            cum_his = cum_sales_dict.get((z, r, s), {}).get("cum_his_sales", 0.0)
+            monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
+            cum_target = cumulative_target_dict.get((z, r, s), 0.0)
+            cur_sales = cur_sales * 1000
+            his_sales = his_sales * 1000
+            target_mt = target * 1000
+            cum_cur_mt = cum_cur * 1000
+            cum_his_mt = cum_his *1000
+            cum_target_mt = cum_target *1000
+        
+            # print("cur_sales: ", cur_sales_mt, "his_sales: ", his_sales_mt, "target: ", target_mt, "cum_cur: ", cum_cur_mt, "cum_his: ", cum_his_mt, "cum_target: ", cum_target_mt)
+            # print("cur_sales:----------- ", cur_sales, "his_sales:------------- ", his_sales, "target:--------------- ", target, "cum_cur: -----------", cum_cur, "cum_his:------- ", cum_his, "cum_target:---------- ", cum_target)
+
+
+            monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
+            monthly_target_diff = round((cur_sales / target) * 100, 2) if target != 0 else None
+            
+            # monthly_diff_value = round(((cur_sales - his_sales) / his_sales) * 100, 2) if his_sales != 0 else None
+            # monthly_target_diff = round((cur_sales / target_mt) * 100, 2) if target_mt != 0 else None
+            
+            # monthly_diff_value = min(round(((cur_sales - his_sales) / his_sales) * 100, 2), 100) if his_sales != 0 else None
+
+            # monthly_target_diff = min(round((cur_sales / target_mt) * 100, 2), 100) if target_mt != 0 else None
+
+            # cumulative_diff_value = min(round(((cum_cur_mt - cum_his_mt) / cum_his_mt) * 100, 2), 100) if cum_his_mt != 0 else None
+
+            # cumulative_target_diff = min(round((cum_cur_mt / cum_target_mt) * 100, 2), 100) if cum_target_mt != 0 else None
+
+            cumulative_diff_value = round(((cum_cur - cum_his) / cum_his) * 100, 2) if cum_his != 0 else None
+            cumulative_target_diff = round((cum_cur / cum_target) * 100, 2) if cum_target != 0 else None
+            # cumulative_diff_value = round(((cum_cur_mt - cum_his_mt) / cum_his_mt) * 100, 2) if cum_his_mt != 0 else None
+            # cumulative_target_diff = round((cum_cur_mt / cum_target_mt) * 100, 2) if cum_target_mt != 0 else None
+            results.append({
+                "id": idx,
+                "region": r,
+                "icSalesArea": s,
+                "SalesOfficer": n,
+                "monthly": {
+                    "cur": round(cur_sales, 2),
+                    "his": round(his_sales, 2),
+                    "target": round(target_mt, 2),
+                    "diff_value": monthly_diff_value,
+                    "target_achieved": monthly_target_diff,
+                    "month_name": required_month
+                },
+                "cumulative": {
+                    "cur": round(cum_cur_mt, 2),
+                    "his": round(cum_his_mt, 2),
+                    "cumulativeTarget": round(cum_target_mt, 2),
+                    "diff_value": cumulative_diff_value,
+                    "target_achieved": cumulative_target_diff
+                }
+            })
+            
+ 
+ 
+        # if results:
+        #     print("results are here", results)
+        #     print(f"Number of  records: {len(results)}")
+
+
+        #     # Call your filter_and_map_sales_area function here
+        #     excel_path = "/tmp/Data_names.xlsx"   # <-- put your real path here
+        #     sheet_name = "Sheet1"                          # <-- your actual sheet name
+            
+        #     matched_df = filter_and_map_sales_area(results, excel_path, sheet_name)
+
+        #     # If you want to return the filtered DataFrame as a dict or list of dicts, convert it:
+        #     results = matched_df.to_dict(orient='records')
+        #     for record in results:
+        #         print(f"Number of  records: {len(results)}")
+            
+        #     # Return only matched records
+        #     return True, results
+
+        # else:
+        #     return False, "No data for current selection"
+        
+        if results:
+            print("results are here", results)
+           
+
+            # Excel path and sheet
+            excel_path = "/home/novex/Data_names.xlsx"
+            sheet_name = "Sheet1"
+            
+            # second_excel_path = "/home/novex/IC_SA_Perf_Monitor.xlsx"
+            second_excel_path = "/home/novex/Copy_IC_SA.xlsx"
+            second_sheet_name = "SA_Wise_Monthly_Targets"
+            second_sheet_name_second = "Master Data"
+            
+            
+            
+
+            
+            # Filter results using Excel mapping
+            enriched_df = filter_and_map_sales_area(
+                        results,
+                        excel_path,
+                        sheet_name,
+                        second_excel_path,
+                        second_sheet_name,
+                        second_sheet_name_second
+                    )
+
+            # print("enriched df len",len(enriched_df))
+            if enriched_df.empty:
+                print("No data for current selection")
+                return False, "No data for current selection"
+            results = pd.DataFrame(results)
+            results['icSalesArea'] = results['icSalesArea'].apply(lambda x: ' '.join(x.split()) if '-' not in x else x)
+            results['icSalesArea'] = results['icSalesArea'].apply(
+                lambda x: ' '.join(x.split()).upper() if x != x.upper() and '-' not in x else x.upper()
+            )
+            # results["icSalesArea"] = results["icSalesArea"].apply(
+            #     lambda x: x if "DS SA" in x else f"{x} DS SA"
+            # )
+            # print("Filtered results length----->>>>:", len(results))
+            # print('ic', results['icSalesArea'].unique().tolist())
+          
+            results = results.merge(enriched_df[['icSalesArea','Name_x']], how='left', left_on='icSalesArea', right_on='icSalesArea')
+            print("results",results)
+            # Your areas to remove
+            areas_to_remove = [
+                'I&C HQO',
+                'DEHRADUN LPG SA',
+                'CHENNAI MARINE DS SA',
+                'NAVI MUMBAI CON-LUB'
+            ]
+
+            # Normalize column to uppercase and strip spaces for reliable filtering
+            results['icSalesArea'] = results['icSalesArea'].astype(str).str.strip().str.upper()
+            print("areas_to_remove", areas_to_remove)
+            areas_to_remove_upper = [x.upper() for x in areas_to_remove]
+            print("areas_to_remove---------->", areas_to_remove)
+
+            # Filter out unwanted sales areas from merged results
+            results = results[~results['icSalesArea'].isin(areas_to_remove_upper)]
+
+            
+            # results = enriched_df
+            if 'SalesOfficer' in results.columns:
+                results['Officer'] = results['Name_x']
+            # results = results[results['Name'].notna()]
+            # print("results len",len(results))
+            # results.to_csv('/Users/apple/Downloads/res_updated.csv',index = False)
+            # print('results columns', results.columns)
+            
+            import ast
+            #results["monthly"] = results["monthly"].apply(ast.literal_eval)
+            results["month_name"] = results["monthly"].apply(lambda x: x.get("month_name", "").strip())
+            results["month_column"] = results["month_name"].str.upper()
+            # print("Converted month_column to uppercase:\n", results["month_column"].unique())
+            
+            monitor_df_clean = pd.read_excel('/home/novex/Copy_IC_SA.xlsx', sheet_name='SA_Wise_Monthly_Targets', skiprows=1)
+            # print("Monitor sheet loaded:", monitor_df_clean.shape)
+            monitor_df_clean["IC Sales Area"] = (
+                monitor_df_clean["IC Sales Area"]
+                .astype(str)
+                .str.replace("S/A", "DS SA")
+                .str.upper()
+            )
+
+            # Ensure results column is string too
+            results["icSalesArea"] = results["icSalesArea"].astype(str)
+            results["icSalesArea"] = results["icSalesArea"].astype(str).str.replace("S/A", "DS SA").str.upper().str.strip()
+            # print("results---->",len(results))
+            # print("Results DataFrame row count:", len(results))
+            # print("Unique icSalesArea in results:\n", results["icSalesArea"].unique()[:5])
+
+
+            def get_updated_month_value(row):
+                monthly_data = row["monthly"].copy()
+                area = row["icSalesArea"].strip().upper()
+                month_col = row["month_column"]
+
+                # match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+                match = enriched_df[enriched_df["icSalesArea"] == area]
+
+                if not match.empty and month_col in match.columns:
+                    try:
+                        new_target = float(match.iloc[0][month_col])
+                    except:
+                        new_target = 0.0
+
+                    monthly_data["target"] = new_target
+                    cur = monthly_data.get("cur", 0.0)
+
+                    if new_target != 0:
+                        monthly_data["target_achieved"] = round((cur / new_target) * 100, 2)
+                        # target_achieved = round((cur / new_target) * 100, 2)
+                        # target_achieved = min(target_achieved, 100)  # Cap at 100%
+                        # monthly_data["target_achieved"] = target_achieved
+
+                    else:
+                        monthly_data["target_achieved"] = None
+
+                return monthly_data
+
+
+            def get_updated_cumulative_value(row):
+                cumulative_data = row["cumulative"].copy()
+                area = row["icSalesArea"].strip().upper()
+                selected_month = row["month_column"]
+
+                # match = monitor_df_clean[monitor_df_clean["IC Sales Area"] == area]
+                match = enriched_df[enriched_df["icSalesArea"] == area]
+
+                if not match.empty:
+                    month_order = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
+                    if selected_month in month_order:
+                        idx = month_order.index(selected_month)
+                        cumulative_months = month_order[:idx + 1]
+
+                        try:
+                            new_cum_target = sum(
+                                float(match.iloc[0][m]) if m in match.columns and pd.notnull(match.iloc[0][m]) else 0.0
+                                for m in cumulative_months
+                            )
+                        except:
+                            new_cum_target = 0.0
+
+                        cumulative_data["cumulativeTarget"] = round(new_cum_target, 2)
+                        cum_cur = cumulative_data.get("cur", 0.0)
+
+                        if new_cum_target != 0:
+                            cumulative_data["target_achieved"] = round((cum_cur / new_cum_target) * 100, 2)
+                            # target_achieved = round((cum_cur / new_cum_target) * 100, 2)
+                            # target_achieved = min(target_achieved, 100)
+                            # cumulative_data["target_achieved"] = target_achieved
+                        else:
+                            cumulative_data["target_achieved"] = None
+
+                return cumulative_data
+
+
+            # Apply to results
+            results["monthly"] = results.apply(get_updated_month_value, axis=1)
+            results["cumulative"] = results.apply(get_updated_cumulative_value, axis=1)
+
+        #print("cal completed")
+        #results.to_csv('/tmp/results_updasted.csv', index=False)
+        #enriched_df.to_csv('/tmp/enriched_df.csv', index=False)
+        # Replace 'results' with only matched records
+        #enriched_df = enriched_df.fillna('')
+        #results = results.fillna('')
+        #results = results.to_dict(orient='records')
+        #print(f"Matched Records (final results): {len(results)}")
+        #for r in results:
+        #    print(r)
+        #for idx, row in enumerate(results, start=1):
+        #    row["id"] = idx
+
+            
+            # results["monthly_updated"] = results.apply(get_updated_month_value, axis=1)
+            # results['monthly'] = results["monthly_updated"]
+            # del results["monthly_updated"]
+            #print("cal completed")
+            #results.to_csv('/tmp/results_updasted.csv', index=False)
+            #enriched_df.to_csv('/tmp/enriched_df.csv', index=False)
+            # Replace 'results' with only matched records
+            #enriched_df = enriched_df.fillna('')
+            # print("dict conversion done")
+            results = results.astype({col: str for col in results.select_dtypes(include='category').columns})
+            results = results.fillna('')
+            # results.to_csv('/Users/apple/Downloads/res_upd.csv', index=False) 
+            results = results.to_dict(orient='records')
+            
+            print(f"Matched Records (final results): {len(results)}")
+            #for r in results:
+            #    print(r)
+            for idx, row in enumerate(results, start=1):
+                row["id"] = idx
+            
+            return True, results
+
+        else:
+            return False, "No data for current selection"
+
+        
+
+        
+    except Exception as e:
+        print("Error:", e)
+        return False, str(e)

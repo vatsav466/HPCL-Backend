@@ -26,9 +26,14 @@ zone_map = {
     "CEN": "CEN"
 }
 
+novex_model_col = ["username", "email", "first_name", "last_name", "password", "employee_id",
+                       "employee_number", "bu", "sap_id", "system_role", "novex_role", "region",
+                       "state", "zone", "sales_area", "is_ad_user", "status","manual_user", "contact_number"]
+
 # Add required roles in novex_role_master.csv
 lpg_query = """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL, EPL.ZLOC_TYPE,
-                    ZE.EMP_BU_CODE,ZE.PLANT_DESC,ZE.SALES_GRP, ZSA.SALES_GROUP_DESC,ZR.ROLE_NAME as ROLE_NAME, EPL.ZZONE as Zone, ZE.PLANT_CODE AS PLANT_CODE
+                    ZE.EMP_BU_CODE,ZE.PLANT_DESC,ZE.SALES_GRP, ZSA.SALES_GROUP_DESC,ZR.ROLE_NAME as ROLE_NAME, EPL.ZZONE as Zone, ZE.PLANT_CODE AS PLANT_CODE,
+                    ZE.EMP_CONTACT_NUMBER AS contact_number
                 FROM ZGRCCV_ROLE_STG ZR left JOIN ZHRCV_EMP_NONHCM_STG ZE on ZR.USER_NAME = ZE.EMPLOYEE_NUMBER 
                     LEFT JOIN ZMMCV_PLANT_STG EPL on ZE.PLANT_CODE = EPL.PLANT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
@@ -38,7 +43,7 @@ lpg_query = """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLO
 additional_lpg_query = [
     """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL,
             ZE.EMP_BU_CODE,ZE.PLANT_CODE as PLANT_CODE, ZE.PLANT_DESC,ZE.SALES_GRP, ZSA.SALES_GROUP_DESC,ZR.ROLE_NAME as ROLE_NAME,
-            EPL.ZZONE as Zone, EPL.ZLOC_TYPE
+            EPL.ZZONE as Zone, EPL.ZLOC_TYPE, ZE.EMP_CONTACT_NUMBER AS contact_number
         FROM ZGRCCV_ROLE_STG ZR left JOIN ZHRCV_EMP_NONHCM_STG ZE on ZR.USER_NAME = ZE.EMPLOYEE_NUMBER 
             LEFT JOIN ZMMCV_PLANT_STG EPL on ZE.PLANT_CODE = EPL.PLANT
             LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
@@ -54,14 +59,16 @@ additional_lpg_query = [
 
 # Add required roles in novex_role_master.csv
 tas_query = """ SELECT ZE.EMPLOYEE_NUMBER as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL,
-                    ZE.EMP_BU_CODE, ZE.PLANT_CODE AS PLANT_CODE, ZE.PLANT_DESC, ZR.ROLE_NAME as ROLE_NAME, EPL.ZZONE as zone
+                    ZE.EMP_BU_CODE, ZE.PLANT_CODE AS PLANT_CODE, ZE.PLANT_DESC, ZR.ROLE_NAME as ROLE_NAME, EPL.ZZONE as zone,
+                    ZE.EMP_CONTACT_NUMBER AS contact_number
                 FROM ZGRCCV_ROLE_STG ZR LEFT JOIN ZHRCV_EMP_NONHCM_STG ZE on ZR.USER_NAME = ZE.EMPLOYEE_NUMBER 
                     LEFT JOIN EDW_DC_PLANT EPL on ZE.PLANT_CODE = EPL.PLANT
-                WHERE ZE.PLANT_CODE like '1%' """
+                WHERE (ZE.PLANT_CODE like '1%' OR ZE.PLANT_CODE='3708') """
 
 # Add required roles in novex_role_master.csv
 ro_query = """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL, 
-                    ZE.EMP_BU_CODE,ZE.PLANT_CODE AS PLANT_CODE, ZE.PLANT_DESC,ZE.SALES_GRP, ZSA.SALES_GROUP_DESC,ZR.ROLE_NAME as ROLE_NAME, EPL.ZZONE as Zone
+                    ZE.EMP_BU_CODE,ZE.PLANT_CODE AS PLANT_CODE, ZE.PLANT_DESC,ZE.SALES_GRP, ZSA.SALES_GROUP_DESC,ZR.ROLE_NAME as ROLE_NAME, EPL.ZZONE as Zone,
+                    ZE.EMP_CONTACT_NUMBER AS contact_number
                 FROM ZGRCCV_ROLE_STG ZR left JOIN ZHRCV_EMP_NONHCM_STG ZE on ZR.USER_NAME = ZE.EMPLOYEE_NUMBER 
                     LEFT JOIN ZMMCV_PLANT_STG EPL on ZE.PLANT_CODE = EPL.PLANT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
@@ -96,14 +103,18 @@ location_configs = [
     {
         "bu": "lpg",
         "query": """
-                SELECT 
-                    PLT.PLANT, PLT.PLANT_DESC, PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1,PLT.STREET,
-                    PLT.STR_SUPPL1, PLT.REPORTING_OFFICE, PLT.STATE_NAME
+                SELECT
+                    DISTINCT PLT.PLANT, zca.SALES_ORG, zps.ZLOC_TYPE, PLT.PLANT_DESC,
+                    PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1, PLT.STREET,PLT.STR_SUPPL1,
+                    PLT.REPORTING_OFFICE, PLT.STATE_NAME
                 FROM
                     EDW_DC_PLANT PLT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
-                WHERE
-                    ZLOC_TYPE IN ('33');
+                    INNER JOIN ZMMCV_PLANT_STG zps  ON PLT.PLANT = zps.PLANT
+                    INNER JOIN ZSDCV_AY_INV3_STG zca  ON zca.SUPPLY_LOC = zps.PLANT
+                WHERE   
+                    zps.ZLOC_TYPE IN ('12', '17', '25', '32', '33','68')
+                    AND zca.INVOICE_DATE >= DATE_SUB(NOW(), INTERVAL 1 YEAR) AND zca.INVOICE_DATE <= NOW();
                 """,
         "reporting_office_query":"""
                     SELECT
@@ -119,13 +130,17 @@ location_configs = [
         "bu": "tas",
         "query": """
                 SELECT
-                    PLT.PLANT, PLT.PLANT_DESC, PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1,PLT.STREET,
-                    PLT.STR_SUPPL1, PLT.REPORTING_OFFICE, PLT.STATE_NAME
+                    DISTINCT PLT.PLANT, zca.SALES_ORG, zps.ZLOC_TYPE, PLT.PLANT_DESC,
+                    PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1, PLT.STREET,PLT.STR_SUPPL1,
+                    PLT.REPORTING_OFFICE, PLT.STATE_NAME
                 FROM
                     EDW_DC_PLANT PLT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
-                WHERE 
-                    PLT.SBU='RET' AND ZLOC_TYPE IN ('15', '16') AND FACILITY!='13';
+                    INNER JOIN ZMMCV_PLANT_STG zps  ON PLT.PLANT = zps.PLANT
+                    INNER JOIN ZSDCV_AY_INV3_STG zca  ON zca.SUPPLY_LOC = zps.PLANT
+                WHERE   
+                    zps.ZLOC_TYPE IN ('11','15','16','18','19','44','51','52','53')
+                    AND zca.INVOICE_DATE >= DATE_SUB(NOW(), INTERVAL 1 YEAR) AND zca.INVOICE_DATE <= NOW()
                 """,
         "reporting_office_query": """ 
                 SELECT

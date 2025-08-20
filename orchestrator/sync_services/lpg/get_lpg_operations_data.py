@@ -1,3 +1,4 @@
+import urdhva_base
 import os
 import sys
 import psycopg2
@@ -12,6 +13,8 @@ import signal
 import generate_lpg_operations_summary
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
+
+logger = urdhva_base.logger.Logger.getInstance("lpg_operations_data_sync_log")
 
 def create_extraction_log_table():
     """Create plant_extraction_log table if it doesn't exist"""
@@ -43,6 +46,7 @@ def create_extraction_log_table():
         pg_conn.close()
         return True
     except Exception as e:
+        logger.error(f"Error creating extraction log table: {str(e)}")
         print(f"Error creating extraction log table: {str(e)}")
         return False
 
@@ -89,6 +93,7 @@ def get_extraction_date(plant_name, default_days=5):
         pg_conn.close()
         return last_date
     except Exception as e:
+        logger.error(f"Error getting extraction date for {plant_name}: {str(e)}")
         print(f"Error getting extraction date for {plant_name}: {str(e)}")
         # Fallback to 7 days ago if there's an error
         return (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
@@ -140,6 +145,7 @@ def update_extraction_log(plant_name, status, max_date=None):
         print(f"Updated extraction log for {plant_name}: {status}")
         return True
     except Exception as e:
+        logger.error(f"Error updating extraction log for {plant_name}: {str(e)}")
         print(f"Error updating extraction log for {plant_name}: {str(e)}")
         return False
 
@@ -203,6 +209,7 @@ def insertToDB(data, table_name):
         print(f"-- Data Inserted to {table_name} --")
         return True
     except Exception as e:
+        logger.error(f"Error inserting data: {str(e)}")
         print(f"Error inserting data: {str(e)}")
         pg_conn.rollback()  # Rollback on error
         cur.close()
@@ -221,9 +228,11 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
     try:
         result = sock.connect_ex((params["host"], int(params["port"])))
         if not result == 0:
+            logger.error(f"Connection timed out to {params['host']}:{params['port']} after {timeout} seconds")
             print(f"Connection timed out to {params['host']}:{params['port']} after {timeout} seconds")
             return pl.DataFrame() if getData else None
     except Exception as e:
+        logger.error(f"Socket connection error: {str(e)}")
         print(f"Socket connection error: {str(e)}")
         return pl.DataFrame() if getData else None
     finally:
@@ -259,6 +268,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
             cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")
 
     except Exception as e:
+        logger.error(f"Database connection error for {params.get('PlantName', 'unknown')}: {str(e)}")
         print(f"Database connection error for {params.get('PlantName', 'unknown')}: {str(e)}")
         return pl.DataFrame() if getData else None
 
@@ -331,11 +341,13 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
                 return pl.DataFrame()
 
     except psycopg2.errors.QueryCanceled:
+        logger.error(f"Query timed out after {query_timeout} seconds - skipping this plant")
         print(f"Query timed out after {query_timeout} seconds - skipping this plant")
         cursor.close()
         pg_conn.close()
         return pl.DataFrame() if getData else None
     except Exception as e:
+        logger.error(f"Query execution error: {str(e)}")
         print(f"Query execution error: {str(e)}")
         cursor.close()
         pg_conn.close()
@@ -373,6 +385,7 @@ def get_data_chunks(params):
         )
 
         if data is None or data.is_empty():
+            logger.error(f"-- No data or query timed out for plant {plant_name} --")
             print(f"-- No data or query timed out for plant {plant_name} --")
             update_extraction_log(plant_name, "NO_DATA")
             return False
@@ -403,6 +416,7 @@ def get_data_chunks(params):
             return False
 
     except Exception as e:
+        logger.error(f"Error in get_data for plant {plant_name}: {str(e)}")
         print(f"Error in get_data for plant {plant_name}: {str(e)}")
         print("Traceback:", traceback.format_exc())
         update_extraction_log(plant_name, "FAILED")
@@ -433,6 +447,7 @@ def process_plant(plant):
 
         return plant["PlantName"], success
     except Exception as e:
+        logger.error(f"Error processing plant {plant['PlantName']}: {str(e)}")
         print(f"Error processing plant {plant['PlantName']}: {str(e)}")
         print("Traceback:", traceback.format_exc())
         update_extraction_log(plant["PlantName"], "FAILED")
@@ -445,6 +460,7 @@ def update_processed_plants(successful_plants):
             update_extraction_log(plant_name, "PROCESSED")
         return True
     except Exception as e:
+        logger.error(f"Error updating processed plants: {str(e)}")
         print(f"Error updating processed plants: {str(e)}")
         return False
 
@@ -455,6 +471,7 @@ def generate_summary_wrapper():
         generate_lpg_operations_summary.generate_summary()
         return True
     except Exception as e:
+        logger.error(f"Error in summary generation: {str(e)}")
         print(f"Error in summary generation: {str(e)}")
         print("Traceback:", traceback.format_exc())
         return False
@@ -497,24 +514,29 @@ if __name__=="__main__":
                             print(f"Successfully processed plant: {name}")
                         else:
                             failed_plants.append(name)
+                            logger.error(f"Failed to process plant: {name}")
                             print(f"Failed to process plant: {name}")
                     except concurrent.futures.TimeoutError:
                         failed_plants.append(plant_name)
                         update_extraction_log(plant_name, "TIMEOUT")
                         print(f"Timeout waiting for result from plant: {plant_name}")
+                        logger.error(f"Timeout waiting for result from plant: {plant_name}")
                     except Exception as e:
                         failed_plants.append(plant_name)
                         update_extraction_log(plant_name, "FAILED")
+                        logger.error(f"Exception during processing plant {plant_name}: {str(e)}")
                         print(f"Exception during processing plant {plant_name}: {str(e)}")
             except concurrent.futures.TimeoutError:
                 # Overall timeout reached
                 print(f"Overall timeout of {overall_timeout} seconds reached. Cancelling remaining tasks.")
+                logger.error(f"Overall timeout of {overall_timeout} seconds reached. Cancelling remaining tasks.")
                 # Add any unprocessed plants to failed list
                 for future, plant_name in futures.items():
                     if future not in completed_futures:
                         failed_plants.append(plant_name)
                         update_extraction_log(plant_name, "CANCELLED")
                         print(f"Cancelled processing for plant: {plant_name}")
+                        logger.error(f"Cancelled processing for plant: {plant_name}")
                         future.cancel()
 
         print("*"*50)
@@ -548,13 +570,17 @@ if __name__=="__main__":
                     pg_conn.close()
                     print('-- Removed the data from lpg_operations_data table --')
                 except Exception as cleanup_error:
+                    logger.error(f"Error during cleanup: {str(cleanup_error)}")
                     print(f"Error during cleanup: {str(cleanup_error)}")
             else:
+                logger.error("Summary generation failed")
                 print("Summary generation failed")
         else:
+            logger.error("No plants were successfully processed, skipping summary generation")
             print("No plants were successfully processed, skipping summary generation")
 
     except Exception as e:
         print("*-"*25)
         print("-- Exception in fetching the operations data -- ")
-        print("Traceback:", traceback.format_exc())        
+        print("Traceback:", traceback.format_exc())
+        logger.error(f"Exception in fetching the operations data: {str(e)}")        

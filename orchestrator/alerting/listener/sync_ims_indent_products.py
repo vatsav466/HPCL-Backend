@@ -9,6 +9,8 @@ import charts_actions
 import dashboard_studio_model
 import utilities.connection_mapping as connection_mapping
 
+logger = urdhva_base.logger.Logger.getInstance("ims_indent_products_sync")
+
 async def sync_ims_indent_products():
     try:
         ro_query = f"""SELECT * FROM "IMS_SAP"."INDENT_PRODUCTS" """
@@ -101,6 +103,7 @@ async def sync_ims_indent_products():
         return {"status": True, "message": "Data Synced Successfully", "data": []}
     except Exception as e:
         print(traceback.format_exc())
+        logger.error(f"Error in sync_ims_indent_products: {str(e)}")
         return {"status": False, "message": "Data Sync Failed", "data": e}
 
 if __name__ == "__main__":

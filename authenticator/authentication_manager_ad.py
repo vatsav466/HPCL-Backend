@@ -8,7 +8,11 @@ import requests
 import hpcl_ceg_model
 import urdhva_base.settings
 import urdhva_base.redispool
+from typing import Dict, Any
+from jose import JWTError, jwt
 from cryptography.fernet import Fernet
+from datetime import datetime, timedelta, timezone
+from fastapi import HTTPException, status as resp_status
 
 
 class AuthenticationManager:
@@ -40,6 +44,115 @@ class AuthenticationManager:
             ldap_client.unbind()
             print(f"User Validation Failed {e}")
             return False
+    
+    @classmethod
+    async def cleanup_internal_jwt(cls, token: str):
+        redis_ins = await urdhva_base.redispool.get_redis_connection()
+        payload = jwt.decode(
+            token,
+            urdhva_base.settings.jwt_secret_key,
+            algorithms=[urdhva_base.settings.jwt_algorithm]
+        )
+        rkey = payload["sec_key"]
+        if redis_ins.exists(rkey):
+            redis_ins.delete(rkey)
+        redis_ins.close()
+
+    @classmethod
+    async def verify_internal_jwt(cls, token: str) -> Dict[str, Any]:
+        """Verify internal JWT token"""
+        redis_ins = await urdhva_base.redispool.get_redis_connection()
+        try:
+            payload = jwt.decode(
+                token,
+                urdhva_base.settings.jwt_secret_key,
+                algorithms=[urdhva_base.settings.jwt_algorithm]
+            )
+
+            # Check token expiration
+            if datetime.now(timezone.utc).timestamp() > payload.get("exp", 0):
+                raise HTTPException(status_code=resp_status.HTTP_401_UNAUTHORIZED,
+                                    detail="Token has expired")
+
+            # Validating redis key information
+            rkey = payload["sec_key"]
+            user_info = redis_ins.get(rkey)
+            if not user_info:
+                # Missing user information in redis, marking as invalid login headers
+                raise HTTPException(status_code=resp_status.HTTP_401_UNAUTHORIZED,
+                                     detail="Invalid authentication token")
+            user_info = json.loads(base64.b64decode(user_info))
+            return user_info
+        except JWTError as e:
+            raise HTTPException(
+                status_code=resp_status.HTTP_401_UNAUTHORIZED,
+                detail=f"Invalid token: {str(e)}"
+            )
+        finally:
+            redis_ins.close()
+    
+    @classmethod
+    async def create_internal_jwt(cls, user_data: Dict[str, Any]) -> str:
+        """Create internal JWT token after successful Keycloak authentication"""
+        # rkey will be used to fetch information from redis
+        # Adding user id to rkey, so incase if any changes in userdata,
+        # we can do auto-logout
+        rkey = f"Novex_SessionData_{uuid.uuid4().hex}"
+        for key in ["password", "created_at", "updated_at"]:
+            if key in user_data.keys():
+                del user_data[key]
+        payload = {
+            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=urdhva_base.settings.jwt_expiration_hours),
+            "sec_key": rkey
+        }
+        payload.update(user_data)
+        redis_client = await urdhva_base.redispool.get_redis_connection()
+        timeout = int(timedelta(hours=urdhva_base.settings.jwt_expiration_hours).total_seconds())
+        await redis_client.setex(rkey, 
+                                 timeout,
+                                 base64.urlsafe_b64encode(json.dumps(user_data, default=str).encode()).decode())
+        return {
+            "jwt_token": jwt.encode(payload, 
+                                    urdhva_base.settings.jwt_secret_key, 
+                                    algorithm=urdhva_base.settings.jwt_algorithm),
+            "user_data": user_data
+            }
+
+    @classmethod
+    def get_access_token(cls):
+        """
+        Get access token using Basic Authentication
+
+        Returns:
+            True if token obtained successfully, False otherwise
+        """
+        try:
+            token_url = urdhva_base.settings.openldap_token_url
+            client_username = urdhva_base.settings.openldap_client_username
+            client_password = urdhva_base.settings.openldap_client_password
+
+            credentials = base64.b64encode(f"{client_username}:{client_password}".encode()).decode()
+            headers = {
+                'Authorization': f'Basic {credentials}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
+            }
+            token_data = {'grant_type': 'client_credentials'}
+            response = requests.post(
+                token_url,
+                data=token_data,
+                headers=headers,
+                timeout=30
+            )
+            response.raise_for_status()
+            token_response = response.json()
+            access_token = token_response.get('access_token')           
+            return access_token
+        
+        except Exception as e:
+            print(f"Error getting token: {e}")
+            return False
 
     @classmethod
     async def validate_open_ldap_auth(cls, username, password):
@@ -52,17 +165,41 @@ class AuthenticationManager:
         Returns:
 
         """
-        url = urdhva_base.settings.open_ldap_url
-        headers = {'Content-Type': 'application/json'}
-        response = requests.post(url, data=json.dumps({"user_id": username, "password": password}), headers=headers, timeout=15)
-        if int(response.status_code // 200) == 1:
-            resp = response.json()
-            if resp.get('success') in ('true', True):
-                return True
-        return False
+        auth_url = urdhva_base.settings.openldap_auth_url
+        access_token = cls.get_access_token()
+        if not access_token:
+            return False
+        try:
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+            auth_data = {
+                'user_id': username,
+                'password': password
+            }
+
+            response = requests.post(
+                auth_url,
+                headers=headers,
+                json=auth_data,
+                timeout=30
+            )
+            response.raise_for_status()
+            result = response.json()
+
+            if isinstance(result, dict):
+                if result.get('success') in ('true', True):
+                    return True
+            return False
+        except Exception as e:
+            print(f"Error checking authentication: {e}")
+            return False
+        
 
     @classmethod
-    async def login(cls, username, password, login_type):
+    async def login(cls, username, password, login_type, jwt_auth=False):
         """
         Authenticates a user based on their username and password(LDAP or Local Authentication)
 
@@ -144,7 +281,9 @@ class AuthenticationManager:
 
             user_info["allowed_roles"] = list(allowed_roles.values())
         # Adding session data
-        return True, await cls.generate_cookie(user_info)
+        if jwt_auth:
+            return True, await cls.create_internal_jwt(user_data=user_info)
+        return True, await cls.generate_cookie(user_info), user_info
 
     @classmethod
     async def verify_locked_check(cls, username):

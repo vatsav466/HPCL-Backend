@@ -77,6 +77,11 @@ class Settings(pydantic_settings.BaseSettings):
     log_max_size: int = 10000000
     log_max_count: int = 5
 
+    # JWT
+    jwt_secret_key: str = ""
+    jwt_algorithm: str = "HS256"
+    jwt_expiration_hours: int = 24
+
     # DB Multi-tenancy model
     db_multi_tenancy_model: MultiTenancyMode = MultiTenancyMode.SingleServerSingleDb
     login_count: int = 5
@@ -141,10 +146,16 @@ class Settings(pydantic_settings.BaseSettings):
     ldap_domain: str = ""
     ldap_auth_enabled: bool = False
 
+    # OpenLDAP
+    openldap_token_url: str = ''
+    openldap_client_username: str = ''
+    openldap_client_password: str = ''
+    openldap_auth_url: str = ''
+    
+
     # camunda
     # Default Camunda
-    camunda_url: str = 'http://10.90.38.167:8080'
-    open_ldap_url: str = ''
+    camunda_url: str = 'http://10.90.38.167:8080'    
     cris_interlock_disable_url: str = ''
     camunda_default_config: typing.Dict[str, int] = {
         "maxTasks": 10,
@@ -189,6 +200,10 @@ class Settings(pydantic_settings.BaseSettings):
 
     # Timezone settings
     time_zone: str = "Asia/Kolkata"
+
+    # Novex user and Password
+    novex_user: str = ''
+    novex_password: str = ''
 
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \

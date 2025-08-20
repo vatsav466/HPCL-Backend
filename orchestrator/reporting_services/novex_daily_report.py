@@ -72,9 +72,10 @@ def get_zones_by_performance(actual, target, by_sbu=False, req_key='Zone_Name'):
             actual_value = resp_actual.get(key, 0)  # Get actual value, default to 0 if missing
             target_value = resp_target[key]
             if target_value == 0:
-                percentage_achieved[key] = 'N/A'  # Avoid division by zero
+                percentage_achieved[key] = 0 if not actual_value else 100# Avoid division by zero
             else:
-                percentage_achieved[key] = round(float((actual_value / target_value) * 100), 1)
+                percentage_achieved[key] = round(float(((actual_value - target_value) /
+                                                        target_value) * 100), 1)
         sorted_zones = sorted(percentage_achieved.items(), key=lambda x: x[1], reverse=True)
 
         return sorted_zones
@@ -104,9 +105,10 @@ def get_zones_by_performance(actual, target, by_sbu=False, req_key='Zone_Name'):
             actual_value = resp_actual.get(sbu, {}).get(zone, 0)  # Get actual value, default to 0 if missing
             target_value = resp_target.get(sbu, {}).get(zone, 0)  # Get actual value, default to 0 if missing
             if target_value == 0:
-                percentage_achieved[zone] = 'N/A'  # Avoid division by zero
+                percentage_achieved[zone] = 0 if not actual_value else 100# Avoid division by zero
             else:
-                percentage_achieved[zone] = round(float((actual_value / target_value) * 100), 1)
+                percentage_achieved[zone] = round(float(((actual_value - target_value) /
+                                                        target_value) * 100), 1)
         sorted_zones = sorted(percentage_achieved.items(), key=lambda x: x[1], reverse=True)
         sbu_level_data[sbu] = sorted_zones
     return sbu_level_data
@@ -116,16 +118,33 @@ async def get_m60_sales_data():
     current = fiscal_year.FiscalYear.current()
     if int(datetime.datetime.now(datetime.timezone.utc).month) == 4:
         current = current.prev_fiscal_year
+    prev = current.prev_fiscal_year
     pres_year = f"FY {current.start.strftime('%Y')}-{current.end.strftime('%Y')}"
+    prev_year = f"FY {prev.start.strftime('%Y')}-{prev.end.strftime('%Y')}"
 
-    target = f"""select ROUND(SUM("TARGET_QTY_TMT")::numeric,2) 
-    AS "TARGET_TMT_SALES", "Zone_Name","SBU_Name" from "M60_LEVEL_METADATA" 
-    where fiscal_year='{pres_year}' AND "Zone_Name" not in ('-', '')  AND "SBU_Name" in ('Retail', 'LPG', 'Lubes')
+    # target = f"""select ROUND(SUM("TARGET_QTY_TMT")::numeric,2)
+    # AS "TARGET_TMT_SALES", "Zone_Name","SBU_Name" from "M60_LEVEL_METADATA"
+    # where fiscal_year='{pres_year}' AND "Zone_Name" not in ('-', '')  AND "SBU_Name" in ('Retail', 'LPG', 'Lubes')
+    # group by "Zone_Name","SBU_Name" """
+    dt = datetime.datetime.today()
+    yesterday = helpers.get_time_stamp_by_delta(dt, days=1, ascending=False,
+                                                with_month_start_day=False,
+                                                date_time_format="%Y%m%d")
+    yesterday_last_year = helpers.get_time_stamp_by_delta(dt, days=1, years=1,
+                                                         ascending=False,
+                                                         with_month_start_day=False,
+                                                         date_time_format="%Y%m%d")
+
+    target = f""" select ROUND(SUM("NETWEIGHT_TMT")::numeric,2) 
+    AS "TARGET_TMT_SALES", "Zone_Name","SBU_Name" from "MOM_DAY_LEVEL_DATA" 
+    where "FISCALYEAR"='{prev_year}' AND "Zone_Name" not in ('-', '') AND "SBU_Name" in ('Retail', 'LPG', 'Lubes') 
+    AND "DAY_ID" <= '{yesterday_last_year}'
     group by "Zone_Name","SBU_Name" """
 
     actual = f""" select ROUND(SUM("NETWEIGHT_TMT")::numeric,2) 
     AS "ACTUAL_TMT_SALES", "Zone_Name","SBU_Name" from "MOM_DAY_LEVEL_DATA" 
     where "FISCALYEAR"='{pres_year}' AND "Zone_Name" not in ('-', '') AND "SBU_Name" in ('Retail', 'LPG', 'Lubes') 
+    AND "DAY_ID" <= '{yesterday}'
     group by "Zone_Name","SBU_Name" """
 
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -136,13 +155,15 @@ async def get_m60_sales_data():
     sbu_level_zones = get_zones_by_performance(resp_actual, resp_target, by_sbu=True, req_key='Zone_Name')
 
     # By Region
-    target = f"""select ROUND(SUM("TARGET_QTY_TMT")::numeric,2) 
-        AS "TARGET_TMT_SALES", "Region_Name","SBU_Name" from "M60_LEVEL_METADATA" 
-        where fiscal_year='{pres_year}' AND "Region_Name" not in ('-', '') group by "Region_Name","SBU_Name" """
+    target = f""" select ROUND(SUM("NETWEIGHT_TMT")::numeric,2) 
+            AS "TARGET_TMT_SALES", "Region_Name","SBU_Name" from "MOM_DAY_LEVEL_DATA" 
+            where "FISCALYEAR"='{prev_year}' AND "Region_Name" not in ('-', '') 
+            AND "DAY_ID" <= '{yesterday_last_year}' group by "Region_Name","SBU_Name" """
 
     actual = f""" select ROUND(SUM("NETWEIGHT_TMT")::numeric,2) 
         AS "ACTUAL_TMT_SALES", "Region_Name","SBU_Name" from "MOM_DAY_LEVEL_DATA" 
-        where "FISCALYEAR"='{pres_year}' AND "Region_Name" not in ('-', '') group by "Region_Name","SBU_Name" """
+        where "FISCALYEAR"='{pres_year}' AND "Region_Name" not in ('-', '') 
+        AND "DAY_ID" <= '{yesterday}' group by "Region_Name","SBU_Name" """
 
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -152,6 +173,38 @@ async def get_m60_sales_data():
     sbu_level_regions = get_zones_by_performance(resp_actual, resp_target, by_sbu=True, req_key='Region_Name')
 
     return sbu_level_zones, sbu_level_regions
+
+
+def process_performance_data(data, limit=3):
+    """
+    Process data to find top performers (>0) and bottom performers (<0)
+    Returns both in descending order
+    """
+
+    # Convert to list of tuples if needed
+    if isinstance(data[0], dict):
+        # Handle dictionary format
+        items = []
+        for item in data:
+            for key, value in item.items():
+                items.append((key, value))
+    else:
+        # Handle list format
+        items = [(item[0], item[1]) for item in data]
+
+    # Separate positive and negative values
+    positive_items = [(key, value) for key, value in items if value >= 0]
+    negative_items = [(key, value) for key, value in items if value < 0]
+
+    # Sort in descending order
+    top_performers = sorted(positive_items, key=lambda x: x[1], reverse=True)
+    bottom_performers = sorted(negative_items, key=lambda x: x[1], reverse=True)
+
+    # Get top 2/3 and bottom 2/3
+    top_x = top_performers[:limit]
+    bottom_x = bottom_performers[:limit]
+
+    return top_x, bottom_x
 
 
 async def fetch_sales_data():
@@ -172,29 +225,22 @@ async def fetch_sales_data():
     yesterday_date = helpers.get_time_stamp_by_delta(datetime.datetime.now(datetime.timezone.utc), days=1,
                                                      with_month_start_day=False, date_time_format="%Y-%m-%d")
 
+    def create_data_list(input):
+        return [f'''{round_off(rec[0], "")} ({round_off(rec[1])}%)''' for rec in input]
+
     sbu_level_zones, sbu_level_regions = await get_m60_sales_data()
     for sbu in ['Retail', 'LPG', 'Lubes']:
-        sales_data[f'{sbu}_growing_zones'] = len([rec for rec in sbu_level_zones[sbu] if rec[1] >= 100])
-        sales_data[f'{sbu}_declining_zones'] = len([rec for rec in sbu_level_zones[sbu] if rec[1] < 100])
-    # sales_data['performing_zone'] = f"{sbu_level_zones[0][0]} ({round(sbu_level_zones[0][1], 1)})"
-    # sales_data['least_performing_zone'] = f"{sbu_level_zones[-1][0]} ({round(sbu_level_zones[-1][1], 1)})"
+        sales_data[f'{sbu}_growing_zones'] = len([rec for rec in sbu_level_zones[sbu] if rec[1] > 0])
+        sales_data[f'{sbu}_declining_zones'] = len([rec for rec in sbu_level_zones[sbu] if rec[1] < 0])
 
     for sbu, dat in sbu_level_zones.items():
-        # sales_data[f'top_performing_{sbu}_zones'] = [f"{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)",
-        sales_data[f'top_performing_{sbu}_zones'] = [f'''{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)''',
-                                                     f'''{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)''']
-        sales_data[f'bottom_performing_{sbu}_zones'] = [f'''{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)''',
-                                                        f'''{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)''']
+        top, bottom = process_performance_data(dat, 2)
+        sales_data[f'top_performing_{sbu}_zones'] = create_data_list(top)
+        sales_data[f'bottom_performing_{sbu}_zones'] = create_data_list(bottom)
     for sbu, dat in sbu_level_regions.items():
-        if len(dat) > 3:
-            sales_data[f'top_performing_{sbu}_regions'] = [f'''{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)''',
-                                                           f'''{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)''',
-                                                           f'''{round_off(dat[2][0], "")} ({round_off(dat[2][1])}%)''']
-            sales_data[f'bottom_performing_{sbu}_regions'] = [f'''{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)''',
-                                                              f'''{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)''',
-                                                              f'''{round_off(dat[-3][0], "")} ({round_off(dat[-3][1])}%)''']
-
-
+        top, bottom = process_performance_data(dat, 3)
+        sales_data[f'top_performing_{sbu}_regions'] = create_data_list(top)
+        sales_data[f'bottom_performing_{sbu}_regions'] = create_data_list(bottom)
     filters = {"filters": [actual, history, cumulative,
                            {"key": "\"DATE\"", "cond": "equals", "value": f"{yesterday_date},{yesterday_date}"}],
                "cross_filters": [], "drill_state": ""}
@@ -235,12 +281,18 @@ async def fetch_sales_data():
         
 
         # For current month data
-        month_start = helpers.get_time_stamp_by_delta(with_month_start_day=True)
-        if month_start.split('-')[-1] == '01' and( datetime.datetime.today().strftime('%d-%m-%Y').split('-')[-1] == '01' or datetime.datetime.today().strftime('%d-%m-%Y').split('-')[-1] == '1'): 
-            yesterday_date = month_start
-        print("yesterday_date",yesterday_date)
+       # month_start = helpers.get_time_stamp_by_delta(with_month_start_day=True)
+
+        date = urdhva_base.utilities.get_present_time()
+        date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                   date_time_format=None)
+        month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                                   date_time_format="%Y-%m-%d")
+        #if month_start.split('-')[-1] == '01' and( datetime.datetime.today().strftime('%d-%m-%Y').split('-')[0] == '01' or datetime.datetime.today().strftime('%d-%m-%Y').split('-')[0] == '1'): 
+        #    yesterday_temp_date = month_start
+        #print("yesterday_date",yesterday_temp_date)
         filters = {"filters": [actual, history, cumulative,
-                               {"key": "\"DATE\"", "cond": "equals", "value": f"{month_start},{yesterday_date}"}],
+                               {"key": "\"DATE\"", "cond": "equals", "value": f"{month_start},{date_yes}"}],
                    "cross_filters": [], "drill_state": ""}
         
         if sbu_filter:
@@ -407,7 +459,12 @@ async def get_tas_alerts():
 
 async def get_alert_data(alert_section):
     # Making sure alerts considering only after May 31st in prod
-    date_filter ="created_at::DATE > '2025-06-30'" # As per HPCL request changed the date on (04-07-2025)
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                               date_time_format="%Y-%m-%d")
+    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'" # As per HPCL request changed the date to be in the present month
     query = f"""SELECT count(alert_section), bu, alert_section, severity FROM alerts where alert_status='Open' and 
     alert_section='{alert_section}' and {date_filter} GROUP BY bu, alert_section, severity"""
     alerts = await hpcl_ceg_model.Alerts.get_aggr_data(query)
@@ -427,9 +484,18 @@ async def get_alert_data(alert_section):
 async def publish_daily_novex_status_email():
     date = urdhva_base.utilities.get_present_time()
     date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                                         date_time_format=None)
+                                                       date_time_format=None)
     report_generated_time = date.strftime('%I:%M %p')
-    status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
+    if date.strftime('%Y-%m-%d').split('-')[-1] == '01' or date.strftime('%Y-%m-%d').split('-')[-1] == '1':
+        print("datde inside if",date)
+        status_yes_date = date
+        tmp_date = urdhva_base.utilities.get_present_time()
+        tmp_date_yes = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+        tmp_date_start = helpers.get_time_stamp_by_delta(tmp_date, days=1, with_month_start_day=True,
+                                               date_time_format=None)
+
+        status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
                    'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
                                                                                date_time_format='%d-%B-%Y'),
                    'today_week': date.strftime('%A'), 'yesterday_week':
@@ -438,9 +504,23 @@ async def publish_daily_novex_status_email():
                    'today': date.strftime('%d-%B-%Y'),
                    'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
                                                                           date_time_format='%d-%B-%Y'),
+                   'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
+                  # 'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
+    else:
+         status_data = {'today_date': date.strftime('%d-%B-%Y'), 'report_generated_time': report_generated_time,
+                   'yesterday_date': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                               date_time_format='%d-%B-%Y'),
+                   'today_week': date.strftime('%A'), 'yesterday_week':
+                       helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                 date_time_format='%A'),
+                   'today': date.strftime('%d-%B-%Y'),
+                   'yesterday': helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                                                          date_time_format='%d-%B-%Y'),
+                  # 'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
                    'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
+
     status_data.update(await fetch_sales_data())
-    print("status_data before :", status_data)
+    # print("status_data before :", status_data)
     status_data.update(await fetch_dryout_data())
     status_data.update(await get_lpg_rejection())
     status_data.update(await get_ro_alerts())
@@ -448,10 +528,10 @@ async def publish_daily_novex_status_email():
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data(alert_section))
-    print("-" * 50)
-    print("status_data :", json.dumps(status_data))
-    print("-" * 50)
-    print("-------->status_data",status_data)
+    # print("-" * 50)
+    # print("status_data :", json.dumps(status_data))
+    # print("-" * 50)
+    # print("-------->status_data",status_data)
     await send_notification(status_data)
 
 
@@ -470,7 +550,7 @@ async def send_notification(notification_data):
         ["sanjayk@hpcl.in", "debeshp@hpcl.in","gargam@hpcl.in"],
         ["cvmallinath@hpcl.in","purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in"],
         ["rujutadoiphode@hpcl.in"],
-        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com"]
+        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com", "aditya@algofusiontech.com"]
         ]:
         await ins.publish_message(
             subject="Novex Daily Report",

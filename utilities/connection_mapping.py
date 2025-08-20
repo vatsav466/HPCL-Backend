@@ -280,27 +280,37 @@ alert_action = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Zonal HSE SOD", "HQO HSE SOD"]
+                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
+                              "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
+                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD"]
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD", "Zonal HSE SOD", "HQO HSE SOD"]
+                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
+                              "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
+                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD"]
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Operations Head SOD", "HQO Operations SOD"]
+                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
+                              "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
+                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD"]
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD","Zonal HSE SOD", "HQO HSE SOD"]
+                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
+                              "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
+                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Operations Head SOD", "HQO Operations SOD"]
+                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
+                              "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
+                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD"]
                 }
             },
             "category": {
@@ -444,27 +454,37 @@ alert_action = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer LPG", "Zonal HSE LPG", "HQO HSE LPG"]
+                    "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
+                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
+                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQ Operations LPG","HQO HSE LPG"]
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer LPG", "Zonal HSE LPG", "HQO HSE LPG"]
+                    "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
+                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
+                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQ Operations LPG","HQO HSE LPG"]
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Operations Head LPG", "HQO Operations LPG"]
+                    "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
+                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
+                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQ Operations LPG","HQO HSE LPG"]
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer LPG", "Zonal HSE LPG", "HQO HSE LPG"]
+                    "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
+                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
+                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQ Operations LPG","HQO HSE LPG"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Operations Head LPG", "HQO Operations LPG"]
+                    "roles": ["Admin", "Safety Officer LPG", "Location In-Charge LPG", "Maintenance Officer LPG", "Planning Officer LPG",
+                              "Zonal HSE LPG", "Zonal Operations Chief Manager LPG", "Zonal Head LPG","Zonal Officer LPG",
+                              "Zonal Operations LPG", "HQO LPG", "HQO Head LPG", "HQO Sale General Manager", "HQ Operations LPG","HQO HSE LPG"]
                 }
             },
             "category": {

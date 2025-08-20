@@ -3,6 +3,7 @@ from ingestion_api_enum import *
 from ingestion_api_model import *
 import fastapi
 import datetime
+import pytz
 import traceback
 import polars as pl
 import hpcl_ceg_model
@@ -55,17 +56,29 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
       enriched_data = enriched_data.to_dicts()
       for entry in enriched_data:
           entry['alert_section'] = entry['alert_type']
-          entry['alert_timestamp'] = datetime.datetime.strptime(entry['alert_timestamp'], "%m/%d/%Y %I:%M:%S %p")
-          # ist = pytz.timezone("Asia/Kolkata")
-          # entry['alert_timestamp'] = entry['alert_timestamp'].astimezone(ist)
-          entry['alert_timestamp'] = entry['alert_timestamp'].isoformat()
-          await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
-          # entry['vendor_alert_id'] = entry.pop("alert_id")
-          camunda_url = urdhva_base.settings.camunda_url
-          if 'camunda_host' in entry.keys():
-            camunda_url = f"http://{entry['camunda_host']}:{entry['camunda_port']}"
-          await alert_manager.create_alert({**entry, "alert_type": "VA"}, camunda_url=camunda_url)
-    
+          entry['alert_timestamp'] = (
+              datetime.datetime.strptime(entry['alert_timestamp'], "%m/%d/%Y %I:%M:%S %p") + 
+              datetime.timedelta(hours=5, minutes=30))
+          IST = pytz.timezone("Asia/Kolkata")
+          now_current_time = datetime.datetime.now(IST).replace(tzinfo=None)
+          diff = now_current_time - entry['alert_timestamp']
+          if diff.days < 30:
+            if diff.total_seconds() >= 2 * 3600:
+                if not await va_analysis.is_alert_exists(entry['alert_id']):
+                    await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
+                    camunda_url = urdhva_base.settings.camunda_url
+                    if 'camunda_host' in entry.keys():
+                        camunda_url = f"http://{entry['camunda_host']}:{entry['camunda_port']}"
+                    await alert_manager.create_alert({**entry, "alert_type": "VA"}, camunda_url=camunda_url)
+                else:
+                    return True, "Success"
+            else:
+                await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
+                # entry['vendor_alert_id'] = entry.pop("alert_id")
+                camunda_url = urdhva_base.settings.camunda_url
+                if 'camunda_host' in entry.keys():
+                    camunda_url = f"http://{entry['camunda_host']}:{entry['camunda_port']}"
+                await alert_manager.create_alert({**entry, "alert_type": "VA"}, camunda_url=camunda_url)
       return True, "Success"
         
     except Exception as e:
@@ -95,20 +108,28 @@ async def va_ingest_data_score(data: Va_Ingest_Data_ScoreParams):
 @router.post('/ingest_data_close', tags=['VA'])
 async def va_ingest_data_close(data: Va_Ingest_Data_CloseParams):
     try:
+        logger.info(f"Received VA data ingestion data close {data}")
         va_query = f"select * from va_alert_history where alert_id = '{data.alert_id}'"
         va_alert = await hpcl_ceg_model.VaAlertHistory.get_aggr_data(va_query, limit=0)
         if va_alert.get("data", []):
             va_alert = va_alert.get("data", [])[0]
             va_alert['status'] = data.status
             va_alert['acknowledged_by'] = data.acknowledged_by
-            va_alert['closed_at'] = data.closed_at
+            va_alert['closed_at'] = (
+                datetime.datetime.strptime(data.closed_at, "%m/%d/%Y %I:%M:%S %p") + 
+                datetime.timedelta(hours=5, minutes=30))
             va_alert['action_description'] = data.action_description
             va_alert['action_code'] = data.action_code
             va_alert['action_reason'] = data.action_reason
             va_alert['action_category'] = data.action_category
             await hpcl_ceg_model.VaAlertHistory(**va_alert).modify()
 
-        alert_query = f"select * from alerts where alert_section = 'VA' and external_id = '{data.alert_id}'"
+        alert_query1 = f"select * from alerts where alert_section = 'VA' and external_id = '{data.alert_id}' and alert_status = 'Close'"
+        alert_data1 = await hpcl_ceg_model.Alerts.get_aggr_data(alert_query1, limit=0)
+        if alert_data1.get("data", []):
+            return {"status": True, "message": "Alert already Closed in Novex", "data": []}
+        
+        alert_query = f"select * from alerts where alert_section = 'VA' and external_id = '{data.alert_id}' and alert_status != 'Close'"
         alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(alert_query, limit=0)
         if not alert_data.get("data", []):
             return {"status": False, "message": "Alert not found", "data": []}
@@ -119,7 +140,9 @@ async def va_ingest_data_close(data: Va_Ingest_Data_CloseParams):
         alert_data['alert_history'].append({
             "action_type": "Resolved", "alert_status": "Close", "action_msg": data.action_code,
             "remarks": data.action_description, "action_by": data.acknowledged_by,
-            "processed_time": datetime.datetime.strptime(data.closed_at, "%Y-%m-%dT%H:%M:%S").isoformat()
+            "processed_time": (
+                datetime.datetime.strptime(data.closed_at, "%m/%d/%Y %I:%M:%S %p") + 
+                datetime.timedelta(hours=5, minutes=30)).isoformat()
         })
         await hpcl_ceg_model.Alerts(**alert_data).modify()
         camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['bu'],

@@ -11,8 +11,8 @@ import pandas as pd
 import hpcl_ceg_model
 import dashboard_studio_model
 from psycopg2 import sql, errors
-from collections import defaultdict
 import utilities.helpers as helpers
+from collections import defaultdict, OrderedDict
 from datetime import datetime,timedelta, timezone
 from pandas.tseries.offsets import MonthEnd
 from orchestrator.analytics import va_analysis
@@ -292,7 +292,7 @@ class GlobalAnalytics:
             location_severity_count_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(location_severity_count_query_, filters, drill_state)
         try:
             # resp = await function(query=location_severity_count_query_)
-            resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=location_severity_count_query_, limit=0)
+            resp = urdhva_base.BasePostgresModel.get_aggr_data(query=location_severity_count_query_, limit=0)
             resp = resp.get('data', [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_severity_count_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -356,7 +356,7 @@ class GlobalAnalytics:
             severity_count_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(severity_count_query, filters, drill_state)
         try:
             # severity_count_data = await function(query=severity_count_query_)
-            severity_count_data = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=severity_count_query_, limit=0)
+            severity_count_data = urdhva_base.BasePostgresModel.get_aggr_data(query=severity_count_query_, limit=0)
             severity_count_data = severity_count_data.get('data', [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(severity_count_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -391,7 +391,7 @@ class GlobalAnalytics:
             hourly_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(hourly_alerts_query, filters, drill_state)
         try:
             # resp = await function(query=hourly_alerts_query_)
-            resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=hourly_alerts_query_, limit=0)
+            resp = urdhva_base.BasePostgresModel.get_aggr_data(query=hourly_alerts_query_, limit=0)
             resp = resp.get('data', [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -493,7 +493,7 @@ class GlobalAnalytics:
             sales_performance_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(sales_performance_query_, access_filters, drill_state)
             print("sales_performance_query_: ",sales_performance_query_)
             # resp = await function(query=sales_performance_query_)
-            resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
+            resp = urdhva_base.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
             resp = resp.get('data', [])
 
             # Convert the response to a DataFrame for further processing
@@ -517,7 +517,7 @@ class GlobalAnalytics:
 
         # Execute the query
         # resp = await function(query=sales_performance_query_)
-        resp = hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
+        resp = urdhva_base.BasePostgresModel.get_aggr_data(query=sales_performance_query_, limit=0)
         resp = resp.get('data', [])
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
@@ -1247,7 +1247,7 @@ class GlobalAnalytics:
             print("Generated Query:", sales_performance_query_)  # Debugging: Print the generated query
 
             # resp = await function(query=sales_performance_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
             resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -1258,7 +1258,7 @@ class GlobalAnalytics:
 
                 """
                 # his_data = await function(query=sales_his_query)
-                his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_his_query, limit=0)
+                his_data = await urdhva_base.BasePostgresModel.get_aggr_data(sales_his_query, limit=0)
                 his_data = his_data.get("data", [])
                 his_data = pd.DataFrame(his_data)
                 his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
@@ -1302,7 +1302,7 @@ class GlobalAnalytics:
                 """
                 print("date_day_query --> ", date_day_query)
                 # day_data = await function(query=date_day_query)
-                day_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(date_day_query, limit=0)
+                day_data = await urdhva_base.BasePostgresModel.get_aggr_data(date_day_query, limit=0)
                 day_data = day_data.get("data", [])
                 day_data = pd.DataFrame(day_data)
                 day_data = day_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
@@ -1442,7 +1442,7 @@ class GlobalAnalytics:
                     "M60_LEVEL_METADATA"."fy_month" ASC;
             '''
             # resp = await function(query=sales_performance_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
             resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -1465,7 +1465,7 @@ class GlobalAnalytics:
 
         # Execute the query
         # resp = await function(query=sales_performance_query_)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
         resp = resp.get("data", [])
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
@@ -2104,7 +2104,7 @@ class GlobalAnalytics:
                     """
 
                     # his_data = await function(query=sales_his_query)
-                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
                     his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
@@ -2196,7 +2196,7 @@ class GlobalAnalytics:
                             sales_his_query += f""" and "month_name" = '{month_name[:3]}'"""
                     print("sales_his_query",sales_his_query)
                     # his_data = await function(query=sales_his_query)
-                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
                     his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
@@ -2284,7 +2284,7 @@ class GlobalAnalytics:
                     if "month_name" in filter_keys:
                         sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
                     # his_data = await function(query=sales_his_query)
-                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
                     his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
@@ -2487,7 +2487,7 @@ class GlobalAnalytics:
                     if "month_name" in filter_keys:
                         sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
                     # his_data = await function(query=sales_his_query)
-                    his_data = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
+                    his_data = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_his_query, limit=0)
                     his_data = his_data.get("data", [])
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
@@ -2727,7 +2727,7 @@ class GlobalAnalytics:
             sales_growth_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(sales_growth_query_, access_filters, drill_state)
             print("sales_growth_query_: ", sales_growth_query_)
             # resp = await function(query=sales_growth_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_growth_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_growth_query_, limit=0)
             resp = resp.get("data", [])
             print("resp: ", resp)
             month_map = {'Apr': '0', 'May': '1', 'Jun': '2', 'Jul': '3', 'Aug': '4', 'Sep': '5', 'Oct': '6', 'Nov': '7',
@@ -2749,7 +2749,7 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": d}
         
         # resp = await function(query=sales_growth_query_)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=sales_growth_query_, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=sales_growth_query_, limit=0)
         resp = resp.get("data", [])
         resp = pd.DataFrame(resp)
         resp =resp.rename(columns = {'ORGSBUCD':'SBU','ORGSBUNAME':'SBU_Name','ORGZONECD':'ZONE','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
@@ -3115,7 +3115,7 @@ class GlobalAnalytics:
             print("Generated Query:", sales_performance_query_)  # Debugging: Print the generated query
 
             # resp = await function(query=sales_performance_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
             resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3146,7 +3146,7 @@ class GlobalAnalytics:
             '''
 
             # resp = await function(query=sales_performance_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
             resp = resp.get("data", [])
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3169,7 +3169,7 @@ class GlobalAnalytics:
         
         # Execute the query
         # resp = await function(query=sales_performance_query_)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(sales_performance_query_, limit=0)
         resp = resp.get("data", [])
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
@@ -3579,7 +3579,7 @@ class GlobalAnalytics:
             location_wise_distribution_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(location_wise_distribution_query, filters, drill_state)
         try:
             # resp = await function(query=location_wise_distribution_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=location_wise_distribution_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=location_wise_distribution_query_, limit=0)
             resp = resp.get("data", [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -3604,7 +3604,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_locations_query)
         # resp = await function(query=cp_locations_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_locations_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_locations_query, limit=0)
         resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
@@ -3624,7 +3624,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_dus_query)
         # resp = await function(query=cp_dus_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_dus_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_dus_query, limit=0)
         resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
@@ -3645,7 +3645,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_dus_query)
         # resp = await function(query=cp_dus_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_dus_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_dus_query, limit=0)
         resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
@@ -3665,7 +3665,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_query)
         # resp = await function(query=cp_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
         resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
@@ -3685,7 +3685,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_query)
         # resp = await function(query=cp_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
         resp = resp.get("data", [])
 
         return {"status": True, "message": "success", "data": resp}
@@ -3705,7 +3705,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_query)
         # resp = await function(query=cp_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
         resp = resp.get("data", [])
         return {"status": True, "message": "success", "data": resp}
 
@@ -3724,7 +3724,7 @@ class GlobalAnalytics:
         
         print("query before execution: ", cp_query)
         # resp = await function(query=cp_query)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
         resp = resp.get("data", [])
         return {"status": True, "message": "success", "data": resp}
     
@@ -3786,7 +3786,7 @@ class GlobalAnalytics:
             
             print("productivity_zone_query_ :", productivity_zone_query_)
             # resp = await function(query=productivity_zone_query_)
-            resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
             resp = resp.get("data", [])
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
@@ -3804,7 +3804,7 @@ class GlobalAnalytics:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
         # resp = await function(query=productivity_zone_query_)
-        resp = await hpcl_ceg_model.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
+        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
         resp = resp.get("data", [])
         if resp:
             resp = pd.DataFrame(resp)
@@ -5757,6 +5757,7 @@ class GlobalAnalytics:
         returned within the result dictionary.
         """
         try:
+            # Interlock mapping (keeping existing code)
             maintenance_interlocks = {
                 item["interlock_name"]: {
                     "alert_category": item["alert_category"],
@@ -5776,74 +5777,58 @@ class GlobalAnalytics:
             sop_ids = {item.get("sop_id") for item in maintenance_interlocks.values()} | \
                     {item.get("sop_id") for item in fault_interlocks.values()}
 
-            # Build filters
-            zone_filter = ''
-            plant_filter = ''
-            sensor_id_filter = ''
-            equipment_name_filter = ''
-            status = 'Open'  # Default status to 'Open'
+            # Build filters (keeping existing code)
+            zone_filter = plant_filter = sensor_id_filter = equipment_name_filter = ''
             if filters:
-                for filter in filters:
-                    if "zone" in filter.key:
-                        zone_filter = filter.value
-                    if "sap_id" in filter.key:
-                        plant_filter = filter.value
-                    if "sensor_id" in filter.key:
-                        sensor_id_filter = filter.value
-                    if "equipment_name" in filter.key:
-                        equipment_name_filter = filter.value
-                    if "status" in filter.key:
-                        status = filter.value
+                for f in filters:
+                    if "zone" in f.key:
+                        zone_filter = f.value
+                    if "sap_id" in f.key:
+                        plant_filter = f.value
+                    if "sensor_id" in f.key:
+                        sensor_id_filter = f.value
+                    if "equipment_name" in f.key:
+                        equipment_name_filter = f.value
 
-            # Build query
-            query = f"""SELECT created_at,
-                            sap_id,
-                            zone,
-                            sop_id,
-                            interlock_name,
-                            location_name,
-                            sensor_id,
-                            equipment_name,
-                            alert_status,
-                            COUNT(DISTINCT device_name) AS alert_count
-                        FROM alerts
-                        WHERE bu = 'TAS' AND alert_section = 'TAS'"""
+            # Get current date in IST
+            current_date = datetime.now().date()
+            yesterday = current_date - timedelta(days=1)
 
-            if status:
-                query += f" AND alert_status IN ('{status}')"
-            if sop_ids:
-                query += f" AND sop_id IN ({', '.join(f"'{s}'" for s in sop_ids if s)})"
-            if zone_filter:
-                query += f" AND zone IN ('{zone_filter}')"
-            if plant_filter:
-                query += f" AND sap_id IN ('{plant_filter}')"
-            if sensor_id_filter:
-                query += f" AND sensor_id IN ('{sensor_id_filter}')"
-            if equipment_name_filter:
-                query += f" AND equipment_name ilike ('%{equipment_name_filter}%')"
-
-            query += """
-                GROUP BY created_at, zone, interlock_name, sap_id, location_name, sop_id, sensor_id, equipment_name, alert_status
-                ORDER BY created_at DESC, alert_count DESC
+            # Simplified SQL Query for day-wise alert counts
+            query = f"""
+                SELECT 
+                    DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS created_date,
+                    DATE(closed_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS closed_date,
+                    sap_id,
+                    zone,
+                    location_name,
+                    interlock_name,
+                    sensor_id,
+                    equipment_name,
+                    device_name,
+                    alert_status,
+                    created_at,
+                    closed_at
+                FROM alerts
+                WHERE bu = 'TAS' AND alert_section = 'TAS'
+                {f"AND sop_id IN ({', '.join(f'\'{s}\'' for s in sop_ids if s)})" if sop_ids else ''}
+                {f"AND zone IN ('{zone_filter}')" if zone_filter else ''}
+                {f"AND sap_id IN ('{plant_filter}')" if plant_filter else ''}
+                {f"AND sensor_id IN ('{sensor_id_filter}')" if sensor_id_filter else ''}
+                {f"AND equipment_name ILIKE ('%{equipment_name_filter}%')" if equipment_name_filter else ''}
+                ORDER BY created_at ASC
             """
 
-            # Run query
+            # Execute query
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=100000)
-            resp = resp.get('data', '')
-
-            if not resp:
+            data = resp.get("data", [])
+            if not data:
                 return {"status": False, "message": "Data Not found", "data": {}}
 
-            # Convert to Polars DataFrame
-            resp_df = pl.DataFrame(resp)
-            resp_df = resp_df.with_columns(pl.col("created_at").cast(pl.Datetime))
+            df = pl.DataFrame(data, infer_schema_length=100000)
 
-            if resp_df.is_empty():
-                return {"status": True, "message": "success", "daily_data": {}, "monthly_data": {}}
-
-            # Add computed columns
-            resp_df = resp_df.with_columns([
-                pl.col("created_at").dt.convert_time_zone("UTC"),
+            # Add alert_category and clean up data
+            df = df.with_columns([
                 pl.col("interlock_name").map_elements(
                     lambda name: maintenance_interlocks.get(name, fault_interlocks.get(name, {})).get("alert_category")
                 ).alias("alert_category"),
@@ -5851,110 +5836,383 @@ class GlobalAnalytics:
                 pl.col("interlock_name").map_elements(
                     lambda name: "Tank" if name == "Tank_Under Maintenance"
                     else maintenance_interlocks.get(name, fault_interlocks.get(name, {})).get("equipment_name", name)
-                ).alias("equipment_name"),
-                pl.col("created_at").cast(pl.Date).alias("created_date")
+                ).alias("mapped_equipment_name"),
+                pl.col("created_date").cast(pl.Date),
+                pl.col("closed_date").cast(pl.Date),
+                pl.col("created_date").dt.strftime("%b-%Y").alias("month_year")
             ])
 
-            # Apply sensor and equipment filters again
-            if sensor_id_filter:
-                resp_df = resp_df.filter(pl.col("sensor_id") == sensor_id_filter)
-            if equipment_name_filter:
-                resp_df = resp_df.filter(pl.col("equipment_name") == equipment_name_filter)
+            # Filter out rows without alert_category
+            df = df.filter(pl.col("alert_category").is_not_null())
 
-            # Remove rows with null categories
-            resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
+            # Apply additional filtering if equipment_name or sensor_id filters are provided
+            if equipment_name_filter or sensor_id_filter:
+                filter_conditions = []
+                if equipment_name_filter:
+                    filter_conditions.append(pl.col("equipment_name").str.contains(equipment_name_filter, literal=False))
+                if sensor_id_filter:
+                    filter_conditions.append(pl.col("sensor_id") == sensor_id_filter)
+                
+                if filter_conditions:
+                    combined_filter = filter_conditions[0]
+                    for condition in filter_conditions[1:]:
+                        combined_filter = combined_filter & condition
+                    df = df.filter(combined_filter)
 
-            # Add month/year keys
-            resp_df = resp_df.with_columns([
-                pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),
-                pl.col("created_date").dt.strftime("%Y-%m").alias("sort_key")
-            ])
-
-            # Get date range
-            start = resp_df.select(pl.col("created_at").min()).to_series()[0].date()
-            # end = resp_df.select(pl.col("created_at").max()).to_series()[0].date()
-            end = datetime.utcnow().date()  # Make sure to go till today
-
-
-            def apply_carry_forward(result_dict, start, end, is_monthly):
-                def date_range(start, end, is_monthly):
-                    cur = start.replace(day=1) if is_monthly else start
-                    while cur <= end:
-                        yield cur.strftime("%b-%Y") if is_monthly else str(cur)
-                        cur = (cur.replace(day=1) + timedelta(days=32)).replace(day=1) if is_monthly else cur + timedelta(days=1)
-
-                all_periods = list(date_range(start, end, is_monthly))
-                all_types = {atype for cat in result_dict.values() for periods in cat.values() for atype in periods.keys()} or {"Equipment"}
-
-                # Ensure all periods and alert types exist
-                for cat in result_dict:
-                    for period in all_periods:
-                        result_dict[cat].setdefault(period, {})
-                        for atype in all_types:
-                            result_dict[cat][period].setdefault(atype, {"total": 0, "details": []})
-
-                # Accumulate
-                for cat in result_dict:
-                    for atype in all_types:
-                        prev_total = 0
-                        for period in sorted(all_periods, key=lambda x: datetime.strptime(x, "%b-%Y") if is_monthly else datetime.strptime(x, "%Y-%m-%d")):
-                            result_dict[cat][period][atype]["total"] += prev_total
-                            prev_total = result_dict[cat][period][atype]["total"]
-
-                return result_dict
-
-            # ---- MONTHLY DATA ----
-            result_monthly = {}
-            grouped_monthly = resp_df.group_by([
-                "sap_id", "zone", "location_name", "equipment_name", "alert_status", "sensor_id",
-                "month_year", "alert_category", "alert_type", "sort_key"
-            ]).agg(pl.sum("alert_count").alias("total"))
-
-            for row in grouped_monthly.sort("sort_key").iter_rows(named=True):
-                cat = row["alert_category"].lower()
-                result_monthly.setdefault(cat, {}).setdefault(row["month_year"], {}).setdefault(row["alert_type"], {"total": 0, "details": []})
-                detail = {k: row.get(k) for k in ["sap_id", "zone", "location_name", "equipment_name", "sensor_id", "alert_status"]}
-                detail["count"] = row["total"]
-                result_monthly[cat][row["month_year"]][row["alert_type"]]["total"] += row["total"]
-                result_monthly[cat][row["month_year"]][row["alert_type"]]["details"].append(detail)
-
-            result_monthly = apply_carry_forward(result_monthly, start, end, is_monthly=True)
-
-            # ---- DAILY DATA ----
+            # Initialize results
             result_daily = {}
-            grouped_daily = resp_df.group_by([
-                "sap_id", "zone", "location_name", "equipment_name", "alert_status", "sensor_id",
-                "created_date", "alert_category", "alert_type"
-            ]).agg(pl.sum("alert_count").alias("total"))
+            result_monthly = {}
 
-            for row in grouped_daily.iter_rows(named=True):
-                cat = row["alert_category"].lower()
-                date_key = str(row["created_date"])
-                result_daily.setdefault(cat, {}).setdefault(date_key, {}).setdefault(row["alert_type"], {"total": 0, "details": []})
-                detail = {k: row.get(k) for k in ["sap_id", "zone", "location_name", "equipment_name", "sensor_id", "alert_status"]}
-                detail["count"] = row["total"]
-                result_daily[cat][date_key][row["alert_type"]]["total"] += row["total"]
-                result_daily[cat][date_key][row["alert_type"]]["details"].append(detail)
+            # DAILY PROCESSING - Fixed logic
+            # Get all unique dates from created_date and closed_date
+            all_dates = set()
+            
+            # Add created dates
+            created_dates = df.select(pl.col("created_date")).filter(pl.col("created_date").is_not_null()).to_series().to_list()
+            all_dates.update(created_dates)
+            
+            # Add closed dates  
+            closed_dates = df.select(pl.col("closed_date")).filter(pl.col("closed_date").is_not_null()).to_series().to_list()
+            all_dates.update(closed_dates)
+            
+            # Add last 7 days to ensure we show open alerts even if no activity
+            for i in range(7):
+                date_to_add = current_date - timedelta(days=i)
+                all_dates.add(date_to_add)
 
-            result_daily = apply_carry_forward(result_daily, start, end, is_monthly=False)
+            # Process each date
+            for date in sorted(all_dates):
+                date_key = str(date)
+                
+                # Get alerts closed on this date
+                closed_today = df.filter(pl.col("closed_date") == date)
+                
+                # Get all alerts that are open on this date:
+                # 1. Created on or before this date AND (status is Open OR closed_date is null OR closed after this date)
+                open_alerts_on_date = df.filter(
+                    (pl.col("created_date") <= date) & 
+                    (pl.col("alert_status") == "Open")
+                )
+                
+                # Separate carry forward (created before this date) and current day (created on this date)
+                carry_forward_alerts = open_alerts_on_date.filter(pl.col("created_date") < date)
+                current_day_alerts = open_alerts_on_date.filter(pl.col("created_date") == date)
 
-            if "date" in drill_state:
-                return {
-                    "status": True,
-                    "message": "success",
-                    "daily_data": result_daily
-                }
-            else:
-                return {
-                    "status": True,
-                    "message": "success",
-                    "monthly_data": result_monthly
-                }
+                # Process closed alerts
+                if len(closed_today) > 0:
+                    closed_grouped = closed_today.group_by(["alert_category", "alert_type"]).agg([
+                        pl.col("device_name").n_unique().alias("unique_device_count"),
+                        pl.col("device_name").unique().alias("unique_device_names")
+                    ])
+                    
+                    for row in closed_grouped.iter_rows(named=True):
+                        cat = row["alert_category"].lower()
+                        alert_type = row["alert_type"]
+                        unique_count = row["unique_device_count"]
+                        
+                        # Create details for closed alerts
+                        details = []
+                        for device_name in row["unique_device_names"]:
+                            device_row = closed_today.filter(pl.col("device_name") == device_name).row(0, named=True)
+                            detail = {
+                                "sap_id": device_row["sap_id"],
+                                "zone": device_row["zone"],
+                                "location_name": device_row["location_name"],
+                                "equipment_name": device_row["equipment_name"],
+                                "device_name": device_name,
+                                "sensor_id": device_row["sensor_id"],
+                                "open_alerts_current_carry_count": 0,
+                                "open_alerts_current_day": 0,
+                                "close_alerts_current_day": 1
+                            }
+                            details.append(detail)
+                        
+                        # Initialize structure
+                        if cat not in result_daily:
+                            result_daily[cat] = {}
+                        if date_key not in result_daily[cat]:
+                            result_daily[cat][date_key] = {}
+                        if alert_type not in result_daily[cat][date_key]:
+                            result_daily[cat][date_key][alert_type] = {
+                                "open_alerts_current_carry_count": 0,
+                                "open_alerts_current_day": 0,
+                                "close_alerts_current_day": 0,
+                                "details": []
+                            }
+                        
+                        result_daily[cat][date_key][alert_type]["close_alerts_current_day"] = unique_count
+                        result_daily[cat][date_key][alert_type]["details"].extend(details)
+
+                # Process open alerts (carry forward + current day) - Always process even if no activity
+                # This ensures we show open alerts for last 7 days even with no new activity
+                open_grouped = open_alerts_on_date.group_by(["alert_category", "alert_type"]).agg([
+                    pl.col("device_name").n_unique().alias("unique_device_count"),
+                    pl.col("device_name").unique().alias("unique_device_names")
+                ]) if len(open_alerts_on_date) > 0 else pl.DataFrame()
+                
+                # If there are open alerts or we need to show last 7 days data
+                if len(open_alerts_on_date) > 0 or (current_date - date).days < 7:
+                    
+                    if len(open_grouped) > 0:
+                        for row in open_grouped.iter_rows(named=True):
+                            cat = row["alert_category"].lower()
+                            alert_type = row["alert_type"]
+                            total_open_count = row["unique_device_count"]
+                            
+                            # Calculate carry forward count for this specific category
+                            cat_carry_forward = carry_forward_alerts.filter(pl.col("alert_category") == row["alert_category"])
+                            carry_count = len(cat_carry_forward.select(pl.col("device_name")).unique()) if len(cat_carry_forward) > 0 else 0
+                            
+                            # Calculate current day open count for this specific category
+                            cat_current_day_alerts = current_day_alerts.filter(pl.col("alert_category") == row["alert_category"])
+                            current_day_count = len(cat_current_day_alerts.select(pl.col("device_name")).unique()) if len(cat_current_day_alerts) > 0 else 0
+
+                            # Create details for all open alerts (both carry forward and current day)
+                            details = []
+                            for device_name in row["unique_device_names"]:
+                                device_row = open_alerts_on_date.filter(pl.col("device_name") == device_name).row(0, named=True)
+                                
+                                # Check if this is carry forward or current day
+                                is_carry_forward = device_row["created_date"] < date
+                                is_open = device_row["created_date"] == date
+                                
+                                detail = {
+                                    "sap_id": device_row["sap_id"],
+                                    "zone": device_row["zone"],
+                                    "location_name": device_row["location_name"],
+                                    "equipment_name": device_row["equipment_name"],
+                                    "device_name": device_name,
+                                    "sensor_id": device_row["sensor_id"],
+                                    "open_alerts_current_carry_count": 1 if is_carry_forward else 0,
+                                    "open_alerts_current_day": 1 if is_open else 0,
+                                    "close_alerts_current_day": 0
+                                }
+                                details.append(detail)
+                            
+                            # Initialize structure
+                            if cat not in result_daily:
+                                result_daily[cat] = {}
+                            if date_key not in result_daily[cat]:
+                                result_daily[cat][date_key] = {}
+                            if alert_type not in result_daily[cat][date_key]:
+                                result_daily[cat][date_key][alert_type] = {
+                                    "open_alerts_current_carry_count": 0,
+                                    "open_alerts_current_day": 0,
+                                    "close_alerts_current_day": 0,
+                                    "details": []
+                                }
+                            
+                            result_daily[cat][date_key][alert_type]["open_alerts_current_carry_count"] = carry_count
+                            result_daily[cat][date_key][alert_type]["open_alerts_current_day"] = current_day_count
+                            # Add details, avoiding duplicates
+                            existing_devices = {d["device_name"] for d in result_daily[cat][date_key][alert_type]["details"]}
+                            for detail in details:
+                                if detail["device_name"] not in existing_devices:
+                                    result_daily[cat][date_key][alert_type]["details"].append(detail)
+                    
+                    # If there are open alerts but no grouped data (edge case), still show the structure
+                    elif len(open_alerts_on_date) > 0:
+                        # Get unique categories from open alerts
+                        unique_categories = open_alerts_on_date.select(pl.col("alert_category")).unique().to_series().to_list()
+                        for alert_category in unique_categories:
+                            cat = alert_category.lower()
+                            alert_type = "Equipment"
+                            
+                            cat_open_alerts = open_alerts_on_date.filter(pl.col("alert_category") == alert_category)
+                            cat_carry_forward = carry_forward_alerts.filter(pl.col("alert_category") == alert_category)
+                            carry_count = len(cat_carry_forward.select(pl.col("device_name")).unique()) if len(cat_carry_forward) > 0 else 0
+                            open_count = len(cat_open_alerts.select(pl.col("device_name")).unique()) if len(cat_open_alerts) > 0 else 0
+                            # Create details
+                            details = []
+                            unique_devices = cat_open_alerts.select(pl.col("device_name")).unique().to_series().to_list()
+                            for device_name in unique_devices:
+                                device_row = cat_open_alerts.filter(pl.col("device_name") == device_name).row(0, named=True)
+                                is_carry_forward = device_row["created_date"] < date
+                                is_open = device_row["created_date"] == date
+                                
+                                detail = {
+                                    "sap_id": device_row["sap_id"],
+                                    "zone": device_row["zone"],
+                                    "location_name": device_row["location_name"],
+                                    "equipment_name": device_row["equipment_name"],
+                                    "device_name": device_name,
+                                    "sensor_id": device_row["sensor_id"],
+                                    "open_alerts_current_carry_count": 1 if is_carry_forward else 0,
+                                    "open_alerts_current_day": 1 if is_open else 0,
+                                    "close_alerts_current_day": 0
+                                }
+                                details.append(detail)
+                            
+                            # Initialize structure
+                            if cat not in result_daily:
+                                result_daily[cat] = {}
+                            if date_key not in result_daily[cat]:
+                                result_daily[cat][date_key] = {}
+                            if alert_type not in result_daily[cat][date_key]:
+                                result_daily[cat][date_key][alert_type] = {
+                                    "open_alerts_current_carry_count": 0,
+                                    "open_alerts_current_day": 0,
+                                    "close_alerts_current_day": 0,
+                                    "details": []
+                                }
+                            
+                            result_daily[cat][date_key][alert_type]["open_alerts_current_carry_count"] = carry_count
+                            result_daily[cat][date_key][alert_type]["open_alerts_current_day"] = open_count
+                            result_daily[cat][date_key][alert_type]["details"] = details
+
+            all_months = df.select(pl.col("month_year")).unique().to_series().to_list()
+
+            def parse_month(month_str):
+                return datetime.strptime(month_str, "%b-%Y")
+
+            all_months.sort(key=parse_month)
+
+            for month in all_months:
+                month_date = parse_month(month)
+                month_start = month_date.replace(day=1).date()
+                if month_date.month == 12:
+                    month_end = month_date.replace(year=month_date.year + 1, month=1, day=1).date() - timedelta(days=1)
+                else:
+                    month_end = month_date.replace(month=month_date.month + 1, day=1).date() - timedelta(days=1)
+
+                # Process each category separately
+                categories = df.select(pl.col("alert_category")).unique().filter(pl.col("alert_category").is_not_null()).to_series().to_list()
+                
+                for category in categories:
+                    cat = category.lower()
+                    alert_type = "Equipment"
+                    
+                    # Get ALL alerts for this category (no month filtering yet)
+                    category_alerts = df.filter(pl.col("alert_category") == category)
+                    
+                    if len(category_alerts) == 0:
+                        continue
+                    
+                    # Now separate into different buckets
+                    
+                    # 1. Alerts created in this month AND still open at month end
+                    created_this_month_and_open = category_alerts.filter(
+                        (pl.col("created_date") >= month_start) & 
+                        (pl.col("created_date") <= month_end) &
+                        (
+                            (pl.col("alert_status") == "Open")
+                        )
+                    )
+                    
+                    # 2. Alerts closed in this month (regardless of when created)
+                    closed_this_month = category_alerts.filter(
+                        (pl.col("closed_date") >= month_start) & 
+                        (pl.col("closed_date") <= month_end)
+                    )
+                    
+                    # 3. Carry forward alerts (created before month and still open at month end)
+                    carry_forward = category_alerts.filter(
+                        (pl.col("created_date") < month_start) &
+                        (
+                            (pl.col("alert_status") == "Open")
+                        )
+                    )
+                    
+                    # Get unique devices for each bucket
+                    created_and_open_devices = set()
+                    closed_devices = set() 
+                    carry_devices = set()
+                    
+                    if len(created_this_month_and_open) > 0:
+                        created_and_open_devices = set(created_this_month_and_open.select(pl.col("device_name")).unique().to_series().to_list())
+                        
+                    if len(closed_this_month) > 0:
+                        closed_devices = set(closed_this_month.select(pl.col("device_name")).unique().to_series().to_list())
+                        
+                    if len(carry_forward) > 0:
+                        carry_devices = set(carry_forward.select(pl.col("device_name")).unique().to_series().to_list())
+                    
+                    # Get all unique devices that had any activity
+                    all_devices = created_and_open_devices | closed_devices | carry_devices
+                    
+                    if not all_devices:
+                        continue
+                        
+                    details = []
+                    
+                    # Process each unique device
+                    for device_name in all_devices:
+                        # Get the most recent alert for this device in this category
+                        device_alerts = category_alerts.filter(pl.col("device_name") == device_name)
+                        device_row = device_alerts.sort("created_at", descending=True).row(0, named=True)
+                        
+                        # Determine flags for this device
+                        carry_forward_flag = 1 if device_name in carry_devices else 0
+                        current_month_flag = 1 if device_name in created_and_open_devices else 0
+                        closed_flag = 1 if device_name in closed_devices else 0
+                        
+                        detail = {
+                            "sap_id": device_row["sap_id"],
+                            "zone": device_row["zone"], 
+                            "location_name": device_row["location_name"],
+                            "equipment_name": device_row["equipment_name"],
+                            "device_name": device_name,
+                            "sensor_id": device_row["sensor_id"],
+                            "open_alerts_current_carry_count": carry_forward_flag,
+                            "open_alerts_current_day": current_month_flag,  # This is for current month
+                            "close_alerts_current_day": closed_flag
+                        }
+                        details.append(detail)
+                    
+                    # Calculate final counts
+                    carry_count = len(carry_devices)
+                    current_month_count = len(created_and_open_devices)  # Fixed: only alerts created this month AND still open
+                    closed_count = len(closed_devices)
+                    
+                    # Create result entry
+                    if details:
+                        if cat not in result_monthly:
+                            result_monthly[cat] = {}
+                        if month not in result_monthly[cat]:
+                            result_monthly[cat][month] = {}
+                        
+                        result_monthly[cat][month][alert_type] = {
+                            "open_alerts_current_carry_count": carry_count,
+                            "open_alerts_current_day": current_month_count,  # This represents current month count
+                            "close_alerts_current_day": closed_count,
+                            "details": details
+                        }
+                        
+                    print(f"Month: {month}, Category: {cat}")
+                    print(f"  Created this month and still open: {len(created_and_open_devices)} - {created_and_open_devices}")
+                    print(f"  Closed devices: {len(closed_devices)} - {closed_devices}")
+                    print(f"  Carry forward devices: {len(carry_devices)} - {carry_devices}")
+                    print(f"  Total unique devices: {len(all_devices)}")
+                    print(f"  Final counts - Carry: {carry_count}, Current Month: {current_month_count}, Closed: {closed_count}")
+                    print("---")
+            # Sort results
+            for cat in result_daily:
+                result_daily[cat] = OrderedDict(
+                    sorted(
+                        result_daily[cat].items(),
+                        key=lambda x: datetime.strptime(x[0], "%Y-%m-%d")
+                    )
+                )
+
+            for cat in result_monthly:
+                result_monthly[cat] = OrderedDict(
+                    sorted(
+                        result_monthly[cat].items(),
+                        key=lambda x: datetime.strptime(x[0], "%b-%Y")
+                    )
+                )
+
+            return {
+                "status": True,
+                "message": "success",
+                "daily_data": result_daily if "date" in drill_state else {},
+                "monthly_data": result_monthly if "date" not in drill_state else {}
+            }
 
         except Exception:
             print(traceback.format_exc())
             return {"status": False, "message": "Internal error occurred", "data": {}}
-    
+
     @staticmethod
     async def tas_maintenance_fault_dropdown(filters, cross_filters, drill_state):
         """
@@ -9077,10 +9335,10 @@ class GlobalAnalytics:
 
         # Final query
         query = (
-            f"SELECT zone, sap_id, location_name, terminal_plant_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count "
+            f"SELECT zone, sap_id, location_name, terminal_plant_id, product_code, created_at, count(sap_id) total_count "
             f"FROM alerts "
             f"WHERE {where_clause} "
-            f"GROUP BY zone, sap_id, product_code, location_name, terminal_plant_id "
+            f"GROUP BY zone, sap_id, product_code, location_name, terminal_plant_id, created_at "
             f"ORDER BY zone, sap_id, product_code"
         )
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)

@@ -385,8 +385,13 @@ class IndentDryOut:
             #    pytz.timezone('Asia/Kolkata')))
             todays_date = datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
             if todays_date.date() > workflow_date.date():
+                dry_alert_data = await Alerts.get(self.params["alert_id"])
+                if not isinstance(dry_alert_data, dict):
+                    dry_alert_data = dry_alert_data.__dict__
                 if await self._is_indent_delivered():
-                    if await self._close_camunda_workflow():
+                    if dry_alert_data.get("alert_status") == 'Close' and dry_alert_data.get('indent_status') == 'Completed':
+                        await self._close_camunda_workflow()
+                    if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') != 'Completed':
                         print("Indent as been delivered but still alert is in Intial stage")
                         # print("Params: ", self.params)
                         input_data = {
@@ -412,8 +417,11 @@ class IndentDryOut:
                             indent_status=IndentStatus.Completed
                         )
                     return await self.send_alert_action(is_raised=False)
+                    
                 elif await self._is_indent_delivered_ims():
-                    if await self._close_camunda_workflow():
+                    if dry_alert_data.get("alert_status") == 'Close' and dry_alert_data.get('indent_status') == 'Completed':
+                        await self._close_camunda_workflow()
+                    if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') != 'Completed':
                         print("Indent as been delivered but still alert is in Intial stage")
                         # print("Params: ", self.params)
                         input_data = {
@@ -440,7 +448,9 @@ class IndentDryOut:
                         )
                     return await self.send_alert_action(is_raised=False)
                 elif await self._is_indent_delivered():
-                    if await self._close_camunda_workflow():
+                    if dry_alert_data.get("alert_status") == 'Close' and dry_alert_data.get('indent_status') == 'Completed':
+                        await self._close_camunda_workflow()
+                    if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') !='Completed':
                         print("Indent as been delivered but still alert is in Intial stage")
                         # print("Params: ", self.params)
                         input_data = {
@@ -1642,8 +1652,14 @@ class IndentDryOut:
         camunda_listener_mapping = list(connection_mapping.camunda_listener_mapping.values())
         process_instance_id = ""
         params = {"businessKey": business_key}
+
+        dry_alert_data = await Alerts.get(self.params["alert_id"])
+
+        if not isinstance(dry_alert_data, dict):
+            dry_alert_data = dry_alert_data.__dict__
+
         camunda_url = await helpers.get_alert_camunda_url(self.params["alert_id"],
-                                                          f"{urdhva_base.settings.camunda_url}")
+                                                          f"{dry_alert_data.get("workflow_url")}")  
         for camunda_map in camunda_listener_mapping:
             camunda_host = f"http://{camunda_map['host']}:{camunda_map['port']}"
             url = f"{camunda_url}/engine-rest/process-instance"
@@ -1669,7 +1685,7 @@ class IndentDryOut:
         business_key = alert_data.get("unique_id")
         if not 'CAMUNDA_URL' in self.params.keys():
             self.params['CAMUNDA_URL'] = await helpers.get_alert_camunda_url(self.params["alert_id"],
-                                                          f"{urdhva_base.settings.camunda_url}")
+                                                          f"{alert_data.get('workflow_url')}")
 
         camunda_url, instance_id = await self.get_process_instance_id(business_key)
         # if 'camunda_host' in self.params.keys():

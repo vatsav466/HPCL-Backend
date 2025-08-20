@@ -386,6 +386,7 @@ class Charts_Generate_Vis_DataParams(pydantic.BaseModel):
     time_grain: typing.Optional[str] = pydantic.Field("", **{})
     resp_format: typing.Optional[str] = pydantic.Field("", **{'pattern': '^([a-zA-Z0-9_. ]+|)$'})
     resp_level: typing.Optional[str] = pydantic.Field("", **{})
+    payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -870,17 +871,13 @@ class Dashboardgroups_Update_Dashboard_Group_OrderParams(pydantic.BaseModel):
 class AITextsSchema(UrdhvaPostgresBase):
     __tablename__ = 'ai_texts'
     
-    ai_text: Mapped[str] = mapped_column("ai_text", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    organization_id: Mapped[int] = mapped_column("organization_id", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    requested_by: Mapped[typing.Optional[str]] = mapped_column("requested_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    ai_texts: Mapped[str] = mapped_column("ai_texts", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
 
 class AITextsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'ai_texts'
     
-    ai_text: str
-    organization_id: int
-    requested_by: typing.Optional[str] = pydantic.Field("", **{})
+    ai_texts: str
 
     class Config:
         collection_name = 'ai_texts'
@@ -893,9 +890,7 @@ class AITextsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 class AITexts(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'ai_texts'
     
-    ai_text: typing.Optional[str] | None = None
-    organization_id: typing.Optional[int] | None = None
-    requested_by: typing.Optional[str] = pydantic.Field("", **{})
+    ai_texts: typing.Optional[str] | None = None
 
     class Config:
         collection_name = 'ai_texts'

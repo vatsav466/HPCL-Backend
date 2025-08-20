@@ -284,28 +284,28 @@ VA_Alert_Mapping = {
     "TAS": {
         "ABSENCE_OF_FIRE_EXTINGUISHER_DECANTATION": {
             "name": "Non compliance of Fire Extinguisher (TT Unloading)",
-            "severity": "Critical",
+            "severity": "Medium",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
                     "value": 10,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 25,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "condition": ">",
+                    "value": 10,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "value": 10,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT6H"
                 }
             }
@@ -318,22 +318,34 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 1,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
+                                    f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
+                    "escalation_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
+                                    f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 2,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "assign_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
+                                    f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
+                    "escalation_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
+                                    f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 2,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "assign_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
+                                    f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
+                    "escalation_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
+                                    f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
                     "escalation_time": "PT30S"
                 }
             }
@@ -346,22 +358,22 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 10,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 25,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
@@ -374,134 +386,134 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 10,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 25,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "value": 50,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "value": 50,
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
         },
         "LOCKIN_POSITION_DOME_COVERS": {
             "name": "TT Dome Covers",
-            "severity": "Critical",
+            "severity": "High",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
                     "value": 10,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 25,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
         },
         "VALVE_OPEN": {
             "name": "valve Box in open status",
-            "severity": "Critical",
+            "severity": "High",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
                     "value": 10,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 25,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
         },
         "ABSENCE_OF_SAFETY_HARNESS": {
             "name": "Safety Harness non compliance (TT Unloading)",
-            "severity": "Critical",
+            "severity": "High",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
                     "value": 10,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 25,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "condition": ">",
+                    "value": 10,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
-                    "escalation_time": "PT6H"
+                    "value": 10,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
         "ABSENCE_OF_WHEELCHOCK": {
             "name": "Wheel choke non compliance (TT Unloading)",
-            "severity": "Critical",
+            "severity": "Medium",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 10,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "value": 50,
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 25,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "condition": ">",
+                    "value": 50,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "value": 50,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
@@ -513,51 +525,51 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 25,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "value": 10,
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 50,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
         },
         "OBSTRUCTION": {
             "name": "Obstruction on approach road (Emergency gate)",
-            "severity": "High",
+            "severity": "Medium",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
                     "value": 25,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 50,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 50,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "value": 25,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
@@ -570,22 +582,22 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 25,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 50,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 50,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "value": 25,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
@@ -598,190 +610,134 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 25,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 50,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
         },
         "ABSENCE_OF_TT_CREW": {
             "name": "TT Crew non availability (TT unloading)",
-            "severity": "High",
+            "severity": "Low",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
                     "value": 25,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 50,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 50,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "value": 25,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
         },
         "PERSON_BELOW_TT": {
             "name": "TT Crew entering below TT",
-            "severity": "High",
+            "severity": "Medium",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 25,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "value": 50,
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
-                    "condition": "<>",
+                    "condition": ">",
                     "value": 50,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
         },
         "COOKING": {
             "name": "Unauthorized activity in parking area",
-            "severity": "High",
-            "period": "weekly",
-            "escalations": {
-                "level - 1": {
-                    "condition": "<",
-                    "value": 25,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT1H"
-                },
-                "level - 2": {
-                    "condition": "<>",
-                    "value": 50,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
-                    "escalation_time": "PT1H"
-                },
-                "level - 3": {
-                    "condition": ">",
-                    "value": 50,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
-                    "escalation_time": "PT1H"
-                }
-            }
-        },
-        "CRASH_GUARD_STATUS": {
-            "name": "Non availability of Crash Guard in TT",
             "severity": "Medium",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 35,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "value": 50,
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 60,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "condition": ">",
+                    "value": 50,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 60,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
-                    "escalation_time": "PT1H"
-                }
-            }
-        },
-        "KEY_REMOVAL": {
-            "name": "Emergency gate Key Removal",
-            "severity": "Medium",
-            "period": "weekly",
-            "escalations": {
-                "level - 1": {
-                    "condition": "<",
-                    "value": 35,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT1H"
-                },
-                "level - 2": {
-                    "condition": "<>",
-                    "value": 60,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
-                    "escalation_time": "PT1H"
-                },
-                "level - 3": {
-                    "condition": ">",
-                    "value": 60,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "value": 50,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
         },
         "PARKING_DISCIPLINE": {
             "name": "Parking Discipline deviation",
-            "severity": "Medium",
+            "severity": "Low",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 35,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "value": 70,
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 60,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "condition": ">",
+                    "value": 70,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 60,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "value": 70,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
@@ -793,23 +749,23 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 2,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "value": 75,
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 20,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
+                    "condition": ">",
+                    "value": 75,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 20,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "value": 75,
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT1H"
                 }
             }
@@ -822,78 +778,22 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 50,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
+                    "assign_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "escalation_role": "Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD",
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 100,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
-                    "escalation_time": "PT6H"
-                },
-                "level - 3": {
                     "condition": ">",
-                    "value": 100,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
-                    "escalation_time": "PT6H"
-                }
-            }
-        },
-        "TT_BRANDING": {
-            "name": "TT Branding non compliance",
-            "severity": "Low",
-            "period": "weekly",
-            "escalations": {
-                "level - 1": {
-                    "condition": "<",
                     "value": 50,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT6H"
-                },
-                "level - 2": {
-                    "condition": "<>",
-                    "value": 100,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
-                    "escalation_time": "PT6H"
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 100,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
-                    "escalation_time": "PT6H"
-                }
-            }
-        },
-        "UNAUTH_STACKING": {
-            "name": "Unauthorized activity (Stacking of unwanted material in shed)",
-            "severity": "Low",
-            "period": "weekly",
-            "escalations": {
-                "level - 1": {
-                    "condition": "<",
                     "value": 50,
-                    "assign_role": "Safety Officer SOD",
-                    "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT6H"
-                },
-                "level - 2": {
-                    "condition": "<>",
-                    "value": 100,
-                    "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operations Head SOD",
-                    "escalation_time": "PT6H"
-                },
-                "level - 3": {
-                    "condition": ">",
-                    "value": 100,
-                    "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operations SOD",
+                    "assign_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
+                    "escalation_role": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD",
                     "escalation_time": "PT6H"
                 }
             }
@@ -902,28 +802,28 @@ VA_Alert_Mapping = {
     "LPG": {
         "TTCrew-NearTT": {
             "name": "TT Crew non avaibaility near TT",
-            "severity": "Medium",
+            "severity": "High",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 35,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "value": 25,
+                    "assign_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
+                    "escalation_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 60,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 60,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "value": 25,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 }
             }
@@ -936,22 +836,34 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 1,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                    "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 2,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                    "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 2,
-                    "assign_role": "HQO HSE LPG",
-                    "escalation_role": "HQO Operations LPG",
+                    "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                    "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 }
             }
@@ -964,50 +876,62 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 1,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                    "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 2,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                    "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 2,
-                    "assign_role": "HQO HSE LPG",
-                    "escalation_role": "HQO Operations LPG",
+                    "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                    "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT30S"
                 }
             }
         },
         "Fire-Extinguisher": {
             "name": "Fire Extinguisher Non Compliance (TT)",
-            "severity": "High",
+            "severity": "Critical",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
                     "value": 10,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "assign_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
+                    "escalation_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 15,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "value": 50,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 15,
-                    "assign_role": "HQO HSE LPG",
-                    "escalation_role": "HQO Operations LPG",
+                    "value": 50,
+                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
                     "escalation_time": "PT6H"
                 }
             }
@@ -1020,50 +944,50 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 10,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "assign_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
+                    "escalation_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 15,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "condition": ">",
+                    "value": 10,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 15,
-                    "assign_role": "HQO HSE LPG",
-                    "escalation_role": "HQO Operations LPG",
+                    "value": 10,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 }
             }
         },
         "Intrusion-PersonAtPerimeter": {
             "name": "Perimeter Intrusion",
-            "severity": "Critical",
+            "severity": "High",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
                     "value": 10,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "assign_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
+                    "escalation_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 25,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "value": 50,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25,
-                    "assign_role": "HQO HSE LPG",
-                    "escalation_role": "HQO Operations LPG",
+                    "value": 50,
+                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
                     "escalation_time": "PT1H"
                 }
             }
@@ -1075,23 +999,35 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 5,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "value": 1,
+                    "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                    "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 15,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "value": 2,
+                    "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                    "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 15,
-                    "assign_role": "HQO HSE LPG",
-                    "escalation_role": "HQO Operations LPG",
+                    "value": 2,
+                    "assign_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
+                    "escalation_role": (f"Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG,"
+                                    f"Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,"
+                                    f"Zonal Operations LPG,HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG"),
                     "escalation_time": "PT1H"
                 }
             }
@@ -1104,50 +1040,50 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 5,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "assign_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
+                    "escalation_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 15,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 15,
-                    "assign_role": "HQO HSE LPG",
-                    "escalation_role": "HQO Operations LPG",
+                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
                     "escalation_time": "PT1H"
                 }
             }
         },
         "PPE-Compliance": {
             "name": "PPE non compliance",
-            "severity": "Medium",
+            "severity": "Critical",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
                     "value": 25,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "assign_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
+                    "escalation_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 50,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
-                    "assign_role": "HQO HSE LPG",
-                    "escalation_role": "HQO Operations LPG",
+                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
                     "escalation_time": "PT6H"
                 }
             }
@@ -1160,22 +1096,22 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 35,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "assign_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
+                    "escalation_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 60,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "condition": ">",
+                    "value": 35,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 60,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "value": 35,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 }
             }
@@ -1188,22 +1124,22 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 25,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "assign_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
+                    "escalation_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 50,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 50,
-                    "assign_role": "HQO HSE LPG",
-                    "escalation_role": "HQO Operations LPG",
+                    "value": 25,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 }
             }
@@ -1216,22 +1152,22 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 50,
-                    "assign_role": "Safety Officer LPG",
-                    "escalation_role": "Location In-Charge LPG",
+                    "assign_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
+                    "escalation_role": "Safety Officer LPG,Location In-Charge LPG,Maintenance Officer LPG,Planning Officer LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
-                    "condition": "<>",
-                    "value": 100,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "condition": ">",
+                    "value": 50,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 100,
-                    "assign_role": "Zonal HSE LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "value": 50,
+                    "assign_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
+                    "escalation_role": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG",
                     "escalation_time": "PT6H"
                 }
             }

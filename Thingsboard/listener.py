@@ -77,7 +77,7 @@ class TelemetryService:
             async with aiohttp.ClientSession() as session:
                 async with session.post(telemetry_url, json=payload, headers=headers, ssl=False) as response:
                     if response.status == 200:
-                        print(f"Successfully posted telemetry for deviceKey: {device_key}")
+                        #print(f"Successfully posted telemetry for deviceKey: {device_key}")
                         return True
                     else:
                         print(f"Failed to post telemetry for deviceKey: {device_key}. Status code: {response.status}")
@@ -123,8 +123,8 @@ class TelemetryService:
                         value = tags_data[tag_path]
                         # Post telemetry using the fetched ThingsBoard URL
                         tasks.append(TelemetryService.post_telemetry(device_key, sensor['sensor_name'], value)) # pass thingsboard_url by calling get_thingsboard_url function if required  
-                    else:
-                        print(f"No value found for TagPath: {tag_path} in message.")
+                    #else:
+                       # print(f"No value found for TagPath: {tag_path} in message.")
             results = await asyncio.gather(*tasks, return_exceptions=True)
             return all(result is True for result in results)
         except Exception as e:
@@ -170,7 +170,7 @@ async def rabbitmq_listener(sap_id):
             await asyncio.sleep(5)
 
 async def main():
-    sap_ids = ["1999", "1128", "1919", "1155", "1334", "1216"]  # Add all the SAP IDs you want to listen for
+    sap_ids = ["1999", "1128", "1919", "1155", "1334", "1216", "1259", "1412", "1146", "1509", "1892"]  # Add all the SAP IDs you want to listen for
     tasks = [rabbitmq_listener(sap_id) for sap_id in sap_ids]
     await asyncio.gather(*tasks)
 

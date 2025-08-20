@@ -1,3 +1,4 @@
+import urdhva_base
 import os
 import sys
 import uuid
@@ -10,6 +11,7 @@ from dateutil.relativedelta import relativedelta
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
 
+logger = urdhva_base.logger.Logger.getInstance("cdcms_data_sync_log")
 
 def get_db_connection():
     """
@@ -76,6 +78,7 @@ def insertToDB(data, table_name, indexing_col=()):
         try:
             data = data.with_columns(pl.col(col).fill_null(0).cast(pl.Int64).alias(col))
         except Exception as e:
+            logger.error(f"Couldn't convert to Integer : {col}")
             print("Couldn't convert to Integer :", col)
             continue
     print("-"*50)
@@ -132,6 +135,7 @@ def insertToDB(data, table_name, indexing_col=()):
             os.remove(f'/tmp/{table_name}.csv')
         print(f"-- Data has been inserted to {table_name} --")
     except Exception as e:
+        logger.error(f"-- Failed to inserted data into {table_name} --")
         print("Error :", str(e))
         raise Exception(e)
 

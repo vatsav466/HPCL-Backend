@@ -1,6 +1,7 @@
 import urdhva_base
 import json
 import math
+import pytz
 import requests
 import datetime
 import calendar
@@ -150,8 +151,9 @@ async def get_period_datetime(period: str, today=None):
         end_of_month = today.replace(day=last_day, hour=23, minute=59, second=59, microsecond=999999)
         return start_of_month, end_of_month
     if period == 'fortnight':
+        ist = pytz.timezone('Asia/Kolkata')
         if not today:
-            today = datetime.datetime.now(datetime.timezone.utc)
+            today = datetime.datetime.now(ist)
         year, month = today.year, today.month
         first_half_start = datetime.datetime(year, month, 1, 0, 0, 0)
         first_half_end = datetime.datetime(year, month, 15, 23, 59, 59)
@@ -247,3 +249,12 @@ async def get_lpg_levels(bu: str, violation_type: str, sap_id: str):
                 print("-"*10)
                 return key
     return ""
+
+async def is_alert_exists(alert_id: str):
+    query = f"select id from alerts where external_id = '{alert_id}' and alert_section = 'VA'"
+    print("query: ", query)
+    va_alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+    print("va_alert_data: ", va_alert_data)
+    if va_alert_data.get("data", []):
+        return True
+    return False

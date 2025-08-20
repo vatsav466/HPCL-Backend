@@ -133,6 +133,8 @@ async def process_data(data):
     print("Before dropping blank Zone :", len(data))
     data = data[data["zone"].fillna("") != ""]
     print("After dropping blank Zone :", len(data))
+    data = data.drop_duplicates(["sap_id"])
+    print("After dropping duplicates :", len(data))
     return data
 
 

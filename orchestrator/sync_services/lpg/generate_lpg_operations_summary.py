@@ -1,3 +1,4 @@
+import urdhva_base
 import os
 import sys
 import psycopg2
@@ -10,6 +11,8 @@ from sqlalchemy import create_engine
 from datetime import datetime, timedelta
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
+
+logger = urdhva_base.logger.Logger.getInstance("lpg_rejection_data_sync_log")
 
 class LPG_CONSOLIDATED():
     def __init__(self, host, database, user, password, port, plantShortName):
@@ -234,6 +237,7 @@ class LPG_CONSOLIDATED():
     def getStartEndTimes(self, carousal):
         carousalConfig = self.getCarousalConfig(self.plantShortName)
         if not carousalConfig:
+            logger.error("Error Processing Request: Carousal configuration not found")
             raise Exception("Error Processing Request: Carousal configuration not found")
         return {
             'start': carousalConfig[int(carousal)]['times']['start'],
@@ -1008,6 +1012,7 @@ def insertToDB(data, table_name):
         if os.path.exists(f'/tmp/{table_name}.csv'):
             os.remove(f'/tmp/{table_name}.csv')
     except Exception as e:
+        logger.error(e)
         print("Error :", str(e))
         raise Exception(e)
     
@@ -1082,6 +1087,7 @@ def generate_summary():
                     insertToDB(data, "lpg_operations_summary")
                 current_date += timedelta(days=1)
     except Exception as e:
+        logger.error(f"Exception While Running Lpg Operations Data Sync : {str(e)}")
         print("-- Exception While Running Lpg Operations Data Sync --")
         print("traceback :", traceback.format_exc())
         query = f""" TRUNCATE lpg_operations_data; """

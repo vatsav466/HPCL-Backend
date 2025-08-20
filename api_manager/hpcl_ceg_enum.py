@@ -31,6 +31,16 @@ class DeviceType(str, enum.Enum):
 
 
 
+class LoginStatus(str, enum.Enum):
+    login = 'Logged In'
+    logout = 'Logged Out'
+
+
+
+
+
+
+
 class NotificationLevel(str, enum.Enum):
     InitialNotification = 'InitialNotification'
     InitialEscalation = 'InitialEscalation'
@@ -167,7 +177,8 @@ class IndentStatus(str, enum.Enum):
 
 
 class TasLogAction(str, enum.Enum):
-    Shutdown = 'Shutdown'
+    GantryShutdown = 'GantryShutdown'
+    ESDShutdown = 'ESDShutdown'
     SignalClearOff = 'SignalClearOff'
 
 

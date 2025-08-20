@@ -140,7 +140,6 @@ class IndentDryOut:
                 "is_raised": False
             }
         }
-        print("resp: ", resp)
         if not resp:
             return await self.send_alert_action(is_raised=False)
 

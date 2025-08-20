@@ -159,6 +159,7 @@ class AlertFactory:
                                                         'cause_effect': alert_data.get('Cause_Effect', ''),
                                                         'workflow_url': alert_data.get('workflow_url', ''),
                                                         'workflow_port': alert_data.get('workflow_port', ''),
+                                                        'vts_alert_history_ids': alert_data.get('vts_alert_history_ids',[]),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -304,6 +305,9 @@ class AlertFactory:
                 
             # Get redis connection for later use
             redis_ins = await urdhva_base.redispool.get_redis_connection()
+
+            interlock_closed = False
+            alert_closed = False
             
             # Handle case with explicit interlock_id
             if 'interlock_id' in alert_data:
@@ -347,6 +351,8 @@ class AlertFactory:
                     # Update the alert record
                     data_obj = hpcl_ceg_model.Alerts(**al_data)
                     await data_obj.modify()
+                    interlock_closed = True
+                    alert_closed = True
                     logger.info(f"Closed alert with ID: {alert_data['alert_id']}")
                 except Exception as e:
                     print(traceback.format_exc())
@@ -396,6 +402,8 @@ class AlertFactory:
 
                 # Handle case where both Interlock and Alert are not found
                 if not alert_data_list and not il_data:
+                    print("alert_data_list ", alert_data_list)
+                    print("il_data ", il_data)
                     logger.warning("Both Interlock and Alert records not found. Skipping closure.")
                     return False, {"status": "Error", "message": "No matching interlock or alert records found"}
 
@@ -450,7 +458,7 @@ class AlertFactory:
                     logger.warning("Failed to close any alerts or interlocks")
                     return False, {"status": "Warning", "message": "Failed to close any alerts or interlocks"}
 
-            return True, {"status": "Success", "message": "Alert Closed"}
+            return True, {"status": "Success", "message": "Alert Closed", "alert_closed": alert_closed, "interlock_closed": interlock_closed}
             
         except Exception as e:
             logger.error(f"Error in alert closure: {str(e)}")

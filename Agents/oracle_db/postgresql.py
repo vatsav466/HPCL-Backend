@@ -1,5 +1,6 @@
 import urdhva_base
 import re
+import pytz
 import json
 import uuid
 import asyncio
@@ -262,10 +263,12 @@ class Postgresql:
         dict: Status and message of the operation.
         """
         for record in sample_records:
+            record.pop("SR_NUMBER", None)
+
             if "cum_start_mass_mt" in record and record["cum_start_mass_mt"] is not None:
-                record["cum_start_mass_mt"] = int(record["cum_start_mass_mt"])
+                record["cum_start_mass_mt"] = str(record["cum_start_mass_mt"])
             if "cum_end_mass_mt" in record and record["cum_end_mass_mt"] is not None:
-                record["cum_end_mass_mt"] = int(record["cum_end_mass_mt"])
+                record["cum_end_mass_mt"] = str(record["cum_end_mass_mt"])
             if "date" in record and isinstance(record["date"], str):
                 try:
                     record["date"] = date.fromisoformat(record["date"])
@@ -416,7 +419,6 @@ class Postgresql:
                 
                 # After processing, update processed_data with our filtered results
                 processed_data = filtered_data
-            
             status, msg = await model.bulk_update(processed_data, upsert=True, upsert_skip_keys=['alert_created'])
 
             # Alert processing logic remains the same, but with SAP ID specific filtering
@@ -480,33 +482,33 @@ class Postgresql:
                             is_close_alert, interlock_name, device_msg = result
                             # Now proceed to create alert
                         
-                        print("device_msg --> ", device_msg)
-                        # Prepare alert data
-                        if interlock_name != '' and interlock_name is not None:
-                            alert_data = {
-                                'bu': 'TAS',
-                                'sop_id': sop_id,
-                                'sap_id': record.get('sap_id'),
-                                'interlock_name': interlock_name,
-                                'severity': severity,
-                                'alert_id': str(uuid.uuid1()),
-                                'device_name': str(record.get('manual_fan_count', '')),
-                                'device_type': 'Gantry',
-                                'vehicle_number': record.get('truck_number', ''),
-                                'message': device_msg,
-                                'alert_section': 'TAS'
-                            }
+                            print("device_msg --> ", device_msg)
+                            # Prepare alert data
+                            if interlock_name != '' and interlock_name is not None:
+                                alert_data = {
+                                    'bu': 'TAS',
+                                    'sop_id': sop_id,
+                                    'sap_id': record.get('sap_id'),
+                                    'interlock_name': interlock_name,
+                                    'severity': severity,
+                                    'alert_id': str(uuid.uuid1()),
+                                    'device_name': str(record.get('manual_fan_count', '')),
+                                    'device_type': 'Gantry',
+                                    'vehicle_number': record.get('truck_number', ''),
+                                    'message': device_msg,
+                                    'alert_section': 'TAS'
+                                }
 
-                            # Create alert for non-zero records
-                            success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-                            
-                            # Close alert if needed
-                            if is_close_alert:
-                                await self.close_created_alert(alert_data=alert_data)
+                                # Create alert for non-zero records
+                                success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
                                 
-                            # Mark record as processed
-                            query = f"UPDATE {table_db_name} SET alert_created = true WHERE id = {record['id']}"
-                            await model.update_by_query(query)
+                                # Close alert if needed
+                                if is_close_alert:
+                                    await self.close_created_alert(alert_data=alert_data)
+                                    
+                                # Mark record as processed
+                                query = f"UPDATE {table_db_name} SET alert_created = true WHERE id = {record['id']}"
+                                await model.update_by_query(query)
                     
                     return {"status": "Table updated and alerts processed for non-zero records"}
                 else:

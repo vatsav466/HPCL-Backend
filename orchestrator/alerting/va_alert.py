@@ -48,7 +48,7 @@ class VAAlertManager(alert_factory.AlertFactory):
             if not status:
                 logger.info(f"Error in finding location {location_id} "
                             f"for bu {alert_data['location_type']} - {loc_dt}")
-                return
+                loc_dt = {'name': ""}
 
             recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
             if isinstance(alert_data, dict):

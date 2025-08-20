@@ -112,6 +112,10 @@ async def tas_listener(rmsg):
             alertdata['severity'] = rmsg['severity']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
+            
+            if alertdata.get('interlock_name') in ["ROSOV_Close Status", "MOV_Close Status"]:
+                if not alertdata.get('sensor_id'):
+                    return False 
             #Handle empty sensor_id case
             if not alertdata.get('sensor_id'):
                 device_name = alertdata.get('device_name', '')
@@ -124,7 +128,7 @@ async def tas_listener(rmsg):
                         alertdata["sensor_id"] = device_name.split('@')[0].strip()
                 else:
                       print("No valid separator found, sensor_id not assigned")
-  
+
             custom_data = rmsg['details']['additionalInfo'].get("customData", {})
 
             
@@ -136,7 +140,10 @@ async def tas_listener(rmsg):
             is_duplicate = await duplicates_check.duplicate_check(alertdata)
             
             if is_duplicate:
-                logger.info(f"Alert already exists (duplicate) for: {alertdata}")
+                if alertdata['interlock_name'] in ["BCU Permissive Off", "BCU Permissive Off_Fail"]:
+                    await create_alert(alertdata)
+                else:
+                    logger.info(f"Alert already exists (duplicate) for: {alertdata}")
             else:
                 logger.info("*"*100)
                 logger.info(f"alertdata ------> {alertdata}")

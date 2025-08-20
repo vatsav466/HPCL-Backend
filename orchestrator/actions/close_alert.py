@@ -1,6 +1,6 @@
 import urdhva_base
 import traceback
-from orchestrator.alerting.alert_factory import AlertFactory
+import orchestrator.alerting.alert_factory as af
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -39,7 +39,7 @@ class CloseAlert:
             close = params.get("close")
             if not close:
                 return {"status": "error", "message": "Invalid close request"}
-            return await AlertFactory().close_alert(params)
+            return await af.AlertFactory().close_alert(params)
         
         except Exception as e:
             print(traceback.format_exc())

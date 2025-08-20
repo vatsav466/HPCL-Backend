@@ -1,12 +1,26 @@
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
+import json
 import fastapi
 import traceback
 import urdhva_base.settings
+from cryptography.fernet import Fernet
 import urdhva_base.queryparams as queryparams
 import authenticator.authentication_manager_ad as auth_manager
 router = fastapi.APIRouter(prefix='/users')
 
+async def parse_device_info(user_agent) -> str:
+    """Simple parser to guess device type from user-agent"""
+    ua = str(user_agent.lower())
+    if "mobile" in ua:
+        return "Mobile Device"
+    elif "mac" in ua:
+        return "MacOS Device"
+    elif "windows" in ua:
+        return "Windows Device"
+    elif "linux" in ua:
+        return "Linux Device"
+    return "Unknown Device"
 
 # Action fetch_users
 @router.post('/fetch_users', tags=['Users'])
@@ -25,7 +39,7 @@ async def users_create_user(data: Users_Create_UserParams):
 # Action login
 @router.post('/login', tags=['Users'])
 async def users_login(request: fastapi.Request, data: Users_LoginParams):
-    status, resp = await auth_manager.AuthenticationManager.login(data.username, data.password, data.login_type)
+    status, resp, user_info = await auth_manager.AuthenticationManager.login(data.username, data.password, data.login_type)
     if not status:
         response = fastapi.responses.JSONResponse({"status": False, "msg": resp}, 401)
     else:
@@ -33,8 +47,47 @@ async def users_login(request: fastapi.Request, data: Users_LoginParams):
                                                   200)
         response.set_cookie(urdhva_base.settings.cookie_name, resp, httponly=urdhva_base.settings.session_httponly,
                             secure=urdhva_base.settings.session_secure, samesite=urdhva_base.settings.session_same_site)
+    
+    user_agent = await parse_device_info(request.headers.get("user-agent", "Unknown"))
+    print("user_agent :", user_agent)
+    
+    f = Fernet(urdhva_base.settings.fernet_key)
+    cookie_data = json.loads(f.decrypt(resp.encode()).decode())
+    
+    login_audit = {
+        "login_id": cookie_data["cookie_id"],
+        "user_agent": user_agent,
+        "employee_id": data.username,
+        "email": user_info.get("email", ""),
+        "role": ",".join(user_info.get("novex_role", [])),
+        "login_time": urdhva_base.utilities.get_present_time(),
+        "login_status": LoginStatus.login,
+        "failure_reason": "",
+        "auth_method": "SSO" if user_info["is_ad_user"] else "Password",
+        "remarks": ""
+        }
+    print("login_audit :", login_audit)
+    await UserLoginAuditCreate(**login_audit).create()
     return response
 
+
+# Action applogin
+@router.post('/applogin', tags=['Users'])
+async def users_applogin(data: Users_ApploginParams):
+    status, resp = await auth_manager.AuthenticationManager.login(data.username, data.password, data.login_type, jwt_auth=True)
+    if not status:
+        response = fastapi.responses.JSONResponse({"status": False, "msg": resp}, 401)
+    else:
+        response = fastapi.responses.JSONResponse({
+            "status": True,
+            "message": "Logged in Successfully",
+            "access_token": resp.get("jwt_token", ""),
+            "token_type": "bearer",
+            "expires_in": urdhva_base.settings.jwt_expiration_hours * 3600,
+            "user": resp.get("user_data", "")
+        })
+    return response
+    
 
 # Action update_user_status
 @router.post('/update_user_status', tags=['Users'])

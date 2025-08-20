@@ -18,6 +18,9 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
+
+logger = urdhva_base.logger.Logger.getInstance('sales_day_data_sync_log')
+
 def get_db_connection(params):
     """
     Establish a database connection
@@ -183,6 +186,8 @@ def insertToDB(data, table_name, indexing_col=()):
     columns = []
     for i in column_names:
         columns.append(i)
+    if 'plant_cd' not in data.columns:
+        data = data.with_columns(pl.lit("").cast(pl.Utf8).alias("plant_cd"))
     data = data.select(columns)
     #data.write_csv('/tmp/sales_data.csv')
     print(data)
@@ -227,6 +232,7 @@ def insertToDB(data, table_name, indexing_col=()):
         asyncio.run(send_sales_sync_email(table_name, row_count))
     except Exception as e:
         print("Error :", str(e))
+        logger.error(f"-- Failed to insert Data into {table_name} --")
         raise Exception(e)
 
 
@@ -292,6 +298,7 @@ def get_and_insert_data(cursor, query, params=None):
     
     data = cursor.fetchall()
     print('Total Records :', len(data))
+    logger.info(f"Total Records : {len(data)}")
     columns = [column[0] for column in cursor.description]
     data = pd.DataFrame.from_records(data, columns=columns)
     

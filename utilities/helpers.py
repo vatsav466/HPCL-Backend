@@ -2,6 +2,8 @@ import urdhva_base
 import time
 import httpx
 import base64
+import asyncio
+import json
 import string
 import asyncio
 import hashlib
@@ -440,6 +442,98 @@ def fetch_alarm_data(device_id):
     params = {'pageSize': 100, 'page': 0}
     alarm_data = tb_master.ThingsBoardInterface().api_handler('GET', alarm_url, {}, params)
     return alarm_data
+
+# TODO: Check the devices for saftey and process plc for all the location by comparing them sap_id 
+# by comparing server attributes and latest telemetry which device is active for particular location
+async def fetch_plc_devices(tb, page_size=100):
+    """Fetch all PLC devices from ThingsBoard."""
+    all_devices = []
+    page = 0
+    
+    while True:
+        params = {
+            'pageSize': page_size,
+            'page': page,
+            'sortOrder': 'ASC',
+            'sortProperty': 'name'
+        }
+        
+        response = tb.api_handler("GET", "/api/tenant/devices", {}, params)
+        if not response:
+            break
+        
+        devices = response.get("data", [])
+        has_next = response.get("hasNext", False)
+        
+        plc_devices = [d for d in devices if d.get("type") == "PLC"]
+        all_devices.extend(plc_devices)
+        
+        if not has_next:
+            break
+        page += 1
+    
+    return all_devices
+
+async def check_plc_status():
+    """Check PLC device status and return results."""
+    # Initialize ThingsBoard
+    tb = tb_master.ThingsBoardInterface()
+    
+    # Get all PLC devices
+    all_devices = await fetch_plc_devices(tb)
+    
+    results = []
+    
+    for device in all_devices:
+        device_id = device.get("id", {}).get("id")
+        device_name = device.get("name")
+        
+        if not device_id or not device_name:
+            continue
+        
+        # Get attributes and telemetry
+        attributes = tb.api_handler("GET", f"/api/plugins/telemetry/DEVICE/{device_id}/values/attributes", {}, {})
+        telemetry = tb.api_handler("GET", f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries", {}, {})
+        
+        # Process data
+        attr_data = {item['key']: item['value'] for item in attributes} if attributes else {}
+        tele_data = {k: v[0]['value'] for k, v in telemetry.items()} if telemetry else {}
+        
+        # Get SAPID
+        sap_id = attr_data.get("SAPID")
+        if not sap_id:
+            continue
+        
+        # Check PLC A status
+        plc_a_attr = attr_data.get("PLC A IS MASTER")
+        plc_a_tele = tele_data.get("PLC A IS MASTER")
+        
+        # Check PLC B status
+        plc_b_attr = attr_data.get("PLC B IS MASTER")
+        plc_b_tele = tele_data.get("PLC B IS MASTER")
+        
+        # Convert to int
+        try:
+            plc_a_attr = int(plc_a_attr) if plc_a_attr is not None else None
+            plc_a_tele = int(plc_a_tele) if plc_a_tele is not None else None
+            plc_b_attr = int(plc_b_attr) if plc_b_attr is not None else None
+            plc_b_tele = int(plc_b_tele) if plc_b_tele is not None else None
+        except:
+            continue
+        
+        # Determine status
+        plc_a_status = "online" if (plc_a_attr == plc_a_tele and plc_a_attr is not None) else "standby"
+        plc_b_status = "online" if (plc_b_attr == plc_b_tele and plc_b_attr is not None) else "standby"
+        
+        # Add result
+        results.append({
+            "device_name": device_name,
+            "sap_id": sap_id,
+            "plc_a_status": plc_a_status,
+            "plc_b_status": plc_b_status
+        })
+    
+    return results
 
 def get_user_details(where_clause):
     where_clause = []

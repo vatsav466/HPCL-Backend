@@ -234,9 +234,9 @@ async def tasassetmaster_download_tas_report(data: Tasassetmaster_Download_Tas_R
         # If success, handle Excel writing
         if resp.get("status"):
             # Detect report type
-            if "monthly_data" in resp:
+            if resp.get("monthly_data"):  # This checks for existence and that it's not empty or None
                 report_type = "monthly"
-            elif "daily_data" in resp:
+            elif resp.get("daily_data"):  # Same here
                 report_type = "daily"
             else:
                 report_type = "daily"  # fallback

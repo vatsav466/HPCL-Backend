@@ -253,6 +253,20 @@ class BasePostgresModel(pydantic.BaseModel):
             await asyncio.shield(session.close())
 
     @classmethod
+    async def execute_query(cls, query):
+        try:
+            session = await manager.get_session()
+            result = await session.execute(text(query))
+            print(f"Rows committed {result.rowcount}")
+            await session.commit()
+
+            return {"status": True, "message": f"{query} Executed successfully"}
+        except Exception as e:
+            return {"status": False, "message": f"Failed to {query}, Exception: {str(e)}"}
+        finally:
+            await asyncio.shield(session.close())
+
+    @classmethod
     async def get_aggr_data(cls, query, limit=100, skip=0, skip_total=True):
         """
         @Description: For getting aggregated data, Join queries
@@ -272,7 +286,7 @@ class BasePostgresModel(pydantic.BaseModel):
                 query_ = f"{query} LIMIT {limit} OFFSET {limit * skip}"
             else:
                 query_ = f"{query}"
-            if not query_.strip().upper().startswith("WITH ") and not query_.strip().upper().startswith("SELECT "):
+            if not query_.strip().upper().startswith("WITH ") and not query_.strip().upper().startswith("SELECT"):
                 query_ = f"select {query_}"
             result = await session.execute(text(query_))
             resp = result.all()

@@ -918,7 +918,7 @@ LIMIT 10000;''',
                                                 "SAName", "ROName",
                                                 SUM("ConsumerCount") AS "ConsumerCount"
                                             FROM
-                                                "LPG_CONSUMER_APRIL" ''',
+                                                "lpg_consumers_summary_april" ''',
     
     "lpg_cdcms_current_consumer_stats": ''' SELECT "JDEDistributorCode", "SubCategory", "ZOName",
                                                     "SAName", "ROName",
@@ -940,11 +940,11 @@ LIMIT 10000;''',
                                         "SAName",
                                         "DistributorName",
                                         "Month",
-                                        "Month_Number",
+                                        "month_number",
                                         "ConsumerType",
                                         sum("DBCIssuedCount") as "DBCIssued"
                                     from
-                                        "lpg_cdcms_dbc_enrollment" ''',
+                                        "lpg_cdcms_dbc_enrollment_data" ''',
     
     "lpg_cdcms_nc_query": '''SELECT 
                                 "ZOName" ,
@@ -1296,7 +1296,7 @@ ORDER BY
                             FROM
                                 "lpg_cdcms_subsidy_state" ''',
     
-    "cs_query" : f'''
+    "cs_query" : '''
                     select 
                         "zone" as "zone",
                         "plant" as "plant",
@@ -1308,7 +1308,7 @@ ORDER BY
                         "lpg_cs_rejections"
                 ''',
 
-    "pt_query": f'''
+    "pt_query": '''
                     select 
                         "zone" as "zone",
                         "plant" as "plant",
@@ -1320,7 +1320,7 @@ ORDER BY
                         "lpg_pt_rejections"
                 ''',
 
-    "gd_query" : f'''
+    "gd_query" : '''
                     select 
                         "zone" as "zone",
                         "plant" as "plant",
@@ -1346,7 +1346,7 @@ ORDER BY
                                     where
                                         "Financial_Year"='{financial_year}' AND "Month"='{current_month}' AND "ZOName" IS NOT NULL ''',
                                                 
-    'cdcms_current_week_sales': f''' SELECT 
+    'cdcms_current_week_sales': ''' SELECT 
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     FROM
                                         "lpg_cdcms_sales_summary"
@@ -1354,7 +1354,7 @@ ORDER BY
                                         "Execution_Date" >= CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::INT + 1
                                         AND "Execution_Date" <= CURRENT_DATE AND "ZOName" IS NOT NULL ''',
     
-    'cdcms_current_date_sales':f'''select
+    'cdcms_current_date_sales': '''select
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales",
                                         ROUND(CAST(SUM("TotalSalesYesterday") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
@@ -1362,7 +1362,7 @@ ORDER BY
                                     where
                                         "ZOName" IS NOT NULL ''',                                
 
-    'cdcms_current_date_bookings':f'''select
+    'cdcms_current_date_bookings': '''select
                                         ROUND(CAST(SUM("bookings_volume") / 1000000 AS NUMERIC), 2) AS "Bookings",
                                         ROUND(CAST(SUM("BookingReceivedYesterday") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
@@ -1370,7 +1370,7 @@ ORDER BY
                                     where
                                         "ZOName" IS NOT NULL ''',
 
-    'cdcms_current_date_pending':f'''select
+    'cdcms_current_date_pending': '''select
                                         ROUND(CAST(SUM("pendings_volume") / 1000000 AS NUMERIC), 2) AS "Pending",
                                         ROUND(CAST(SUM("Total_Pending") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
@@ -1379,9 +1379,9 @@ ORDER BY
                                         "ZOName" IS NOT NULL ''',        
 
     'lpg_operations_current_month_cylinder_filled': ''' SELECT
-                                                            ROUND(SUM("cylfilled"::numeric)/100000, 2) AS "Cylinders_Filled"
+                                                            (SUM(bottling_14_2kg) + SUM(bottling_19kg)) AS "Cylinders_Filled"
                                                         FROM
-                                                            "lpg_cs_rejections"
+                                                            "lpg_operations_summary"
                                                         WHERE
                                                             DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
 

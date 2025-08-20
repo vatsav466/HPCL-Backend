@@ -9,6 +9,8 @@ import charts_actions
 import dashboard_studio_model
 import utilities.connection_mapping as connection_mapping
 
+logger = urdhva_base.logger.Logger.getInstance("ims_truck_swipe_sync")
+
 async def sync_ims_indent_truck_swipe():
     try:
         ro_query = f"""SELECT * FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" """
@@ -61,6 +63,7 @@ async def sync_ims_indent_truck_swipe():
         return {"status": True, "message": "Data Synced Successfully", "data": []}
     except Exception as e:
         print(traceback.format_exc())
+        logger.error(f"Error in data sync: {e}, Traceback: {traceback.format_exc()}")
         return {"status": False, "message": "Data Sync Failed", "data": e}
 
 if __name__ == "__main__":
