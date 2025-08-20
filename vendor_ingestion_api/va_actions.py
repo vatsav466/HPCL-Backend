@@ -58,14 +58,27 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
           entry['alert_section'] = entry['alert_type']
           entry['alert_timestamp'] = (
               datetime.datetime.strptime(entry['alert_timestamp'], "%m/%d/%Y %I:%M:%S %p") + 
-              datetime.timedelta(hours=5, minutes=30))          
-          await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
-          # entry['vendor_alert_id'] = entry.pop("alert_id")
-          camunda_url = urdhva_base.settings.camunda_url
-          if 'camunda_host' in entry.keys():
-            camunda_url = f"http://{entry['camunda_host']}:{entry['camunda_port']}"
-          await alert_manager.create_alert({**entry, "alert_type": "VA"}, camunda_url=camunda_url)
-    
+              datetime.timedelta(hours=5, minutes=30))
+          IST = pytz.timezone("Asia/Kolkata")
+          now_current_time = datetime.datetime.now(IST).replace(tzinfo=None)
+          diff = now_current_time - entry['alert_timestamp']
+          if diff.days < 30:
+            if diff.total_seconds() >= 2 * 3600:
+                if not await va_analysis.is_alert_exists(entry['alert_id']):
+                    await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
+                    camunda_url = urdhva_base.settings.camunda_url
+                    if 'camunda_host' in entry.keys():
+                        camunda_url = f"http://{entry['camunda_host']}:{entry['camunda_port']}"
+                    await alert_manager.create_alert({**entry, "alert_type": "VA"}, camunda_url=camunda_url)
+                else:
+                    return True, "Success"
+            else:
+                await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
+                # entry['vendor_alert_id'] = entry.pop("alert_id")
+                camunda_url = urdhva_base.settings.camunda_url
+                if 'camunda_host' in entry.keys():
+                    camunda_url = f"http://{entry['camunda_host']}:{entry['camunda_port']}"
+                await alert_manager.create_alert({**entry, "alert_type": "VA"}, camunda_url=camunda_url)
       return True, "Success"
         
     except Exception as e:
