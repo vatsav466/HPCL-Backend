@@ -391,7 +391,7 @@ class GlobalAnalytics:
             hourly_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(hourly_alerts_query, filters, drill_state)
         try:
             # resp = await function(query=hourly_alerts_query_)
-            resp = urdhva_base.BasePostgresModel.get_aggr_data(query=hourly_alerts_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=hourly_alerts_query_, limit=0)
             resp = resp.get('data', [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query_)
         except psycopg2.errors.UndefinedColumn as e:

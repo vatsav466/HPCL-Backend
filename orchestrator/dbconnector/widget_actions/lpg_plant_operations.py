@@ -174,6 +174,7 @@ class LPGOperationsActions:
                         COUNT(production_log_id)
                     FROM production_log
                     WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                        AND sap_id = {data['sap_id']}
                         AND system_id IN ({carousals})
                         AND process_id IN (2,22)
                     GROUP BY  process_status, system_id"""
@@ -246,12 +247,12 @@ class LPGOperationsActions:
         endTime = startEndTimes['end']
         queryString  = f"""WITH day_wise_data as (
                 select
-                process_date::date as process_day,
-                to_char(process_date, 'HH24:MI:SS.MS') as process_time,
-                process_date
-                FROM
-                production_log
+                    process_date::date as process_day,
+                    to_char(process_date, 'HH24:MI:SS.MS') as process_time,
+                    process_date
+                FROM production_log
                     where process_date between '{from_date} 00:00:00' and '{to_date} 23:59:59.999'
+                    AND sap_id = {data['sap_id']}
                     AND process_id IN (2, 22)
                     AND cyl_type IN (1, 2)
                     and system_id = {carousal}
@@ -259,23 +260,21 @@ class LPGOperationsActions:
             ),
             pre_shift_ot_periods as (
                 select 
-                process_day,
-                max(process_time::time) - min(process_time::time) as production_time
-                from 
-                day_wise_data
+                    process_day,
+                    max(process_time::time) - min(process_time::time) as production_time
+                from day_wise_data
                 where 
-                process_time::time between '00:00:00'::time and '{startTime}'::time
-                group by process_day
+                    process_time::time between '00:00:00'::time and '{startTime}'::time
+                    group by process_day
             ),
             post_shift_ot_periods as (
                 select 
-                process_day,
-                max(process_time::time) - min(process_time::time) as production_time
-                from 
-                day_wise_data
+                    process_day,
+                    max(process_time::time) - min(process_time::time) as production_time
+                from day_wise_data
                 where 
-                process_time::time between '{endTime}'::time and '23:59:59.999'::time
-                group by process_day
+                    process_time::time between '{endTime}'::time and '23:59:59.999'::time
+                    group by process_day
             )
             select 
                 EXTRACT(EPOCH from (select sum(production_time) from pre_shift_ot_periods)) / 3600 as total_pre_shift_time,
@@ -283,7 +282,7 @@ class LPGOperationsActions:
 
         return queryString
 
-    async def build_production_gap_query(carousal, phases, from_date, to_date):
+    async def build_production_gap_query(carousal, phases, from_date, to_date, sap_id):
         minInterruption = lpg_config.min_interruption
 
         normalGapStringArray = []
@@ -318,16 +317,17 @@ class LPGOperationsActions:
 
         queryString  = f"""WITH day_wise_data as (
                 select
-                process_date::date as process_day,
-                to_char(process_date, 'HH24:MI:SS.MS') as process_time,
-                process_date,
-                system_id,
-                process_status,
-                cyl_type,
-                production_log_id
-                FROM
-                production_log
-                    where process_date between '{from_date} 00:00:00' and '{to_date} 23:59:59.999'
+                    process_date::date as process_day,
+                    to_char(process_date, 'HH24:MI:SS.MS') as process_time,
+                    process_date,
+                    system_id,
+                    process_status,
+                    cyl_type,
+                    production_log_id
+                FROM production_log
+                where 
+                    process_date between '{from_date} 00:00:00' and '{to_date} 23:59:59.999'
+                    AND sap_id = {sap_id}
                     AND process_id IN (2,22)
                     AND cyl_type IN (1,2)
                     and system_id = {carousal}
@@ -416,6 +416,7 @@ class LPGOperationsActions:
                                 production_log
                             WHERE
                                 process_date BETWEEN '{from_date} 00:00:00' AND '{to_date} 23:59:59'
+                                AND sap_id = {data['sap_id']}
                                 AND system_id = {carousal}
                                 AND process_id IN (1,2,22)
                                 AND process_status NOT IN (16)
@@ -446,7 +447,7 @@ class LPGOperationsActions:
         from_date = datetime.strptime(f"{data['from_date']}", "%Y-%m-%d").date()
         to_date = datetime.strptime(f"{data['to_date']}","%Y-%m-%d").date()
         phases = await LPGOperationsActions.get_phases(data)
-        queryString = await LPGOperationsActions.build_production_gap_query(carousal, phases[carousal], from_date, to_date)
+        queryString = await LPGOperationsActions.build_production_gap_query(carousal, phases[carousal], from_date, to_date, data["sap_id"])
         query3 = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
         if query3['data']:
             query3 = query3['data']
@@ -456,7 +457,7 @@ class LPGOperationsActions:
         phases = await LPGOperationsActions.get_phases(data)
         operating_time = {}
 
-        for key,value in phases.items():
+        for key, value in phases.items():
             totalWorkingSeconds = 0
             totalBreakSeconds = 0
 
@@ -470,7 +471,7 @@ class LPGOperationsActions:
             for break_period in value['breaks']:
                 from_date = datetime.strptime(f'{break_period['from']}', "%H:%M:%S" )
                 to_date = datetime.strptime(f'{break_period['to']}', "%H:%M:%S")
-                interval =  to_date - from_date
+                interval = to_date - from_date
                 interval = interval.total_seconds()
                 totalBreakSeconds += interval
 
@@ -565,13 +566,13 @@ class LPGOperationsActions:
                         then 'break'
                         else 'overtime'
                     end as phase
-                    from
-                    production_log
+                    from production_log
                     where 
-                    process_date between '{from_date} 00:00:00' and '{to_date} 23:59:59.999'
-                    and process_id in (2, 22)
-                    AND process_status NOT IN ({excludedStatuses})
-                    and system_id = {carousal}
+                        process_date between '{from_date} 00:00:00' and '{to_date} 23:59:59.999'
+                        AND sap_id = {data['sap_id']}
+                        AND process_id in (2, 22)
+                        AND process_status NOT IN ({excludedStatuses})
+                        AND system_id = {carousal}
                 )
                 select 
                     phase,
@@ -640,8 +641,6 @@ class LPGOperationsActions:
             production_hours[carousal]['max_op_hours']['normal'] = dailyOperatingHours[carousal]['normal'] * production_hours[carousal]['net_op_days']
             production_hours[carousal]['max_op_hours']['break'] = dailyOperatingHours[carousal]['break'] * production_hours[carousal]['net_op_days']
             production_hours[carousal]['net_op_hours'] = {}
-            print(type((production_hours[carousal]['max_op_hours']['normal'])))
-            print(type(production_hours[carousal]['total_normal_gap']))
             production_hours[carousal]['net_op_hours']['normal'] = float((production_hours[carousal]['max_op_hours']['normal']) - float(production_hours[carousal]['total_normal_gap']))
             production_hours[carousal]['net_op_hours']['break'] = float((production_hours[carousal]['max_op_hours']['break']) - float(production_hours[carousal]['total_break_gap']))
         return production_hours
@@ -739,25 +738,25 @@ class LPGOperationsActions:
                     THEN 1
                     ELSE 0
                 END) AS hundred_plus,
-            SUM(CASE WHEN ((check_net - 14200) >= -200 AND (check_net - 14200) <= 200) THEN (check_net - 14200)
-            WHEN ((check_net - 14200) < -200) THEN -200
-            WHEN ((check_net - 14200) > 200) THEN 200
-            ELSE 0 END)/(COUNT(production_log_id)::float) AS average,
-            COUNT(production_log_id) AS count,
-            STDDEV_POP(CASE WHEN ((check_net - 14200) >= -200 AND (check_net - 14200) <= 200) THEN (check_net - 14200)
-            WHEN ((check_net - 14200) < -200) THEN -200
-            WHEN ((check_net - 14200) > 200) THEN 200
-            ELSE 0 END) AS stddev
+                SUM(CASE WHEN ((check_net - 14200) >= -200 AND (check_net - 14200) <= 200) THEN (check_net - 14200)
+                WHEN ((check_net - 14200) < -200) THEN -200
+                WHEN ((check_net - 14200) > 200) THEN 200
+                ELSE 0 END)/(COUNT(production_log_id)::float) AS average,
+                COUNT(production_log_id) AS count,
+                STDDEV_POP(CASE WHEN ((check_net - 14200) >= -200 AND (check_net - 14200) <= 200) THEN (check_net - 14200)
+                WHEN ((check_net - 14200) < -200) THEN -200
+                WHEN ((check_net - 14200) > 200) THEN 200
+                ELSE 0 END) AS stddev
             FROM production_log
             WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
-            AND system_id IN ({carousal})
-            AND process_id IN (2, 22)
-            AND cyl_type IN ({cyl_types})
-            AND process_status IN (0, 1040, 2064)
-            AND sap_id = '{data['sap_id']}'
-            GROUP BY system_id
-            ORDER BY system_id ASC;
-            """
+                AND system_id IN ({carousal})
+                AND process_id IN (2, 22)
+                AND cyl_type IN ({cyl_types})
+                AND process_status IN (0, 1040, 2064)
+                AND sap_id = {data['sap_id']}
+                GROUP BY system_id
+                ORDER BY system_id ASC;
+                """
         stats = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
         if stats['data']:
             return stats['data']
@@ -785,6 +784,7 @@ class LPGOperationsActions:
                     END) AS production_19
                 FROM production_log
                 WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                    AND sap_id = {data['sap_id']}
                     AND process_id IN (2,22)
                     AND system_id IN ({carousal})
                     AND cyl_type IN (1,2)
