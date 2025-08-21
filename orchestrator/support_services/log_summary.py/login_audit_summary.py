@@ -31,7 +31,8 @@ class LogAuditSummaryReport:
             ins = await notification_factory.get_notification_module("email")
             recipients = [["cvmallinath@hpcl.in","sreedhar.maddipati@algofusiontech.com",
                            "purushm@hpcl.in","sachinkwarghane@hpcl.in",
-                           "venu@algofusiontech.com","bala@algofusiontech.com","yesu.p@algofusiontech.com", "shrihari.b@algofusiontech.com"]]
+                           "venu@algofusiontech.com","bala@algofusiontech.com",
+                           "yesu.p@algofusiontech.com", "shrihari.b@algofusiontech.com"]]
             IST = pytz.timezone("Asia/Kolkata")
             today_ist = datetime.datetime.now(IST).strftime("%d-%m-%Y")
             for recipient in recipients:
@@ -197,7 +198,7 @@ class LogAuditSummaryReport:
 
             IST = pytz.timezone("Asia/Kolkata")
             today_ist = datetime.datetime.now(IST).strftime("%d-%m-%Y")
-            html_intro = f"<p>Please find the attached for the list of users whoever logged in to the<b>Novex</b> on <b>{today_ist}</b>.</p>"
+            html_intro = f"<p>Please find attached the list of users who logged into <b>Novex</b> on <b>{today_ist}</b>.</p>"
             body_html = f"{html_intro}<p><b>Summary by BU &amp; Action Required:</b></p>{summary_html_table}"
             await self.send_notification(body_html, self.EXCEL_FILENAME)
 
