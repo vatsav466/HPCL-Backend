@@ -282,7 +282,7 @@ class LPGOperationsActions:
 
         return queryString
 
-    async def build_production_gap_query(carousal, phases, from_date, to_date):
+    async def build_production_gap_query(carousal, phases, from_date, to_date, sap_id):
         minInterruption = lpg_config.min_interruption
 
         normalGapStringArray = []
@@ -327,7 +327,7 @@ class LPGOperationsActions:
                 FROM production_log
                 where 
                     process_date between '{from_date} 00:00:00' and '{to_date} 23:59:59.999'
-                    AND sap_id = {data['sap_id']}
+                    AND sap_id = {sap_id}
                     AND process_id IN (2,22)
                     AND cyl_type IN (1,2)
                     and system_id = {carousal}
@@ -447,7 +447,7 @@ class LPGOperationsActions:
         from_date = datetime.strptime(f"{data['from_date']}", "%Y-%m-%d").date()
         to_date = datetime.strptime(f"{data['to_date']}","%Y-%m-%d").date()
         phases = await LPGOperationsActions.get_phases(data)
-        queryString = await LPGOperationsActions.build_production_gap_query(carousal, phases[carousal], from_date, to_date)
+        queryString = await LPGOperationsActions.build_production_gap_query(carousal, phases[carousal], from_date, to_date, data["sap_id"])
         query3 = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
         if query3['data']:
             query3 = query3['data']
