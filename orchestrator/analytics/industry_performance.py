@@ -487,12 +487,28 @@ def get_date_filters(filters, months_list = None,cumulative = None,resp_type="mo
             
             print("months_list",months_list)
             
-            months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
+            # months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
             
-            if months_list:
+            # if months_list:
+            #     start_index = months_list.index(months[0])
+            #     end_index = months_list.index(months[1])
+            #     months = months_list[start_index:end_index + 1]
+            
+            
+            months = [mnt_name.strip() for mnt_name in condition["value"].split(",") if mnt_name.strip()]
+    
+            if months_list and months:
                 start_index = months_list.index(months[0])
+                
+                # If only one month is provided, use last month as fallback
+                if len(months) < 2:
+                    months.append(months_list[-1])
+                
                 end_index = months_list.index(months[1])
                 months = months_list[start_index:end_index + 1]
+
+            print("months", months)
+            
             
             print("months",months)
     discard_filters = ['YTM', 'DATE', 'month_name', 'ind_sbu_cumulative', 'ind_analytics','table_graph', 'fiscal_year',
@@ -525,6 +541,28 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
     # Convert Decimal to float for Pandas compatibility
     if "sales" in  df.columns.tolist():
         df["sales"] = df["sales"].astype(float)
+        
+    # new_geo_filters = ["zone_name", "region_name", "distname", "statename"]
+    # cleaned_filters = []
+    # for cond in filters:
+    #     cond['key'] = cond['key'].strip('"')
+
+    #     # Skip "All" for geo filters
+    #     if cond['key'] in new_geo_filters and isinstance(cond['value'], str) and cond['value'].strip().lower() == "all":
+    #         continue
+
+    #     # Convert comma-separated strings to list if needed
+    #     if isinstance(cond["value"], str):
+    #         value = [v.strip() for v in cond["value"].split(",")]
+    #         if len(value) > 1:
+    #             cond["cond"] = "one-off"
+    #             cond["value"] = value
+    #         else:
+    #             cond["value"] = value[0]  # keep as string if only one
+
+    #     cleaned_filters.append(cond)
+
+    # filters = cleaned_filters
 
     # Calculate total sales per fiscal year
     if 'sbu_name' in df.columns.tolist():
@@ -819,7 +857,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         if not getCumulative:
             df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
         
-        
+                    
         """
         below code is for line graph combining all opsu as psu companies and all pvt companies as pvt in the result
         """
@@ -1489,6 +1527,14 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     
     pd.DataFrame(resp_data).to_csv('/tmp/response.csv',index = False)
     print("writing data to csv")
+    
+    # Convert query result to DataFrame
+    df = pd.DataFrame(resp_data)
+
+    # Normalize column names to lowercase (or whatever your code expects)
+    df.columns = [c.lower() for c in df.columns]
+    print("df---",df)
+    print("df.columns------->",df.columns)
     return calculate_market_share(pd.DataFrame(resp_data), group_keys, fiscal_year_pre, fiscal_year_last,
                                   drill_state, time_grain, resp_format, resp_level, org_filters, resp_format_org)
 
@@ -1743,13 +1789,39 @@ async def get_category_wise_cumulative_data(filters):
                                        group_by, "")
     print("resp_data",resp_data)
     df = pd.DataFrame(resp_data)
-    df["sales"] = df["sales"].astype(str).apply(float)
-    fiscal_years = sorted(df["fiscal_year"].unique())
-    if len(fiscal_years) ==1:
-        if fiscal_years[0] =='2024-2025':
-            fiscal_years.extend('2025-2026')
-        else:
-            fiscal_years.extend('2024-2025')
+    if df.empty:
+        df = pd.DataFrame(columns=["sales", "coname", "company_name", "fiscal_year"])
+    else:
+        df["sales"] = df["sales"].astype(str).apply(float)
+    
+    # resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "", group_by, "")
+    # print("resp_data", resp_data)
+
+    # # Insert this block immediately after the above line
+    # df = pd.DataFrame(resp_data.get('data', []))  # if resp_data is a dict with 'data'
+    # if df.empty:
+    #     df = pd.DataFrame(columns=["sales", "coname", "company_name", "fiscal_year"])
+    # else:
+    #     df["sales"] = df["sales"].astype(float)
+    
+    # fiscal_years = sorted(df["fiscal_year"].unique())
+    # if len(fiscal_years) ==1:
+    #     if fiscal_years[0] =='2024-2025':
+    #         fiscal_years.extend('2025-2026')
+    #     else:
+    #         fiscal_years.extend('2024-2025')
+            
+    if df.empty:
+        fiscal_years = ["2024-2025", "2025-2026"]  # default fiscal years when no data
+    else:
+        fiscal_years = sorted(df["fiscal_year"].unique())
+        if len(fiscal_years) == 1:
+            if fiscal_years[0] == '2024-2025':
+                fiscal_years.append('2025-2026')
+            else:
+                fiscal_years.append('2024-2025')
+    
+    
     result_dict = {year: {} for year in fiscal_years}
     for year in fiscal_years:
         filtered_df = df[df["fiscal_year"] == year]
@@ -1932,16 +2004,37 @@ async def generate_omc_compare_data(filters, drill_state):
                 fiscal_year_last =str(int(fiscal_year_last.split('-')[0]) - 1 )+'-'+ str(int(fiscal_year_last.split('-')[0]))
     print("fiscal_year_pre",fiscal_year_pre)
     print("fiscal_year_last",fiscal_year_last)
+    
     # Modifying filters to handle list conditions
+    # for cond in filters:
+    #     cond['key'] = cond['key'].strip('"')
+    #     if isinstance(cond["value"], str):
+    #         value = [mnt_name.strip() for mnt_name in cond["value"].split(",")]
+    #         if len(value) > 1:
+    #             cond["cond"] = 'one-off'
+    #             cond["value"] = value
+    
+    new_geo_filters = ["zone_name", "region_name", "distname", "statename"]
+    cleaned_filters = []
     for cond in filters:
         cond['key'] = cond['key'].strip('"')
+        # Skip if value is "All" (means no filter)
+        if cond['key'] in new_geo_filters and cond['value'].strip().lower() == "all":
+            continue
+        # Handle comma-separated multiple values
         if isinstance(cond["value"], str):
-            value = [mnt_name.strip() for mnt_name in cond["value"].split(",")]
+            value = [v.strip() for v in cond["value"].split(",")]
             if len(value) > 1:
-                cond["cond"] = 'one-off'
+                cond["cond"] = "one-off"
                 cond["value"] = value
+            else:
+                cond["value"] = value[0]  # keep as string if only one
+        cleaned_filters.append(cond)
+
+    filters = cleaned_filters
 
     clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
+    
     if clause:
         where_conditions.extend([clause])
 

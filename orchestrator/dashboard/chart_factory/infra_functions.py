@@ -57,11 +57,27 @@ async def sod_infra(filters, cross_filters, drill_state, limit, time_grain):
         }
 
         exclude_keys = {"filename", "updated_by", "id", "created_at", "updated_at", "entity_id"}
+        lpg_only_columns = {"time_of_commissioning"}
         all_data = []
         for sbu in sbu_configs:
             query = f'''SELECT * FROM {sbu["table"]}'''
+            applied_filters = []
             if filters:
-                query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+                for f in filters:
+                    key_name = getattr(f, "key", None)
+                    if not key_name:
+                        continue
+
+                    # Skip LPG-only filter if not in LPG table
+                    if key_name.lower() in lpg_only_columns and sbu["name"] != "LPG":
+                        continue
+
+                    applied_filters.append(f)
+
+                if applied_filters:
+                    query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                        query, applied_filters, drill_state
+                    )
 
             result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
             records = result.get("data", [])
@@ -71,12 +87,16 @@ async def sod_infra(filters, cross_filters, drill_state, limit, time_grain):
             for i in range(len(records)):
                 company = records[i].get('company', '').lower()
                 records[i]['color_code'] = company_color_map.get(company, '#CCCCCC')
-                records[i] = {k: v for k, v in records[i].items() if k not in exclude_keys}  # Remove unwanted columns
+                records[i] = {k: v for k, v in records[i].items() if k not in exclude_keys}
                 if rename_map_lower:
-                    records[i] = {rename_map_lower.get(k.lower(), k): v for k, v in records[i].items()}  # rename map
+                    records[i] = {
+                        rename_map_lower.get(k.lower(), k): v for k, v in records[i].items()
+                    }
+
             all_data.extend(records)
 
         return {"status": True, "message": "success", "data": all_data}
+
     except Exception as e:
         logging.exception("Error while fetching SBU infra data")
         return {"error": str(e)}
@@ -313,34 +333,26 @@ async def get_sales_info(filters, cross_filters, drill_state, limit, time_grain)
         print(f"Error in get_sales_info: {str(e)}")
         return {"status": False, "message": f"Error: {str(e)}", "data": []}
 
-async def get_sales_officer_info(sbu,sap_id):
+async def get_sales_officer_info(sbu, sap_id):
+    try:
+        query = f'''   
+                u.username, u.first_name, u.last_name, u.novex_role, u.contact_number, sbu.sap_id
+            FROM {sbu}_infra sbu
+            LEFT JOIN users u 
+                ON sbu.sap_id = ANY(u.sap_id)
+            WHERE sbu.sbu = '{sbu}' AND sbu.sap_id = '{sap_id}' 
+              AND (u.username IS NOT NULL OR u.first_name IS NOT NULL OR u.last_name IS NOT NULL OR u.novex_role IS NOT NULL )
+            ORDER BY username
+        '''
 
-    query = f'''   
-            u.username, 
-            u.first_name, 
-            u.last_name, 
-            u.novex_role ,
-            u.contact_number,
-            sbu.sap_id
-        FROM {sbu}_infra sbu
-        LEFT JOIN users u 
-            ON sbu.sap_id = ANY(u.sap_id)
-        WHERE sbu.sbu = '{sbu}' and sbu.sap_id = '{sap_id}' 
-            AND (
-        u.username IS NOT NULL 
-        OR u.first_name IS NOT NULL 
-        OR u.last_name IS NOT NULL 
-        OR u.novex_role IS NOT NULL
-    )
-    order by username
-    '''
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        records = result.get("data", [])
+        # Drop contract employees records
+        records = [r for r in records if r.get("username") != r.get("first_name")]
+        return {"status": True, "message": "Sales Officer Info fetched successfully", "data": records}
 
-
-    result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
-    records = result.get("data", [])
-
-    return {
-        "status": True, "message": "Sales Officer Info fetched successfully", "data": records}
+    except Exception as e:
+        return {"status": False, "message": f"Error while fetching Sales Officer Info: {str(e)}", "data": []}
 
 async def get_download_info(sbu, background_tasks):
     try:
