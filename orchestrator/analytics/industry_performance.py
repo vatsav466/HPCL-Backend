@@ -1788,18 +1788,21 @@ async def get_category_wise_cumulative_data(filters):
     resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "",
                                        group_by, "")
     print("resp_data",resp_data)
-    # df = pd.DataFrame(resp_data)
-    # df["sales"] = df["sales"].astype(str).apply(float)
-    
-    resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "", group_by, "")
-    print("resp_data", resp_data)
-
-    # Insert this block immediately after the above line
-    df = pd.DataFrame(resp_data.get('data', []))  # if resp_data is a dict with 'data'
+    df = pd.DataFrame(resp_data)
     if df.empty:
         df = pd.DataFrame(columns=["sales", "coname", "company_name", "fiscal_year"])
     else:
-        df["sales"] = df["sales"].astype(float)
+        df["sales"] = df["sales"].astype(str).apply(float)
+    
+    # resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "", group_by, "")
+    # print("resp_data", resp_data)
+
+    # # Insert this block immediately after the above line
+    # df = pd.DataFrame(resp_data.get('data', []))  # if resp_data is a dict with 'data'
+    # if df.empty:
+    #     df = pd.DataFrame(columns=["sales", "coname", "company_name", "fiscal_year"])
+    # else:
+    #     df["sales"] = df["sales"].astype(float)
     
     # fiscal_years = sorted(df["fiscal_year"].unique())
     # if len(fiscal_years) ==1:
