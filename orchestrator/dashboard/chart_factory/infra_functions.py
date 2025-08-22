@@ -313,34 +313,26 @@ async def get_sales_info(filters, cross_filters, drill_state, limit, time_grain)
         print(f"Error in get_sales_info: {str(e)}")
         return {"status": False, "message": f"Error: {str(e)}", "data": []}
 
-async def get_sales_officer_info(sbu,sap_id):
+async def get_sales_officer_info(sbu, sap_id):
+    try:
+        query = f'''   
+                u.username, u.first_name, u.last_name, u.novex_role, u.contact_number, sbu.sap_id
+            FROM {sbu}_infra sbu
+            LEFT JOIN users u 
+                ON sbu.sap_id = ANY(u.sap_id)
+            WHERE sbu.sbu = '{sbu}' AND sbu.sap_id = '{sap_id}' 
+              AND (u.username IS NOT NULL OR u.first_name IS NOT NULL OR u.last_name IS NOT NULL OR u.novex_role IS NOT NULL )
+            ORDER BY username
+        '''
 
-    query = f'''   
-            u.username, 
-            u.first_name, 
-            u.last_name, 
-            u.novex_role ,
-            u.contact_number,
-            sbu.sap_id
-        FROM {sbu}_infra sbu
-        LEFT JOIN users u 
-            ON sbu.sap_id = ANY(u.sap_id)
-        WHERE sbu.sbu = '{sbu}' and sbu.sap_id = '{sap_id}' 
-            AND (
-        u.username IS NOT NULL 
-        OR u.first_name IS NOT NULL 
-        OR u.last_name IS NOT NULL 
-        OR u.novex_role IS NOT NULL
-    )
-    order by username
-    '''
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        records = result.get("data", [])
+        # Drop contract employees records
+        records = [r for r in records if r.get("username") != r.get("first_name")]
+        return {"status": True, "message": "Sales Officer Info fetched successfully", "data": records}
 
-
-    result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
-    records = result.get("data", [])
-
-    return {
-        "status": True, "message": "Sales Officer Info fetched successfully", "data": records}
+    except Exception as e:
+        return {"status": False, "message": f"Error while fetching Sales Officer Info: {str(e)}", "data": []}
 
 async def get_download_info(sbu, background_tasks):
     try:
