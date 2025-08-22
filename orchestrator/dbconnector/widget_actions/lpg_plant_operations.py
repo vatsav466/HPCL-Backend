@@ -281,13 +281,12 @@ class LPGOperationsActions:
         
         refData = {
             "handled": 0,
-            "sortout": 0,
-            "rejection_rate": 0
+            "sortout": 0
         }
         for id in carousal_array:
             refData["handled"] += int(total[id])
             refData["sortout"] += int(totalSortout[id])
-            refData["rejection_rate"] += round((int(totalSortout[id]) / int(total[id])) * 100, 2)
+        refData["rejection_rate"] = round((int(refData["sortout"]) / int(refData["handled"])) * 100, 2)
         return refData
 
     #################### Productivity ####################
