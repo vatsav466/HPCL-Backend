@@ -743,7 +743,7 @@ class LPGOperationsActions:
                         total_post_shift_time = 0
                     else:
                         total_post_shift_time = ot_production_time[key]['total_post_shift_time']                    
-                    productivityData[key][phase]['net_hours'] =  round(ot_production_time[key]['total_pre_shift_time'] + total_post_shift_time - gapHours, 2)
+                    productivityData[key][phase]['net_hours'] =  round(total_post_shift_time + total_post_shift_time - gapHours, 2)
                 productivityData[key][phase]['total_production'] = totalProduction
                 if not (productivityData[key][phase]['net_hours']):
                     productivityData[key][phase]['productivity'] =  0

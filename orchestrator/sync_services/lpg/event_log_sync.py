@@ -201,6 +201,10 @@ def insertToDB(data, table_name):
         if not col in data.columns:
             data = data.with_columns(pl.lit(0).alias(col))
     data = data.select(columns)
+
+    for col in data.columns:
+        if data[col].dtype in [pl.Utf8]:
+            data = data.with_columns(pl.col(col).str.replace_all("\x00", "").alias(col))
     try:
         query = f'''
         COPY "{table_name}"
