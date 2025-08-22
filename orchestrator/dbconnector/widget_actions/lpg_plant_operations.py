@@ -226,6 +226,69 @@ class LPGOperationsActions:
             }
 
         return refData
+    
+    async def get_cs_rejection_card(data : dict):
+        from_date = datetime.strptime(
+            f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
+            )
+        to_date = datetime.strptime(
+            f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S"
+            )
+        
+        carousals = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
+        carousal_array = await LPGOperationsActions.get_carousals('array', data.get("sap_id"))
+        
+        query =f"""SELECT
+                        system_id,
+                        process_status,
+                        COUNT(production_log_id)
+                    FROM production_log
+                    WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                        AND sap_id = {data['sap_id']}
+                        AND system_id IN ({carousals})
+                        AND process_id IN (2,22)
+                    GROUP BY  process_status, system_id"""
+
+        results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+        if results['data']:
+            results = results['data']
+        data = {}
+        total = {}
+        totalSortout = {}
+        otherErrors = {}
+        commErrorSortout = {}
+
+        for c in carousal_array:
+            total[c] = 0
+            totalSortout[c] = 0
+            otherErrors[c] = 0
+            commErrorSortout[c] = 0
+        sortoutStatuses = [1040, 2064, 1296, 17424, 1048, 4120, 5392]
+        otherErrorStatuses = [1041, 1042, 2192, 4112, 4113, 5136, 6160]
+        for row in results:
+            carID = row['system_id']
+            processID = row['process_status']
+            if carID not in data:
+                data[carID] = {}
+            data[carID][processID] = row['count']
+            total[carID] += row['count']
+            if row['process_status'] in otherErrorStatuses:
+                otherErrors[carID] += row['count']
+            if row['process_status'] in sortoutStatuses + otherErrorStatuses:
+                totalSortout[carID] += row['count']
+            if row['process_status'] < 0 or row['process_status'] == 4096:
+                commErrorSortout[carID] += row['count']
+        
+        refData = {
+            "handled": 0,
+            "sortout": 0,
+            "rejection_rate": 0
+        }
+        for id in carousal_array:
+            refData["handled"] += int(total[id])
+            refData["sortout"] += int(totalSortout[id])
+            refData["rejection_rate"] += round((int(totalSortout[id]) / int(total[id])) * 100, 2)
+        return refData
 
     #################### Productivity ####################
     async def get_start_end_times(carousal, data):
