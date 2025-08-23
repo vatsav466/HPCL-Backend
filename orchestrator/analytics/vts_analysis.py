@@ -219,6 +219,35 @@ async def post_blocked_tt(input_data: dict) -> typing.List[typing.Any]:
     finally:
         session.close()
 
+async def post_blocked_tt_ims(input_data: typing.List[typing.Dict[str, typing.Any]]) -> typing.List[typing.Any]:
+    """
+    Args:
+        input_data: List of dicts, e.g.:
+        [
+            {
+               "transactNo" : "1234567899",
+               "truckRegNo" : "KA01AJ4588",
+               "blockingFlag" : "Y",
+               "blockingFrom" : "20231225",
+               "blockingTo" : "20240112"
+            }
+        ]
+
+    Returns:
+        The response JSON parsed as a list. If the response is a single dict,
+        it is wrapped in a list.
+    """
+    url = f"https://webtest.hpcl.co.in/VTSBlocking/webresources/vtsBlocking/blockTT"
+    session = requests.Session()
+    try:
+        response = session.post(url, json=input_data, headers=default_headers)
+        if response.status_code // 100 == 2:
+            logger.info(f"Data successfully posted to IMS {response.json()}")
+            return response.json()
+        return response.json()
+    finally:
+        session.close()
+
 async def get_distance_of_truck(start_lat: float, start_lon: float, end_lat: float, end_lon: float):
     # Note: this is straight line route for actual need to use OSRM, google maps
     start_coords = (start_lat, start_lon)
