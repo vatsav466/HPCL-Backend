@@ -1546,6 +1546,7 @@ Model IndustryPerformance {
     month_name optional str
     netweight_tmt optional float
     com_type optional str
+    RO optional str
 
     Action=> generate_ai_industry_performance {
         user_prompt str
