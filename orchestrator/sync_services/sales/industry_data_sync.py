@@ -39,9 +39,7 @@ def get_industry_data():
     columns = res.columns.tolist()
     if 'SBU with district wise' in res.columns:
         del res['SBU with district wise']
-    if 'RO' in res.columns and 'RO' not in columns:
-        columns.append('RO')
-        res = res.select(columns)
+    
     print("res---------------------",res.columns)
     #res.to_csv('/tmp/res_output.csv', index=False)
     try:
@@ -63,7 +61,7 @@ def get_industry_data():
             right_on='Code',
             how='left'
         )
-        print("res",res.columns)
+        # print("res",res.columns)
        # output_file = '/tmp/merged_output.csv'
        # res.to_csv(output_file, index=False)
         #print(f"CSV file saved to: {output_file}")
@@ -138,19 +136,22 @@ def insert_industry_data(res):
    # for i in column_names:
       #  columns.append(i)
     cur.execute(f"""
-        SELECT column_name 
+        SELECT 1 
         FROM information_schema.columns 
-        WHERE table_name = '{table_name}' AND column_name = 'RO';
+        WHERE table_name = '{table_name}' AND column_name = 'ro';
     """)
     ro_exists = cur.fetchone() is not None
 
-    if not ro_exists and 'RO' in res.columns:
-        cur.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "RO" text;')
+    # If 'ro' column does not exist, create it
+    if not ro_exists:
+        cur.execute(f'ALTER TABLE "{table_name}" ADD COLUMN ro text;')
         pg_conn.commit()
     # --- End RO addition ---
+    if 'RO' in res.columns:
+        res = res.rename({'RO': 'ro'})
     columns = list(column_names)
-    if 'RO' in res.columns and 'RO' not in columns:
-        columns.append('RO')
+    if 'ro' in res.columns and 'ro' not in columns:
+        columns.append('ro')
     res = res.with_columns([pl.col("productname").alias("productname_org")])
     res = res.with_columns([pl.col("prod1").alias("productname")])
     res= res.with_columns([
@@ -158,7 +159,7 @@ def insert_industry_data(res):
     pl.lit(datetime.datetime.now()).alias("created_at"),
     pl.lit(datetime.datetime.now()).alias("updated_at")
 ])
-    print("res-->",res.columns)
+    # print("res-->",res.columns)
     res = res.select(columns)
     pg_conn.commit()
     try:
