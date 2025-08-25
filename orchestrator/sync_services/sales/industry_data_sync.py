@@ -36,10 +36,48 @@ def get_industry_data():
         'New Code':'newcode','COMCODE':'comcode','COMNAME':'comname','Prod1':'prod1','CATEGORY':'category',
         'TOTAL':'total','STATENAME':'statename','DISTNAME':'distname','Dist':'dist','COMP_TYPE':'com_type'})
     res.loc[res['company_name'].isin(['HPCL','BPCL','IOCL']),'company_name'] = 'MPSU'
+    columns = res.columns.tolist()
     if 'SBU with district wise' in res.columns:
         del res['SBU with district wise']
-    if 'RO' in res.columns:
-        del res['RO']
+    if 'RO' in res.columns and 'RO' not in columns:
+        columns.append('RO')
+        res = res.select(columns)
+    print("res---------------------",res.columns)
+    #res.to_csv('/tmp/res_output.csv', index=False)
+    try:
+        file_path_1 = '/opt/ceg/algo/orchestrator/masters/Tables.xlsx'
+        df2 = pd.read_excel(file_path_1, sheet_name='Tables', skiprows=2)
+
+        # Clean DISTCODE & New Code
+        res['distcode'] = res['distcode'].astype(str).str.strip()
+        df2['New Code'] = df2['New Code'].astype(str).str.strip()
+
+        # Create Code column for merging
+        res['code'] = res['sbu_name'] + res['distcode']
+        res['code'] = res['code'].str.strip()
+        df2['Code'] = df2['Code'].str.strip()
+        # Merge with df2 on Code
+        res = res.merge(
+            df2[['Code', 'RO']],
+            left_on='code',
+            right_on='Code',
+            how='left'
+        )
+        print("res",res.columns)
+       # output_file = '/tmp/merged_output.csv'
+       # res.to_csv(output_file, index=False)
+        #print(f"CSV file saved to: {output_file}")
+
+        if "RO_y" in res.columns:
+            res["RO"] = res["RO_y"]  # Assign merged RO_y to RO
+        if "RO_x" in res.columns:
+            res = res.drop(columns=["RO_x"])# Drop RO_x if exists
+        if "RO_y" in res.columns:
+            res = res.drop(columns=["RO_y"])  # Optional: drop RO_y after copy
+        print("fixed")
+        print(f"After merge: total={len(res)}, matched={res['RO'].notna().sum()}, match_rate={res['RO'].notna().mean()*100:.1f}%")
+    except Exception as e:
+        print("Merge step failed:", str(e))  
     #res['zone_name'] = res['zone_name'].str.replace('CZ','Central Zone').str.replace('ECZ','East Central Zone').str.replace('EZ','East').str.replace('NCZ','North Central Zone').str.replace('NFZ','North Frontier Zone').str.replace('NWFZ','North West Frontier Zone').str.replace('NWZ','North Western Zone').str.replace('NZ','North').str.replace('SCZ','South Central Zone').str.replace('SWZ','South Western Zone').str.replace('SZ','South').str.replace('WZ','West')
     res = pl.from_pandas(res)
     res.write_csv('/tmp/res.csv')
@@ -96,9 +134,23 @@ def insert_industry_data(res):
     sql = f"""SELECT * FROM "{table_name}" LIMIT 1"""
     cur.execute(sql)
     column_names = [desc[0] for desc in cur.description]
-    columns = []
-    for i in column_names:
-        columns.append(i)
+
+   # for i in column_names:
+      #  columns.append(i)
+    cur.execute(f"""
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = '{table_name}' AND column_name = 'RO';
+    """)
+    ro_exists = cur.fetchone() is not None
+
+    if not ro_exists and 'RO' in res.columns:
+        cur.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "RO" text;')
+        pg_conn.commit()
+    # --- End RO addition ---
+    columns = list(column_names)
+    if 'RO' in res.columns and 'RO' not in columns:
+        columns.append('RO')
     res = res.with_columns([pl.col("productname").alias("productname_org")])
     res = res.with_columns([pl.col("prod1").alias("productname")])
     res= res.with_columns([
@@ -106,6 +158,7 @@ def insert_industry_data(res):
     pl.lit(datetime.datetime.now()).alias("created_at"),
     pl.lit(datetime.datetime.now()).alias("updated_at")
 ])
+    print("res-->",res.columns)
     res = res.select(columns)
     pg_conn.commit()
     try:
