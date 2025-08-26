@@ -2717,7 +2717,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 'I&C HQO',
                 'DEHRADUN LPG SA',
                 'CHENNAI MARINE DS SA',
-                'NAVI MUMBAI CON-LUB'
+                'NAVI MUMBAI CON-LUB',
+                'LUBES HQO BASE OIL'
             ]
 
             # Normalize column to uppercase and strip spaces for reliable filtering

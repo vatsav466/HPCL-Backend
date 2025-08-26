@@ -231,15 +231,15 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
             })[[name_col, "total_sales", "curr_mkt", "his_mkt", "growth", "gain_loss"]].sort_values(by="gain_loss", ascending=sort_ascending)
 
         zones_output = format_output(zones_merged, "zone_name")
-        regions_output = format_output(regions_merged, "ro").rename(columns={"ro": "region_name"})
+        regions_output = format_output(regions_merged, "ro").rename(columns={"ro": "region_name"}).head(10)
         districts_output = format_output(districts_merged, "distname").head(10)
 
         # 7. Convert to JSON and save to CSV
         if zones_output.empty and regions_output.empty and districts_output.empty:
             return False, {"zones": [], "regions": [], "districts": []}, None
 
-        # file_path = "/opt/downloads/final_data_indus.csv" # Use a dynamic path if needed
-        file_path = "/Users/apple/Downloads/final_data_indus.csv" # Local path for testing
+        file_path = "/opt/downloads/final_data_indus.csv" # Use a dynamic path if needed
+        # file_path = "/Users/apple/Downloads/final_data_indus.csv" # Local path for testing
         
         combined_df = pd.concat([zones_output, regions_output, districts_output], axis=0, ignore_index=True)
         combined_df.to_csv(file_path, index=False)
