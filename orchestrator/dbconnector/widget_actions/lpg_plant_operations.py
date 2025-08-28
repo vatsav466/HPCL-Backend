@@ -1,7 +1,8 @@
 import urdhva_base
+import math
 import asyncio
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from orchestrator.dbconnector.widget_actions import lpg_config
 
@@ -76,218 +77,238 @@ class LPGOperationsActions:
 
     @staticmethod
     async def get_gd_rejection(data : dict):
-        from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
-        to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
+        try:
+            from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
+            to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
 
-        if not data.get("carousal", None):
-            carousal = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
-            processId = '3,23'
+            if not data.get("carousal", None):
+                carousal = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
+                processId = '3,23'
 
-        query = f"""SELECT
-                        process_id,
-                        process_status,
-                        COUNT(event_log_id)
-                    FROM event_log
-                    WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
-                        AND system_id IN ({carousal})
-                        AND process_id IN ({processId})
-                        AND sap_id = {data['sap_id']}
-                    GROUP BY  process_status, process_id """
-        
-        results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-        if results['data']:
-            results = results['data']
+            query = f"""SELECT
+                            process_id,
+                            process_status,
+                            COUNT(event_log_id)
+                        FROM event_log
+                        WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                            AND system_id IN ({carousal})
+                            AND process_id IN ({processId})
+                            AND sap_id = {data['sap_id']}
+                        GROUP BY  process_status, process_id """
+            
+            results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+            if results['data']:
+                results = results['data']
 
-        if results:
-            data = {
-                'handled' : 0,
-                'sortout' : 0
-            }
+            if results:
+                data = {
+                    'handled' : 0,
+                    'sortout' : 0
+                }
 
-            for row in results:
-                data['handled'] += row['count'] 
-                if row['process_status'] != 0:
-                    data['sortout'] += row['count'] 
+                for row in results:
+                    data['handled'] += row['count'] 
+                    if row['process_status'] != 0:
+                        data['sortout'] += row['count'] 
 
-            data['rejection_rate'] = round((data['sortout'] / data['handled']) * 100, 2)
-            return data
-        return False
+                data['rejection_rate'] = round((data['sortout'] / data['handled']) * 100, 2)
+                return data
+            return False
+        except Exception as e:
+            print("Exception in getting filling accuracy :", str(e))
+            print("Traceback :", traceback.format_exc())
+            return False, "No data found"
     
     @staticmethod
     async def get_pt_rejection(data : dict):
-        from_date = datetime.strptime(
-            f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
-            )
-        to_date = datetime.strptime(
-            f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S"
-            )
+        try:
+            from_date = datetime.strptime(
+                f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
+                )
+            to_date = datetime.strptime(
+                f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S"
+                )
 
-        if not data.get("carousal", None):
-            carousal = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
-        processId = '4,24'
-        
-        query = f"""SELECT
-                        process_id,
-                        process_status,
-                        COUNT(event_log_id)
-                    FROM event_log
-                    WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
-                        AND system_id IN ({carousal})
-                        AND process_id IN ({processId})
-                        AND sap_id = {data['sap_id']}
-                    GROUP BY  process_status, process_id"""
+            if not data.get("carousal", None):
+                carousal = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
+            processId = '4,24'
+            
+            query = f"""SELECT
+                            process_id,
+                            process_status,
+                            COUNT(event_log_id)
+                        FROM event_log
+                        WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                            AND system_id IN ({carousal})
+                            AND process_id IN ({processId})
+                            AND sap_id = {data['sap_id']}
+                        GROUP BY  process_status, process_id"""
 
-        results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-        if results['data']:
-            results = results['data']
+            results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+            if results['data']:
+                results = results['data']
 
-        if results:
-            data = {
-                'handled' : 0,
-                'sortout' : 0
-            }
+            if results:
+                data = {
+                    'handled' : 0,
+                    'sortout' : 0
+                }
 
-            for row in results:
-                data['handled'] += row['count'] 
-                if row['process_status'] != 0:
-                    data['sortout'] += row['count'] 
+                for row in results:
+                    data['handled'] += row['count'] 
+                    if row['process_status'] != 0:
+                        data['sortout'] += row['count'] 
 
-            data['rejection_rate'] = round((data['sortout'] / data['handled']) * 100, 2)
-            return data
-        return False
+                data['rejection_rate'] = round((data['sortout'] / data['handled']) * 100, 2)
+                return data
+            return False, "No data found"
+        except Exception as e:
+            print("Exception in getting filling accuracy :", str(e))
+            print("Traceback :", traceback.format_exc())
+            return False, "No data found"
     
 
     async def get_cs_rejection(data : dict):
-        from_date = datetime.strptime(
-            f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
-            )
-        to_date = datetime.strptime(
-            f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S"
-            )
-        
-        carousals = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
-        carousal_array = await LPGOperationsActions.get_carousals('array', data.get("sap_id"))
-        
-        query =f"""SELECT
-                        system_id,
-                        process_status,
-                        COUNT(production_log_id)
-                    FROM production_log
-                    WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
-                        AND sap_id = {data['sap_id']}
-                        AND system_id IN ({carousals})
-                        AND process_id IN (2,22)
-                    GROUP BY  process_status, system_id"""
+        try:
+            from_date = datetime.strptime(
+                f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
+                )
+            to_date = datetime.strptime(
+                f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S"
+                )
+            
+            carousals = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
+            carousal_array = await LPGOperationsActions.get_carousals('array', data.get("sap_id"))
+            
+            query =f"""SELECT
+                            system_id,
+                            process_status,
+                            COUNT(production_log_id)
+                        FROM production_log
+                        WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                            AND sap_id = {data['sap_id']}
+                            AND system_id IN ({carousals})
+                            AND process_id IN (2,22)
+                        GROUP BY  process_status, system_id"""
 
-        results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-        if results['data']:
-            results = results['data']
-        data = {}
-        total = {}
-        totalSortout = {}
-        otherErrors = {}
-        commErrorSortout = {}
+            results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+            if results['data']:
+                results = results['data']
+            data = {}
+            total = {}
+            totalSortout = {}
+            otherErrors = {}
+            commErrorSortout = {}
 
-        for c in carousal_array:
-            total[c] = 0
-            totalSortout[c] = 0
-            otherErrors[c] = 0
-            commErrorSortout[c] = 0
-        sortoutStatuses = [1040, 2064, 1296, 17424, 1048, 4120, 5392]
-        otherErrorStatuses = [1041, 1042, 2192, 4112, 4113, 5136, 6160]
-        for row in results:
-            carID = row['system_id']
-            processID = row['process_status']
-            if carID not in data:
-                data[carID] = {}
-            data[carID][processID] = row['count']
-            total[carID] += row['count']
-            if row['process_status'] in otherErrorStatuses:
-                otherErrors[carID] += row['count']
-            if row['process_status'] in sortoutStatuses + otherErrorStatuses:
-                totalSortout[carID] += row['count']
-            if row['process_status'] < 0 or row['process_status'] == 4096:
-                commErrorSortout[carID] += row['count']
-        
-        refData = {}
-        for id in carousal_array:
-            refData[id] = {
-            'handled' : int(total[id]),
-            'cylinder_filled':int(total[id] - totalSortout[id]),
-            'underfilled': int(data.get(id, {}).get(1040, 0)),
-            'overfilled' : int(data.get(id, {}).get(2064, 0)),
-            'negative_tare'	: int(data.get(id, {}).get(1296, 0)+(data.get(id, {}).get(5392,0))),
-            'positive_tare' : int(data.get(id, {}).get(17424, 0)),
-            'timeout':int(data.get(id, {}).get(1048, 0) + data.get(id,{}).get(4120, 0)),
-            'other_errors'	: int(otherErrors[id]),
-            'sortout':int(totalSortout[id]),
-            'commErrorSortout':int(commErrorSortout[id]),
-            'rejection_rate' : round((int(totalSortout[id]) / int(total[id])) * 100, 2)
-            }
+            for c in carousal_array:
+                total[c] = 0
+                totalSortout[c] = 0
+                otherErrors[c] = 0
+                commErrorSortout[c] = 0
+            sortoutStatuses = [1040, 2064, 1296, 17424, 1048, 4120, 5392]
+            otherErrorStatuses = [1041, 1042, 2192, 4112, 4113, 5136, 6160]
+            for row in results:
+                carID = row['system_id']
+                processID = row['process_status']
+                if carID not in data:
+                    data[carID] = {}
+                data[carID][processID] = row['count']
+                total[carID] += row['count']
+                if row['process_status'] in otherErrorStatuses:
+                    otherErrors[carID] += row['count']
+                if row['process_status'] in sortoutStatuses + otherErrorStatuses:
+                    totalSortout[carID] += row['count']
+                if row['process_status'] < 0 or row['process_status'] == 4096:
+                    commErrorSortout[carID] += row['count']
+            
+            refData = {}
+            for id in carousal_array:
+                refData[id] = {
+                'handled' : int(total[id]),
+                'cylinder_filled':int(total[id] - totalSortout[id]),
+                'underfilled': int(data.get(id, {}).get(1040, 0)),
+                'overfilled' : int(data.get(id, {}).get(2064, 0)),
+                'negative_tare'	: int(data.get(id, {}).get(1296, 0)+(data.get(id, {}).get(5392,0))),
+                'positive_tare' : int(data.get(id, {}).get(17424, 0)),
+                'timeout':int(data.get(id, {}).get(1048, 0) + data.get(id,{}).get(4120, 0)),
+                'other_errors'	: int(otherErrors[id]),
+                'sortout':int(totalSortout[id]),
+                'commErrorSortout':int(commErrorSortout[id]),
+                'rejection_rate' : round((int(totalSortout[id]) / int(total[id])) * 100, 2)
+                }
 
-        return refData
+            return refData
+        except Exception as e:
+            print("Exception in getting filling accuracy :", str(e))
+            print("Traceback :", traceback.format_exc())
+            return False, "No data found"
     
     async def get_cs_rejection_card(data : dict):
-        from_date = datetime.strptime(
-            f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
-            )
-        to_date = datetime.strptime(
-            f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S"
-            )
-        
-        carousals = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
-        carousal_array = await LPGOperationsActions.get_carousals('array', data.get("sap_id"))
-        
-        query =f"""SELECT
-                        system_id,
-                        process_status,
-                        COUNT(production_log_id)
-                    FROM production_log
-                    WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
-                        AND sap_id = {data['sap_id']}
-                        AND system_id IN ({carousals})
-                        AND process_id IN (2,22)
-                    GROUP BY  process_status, system_id"""
+        try:
+            from_date = datetime.strptime(
+                f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S"
+                )
+            to_date = datetime.strptime(
+                f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S"
+                )
+            
+            carousals = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
+            carousal_array = await LPGOperationsActions.get_carousals('array', data.get("sap_id"))
+            
+            query =f"""SELECT
+                            system_id,
+                            process_status,
+                            COUNT(production_log_id)
+                        FROM production_log
+                        WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                            AND sap_id = {data['sap_id']}
+                            AND system_id IN ({carousals})
+                            AND process_id IN (2,22)
+                        GROUP BY  process_status, system_id"""
 
-        results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-        if results['data']:
-            results = results['data']
-        data = {}
-        total = {}
-        totalSortout = {}
-        otherErrors = {}
-        commErrorSortout = {}
+            results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+            if results['data']:
+                results = results['data']
+            data = {}
+            total = {}
+            totalSortout = {}
+            otherErrors = {}
+            commErrorSortout = {}
 
-        for c in carousal_array:
-            total[c] = 0
-            totalSortout[c] = 0
-            otherErrors[c] = 0
-            commErrorSortout[c] = 0
-        sortoutStatuses = [1040, 2064, 1296, 17424, 1048, 4120, 5392]
-        otherErrorStatuses = [1041, 1042, 2192, 4112, 4113, 5136, 6160]
-        for row in results:
-            carID = row['system_id']
-            processID = row['process_status']
-            if carID not in data:
-                data[carID] = {}
-            data[carID][processID] = row['count']
-            total[carID] += row['count']
-            if row['process_status'] in otherErrorStatuses:
-                otherErrors[carID] += row['count']
-            if row['process_status'] in sortoutStatuses + otherErrorStatuses:
-                totalSortout[carID] += row['count']
-            if row['process_status'] < 0 or row['process_status'] == 4096:
-                commErrorSortout[carID] += row['count']
-        
-        refData = {
-            "handled": 0,
-            "sortout": 0
-        }
-        for id in carousal_array:
-            refData["handled"] += int(total[id])
-            refData["sortout"] += int(totalSortout[id])
-        refData["rejection_rate"] = round((int(refData["sortout"]) / int(refData["handled"])) * 100, 2)
-        return refData
+            for c in carousal_array:
+                total[c] = 0
+                totalSortout[c] = 0
+                otherErrors[c] = 0
+                commErrorSortout[c] = 0
+            sortoutStatuses = [1040, 2064, 1296, 17424, 1048, 4120, 5392]
+            otherErrorStatuses = [1041, 1042, 2192, 4112, 4113, 5136, 6160]
+            for row in results:
+                carID = row['system_id']
+                processID = row['process_status']
+                if carID not in data:
+                    data[carID] = {}
+                data[carID][processID] = row['count']
+                total[carID] += row['count']
+                if row['process_status'] in otherErrorStatuses:
+                    otherErrors[carID] += row['count']
+                if row['process_status'] in sortoutStatuses + otherErrorStatuses:
+                    totalSortout[carID] += row['count']
+                if row['process_status'] < 0 or row['process_status'] == 4096:
+                    commErrorSortout[carID] += row['count']
+            
+            refData = {
+                "handled": 0,
+                "sortout": 0
+            }
+            for id in carousal_array:
+                refData["handled"] += int(total[id])
+                refData["sortout"] += int(totalSortout[id])
+            refData["rejection_rate"] = round((int(refData["sortout"]) / int(refData["handled"])) * 100, 2)
+            return refData
+        except Exception as e:
+            print("Exception in getting filling accuracy :", str(e))
+            print("Traceback :", traceback.format_exc())
+            return False, "No data found"
 
     #################### Productivity ####################
     async def get_start_end_times(carousal, data):
@@ -722,148 +743,238 @@ class LPGOperationsActions:
         return ot_production
     
     async def get_productivity(data: dict):
-        bottling_data = await LPGOperationsActions.bottling_data(data)
-        production_hours_data = await LPGOperationsActions.production_hours_data(data)
-        ot_production_time = await LPGOperationsActions.ot_production_time(data)
-        phases = ['normal', 'break', 'overtime']
-        productivityData = {}
-        for key, value in bottling_data.items():
-            for phase in phases:
-                totalProduction = bottling_data[key][phase]['prod_14_2'] + 1.25 * bottling_data[key][phase]['prod_19']
-                gapHours = production_hours_data[key]["total_" + phase + "_gap"]
-                if key not in productivityData:
-                     productivityData[key] = {}
-                productivityData[key][phase]={}
-                if phase != 'overtime':                                        
-                    maxHours = production_hours_data[key]['max_op_hours'][phase]
-                    productivityData[key][phase]['net_hours'] =  round(float(maxHours) - float(gapHours), 2)
-                else:
-                    if ot_production_time[key]['total_post_shift_time'] is None:
-                        total_post_shift_time = 0
+        try:
+            bottling_data = await LPGOperationsActions.bottling_data(data)
+            production_hours_data = await LPGOperationsActions.production_hours_data(data)
+            ot_production_time = await LPGOperationsActions.ot_production_time(data)
+            phases = ['normal', 'break', 'overtime']
+            productivityData = {}
+            for key, value in bottling_data.items():
+                for phase in phases:
+                    totalProduction = bottling_data[key][phase]['prod_14_2'] + 1.25 * bottling_data[key][phase]['prod_19']
+                    gapHours = production_hours_data[key]["total_" + phase + "_gap"]
+                    if key not in productivityData:
+                        productivityData[key] = {}
+                    productivityData[key][phase]={}
+                    if phase != 'overtime':                                        
+                        maxHours = production_hours_data[key]['max_op_hours'][phase]
+                        productivityData[key][phase]['net_hours'] =  round(float(maxHours) - float(gapHours), 2)
                     else:
-                        total_post_shift_time = ot_production_time[key]['total_post_shift_time']                    
-                    productivityData[key][phase]['net_hours'] =  round(total_post_shift_time + total_post_shift_time - gapHours, 2)
-                productivityData[key][phase]['total_production'] = totalProduction
-                if not (productivityData[key][phase]['net_hours']):
-                    productivityData[key][phase]['productivity'] =  0
-                else:
-                    productivityData[key][phase]['productivity'] = round(float(totalProduction) / float(productivityData[key][phase]['net_hours']), 2)
-        return productivityData    
+                        if ot_production_time[key]['total_post_shift_time'] is None:
+                            total_post_shift_time = 0
+                        else:
+                            total_post_shift_time = ot_production_time[key]['total_post_shift_time']                    
+                        productivityData[key][phase]['net_hours'] =  round(total_post_shift_time + total_post_shift_time - gapHours, 2)
+                    productivityData[key][phase]['total_production'] = totalProduction
+                    if not (productivityData[key][phase]['net_hours']):
+                        productivityData[key][phase]['productivity'] =  0
+                    else:
+                        productivityData[key][phase]['productivity'] = round(float(totalProduction) / float(productivityData[key][phase]['net_hours']), 2)
+            return productivityData    
+        except Exception as e:
+            print("Exception in getting filling accuracy :", str(e))
+            print("Traceback :", traceback.format_exc())
+            return False, "No data found"
     
     ##########################  Filling Accuracy  ################################
     async def get_filling_accuracy(data: dict):
-        cyl_types = ",".join(map(str, lpg_config.cyl_types))
-        carousal = await LPGOperationsActions.get_carousals('string', data["sap_id"])
-        from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
-        to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
-        query = f"""
-            SELECT
-            system_id,
-            MAX(sap_id) AS sap_id,
-            SUM(CASE WHEN
-                        ((cyl_type = 1) AND (check_net - 14200) = 0)
-                        OR
-                        ((cyl_type = 2) AND (check_net - 19000) = 0)
-                    THEN 1
-                    ELSE 0
-                END) AS nil_var,
-            SUM(CASE WHEN
-                        ((cyl_type = 1) AND (check_net - 14200) > 0 AND (check_net - 14200) <= 50)
-                        OR
-                        ((cyl_type = 1) AND (check_net - 14200) < 0 AND (check_net - 14200) >= -50)
-                        OR
-                        ((cyl_type = 2) AND (check_net - 19000) > 0 AND (check_net - 19000) <= 50)
-                        OR
-                        ((cyl_type = 2) AND (check_net - 19000) < 0 AND (check_net - 19000) >= -50)
-                    THEN 1
-                    ELSE 0
-                END) AS zero_fifty,
-            SUM(CASE WHEN
-                        ((cyl_type = 1) AND (check_net - 14200) > 50 AND (check_net - 14200) <= 100)
-                        OR
-                        ((cyl_type = 1) AND (check_net - 14200) < -50 AND (check_net - 14200) >= -100)
-                        OR
-                        ((cyl_type = 2) AND (check_net - 19000) > 50 AND (check_net - 19000) <= 100)
-                        OR
-                        ((cyl_type = 2) AND (check_net - 19000) < -50 AND (check_net - 19000) >= -100)
-                    THEN 1
-                    ELSE 0
-                END) AS fifty_hundred,
-            SUM(CASE WHEN
-                        ((cyl_type = 1) AND (check_net - 14200) > 100 AND (check_net - 14200) <= 200)
-                        OR
-                        ((cyl_type = 1) AND (check_net - 14200) < -100 AND (check_net - 14200) >= -200)
-                        OR
-                        ((cyl_type = 2) AND (check_net - 19000) > 100 AND (check_net - 14200) <= 200)
-                        OR
-                        ((cyl_type = 2) AND (check_net - 19000) < -100 AND (check_net - 14200) >= -200)
-                    THEN 1
-                    ELSE 0
-                END) AS hundred_plus,
-                SUM(CASE WHEN ((check_net - 14200) >= -200 AND (check_net - 14200) <= 200) THEN (check_net - 14200)
-                WHEN ((check_net - 14200) < -200) THEN -200
-                WHEN ((check_net - 14200) > 200) THEN 200
-                ELSE 0 END)/(COUNT(production_log_id)::float) AS average,
-                COUNT(production_log_id) AS count,
-                STDDEV_POP(CASE WHEN ((check_net - 14200) >= -200 AND (check_net - 14200) <= 200) THEN (check_net - 14200)
-                WHEN ((check_net - 14200) < -200) THEN -200
-                WHEN ((check_net - 14200) > 200) THEN 200
-                ELSE 0 END) AS stddev
-            FROM production_log
-            WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
-                AND system_id IN ({carousal})
-                AND process_id IN (2, 22)
-                AND cyl_type IN ({cyl_types})
-                AND process_status IN (0, 1040, 2064)
-                AND sap_id = {data['sap_id']}
-                GROUP BY system_id
-                ORDER BY system_id ASC;
-                """
-        stats = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
-        if stats['data']:
-            return stats['data']
-        return {}
+        try:
+            cyl_types = ",".join(map(str, lpg_config.cyl_types))
+            carousal = await LPGOperationsActions.get_carousals('string', data["sap_id"])
+            from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
+            to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
+            query = f"""
+                SELECT
+                system_id,
+                MAX(sap_id) AS sap_id,
+                SUM(CASE WHEN
+                            ((cyl_type = 1) AND (check_net - 14200) = 0)
+                            OR
+                            ((cyl_type = 2) AND (check_net - 19000) = 0)
+                        THEN 1
+                        ELSE 0
+                    END) AS nil_var,
+                SUM(CASE WHEN
+                            ((cyl_type = 1) AND (check_net - 14200) > 0 AND (check_net - 14200) <= 50)
+                            OR
+                            ((cyl_type = 1) AND (check_net - 14200) < 0 AND (check_net - 14200) >= -50)
+                            OR
+                            ((cyl_type = 2) AND (check_net - 19000) > 0 AND (check_net - 19000) <= 50)
+                            OR
+                            ((cyl_type = 2) AND (check_net - 19000) < 0 AND (check_net - 19000) >= -50)
+                        THEN 1
+                        ELSE 0
+                    END) AS zero_fifty,
+                SUM(CASE WHEN
+                            ((cyl_type = 1) AND (check_net - 14200) > 50 AND (check_net - 14200) <= 100)
+                            OR
+                            ((cyl_type = 1) AND (check_net - 14200) < -50 AND (check_net - 14200) >= -100)
+                            OR
+                            ((cyl_type = 2) AND (check_net - 19000) > 50 AND (check_net - 19000) <= 100)
+                            OR
+                            ((cyl_type = 2) AND (check_net - 19000) < -50 AND (check_net - 19000) >= -100)
+                        THEN 1
+                        ELSE 0
+                    END) AS fifty_hundred,
+                SUM(CASE WHEN
+                            ((cyl_type = 1) AND (check_net - 14200) > 100 AND (check_net - 14200) <= 200)
+                            OR
+                            ((cyl_type = 1) AND (check_net - 14200) < -100 AND (check_net - 14200) >= -200)
+                            OR
+                            ((cyl_type = 2) AND (check_net - 19000) > 100 AND (check_net - 14200) <= 200)
+                            OR
+                            ((cyl_type = 2) AND (check_net - 19000) < -100 AND (check_net - 14200) >= -200)
+                        THEN 1
+                        ELSE 0
+                    END) AS hundred_plus,
+                    SUM(CASE WHEN ((check_net - 14200) >= -200 AND (check_net - 14200) <= 200) THEN (check_net - 14200)
+                    WHEN ((check_net - 14200) < -200) THEN -200
+                    WHEN ((check_net - 14200) > 200) THEN 200
+                    ELSE 0 END)/(COUNT(production_log_id)::float) AS average,
+                    COUNT(production_log_id) AS count,
+                    STDDEV_POP(CASE WHEN ((check_net - 14200) >= -200 AND (check_net - 14200) <= 200) THEN (check_net - 14200)
+                    WHEN ((check_net - 14200) < -200) THEN -200
+                    WHEN ((check_net - 14200) > 200) THEN 200
+                    ELSE 0 END) AS stddev
+                FROM production_log
+                WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                    AND system_id IN ({carousal})
+                    AND process_id IN (2, 22)
+                    AND cyl_type IN ({cyl_types})
+                    AND process_status IN (0, 1040, 2064)
+                    AND sap_id = {data['sap_id']}
+                    GROUP BY system_id
+                    ORDER BY system_id ASC
+                    """
+            stats = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+            if stats['data']:
+                return stats['data']
+            return False, "No data found"
+        except Exception as e:
+            print("Exception in getting filling accuracy :", str(e))
+            print("Traceback :", traceback.format_exc())
+            return False, "No data found"
     
     async def get_bottling_summary(data: dict):
-        excludedStatuses = ", ".join(
-            map(str, lpg_config.process_statuses['negativeTare'] + lpg_config.process_statuses['positiveTare'])
-            )
+        try:
+            excludedStatuses = ", ".join(
+                map(str, lpg_config.process_statuses['negativeTare'] + lpg_config.process_statuses['positiveTare'])
+                )
+            from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
+            to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
+            
+            carousal = await LPGOperationsActions.get_carousals('string', data["sap_id"])
+            queryString = f"""SELECT
+                    system_id as carousal,
+                    SUM(CASE
+                        WHEN (cyl_type = 1)
+                        THEN 1
+                        ELSE 0
+                        END) AS production_14_2,
+                    SUM(CASE
+                        WHEN (cyl_type = 2)
+                        THEN 1
+                        ELSE 0
+                        END) AS production_19
+                    FROM production_log
+                    WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                        AND sap_id = {data['sap_id']}
+                        AND process_id IN (2,22)
+                        AND system_id IN ({carousal})
+                        AND cyl_type IN (1,2)
+                        AND process_status NOT IN ({excludedStatuses})
+                    GROUP BY system_id 
+                    ORDER BY system_id;"""        
+
+            bottling_data = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
+            if bottling_data['data']:
+                bottling_data = bottling_data['data']
+            carousals = await LPGOperationsActions.get_carousals('array', data["sap_id"])
+            result = {}
+
+            if(bottling_data and (bottling_data[0]["production_14_2"] > 0 or bottling_data[0]["production_19"] > 0)):
+                for d in bottling_data:
+                    for c in carousals:
+                        if c == d["carousal"]:
+                            result[c] = d
+                return result
+            return False, "No data found"
+        except Exception as e:
+            print("Exception in getting bottling summary :", str(e))
+            print("Traceback :", traceback.format_exc())
+            return False, "No data found"
+
+
+############## Hourly Production Data ###################
+    async def hourly_production_data(data: dict):
         from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
         to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
         
-        carousal = await LPGOperationsActions.get_carousals('string', data["sap_id"])
-        queryString = f"""SELECT
-                system_id as carousal,
-                SUM(CASE
-                    WHEN (cyl_type = 1)
-                    THEN 1
-                    ELSE 0
-                    END) AS production_14_2,
-                SUM(CASE
-                    WHEN (cyl_type = 2)
-                    THEN 1
-                    ELSE 0
-                    END) AS production_19
-                FROM production_log
-                WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
-                    AND sap_id = {data['sap_id']}
-                    AND process_id IN (2,22)
-                    AND system_id IN ({carousal})
-                    AND cyl_type IN (1,2)
-                    AND process_status NOT IN ({excludedStatuses})
-                GROUP BY system_id 
-                ORDER BY system_id;"""        
+        cyl_type = ", ".join(map(str, lpg_config.cyl_types))
+        carousal = await LPGOperationsActions.get_carousals('string', data['sap_id'])
 
-        bottling_data = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
-        if bottling_data['data']:
-            bottling_data = bottling_data['data']
-        carousals = await LPGOperationsActions.get_carousals('array', data["sap_id"])
-        result = {}
+        excludedStatuses = ", ".join(map(str, lpg_config.process_statuses['negativeTare'] + lpg_config.process_statuses['positiveTare']))
+        queryString = f"""
+        SELECT
+            DATE_TRUNC('hour', process_date) as hour,
+            SUM(CASE WHEN (system_id = 1 AND cyl_type = 1) THEN 1 ELSE 0 END) AS c1_t1,
+            SUM(CASE WHEN (system_id = 1 AND cyl_type = 2) THEN 1 ELSE 0 END) AS c1_t2,
+            SUM(CASE WHEN (system_id = 2 AND cyl_type = 1) THEN 1 ELSE 0 END) AS c2_t1,
+            SUM(CASE WHEN (system_id = 2 AND cyl_type = 2) THEN 1 ELSE 0 END) AS c2_t2
+        FROM production_log
+        WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+            AND sap_id = {data['sap_id']}
+            AND process_id IN (2,22)
+            AND system_id IN ({carousal})
+            AND cyl_type IN ({cyl_type})
+            AND process_status NOT IN ({excludedStatuses})
+        GROUP BY DATE_TRUNC('hour', process_date)
+        ORDER BY hour ASC;
+        """
+        stats = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
+        if stats['data']:
+            return stats['data']
+        return False
 
-        if(bottling_data and (bottling_data[0]["production_14_2"] > 0 or bottling_data[0]["production_19"] > 0)):
-            for d in bottling_data:
-                for c in carousals:
-                    if c == d["carousal"]:
-                        result[c] = d
-            return result
-        return None
+    async def get_hourly_production(data : dict):
+        try:
+            rawData = await LPGOperationsActions.hourly_production_data(data=data)
+            print("rawData :", rawData)
+            data = {
+                1 : [],
+                2 : [],
+                'labels' : [],
+                'total1' : 0,
+                'total2' : 0
+            }
+            if len(rawData) == 0:
+                return data
+            labels = []
+            car1Data = []
+            car2Data = []
+            total1 = 0
+            total2 = 0
+
+            for row in rawData:
+                timeLow = row['hour']
+                timeHigh = row['hour'] + timedelta(hours=1)
+                label = timeLow.strftime('%H') + '00 - ' + timeHigh.strftime('%H') + '00'
+                labels.append(label)
+                count1 = math.floor(row['c1_t1'] + 0.5)
+                count2 = math.floor(row['c2_t2'] + 0.5)
+                total1 += count1
+                total2 += count2
+                car1Data.append(count1)
+                car2Data.append(count2)
+
+            data['labels'] = labels
+            data['total1'] = total1
+            data['total2'] = total2
+            data[1] = car1Data
+            data[2] = car2Data
+
+            return data
+        except Exception as e:
+            print("Exception in getting bottling summary :", str(e))
+            print("Traceback :", traceback.format_exc())
+            return False, "No data found"
