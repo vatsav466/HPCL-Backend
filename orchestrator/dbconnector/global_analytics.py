@@ -4217,10 +4217,10 @@ class GlobalAnalytics:
             resp = pl.from_pandas(resp)
             resp = resp.group_by(["zone"]).agg([
                         pl.sum("break_production").round(2).alias("break_production"),
-                        pl.sum("overtime_production").round(2).alias("overtime_prouction"),
+                        pl.sum("overtime_production").round(2).alias("overtime_production"),
                     ])
-            resp = resp.with_columns(pl.col("break_production") / 60)
-            resp = resp.with_columns(pl.col("overtime_production") / 60)
+            resp = resp.with_columns((pl.col("break_production") / 60).alias("break_production"))
+            resp = resp.with_columns((pl.col("overtime_production") / 60).alias("overtime_production"))
 
             return {"status": True, "message": "success", "data": resp.to_dicts()}
         try:
@@ -4247,11 +4247,11 @@ class GlobalAnalytics:
                 if "zone" in filter_keys and "plant" not in filter_keys:
                     grouped_resp = resp.group_by(["zone", "plant"]).agg([
                         pl.sum("break_production").round(1).alias("break_production"),
-                        pl.sum("overtime_production").round(1).alias("overtime_prouction"),
+                        pl.sum("overtime_production").round(1).alias("overtime_production"),
                     ])                
                 if grouped_resp is not None:
-                    grouped_resp = grouped_resp.with_columns(pl.col("break_production") / 60)
-                    grouped_resp = grouped_resp.with_columns(pl.col("overtime_production") / 60)
+                    grouped_resp = grouped_resp.with_columns((pl.col("break_production") / 60).alias("break_production"))
+                    grouped_resp = grouped_resp.with_columns((pl.col("overtime_production") / 60).alias("overtime_production"))
                     return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
 
             return {"status": True, "message": "success", "data": resp.to_dicts()}
