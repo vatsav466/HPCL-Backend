@@ -837,7 +837,7 @@ class AlertAction:
                 :return:
                 """
         if alert_data.get("alert_section","") in ["VA"]:
-            await hpcl_ceg_model.Alerts(**{"id": input_data['alert_id'], "mark_as_false=": True}).modify()
+            await hpcl_ceg_model.Alerts(**{"id": input_data['alert_id'], "mark_as_false": True}).modify()
         return await cls.publish_to_camunda(input_data, alert_data, "FalseAlert")
     
     @classmethod
