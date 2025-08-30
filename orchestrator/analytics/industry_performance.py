@@ -97,7 +97,7 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
             return None, None
 
         zone_filter, _ = get_filter_value("zone_name")
-        region_filter, _ = get_filter_value("region_name")
+        ro_filter, _ = get_filter_value("region_name")  # store as ro_filter
         fiscal_year, _ = get_filter_value("fiscal_year")
         product_filter, product_cond = get_filter_value("productname")
         district_filter, district_cond = get_filter_value("distname")
@@ -149,25 +149,25 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         district_sql = build_dynamic_clause(district_filter, district_cond, "distname")
         state_sql = build_dynamic_clause(state_filter, state_cond, "statename")
         zone_cond = f"AND zone_name = '{zone_filter}'" if zone_filter else ""
-        region_cond = f"AND region_name = '{region_filter}'" if region_filter else ""
+        ro_cond = f"AND ro = '{ro_filter}'" if ro_filter else ""  # use ro column
         company_cond = f"AND coname = '{company_filter}'" if company_filter else ""
 
         # 3. Define a reusable function for queries
         def build_query(fiscal_year, group_by_col):
             cols = {
                 "zone_name": "zone_name",
-                "region_name": "region_name",
-                "distname": "distname AS district_name",
+                "region_name": "ro", 
+                "distname": "distname",
             }
             valid_clause = f"AND {group_by_col} IS NOT NULL AND TRIM({group_by_col}) <> '' AND TRIM({group_by_col}) <> '-'" if group_by_col != 'zone_name' else ""
 
             query = f"""
                 SELECT {cols[group_by_col]}, ROUND(COALESCE(SUM(netweight_tmt) / 1000, 0), 2) AS total_sales
                 FROM industry_performance
-                WHERE {base_where} {zone_cond} {region_cond} {product_sql} {company_cond} {district_sql} {state_sql}
+                WHERE {base_where} {zone_cond} {ro_cond} {product_sql} {company_cond} {district_sql} {state_sql}
                 AND fiscal_year = '{fiscal_year}'
                 {valid_clause}
-                GROUP BY {group_by_col}
+                GROUP BY {cols[group_by_col]}
                 ORDER BY total_sales DESC
             """
             return query
@@ -215,8 +215,8 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
             return merged_df
 
         zones_merged = process_data(zones_curr_resp, zones_his_resp, "zone_name", grand_total_curr, grand_total_his)
-        regions_merged = process_data(regions_curr_resp, regions_his_resp, "region_name", grand_total_curr, grand_total_his)
-        districts_merged = process_data(districts_curr_resp, districts_his_resp, "district_name", grand_total_curr, grand_total_his)
+        regions_merged = process_data(regions_curr_resp, regions_his_resp, "ro", grand_total_curr, grand_total_his)
+        districts_merged = process_data(districts_curr_resp, districts_his_resp, "distname", grand_total_curr, grand_total_his)
 
         # 6. Format and sort output
         sort_ascending = (resp_format.lower() == "bottom_performers")
@@ -231,8 +231,8 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
             })[[name_col, "total_sales", "curr_mkt", "his_mkt", "growth", "gain_loss"]].sort_values(by="gain_loss", ascending=sort_ascending)
 
         zones_output = format_output(zones_merged, "zone_name")
-        regions_output = format_output(regions_merged, "region_name")
-        districts_output = format_output(districts_merged, "district_name").head(10)
+        regions_output = format_output(regions_merged, "ro").rename(columns={"ro": "region_name"}).head(10)
+        districts_output = format_output(districts_merged, "distname").head(10)
 
         # 7. Convert to JSON and save to CSV
         if zones_output.empty and regions_output.empty and districts_output.empty:
@@ -258,76 +258,14 @@ import pandas as pd
 
 ALL_MONTHS = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"]
 
-# async def get_region_monthly_performance(region_name: str, sbu_name: str = "RETAIL", coname: str = "HPCL"):
-#     # Build query dynamically using filters
-#     query = f"""
-#     SELECT fiscal_year, month_name, ROUND(COALESCE(SUM(netweight_tmt), 0), 2) AS total_sales
-#     FROM industry_performance
-#     WHERE region_name = '{region_name}'
-#       AND sbu_name = '{sbu_name}'
-#       AND coname = '{coname}'
-#       AND distname IS NOT NULL AND TRIM(distname) <> '' AND TRIM(distname) <> '-'
-#       AND zone_name IS NOT NULL AND TRIM(zone_name) <> '' AND TRIM(zone_name) <> '-'
-#     GROUP BY fiscal_year, month_name
-#     ORDER BY fiscal_year DESC;
-#     """
-#     print("query",query)
-#     # Execute query via your connection method
-#     Charts_Connection_Vault_RoutingParams.connection_id = "1"  # example
-#     Charts_Connection_Vault_RoutingParams.action = "execute_query"
-#     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-#     resp = await function(query=query)
-
-#     # Convert to DataFrame for easier processing
-#     df = pd.DataFrame(resp)
-#     df.columns = [str(col).strip() for col in df.columns]
-
-
-#     # Check if fiscal_year exists
-#     if "fiscal_year" not in df.columns:
-#         print("Columns in df:", df.columns)
-#         return {
-#             "status": False,
-#             "message": "fiscal_year column not found in data",
-#             "data": []
-#         }
-
-#     # Group by fiscal year
-#     response = []
-#     for year, year_df in df.groupby("fiscal_year"):
-#         total_sales = float(year_df["total_sales"].sum())  # Cast to float
-#         months_list = []
-
-#         for month in ALL_MONTHS:
-#             month_row = year_df[year_df["month_name"] == month]
-#             sales = float(month_row["total_sales"].values[0]) if not month_row.empty else 0.0
-#             market_share_percentage = (sales / total_sales * 100) if total_sales > 0 else 0.0
-
-#             months_list.append({
-#                 "month": month,
-#                 "fiscal_year": year,
-#                 "total_sales": sales,
-#                 "market_share_percentage": round(market_share_percentage, 2)  # Added here
-#             })
-
-#         response.append({
-#             "Year": year,
-#             "Total_sales": total_sales,
-#             "months": months_list
-#         })
-
-#     return {
-#         "status": True,
-#         "message": "Success",
-#         "data": response
-#     }
-
 async def get_fiscal_sales(filters: list, cross_filters: list, resp_format: str):
     conditions = []
     for f in filters:
         key = f["key"].replace('"', '')
         cond = f["cond"].lower()
         values = f["value"]
+        if key.lower() == "region_name":
+            key = "ro"
 
         # Skip "All", empty string, None, or empty list
         if values in ["All", ["All"], "", None, []]:
@@ -380,6 +318,11 @@ async def get_fiscal_sales(filters: list, cross_filters: list, resp_format: str)
     for year, year_df in df.groupby("fiscal_year"):
         total_sales = float(year_df["total_sales"].sum())
         months_list = []
+        
+        monthly_sales_series = year_df.groupby("month_name")["total_sales"].sum()
+        monthly_sales_series = monthly_sales_series.astype(float)  # convert to float
+        mean_sales = monthly_sales_series.mean()
+        std_dev_sales = monthly_sales_series.std()
 
         prev_month_sales = None  # track last month’s sales for MoM difference
 
@@ -387,6 +330,14 @@ async def get_fiscal_sales(filters: list, cross_filters: list, resp_format: str)
             month_df = year_df[year_df["month_name"] == month]
             month_sales = float(month_df["total_sales"].sum()) if not month_df.empty else 0.0
             month_market_share_percentage = (month_sales / total_sales * 100) if total_sales > 0 else 0.0
+            
+             # --- Categorize season based on std deviation ---
+            if month_sales > mean_sales + std_dev_sales:
+                season_category = "High Season"
+            elif month_sales < mean_sales - std_dev_sales:
+                season_category = "Low Season"
+            else:
+                season_category = "Normal Season"
 
             # ---- Add zone level data inside each month ----
             zones_list = []
@@ -409,8 +360,8 @@ async def get_fiscal_sales(filters: list, cross_filters: list, resp_format: str)
                 "fiscal_year": year,
                 "total_sales": round(month_sales, 2),
                 "market_share_percentage": round(month_market_share_percentage, 2),
+                "season_category": season_category,
                 "difference": f"{month_diff:+.2f}",  
-
                 "zones": zones_list   
             })
             

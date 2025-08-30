@@ -3872,6 +3872,7 @@ class IndustryPerformanceSchema(UrdhvaPostgresBase):
     month_name: Mapped[typing.Optional[str]] = mapped_column("month_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     netweight_tmt: Mapped[typing.Optional[float]] = mapped_column("netweight_tmt", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
     com_type: Mapped[typing.Optional[str]] = mapped_column("com_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    ro: Mapped[typing.Optional[str]] = mapped_column("ro", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class IndustryPerformanceCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -3904,6 +3905,7 @@ class IndustryPerformanceCreate(urdhva_base.postgresmodel.BasePostgresModel):
     month_name: typing.Optional[str] = pydantic.Field("", **{})
     netweight_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
     com_type: typing.Optional[str] = pydantic.Field("", **{})
+    ro: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -3944,6 +3946,7 @@ class IndustryPerformance(urdhva_base.postgresmodel.PostgresModel):
     month_name: typing.Optional[str] = pydantic.Field("", **{})
     netweight_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
     com_type: typing.Optional[str] = pydantic.Field("", **{})
+    ro: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'

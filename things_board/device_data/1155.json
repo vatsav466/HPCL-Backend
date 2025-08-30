@@ -1452,7 +1452,7 @@
                     "sensor_tag": "MOV.ROSOV-02.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-02",
-                    "sensor_type": "ROSOV FAILED OL1"
+                    "sensor_type": "ROSOV FAILED OL"
                 },
                 {
                     "sensor_name": "ROSOV OPEN STATUS RCL",
@@ -1641,7 +1641,7 @@
                     "sensor_tag": "MOV.ROSOV-05.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-05",
-                    "sensor_type": "ROSOV FAILED OL1"
+                    "sensor_type": "ROSOV FAILED OL"
                 },
                 {
                     "sensor_name": "ROSOV OPEN STATUS RCL",
@@ -1830,7 +1830,7 @@
                     "sensor_tag": "MOV.ROSOV-08.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-08",
-                    "sensor_type": "ROSOV FAILED OL1"
+                    "sensor_type": "ROSOV FAILED OL"
                 },
                 {
                     "sensor_name": "ROSOV OPEN STATUS RCL",
@@ -2019,7 +2019,7 @@
                     "sensor_tag": "MOV.ROSOV-11.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-11",
-                    "sensor_type": "ROSOV FAILED OL1"
+                    "sensor_type": "ROSOV FAILED OL"
                 },
                 {
                     "sensor_name": "ROSOV OPEN STATUS RCL",
@@ -2208,7 +2208,7 @@
                     "sensor_tag": "MOV.ROSOV-14.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-14",
-                    "sensor_type": "ROSOV FAILED OL1"
+                    "sensor_type": "ROSOV FAILED OL"
                 },
                 {
                     "sensor_name": "ROSOV OPEN STATUS RCL",
@@ -3153,7 +3153,7 @@
                     "sensor_tag": "MOV.ROSOV-17.FAILED_TO_CLOSE",
                     "normal_value": "0",
                     "sensor_id": "ROSOV-17",
-                    "sensor_type": "ROSOV FAILED OL1"
+                    "sensor_type": "ROSOV FAILED OL"
                 },
                 {
                     "sensor_name": "ROSOV OPEN STATUS RCL",
