@@ -3048,6 +3048,32 @@ Model PlantEvInfra {
         time_grain optional str
     }
 
+    Action=> get_all_ev_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+
+    Action=> get_ev_company_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+
+    Action=> get_distinct_ev_retail_infra {
+        sbu str
+        company optional list str
+        zone optional list str
+        state optional list str
+        status optional list str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone'
     }

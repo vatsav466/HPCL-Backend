@@ -326,6 +326,7 @@ async def get_sales_info(filters, cross_filters, drill_state, limit, time_grain)
 
         result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
         rows = result.get("data", [])
+        rows = [{k.upper(): v for k, v in row.items()} for row in rows]
 
         return {"status": True, "message": "success", "data": rows}
 
