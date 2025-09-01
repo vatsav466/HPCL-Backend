@@ -6156,6 +6156,15 @@
                 },
                 {
                     "name": "get_plant_ev_count_infra"
+                },
+                {
+                    "name": "get_all_ev_infra"
+                },
+                {
+                    "name": "get_ev_company_infra"
+                },
+                {
+                    "name": "get_distinct_ev_retail_infra"
                 }
             ]
         },
@@ -6174,6 +6183,15 @@
                 },
                 {
                     "name": "get_plant_ev_count_infra"
+                },
+                {
+                    "name": "get_all_ev_infra"
+                },
+                {
+                    "name": "get_ev_company_infra"
+                },
+                {
+                    "name": "get_distinct_ev_retail_infra"
                 }
             ]
         },
@@ -6204,6 +6222,15 @@
                 },
                 {
                     "name": "get_plant_ev_count_infra"
+                },
+                {
+                    "name": "get_all_ev_infra"
+                },
+                {
+                    "name": "get_ev_company_infra"
+                },
+                {
+                    "name": "get_distinct_ev_retail_infra"
                 }
             ]
         }
@@ -6787,6 +6814,18 @@
         {
             "name": "get_plant_ev_count_infra",
             "displayName": "get_plant_ev_count_infra"
+        },
+        {
+            "name": "get_all_ev_infra",
+            "displayName": "get_all_ev_infra"
+        },
+        {
+            "name": "get_ev_company_infra",
+            "displayName": "get_ev_company_infra"
+        },
+        {
+            "name": "get_distinct_ev_retail_infra",
+            "displayName": "get_distinct_ev_retail_infra"
         }
     ]
 }
