@@ -256,6 +256,9 @@ async def get_distinct_sod_lpg_info(sbu: str = "", zone=None, state=None, distri
             add_if_valid(row.get("company"), company_set)
             add_if_valid(row.get("location_name"), location_name_set)
 
+        sbu_values = {"SOD", "LPG", "AVIATION", "LUBES"}
+        sbu_set = sbu_set.union(sbu_values)
+
         return {
             "status": True,
             "message": "success",
