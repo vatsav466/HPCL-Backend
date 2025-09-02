@@ -2247,6 +2247,7 @@ Model PerformanceIndex {
         zone optional str
         sap_id optional str
         strategy str
+        filters optional list WidgetFilters
     }
 
     Action=> get_pi_score_by_category {
@@ -2290,6 +2291,7 @@ Model PerformanceScore {
         zone optional str
         sap_id optional str
         strategy str
+        filters optional list WidgetFilters
     }
 
     Config=> {

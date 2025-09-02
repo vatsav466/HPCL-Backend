@@ -6479,6 +6479,7 @@ class Performanceindex_Get_Pi_ScoreParams(pydantic.BaseModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     strategy: str
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -6586,6 +6587,7 @@ class Performancescore_Get_Pi_ScoreParams(pydantic.BaseModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     strategy: str
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
