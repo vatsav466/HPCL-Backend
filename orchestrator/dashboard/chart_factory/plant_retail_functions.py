@@ -208,14 +208,16 @@ async def get_retail_company_cng_info(filters, cross_filters, drill_state, limit
 
 async def get_plant_ev_count_info(filters, cross_filters, drill_state, limit, time_grain):
     try:
-        query = ''' count(status) AS total_stations,
-                    SUM(CAST(battery_swapping_stations AS INT)) AS battery_swapping_stations,
-                    SUM(CAST(vehicle_charging_stations AS INT)) AS vehicle_charging_stations,
-                    COUNT(*) FILTER (WHERE fame_status ILIKE '%FAME%') AS fame_stations,
-                    COUNT(*) FILTER (WHERE non_fame_status ILIKE '%FAME%') AS non_fame_stations,
-                    COUNT(*) FILTER (WHERE status ILIKE 'Active') AS active_stations,
-                    COUNT(*) FILTER (WHERE status ILIKE 'Inactive') AS inactive_stations
-                FROM plant_ev_infra'''
+        query = '''  
+                COUNT(status) AS total_stations,
+                SUM(CAST(battery_swapping_stations AS INT)) AS battery_swapping_stations,
+                SUM(CAST(vehicle_charging_stations AS INT)) AS vehicle_charging_stations,
+                COUNT(CASE WHEN fame_status ILIKE '%FAME%' THEN 1 END) AS fame_stations,
+                COUNT(CASE WHEN non_fame_status ILIKE '%FAME%' THEN 1 END) AS non_fame_stations,
+                COUNT(CASE WHEN status ILIKE 'Active' THEN 1 END) AS active_stations,
+                COUNT(CASE WHEN status ILIKE 'Inactive' THEN 1 END) AS inactive_stations
+            FROM plant_ev_infra
+        '''
 
         if filters:
             query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
@@ -226,8 +228,10 @@ async def get_plant_ev_count_info(filters, cross_filters, drill_state, limit, ti
         return {"status": True, "message": "success", "data": result}
 
     except Exception as e:
-        print(f"Error in get_plant_cng_count_info: {e}")
-        return {"status": False, "message": f"Failed to fetch plant CNG count info: {str(e)}", "data": []}
+        print(f"Error in get_plant_ev_count_info: {e}")
+        return {
+            "status": False, "message": f"Failed to fetch plant EV count info: {str(e)}", "data": []}
+
 
 
 async def get_all_ev_info(filters, cross_filters, drill_state, limit, time_grain):
@@ -417,3 +421,17 @@ async def get_distinct_cng_retail_info(sbu, company, zone, state, status):
     except Exception as e:
         logging.exception("Error while fetching distinct infra info")
         return {"error": str(e)}
+
+
+async def get_zone_wise_cng_info(filters, cross_filters, drill_state, limit, time_grain):
+    query = ''' 
+            count(cng_outlet) as cng_outlet ,zone from plant_cng_infra group by zone
+    '''
+
+    if filters:
+        query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+
+    cng = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+    cng = cng.get("data", [])
+
+    return {"status": True, "message": "success", "data": cng}

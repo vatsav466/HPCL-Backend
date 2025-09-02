@@ -6060,6 +6060,9 @@
                 },
                 {
                     "name": "get_top_five_cng_infra"
+                },
+                {
+                    "name": "get_zone_wise_cng_infra"
                 }
             ]
         },
@@ -6087,6 +6090,9 @@
                 },
                 {
                     "name": "get_top_five_cng_infra"
+                },
+                {
+                    "name": "get_zone_wise_cng_infra"
                 }
             ]
         },
@@ -6126,6 +6132,9 @@
                 },
                 {
                     "name": "get_top_five_cng_infra"
+                },
+                {
+                    "name": "get_zone_wise_cng_infra"
                 }
             ]
         },
@@ -6806,6 +6815,10 @@
         {
             "name": "get_top_five_cng_infra",
             "displayName": "get_top_five_cng_infra"
+        },
+        {
+            "name": "get_zone_wise_cng_infra",
+            "displayName": "get_zone_wise_cng_infra"
         },
         {
             "name": "upload_plant_ev_file",

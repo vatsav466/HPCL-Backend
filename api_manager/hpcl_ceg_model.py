@@ -8592,6 +8592,18 @@ class Plantcnginfra_Get_Top_Five_Cng_InfraParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Plantcnginfra_Get_Zone_Wise_Cng_InfraParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class PlantEvInfraSchema(UrdhvaPostgresBase):
     __tablename__ = 'plant_ev_infra'
     
