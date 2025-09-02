@@ -68,7 +68,6 @@ async def sod_infra(filters, cross_filters, drill_state, limit, time_grain):
                     if not key_name:
                         continue
 
-                    # Skip LPG-only filter if not in LPG table
                     if key_name.lower() in lpg_only_columns and sbu["name"] != "LPG":
                         continue
 
@@ -84,6 +83,12 @@ async def sod_infra(filters, cross_filters, drill_state, limit, time_grain):
 
             rename_map_lower = {k.lower(): v for k, v in sbu.get("rename_map", {}).items()}
 
+            if not records:
+                placeholder = {"sbu": sbu["name"], "color_code": "#CCCCCC"}
+                for col in rename_map_lower.values():
+                    placeholder[col] = 0
+                records = [placeholder]
+
             for i in range(len(records)):
                 company = records[i].get('company', '').lower()
                 records[i]['color_code'] = company_color_map.get(company, '#CCCCCC')
@@ -92,6 +97,7 @@ async def sod_infra(filters, cross_filters, drill_state, limit, time_grain):
                     records[i] = {
                         rename_map_lower.get(k.lower(), k): v for k, v in records[i].items()
                     }
+                records[i]["sbu"] = sbu["name"]
 
             all_data.extend(records)
 
@@ -99,7 +105,7 @@ async def sod_infra(filters, cross_filters, drill_state, limit, time_grain):
 
     except Exception as e:
         logging.exception("Error while fetching SBU infra data")
-        return {"error": str(e)}
+        return {"status": False, "error": str(e)}
 
 
 
