@@ -2256,6 +2256,7 @@ Model PerformanceIndex {
         zone optional str
         sap_id optional str
         strategy str
+        filters optional list WidgetFilters
     }
 
     Action=> get_pi_score_by_category {
@@ -2299,6 +2300,7 @@ Model PerformanceScore {
         zone optional str
         sap_id optional str
         strategy str
+        filters optional list WidgetFilters
     }
 
     Config=> {
@@ -3023,6 +3025,14 @@ Model PlantCngInfra {
         time_grain optional str
     }
 
+    Action=> get_zone_wise_cng_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone'
     }
@@ -3055,6 +3065,32 @@ Model PlantEvInfra {
         cross_filters optional list WidgetFilters
         limit optional int
         time_grain optional str
+    }
+
+    Action=> get_all_ev_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+
+    Action=> get_ev_company_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+
+    Action=> get_distinct_ev_retail_infra {
+        sbu str
+        company optional list str
+        zone optional list str
+        state optional list str
+        status optional list str
     }
 
     Config=> {

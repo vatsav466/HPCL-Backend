@@ -326,6 +326,7 @@ async def get_sales_info(filters, cross_filters, drill_state, limit, time_grain)
 
         result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
         rows = result.get("data", [])
+        rows = [{k.upper(): v for k, v in row.items()} for row in rows]
 
         return {"status": True, "message": "success", "data": rows}
 
@@ -363,7 +364,7 @@ async def get_download_info(sbu, background_tasks):
             return {"status": "error", "message": "No data found."}
 
         df = pd.DataFrame(rows)
-        output_dir = "/opt/ceg/algo/orchestrator/masterdata/infra_inputs"  # temporary folder
+        output_dir = "/opt/ceg/algo/orchestrator/masterdata/infra_inputs"
         os.makedirs(output_dir, exist_ok=True)
         template_file_path = os.path.join(output_dir, f"Updated_{sbu}_infra_data.xlsx")
         df.to_excel(template_file_path, index=False, sheet_name=sbu)
