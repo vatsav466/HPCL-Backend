@@ -133,22 +133,68 @@ class DryoutCollector:
         # Get all open dry out history details
         # Compare with dry out records -> if not there for product and location id close and update end_time
         # Closed alerts day wise unique by sap_id and product -> Create Close
-        query = f"SELECT id, sap_id, product_no from dry_out_history where status='Open'"
+        query = f"SELECT id, sap_id, product_no, dry_out_in_days from dry_out_history where status='Open'"
         dry_out_history = await hpcl_ceg_model.DryOutHistory.get_aggr_data(query, limit=50000)
         dry_out_hist_data = {f"{rec['sap_id']}_{rec['product_no']}": rec for rec in dry_out_history['data']}
         dry_out_alert = {f"{rec['rosapcode']}_{rec['product_no']}": rec for rec in records}
         closed_alerts = list(set(list(dry_out_hist_data.keys())) - set(list(dry_out_alert.keys())))
         closed_ids = list({dry_out_hist_data[key]['id'] for key in closed_alerts})
+        # for index in range(0, len(closed_ids), 1000):
+        #     ids = [f"{key}" for key in closed_ids[index:index+1000]]
+        #     conditions = [f"id in {tuple(ids)}" if len(ids) > 1 else f"id={ids[0]}"]
+        #     query = (f"Update dry_out_history set "
+        #              f"status='Close',end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
+        #              f"where {' AND '.join(conditions)}")
+        #     await hpcl_ceg_model.DryOutHistory.update_by_query(query)
+
+        # await dry_out_analysis.update_dry_out_from_cris(records)
         for index in range(0, len(closed_ids), 1000):
-            ids = [f"{key}" for key in closed_ids[index:index+1000]]
-            conditions = [f"id in {tuple(ids)}" if len(ids) > 1 else f"id={ids[0]}"]
-            query = (f"Update dry_out_history set "
-                     f"status='Close',end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
-                     f"where {' AND '.join(conditions)}")
-            await hpcl_ceg_model.DryOutHistory.update_by_query(query)
-
-        await dry_out_analysis.update_dry_out_from_cris(records)
-
+            batch_ids = closed_ids[index:index+1000]
+            ids_1 = []
+            ids_2 = []
+            ids_3 = []
+            for cid in batch_ids:
+                # Find the key corresponding to this id in dry_out_hist_data
+                key = next(k for k, v in dry_out_hist_data.items() if v['id'] == cid)
+                dry_out_in_days = dry_out_hist_data[key].get('dry_out_in_days','')
+                if dry_out_in_days == '1':
+                    ids_1.append(cid)
+                elif dry_out_in_days == '2':
+                    ids_2.append(cid)
+                else:
+                    ids_3.append(cid)
+            now_utc = datetime.datetime.now(tz=datetime.timezone.utc)
+            # Update for dry_out_in_days == '1'
+            if ids_1:
+                ids_text = tuple(ids_1) if len(ids_1) > 1 else f"('{ids_1[0]}')"
+                query = (
+                    f"UPDATE dry_out_history SET "
+                    f"status='Close', "
+                    f"end_time='{now_utc}', "
+                    f"dry_out_end_time='{now_utc}' "
+                    f"WHERE id IN {ids_text}"
+                )
+                await hpcl_ceg_model.DryOutHistory.update_by_query(query)
+            # Update for dry_out_in_days == '2'
+            if ids_2:
+                ids_text = tuple(ids_2) if len(ids_2) > 1 else f"('{ids_2[0]}')"
+                query = (
+                    f"UPDATE dry_out_history SET "
+                    f"status='Close', "
+                    f"end_time='{now_utc}', "
+                    f"intra_day_dry_out_end_time='{now_utc}' "
+                    f"WHERE id IN {ids_text}"
+                )
+                await hpcl_ceg_model.DryOutHistory.update_by_query(query)
+            if ids_3:
+                ids_text = tuple(ids_3) if len(ids_3) > 1 else f"('{ids_3[0]}')"
+                query = (
+                    f"UPDATE dry_out_history SET "
+                    f"status='Close', "
+                    f"end_time='{now_utc}' "
+                    f"WHERE id IN {ids_text}"
+                )
+                await hpcl_ceg_model.DryOutHistory.update_by_query(query)
 
 if __name__ == "__main__":
     print(f"Executing dry-out alert creation at {datetime.datetime.now(datetime.timezone.utc)}")
