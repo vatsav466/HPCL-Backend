@@ -256,6 +256,9 @@ async def get_distinct_sod_lpg_info(sbu: str = "", zone=None, state=None, distri
             add_if_valid(row.get("company"), company_set)
             add_if_valid(row.get("location_name"), location_name_set)
 
+        if not rows:
+            sbu_set = {"SOD", "LPG", "AVIATION", "LUBES"}
+
         return {
             "status": True,
             "message": "success",
