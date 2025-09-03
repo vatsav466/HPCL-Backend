@@ -346,6 +346,25 @@ async def get_fiscal_sales(filters: list, cross_filters: list, resp_format: str)
     
     response = []
     prev_year_total = None  # to calculate YoY difference
+    # Compute full month totals ignoring zone filter
+    
+    query_all_zones = f"""
+        SELECT fiscal_year, month_name, zone_name, ROUND(COALESCE(SUM(netweight_tmt)/1000, 2), 2) AS total_sales
+        FROM industry_performance
+        WHERE distname IS NOT NULL AND TRIM(distname) <> '' AND TRIM(distname) <> '-'
+        AND zone_name IS NOT NULL AND TRIM(zone_name) <> '' AND TRIM(zone_name) <> '-'
+        GROUP BY fiscal_year, month_name, zone_name
+    """
+
+    resp_all_zones = await function(query=query_all_zones)
+    df_all = pd.DataFrame(resp_all_zones)
+    df_all.columns = [str(col).strip() for col in df_all.columns]
+    
+
+    # This replaces your previous df_all calculation
+    month_totals_all_zones = df_all.groupby(["fiscal_year", "month_name"])["total_sales"].sum().to_dict()
+
+
 
     for year, year_df in df.groupby("fiscal_year"):
         total_sales = float(year_df["total_sales"].sum())
@@ -363,6 +382,10 @@ async def get_fiscal_sales(filters: list, cross_filters: list, resp_format: str)
             month_sales = float(month_df["total_sales"].sum()) if not month_df.empty else 0.0
             month_market_share_percentage = (month_sales / total_sales * 100) if total_sales > 0 else 0.0
             
+            full_month_total = float(month_totals_all_zones.get((year, month), 0.0))
+            
+
+
              # --- Categorize season based on std deviation ---
             if month_sales > mean_sales + std_dev_sales:
                 season_category = "High Season"
@@ -373,9 +396,20 @@ async def get_fiscal_sales(filters: list, cross_filters: list, resp_format: str)
 
             # ---- Add zone level data inside each month ----
             zones_list = []
+            month_all_zones_df = df_all[(df_all["fiscal_year"] == year) & (df_all["month_name"] == month)]
+            month_total_sales_all_zones = float(month_all_zones_df["total_sales"].sum())
+
+
             for zone, zone_df in month_df.groupby("zone_name"):
                 zone_sales = float(zone_df["total_sales"].sum())
-                zone_market_share_percentage = (zone_sales / month_sales * 100) if month_sales > 0 else 0.0
+                
+
+                # zone_market_share_percentage = (zone_sales / month_sales * 100) if month_sales > 0 else 0.0
+                # zone_market_share_percentage = (zone_sales / full_month_total * 100) if full_month_total > 0 else 0.0
+                zone_market_share_percentage = (
+                    (zone_sales / month_total_sales_all_zones * 100)
+                    if month_total_sales_all_zones > 0 else 0.0
+                )
 
                 zones_list.append({
                     "zone_name": zone,
