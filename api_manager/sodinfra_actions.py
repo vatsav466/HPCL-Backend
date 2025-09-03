@@ -39,7 +39,9 @@ async def sodinfra_upload_sod_file(file: fastapi.UploadFile):
         loc_df = pd.DataFrame(resp['data'])
 
         loc_df['updated_by'] = ''
-        df['updated_by'] = ''
+        rpt = urdhva_base.context.context.get('rpt', {})
+        username = rpt.get("username")
+        df['updated_by'] = username
         df['location code'] = df['location code'].apply(
             lambda x: str(int(float(x))) if pd.notnull(x) and str(x).strip() != "" else ""
         )
