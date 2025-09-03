@@ -49,7 +49,14 @@ class TASAlertManager(alert_factory.AlertFactory):
                             f"Skipping alert creation")
                 return {"status": False, "message": f"Location details not found for {alert_data['sap_id']}",
                         "alert_data": None}
-            with open(f"/opt/ceg/algo/things_board/device_data/{alert_data['sap_id']}.json") as f:
+            
+            if urdhva_base.settings.environment == "prod":
+                basepath = "/opt/ceg/algo/prod/"
+            elif urdhva_base.settings.environment == "uat":
+                basepath = "/opt/ceg/algo/uat/"
+            else:
+                basepath = "/opt/ceg/algo/things_board/device_data/"
+            with open(f"{basepath}{alert_data['sap_id']}.json") as f:
                 device_data = json.load(f)
             device_keys = []
             for rec in device_data["data"]:
@@ -60,12 +67,14 @@ class TASAlertManager(alert_factory.AlertFactory):
                     break
             device_data = f"{alert_data['device_name']}"
             processed_time = datetime.datetime.now(datetime.timezone.utc)
-            alert_data["alert_history"] = [{
-                "processed_time": processed_time.isoformat(),
-                "allocated_time": processed_time.isoformat(),
-                "action_msg": f"{alert_data['interlock_name']} Interlock created",
-                "action_type": "InterlockCreated"
-            }]
+            
+            if "alert_history" not in alert_data:
+                alert_data["alert_history"] = [{
+                    "processed_time": processed_time.isoformat(),
+                    "allocated_time": processed_time.isoformat(),
+                    "action_msg": f"{alert_data['interlock_name']} Interlock created",
+                    "action_type": "InterlockCreated"
+                }]
 
             camunda_url = await helpers.get_camunda_url(
                 bu=alert_data['bu'], 
@@ -104,8 +113,16 @@ class TASAlertManager(alert_factory.AlertFactory):
         try:
             logger.info(f"Alert data received to close alert: {alert_data}")
             print("-- In Close Alert ---")
-
-            with open(f"/opt/ceg/algo/things_board/device_data/{alert_data['sap_id']}.json") as f:
+            
+            
+            if urdhva_base.settings.environment == "prod":
+                basepath = "/opt/ceg/algo/prod/"
+            elif urdhva_base.settings.environment == "uat":
+                basepath = "/opt/ceg/algo/uat/"
+            else:
+                basepath = "/opt/ceg/algo/things_board/device_data/"
+                
+            with open(f"{basepath}{alert_data['sap_id']}.json") as f:
                 device_data = json.load(f)
 
             device_keys = []
@@ -119,12 +136,14 @@ class TASAlertManager(alert_factory.AlertFactory):
 
             device_data_str = f"{alert_data.get('device_name')}({', '.join(device_keys)})"
             processed_time = datetime.datetime.now(datetime.timezone.utc)
-            alert_data["alert_history"] = {
-                "processed_time": processed_time.isoformat(),
-                "allocated_time": processed_time.isoformat(),
-                "action_msg": f"{alert_data['interlock_name']} Interlock cleared",
-                "action_type": "InterlockCleared"
-            }
+            
+            if "alert_history" not in alert_data:
+                alert_data["alert_history"] = {
+                    "processed_time": processed_time.isoformat(),
+                    "allocated_time": processed_time.isoformat(),
+                    "action_msg": f"{alert_data['interlock_name']} Interlock cleared",
+                    "action_type": "InterlockCleared"
+                }
 
             query = (f"external_id='{alert_data['alert_id']}' and bu='{alert_data['bu']}' and "
                     f"sap_id='{alert_data['sap_id']}' and alert_status!='Close'")

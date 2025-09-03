@@ -269,3 +269,137 @@ class Taslistener_Get_DataParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class TasAgentCommStatusSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_agent_comm_status'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    message: Mapped[typing.Optional[str]] = mapped_column("message", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    opcda_status: Mapped[typing.Optional[str]] = mapped_column("opcda_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    data_receiving_status: Mapped[typing.Optional[str]] = mapped_column("data_receiving_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    configuration_healthy: Mapped[typing.Optional[str]] = mapped_column("configuration_healthy", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    last_opc_failure: Mapped[typing.Optional[str]] = mapped_column("last_opc_failure", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    last_rabbit_failure: Mapped[typing.Optional[str]] = mapped_column("last_rabbit_failure", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    locaction_name: Mapped[typing.Optional[str]] = mapped_column("locaction_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class TasAgentCommStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_agent_comm_status'
+    
+    sap_id: str
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    message: typing.Optional[str] = pydantic.Field("", **{})
+    opcda_status: typing.Optional[str] = pydantic.Field("", **{})
+    data_receiving_status: typing.Optional[str] = pydantic.Field("", **{})
+    configuration_healthy: typing.Optional[str] = pydantic.Field("", **{})
+    last_opc_failure: typing.Optional[str] = pydantic.Field("", **{})
+    last_rabbit_failure: typing.Optional[str] = pydantic.Field("", **{})
+    locaction_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasAgentCommStatusSchema
+        upsert_keys = []
+
+
+class TasAgentCommStatus(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_agent_comm_status'
+    
+    sap_id: typing.Optional[str] | None = None
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    message: typing.Optional[str] = pydantic.Field("", **{})
+    opcda_status: typing.Optional[str] = pydantic.Field("", **{})
+    data_receiving_status: typing.Optional[str] = pydantic.Field("", **{})
+    configuration_healthy: typing.Optional[str] = pydantic.Field("", **{})
+    last_opc_failure: typing.Optional[str] = pydantic.Field("", **{})
+    last_rabbit_failure: typing.Optional[str] = pydantic.Field("", **{})
+    locaction_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasAgentCommStatusSchema
+        upsert_keys = []
+
+
+class TasAgentCommStatusGetResp(pydantic.BaseModel):
+    data: typing.List[TasAgentCommStatus]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class TasAgentServiceStatusSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_agent_service_status'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    message: Mapped[typing.Optional[str]] = mapped_column("message", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class TasAgentServiceStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_agent_service_status'
+    
+    sap_id: str
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    message: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasAgentServiceStatusSchema
+        upsert_keys = []
+
+
+class TasAgentServiceStatus(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_agent_service_status'
+    
+    sap_id: typing.Optional[str] | None = None
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    message: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasAgentServiceStatusSchema
+        upsert_keys = []
+
+
+class TasAgentServiceStatusGetResp(pydantic.BaseModel):
+    data: typing.List[TasAgentServiceStatus]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Tas_Get_Agent_Service_StatusParams(pydantic.BaseModel):
+    sap_id: str
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    message: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Tas_Get_Agent_Comm_StatusParams(pydantic.BaseModel):
+    sap_id: str
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    message: typing.Optional[str] = pydantic.Field("", **{})
+    opcda_status: typing.Optional[str] = pydantic.Field("", **{})
+    data_receiving_status: typing.Optional[str] = pydantic.Field("", **{})
+    configuration_healthy: typing.Optional[str] = pydantic.Field("", **{})
+    last_opc_failure: typing.Optional[str] = pydantic.Field("", **{})
+    last_rabbit_failure: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
