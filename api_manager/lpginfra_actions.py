@@ -36,8 +36,10 @@ async def lpginfra_upload_lpg_file(file: fastapi.UploadFile):
         query = ''' * FROM location_master'''
         resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
         loc_df = pd.DataFrame(resp['data'])
+        rpt = urdhva_base.context.context.get('rpt', {})
+        username = rpt.get("username")
         loc_df['updated_by'] = ''
-        df['updated_by'] = ''
+        df['updated_by'] = username
         df['sap code'] = df['sap code'].apply(
             lambda x: str(int(float(x))) if pd.notnull(x) and str(x).strip() != "" else ""
         )
@@ -146,3 +148,38 @@ async def lpginfra_add_lpg_data(data: Lpginfra_Add_Lpg_DataParams):
         print("Error in add_lpg_data:", str(e))
         traceback.print_exc()
         return {"status": False, "message": "An error occurred while creating LPG data", "error": str(e)}
+
+
+# Action delete_lpg_data
+@router.post('/delete_lpg_data', tags=['LPGInfra'])
+async def lpginfra_delete_lpg_data(data: Lpginfra_Delete_Lpg_DataParams):
+    try:
+        unique_ids = data.unique_id or []
+        if not unique_ids:
+            return {"status": False, "message": "No unique_id(s) provided for deletion"}
+
+        deleted_ids = []
+        not_found_ids = []
+
+        for uid in unique_ids:
+            q = f"id='{uid}'"
+            existing = await LPGInfra.get_all( urdhva_base.QueryParams(q=q, limit=1), resp_type="plain")
+
+            if existing["data"]:
+                record_id = existing["data"][0].get("id")
+                await LPGInfra.delete(record_id)
+                deleted_ids.append(uid)
+                print(f"Deleted LPG record with ID: {uid}")
+            else:
+                not_found_ids.append(uid)
+                print(f"No LPG record found for ID: {uid}")
+
+        print(f"Total LPG deleted: {len(deleted_ids)}, Not found: {len(not_found_ids)}")
+
+        return {
+            "status": True, "message": f"LPG Data Deleted Successfully. Deleted: {len(deleted_ids)}, Not Found: {len(not_found_ids)}", "deleted_ids": deleted_ids, "not_found_ids": not_found_ids}
+
+    except Exception as e:
+        print("Error in delete_lpg_data:", str(e))
+        traceback.print_exc()
+        return {"status": False, "message": "An error occurred while deleting LPG data", "error": str(e)}

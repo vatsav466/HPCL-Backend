@@ -39,7 +39,9 @@ async def sodinfra_upload_sod_file(file: fastapi.UploadFile):
         loc_df = pd.DataFrame(resp['data'])
 
         loc_df['updated_by'] = ''
-        df['updated_by'] = ''
+        rpt = urdhva_base.context.context.get('rpt', {})
+        username = rpt.get("username")
+        df['updated_by'] = username
         df['location code'] = df['location code'].apply(
             lambda x: str(int(float(x))) if pd.notnull(x) and str(x).strip() != "" else ""
         )
@@ -200,10 +202,45 @@ async def sodinfra_add_sod_data(data: Sodinfra_Add_Sod_DataParams):
         sod_data = data.sod_data.dict()
         sod_data["id"] = None
         await SodInfra(**sod_data).create()
-        await HistoricSodInfra(**sod_data).create()
         return {"status": True, "message": "SOD Data Created Successfully"}
     except Exception as e:
         print("Error in add_sod_data:", str(e))
         traceback.print_exc()
         return {"status": False, "message": "An error occurred while creating SOD data", "error": str(e)
 }
+
+
+# Action delete_sod_data
+@router.post('/delete_sod_data', tags=['SodInfra'])
+async def sodinfra_delete_sod_data(data: Sodinfra_Delete_Sod_DataParams):
+    try:
+        unique_ids = data.unique_id or []
+        if not unique_ids:
+            return {"status": False, "message": "No unique_id(s) provided for deletion"}
+
+        deleted_ids = []
+        not_found_ids = []
+
+        for uid in unique_ids:
+            q = f"id='{uid}'"
+            existing = await SodInfra.get_all(
+                urdhva_base.QueryParams(q=q, limit=1), resp_type="plain"
+            )
+
+            if existing["data"]:
+                record_id = existing["data"][0].get("id")
+                await SodInfra.delete(record_id)
+                deleted_ids.append(uid)
+                print(f"Deleted record with ID: {uid}")
+            else:
+                not_found_ids.append(uid)
+                print(f"No record found for ID: {uid}")
+
+        print(f"Total deleted: {len(deleted_ids)}, Not found: {len(not_found_ids)}")
+
+        return {"status": True, "message": f"SOD Data Deleted Successfully. Deleted: {len(deleted_ids)}, Not Found: {len(not_found_ids)}", "deleted_ids": deleted_ids, "not_found_ids": not_found_ids}
+
+    except Exception as e:
+        print("Error in delete_sod_data:", str(e))
+        traceback.print_exc()
+        return {"status": False, "message": "An error occurred while deleting SOD data", "error": str(e)}

@@ -7,6 +7,7 @@ import datetime
 import traceback
 from http.client import HTTPException
 import orchestrator.dashboard.chart_factory.infra_functions as infra_functions
+import orchestrator.dashboard.chart_factory.plant_retail_functions as plant_retail_functions
 from fastapi.responses import FileResponse, JSONResponse
 import polars as pl
 from openpyxl import load_workbook
@@ -53,7 +54,7 @@ async def plantevinfra_upload_plant_ev_file(file: fastapi.UploadFile):
             "ANDHRA PRADESH": "SCR", "ARUNACHAL PRADESH": "EAS", "ASSAM": "EAS",
             "BIHAR": "ECZ", "CHHATTISGARH": "CEN", "DELHI": "NOR", "GOA": "WES",
             "GUJARAT": "WES", "HARYANA": "NOR", "HIMACHAL PRADESH": "NFZ",
-            "JHARKHAND": "ECZ", "KARNATAKA": "SWZ", "KERALA": "SWZ", "MADHYA PRADESH": "WIS",
+            "JHARKAND": "ECZ", "KARNATAKA": "SWZ", "KERALA": "SWZ", "MADHYA PRADESH": "WIS",
             "MAHARASHTRA": "WIS", "MANIPUR": "EAS", "MEGHALAYA": "EAS", "MIZORAM": "EAS",
             "NAGALAND": "EAS", "ODISHA": "ECZ", "PUNJAB": "NFZ", "RAJASTHAN": "NRW",
             "SIKKIM": "EAS", "TAMIL NADU": "SR", "TELANGANA": "SCR", "TRIPURA": "EAS",
@@ -71,12 +72,13 @@ async def plantevinfra_upload_plant_ev_file(file: fastapi.UploadFile):
         df = df[~(df['Omc'].astype(str).str.upper().str.contains('OMC') &
                   df.iloc[:, 1].astype(str).str.upper().str.contains('TOTAL'))]
         df['State'] = df['State'].astype(str).str.strip().str.upper()
+        print(df['State'].unique())
         df['City'] = df['City'].astype(str)
 
         df_transformed = pd.DataFrame({
             'date': date_value if date_value else '',
             'zone': df['State'].map(state_zone_mapping).fillna(''),
-            'location': df['State'].str.title(),
+            'state': df['State'].str.title(),
             'region': 'State',
             'company': df['Omc'].map(omc_mapping).fillna(df['Omc']),
             'ro_name': df['Ro Name'],
@@ -108,6 +110,29 @@ async def plantevinfra_upload_plant_ev_file(file: fastapi.UploadFile):
 # Action get_plant_ev_count_infra
 @router.post('/get_plant_ev_count_infra', tags=['PlantEvInfra'])
 async def plantevinfra_get_plant_ev_count_infra(data: Plantevinfra_Get_Plant_Ev_Count_InfraParams):
-    return await infra_functions.get_plant_ev_count_info(filters=data.filters, cross_filters=data.cross_filters,
+    return await plant_retail_functions.get_plant_ev_count_info(filters=data.filters, cross_filters=data.cross_filters,
                                                          drill_state=data.drill_state, limit=data.limit,
                                                          time_grain=data.time_grain)
+
+
+# Action get_all_ev_infra
+@router.post('/get_all_ev_infra', tags=['PlantEvInfra'])
+async def plantevinfra_get_all_ev_infra(data: Plantevinfra_Get_All_Ev_InfraParams):
+    return await plant_retail_functions.get_all_ev_info(filters=data.filters, cross_filters=data.cross_filters,
+                                                         drill_state=data.drill_state, limit=data.limit,
+                                                         time_grain=data.time_grain)
+
+
+# Action get_ev_company_infra
+@router.post('/get_ev_company_infra', tags=['PlantEvInfra'])
+async def plantevinfra_get_ev_company_infra(data: Plantevinfra_Get_Ev_Company_InfraParams):
+    return await plant_retail_functions.get_ev_company_info(filters=data.filters, cross_filters=data.cross_filters,
+                                                        drill_state=data.drill_state, limit=data.limit,
+                                                        time_grain=data.time_grain)
+
+
+# Action get_distinct_ev_retail_infra
+@router.post('/get_distinct_ev_retail_infra', tags=['PlantEvInfra'])
+async def plantevinfra_get_distinct_ev_retail_infra(data: Plantevinfra_Get_Distinct_Ev_Retail_InfraParams):
+    return await plant_retail_functions.get_distinct_ev_retail_info(data.sbu, data.company, data.zone, data.state,
+                                                                    data.status)

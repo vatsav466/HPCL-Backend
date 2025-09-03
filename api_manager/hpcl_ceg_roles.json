@@ -5268,6 +5268,9 @@
                 },
                 {
                     "name": "add_sod_data"
+                },
+                {
+                    "name": "delete_sod_data"
                 }
             ]
         },
@@ -5367,6 +5370,9 @@
                 },
                 {
                     "name": "add_sod_data"
+                },
+                {
+                    "name": "delete_sod_data"
                 }
             ]
         },
@@ -5403,6 +5409,9 @@
                 },
                 {
                     "name": "add_lpg_data"
+                },
+                {
+                    "name": "delete_lpg_data"
                 }
             ]
         },
@@ -5457,6 +5466,9 @@
                 },
                 {
                     "name": "add_lpg_data"
+                },
+                {
+                    "name": "delete_lpg_data"
                 }
             ]
         },
@@ -5493,6 +5505,9 @@
                 },
                 {
                     "name": "add_aviation_data"
+                },
+                {
+                    "name": "delete_aviation_data"
                 }
             ]
         },
@@ -5547,6 +5562,9 @@
                 },
                 {
                     "name": "add_aviation_data"
+                },
+                {
+                    "name": "delete_aviation_data"
                 }
             ]
         },
@@ -5583,6 +5601,9 @@
                 },
                 {
                     "name": "add_lubes_data"
+                },
+                {
+                    "name": "delete_lubes_data"
                 }
             ]
         },
@@ -5637,6 +5658,9 @@
                 },
                 {
                     "name": "add_lubes_data"
+                },
+                {
+                    "name": "delete_lubes_data"
                 }
             ]
         },
@@ -5928,6 +5952,9 @@
                 },
                 {
                     "name": "get_distinct_ro_retail_infra"
+                },
+                {
+                    "name": "get_top_five_ro_infra"
                 }
             ]
         },
@@ -5955,6 +5982,9 @@
                 },
                 {
                     "name": "get_distinct_ro_retail_infra"
+                },
+                {
+                    "name": "get_top_five_ro_infra"
                 }
             ]
         },
@@ -5994,6 +6024,9 @@
                 },
                 {
                     "name": "get_distinct_ro_retail_infra"
+                },
+                {
+                    "name": "get_top_five_ro_infra"
                 }
             ]
         },
@@ -6026,7 +6059,16 @@
                     "name": "get_plant_cng_count_infra"
                 },
                 {
+                    "name": "get_distinct_cng_retail_infra"
+                },
+                {
                     "name": "get_retail_company_cng_infra"
+                },
+                {
+                    "name": "get_top_five_cng_infra"
+                },
+                {
+                    "name": "get_zone_wise_cng_infra"
                 }
             ]
         },
@@ -6047,7 +6089,16 @@
                     "name": "get_plant_cng_count_infra"
                 },
                 {
+                    "name": "get_distinct_cng_retail_infra"
+                },
+                {
                     "name": "get_retail_company_cng_infra"
+                },
+                {
+                    "name": "get_top_five_cng_infra"
+                },
+                {
+                    "name": "get_zone_wise_cng_infra"
                 }
             ]
         },
@@ -6080,7 +6131,16 @@
                     "name": "get_plant_cng_count_infra"
                 },
                 {
+                    "name": "get_distinct_cng_retail_infra"
+                },
+                {
                     "name": "get_retail_company_cng_infra"
+                },
+                {
+                    "name": "get_top_five_cng_infra"
+                },
+                {
+                    "name": "get_zone_wise_cng_infra"
                 }
             ]
         },
@@ -6111,6 +6171,15 @@
                 },
                 {
                     "name": "get_plant_ev_count_infra"
+                },
+                {
+                    "name": "get_all_ev_infra"
+                },
+                {
+                    "name": "get_ev_company_infra"
+                },
+                {
+                    "name": "get_distinct_ev_retail_infra"
                 }
             ]
         },
@@ -6129,6 +6198,15 @@
                 },
                 {
                     "name": "get_plant_ev_count_infra"
+                },
+                {
+                    "name": "get_all_ev_infra"
+                },
+                {
+                    "name": "get_ev_company_infra"
+                },
+                {
+                    "name": "get_distinct_ev_retail_infra"
                 }
             ]
         },
@@ -6159,6 +6237,15 @@
                 },
                 {
                     "name": "get_plant_ev_count_infra"
+                },
+                {
+                    "name": "get_all_ev_infra"
+                },
+                {
+                    "name": "get_ev_company_infra"
+                },
+                {
+                    "name": "get_distinct_ev_retail_infra"
                 }
             ]
         }
@@ -6632,6 +6719,10 @@
             "displayName": "add_sod_data"
         },
         {
+            "name": "delete_sod_data",
+            "displayName": "delete_sod_data"
+        },
+        {
             "name": "upload_lpg_file",
             "displayName": "upload_lpg_file"
         },
@@ -6646,6 +6737,10 @@
         {
             "name": "add_lpg_data",
             "displayName": "add_lpg_data"
+        },
+        {
+            "name": "delete_lpg_data",
+            "displayName": "delete_lpg_data"
         },
         {
             "name": "upload_aviation_file",
@@ -6664,6 +6759,10 @@
             "displayName": "add_aviation_data"
         },
         {
+            "name": "delete_aviation_data",
+            "displayName": "delete_aviation_data"
+        },
+        {
             "name": "upload_lubes_file",
             "displayName": "upload_lubes_file"
         },
@@ -6678,6 +6777,10 @@
         {
             "name": "add_lubes_data",
             "displayName": "add_lubes_data"
+        },
+        {
+            "name": "delete_lubes_data",
+            "displayName": "delete_lubes_data"
         },
         {
             "name": "upload_plant_ro_file",
@@ -6700,6 +6803,10 @@
             "displayName": "get_distinct_ro_retail_infra"
         },
         {
+            "name": "get_top_five_ro_infra",
+            "displayName": "get_top_five_ro_infra"
+        },
+        {
             "name": "upload_plant_cng_file",
             "displayName": "upload_plant_cng_file"
         },
@@ -6708,8 +6815,20 @@
             "displayName": "get_plant_cng_count_infra"
         },
         {
+            "name": "get_distinct_cng_retail_infra",
+            "displayName": "get_distinct_cng_retail_infra"
+        },
+        {
             "name": "get_retail_company_cng_infra",
             "displayName": "get_retail_company_cng_infra"
+        },
+        {
+            "name": "get_top_five_cng_infra",
+            "displayName": "get_top_five_cng_infra"
+        },
+        {
+            "name": "get_zone_wise_cng_infra",
+            "displayName": "get_zone_wise_cng_infra"
         },
         {
             "name": "upload_plant_ev_file",
@@ -6718,6 +6837,18 @@
         {
             "name": "get_plant_ev_count_infra",
             "displayName": "get_plant_ev_count_infra"
+        },
+        {
+            "name": "get_all_ev_infra",
+            "displayName": "get_all_ev_infra"
+        },
+        {
+            "name": "get_ev_company_infra",
+            "displayName": "get_ev_company_infra"
+        },
+        {
+            "name": "get_distinct_ev_retail_infra",
+            "displayName": "get_distinct_ev_retail_infra"
         }
     ]
 }

@@ -34,7 +34,9 @@ async def aviationinfra_upload_aviation_file(file: fastapi.UploadFile):
                      'zone': 'zone', 'state': 'state', 'district': 'district', 'aviation sbu': 'city', 'tankage': 'tankage', 'operation status': 'operation_status', 'mode': 'mode',
                      'address': 'address', 'pin code': 'pincode', 'status': 'status', 'latitude': 'latitude', 'longitude': 'longitude'
                      })
-        df['updated_by'] = ''
+        rpt = urdhva_base.context.context.get('rpt', {})
+        username = rpt.get("username")
+        df['updated_by'] = username
         df['sap_id'] = df['sap_id'].apply(
             lambda x: str(int(float(x))) if pd.notnull(x) and str(x).strip() != "" else ""
         )
@@ -124,9 +126,43 @@ async def aviationinfra_add_aviation_data(data: Aviationinfra_Add_Aviation_DataP
         aviation_data = data.aviation_data.dict()
         aviation_data["id"] = None
         await AVIATIONInfra(**aviation_data).create()
-        await HistoricAVIATIONInfra(**aviation_data).create()
         return {"status": True, "message": "AVIATION Data Created Successfully"}
     except Exception as e:
         print("Error in add_aviation_data:", str(e))
         traceback.print_exc()
         return {"status": False, "message": "An error occurred while creating AVIATION data", "error": str(e)}
+
+
+# Action delete_aviation_data
+@router.post('/delete_aviation_data', tags=['AVIATIONInfra'])
+async def aviationinfra_delete_aviation_data(data: Aviationinfra_Delete_Aviation_DataParams):
+    try:
+        unique_ids = data.unique_id or []
+        if not unique_ids:
+            return {"status": False, "message": "No unique_id(s) provided for deletion"}
+
+        deleted_ids = []
+        not_found_ids = []
+
+        for uid in unique_ids:
+            q = f"id='{uid}'"
+            existing = await AVIATIONInfra.get_all( urdhva_base.QueryParams(q=q, limit=1), resp_type="plain")
+
+            if existing["data"]:
+                record_id = existing["data"][0].get("id")
+                await AVIATIONInfra.delete(record_id)
+                deleted_ids.append(uid)
+                print(f"Deleted AVIATION record with ID: {uid}")
+            else:
+                not_found_ids.append(uid)
+                print(f"No AVIATION record found for ID: {uid}")
+
+        print(f"Total AVIATION deleted: {len(deleted_ids)}, Not found: {len(not_found_ids)}")
+
+        return {
+            "status": True, "message": f"AVIATION Data Deleted Successfully. Deleted: {len(deleted_ids)}, Not Found: {len(not_found_ids)}", "deleted_ids": deleted_ids, "not_found_ids": not_found_ids}
+
+    except Exception as e:
+        print("Error in delete_aviation_data:", str(e))
+        traceback.print_exc()
+        return {"status": False, "message": "An error occurred while deleting AVIATION data", "error": str(e)}
