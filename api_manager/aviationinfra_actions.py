@@ -34,7 +34,9 @@ async def aviationinfra_upload_aviation_file(file: fastapi.UploadFile):
                      'zone': 'zone', 'state': 'state', 'district': 'district', 'aviation sbu': 'city', 'tankage': 'tankage', 'operation status': 'operation_status', 'mode': 'mode',
                      'address': 'address', 'pin code': 'pincode', 'status': 'status', 'latitude': 'latitude', 'longitude': 'longitude'
                      })
-        df['updated_by'] = ''
+        rpt = urdhva_base.context.context.get('rpt', {})
+        username = rpt.get("username")
+        df['updated_by'] = username
         df['sap_id'] = df['sap_id'].apply(
             lambda x: str(int(float(x))) if pd.notnull(x) and str(x).strip() != "" else ""
         )
