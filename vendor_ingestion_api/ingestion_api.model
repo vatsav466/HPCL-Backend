@@ -238,3 +238,47 @@ Model TasListener crud_disable {
         input_data dict
     }
 }
+
+
+Model TasAgentCommStatus {
+
+    sap_id  str
+    status optional str
+    message optional str
+    opcda_status optional str
+    data_receiving_status optional str
+    configuration_healthy optional str
+    last_opc_failure optional str
+    last_rabbit_failure optional str
+    locaction_name optional str
+
+}
+
+Model TasAgentServiceStatus {
+      
+      sap_id  str
+      status optional str
+      message optional str
+      location_name optional str
+
+}
+
+Model TAS crud_disable {
+    Action=> get_agent_service_status {
+        sap_id  str
+        status optional str
+        message optional str
+    }
+
+    Action=> get_agent_comm_status {
+        sap_id  str
+        status optional str
+        message optional str
+        opcda_status optional str
+        data_receiving_status optional str
+        configuration_healthy optional str
+        last_opc_failure optional str
+        last_rabbit_failure optional str
+        
+    }
+}
