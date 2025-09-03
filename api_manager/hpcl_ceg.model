@@ -2210,7 +2210,11 @@ Model TasProofTest{
     proof_test_created_at optional datetime
     next_proof_test_date optional datetime
 
+    Action=> prooftest_data {   
+             
+    }
 }
+
 
 Model ArchitectureData{
     sap_id optional unique_field str

@@ -239,6 +239,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP073", "interlock_name": "Day End Report", "workflow_name": ""},
                         {"sop_id": "SOP074", "interlock_name": "TAS User access report", "workflow_name": ""},
                         {"sop_id": "SOP075", "interlock_name": "Local order/Standalone Order Entryt", "workflow_name": ""},
+                        {"sop_id": "SOP099", "interlock_name": "Loss Of Communication", "workflow_name": "Loss Of Communication"},
                          
                          {"sop_id": "SOP033", "interlock_name": "Non compliance of Fire Extinguisher (TT Unloading)", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
                          {"sop_id": "SOP034", "interlock_name": "Fire", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},

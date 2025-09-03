@@ -308,6 +308,11 @@ class BasePostgresModel(pydantic.BaseModel):
         finally:
             await asyncio.shield(session.close())
 
+
+    @classmethod
+    async def create_database_table(cls):
+        await manager.create_all()
+
     @classmethod
     async def get_all(cls, params: urdhva_base.queryparams.QueryParams = None, entity_id=None, resp_type="encoded",
                       skip_secrets=False):

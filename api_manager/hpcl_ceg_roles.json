@@ -4425,6 +4425,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "prooftest_data"
                 }
             ]
         },
@@ -4464,6 +4467,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "prooftest_data"
                 }
             ]
         },
@@ -6548,6 +6554,10 @@
         {
             "name": "get_tags_data",
             "displayName": "get_tags_data"
+        },
+        {
+            "name": "prooftest_data",
+            "displayName": "prooftest_data"
         },
         {
             "name": "architecture_details",

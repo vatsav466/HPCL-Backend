@@ -6336,6 +6336,14 @@ class TasProofTestGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class Tasprooftest_Prooftest_DataParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class ArchitectureDataSchema(UrdhvaPostgresBase):
     __tablename__ = 'architecture_data'
     
