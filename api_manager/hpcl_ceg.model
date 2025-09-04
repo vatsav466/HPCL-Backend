@@ -757,6 +757,10 @@ Model Alerts {
     emlock_ack optional bool
     vts_return optional bool
     atg_ack_time optional datetime
+    dry_out_start_time optional datetime
+    dry_out_end_time optional datetime
+    intra_day_dry_out_start_time optional datetime
+    intra_day_dry_out_end_time optional datetime
 
     // VTS
     transporter_name optional str
@@ -956,6 +960,11 @@ Model DryOutHistory {
     plant_name str
     category optional str          // For category filter
     status index_field AlertStatus // To Check whether Dry-out in Open or Closed
+    dry_out_in_days optional str
+    dry_out_start_time optional datetime
+    dry_out_end_time optional datetime
+    intra_day_dry_out_start_time optional datetime
+    intra_day_dry_out_end_time optional datetime
 
     Config=> {
         crud_operations='read'
@@ -2211,7 +2220,11 @@ Model TasProofTest{
     proof_test_created_at optional datetime
     next_proof_test_date optional datetime
 
+    Action=> prooftest_data {   
+             
+    }
 }
+
 
 Model ArchitectureData{
     sap_id optional unique_field str
@@ -2247,6 +2260,7 @@ Model PerformanceIndex {
         zone optional str
         sap_id optional str
         strategy str
+        filters optional list WidgetFilters
     }
 
     Action=> get_pi_score_by_category {
@@ -2290,6 +2304,7 @@ Model PerformanceScore {
         zone optional str
         sap_id optional str
         strategy str
+        filters optional list WidgetFilters
     }
 
     Config=> {
@@ -2571,6 +2586,10 @@ Model SodInfra {
 
     Action=> delete_sod_data {
         unique_id optional list str
+    }
+
+    Action=> get_updated_by_infra {
+        sbu str
     }
 
     Config=> {
@@ -3014,6 +3033,14 @@ Model PlantCngInfra {
         time_grain optional str
     }
 
+    Action=> get_zone_wise_cng_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone'
     }
@@ -3046,6 +3073,32 @@ Model PlantEvInfra {
         cross_filters optional list WidgetFilters
         limit optional int
         time_grain optional str
+    }
+
+    Action=> get_all_ev_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+
+    Action=> get_ev_company_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+
+    Action=> get_distinct_ev_retail_infra {
+        sbu str
+        company optional list str
+        zone optional list str
+        state optional list str
+        status optional list str
     }
 
     Config=> {

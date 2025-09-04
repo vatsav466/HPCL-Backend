@@ -32,7 +32,7 @@ fy_months =  ['apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'ja
 # Define keyword mapping for key extraction
 KEYWORDS = {'sbu_name': ['SBU', 'BUSINESS UNIT'],
             'coname': ['COMPANY', 'HPCL', 'BPCL', 'IOCL'],
-            'region_name': ['ZONE', 'REGION'],
+            'ro': ['ZONE', 'REGION'],
             'statename': ['STATE', 'STATENAME'],
             'distname': ['DISTRICT', 'DISTNAME'],
             'month_name': ['MONTH', 'MONTH NAME'],
@@ -152,25 +152,57 @@ async def get_zones_and_regions(filters, cross_filters, drill_state, time_grain,
         ro_cond = f"AND ro = '{ro_filter}'" if ro_filter else ""  # use ro column
         company_cond = f"AND coname = '{company_filter}'" if company_filter else ""
 
-        # 3. Define a reusable function for queries
+       
+      
         def build_query(fiscal_year, group_by_col):
             cols = {
                 "zone_name": "zone_name",
-                "region_name": "ro", 
+                "region_name": "ro",
                 "distname": "distname",
             }
             valid_clause = f"AND {group_by_col} IS NOT NULL AND TRIM({group_by_col}) <> '' AND TRIM({group_by_col}) <> '-'" if group_by_col != 'zone_name' else ""
 
+            # Ensure valid column values
+            valid_clause = f"AND {cols[group_by_col]} IS NOT NULL AND TRIM({cols[group_by_col]}) <> '' AND TRIM({cols[group_by_col]}) <> '-'"
+
+            # Base filters common to all
+            where_parts = [base_where, product_sql, company_cond, state_sql]
+
+            # Apply only relevant filters per level
+            if group_by_col == "zone_name":
+                if zone_filter:
+                    where_parts.append(zone_cond)
+            elif group_by_col == "region_name":
+                if zone_filter:
+                    where_parts.append(zone_cond)
+                if ro_filter:
+                    where_parts.append(ro_cond)
+            elif group_by_col == "distname":
+                if zone_filter:
+                    where_parts.append(zone_cond)
+                if ro_filter:
+                    where_parts.append(ro_cond)
+                if district_filter:
+                    where_parts.append(district_sql)
+
+            # Remove any None values before joining
+            where_clause = " ".join([x for x in where_parts if x])
+
+            # Build final query
+            
             query = f"""
-                SELECT {cols[group_by_col]}, ROUND(COALESCE(SUM(netweight_tmt) / 1000, 0), 2) AS total_sales
+                SELECT {cols[group_by_col]}, 
+                    ROUND(COALESCE(SUM(netweight_tmt) / 1000, 0), 2) AS total_sales
                 FROM industry_performance
-                WHERE {base_where} {zone_cond} {ro_cond} {product_sql} {company_cond} {district_sql} {state_sql}
-                AND fiscal_year = '{fiscal_year}'
-                {valid_clause}
+                WHERE {where_clause} {valid_clause} AND fiscal_year = '{fiscal_year}'
                 GROUP BY {cols[group_by_col]}
                 ORDER BY total_sales DESC
             """
             return query
+        print("Zone Query:\n", build_query(curr_year, "zone_name"))
+        print("Region Query:\n", build_query(curr_year, "region_name"))
+        print("District Query:\n", build_query(curr_year, "distname"))
+
 
         # 4. Execute queries concurrently
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -314,6 +346,25 @@ async def get_fiscal_sales(filters: list, cross_filters: list, resp_format: str)
     
     response = []
     prev_year_total = None  # to calculate YoY difference
+    # Compute full month totals ignoring zone filter
+    
+    query_all_zones = f"""
+        SELECT fiscal_year, month_name, zone_name, ROUND(COALESCE(SUM(netweight_tmt)/1000, 2), 2) AS total_sales
+        FROM industry_performance
+        WHERE distname IS NOT NULL AND TRIM(distname) <> '' AND TRIM(distname) <> '-'
+        AND zone_name IS NOT NULL AND TRIM(zone_name) <> '' AND TRIM(zone_name) <> '-'
+        GROUP BY fiscal_year, month_name, zone_name
+    """
+
+    resp_all_zones = await function(query=query_all_zones)
+    df_all = pd.DataFrame(resp_all_zones)
+    df_all.columns = [str(col).strip() for col in df_all.columns]
+    
+
+    # This replaces your previous df_all calculation
+    month_totals_all_zones = df_all.groupby(["fiscal_year", "month_name"])["total_sales"].sum().to_dict()
+
+
 
     for year, year_df in df.groupby("fiscal_year"):
         total_sales = float(year_df["total_sales"].sum())
@@ -331,6 +382,10 @@ async def get_fiscal_sales(filters: list, cross_filters: list, resp_format: str)
             month_sales = float(month_df["total_sales"].sum()) if not month_df.empty else 0.0
             month_market_share_percentage = (month_sales / total_sales * 100) if total_sales > 0 else 0.0
             
+            full_month_total = float(month_totals_all_zones.get((year, month), 0.0))
+            
+
+
              # --- Categorize season based on std deviation ---
             if month_sales > mean_sales + std_dev_sales:
                 season_category = "High Season"
@@ -341,9 +396,20 @@ async def get_fiscal_sales(filters: list, cross_filters: list, resp_format: str)
 
             # ---- Add zone level data inside each month ----
             zones_list = []
+            month_all_zones_df = df_all[(df_all["fiscal_year"] == year) & (df_all["month_name"] == month)]
+            month_total_sales_all_zones = float(month_all_zones_df["total_sales"].sum())
+
+
             for zone, zone_df in month_df.groupby("zone_name"):
                 zone_sales = float(zone_df["total_sales"].sum())
-                zone_market_share_percentage = (zone_sales / month_sales * 100) if month_sales > 0 else 0.0
+                
+
+                # zone_market_share_percentage = (zone_sales / month_sales * 100) if month_sales > 0 else 0.0
+                # zone_market_share_percentage = (zone_sales / full_month_total * 100) if full_month_total > 0 else 0.0
+                zone_market_share_percentage = (
+                    (zone_sales / month_total_sales_all_zones * 100)
+                    if month_total_sales_all_zones > 0 else 0.0
+                )
 
                 zones_list.append({
                     "zone_name": zone,
@@ -1208,29 +1274,7 @@ def get_mappers():
     
 async def industry_performance(filters, cross_filters, drill_state="", time_grain="", resp_format="", resp_level=""):
     print("going to top ")
-    if resp_format == "month_wise":
-        filters_dict = {f["key"].replace('"', ''): f["value"] for f in filters}
-
-        # Call your function to get month-wise region performance
-        results = await get_region_monthly_performance(
-            region_name=filters_dict.get("region_name"),
-            sbu_name=filters_dict.get("sbu_name"),
-            coname=filters_dict.get("coname")
-        )
-
-        if not results:
-            return {
-                'status': False,
-                'message': "No data present for current selection",
-                'data': [],
-            }
-
-        return {
-            'status': True,
-            'message': "Success",
-            'data': results
-        }
-        
+   
     if resp_format == "historical_years":
     # Call new function to get last 6 fiscal years (with multi-select filters support)
         results = await get_fiscal_sales(
@@ -1833,7 +1877,9 @@ async def get_category_wise_cumulative_data(filters):
     for cogroup, details in result_dict[fiscal_years[-1]].items():
         growth_dict[cogroup] = {}
         cat_prev = {rec['category']: rec for rec in result_dict[fiscal_years[0]][cogroup]}
+        print("cat_prev",cat_prev)
         cat_pres = {rec['category']: rec for rec in result_dict[fiscal_years[1]][cogroup]}
+        print ("cat_pres",cat_pres)
         for company, data in cat_pres.items():
             if len(data['subData']) <= 1:
                 growth_dict[cogroup][company] = round(data['percentage'] - cat_prev[company]['percentage'], 2)
@@ -1841,9 +1887,16 @@ async def get_category_wise_cumulative_data(filters):
 
             else:
                 cat_prev_sub = {rec['category']: rec for rec in cat_prev[company]['subData']}
+                print("cat_prev_sub",cat_prev_sub)
                 cat_pres_sub = {rec['category']: rec for rec in data['subData']}
+                print("cat_pres_sub----->",cat_pres_sub)
                 for co, dt in cat_pres_sub.items():
-                    growth_dict[cogroup][co] = round(dt['percentage'] - cat_prev_sub[co]['percentage'], 2)
+                    print("co, dt", co, dt)
+                    prev_dt = cat_prev_sub.get(co, {"percentage": 0})  # default percentage = 0
+                    print("cat_prev_sub.get(co, {}) -->", prev_dt)
+
+                    # Use prev_dt here, NOT cat_prev_sub[co]
+                    growth_dict[cogroup][co] = round(dt['percentage'] - prev_dt['percentage'], 2)
                     
                     '''
                     if cat_prev_sub[co]['percentage'] != 0:

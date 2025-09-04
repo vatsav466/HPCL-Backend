@@ -186,7 +186,11 @@ def insertToDB(data, table_name, indexing_col=()):
     columns = []
     for i in column_names:
         columns.append(i)
+    data = data.rename({"PLANT_CD": "plant_cd"})
+    # print("data.columns--------------->",data.columns)
+    # print("dataaaaaaaaaaaaaaa",data['plant_cd'].unique())
     if 'plant_cd' not in data.columns:
+    
         data = data.with_columns(pl.lit("").cast(pl.Utf8).alias("plant_cd"))
     data = data.select(columns)
     #data.write_csv('/tmp/sales_data.csv')

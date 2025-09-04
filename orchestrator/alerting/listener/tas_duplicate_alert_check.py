@@ -119,3 +119,19 @@ async def alert_history_check(alertdata, month_check=None):
     if resp["data"]:
         return True
     return False
+
+async def duplicate_loss_of_comm_check(alertdata):
+    query = (
+        f"""bu = 'TAS' and """
+        f"""sap_id = '{alertdata.get('sap_id', '')}' and """
+        f"""alert_section = 'TAS' and """
+        f"""device_id = '{alertdata.get('device_id', '')}' and """
+        f"""device_name = '{alertdata.get('device_name', '')}' and """
+        f"""interlock_name = '{alertdata.get('interlock_name', '')}' and """
+        f"""alert_status != 'Close'"""
+    )
+    params = urdhva_base.queryparams.QueryParams(q=query)
+    resp = await hpcl_ceg_model.Alerts.get_all(params,resp_type='plain')
+    if resp["data"]:
+        return False
+    return True

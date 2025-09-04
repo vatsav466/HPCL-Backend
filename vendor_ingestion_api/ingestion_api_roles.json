@@ -455,6 +455,213 @@
                     "name": "get_data"
                 }
             ]
+        },
+        {
+            "name": "tasagentcommstatus",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasAgentCommStatus",
+            "attributes": {},
+            "uris": [
+                "/api/tasagentcommstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "tasagentcommstatus_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasAgentCommStatus_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasagentcommstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tasagentcommstatus_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasAgentCommStatus_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasagentcommstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "tasagentservicestatus",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasAgentServiceStatus",
+            "attributes": {},
+            "uris": [
+                "/api/tasagentservicestatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "tasagentservicestatus_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasAgentServiceStatus_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasagentservicestatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tasagentservicestatus_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasAgentServiceStatus_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasagentservicestatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "tas",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TAS",
+            "attributes": {},
+            "uris": [
+                "/api/tas/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_agent_service_status"
+                },
+                {
+                    "name": "get_agent_comm_status"
+                }
+            ]
+        },
+        {
+            "name": "tas_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TAS_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tas/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_agent_service_status"
+                },
+                {
+                    "name": "get_agent_comm_status"
+                }
+            ]
+        },
+        {
+            "name": "tas_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TAS_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tas/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_agent_service_status"
+                },
+                {
+                    "name": "get_agent_comm_status"
+                }
+            ]
         }
     ],
     "policies": [
@@ -580,6 +787,14 @@
         {
             "name": "get_data",
             "displayName": "get_data"
+        },
+        {
+            "name": "get_agent_service_status",
+            "displayName": "get_agent_service_status"
+        },
+        {
+            "name": "get_agent_comm_status",
+            "displayName": "get_agent_comm_status"
         }
     ]
 }
