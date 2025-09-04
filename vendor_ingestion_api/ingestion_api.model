@@ -250,7 +250,7 @@ Model TasAgentCommStatus {
     configuration_healthy optional str
     last_opc_failure optional str
     last_rabbit_failure optional str
-    locaction_name optional str
+    location_name optional str
 
 }
 
