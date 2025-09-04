@@ -331,6 +331,25 @@ async def get_ev_company_info(filters, cross_filters, drill_state, limit, time_g
         print(f"Error in get_plant_ro_count_info: {e}")
         return {"status": False, "message": f"Failed to fetch retail company info: {str(e)}","data": []}
 
+async def get_zone_wise_ev_info(filters, cross_filters, drill_state, limit, time_grain):
+    try:
+        query = '''  zone, SUM(CAST(battery_swapping_stations AS INT)) AS battery_swapping_stations,
+                            SUM(CAST(vehicle_charging_stations AS INT)) AS vehicle_charging_stations
+                    FROM plant_ev_infra
+                    GROUP BY zone '''
+
+        if filters:
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+
+        retail = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        retail = retail.get("data", [])
+
+        return {"status": True, "message": "success", "data": retail}
+
+    except Exception as e:
+        print(f"Error in get_plant_ro_count_info: {e}")
+        return {"status": False, "message": f"Failed to fetch retail company info: {str(e)}","data": []}
+
 async def get_top_five_cng_info(filters, cross_filters, drill_state, limit, time_grain):
     try:
         query = ''' 

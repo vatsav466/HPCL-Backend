@@ -8779,3 +8779,15 @@ class Plantevinfra_Get_Distinct_Ev_Retail_InfraParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class Plantevinfra_Get_Zone_Wise_Ev_InfraParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
