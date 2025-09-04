@@ -136,7 +136,7 @@ Model VTS crud_disable {
     Action=> ingest_data {
         data list vtsData
     }
-    Action=> vts_ingest_data {
+    Action=> ingest_event_data {
         data list VtsEventData
     }
 
