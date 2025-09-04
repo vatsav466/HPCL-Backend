@@ -6189,6 +6189,9 @@
                 },
                 {
                     "name": "get_distinct_ev_retail_infra"
+                },
+                {
+                    "name": "get_zone_wise_ev_infra"
                 }
             ]
         },
@@ -6216,6 +6219,9 @@
                 },
                 {
                     "name": "get_distinct_ev_retail_infra"
+                },
+                {
+                    "name": "get_zone_wise_ev_infra"
                 }
             ]
         },
@@ -6255,6 +6261,9 @@
                 },
                 {
                     "name": "get_distinct_ev_retail_infra"
+                },
+                {
+                    "name": "get_zone_wise_ev_infra"
                 }
             ]
         }
@@ -6862,6 +6871,10 @@
         {
             "name": "get_distinct_ev_retail_infra",
             "displayName": "get_distinct_ev_retail_infra"
+        },
+        {
+            "name": "get_zone_wise_ev_infra",
+            "displayName": "get_zone_wise_ev_infra"
         }
     ]
 }

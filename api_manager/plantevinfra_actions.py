@@ -136,3 +136,11 @@ async def plantevinfra_get_ev_company_infra(data: Plantevinfra_Get_Ev_Company_In
 async def plantevinfra_get_distinct_ev_retail_infra(data: Plantevinfra_Get_Distinct_Ev_Retail_InfraParams):
     return await plant_retail_functions.get_distinct_ev_retail_info(data.sbu, data.company, data.zone, data.state,
                                                                     data.status)
+
+
+# Action get_zone_wise_ev_infra
+@router.post('/get_zone_wise_ev_infra', tags=['PlantEvInfra'])
+async def plantevinfra_get_zone_wise_ev_infra(data: Plantevinfra_Get_Zone_Wise_Ev_InfraParams):
+    return await plant_retail_functions.get_zone_wise_ev_info(filters=data.filters, cross_filters=data.cross_filters,
+                                                            drill_state=data.drill_state, limit=data.limit,
+                                                            time_grain=data.time_grain)

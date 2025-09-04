@@ -3101,6 +3101,14 @@ Model PlantEvInfra {
         status optional list str
     }
 
+    Action=> get_zone_wise_ev_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone'
     }
