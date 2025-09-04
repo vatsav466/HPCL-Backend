@@ -318,7 +318,7 @@ class IndentDryOut:
         :param item_name:
         :return:
         """
-        query = (f"SELECT sap_id, product_no, dry_out_in_days from dry_out_history where sap_id='{location_id}' "
+        query = (f"SELECT sap_id, product_no, dry_out_in_days, id from dry_out_history where sap_id='{location_id}' "
                  f"and product_no='{product_code}' and status='Open'")
         resp = await hpcl_ceg_model.DryOutHistory.get_aggr_data(query, limit=1)
         # If there was no alert then creating dry out history
