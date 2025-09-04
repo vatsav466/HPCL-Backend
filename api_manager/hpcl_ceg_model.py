@@ -7492,6 +7492,14 @@ class Sodinfra_Delete_Sod_DataParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Sodinfra_Get_Updated_By_InfraParams(pydantic.BaseModel):
+    sbu: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class LpgInfraDataCreate(pydantic.BaseModel):
     unique_id: str
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
