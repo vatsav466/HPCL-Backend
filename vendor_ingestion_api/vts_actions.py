@@ -118,8 +118,8 @@ async def vts_ingest_data_un_blocked_trucks(data: Vts_Ingest_Data_Un_Blocked_Tru
         return False, e
 
 # Action vts_ingest_data
-@router.post('/vts_ingest_data', tags=['VTS'])
-async def vts_vts_ingest_data(data: Vts_Vts_Ingest_DataParams):
+@router.post('/ingest_event_data', tags=['VTS'])
+async def vts_ingest_event_data(data: Vts_Ingest_Event_DataParams):
     """
     API endpoint to ingest VTS data.
 

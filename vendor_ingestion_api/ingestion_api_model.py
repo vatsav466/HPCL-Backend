@@ -142,7 +142,7 @@ class Vts_Ingest_DataParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
-class Vts_Vts_Ingest_DataParams(pydantic.BaseModel):
+class Vts_Ingest_Event_DataParams(pydantic.BaseModel):
     data: typing.List[VtsEventDataCreate]
 
     class Config:
