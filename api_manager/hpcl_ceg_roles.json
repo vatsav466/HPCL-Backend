@@ -5271,6 +5271,9 @@
                 },
                 {
                     "name": "delete_sod_data"
+                },
+                {
+                    "name": "get_updated_by_infra"
                 }
             ]
         },
@@ -5310,6 +5313,9 @@
                 },
                 {
                     "name": "get_download_data"
+                },
+                {
+                    "name": "get_updated_by_infra"
                 }
             ]
         },
@@ -5373,6 +5379,9 @@
                 },
                 {
                     "name": "delete_sod_data"
+                },
+                {
+                    "name": "get_updated_by_infra"
                 }
             ]
         },
@@ -6721,6 +6730,10 @@
         {
             "name": "delete_sod_data",
             "displayName": "delete_sod_data"
+        },
+        {
+            "name": "get_updated_by_infra",
+            "displayName": "get_updated_by_infra"
         },
         {
             "name": "upload_lpg_file",

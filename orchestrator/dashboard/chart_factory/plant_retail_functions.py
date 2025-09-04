@@ -358,11 +358,9 @@ async def get_distinct_cng_retail_info(sbu, company, zone, state, status):
         sbu_tables = ["plant_cng_infra"]
         select_columns = "sbu, company, zone, state, status"
 
-        # Build UNION query
         union_queries = [f"SELECT {select_columns} FROM {table}" for table in sbu_tables]
         union_block = "\nUNION\n".join(union_queries)
 
-        # Base query
         query = f"""
             SELECT DISTINCT {select_columns}
             FROM (
@@ -370,7 +368,6 @@ async def get_distinct_cng_retail_info(sbu, company, zone, state, status):
             ) AS combined_infra
         """
 
-        # Build WHERE conditions
         conditions = []
         if sbu:
             conditions.append(f"sbu = '{sbu}'")
@@ -424,14 +421,17 @@ async def get_distinct_cng_retail_info(sbu, company, zone, state, status):
 
 
 async def get_zone_wise_cng_info(filters, cross_filters, drill_state, limit, time_grain):
-    query = ''' 
-            count(cng_outlet) as cng_outlet ,zone from plant_cng_infra group by zone
-    '''
+    try:
+        query = ''' 
+                sum(cng_outlet) as cng_outlet ,zone from plant_cng_infra group by zone
+        '''
+        if filters:
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
 
-    if filters:
-        query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+        cng = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        cng = cng.get("data", [])
 
-    cng = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
-    cng = cng.get("data", [])
-
-    return {"status": True, "message": "success", "data": cng}
+        return {"status": True, "message": "success", "data": cng}
+    except Exception as e:
+        logging.exception("Error while fetching distinct infra info")
+        return {"error": str(e)}

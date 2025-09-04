@@ -386,3 +386,35 @@ async def get_download_info(sbu, background_tasks):
         )
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+async def get_updated_by_info(sbu: str = ""):
+    try:
+        sbu_tables = ["sod_infra", "lpg_infra", "aviation_infra", "lubes_infra"]
+        select_columns = "sbu, created_at, updated_by"
+
+        union_queries = [f"SELECT {select_columns} FROM {table}" for table in sbu_tables]
+        union_block = "\nUNION ALL\n".join(union_queries)
+
+        query = f"""
+            SELECT sbu, created_at, updated_by
+            FROM (
+                SELECT 
+                    sbu,
+                    created_at,
+                    updated_by,
+                    ROW_NUMBER() OVER (PARTITION BY sbu ORDER BY created_at DESC) AS rn
+                FROM (
+                    {union_block}
+                ) AS combined_infra
+            ) ranked
+            WHERE rn = 1 AND sbu = '{sbu}'
+        """
+
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        rows = result.get("data", [])
+
+        return {"status": True, "message": "success", "data": rows}
+
+    except Exception as e:
+        print(f"Error in get_sales_info: {str(e)}")
+        return {"status": False, "message": f"Error: {str(e)}", "data": []}

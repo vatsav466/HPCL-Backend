@@ -2588,6 +2588,10 @@ Model SodInfra {
         unique_id optional list str
     }
 
+    Action=> get_updated_by_infra {
+        sbu str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone,region,sap_id'
     }
