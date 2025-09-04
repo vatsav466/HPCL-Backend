@@ -24,95 +24,64 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
     try:
         resp = await widget_actions.WidgetActions().generate_filter_clause(data.filters) if data.filters else ""
         clause = f" and {resp}" if resp else ""
-        if data.bu == "TAS":
+        table = ""
+        if data.bu in ["TAS", "LPG"]:  
             location_str = f" and sap_id='{data.sap_id}'" if data.sap_id else ''
-            query = f"select * from performance_score where bu='{data.bu}' {location_str} {clause}"
-            score = await PerformanceScore.get_aggr_data(query)
 
-            # Fallback to history if no data
+            # choose table based on filters
+            if data.filters:
+                for f in data.filters:
+                    if f.value == "t":
+                        table = "performance_score"
+                        break
+                else:  # loop finished with no break
+                    table = "performance_score_history"
+            else:
+                table = "performance_score_history"
+
+            query = f"select * from {table} where bu='{data.bu}' {location_str} {clause}"
+            score = await (PerformanceScore if table == "performance_score" else PerformanceScoreHistory).get_aggr_data(query)
+
+            print("query ", query)
             if not score['data']:
-                query = f"select * from performance_score_history where bu='{data.bu}' {location_str} {clause}"
-                score = await PerformanceScoreHistory.get_aggr_data(query)
-            if not score['data']:  # Final check for no data
                 return {}
 
+            # Aggregate category scores
             category = {}
             for rec in score['data']:
                 for category_ in rec['category']:
-                    if category_['name'] not in category:
-                        category[category_['name']] = []
-                    category[category_['name']].append({
+                    category.setdefault(category_['name'], []).append({
                         'score': category_['score'],
                         'weightage': category_['weightage']
                     })
 
-            tas_category_scores = {}
+            category_scores = {}
             for cat, scores in category.items():
-                if not scores:
-                    continue
-                tas_category_scores[cat] = {
-                    'oi_score': round(sum([rec['score'] for rec in scores]) / len(scores), 2),
-                    'weightage': round(sum([rec['weightage'] for rec in scores]) / len(scores), 2)
-                }
+                if scores:  # safeguard
+                    category_scores[cat] = {
+                        'oi_score': round(sum(s['score'] for s in scores) / len(scores), 2),
+                        'weightage': round(sum(s['weightage'] for s in scores) / len(scores), 2)
+                    }
 
             total_scores = [rec['score'] for rec in score['data']]
             if not total_scores:
                 return {}
 
-            tas_resp = {
+            return {
                 'overall_oi_score': round(sum(total_scores) / len(total_scores), 2),
-                'tas_category_scores': tas_category_scores
+                f"{data.bu.lower()}_category_scores": category_scores
             }
-
-            return tas_resp
-
-        elif data.bu == "LPG":
-            location_str = f" and sap_id='{data.sap_id}'" if data.sap_id else ''
-            query = f"select * from performance_score where bu='{data.bu}' {location_str} {clause}"
-            score = await PerformanceScore.get_aggr_data(query)
-
-            # Fallback to history if no data
-            if not score['data']:
-                query = f"select * from performance_score_history where bu='{data.bu}' {location_str} {clause}"
-                score = await PerformanceScoreHistory.get_aggr_data(query)
-
-            if not score['data']:
-                return {}
-
-            category = {}
-            for rec in score['data']:
-                for category_ in rec['category']:
-                    if category_['name'] not in category:
-                        category[category_['name']] = []
-                    category[category_['name']].append({
-                        'score': category_['score'],
-                        'weightage': category_['weightage']
-                    })
-
-            lpg_category_scores = {}
-            for cat, scores in category.items():
-                lpg_category_scores[cat] = {
-                    'oi_score': round(sum([rec['score'] for rec in scores]) / len(scores), 2),
-                    'weightage': round(sum([rec['weightage'] for rec in scores]) / len(scores), 2)
-                }
-
-            total_scores = [rec['score'] for rec in score['data']]
-            lpg_resp = {
-                'overall_oi_score': round(sum(total_scores) / len(total_scores), 2),
-                'lpg_category_scores': lpg_category_scores
-            }
-
-            return lpg_resp
 
         elif data.bu == "RO":
             return {}
 
         else:
             return {}
+
     except Exception as e:
         print(traceback.format_exc())
-        logger.error(f"Error in getting performance index score: {e}, InputData {data.dict()}, Traceback: {traceback.format_exc()}")
         return False, "Error in getting performance index score"
+
 
 
 # Action get_pi_score_by_category

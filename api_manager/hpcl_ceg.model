@@ -757,6 +757,10 @@ Model Alerts {
     emlock_ack optional bool
     vts_return optional bool
     atg_ack_time optional datetime
+    dry_out_start_time optional datetime
+    dry_out_end_time optional datetime
+    intra_day_dry_out_start_time optional datetime
+    intra_day_dry_out_end_time optional datetime
 
     // VTS
     transporter_name optional str
@@ -956,6 +960,11 @@ Model DryOutHistory {
     plant_name str
     category optional str          // For category filter
     status index_field AlertStatus // To Check whether Dry-out in Open or Closed
+    dry_out_in_days optional str
+    dry_out_start_time optional datetime
+    dry_out_end_time optional datetime
+    intra_day_dry_out_start_time optional datetime
+    intra_day_dry_out_end_time optional datetime
 
     Config=> {
         crud_operations='read'
