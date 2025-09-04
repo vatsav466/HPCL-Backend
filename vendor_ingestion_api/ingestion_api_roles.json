@@ -29,6 +29,9 @@
                     "name": "ingest_data"
                 },
                 {
+                    "name": "vts_ingest_data"
+                },
+                {
                     "name": "ingest_data_blocked_trucks"
                 },
                 {
@@ -75,6 +78,9 @@
                 },
                 {
                     "name": "ingest_data"
+                },
+                {
+                    "name": "vts_ingest_data"
                 },
                 {
                     "name": "ingest_data_blocked_trucks"
@@ -737,6 +743,10 @@
         {
             "name": "ingest_data",
             "displayName": "ingest_data"
+        },
+        {
+            "name": "vts_ingest_data",
+            "displayName": "vts_ingest_data"
         },
         {
             "name": "ingest_data_blocked_trucks",

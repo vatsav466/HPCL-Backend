@@ -16,6 +16,11 @@ from sqlalchemy.orm import *
 from urdhva_base.postgresmodel import UrdhvaPostgresBase
 
 
+class GeoCordinatesCreate(pydantic.BaseModel):
+    latitude: str
+    longitude: str
+
+
 class vtsDataCreate(pydantic.BaseModel):
     vendor_id: str
     location_id: str
@@ -35,6 +40,35 @@ class vtsDataCreate(pydantic.BaseModel):
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
     invoice_number: typing.Optional[str] = pydantic.Field("", **{})
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class VtsEventDataCreate(pydantic.BaseModel):
+    vendor_id: str
+    location_id: str
+    location_type: str
+    tt_number: str
+    event_id: str
+    report_duration: typing.Optional[str] = pydantic.Field("", **{})
+    event_start_time: typing.Optional[datetime.datetime] | None = None
+    event_end_time: typing.Optional[datetime.datetime] | None = None
+    event_start_location: typing.Optional[str] = pydantic.Field("", **{})
+    event_end_location: typing.Optional[str] = pydantic.Field("", **{})
+    cordinates: typing.Optional[GeoCordinatesCreate] | None = None
+    distance: typing.Optional[str] = pydantic.Field("", **{})
+    total_trips: typing.Optional[int] = pydantic.Field(0, **{})
+    stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
+    route_deviation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    speed_violation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    main_supply_removal_count: typing.Optional[int] = pydantic.Field(0, **{})
+    night_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
+    no_halt_zone_count: typing.Optional[int] = pydantic.Field(0, **{})
+    device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
+    device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
+    continuous_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
+    approved_by: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    transporter: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class vtsDataUpdatedCreate(pydantic.BaseModel):
@@ -102,6 +136,14 @@ class vtsBlockedTruckCreate(pydantic.BaseModel):
 
 class Vts_Ingest_DataParams(pydantic.BaseModel):
     data: typing.List[vtsDataCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Vts_Vts_Ingest_DataParams(pydantic.BaseModel):
+    data: typing.List[VtsEventDataCreate]
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
