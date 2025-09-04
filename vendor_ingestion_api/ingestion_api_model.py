@@ -282,7 +282,7 @@ class TasAgentCommStatusSchema(UrdhvaPostgresBase):
     configuration_healthy: Mapped[typing.Optional[str]] = mapped_column("configuration_healthy", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     last_opc_failure: Mapped[typing.Optional[str]] = mapped_column("last_opc_failure", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     last_rabbit_failure: Mapped[typing.Optional[str]] = mapped_column("last_rabbit_failure", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    locaction_name: Mapped[typing.Optional[str]] = mapped_column("locaction_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class TasAgentCommStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -296,7 +296,7 @@ class TasAgentCommStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
     configuration_healthy: typing.Optional[str] = pydantic.Field("", **{})
     last_opc_failure: typing.Optional[str] = pydantic.Field("", **{})
     last_rabbit_failure: typing.Optional[str] = pydantic.Field("", **{})
-    locaction_name: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -317,7 +317,7 @@ class TasAgentCommStatus(urdhva_base.postgresmodel.PostgresModel):
     configuration_healthy: typing.Optional[str] = pydantic.Field("", **{})
     last_opc_failure: typing.Optional[str] = pydantic.Field("", **{})
     last_rabbit_failure: typing.Optional[str] = pydantic.Field("", **{})
-    locaction_name: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
