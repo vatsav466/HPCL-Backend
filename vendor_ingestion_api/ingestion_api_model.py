@@ -53,7 +53,7 @@ class VtsEventDataCreate(pydantic.BaseModel):
     event_end_time: typing.Optional[datetime.datetime] | None = None
     event_start_location: typing.Optional[str] = pydantic.Field("", **{})
     event_end_location: typing.Optional[str] = pydantic.Field("", **{})
-    cordinates: typing.Optional[GeoCordinatesCreate] | None = None
+    coordinates: typing.Optional[GeoCordinatesCreate] | None = None
     distance: typing.Optional[str] = pydantic.Field("", **{})
     total_trips: typing.Optional[int] = pydantic.Field(0, **{})
     stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})

@@ -51,7 +51,7 @@ Model VtsEventData internal {
     event_end_time optional datetime  
     event_start_location optional str
     event_end_location optional str  
-    cordinates optional GeoCordinates
+    coordinates optional GeoCordinates
     distance optional str
     total_trips optional int
     stoppage_violations_count optional int
