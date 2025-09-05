@@ -192,6 +192,28 @@ async def get_zone_wise_ro_info(filters, cross_filters, drill_state, limit, time
         print(f"Error in get_plant_ro_count_info: {e}")
         return {"status": False, "message": f"Failed to fetch retail company info: {str(e)}","data": []}
 
+
+async def get_zone_table_ro_info(filters, cross_filters, drill_state, limit, time_grain):
+    try:
+        query = '''   zone,company,status,ro_status, SUM(CAST(retail_outlet AS INT)) AS retail_outlet,
+                        SUM(CAST(ros_commissioned AS INT)) AS ros_commissioned, 
+                        SUM(CAST(ros_decommissioned AS INT)) AS ros_decommissioned 
+                        FROM plant_ro_infra 
+                        GROUP BY zone,company,status,ro_status'''
+
+        if filters:
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+
+        retail = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        retail = retail.get("data", [])
+        retail = [row for row in retail if row.get("ro_status") != "Total"]
+
+        return {"status": True, "message": "success", "data": retail}
+
+    except Exception as e:
+        print(f"Error in get_plant_ro_count_info: {e}")
+        return {"status": False, "message": f"Failed to fetch retail company info: {str(e)}","data": []}
+
 async def get_ro_status_ro_info(filters, cross_filters, drill_state, limit, time_grain):
     try:
         query = '''  ro_status, SUM(CAST(retail_outlet AS INT)) AS retail_outlet

@@ -199,3 +199,12 @@ async def plantroinfra_get_ro_status_ro_infra(data: Plantroinfra_Get_Ro_Status_R
                                                               cross_filters=data.cross_filters,
                                                               drill_state=data.drill_state, limit=data.limit,
                                                               time_grain=data.time_grain)
+
+
+# Action get_zone_table_ro_infra
+@router.post('/get_zone_table_ro_infra', tags=['PlantRoInfra'])
+async def plantroinfra_get_zone_table_ro_infra(data: Plantroinfra_Get_Zone_Table_Ro_InfraParams):
+    return await plant_retail_functions.get_zone_table_ro_info(filters=data.filters,
+                                                              cross_filters=data.cross_filters,
+                                                              drill_state=data.drill_state, limit=data.limit,
+                                                              time_grain=data.time_grain)

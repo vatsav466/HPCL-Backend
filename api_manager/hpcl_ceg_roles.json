@@ -5970,6 +5970,9 @@
                 },
                 {
                     "name": "get_ro_status_ro_infra"
+                },
+                {
+                    "name": "get_zone_table_ro_infra"
                 }
             ]
         },
@@ -6006,6 +6009,9 @@
                 },
                 {
                     "name": "get_ro_status_ro_infra"
+                },
+                {
+                    "name": "get_zone_table_ro_infra"
                 }
             ]
         },
@@ -6054,6 +6060,9 @@
                 },
                 {
                     "name": "get_ro_status_ro_infra"
+                },
+                {
+                    "name": "get_zone_table_ro_infra"
                 }
             ]
         },
@@ -6853,6 +6862,10 @@
         {
             "name": "get_ro_status_ro_infra",
             "displayName": "get_ro_status_ro_infra"
+        },
+        {
+            "name": "get_zone_table_ro_infra",
+            "displayName": "get_zone_table_ro_infra"
         },
         {
             "name": "upload_plant_cng_file",
