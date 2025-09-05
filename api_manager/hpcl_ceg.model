@@ -2969,9 +2969,35 @@ Model PlantRoInfra {
         zone optional list str
         state optional list str
         status optional list str
+        ro_status optional list str
     }
 
     Action=> get_top_five_ro_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Action=> get_zone_wise_ro_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+
+    Action=> get_ro_status_ro_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Action=> get_zone_table_ro_infra {
         filters optional list WidgetFilters
         drill_state optional str
         cross_filters optional list WidgetFilters
