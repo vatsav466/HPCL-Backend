@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<!-- saved from url=(0058)file:///Users/astha/Downloads/novex_daily_email%20(1).html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Novex Yesterday - Dryout Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h2 {
+            color: #003366;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #003366;
+            color: white;
+            /* width: 500px; */
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: #d9534f;
+        }
+
+        .positive {
+            color: green;
+        }
+
+        .negative {
+            color: red;
+        }
+        .openAlert th{
+            width: 300px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Novex Today - Dryout Report</h2>
+    <p><strong>Date:</strong> {{yesterday_date}} | <strong>Day:</strong> {{yesterday_week}}</p>
+    <hr>
+    <h3>Catch up on Yesterday's Dryout Report</h3>
+    <h4>1. Retail Outlet Partial Dryout Details (MS/HSD):</h4>
+    <table>
+        <tbody><tr>
+            <th>Date</th>
+            <th>Dryout</th>
+            <th>Indent not raised</th>
+            <th>Indent raised</th>
+        </tr>
+        <tr>
+            <td style="color: darkgreen;">{{today}} {{report_generated_time}}</td>
+            <td>{{dry_out['dry_out']}}</td>
+            <td>{{dry_out['indent_not_raised']}}</td>
+            <td>{{dry_out['indent_raised']}}</td>
+        </tr>
+    </tbody></table>
+    <h5>1.1. Indent Not Raised - Details By Sales (MS/HSD):</h5>
+    <table>
+        <tbody><tr>
+            <th>Indent not raised</th>
+            <th>Volume (> 50KLPM)</th>
+            <th>Low Volume (< 50KLPM)</th>
+        </tr>
+        <tr>
+            <td>{{dry_out['indent_not_raised']}}</td>
+            <td>{{dry_out_details['Volume(>50KLPM)']}}</td>
+            <td>{{dry_out_details['Low Volume(<50KLPM)']}}</td>
+        </tr>
+    </tbody></table>
+    <h5>1.2. Indent Not Raised - Details By Dryout Days (MS/HSD):</h5>
+    <table>
+        <tbody><tr>
+            <th>Indent not raised</th>
+            <th><2 Days</th>
+            <th>3 to 7 Days</th>
+            <th>8 to 15 Days</th>
+            <th>>15 Days</th>
+        </tr>
+        <tr>
+            <td>{{dry_out['indent_not_raised']}}</td>
+            <td>{{dry_out_details['<2 Days']}}</td>
+            <td>{{dry_out_details['3 to 7 Days']}}</td>
+            <td>{{dry_out_details['8 to 15 Days']}}</td>
+            <td>{{dry_out_details['> 15 Days']}}</td>
+        </tr>
+    </tbody></table>
+    <h5>1.3. Indent Not Raised - TAR Analysis (MS/HSD):</h5>
+    <table>
+        <tbody><tr>
+            <th>Indent not raised</th>
+            <th>< 25 Rs Lakhs</th>
+            <th>25 to 50 Rs lakhs</th>
+            <th>50 to 75 Rs Lakhs</th>
+            <th>> 1 Rs Cr</th>
+        </tr>
+        <tr>
+            <td>{{dry_out['indent_not_raised']}}</td>
+            <td>{{dry_out_details['0 to 25 Rs Lakhs']}}</td>
+            <td>{{dry_out_details['25 to 50 Rs Lakhs']}}</td>
+            <td>{{dry_out_details['50 to 75 Rs Lakhs']}}</td>
+            <td>{{dry_out_details['> 1 Rs Cr']}}</td>
+        </tr>
+    </tbody></table>
+    <h5>1.4. Day wise trend of Partial Dryout Details (MS/HSD):</h5>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Dry out Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in dry_out_trends %}
+            <tr>
+                <td>{{ row['Date'] }}</td>
+                <td>{{ row['Count'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h5>1.5. Zone wise Date wise Listing of Partial Dry outs</h5>
+    <table>
+        <thead>
+            <tr style="background-color:#003366; color:white; font-weight:bold;">
+                {% for col in zone_wise_summary.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in zone_wise_summary.to_dict(orient='records') %}
+            <tr
+                {% if loop.index == 1 %}
+                    style="background-color:#003366; color:white; font-weight:bold;"
+                {% elif loop.index is even %}
+                    style="background-color:white;"
+                {% else %}
+                    style="background-color:white;"
+                {% endif %}
+            >
+                {% for col in zone_wise_summary.columns %}
+                    <td style="padding:8px;">{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h5>1.6. Zone wise loss of Sales due to Partial Dry outs ( 1.9.2025 till previous day)</h5>
+    <table>
+        <thead>
+            <tr style="background-color:#003366; color:white; font-weight:bold;">
+                {% for col in zone_fuel_df.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in zone_fuel_df.to_dict(orient='records') %}
+            <tr {% if loop.index is even %} style="background-color:#f2f6f9;" {% endif %}>
+                {% for col in zone_fuel_df.columns %}
+                    <td style="padding:8px;">{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+<script>
+    window.onload = function () {
+        document.querySelectorAll(".growth").forEach(td => {
+            let value = td.textContent.trim(); // Get text inside the <td>
+            let number = parseFloat(value); // Convert to number
+
+            if (!isNaN(number)) { // Check if it’s a valid number
+                if (number > 0) {
+                    td.classList.add("positive"); // Green for positive
+                } else if (number < 0) {
+                    td.classList.add("negative"); // Red for negative
+                }
+            }
+        });
+    };
+</script>
+
+</body></html>
