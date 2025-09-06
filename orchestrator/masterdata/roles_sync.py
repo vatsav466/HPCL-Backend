@@ -1250,6 +1250,63 @@ async def sync_user_roles():
         "name": "LPG",
         "status": True
     },
+    "HQO Operations": {
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Terminal Automation"
+                    }
+                ]
+            },
+            {
+                "menu_name": "LPG",
+                "allowed_sub_menus": [
+                    {
+                        "title": "LPG Operations"
+                    },
+                    {
+                        "title": "LPG Plant"
+                    },
+                    {
+                        "title": "LPG Inventory"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "LPG Analytics"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Retail Outlet",
+                "allowed_sub_menus": [
+                    {
+                        "title": "RO Home"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    }
+                ]
+            }
+        ],
+        "name": "LPG",
+        "status": True
+    },
     "HQO Operations LPG": {
         "allowed_pages": [
             {
@@ -1446,6 +1503,39 @@ async def sync_user_roles():
         "status": True
     },
     "Zonal Head RO": {
+        "allowed_pages": [
+            {
+                "menu_name": "Retail Outlet",
+                "allowed_sub_menus": [
+                    {
+                        "title": "RO Home"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Sales Performance",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Performance",
+                        "allowed_sub_menus": [
+                        {
+                        "title": "Retail Insights"
+                        }
+          ]
+                    }
+                ]
+            }
+        ],
+        "name": "RO",
+        "status": True
+    },
+    "Zonal Officer RO": {
         "allowed_pages": [
             {
                 "menu_name": "Retail Outlet",

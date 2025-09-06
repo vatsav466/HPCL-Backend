@@ -5964,6 +5964,15 @@
                 },
                 {
                     "name": "get_top_five_ro_infra"
+                },
+                {
+                    "name": "get_zone_wise_ro_infra"
+                },
+                {
+                    "name": "get_ro_status_ro_infra"
+                },
+                {
+                    "name": "get_zone_table_ro_infra"
                 }
             ]
         },
@@ -5994,6 +6003,15 @@
                 },
                 {
                     "name": "get_top_five_ro_infra"
+                },
+                {
+                    "name": "get_zone_wise_ro_infra"
+                },
+                {
+                    "name": "get_ro_status_ro_infra"
+                },
+                {
+                    "name": "get_zone_table_ro_infra"
                 }
             ]
         },
@@ -6036,6 +6054,15 @@
                 },
                 {
                     "name": "get_top_five_ro_infra"
+                },
+                {
+                    "name": "get_zone_wise_ro_infra"
+                },
+                {
+                    "name": "get_ro_status_ro_infra"
+                },
+                {
+                    "name": "get_zone_table_ro_infra"
                 }
             ]
         },
@@ -6189,6 +6216,9 @@
                 },
                 {
                     "name": "get_distinct_ev_retail_infra"
+                },
+                {
+                    "name": "get_zone_wise_ev_infra"
                 }
             ]
         },
@@ -6216,6 +6246,9 @@
                 },
                 {
                     "name": "get_distinct_ev_retail_infra"
+                },
+                {
+                    "name": "get_zone_wise_ev_infra"
                 }
             ]
         },
@@ -6255,6 +6288,9 @@
                 },
                 {
                     "name": "get_distinct_ev_retail_infra"
+                },
+                {
+                    "name": "get_zone_wise_ev_infra"
                 }
             ]
         }
@@ -6820,6 +6856,18 @@
             "displayName": "get_top_five_ro_infra"
         },
         {
+            "name": "get_zone_wise_ro_infra",
+            "displayName": "get_zone_wise_ro_infra"
+        },
+        {
+            "name": "get_ro_status_ro_infra",
+            "displayName": "get_ro_status_ro_infra"
+        },
+        {
+            "name": "get_zone_table_ro_infra",
+            "displayName": "get_zone_table_ro_infra"
+        },
+        {
             "name": "upload_plant_cng_file",
             "displayName": "upload_plant_cng_file"
         },
@@ -6862,6 +6910,10 @@
         {
             "name": "get_distinct_ev_retail_infra",
             "displayName": "get_distinct_ev_retail_infra"
+        },
+        {
+            "name": "get_zone_wise_ev_infra",
+            "displayName": "get_zone_wise_ev_infra"
         }
     ]
 }

@@ -14,6 +14,11 @@ Enum AlertStatus str {
     OnHold='OnHold'
 }
 
+Model GeoCordinates internal {
+    latitude str
+    longitude str
+}
+
 Model vtsData internal {
     vendor_id str
     location_id str
@@ -33,6 +38,35 @@ Model vtsData internal {
     approved_by optional str
     invoice_number optional str
     tt_type optional str
+}
+
+Model VtsEventData internal {
+    vendor_id str
+    location_id str
+    location_type str
+    tt_number str
+    event_id str
+    report_duration optional str    
+    event_start_time optional datetime
+    event_end_time optional datetime  
+    event_start_location optional str
+    event_end_location optional str  
+    coordinates optional GeoCordinates
+    distance optional str
+    total_trips optional int
+    stoppage_violations_count optional int
+    route_deviation_count optional int
+    speed_violation_count optional int
+    main_supply_removal_count optional int
+    night_driving_count optional int
+    no_halt_zone_count optional int
+    device_offline_count optional int
+    device_tamper_count optional int
+    continuous_driving_count optional int
+    approved_by optional str
+    invoice_number optional str
+    tt_type optional str
+    transporter optional str
 }
 
 Model vtsDataUpdated internal {
@@ -101,6 +135,9 @@ Model vtsBlockedTruck internal {
 Model VTS crud_disable {
     Action=> ingest_data {
         data list vtsData
+    }
+    Action=> ingest_event_data {
+        data list VtsEventData
     }
 
     Action=> ingest_data_blocked_trucks {
