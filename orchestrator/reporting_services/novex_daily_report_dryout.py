@@ -614,6 +614,83 @@ async def get_tas_alerts():
             data.update({key: 0})
     return data
 
+async def get_vts_route_deviation():
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    date_filter = f"a.created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    tas_query = f"""SELECT 
+                    COALESCE(lm.name, a.location_name) AS plant_name,
+                    a.sap_id AS plant_id,
+                    COALESCE(lm.zone, a.zone) AS zone,
+                    COUNT(*) AS Open_alerts
+                FROM alerts a
+                LEFT JOIN location_master lm 
+                    ON a.sap_id = lm.sap_id
+                WHERE a.alert_status = 'Open'
+                AND a.alert_section = 'VTS'
+                AND a.violation_type = 'route_deviation_count'
+                AND a.bu = 'TAS' AND {date_filter}
+                AND COALESCE(lm.name, a.location_name) IS NOT NULL
+                AND COALESCE(lm.name, a.location_name) <> ''
+                GROUP BY COALESCE(lm.name, a.location_name), a.sap_id, COALESCE(lm.zone, a.zone)
+                ORDER BY zone, plant_name"""
+    
+    lpg_query = f"""SELECT 
+                    COALESCE(lm.name, a.location_name) AS plant_name,
+                    a.sap_id AS plant_id,
+                    COALESCE(lm.zone, a.zone) AS zone,
+                    COUNT(*) AS Open_alerts
+                FROM alerts a
+                LEFT JOIN location_master lm 
+                    ON a.sap_id = lm.sap_id
+                WHERE a.alert_status = 'Open'
+                AND a.violation_type = 'route_deviation_count'
+                AND a.alert_section = 'VTS'
+                AND a.bu = 'LPG' AND {date_filter}
+                AND COALESCE(lm.name, a.location_name) IS NOT NULL
+                AND COALESCE(lm.name, a.location_name) <> ''
+                GROUP BY COALESCE(lm.name, a.location_name), a.sap_id, COALESCE(lm.zone, a.zone)
+                ORDER BY zone, plant_name"""
+    tas_alerts = await function(query=tas_query)
+    lpg_alerts = await function(query=lpg_query)
+
+    tas_alerts = pd.DataFrame(tas_alerts)
+    lpg_alerts = pd.DataFrame(lpg_alerts)
+    return {"lpg_vts_data": lpg_alerts, "tas_vts_data": tas_alerts}
+
+async def lpg_top_bottom_score_plants():
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    top_query = f"""SELECT 
+                        ROW_NUMBER() OVER (ORDER BY score DESC) AS "Sl No",
+                        name AS "Plant name",
+                        zone,
+                        region AS "Region",
+                        ROUND(score::numeric, 2) AS score
+                    FROM public.performance_score
+                    WHERE bu = 'LPG'
+                    ORDER BY score DESC
+                    LIMIT 3"""
+    bottom_query = f"""SELECT 
+                        ROW_NUMBER() OVER (ORDER BY score ASC) AS "Sl No",
+                        name AS "Plant name",
+                        zone,
+                        region AS "Region",
+                        ROUND(score::numeric, 2) AS score
+                    FROM public.performance_score
+                    WHERE bu = 'LPG'
+                    ORDER BY score ASC
+                    LIMIT 3"""
+    top_resp = await function(query=top_query)
+    bottom_resp = await function(query=bottom_query)
+    top_resp = pd.DataFrame(top_resp)
+    bottom_resp = pd.DataFrame(bottom_resp)
+    return {"lpg_top_data": top_resp, "lpg_bottom_data": bottom_resp}
 
 async def get_alert_data(alert_section):
     # Making sure alerts considering only after May 31st in prod
@@ -677,12 +754,14 @@ async def publish_daily_novex_status_email():
                   # 'present_month': f"01-{tmp_date_start.strftime('%b')} to {tmp_date_yes.strftime('%d')}-{tmp_date_yes.strftime('%b')}"}
                    'present_month': f"01-{date.strftime('%b')} to {date_yes.strftime('%d')}-{date_yes.strftime('%b')}"}
 
-    #status_data.update(await fetch_sales_data())
+    status_data.update(await fetch_sales_data())
     # print("status_data before :", status_data)
     status_data.update(await fetch_dryout_data())
     status_data.update(await get_lpg_rejection())
     status_data.update(await get_ro_alerts())
     status_data.update(await get_tas_alerts())
+    #status_data.update(await get_vts_route_deviation())
+    status_data.update(await lpg_top_bottom_score_plants())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data(alert_section))
@@ -705,10 +784,8 @@ async def send_notification(notification_data):
     # Send email
     ins = await notification_factory.get_notification_module("email")
     for recipient in [
-        ["sanjayk@hpcl.in", "debeshp@hpcl.in","gargam@hpcl.in"],
-        ["cvmallinath@hpcl.in","purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in"],
-        ["rujutadoiphode@hpcl.in"],
-        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"]
+        ["cvmallinath@hpcl.in", "purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in", "adityapandey.hpcl.in"],
+        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"]
         ]:
         await ins.publish_message(
             subject="Novex Daily Report",

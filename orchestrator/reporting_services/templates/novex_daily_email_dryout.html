@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- saved from url=(0058)file:///Users/astha/Downloads/novex_daily_email%20(1).html -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>Novex Yesterday - Dryout Report</title>
+    <title>Novex Yesterday - Sales Report</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,10 +21,14 @@
         th,
         td {
             border: 1px solid #ddd;
-            padding: 8px;
             text-align: left;
+            padding-top: 1px;
+            padding-bottom: 1px;
+            padding-left: 8px;
+            padding-right: 8px;
+            /* Optionally, reduce font size for even more compact rows: */
+            font-size: 12px;
         }
-
         th {
             background-color: #003366;
             color: white;
@@ -50,11 +54,39 @@
 </head>
 
 <body>
-    <h2>Novex Today - Dryout Report</h2>
+    <h2>Novex Today - Sales Report</h2>
     <p><strong>Date:</strong> {{yesterday_date}} | <strong>Day:</strong> {{yesterday_week}}</p>
     <hr>
+    <h3>Catch up on Yesterday's Marketing Sales</h3>
+    <h4>1. Marketing Sales Summary:</h4>
+    <table>
+        <tbody><tr>
+            <th style="width: 400px;"> </th>
+            <th>Current (TMT)</th>
+            <th>Historical (TMT)</th>
+            <th>Growth%</th>
+        </tr>
+        <tr>
+            <td>Volume on {{yesterday}}</td>
+            <td>{{sales_data['yesterday_current']}}</td>
+            <td>{{sales_data['yesterday_historical']}}</td>
+            <td class="growth">{{sales_data['yesterday_growth']}}%</td>
+        </tr>
+        <tr>
+            <td>Volume ({{present_month}})</td>
+            <td>{{sales_data['present_month_current']}}</td>
+            <td>{{sales_data['present_month_historical']}}</td>
+            <td class="growth">{{sales_data['present_month_growth']}}%</td>
+        </tr>
+        <tr>
+            <td>YTPM</td>
+            <td>{{sales_data['ytpm_current']}}</td>
+            <td>{{sales_data['ytpm_historical']}}</td>
+            <td class="growth">{{sales_data['ytpm_growth']}}{% if sales_data['ytpm_growth'] != 'NA' %}%{% endif %}</td>
+        </tr>
+    </tbody></table>
     <h3>Catch up on Yesterday's Dryout Report</h3>
-    <h4>1. Retail Outlet Partial Dryout Details (MS/HSD):</h4>
+    <h4>2. Retail Outlet Partial Dryout Details (MS/HSD):</h4>
     <table>
         <tbody><tr>
             <th>Date</th>
@@ -69,7 +101,7 @@
             <td>{{dry_out['indent_raised']}}</td>
         </tr>
     </tbody></table>
-    <h5>1.1. Indent Not Raised - Details By Sales (MS/HSD):</h5>
+    <h5>2.1. Indent Not Raised - Details By Sales (MS/HSD):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
@@ -82,7 +114,7 @@
             <td>{{dry_out_details['Low Volume(<50KLPM)']}}</td>
         </tr>
     </tbody></table>
-    <h5>1.2. Indent Not Raised - Details By Dryout Days (MS/HSD):</h5>
+    <h5>2.2. Indent Not Raised - Details By Dryout Days (MS/HSD):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
@@ -99,7 +131,7 @@
             <td>{{dry_out_details['> 15 Days']}}</td>
         </tr>
     </tbody></table>
-    <h5>1.3. Indent Not Raised - TAR Analysis (MS/HSD):</h5>
+    <h5>2.3. Indent Not Raised - TAR Analysis (MS/HSD):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
@@ -116,7 +148,7 @@
             <td>{{dry_out_details['> 75 Rs Lakhs']}}</td>
         </tr>
     </tbody></table>
-    <h5>1.4. Day wise trend of Partial Dryout Details (MS/HSD):</h5>
+    <h5>2.4. Day wise trend of Partial Dryout Details (MS/HSD):</h5>
     <table>
         <thead>
             <tr>
@@ -133,10 +165,10 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>1.5. Zone wise Date wise Listing of Partial Dry outs</h5>
+    <h5>2.5. Zone wise Date wise Listing of Partial Dry outs</h5>
     <table>
         <thead>
-            <tr style="background-color:#003366; color:white; font-weight:bold;">
+            <tr>
                 {% for col in zone_wise_summary.columns %}
                     <th>{{ col }}</th>
                 {% endfor %}
@@ -144,42 +176,54 @@
         </thead>
         <tbody>
             {% for row in zone_wise_summary.to_dict(orient='records') %}
-            <tr
-                {% if loop.index == 1 %}
-                    style="background-color:#003366; color:white; font-weight:bold;"
-                {% elif loop.index is even %}
-                    style="background-color:white;"
-                {% else %}
-                    style="background-color:white;"
-                {% endif %}
-            >
+            <tr {% if loop.index == 1 %}style="border: 1px solid #ddd; text-align: left; padding-top: 1px; padding-bottom: 1px; padding-left: 8px; padding-right: 8px; font-size: 12px; background-color: #003366; color: white; font-weight: bold;"{% endif %}>
                 {% for col in zone_wise_summary.columns %}
-                    <td style="padding:8px;">{{ row[col] }}</td>
+                    <td>{{ row[col] }}</td>
                 {% endfor %}
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    <h5>1.6. Zone wise loss of Sales due to Partial Dry outs ( 1.9.2025 till previous day)</h5>
+    <h4>3. LPG Performance Score card</h4>
+    <h5>3.1. Top 3 LPG plants based on performance score</h5>
     <table>
         <thead>
-            <tr style="background-color:#003366; color:white; font-weight:bold;">
-                {% for col in zone_fuel_df.columns %}
+            <tr>
+                {% for col in lpg_top_data.columns %}
                     <th>{{ col }}</th>
                 {% endfor %}
             </tr>
         </thead>
         <tbody>
-            {% for row in zone_fuel_df.to_dict(orient='records') %}
-            <tr {% if loop.index is even %} style="background-color:#f2f6f9;" {% endif %}>
-                {% for col in zone_fuel_df.columns %}
-                    <td style="padding:8px;">{{ row[col] }}</td>
+            {% for row in lpg_top_data.to_dict(orient='records') %}
+            <tr>
+                {% for col in lpg_top_data.columns %}
+                    <td>{{ row[col] }}</td>
                 {% endfor %}
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    <h4>2. Open Alert Summary ({{present_month}})</h4>
+    <h5>3.2. Bottom 3 LPG plants based on performance score</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in lpg_bottom_data.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in lpg_bottom_data.to_dict(orient='records') %}
+            <tr>
+                {% for col in lpg_bottom_data.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+<h4>4. Open Alert Summary ({{present_month}})</h4>
     <div class="openAlert">
     <table>
         <tbody>
