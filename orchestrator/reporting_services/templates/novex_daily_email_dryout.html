@@ -106,14 +106,14 @@
             <th>< 25 Rs Lakhs</th>
             <th>25 to 50 Rs lakhs</th>
             <th>50 to 75 Rs Lakhs</th>
-            <th>> 1 Rs Cr</th>
+            <th>> 75 Rs Lakhs</th>
         </tr>
         <tr>
             <td>{{dry_out['indent_not_raised']}}</td>
             <td>{{dry_out_details['0 to 25 Rs Lakhs']}}</td>
             <td>{{dry_out_details['25 to 50 Rs Lakhs']}}</td>
             <td>{{dry_out_details['50 to 75 Rs Lakhs']}}</td>
-            <td>{{dry_out_details['> 1 Rs Cr']}}</td>
+            <td>{{dry_out_details['> 75 Rs Lakhs']}}</td>
         </tr>
     </tbody></table>
     <h5>1.4. Day wise trend of Partial Dryout Details (MS/HSD):</h5>
@@ -179,6 +179,67 @@
             {% endfor %}
         </tbody>
     </table>
+    <h4>2. Open Alert Summary ({{present_month}})</h4>
+    <div class="openAlert">
+    <table>
+        <tbody>
+        <tr>
+            <th>SBU</th>
+            <th>Alert Category</th>
+            <th>Critical</th>
+            <th>High</th>
+        </tr>
+        <tr>
+            <td rowspan="4">SOD</td>
+            <td>VA</td>
+            <td>{{va_critical_tas}}</td>
+            <td>{{va_high_tas}}</td>
+        </tr>
+        <tr>
+            <td>VTS</td>
+            <td>{{vts_critical_tas}}</td>
+            <td>{{vts_high_tas}}</td>
+        </tr>
+        <tr>
+            <td>EMLock</td>
+            <td>{{emlock_critical_tas}}</td>
+            <td>{{emlock_high_tas}}</td>
+        </tr>
+        <tr>
+            <td>TAS</td>
+            <td>{{tas_critical_tas}}</td>
+            <td>{{tas_high_tas}}</td>
+        </tr>
+        <tr>
+            <td rowspan="3">LPG</td>
+            <td>VA</td>
+            <td>{{va_critical_lpg}}</td>
+            <td>{{va_high_lpg}}</td>
+        </tr>
+        <tr>
+            <td>VTS</td>
+            <td>{{vts_critical_lpg}}</td>
+            <td>{{vts_high_lpg}}</td>
+        </tr>
+        <tr>
+            <td>PQ</td>
+            <td>{{pq_critical_lpg}}</td>
+            <td>{{pq_high_lpg}}</td>
+        </tr>
+        <!-- <tr>
+            <td rowspan="2">Retail</td>
+            <td>VA</td>
+            <td>{{va_critical_ro}}</td>
+            <td>{{va_high_ro}}</td>
+        </tr>
+        <tr>
+            <td>Automation</td>
+            <td>{{automation_critical_ro}}</td>
+            <td>{{automation_high_ro}}</td>
+        </tr> -->
+        </tbody>
+    </table>
+</div>
 <script>
     window.onload = function () {
         document.querySelectorAll(".growth").forEach(td => {

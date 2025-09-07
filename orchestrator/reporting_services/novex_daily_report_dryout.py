@@ -680,12 +680,12 @@ async def publish_daily_novex_status_email():
     #status_data.update(await fetch_sales_data())
     # print("status_data before :", status_data)
     status_data.update(await fetch_dryout_data())
-    #status_data.update(await get_lpg_rejection())
-    #status_data.update(await get_ro_alerts())
-    #status_data.update(await get_tas_alerts())
+    status_data.update(await get_lpg_rejection())
+    status_data.update(await get_ro_alerts())
+    status_data.update(await get_tas_alerts())
 
-    #for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
-    #    status_data.update(await get_alert_data(alert_section))
+    for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
+        status_data.update(await get_alert_data(alert_section))
     # print("-" * 50)
     # print("status_data :", json.dumps(status_data))
     # print("-" * 50)
