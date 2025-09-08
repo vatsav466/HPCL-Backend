@@ -32,6 +32,9 @@
                     "name": "ingest_event_data"
                 },
                 {
+                    "name": "ingest_trip_data"
+                },
+                {
                     "name": "ingest_data_blocked_trucks"
                 },
                 {
@@ -81,6 +84,9 @@
                 },
                 {
                     "name": "ingest_event_data"
+                },
+                {
+                    "name": "ingest_trip_data"
                 },
                 {
                     "name": "ingest_data_blocked_trucks"
@@ -747,6 +753,10 @@
         {
             "name": "ingest_event_data",
             "displayName": "ingest_event_data"
+        },
+        {
+            "name": "ingest_trip_data",
+            "displayName": "ingest_trip_data"
         },
         {
             "name": "ingest_data_blocked_trucks",

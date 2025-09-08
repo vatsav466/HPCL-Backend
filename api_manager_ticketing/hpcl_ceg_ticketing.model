@@ -1,0 +1,200 @@
+Enum BusinessUnit str {
+    TAS='TAS'
+    LPG='LPG'
+    RO='RO'
+    RDI='RDI'
+    CP='CP'
+    CDCMS='CDCMS'
+    ALL='ALL'
+}
+
+Enum Status str {
+    Open='Open'
+    Close='Close'
+}
+
+Enum State str {
+    ToDo='ToDo'
+    InProgress='InProgress'
+    Cancelled='Cancelled'
+    Resolved='Resolved'
+    OnHold='OnHold'
+}
+
+Enum Severity str {
+    Critical='Critical'
+    High='High'
+    Medium='Medium'
+    Low='Low'
+}
+
+Enum Assignee str {
+    NovexSupport='NovexSupport'
+    TechSupport='TechSupport'
+}
+
+Model Ticket_History internal {
+    description optional str
+}
+
+
+Model Ticketing {
+    ticket_name str
+    ticket_id index_field unique_field str
+    alert_id index_field str
+    bu BusinessUnit
+    alert_section optional str
+    sop_id optional str
+    sap_id index_field unique_field str
+    location_name str
+    zone optional str
+    region optional str
+    ticket_status Status
+    ticket_state State
+    start_date optional datetime
+    end_date optional datetime
+    summary str
+    description str
+    ticket_severity Severity
+    assignee optional Assignee
+    reporter optional str
+    ticket_history optional list Ticket_History
+    linked_alert_id optional list str
+    interlock_name optional list str
+    comment optional str
+    file_attachment optional list str
+    file_attachment_name optional str
+    file_attachment_id optional str
+    comment_text optional str
+    comment_id optional str
+
+
+    Action=> get_ticket {
+        ticket_id str
+    }
+
+    Action=> create_ticket {
+        bu str
+        alert_section optional str
+        sop_id optional str
+        sap_id str
+        location_name str
+        zone optional str
+        region optional str
+        alert_type str
+        assignee optional Assignee
+        summary str
+        description str
+        ticket_state State
+        ticket_severity Severity
+        comment optional str
+        start_date datetime
+        file_attachment optional list str
+        file_attachment_name optional str
+        file_attachment_id optional str
+        linked_alert_id optional list str
+    }
+
+    Action=> close_ticket {
+        close_id str
+        end_date datetime
+    }
+
+    Action=> update_ticket {
+        bu optional str
+        sap_id optional str
+        sop_id optional str
+        alert_section optional str
+        location_name optional str
+        assignee optional str
+        summary optional str
+        description optional str
+        ticket_state optional str
+        ticket_severity optional str
+        comment optional str
+        update_id str
+    }
+
+    Action=> delete_ticket {
+        delete_id str
+    }
+
+    Action=> attach_file {
+        ticket_id str
+        file_path optional str
+    }
+
+    Action=> delete_file_attachment {
+        ticket_id str
+        attachment_id str
+        attachment_name str
+        file_path optional str
+    }
+
+    Action=> download_file_attachment {
+        ticket_id str
+        attachmentid str
+        attachmentname str
+        file_path optional str
+    }
+
+    Action=> update_assignee {
+        ticket_id str
+        assignee str
+    }
+    
+    Action=> update_reporter {
+        ticket_id str
+        reporter str
+    }
+
+    Action=> update_priority {
+        ticket_id str
+        ticket_priority str
+    }
+
+    Action=> add_comment_to_ticket {
+        ticket_id str
+        comment_text str 
+    }
+
+    Action=> edit_comment {
+        ticket_id str
+        comment_id str
+        existing_comment_text str
+        new_comment str
+    }
+
+    Action=> delete_comment {
+        ticket_id str
+        comment_id str
+        existing_comment_text str
+    }
+
+    Action=> edit_description {
+        ticket_id str
+        new_description str
+    }
+    
+    Action=> delete_description {
+        ticket_id str
+        delete_existing_desctiption str
+    }
+
+    Action=> attach_file_to_comment {
+        ticket_id str
+        comment_id str
+        file_path optional str
+    }
+
+    Action=> delete_file_from_comment {
+        ticket_id str
+        comment_id str
+        attachment_id str
+        file_path optional str
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}

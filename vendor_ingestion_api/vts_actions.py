@@ -117,7 +117,8 @@ async def vts_ingest_data_un_blocked_trucks(data: Vts_Ingest_Data_Un_Blocked_Tru
         logger.error(e)
         return False, e
 
-# Action vts_ingest_data
+
+# Action ingest_event_data
 @router.post('/ingest_event_data', tags=['VTS'])
 async def vts_ingest_event_data(data: Vts_Ingest_Event_DataParams):
     """
@@ -136,16 +137,40 @@ async def vts_ingest_event_data(data: Vts_Ingest_Event_DataParams):
     """
     try:
         logger.info(f"Received VTS data ingestion from vendor {data.dict()}")
-        # if isinstance(data.data, list) and len(data.data) > 0:
-        #     enriched_data = [
-        #         {
-        #             **entry.dict()
-        #         }
-        #     for entry in data.data
-        #     ]
-        # else:
-        #     logger.error(f"Invalid data structure: data.data is not a list or is empty")
-        #     return {"status": False, "message": "Invalid data", "data": []}
+        if isinstance(data.data, list) and len(data.data) > 0:
+            enriched_data = [
+                {
+                    **entry.dict()
+                }
+            for entry in data.data
+            ]
+        else:
+            logger.error(f"Invalid data structure: data.data is not a list or is empty")
+            return {"status": False, "message": "Invalid data", "data": []}
+        # redis_queue = urdhva_base.redispool.RedisQueue('vts_alerts_queue')
+        # await redis_queue.put(json.dumps(enriched_data))
+        return True, "Success"
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return {"status": False, "message": "Error", "data": []}
+
+
+# Action ingest_trip_data
+@router.post('/ingest_trip_data', tags=['VTS'])
+async def vts_ingest_trip_data(data: Vts_Ingest_Trip_DataParams):
+    try:
+        logger.info(f"Received VTS data ingestion from vendor {data.dict()}")
+        if isinstance(data.data, list) and len(data.data) > 0:
+            enriched_data = [
+                {
+                    **entry.dict()
+                }
+            for entry in data.data
+            ]
+        else:
+            logger.error(f"Invalid data structure: data.data is not a list or is empty")
+            return {"status": False, "message": "Invalid data", "data": []}
         # redis_queue = urdhva_base.redispool.RedisQueue('vts_alerts_queue')
         # await redis_queue.put(json.dumps(enriched_data))
         return True, "Success"
