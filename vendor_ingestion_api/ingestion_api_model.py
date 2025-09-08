@@ -71,6 +71,19 @@ class VtsEventDataCreate(pydantic.BaseModel):
     transporter: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class VtsTripDataCreate(pydantic.BaseModel):
+    vendor_id: str
+    location_id: str
+    location_type: str
+    tt_number: str
+    trip_start_time: typing.Optional[datetime.datetime] | None = None
+    trip_end_time: typing.Optional[datetime.datetime] | None = None
+    distance: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+    transporter: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class vtsDataUpdatedCreate(pydantic.BaseModel):
     alert_id: str
     zone: typing.Optional[str] = pydantic.Field("", **{})
@@ -143,6 +156,14 @@ class Vts_Ingest_DataParams(pydantic.BaseModel):
 
 
 class Vts_Ingest_Event_DataParams(pydantic.BaseModel):
+    data: typing.List[VtsEventDataCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Vts_Ingest_Trip_DataParams(pydantic.BaseModel):
     data: typing.List[VtsEventDataCreate]
 
     class Config:
