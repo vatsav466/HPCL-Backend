@@ -69,6 +69,19 @@ Model VtsEventData internal {
     transporter optional str
 }
 
+Model VtsTripData internal {
+    vendor_id str
+    location_id str
+    location_type str
+    tt_number str
+    trip_start_time optional datetime
+    trip_end_time optional datetime
+    distance optional str
+    tt_type optional str
+    invoice_number optional str
+    transporter optional str
+}
+
 Model vtsDataUpdated internal {
     alert_id str
     zone optional str
@@ -137,6 +150,9 @@ Model VTS crud_disable {
         data list vtsData
     }
     Action=> ingest_event_data {
+        data list VtsEventData
+    }
+    Action=> ingest_trip_data {
         data list VtsEventData
     }
 
