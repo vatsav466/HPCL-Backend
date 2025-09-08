@@ -20,10 +20,10 @@ from fastapi.responses import FileResponse, JSONResponse
 from orchestrator.dbconnector.widget_actions import widget_actions
 
 
-async def get_distinct_ro_retail_info(sbu, company, zone, state, status):
+async def get_distinct_ro_retail_info(sbu, company, zone, state, status,ro_status):
     try:
         sbu_tables = ["plant_ro_infra"]
-        select_columns = "sbu, company, zone, state, status"
+        select_columns = "sbu, company, zone, state, status, ro_status"
 
         union_queries = [f"SELECT {select_columns} FROM {table}" for table in sbu_tables]
         union_block = "\nUNION\n".join(union_queries)
@@ -52,6 +52,10 @@ async def get_distinct_ro_retail_info(sbu, company, zone, state, status):
             company_str = "', '".join(company)
             conditions.append(f"company IN ('{company_str}')")
 
+        if ro_status:
+            ro_status_str = "', '".join(ro_status)
+            conditions.append(f"company IN ('{ro_status_str}')")
+
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
 
@@ -63,7 +67,7 @@ async def get_distinct_ro_retail_info(sbu, company, zone, state, status):
             if val and str(val).strip():
                 target_set.add(str(val).strip())
 
-        sbu_set, company_set, zone_set, state_set, status_set = set(), set(), set(), set(), set()
+        sbu_set, company_set, zone_set, state_set, status_set, ro_status_set = set(), set(), set(), set(), set(), set()
 
         for row in rows:
             add_if_valid(row.get("sbu"), sbu_set)
@@ -71,6 +75,7 @@ async def get_distinct_ro_retail_info(sbu, company, zone, state, status):
             add_if_valid(row.get("zone"), zone_set)
             add_if_valid(row.get("state"), state_set)
             add_if_valid(row.get("status"), status_set)
+            add_if_valid(row.get("ro_status"), ro_status_set)
 
         return {
             "status": True,
@@ -81,6 +86,7 @@ async def get_distinct_ro_retail_info(sbu, company, zone, state, status):
                 "zone": sorted(zone_set),
                 "state": sorted(state_set),
                 "status": sorted(status_set),
+                "ro_status": sorted(ro_status_set)
             }
         }
 
@@ -166,6 +172,66 @@ async def get_top_five_ro_info(filters, cross_filters, drill_state, limit, time_
     except Exception as e:
         traceback.print_exc()
         return {"status": False, "message": f"Error occurred: {str(e)}", "data": []}
+
+
+async def get_zone_wise_ro_info(filters, cross_filters, drill_state, limit, time_grain):
+    try:
+        query = '''  zone,ro_status, SUM(CAST(retail_outlet AS INT)) AS retail_outlet
+                    FROM plant_ro_infra
+                    GROUP BY zone,ro_status'''
+
+        if filters:
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+
+        retail = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        retail = retail.get("data", [])
+
+        return {"status": True, "message": "success", "data": retail}
+
+    except Exception as e:
+        print(f"Error in get_plant_ro_count_info: {e}")
+        return {"status": False, "message": f"Failed to fetch retail company info: {str(e)}","data": []}
+
+
+async def get_zone_table_ro_info(filters, cross_filters, drill_state, limit, time_grain):
+    try:
+        query = '''   zone,company,status,ro_status, SUM(CAST(retail_outlet AS INT)) AS retail_outlet,
+                        SUM(CAST(ros_commissioned AS INT)) AS ros_commissioned, 
+                        SUM(CAST(ros_decommissioned AS INT)) AS ros_decommissioned 
+                        FROM plant_ro_infra 
+                        GROUP BY zone,company,status,ro_status'''
+
+        if filters:
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+
+        retail = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        retail = retail.get("data", [])
+        retail = [row for row in retail if row.get("ro_status") != "Total"]
+
+        return {"status": True, "message": "success", "data": retail}
+
+    except Exception as e:
+        print(f"Error in get_plant_ro_count_info: {e}")
+        return {"status": False, "message": f"Failed to fetch retail company info: {str(e)}","data": []}
+
+async def get_ro_status_ro_info(filters, cross_filters, drill_state, limit, time_grain):
+    try:
+        query = '''  ro_status, SUM(CAST(retail_outlet AS INT)) AS retail_outlet
+                    FROM plant_ro_infra
+                    GROUP BY ro_status'''
+
+        if filters:
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+
+        retail = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        retail = retail.get("data", [])
+        retail = [row for row in retail if row.get("ro_status") != "Total"]
+
+        return {"status": True, "message": "success", "data": retail}
+
+    except Exception as e:
+        print(f"Error in get_plant_ro_count_info: {e}")
+        return {"status": False, "message": f"Failed to fetch retail company info: {str(e)}","data": []}
 
 async def get_plant_cng_count_info(filters, cross_filters, drill_state, limit, time_grain):
     try:
