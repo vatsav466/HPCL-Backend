@@ -80,11 +80,21 @@ class NotifyEMail(NotificationManager):
         print("creds --> ", creds)
         print("kwargs --> ", kwargs)
         recipients = [kwargs['recipients']] if isinstance(kwargs['recipients'], str) else kwargs['recipients'] or []
+        cc_recipients = [kwargs['cc_recipients']] if isinstance(kwargs.get('cc_recipients'), str) else kwargs.get('cc_recipients', [])
+        bcc_recipients = [kwargs['bcc_recipients']] if isinstance(kwargs.get('bcc_recipients'), str) else kwargs.get('bcc_recipients', [])
+
 
         mail_content = MIMEMultipart('alternative' if creds.get("html_content") else 'mixed')
         mail_content['Subject'] = kwargs['subject']
         mail_content['To'] = ",".join(kwargs['recipients'])
         mail_content['From'] = kwargs.get("from", creds['from'])
+        all_recipients = recipients
+        if cc_recipients:
+            mail_content['Cc'] = ",".join(cc_recipients)
+            all_recipients = all_recipients + cc_recipients
+        if bcc_recipients:
+            all_recipients = all_recipients + bcc_recipients
+
         print("mail_content", mail_content)
         # Reply to email
         if creds.get("reply_to"):
@@ -110,7 +120,7 @@ class NotifyEMail(NotificationManager):
                     print(f"SMTP Authentication Error: {e}")
                 except Exception as e:
                     print(f"Unexpected Error during login: {e}")
-            server.sendmail(kwargs.get("from", creds['from']), recipients, mail_content.as_string())
+            server.sendmail(kwargs.get("from", creds['from']), all_recipients, mail_content.as_string())
             print("Email before quit")
             server.quit()
             print({"status": "success", "message": "Email sent successfully."})
