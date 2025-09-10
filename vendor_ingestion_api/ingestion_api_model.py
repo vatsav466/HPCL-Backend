@@ -27,6 +27,8 @@ class vtsDataCreate(pydantic.BaseModel):
     location_type: str
     tl_number: str
     report_duration: str
+    scheduled_trip_start_time: typing.Optional[datetime.datetime] | None = None
+    scheduled_trip_end_time: typing.Optional[datetime.datetime] | None = None
     total_trips: typing.Optional[int] = pydantic.Field(0, **{})
     stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
     route_deviation_count: typing.Optional[int] = pydantic.Field(0, **{})
