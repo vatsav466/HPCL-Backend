@@ -522,8 +522,8 @@ async def check_plc_status():
             continue
         
         # Determine status
-        plc_a_status = "online" if (plc_a_attr == plc_a_tele and plc_a_attr is not None) else "standby"
-        plc_b_status = "online" if (plc_b_attr == plc_b_tele and plc_b_attr is not None) else "standby"
+        plc_a_status = "master" if (plc_a_attr == plc_a_tele and plc_a_attr is not None) else "slave"
+        plc_b_status = "master" if (plc_b_attr == plc_b_tele and plc_b_attr is not None) else "slave"
         
         # Add result
         results.append({
