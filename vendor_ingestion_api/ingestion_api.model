@@ -25,6 +25,8 @@ Model vtsData internal {
     location_type str
     tl_number str
     report_duration str
+    scheduled_trip_start_datetime optional datetime
+    scheduled_trip_end_datetime optional datetime
     total_trips optional int
     stoppage_violations_count optional int
     route_deviation_count optional int

@@ -327,10 +327,10 @@ async def generate_sod_engineering_location_stats(sap_id):
             return None
 
         plc_status_dict = {
-            "safety_plc_a": {"id": "safety_plc_a", "name": "PLC A", "status": "offline"},
-            "safety_plc_b": {"id": "safety_plc_b", "name": "PLC B", "status": "offline"},
-            "process_plc_a": {"id": "process_plc_a", "name": "PLC A", "status": "offline"},
-            "process_plc_b": {"id": "process_plc_b", "name": "PLC B", "status": "offline"},
+            "safety_plc_a": {"id": "safety_plc_a", "name": "PLC A", "status": "slave"},
+            "safety_plc_b": {"id": "safety_plc_b", "name": "PLC B", "status": "slave"},
+            "process_plc_a": {"id": "process_plc_a", "name": "PLC A", "status": "slave"},
+            "process_plc_b": {"id": "process_plc_b", "name": "PLC B", "status": "slave"},
         }
 
         for plc in matching_plcs:
@@ -338,9 +338,9 @@ async def generate_sod_engineering_location_stats(sap_id):
             if plc_type:
                 a_key = f"{plc_type}_plc_a"
                 b_key = f"{plc_type}_plc_b"
-                if plc_status_dict[a_key]["status"] != "online" and plc["plc_a_status"] in ("online", "standby"):
+                if plc_status_dict[a_key]["status"] != "master" and plc["plc_a_status"] in ("master", "slave"):
                     plc_status_dict[a_key]["status"] = plc["plc_a_status"]
-                if plc_status_dict[b_key]["status"] != "online" and plc["plc_b_status"] in ("online", "standby"):
+                if plc_status_dict[b_key]["status"] != "master" and plc["plc_b_status"] in ("master", "slave"):
                     plc_status_dict[b_key]["status"] = plc["plc_b_status"]
 
         result_dict.update(plc_status_dict)
