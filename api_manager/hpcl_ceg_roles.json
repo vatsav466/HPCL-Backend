@@ -6293,6 +6293,69 @@
                     "name": "get_zone_wise_ev_infra"
                 }
             ]
+        },
+        {
+            "name": "dryoutdailyreport",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutDailyReport",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutdailyreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "dryoutdailyreport_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutDailyReport_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutdailyreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "dryoutdailyreport_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutDailyReport_admin",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutdailyreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
