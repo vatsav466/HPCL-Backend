@@ -406,12 +406,12 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
     violation_counts = dict(Counter(all_violations))
     instance = {}
     violation_name = ""
-    if "device_tamper_count" in violation_counts.keys() and violation_counts['device_tamper_count'] > 0:
+    if "device_tamper_count" in violation_counts.keys() and violation_counts['device_tamper_count'] > 1:
         instance = vts_map["device_tamper_count"]['alerting_rules'][await get_instance(tt_number,sap_id,bu)]
         instance['severity'] = vts_map["device_tamper_count"]["severity"]
         violation_name = "device_tamper_count"
 
-    elif "main_supply_removal_count" in violation_counts.keys() and violation_counts['main_supply_removal_count'] > 0:
+    elif "main_supply_removal_count" in violation_counts.keys() and violation_counts['main_supply_removal_count'] > 1:
         instance = vts_map["main_supply_removal_count"]['alerting_rules'][await get_instance(tt_number,sap_id,bu)]
         instance['severity'] = vts_map["main_supply_removal_count"]["severity"]
         violation_name = "main_supply_removal_count"

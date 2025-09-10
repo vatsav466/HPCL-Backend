@@ -3139,3 +3139,15 @@ Model PlantEvInfra {
         access_key_mapping='sbu,zone'
     }
 }
+
+Model Zone_History_Counts internal {
+    zone optional str
+    count optional str
+}
+
+Model DryOutDailyReport {
+    dry_out_date optional str
+    dry_out_count optional str
+    dry_out_zone optional list Zone_History_Counts
+    dry_out_alert_ids optional list str
+}

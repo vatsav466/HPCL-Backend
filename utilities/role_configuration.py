@@ -12,7 +12,7 @@ role_Mapping={
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
-                    "0": "P90D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -27,7 +27,7 @@ role_Mapping={
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
-                    "0": "P90D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -42,7 +42,7 @@ role_Mapping={
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -57,7 +57,7 @@ role_Mapping={
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -147,7 +147,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P90D",
                     "1": "PT1H"
                 }
             },
@@ -162,7 +162,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P90D",
                     "1": "PT1H"
                 }
             },
@@ -177,7 +177,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -192,7 +192,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30",
                     "1": "PT1H"
                 }
             },
@@ -222,7 +222,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P90D",
+                    "0": "P15D",
                     "1": "PT1H"
                 }
             },
@@ -237,7 +237,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P90D",
+                    "0": "P15D",
                     "1": "PT1H"
                 }
             },
@@ -267,7 +267,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P90D",
+                    "0": "P15D",
                     "1": "PT1H"
                 }
             },
@@ -282,7 +282,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P90D",
                     "1": "PT1H"
                 }
             },
@@ -297,7 +297,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P90D",
                     "1": "PT1H"
                 }
             },
@@ -312,7 +312,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -327,7 +327,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -357,7 +357,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -372,7 +372,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -402,7 +402,7 @@ role_Mapping={
                     "1": "Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             }
@@ -419,7 +419,7 @@ role_Mapping={
                     "1": "Location In-Charge LPG"
                 },
                 "block_time": {
-                    "0": "P90D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -434,7 +434,7 @@ role_Mapping={
                     "1": "Location In-Charge LPG"
                 },
                 "block_time": {
-                    "0": "P90D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -449,7 +449,7 @@ role_Mapping={
                     "1": "Location In-Charge LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -464,7 +464,7 @@ role_Mapping={
                     "1": "Location In-Charge LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -554,7 +554,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P90D",
                     "1": "PT1H"
                 }
             },
@@ -569,7 +569,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P90D",
                     "1": "PT1H"
                 }
             },
@@ -584,7 +584,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -599,7 +599,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -629,7 +629,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P90D",
+                    "0": "P15D",
                     "1": "PT1H"
                 }
             },
@@ -644,7 +644,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P90D",
+                    "0": "P15D",
                     "1": "PT1H"
                 }
             },
@@ -674,7 +674,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P90D",
+                    "0": "P15D",
                     "1": "PT1H"
                 }
             },
@@ -689,7 +689,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P90D",
                     "1": "PT1H"
                 }
             },
@@ -704,7 +704,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P90D",
                     "1": "PT1H"
                 }
             },
@@ -719,7 +719,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -734,7 +734,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -764,7 +764,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -779,7 +779,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -809,7 +809,7 @@ role_Mapping={
                     "1": "Zonal HSE LPG,Zonal Operations Chief Manager LPG,Zonal Head LPG,Zonal Officer LPG,Zonal Operations LPG"
                 },
                 "block_time": {
-                    "0": "P365D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             }

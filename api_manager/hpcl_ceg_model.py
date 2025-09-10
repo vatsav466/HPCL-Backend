@@ -8828,3 +8828,55 @@ class Plantevinfra_Get_Zone_Wise_Ev_InfraParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class Zone_History_CountsCreate(pydantic.BaseModel):
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    count: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class DryOutDailyReportSchema(UrdhvaPostgresBase):
+    __tablename__ = 'dry_out_daily_report'
+    
+    dry_out_date: Mapped[typing.Optional[str]] = mapped_column("dry_out_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dry_out_count: Mapped[typing.Optional[str]] = mapped_column("dry_out_count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dry_out_zone: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("dry_out_zone", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    dry_out_alert_ids: Mapped[typing.Optional[typing.List[str]]] = mapped_column("dry_out_alert_ids", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class DryOutDailyReportCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'dry_out_daily_report'
+    
+    dry_out_date: typing.Optional[str] = pydantic.Field("", **{})
+    dry_out_count: typing.Optional[str] = pydantic.Field("", **{})
+    dry_out_zone: typing.Optional[typing.List[Zone_History_CountsCreate]] | None = None
+    dry_out_alert_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = DryOutDailyReportSchema
+        upsert_keys = []
+
+
+class DryOutDailyReport(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'dry_out_daily_report'
+    
+    dry_out_date: typing.Optional[str] = pydantic.Field("", **{})
+    dry_out_count: typing.Optional[str] = pydantic.Field("", **{})
+    dry_out_zone: typing.Optional[typing.List[Zone_History_CountsCreate]] | None = None
+    dry_out_alert_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = DryOutDailyReportSchema
+        upsert_keys = []
+
+
+class DryOutDailyReportGetResp(pydantic.BaseModel):
+    data: typing.List[DryOutDailyReport]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
