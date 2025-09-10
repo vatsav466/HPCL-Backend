@@ -3,12 +3,12 @@ role_Mapping={
         "TAS": {
             "VTS RouteDeviation FirstTime": {
                 "rolemailto": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD",
-                    "2": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD,Location In-Charge SOD"
+                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
                 },
                 "mqof": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
@@ -18,12 +18,12 @@ role_Mapping={
             },
             "Unauthorized Stoppage FirstTime": {
                 "rolemailto": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD",
-                    "2": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD,Location In-Charge SOD"
+                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
                 },
                 "mqof": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
@@ -33,12 +33,12 @@ role_Mapping={
             },
             "VTS PowerDisconnect FirstTime": {
                 "rolemailto": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD",
-                    "2": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD,Location In-Charge SOD"
+                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
                 },
                 "mqof": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
@@ -48,12 +48,12 @@ role_Mapping={
             },
             "VTS Device Tampering FirstTime": {
                 "rolemailto": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD",
-                    "2": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD,Location In-Charge SOD"
+                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
                 },
                 "mqof": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
@@ -63,12 +63,12 @@ role_Mapping={
             },
             "VTS Offline FirstTime": {
                 "rolemailto": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD",
-                    "2": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD,Location In-Charge SOD"
+                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
                 },
                 "mqof": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
@@ -78,12 +78,12 @@ role_Mapping={
             },
             "Night Driving FirstTime": {
                 "rolemailto": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD",
-                    "2": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD,Location In-Charge SOD"
+                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
                 },
                 "mqof": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
@@ -93,12 +93,12 @@ role_Mapping={
             },
             "Speed Violation FirstTime": {
                 "rolemailto": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD",
-                    "2": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD,Location In-Charge SOD"
+                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
                 },
                 "mqof": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
@@ -108,12 +108,12 @@ role_Mapping={
             },
             "NoHalt Zone FirstTime": {
                 "rolemailto": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD",
-                    "2": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD,Location In-Charge SOD"
+                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
                 },
                 "mqof": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
@@ -123,12 +123,12 @@ role_Mapping={
             },
             "Continuous Driving FirstTime": {
                 "rolemailto": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD",
-                    "2": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD,Location In-Charge SOD"
+                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
                 },
                 "mqof": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Plant In-Charge SOD,Planning Officer SOD",
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
                     "1": "Location In-Charge SOD"
                 },
                 "block_time": {
