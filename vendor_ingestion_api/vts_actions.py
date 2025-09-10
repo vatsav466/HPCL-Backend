@@ -39,12 +39,13 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
         #
         # Ensure data.data is a list and contains items
         if isinstance(data.data, list) and len(data.data) > 0:
-            enriched_data = [
-                {
-                    **entry.dict()
-                }
-            for entry in data.data
-            ]
+            # enriched_data = [
+            #     {
+            #         **entry.dict()
+            #     }
+            # for entry in data.data
+            # ]
+            enriched_data = jsonable_encoder(data.data)
         else:
             logger.error(f"Invalid data structure: data.data is not a list or is empty")
             return {"status": False, "message": "Invalid data", "data": []}
