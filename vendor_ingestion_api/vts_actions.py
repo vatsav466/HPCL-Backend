@@ -1,13 +1,15 @@
 import urdhva_base
 from ingestion_api_enum import *
 from ingestion_api_model import *
-import fastapi
 import json
+import fastapi
+import datetime
 import requests
 import traceback
 import hpcl_ceg_model
 import orchestrator.analytics.vts_analysis as vts_analysis
 import orchestrator.alerting.alert_manager as alert_manager
+from fastapi.encoders import jsonable_encoder
 
 router = fastapi.APIRouter(prefix='/vts')
 
