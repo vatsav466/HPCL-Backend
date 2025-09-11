@@ -1379,6 +1379,14 @@ class VTSGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class Vts_Alert_ManagerParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class AlertsSchema(UrdhvaPostgresBase):
     __tablename__ = 'alerts'
     

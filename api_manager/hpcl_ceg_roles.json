@@ -924,6 +924,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "alert_manager"
                 }
             ]
         },
@@ -963,6 +966,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "alert_manager"
                 }
             ]
         },
@@ -6565,6 +6571,10 @@
         {
             "name": "download_template",
             "displayName": "download_template"
+        },
+        {
+            "name": "alert_manager",
+            "displayName": "alert_manager"
         },
         {
             "name": "alert_action",
