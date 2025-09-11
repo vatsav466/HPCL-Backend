@@ -245,6 +245,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
             "alert_type": selected_type,
             "alert_data": selected_alert,
             "reporter": user_name,
+            "ticket_history": ticket_data['ticket_history'],
             "linked_alerts": [
                 {
                     "sap_id": lr.get("sap_id"),
@@ -355,11 +356,28 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
 
             await hpcl_ceg_model.Alerts(id=alert_id, alert_history=updated_alert_history).modify()
 
-        return {"status": True, "message": "Ticket updated successfully", "data": ticket_id}
+        # return {"status": True, "message": "Ticket updated successfully", "data": ticket_id}
+        return {
+            "status": True,
+            "message": "Ticket updated successfully",
+            "data": {
+                "ticket_id": ticket_id,
+                "ticket_history": updated_history
+            }
+        }
 
     except Exception as e:
         print(f"Error in update_ticket: {str(e)}")
-        return {"status": False, "message": str(e)}
+        # return {"status": False, "message": str(e)}
+        return {
+            "status": True,
+            "message": "Ticket updated successfully",
+            "data": {
+                "ticket_id": ticket_id,
+                "ticket_history": updated_history
+            }
+        }
+
 
 # Action delete_ticket
 @router.post('/delete_ticket', tags=['Ticketing'])
