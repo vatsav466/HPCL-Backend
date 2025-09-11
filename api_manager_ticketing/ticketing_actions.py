@@ -22,8 +22,17 @@ from hpcl_ceg_ticketing_model import (
     Ticketing_Delete_File_From_CommentParams
 
 )
+import os
+from fastapi import UploadFile, File, Depends
+from datetime import datetime
+import urdhva_base
+import api_manager
+import hpcl_ceg_model
 import fastapi
 import traceback
+from hpcl_ceg_enum import AlertActionType
+from datetime import datetime
+from orchestrator.alerting import alert_helper
 router = fastapi.APIRouter(prefix='/ticketing')
 
 
@@ -42,8 +51,7 @@ async def ticketing_get_ticket(data: Ticketing_Get_TicketParams):
         print(f"Error in getting ticket: {e}, InputData {data.dict()}, Traceback: {traceback.format_exc()}")
         return False, "Error in getting ticket"
 
-
-# Action create_ticket
+from dateutil import parser
 @router.post('/create_ticket', tags=['Ticketing'])
 async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     """
@@ -60,8 +68,9 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         f"and sap_id='{tdata['sap_id']}' and location_name='{tdata['location_name']}'"
     )
     params = urdhva_base.queryparams.QueryParams(q=query, limit=10000)
-    params.fields =['bu','sop_id','alert_section','sap_id','location_name','interlock_name','unique_id']
-    resp = await Alerts.get_all(params, resp_type='plain')
+    params.fields = ['bu', 'sop_id', 'alert_section', 'sap_id',
+                     'location_name', 'interlock_name', 'unique_id']
+    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
 
     if not resp or len(resp) == 0:
         raise fastapi.HTTPException(status_code=404, detail="Alerts not found")
@@ -70,14 +79,15 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
 
     # Group alerts by interlock_name
     grouped_alerts = {}
-    print("Alert Data: ", alert_data)
     for alert in alert_data:
         alert_type = alert.get('interlock_name')
         if alert_type:
             grouped_alerts.setdefault(alert_type, []).append(alert)
 
-    # If alert_type is NOT provided, return alert_type and sop_id for each group
-    if not tdata.get("alert_type"):
+    selected_type_raw = tdata.get("alert_type")
+
+    # If alert_type is NOT provided
+    if not selected_type_raw:
         result = [
             {
                 "alert_type": alert_type,
@@ -85,81 +95,167 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
             }
             for alert_type, alerts in grouped_alerts.items()
         ]
-        return {
-            "reporter": user_name,
-            "alert_types": result
-        }
+        return {"reporter": user_name, "alert_types": result}
 
+    # Always treat as list
+    selected_types = selected_type_raw if isinstance(selected_type_raw, list) else [selected_type_raw]
+
+    # Validate
+    for selected_type in selected_types:
+        if selected_type not in grouped_alerts:
+            raise fastapi.HTTPException(status_code=400, detail=f"Alert type '{selected_type}' not found.")
+
+    tickets_created = []
 
     # ----------------------------
     # Proceed to TICKET CREATION
     # ----------------------------
+    for selected_type in selected_types:
+        alerts_for_type = grouped_alerts[selected_type]
+        selected_alert = alerts_for_type[0]
 
-    selected_type = tdata["alert_type"]
-    if selected_type not in grouped_alerts:
-        raise fastapi.HTTPException(status_code=404, detail=f"No alerts found for alert_type: {selected_type}")
+        ticket_data = tdata.copy()  # avoid overwriting
 
-    # Select the first alert to associate with the ticket
-    selected_alert = grouped_alerts[selected_type][0]
-    tdata['alert_id'] = selected_alert.get('unique_id')  # or appropriate alert ID field
+        # Core fields
+        ticket_data['alert_id'] = selected_alert.get('unique_id')
+        ticket_data['ticket_id'] = await alert_helper.get_alert_unique_id(
+            ticket_data['bu'], ticket_data['sap_id'], ticket_data.get('sop_id')
+        )
 
-    # Generate ticket_id using helper
-    tdata['ticket_id'] = await alert_helper.get_alert_unique_id(tdata['bu'], tdata['sap_id'], tdata.get('sop_id'))
-    # Get the ticket_name
-    redis_ins = await urdhva_base.redispool.get_redis_connection()
-    # Redis key to increment (namespaced if needed)
-    redis_key = f"ticket_counter:{tdata['bu']}"
+        # Generate incremental ticket_name
+        redis_ins = await urdhva_base.redispool.get_redis_connection()
+        redis_key = f"ticket_counter:{ticket_data['bu']}"
+        ticket_count = await redis_ins.incr(redis_key)
+        ticket_data['ticket_name'] = (
+            f"{ticket_data['bu']}_{ticket_data['sap_id']}_{ticket_count}"
+            if not ticket_data.get('ticket_name')
+            else f"{ticket_data.get('ticket_name')}_{ticket_data['bu']}_{ticket_data['sap_id']}_{ticket_count}"
+        )
 
-    # Increment the counter
-    ticket_count = await redis_ins.incr(redis_key)
+        # Linked alerts if provided
+        linked_data = (
+            f"id in ({','.join(map(str, data.linked_alert_id))})"
+            if data.linked_alert_id else None
+        )
+        linked_res = []
+        if linked_data:
+            params = urdhva_base.queryparams.QueryParams(q=linked_data, limit=10000)
+            # params.fields = [""]
+            resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+            linked_res = resp.get('data', [])
 
-    # You can optionally use this number in your ticket (e.g., to generate ticket_id)
-    tdata['ticket_name'] = f"{tdata['bu']}_{tdata['sap_id']}_{ticket_count}" if not tdata.get('ticket_name') else f"{tdata.get('ticket_name')}_{tdata['bu']}_{tdata['sap_id']}_{ticket_count}"
-    # Set default values
-        # Set default values (including interlock_name as a list)
-    ticket_state_str = tdata.get('ticket_state')
-    for key, value in {
-        'ticket_name': tdata.get('ticket_name'),
-        'sop_id': tdata.get('sop_id', selected_alert.get('sop_id')),
-        'reporter': user_name,
-        'ticket_status': Status.Open.value,
-        'ticket_state': getattr(State, ticket_state_str).value,
-        'ticket_severity': tdata.get('ticket_severity') or Severity.Medium.value,
-        'start_date': tdata.get('start_date'),
-        'ticket_history': [],
-        'linked_alert_id': data.linked_alert_id,
-        'interlock_name': [selected_type],  # <-- this is the fix
-        'comment': tdata.get('comment'),
-        'file_attachment': [],
-        'file_attachment_name': '',
-        'file_attachment_id': "",
-        'comment_text': '',
-        'comment_id': '',
-    }.items():
-        tdata[key] = value
+        startdate_str = ticket_data.get('startdate')  # from request payload
 
-    print("Ticket Data: ", tdata)
-    # Required fields
-    required_fields = [
-        'ticket_name', 'ticket_id', 'alert_id', 'bu', 'sop_id', 'alert_section', 'sap_id', 'location_name', 'zone', 'region',
-        'ticket_status', 'ticket_state', 'start_date', 'end_date', 'summary', 'description',
-        'ticket_severity', 'assignee', 'reporter', 'ticket_history', 'linked_alert_id',
-        'interlock_name', 'comment'
-    ]
-    res = {field: tdata.get(field) for field in required_fields}
+        if startdate_str:
+            try:
+                # Try parsing ISO 8601 and other common formats
+                startdate = parser.isoparse(startdate_str)
+            except Exception:
+                try:
+                    startdate = datetime.strptime(startdate_str, "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    try:
+                        startdate = datetime.strptime(startdate_str, "%Y-%m-%d")
+                    except ValueError:
+                        startdate = None  # fallback if nothing matches
+        else:
+            startdate = None  # or datetime.now() if you want a default
+        # Defaults
+        ticket_state_str = ticket_data.get('ticket_state')
+        for key, value in {
+            'ticket_name': ticket_data['ticket_name'],
+            'sop_id': ticket_data.get('sop_id', selected_alert.get('sop_id')),
+            'reporter': user_name,
+            'ticket_status': Status.Open.value,
+            'ticket_state': getattr(State, ticket_state_str).value,
+            'ticket_severity': ticket_data.get('ticket_severity') or Severity.Medium.value,
+             'startdate': startdate, 
+            'ticket_history': [],
+            'linked_alert_id': data.linked_alert_id,
+            'interlock_name': [selected_type],
+            'comment': ticket_data.get('comment'),
+            'file_attachment': data.file_attachment,
+            'file_attachment_name': data.file_attachment_name,
+            'file_attachment_id': data.file_attachment_id,
+            'ticket_id': ticket_data['ticket_id'],
+            'comment_text': '',
+            'comment_id': '',
+        }.items():
+            ticket_data[key] = value
 
-    # Create the ticket
-    await TicketingCreate(**tdata).create()
+        # Create the ticket
+        ticket_resp = await TicketingCreate(**ticket_data).create()
+        
+        for lr in linked_res:
+            if lr.get("interlock_name") == selected_type:
+                alert_hist = lr.get("alert_history") or []
+                state_to_action = {
+                    "ToDo": "TicketRaised",
+                    "InProgress": "TicketInProgress",
+                    "Cancelled": "TicketCancelled",
+                    "Resolved": "TicketResolved",
+                    "OnHold": "TicketOnHold",
+                }
 
-    # Return success response
+                action_type_str = state_to_action.get(ticket_state_str, "TicketRaised")
+                action_type = getattr(AlertActionType, action_type_str)
+
+                # action_type = getattr(AlertActionType, f"Ticket{ticket_state_str}", AlertActionType.TicketRaised)
+
+                alert_action = {
+                    "action_type": action_type,
+                    "alert_id": lr["id"],
+                    "action_msg": f"Ticket is raised and is in {ticket_state_str} state"
+                }
+
+
+
+                processed_time = datetime.now()
+
+                # Append minimal history entry
+                alert_hist.append({
+                    "processed_time": processed_time.isoformat(),  # current time
+                    "allocated_time": startdate.isoformat() if startdate else processed_time.isoformat(),  # start date or fallback
+                    "action_msg": f"Ticket is raised and is in {ticket_data['ticket_state']} state",
+                    "action_type": action_type
+                })
+
+                # Update Alerts table by alert ID
+                await hpcl_ceg_model.Alerts(
+                    id=lr["id"],
+                    alert_history=alert_hist
+                ).modify()
+
+                # Update in memory for API response
+                lr["alert_history"] = alert_hist
+        # Append to results
+        tickets_created.append({
+            "ticket_id": ticket_data['ticket_id'],
+            "ticket_name": ticket_data['ticket_name'],
+            "alert_type": selected_type,
+            "alert_data": selected_alert,
+            "reporter": user_name,
+            "linked_alerts": [
+                {
+                    "sap_id": lr.get("sap_id"),
+                    "location_name": lr.get("location_name"),
+                    "alert_type": lr.get("interlock_name"),
+                    "unique_id": lr.get("unique_id"),
+                    "created_at": lr.get("created_at"),
+                    "alert_history": lr.get("alert_history", [])
+                }
+                for lr in linked_res
+                if lr.get("interlock_name") == selected_type  
+            ]
+        })
+
+    # ----------------------------
+    # END OF TICKET CREATION
+    # ----------------------------
+
     return {
-        "message": "Ticket created successfully",
-        "ticket_id": tdata['ticket_id'],
-        "alert_type": selected_type,
-        "alert_data": selected_alert,
-        "reporter": user_name,
-        "ticket_name": tdata['ticket_name'],
-        "ticker_id": tdata['ticket_id'],
+        "message": "Tickets created successfully",
+        "tickets": tickets_created
     }
 
 
@@ -184,44 +280,58 @@ async def ticketing_delete_ticket(data: Ticketing_Delete_TicketParams):
     await Ticketing.delete(data.delete_id)
     return {"status": True, "message": "Ticket deleted successfully", "data": data.delete_id}
 
-
-# Action attach_file
+from fastapi import UploadFile, File, Form
+import os, uuid
+# # Action attach_file
 @router.post('/attach_file', tags=['Ticketing'])
-async def ticketing_attach_file(data: Ticketing_Attach_FileParams):
+async def ticketing_attach_file(
+    ticket_id: str = Form(...),
+    tid: int = Form(...),
+    uploadfile: UploadFile = File(...)
+):
     try:
-        # Create /tmp if not exists
-        os.makedirs("/tmp", exist_ok=True)
+        # Only create the directory if it doesn't exist
+        target_dir = urdhva_base.settings.ticketing_attachments
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
 
-        # Use original filename (any type: .csv, .pdf, .png, .zip, etc.)
-        temp_file_path = os.path.join("/tmp", uploadfile.filename)
-
-        # Write the file contents
+        # Path to save the file
+        temp_file_path = os.path.join(target_dir, uploadfile.filename)
+        # Save file in /tmp
+        # temp_file_path = os.path.join(urdhva_base.settings.ticketing_attachments, uploadfile.filename)
         with open(temp_file_path, "wb") as file_to_attach:
             file_to_attach.write(await uploadfile.read())
-        
-        query = f"ticket_id='{data.ticket_id}'"
+
+        # Query ticket
+        query = f"ticket_id='{ticket_id}' and id = {tid}"  # tid ==> id column
         params = urdhva_base.queryparams.QueryParams(q=query)
         result = await Ticketing.get_all(params, resp_type='plain')
         resp = result.get("data", [])
         if not resp:
-            return {
-                "status": False,
-                "message": "Ticket not found"
+            return {"status": False, "message": "Ticket not found"}
+
+        # Attach file to ticket (must be a list)
+        await Ticketing(
+            **{
+                "id": resp[0].get("id"),
+                "file_attachment": [temp_file_path]
             }
-        # Attach the file to the issue
-        await Ticketing(**{"id": resp[0].get("id"),"file_attachment": temp_file_path}).modify()
+        ).modify()
+
+        # Generate UUID for file
+        file_uuid = str(uuid.uuid4())
+
         return {
             "status": True,
             "message": f"File {uploadfile.filename} saved successfully",
-            "data": temp_file_path,
-            "content_type": uploadfile.content_type  # info about file type
+            "file_attachment": temp_file_path,          # full path
+            "file_attachment_name": uploadfile.filename, # only filename
+            "file_attachment_id": file_uuid,            # generated uuid
+            "content_type": uploadfile.content_type     # file type
         }
 
     except Exception as e:
-        return {
-            "status": False,
-            "message": f"Error saving file: {str(e)}"
-        }
+        return {"status": False, "message": f"Error saving file: {str(e)}"}
 
 
 # Action delete_file_attachment
@@ -293,4 +403,16 @@ async def ticketing_attach_file_to_comment(data: Ticketing_Attach_File_To_Commen
 # Action delete_file_from_comment
 @router.post('/delete_file_from_comment', tags=['Ticketing'])
 async def ticketing_delete_file_from_comment(data: Ticketing_Delete_File_From_CommentParams):
+    ...
+
+
+# Action create_ticket
+@router.post('/create_ticket', tags=['Ticketing'])
+async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
+    ...
+
+
+# Action attach_file
+@router.post('/attach_file', tags=['Ticketing'])
+async def ticketing_attach_file(data: Ticketing_Attach_FileParams):
     ...

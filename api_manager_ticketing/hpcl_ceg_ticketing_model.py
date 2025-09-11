@@ -157,7 +157,7 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     location_name: str
     zone: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
-    alert_type: str
+    alert_type: typing.List[str]
     assignee: typing.Optional[hpcl_ceg_ticketing_enum.Assignee] | None = None
     summary: str
     description: str
@@ -197,6 +197,10 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     ticket_severity: typing.Optional[str] = pydantic.Field("", **{})
     comment: typing.Optional[str] = pydantic.Field("", **{})
     update_id: str
+    file_attachment: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    file_attachment_name: typing.Optional[str] = pydantic.Field("", **{})
+    file_attachment_id: typing.Optional[str] = pydantic.Field("", **{})
+    linked_alert_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
