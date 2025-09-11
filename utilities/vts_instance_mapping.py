@@ -25,48 +25,48 @@ instance_mapping = {
         },
         "1":{
             "device_tamper_count":{
-                "violation_count": 2
+                "violation_count": 0
             },
             "main_supply_removal_count":{
-                "violation_count": 2
+                "violation_count": 0
             },
             "route_deviation_count":{
-                "violation_count": 10
+                "violation_count": 4
             },
             "stoppage_violations_count":{
-                "violation_count": 10
+                "violation_count": 4
             },
             "speed_violation_count":{
-                "violation_count": 6
+                "violation_count": 2
             },
             "night_driving_count":{
-                "violation_count": 6
+                "violation_count": 2
             },
             "continuous_driving_count":{
-                "violation_count": 6
+                "violation_count": 2
             }
         },
         "2":{
             "device_tamper_count":{
-                "violation_count": 3
+                "violation_count": 0
             },
             "main_supply_removal_count":{
-                "violation_count": 3
+                "violation_count": 0
             },
             "route_deviation_count":{
-                "violation_count": 15
+                "violation_count": 4
             },
             "stoppage_violations_count":{
-                "violation_count": 15
+                "violation_count": 4
             },
             "speed_violation_count":{
-                "violation_count": 9
+                "violation_count": 2
             },
             "night_driving_count":{
-                "violation_count": 9
+                "violation_count": 2
             },
             "continuous_driving_count":{
-                "violation_count": 9
+                "violation_count": 2
             }
         }
     },
