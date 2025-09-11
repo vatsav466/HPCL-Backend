@@ -11,6 +11,7 @@ Enum BusinessUnit str {
 Enum Status str {
     Open='Open'
     Close='Close'
+    Pending='Pending'
 }
 
 Enum State str {
@@ -81,7 +82,7 @@ Model Ticketing {
         location_name str
         zone optional str
         region optional str
-        alert_type str
+        alert_type list str
         assignee optional Assignee
         summary str
         description str
@@ -93,6 +94,8 @@ Model Ticketing {
         file_attachment_name optional str
         file_attachment_id optional str
         linked_alert_id optional list str
+      
+
     }
 
     Action=> close_ticket {
@@ -113,6 +116,12 @@ Model Ticketing {
         ticket_severity optional str
         comment optional str
         update_id str
+        file_attachment optional list str
+        file_attachment_name optional str
+        file_attachment_id optional str
+        linked_alert_id optional list str
+      
+       
     }
 
     Action=> delete_ticket {

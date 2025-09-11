@@ -97,6 +97,12 @@ Enum AlertActionType str {
     Cause='Cause'
     ESDFailure='ESDFailure'
     Maintenance='Maintenance'
+    TicketRaised='TicketRaised'
+    TicketInProgress='TicketInProgress'
+    TicketCancelled='TicketCancelled'
+    TicketResolved='TicketResolved'
+    TicketOnHold='TicketOnHold'
+
 }
 
 Enum IndentStatus str {

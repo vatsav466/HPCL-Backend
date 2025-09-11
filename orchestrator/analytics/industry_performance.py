@@ -1024,8 +1024,12 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             history_col = f"history_{company}_share"
             
             total_actual = df[actual_col].sum()
-            total_history = df[history_col].sum()
-
+            # total_history = df[history_col].sum()
+            if history_col in df.columns:
+                total_history = df[history_col].sum()
+            else:
+                total_history = 0.0 # Or some other appropriate default value
+            
             # Handle division by zero scenarios
             if total_history == 0:
                 market_share = 100 if total_actual > 0 else None  # If actual > 0 & history = 0 -> 100%, else None
@@ -1806,15 +1810,29 @@ async def get_category_wise_cumulative_data(filters):
     #     else:
     #         fiscal_years.extend('2024-2025')
             
+    # if df.empty:
+    #     fiscal_years = ["2024-2025", "2025-2026"]  # default fiscal years when no data
+    # else:
+    #     fiscal_years = sorted(df["fiscal_year"].unique())
+    #     if len(fiscal_years) == 1:
+    #         if fiscal_years[0] == '2024-2025':
+    #             fiscal_years.append('2025-2026')
+    #         else:
+    #             fiscal_years.append('2024-2025')
     if df.empty:
         fiscal_years = ["2024-2025", "2025-2026"]  # default fiscal years when no data
     else:
         fiscal_years = sorted(df["fiscal_year"].unique())
         if len(fiscal_years) == 1:
-            if fiscal_years[0] == '2024-2025':
-                fiscal_years.append('2025-2026')
-            else:
-                fiscal_years.append('2024-2025')
+            selected_year = fiscal_years[0]
+            # Extract start year from string like '2024-2025'
+            start_year = int(selected_year.split("-")[0])
+            prev_year = f"{start_year-1}-{start_year}"
+            # Append previous year
+            fiscal_years.append(prev_year)
+
+    print("fiscal_years------>", fiscal_years)
+    
     
     
     result_dict = {year: {} for year in fiscal_years}
@@ -1882,7 +1900,9 @@ async def get_category_wise_cumulative_data(filters):
         print ("cat_pres",cat_pres)
         for company, data in cat_pres.items():
             if len(data['subData']) <= 1:
-                growth_dict[cogroup][company] = round(data['percentage'] - cat_prev[company]['percentage'], 2)
+                prev_percentage = cat_prev.get(company, {}).get('percentage', 0)
+                growth_dict[cogroup][company] = round(data['percentage'] - prev_percentage, 2)
+                # growth_dict[cogroup][company] = round(data['percentage'] - cat_prev[company]['percentage'], 2)
                 #growth_dict[cogroup][company] = round(((data['percentage'] - cat_prev[company]['percentage']) / cat_prev[company]['percentage']) * 100, 1) if cat_prev[company]['percentage'] != 0 else 100  # If previous value is 0, assume 100% growth
 
             else:
@@ -1914,6 +1934,41 @@ async def get_category_wise_cumulative_data(filters):
 }
     '''
     result_dict["growth_percentage"] = growth_dict
+    print("result_dict-----------------------------",result_dict)
+    fiscal_years = [k for k in result_dict.keys() if k != "growth_percentage"]
+    fiscal_years = sorted(fiscal_years)
+
+    # Ensure growth_percentage key exists
+    result_dict.setdefault("growth_percentage", {})
+
+    # If we have at least 2 years, check last and previous
+    if len(fiscal_years) >= 2:
+        prev_year, curr_year = fiscal_years[-2], fiscal_years[-1]
+
+        prev_empty = not result_dict.get(prev_year)
+        curr_data = result_dict.get(curr_year, {})
+
+        # Case 1: Both empty → just keep current year empty
+        if prev_empty and not curr_data:
+            result_dict[curr_year] = {}
+
+        # Case 2: Prev empty, curr has data → set 100% for all companies
+        elif prev_empty and curr_data:
+            for category, companies in curr_data.items():
+                result_dict["growth_percentage"][category] = {}
+                for comp_entry in companies:
+                    comp_name = comp_entry["category"]
+                    result_dict["growth_percentage"][category][comp_name] = 100
+
+        # Case 3: Curr empty → set it as empty dict
+        elif not prev_empty and not curr_data:
+            result_dict[curr_year] = {}
+
+        # Case 4: Both have data → leave as is (you can compute actual growth elsewhere)
+        else:
+            pass
+
+    print("updated result_dict-----------------------------", result_dict)
     return result_dict
 
 
