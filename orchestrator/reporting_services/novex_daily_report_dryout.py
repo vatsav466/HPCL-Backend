@@ -6,6 +6,7 @@ import jinja2
 import decimal
 import asyncio
 import datetime
+import pandas as pd
 import hpcl_ceg_model
 import indentdryout_actions
 import urdhva_base.utilities
@@ -361,6 +362,78 @@ def dict_to_object(d):
 
 
 async def fetch_dryout_data():
+    
+    zone_wise_query = f"""WITH dates AS (
+                                SELECT generate_series(
+                                    date_trunc('month', CURRENT_DATE)::date,
+                                    CURRENT_DATE,
+                                    interval '1 day'
+                                )::date AS report_date
+                            ),
+                            alerts_with_zone AS (
+                                SELECT 
+                                    a.sap_id,
+                                    COALESCE(a.zone, lm.zone) AS raw_zone,
+                                    a.created_at::date AS created_date
+                                FROM alerts a
+                                LEFT JOIN location_master lm 
+                                    ON a.sap_id = lm.sap_id
+                                WHERE a.dry_out_in_days = '1'
+                                AND a.mark_as_false = 'true'
+                                AND a.alert_status != 'Close'
+                                AND a.product_code IN ('2811000','2812000')
+                            ),
+                            normalized AS (
+                                SELECT 
+                                    sap_id,
+                                    created_date,
+                                    CASE 
+                                        WHEN raw_zone IN ('CEN','CZ') THEN 'CZ'
+                                        WHEN raw_zone = 'ECZ' THEN 'ECZ'
+                                        WHEN raw_zone = 'EZ' THEN 'EZ'
+                                        WHEN raw_zone IN ('NCR','NCZ') THEN 'NCZ'
+                                        WHEN raw_zone = 'NFZ' THEN 'NFZ'
+                                        WHEN raw_zone = 'NWF' THEN 'NWFZ'
+                                        WHEN raw_zone IN ('NWR','NWZ') THEN 'NWZ'
+                                        WHEN raw_zone = 'NZ' THEN 'NZ'
+                                        WHEN raw_zone IN ('SCR','SCZ') THEN 'SCZ'
+                                        WHEN raw_zone = 'SWZ' THEN 'SWZ'
+                                        WHEN raw_zone = 'SZ' THEN 'SZ'
+                                        WHEN raw_zone = 'WZ' THEN 'WZ'
+                                        ELSE 'OTHERS'
+                                    END AS zone
+                                FROM alerts_with_zone
+                            )
+                            SELECT 
+                                d.report_date as "Zone wise ROs",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'CZ'  AND n.created_date <= d.report_date THEN n.sap_id END) AS "CZ",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'ECZ' AND n.created_date <= d.report_date THEN n.sap_id END) AS "ECZ",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'EZ'  AND n.created_date <= d.report_date THEN n.sap_id END) AS "EZ",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'NCZ' AND n.created_date <= d.report_date THEN n.sap_id END) AS "NCZ",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'NFZ' AND n.created_date <= d.report_date THEN n.sap_id END) AS "NFZ",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'NWFZ' AND n.created_date <= d.report_date THEN n.sap_id END) AS "NWFZ",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'NWZ' AND n.created_date <= d.report_date THEN n.sap_id END) AS "NWZ",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'NZ'  AND n.created_date <= d.report_date THEN n.sap_id END) AS "NZ",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'SCZ' AND n.created_date <= d.report_date THEN n.sap_id END) AS "SCZ",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'SWZ' AND n.created_date <= d.report_date THEN n.sap_id END) AS "SWZ",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'SZ'  AND n.created_date <= d.report_date THEN n.sap_id END) AS "SZ",
+                                COUNT(DISTINCT CASE WHEN n.zone = 'WZ'  AND n.created_date <= d.report_date THEN n.sap_id END) AS "WZ",
+                                COUNT(DISTINCT CASE WHEN n.created_date <= d.report_date THEN n.sap_id END) AS "Grand Total"
+                            FROM dates d
+                            LEFT JOIN normalized n ON n.created_date <= d.report_date
+                            GROUP BY d.report_date
+                            ORDER BY d.report_date
+                            """
+    
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # trends = await function(query=dry_out_trend_query)
+    # trends = pd.DataFrame(trends)
+    # trends = trends.drop(trends.index[-1])
+    zone_summary = await function(query=zone_wise_query)
+    zone_summary = pd.DataFrame(zone_summary)
+
     payload_dict = {"filters": [{"key": "interlock_name", "cond": "=", "value": ["Dry Out Each Indent Wise MainFlow"]},
                                 {"key": "zone", "cond": "=", "value": []}, {"key": "plant", "cond": "=", "value": []},
                                 {"key": "dealer_id", "cond": "=", "value": []},
@@ -386,6 +459,213 @@ async def fetch_dryout_data():
         elif stat['section'] == 'Indent Raised':
             indent_raised = stat['value']
 
+    
+    query = f"""SELECT
+                    zone,
+                    sales_area,
+                    region,
+                    dryout_day::date,
+                    sap_id,
+                    product_code AS item_name,
+                    COUNT(DISTINCT (product_code, sap_id)) AS dryout_count
+                FROM (
+                    SELECT
+                        zone,
+                        sales_area,
+                        region,
+                        product_code,
+                        sap_id,
+                        dryout_day,
+                        dry_out_in_days,
+                        created_at,
+                        closed_at
+                    FROM (
+                        SELECT
+                            zone,
+                            sales_area,
+                            region,
+                            product_code,
+                            sap_id,
+                            dry_out_in_days,
+                            generate_series(
+                                date_trunc('day', created_at)::date,
+                                COALESCE(date_trunc('day', closed_at), date_trunc('day', created_at))::date,
+                                interval '1 day'
+                            )::date AS dryout_day,
+                            created_at,
+                            closed_at
+                        FROM
+                            alerts
+                        WHERE
+                            bu = 'RO'
+                            AND interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                            AND product_code IN ('2811000', '2812000', '2822000')
+                            AND dry_out_in_days = '1'
+                    ) AS series
+                    WHERE
+                        /* created_at < dryout_day + 3:30 (no timezone math) */
+                        created_at < (dryout_day + interval '3 hours 30 minutes')
+                        /* closed_at is NULL or > dryout_day + 3:30 (no timezone math) */
+                        AND (closed_at IS NULL OR closed_at > (dryout_day + interval '3 hours 30 minutes'))
+                        AND product_code IN ('2811000', '2812000', '2822000')
+                        AND (closed_at IS NULL OR closed_at >= date_trunc('month', current_date)::date)
+                ) AS expanded
+                WHERE
+                    dryout_day >= date_trunc('month', current_date)::date
+                    AND dry_out_in_days = '1'
+                    AND product_code IN ('2811000', '2812000', '2822000')
+                GROUP BY
+                    zone,
+                    sales_area,
+                    region,
+                    dryout_day,
+                    product_code,
+                    sap_id,
+                    closed_at,
+                    created_at
+                ORDER BY
+                    dryout_day, zone, sales_area, region, product_code"""
+    
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp_target = await function(query=query)
+
+    data = pd.DataFrame(resp_target)
+
+    data['zone'] = data['zone'].replace('CEN', 'CZ')
+
+    data['zone'] = data['zone'].replace('NWF', 'NWFZ')
+
+    data['dryout_day'] = pd.to_datetime(data['dryout_day'])
+
+    summary = data.groupby(data['dryout_day'].dt.date)['dryout_count'].sum().reset_index()
+
+    # Rename columns
+    summary.columns = ['Date', 'Dry out Count']
+
+    # Optional: format the date like "Sep 1"
+    summary['Date'] = summary['Date'].apply(lambda x: x.strftime('%b %-d'))
+
+    # Your existing pivot table creation
+    zone_wise_summary = data.groupby(['dryout_day', 'zone'])['dryout_count'].sum().reset_index()
+
+    pivot = (
+        zone_wise_summary
+        .pivot(index='dryout_day', columns='zone', values='dryout_count')
+        .fillna(0)
+        .astype(int)
+    )
+
+    # Format datetime index as date strings
+    pivot.index = pivot.index.strftime('%Y-%m-%d')
+
+    # Add Grand Total column summing across zones
+    pivot['Grand Total'] = pivot.sum(axis=1)
+
+    # Reset index and rename index column to 'Row Labels'
+    pivot_reset = pivot.reset_index().rename(columns={'dryout_day': 'Zone wise ROs'})
+
+    # Remove any empty string columns that might cause issues
+    pivot_reset = pivot_reset.loc[:, pivot_reset.columns != '']
+
+    # Define default No of ROs values for zones present in data
+    default_ro_values_base = {
+        'CZ': 2423,    # not a column, will be ignored
+        'EZ': 1129,
+        'ECZ': 1814,
+        'NZ': 1402,
+        'NCZ': 2881,
+        'NFZ': 1502,
+        'NWFZ': 1832,  # not a column, ignored
+        'NWZ': 1337,
+        'SZ': 1875,
+        'SCZ': 2777,
+        'SWZ': 2443,
+        'WZ': 2596
+    }
+
+    # Prepare default No of ROs row with zeros for missing columns, assign to appropriate columns only
+    default_ro_values = {}
+    for col in pivot_reset.columns:
+        if col == 'Zone wise ROs':
+            default_ro_values[col] = 'Day wise No. of Dryout ROs'
+        elif col == 'Grand Total':
+            # Sum only those default values which are present as columns in pivot_reset
+            default_ro_values[col] = sum(val for key, val in default_ro_values_base.items() if key in pivot_reset.columns)
+        else:
+            default_ro_values[col] = default_ro_values_base.get(col, 0)
+
+    # Create a DataFrame for the default row
+    default_ro_df = pd.DataFrame([default_ro_values])
+
+    # Concatenate default row at top, below column headers, and then the original pivot data
+    final_df = pd.concat([default_ro_df, pivot_reset], ignore_index=True)
+
+    zone_summary = pd.DataFrame(zone_summary)
+    if not zone_summary.empty and not final_df.empty:
+        final_df.iloc[-1] = zone_summary.iloc[-1].reindex(final_df.columns).fillna(0)
+    print(final_df.to_string(index=False))
+
+    zone_data = {
+        "Zone": ["CZ", "EZ", "ECZ", "NZ", "NCZ", "NFZ", "NWFZ", "NWZ", "SZ", "SCZ", "SWZ", "WZ"],
+        "MS in KL":  [81581, 64049, 72322, 32347, 77729, 36448, 24834, 29651, 65788, 137683, 196462, 164138],
+        "HSD in KL": [87799, 36892, 73807, 69353, 96755, 38824, 43669, 26357, 108406, 162920, 157633, 192443],
+        "TMF in KL": [169380, 100941, 146129, 101700, 174484, 75272, 68503, 56008, 174194, 300603, 354095, 356581]
+    }
+
+    # Create DataFrame
+    zone_fuel_df = pd.DataFrame(zone_data)
+
+    summary = summary.drop(summary.index[-1])
+
+    query = """
+               SELECT 
+               CURRENT_DATE AS report_date,
+                COUNT(*) AS total_records,
+                array_agg(sub.id) AS all_ids
+                FROM (
+                SELECT DISTINCT ON (a.sap_id) 
+                        a.id
+                FROM alerts a
+                WHERE a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                    AND a.mark_as_false = true
+                    AND a.product_code IN ('2811000', '2812000', '2822000')
+                    AND a.dry_out_in_days = '1'
+                    AND a.indent_status NOT IN ('Cancelled', 'Completed')
+                ORDER BY a.sap_id, a.progress_rate ASC, a.id
+                ) sub
+            """
+    
+    # Run query
+    dry_out_report_count = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+
+    if dry_out_report_count.get("data", []):
+        report_data = dry_out_report_count["data"][0]
+        report_date = str(report_data["report_date"])
+
+        # Step 1: Check if record already exists
+        check_query = f"""
+            SELECT id
+            FROM dry_out_daily_report
+            WHERE dry_out_date = '{report_date}'
+            """
+        existing = await hpcl_ceg_model.DryOutDailyReport.get_aggr_data(check_query)
+        all_ids_list = [str(i) for i in report_data["all_ids"]] if report_data["all_ids"] else []
+        # Step 2: Only insert if record does not exist
+        if not existing.get("data", []):
+            data = {
+                "dry_out_date": report_date,
+                "dry_out_count": str(report_data["total_records"]),
+                "dry_out_alert_ids": all_ids_list,
+            }
+            await hpcl_ceg_model.DryOutDailyReportCreate(**data).create()
+        else:
+            data_resp = existing['data'][0]
+            await hpcl_ceg_model.DryOutDailyReport(**{"id": data_resp['id'],
+                                           "dry_out_count": str(report_data["total_records"]), 
+                                           "dry_out_alert_ids": all_ids_list}).modify()
+
     dry_out_cf = {
         'cat_a': cat_a,
         'dry_out': carry_fwd_dry_out,
@@ -400,7 +680,9 @@ async def fetch_dryout_data():
 
     print("dry_out_cf :", dry_out_cf)
     print("dry_out :", dry_out)
-    return {"dry_out_cf": dry_out_cf, "dry_out": dry_out, 'dry_out_details': dry_out_details}
+    return {"dry_out_cf": dry_out_cf, "dry_out": dry_out, 'dry_out_details': dry_out_details, 
+            'dry_out_trends': summary.to_dict(orient='records'),
+            'zone_wise_summary': final_df, 'zone_fuel_df':zone_fuel_df}
 
 
 async def get_lpg_rejection():
@@ -456,6 +738,91 @@ async def get_tas_alerts():
             data.update({key: 0})
     return data
 
+async def get_vts_route_deviation():
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                               date_time_format="%Y-%m-%d")
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    date_filter = f"a.created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    tas_query = f"""SELECT 
+                    COALESCE(lm.name, a.location_name) AS "Terminal Name",
+                    a.sap_id AS "Terminal Id",
+                    COALESCE(lm.zone, a.zone) AS "Zone",
+                    COUNT(*) AS "Open Alerts"
+                FROM alerts a
+                LEFT JOIN location_master lm 
+                    ON a.sap_id = lm.sap_id
+                WHERE a.alert_status = 'Open'
+                AND a.alert_section = 'VTS'
+                AND a.violation_type = 'route_deviation_count'
+                AND a.bu = 'TAS' AND {date_filter}
+                AND COALESCE(lm.name, a.location_name) IS NOT NULL
+                AND COALESCE(lm.name, a.location_name) <> ''
+                GROUP BY COALESCE(lm.name, a.location_name), a.sap_id, COALESCE(lm.zone, a.zone)
+                ORDER BY "Zone", "Terminal Name"
+                """
+    
+    lpg_query = f"""SELECT 
+                    COALESCE(lm.name, a.location_name) AS "Plant Name",
+                    a.sap_id AS "Plant Id",
+                    COALESCE(lm.zone, a.zone) AS "Zone",
+                    COUNT(*) AS "Open Alerts"
+                FROM alerts a
+                LEFT JOIN location_master lm 
+                    ON a.sap_id = lm.sap_id
+                WHERE a.alert_status = 'Open'
+                AND a.violation_type = 'route_deviation_count'
+                AND a.alert_section = 'VTS'
+                AND a.bu = 'LPG' AND {date_filter}
+                AND COALESCE(lm.name, a.location_name) IS NOT NULL
+                AND COALESCE(lm.name, a.location_name) <> ''
+                GROUP BY COALESCE(lm.name, a.location_name), a.sap_id, COALESCE(lm.zone, a.zone)
+                ORDER BY "Zone", "Plant Name"
+            """
+    tas_alerts = await function(query=tas_query)
+    lpg_alerts = await function(query=lpg_query)
+
+    tas_alerts = pd.DataFrame(tas_alerts)
+    lpg_alerts = pd.DataFrame(lpg_alerts)
+    return {"lpg_vts_data": lpg_alerts, "tas_vts_data": tas_alerts}
+
+async def lpg_top_bottom_score_plants():
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    top_query = f"""SELECT 
+                        ROW_NUMBER() OVER (ORDER BY score DESC) AS "Sl No",
+                        name AS "Plant Name",
+                        zone AS "Zone",
+                        region AS "Region",
+                        ROUND(score::numeric, 2) AS "Score"
+                    FROM public.performance_score
+                    WHERE bu = 'LPG'
+                    AND zone!=''
+                    AND name NOT ILIKE '%RO%'
+                    ORDER BY score DESC
+                    LIMIT 3"""
+    bottom_query = f"""SELECT 
+                        ROW_NUMBER() OVER (ORDER BY score ASC) AS "Sl No",
+                        name AS "Plant Name",
+                        zone AS "Zone",
+                        region AS "Region",
+                        ROUND(score::numeric, 2) AS "Score"
+                    FROM public.performance_score
+                    WHERE bu = 'LPG'
+                    AND zone!=''
+                    AND name NOT ILIKE '%RO%'
+                    ORDER BY score ASC
+                    LIMIT 3"""
+    top_resp = await function(query=top_query)
+    bottom_resp = await function(query=bottom_query)
+    top_resp = pd.DataFrame(top_resp)
+    bottom_resp = pd.DataFrame(bottom_resp)
+    return {"lpg_top_data": top_resp, "lpg_bottom_data": bottom_resp}
 
 async def get_alert_data(alert_section):
     # Making sure alerts considering only after May 31st in prod
@@ -525,6 +892,8 @@ async def publish_daily_novex_status_email():
     status_data.update(await get_lpg_rejection())
     status_data.update(await get_ro_alerts())
     status_data.update(await get_tas_alerts())
+    #status_data.update(await get_vts_route_deviation())
+    status_data.update(await lpg_top_bottom_score_plants())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data(alert_section))
@@ -537,19 +906,17 @@ async def publish_daily_novex_status_email():
 
 async def send_notification(notification_data):
     template_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..', 'orchestrator', 'reporting_services',
-                                 'templates', 'novex_daily_email.html')
+                                 'templates', 'seg1.html')
     with open(template_path, 'r') as f:
         template_data = jinja2.Template(f.read())
     final_data = template_data.render(**notification_data)
 
-    with open(f'/tmp/novex_daily_email.html', 'w') as f:
+    with open(f'/tmp/seg1.html', 'w') as f:
         f.write(final_data)
     # Send email
     ins = await notification_factory.get_notification_module("email")
     for recipient in [
-        ["sanjayk@hpcl.in", "debeshp@hpcl.in","gargam@hpcl.in"],
-        ["cvmallinath@hpcl.in","purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in"],
-        ["rujutadoiphode@hpcl.in"],
+        ["cvmallinath@hpcl.in","purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in", "adityapandey@hpcl.in"],
         ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"]
         ]:
         await ins.publish_message(

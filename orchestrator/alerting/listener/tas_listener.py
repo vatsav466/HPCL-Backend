@@ -80,7 +80,10 @@ def fix_additional_info(additional_info):
             sensor_id = get_sensor_id( device_name, equipment_type, device_data)
             if sensor_id:
                 additional_info["sensor_id"] = sensor_id
-                additional_info["device_name"] = f"{sensor_id}_{device_name}"    
+                if device_name[:2].lower() != sensor_id[:2].lower():
+                    additional_info["device_name"] = f"{sensor_id}_{device_name}"
+                else:
+                    additional_info["device_name"] = device_name  
     return additional_info
 
 async def tas_listener(rmsg):

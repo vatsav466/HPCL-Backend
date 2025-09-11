@@ -1,13 +1,15 @@
 import urdhva_base
 from ingestion_api_enum import *
 from ingestion_api_model import *
-import fastapi
 import json
+import fastapi
+import datetime
 import requests
 import traceback
 import hpcl_ceg_model
 import orchestrator.analytics.vts_analysis as vts_analysis
 import orchestrator.alerting.alert_manager as alert_manager
+from fastapi.encoders import jsonable_encoder
 
 router = fastapi.APIRouter(prefix='/vts')
 
@@ -37,12 +39,13 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
         #
         # Ensure data.data is a list and contains items
         if isinstance(data.data, list) and len(data.data) > 0:
-            enriched_data = [
-                {
-                    **entry.dict()
-                }
-            for entry in data.data
-            ]
+            # enriched_data = [
+            #     {
+            #         **entry.dict()
+            #     }
+            # for entry in data.data
+            # ]
+            enriched_data = jsonable_encoder(data.data)
         else:
             logger.error(f"Invalid data structure: data.data is not a list or is empty")
             return {"status": False, "message": "Invalid data", "data": []}

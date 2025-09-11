@@ -3334,6 +3334,8 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     total_trips: Mapped[typing.Optional[int]] = mapped_column("total_trips", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     stoppage_violations_count: Mapped[typing.Optional[int]] = mapped_column("stoppage_violations_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     route_deviation_count: Mapped[typing.Optional[int]] = mapped_column("route_deviation_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    scheduled_trip_start_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("scheduled_trip_start_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    scheduled_trip_end_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("scheduled_trip_end_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     speed_violation_count: Mapped[typing.Optional[int]] = mapped_column("speed_violation_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     main_supply_removal_count: Mapped[typing.Optional[int]] = mapped_column("main_supply_removal_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     night_driving_count: Mapped[typing.Optional[int]] = mapped_column("night_driving_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
@@ -3362,6 +3364,8 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     total_trips: typing.Optional[int] = pydantic.Field(0, **{})
     stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
     route_deviation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    scheduled_trip_start_datetime: typing.Optional[datetime.datetime] | None = None
+    scheduled_trip_end_datetime: typing.Optional[datetime.datetime] | None = None
     speed_violation_count: typing.Optional[int] = pydantic.Field(0, **{})
     main_supply_removal_count: typing.Optional[int] = pydantic.Field(0, **{})
     night_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
@@ -3398,6 +3402,8 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     total_trips: typing.Optional[int] = pydantic.Field(0, **{})
     stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
     route_deviation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    scheduled_trip_start_datetime: typing.Optional[datetime.datetime] | None = None
+    scheduled_trip_end_datetime: typing.Optional[datetime.datetime] | None = None
     speed_violation_count: typing.Optional[int] = pydantic.Field(0, **{})
     main_supply_removal_count: typing.Optional[int] = pydantic.Field(0, **{})
     night_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
@@ -8828,3 +8834,55 @@ class Plantevinfra_Get_Zone_Wise_Ev_InfraParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class Zone_History_CountsCreate(pydantic.BaseModel):
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    count: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class DryOutDailyReportSchema(UrdhvaPostgresBase):
+    __tablename__ = 'dry_out_daily_report'
+    
+    dry_out_date: Mapped[typing.Optional[str]] = mapped_column("dry_out_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dry_out_count: Mapped[typing.Optional[str]] = mapped_column("dry_out_count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dry_out_zone: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("dry_out_zone", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    dry_out_alert_ids: Mapped[typing.Optional[typing.List[str]]] = mapped_column("dry_out_alert_ids", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class DryOutDailyReportCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'dry_out_daily_report'
+    
+    dry_out_date: typing.Optional[str] = pydantic.Field("", **{})
+    dry_out_count: typing.Optional[str] = pydantic.Field("", **{})
+    dry_out_zone: typing.Optional[typing.List[Zone_History_CountsCreate]] | None = None
+    dry_out_alert_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = DryOutDailyReportSchema
+        upsert_keys = []
+
+
+class DryOutDailyReport(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'dry_out_daily_report'
+    
+    dry_out_date: typing.Optional[str] = pydantic.Field("", **{})
+    dry_out_count: typing.Optional[str] = pydantic.Field("", **{})
+    dry_out_zone: typing.Optional[typing.List[Zone_History_CountsCreate]] | None = None
+    dry_out_alert_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = DryOutDailyReportSchema
+        upsert_keys = []
+
+
+class DryOutDailyReportGetResp(pydantic.BaseModel):
+    data: typing.List[DryOutDailyReport]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

@@ -1790,3 +1790,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/plantevinfra/{id}', tags=['PlantEvInfra'])
 async def delete(id: str):
     return await PlantEvInfra.delete(id)
+
+
+@router.post('/dryoutdailyreport', response_model=DryOutDailyReport, tags=['DryOutDailyReport'])
+async def create(inputObj: DryOutDailyReportCreate):
+    return await inputObj.create()
+
+
+@router.put('/dryoutdailyreport', response_model=DryOutDailyReport, tags=['DryOutDailyReport'])
+async def update(inputObj: DryOutDailyReport):
+    return await inputObj.modify()
+
+
+@router.get('/dryoutdailyreport/{id}', response_model=DryOutDailyReport, tags=['DryOutDailyReport'])
+async def get(id: str):
+    return await DryOutDailyReport.get(id, skip_secrets=True)
+
+
+@router.get('/dryoutdailyreport', response_model=DryOutDailyReportGetResp, tags=['DryOutDailyReport'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await DryOutDailyReport.get_all(params, skip_secrets=True)
+
+
+@router.delete('/dryoutdailyreport/{id}', tags=['DryOutDailyReport'])
+async def delete(id: str):
+    return await DryOutDailyReport.delete(id)

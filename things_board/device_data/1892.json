@@ -331,7 +331,7 @@
                     "sensor_tag": "MOV.MOV-03.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-03",
-                    "sensor_type": "MOV IL2"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV STATUS IL2",
@@ -516,7 +516,7 @@
                     "sensor_tag": "MOV.MOV-05.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-05",
-                    "sensor_type": "MOV IL3"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV STATUS IL2",
@@ -701,7 +701,7 @@
                     "sensor_tag": "MOV.MOV-06.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-06",
-                    "sensor_type": "MOV IL4"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV STATUS IL2",
@@ -886,7 +886,7 @@
                     "sensor_tag": "MOV.MOV-07.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-07",
-                    "sensor_type": "MOV IL5"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV STATUS IL2",
@@ -1071,7 +1071,7 @@
                     "sensor_tag": "MOV.MOV-08.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-08",
-                    "sensor_type": "MOV IL6"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV STATUS IL2",
@@ -1256,7 +1256,7 @@
                     "sensor_tag": "MOV.MOV-09.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-09",
-                    "sensor_type": "MOV IL7"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV STATUS IL2",
@@ -1441,7 +1441,7 @@
                     "sensor_tag": "MOV.MOV-10.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-10",
-                    "sensor_type": "MOV IL8"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV STATUS IL2",
@@ -1626,7 +1626,7 @@
                     "sensor_tag": "MOV.MOV-11.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-11",
-                    "sensor_type": "MOV IL9"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV STATUS IL2",
@@ -2183,7 +2183,7 @@
                     "sensor_tag": "MOV.MOV-03.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-03",
-                    "sensor_type": "MOV IL2"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL2",
@@ -2272,7 +2272,7 @@
                     "sensor_tag": "MOV.MOV-05.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-05",
-                    "sensor_type": "MOV IL3"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL2",
@@ -2361,7 +2361,7 @@
                     "sensor_tag": "MOV.MOV-06.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-06",
-                    "sensor_type": "MOV IL4"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL2",
@@ -2450,7 +2450,7 @@
                     "sensor_tag": "MOV.MOV-07.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-07",
-                    "sensor_type": "MOV IL5"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL2",
@@ -2539,7 +2539,7 @@
                     "sensor_tag": "MOV.MOV-08.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-08",
-                    "sensor_type": "MOV IL6"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL2",
@@ -2628,7 +2628,7 @@
                     "sensor_tag": "MOV.MOV-09.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-09",
-                    "sensor_type": "MOV IL7"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL2",
@@ -2717,7 +2717,7 @@
                     "sensor_tag": "MOV.MOV-10.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-10",
-                    "sensor_type": "MOV IL8"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL2",
@@ -2806,7 +2806,7 @@
                     "sensor_tag": "MOV.MOV-11.MAINTENANCE_STATUS",
                     "normal_value": "0",
                     "sensor_id": "MOV-11",
-                    "sensor_type": "MOV IL9"
+                    "sensor_type": "MOV IL1"
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE IL2",
