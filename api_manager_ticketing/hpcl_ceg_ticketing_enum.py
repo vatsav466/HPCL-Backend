@@ -21,6 +21,7 @@ class BusinessUnit(str, enum.Enum):
 class Status(str, enum.Enum):
     Open = 'Open'
     Close = 'Close'
+    Pending = 'Pending'
 
 
 
