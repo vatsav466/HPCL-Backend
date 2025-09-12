@@ -36,8 +36,23 @@ Enum Assignee str {
 
 Model Ticket_History internal {
     description optional str
+    processed_time optional str
+    allocated_time optional str
+    action_msg optional str
+    action_type optional str
+    
+
 }
 
+Enum TicketType str{
+    ToDo = 'TicketRaised'
+    InProgress = 'TicketInProgress'
+    Cancelled = 'TicketCancelled'
+    Resolved = 'TicketResolved'
+    OnHold = 'TicketOnHold'
+
+
+}
 
 Model Ticketing {
     ticket_name str

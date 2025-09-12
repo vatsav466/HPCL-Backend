@@ -18,6 +18,10 @@ from urdhva_base.postgresmodel import UrdhvaPostgresBase
 
 class Ticket_HistoryCreate(pydantic.BaseModel):
     description: typing.Optional[str] = pydantic.Field("", **{})
+    processed_time: typing.Optional[str] = pydantic.Field("", **{})
+    allocated_time: typing.Optional[str] = pydantic.Field("", **{})
+    action_msg: typing.Optional[str] = pydantic.Field("", **{})
+    action_type: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class TicketingSchema(UrdhvaPostgresBase):
