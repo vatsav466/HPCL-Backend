@@ -61,3 +61,16 @@ class Assignee(str, enum.Enum):
 
 
 
+
+
+
+class TicketType(str, enum.Enum):
+    ToDo = 'TicketRaised'
+    InProgress = 'TicketInProgress'
+    Cancelled = 'TicketCancelled'
+    Resolved = 'TicketResolved'
+    OnHold = 'TicketOnHold'
+
+
+
+
