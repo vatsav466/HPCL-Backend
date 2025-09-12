@@ -924,9 +924,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "alert_manager"
                 }
             ]
         },
@@ -966,9 +963,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "alert_manager"
                 }
             ]
         },
@@ -1017,6 +1011,9 @@
                 },
                 {
                     "name": "get_closed_alerts_details"
+                },
+                {
+                    "name": "vts_alert_manager"
                 }
             ]
         },
@@ -1092,6 +1089,9 @@
                 },
                 {
                     "name": "get_closed_alerts_details"
+                },
+                {
+                    "name": "vts_alert_manager"
                 }
             ]
         },
@@ -6573,10 +6573,6 @@
             "displayName": "download_template"
         },
         {
-            "name": "alert_manager",
-            "displayName": "alert_manager"
-        },
-        {
             "name": "alert_action",
             "displayName": "alert_action"
         },
@@ -6607,6 +6603,10 @@
         {
             "name": "get_closed_alerts_details",
             "displayName": "get_closed_alerts_details"
+        },
+        {
+            "name": "vts_alert_manager",
+            "displayName": "vts_alert_manager"
         },
         {
             "name": "upload_cems_location_master",
