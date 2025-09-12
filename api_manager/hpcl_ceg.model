@@ -668,6 +668,10 @@ Model VTS {
     report_duration optional str
     total_trips optional int
 
+    Action=> alert_manager {
+        filters optional list WidgetFilters
+    }
+
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,sap_id'
