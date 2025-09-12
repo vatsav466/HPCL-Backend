@@ -24,6 +24,16 @@ class Ticket_HistoryCreate(pydantic.BaseModel):
     action_type: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class Merge_HistoryCreate(pydantic.BaseModel):
+    ticket_id: typing.Optional[str] = pydantic.Field("", **{})
+    merge_ticket_id: typing.List[str]
+    comment: typing.Optional[str] = pydantic.Field("", **{})
+    processed_time: typing.Optional[str] = pydantic.Field("", **{})
+    allocated_time: typing.Optional[str] = pydantic.Field("", **{})
+    action_msg: typing.Optional[str] = pydantic.Field("", **{})
+    action_type: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class TicketingSchema(UrdhvaPostgresBase):
     __tablename__ = 'ticketing'
     
@@ -47,6 +57,7 @@ class TicketingSchema(UrdhvaPostgresBase):
     assignee: Mapped[typing.Optional[typing.Any]] = mapped_column("assignee", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     reporter: Mapped[typing.Optional[str]] = mapped_column("reporter", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     ticket_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("ticket_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    merge_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("merge_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
     linked_alert_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("linked_alert_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     interlock_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column("interlock_name", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     comment: Mapped[typing.Optional[str]] = mapped_column("comment", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -82,6 +93,7 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     assignee: typing.Optional[hpcl_ceg_ticketing_enum.Assignee] | None = None
     reporter: typing.Optional[str] = pydantic.Field("", **{})
     ticket_history: typing.Optional[typing.List[Ticket_HistoryCreate]] | None = None
+    merge_history: typing.Optional[typing.List[Merge_HistoryCreate]] | None = None
     linked_alert_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     interlock_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     comment: typing.Optional[str] = pydantic.Field("", **{})
@@ -122,6 +134,7 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     assignee: typing.Optional[hpcl_ceg_ticketing_enum.Assignee] | None = None
     reporter: typing.Optional[str] = pydantic.Field("", **{})
     ticket_history: typing.Optional[typing.List[Ticket_HistoryCreate]] | None = None
+    merge_history: typing.Optional[typing.List[Merge_HistoryCreate]] | None = None
     linked_alert_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     interlock_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     comment: typing.Optional[str] = pydantic.Field("", **{})
@@ -211,6 +224,16 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Ticketing_Merge_TicketParams(pydantic.BaseModel):
+    ticket_id: str
+    merge_ticket_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    comment: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Ticketing_Delete_TicketParams(pydantic.BaseModel):
     delete_id: str
 
@@ -230,9 +253,6 @@ class Ticketing_Attach_FileParams(pydantic.BaseModel):
 
 class Ticketing_Delete_File_AttachmentParams(pydantic.BaseModel):
     ticket_id: str
-    attachment_id: str
-    attachment_name: str
-    file_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -241,9 +261,7 @@ class Ticketing_Delete_File_AttachmentParams(pydantic.BaseModel):
 
 class Ticketing_Download_File_AttachmentParams(pydantic.BaseModel):
     ticket_id: str
-    attachmentid: str
-    attachmentname: str
-    file_path: typing.Optional[str] = pydantic.Field("", **{})
+    file_attachment_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

@@ -439,30 +439,155 @@ async def ticketing_attach_file(
     except Exception as e:
         return {"status": False, "message": f"Error saving file: {str(e)}"}
 
-
-# Action delete_file_attachment
+from fastapi import APIRouter, HTTPException
+from hpcl_ceg_ticketing_model import Ticketing_Delete_File_AttachmentParams
+from urdhva_base.queryparams import QueryParams
+import os
 @router.post('/delete_file_attachment', tags=['Ticketing'])
 async def ticketing_delete_file_attachment(data: Ticketing_Delete_File_AttachmentParams):
-    ...
+    ticket_id = data.ticket_id
 
+    # Prepare query params to fetch the ticket
+    params = QueryParams()
+    params.q = f"id='{ticket_id}'"
+    params.limit = 1
 
+    # Fetch ticket row
+    main_resp = await Ticketing.get_all(params, resp_type="plain")
+    if not main_resp or len(main_resp.get("data", [])) == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    db_record = main_resp["data"][0]
+
+    # Extract file paths from the DB (file_attachment is a list)
+    file_list = db_record.get("file_attachment") or []
+
+    # Delete each file from the server if it exists
+    for file_path in file_list:
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
+
+    
+    update_payload = {
+        "file_attachment": [],
+        "file_attachment_name": "",
+        "file_attachment_id": ""
+    }
+
+    await Ticketing(**{"id": ticket_id, **update_payload}).modify()
+
+    return {
+        "status": True,
+        "message": "File attachment deleted successfully",
+        "data": ticket_id
+    }
 # Action download_file_attachment
 @router.post('/download_file_attachment', tags=['Ticketing'])
 async def ticketing_download_file_attachment(data: Ticketing_Download_File_AttachmentParams):
-    ...
+    ticket_id = data.ticket_id
+    requested_file_name = data.file_attachment_name
 
+    # Fetch ticket details
+    params = urdhva_base.queryparams.QueryParams()
+    params.q = f"id='{ticket_id}'"
+    params.limit = 1
+    ticket_resp = await Ticketing.get_all(params, resp_type="plain")
 
+    if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    ticket = ticket_resp["data"][0]
+
+    # Normalize file_attachment (convert '{"/tmp/..."}' -> ['/tmp/...'])
+    raw_paths = ticket.get("file_attachment")
+    if isinstance(raw_paths, str) and raw_paths.startswith("{"):
+        file_paths = [p.strip('"') for p in raw_paths.strip("{}").split(",") if p]
+    elif isinstance(raw_paths, list):
+        file_paths = raw_paths
+    else:
+        file_paths = []
+
+    # file_attachment_name is a single string
+    db_file_name = ticket.get("file_attachment_name")
+
+    if not file_paths or not db_file_name:
+        raise HTTPException(status_code=404, detail="No file attachments found")
+
+    # Check requested file matches DB
+    if db_file_name != requested_file_name:
+        raise HTTPException(status_code=404, detail="Requested file not found for this ticket")
+
+    file_path = file_paths[0]  # only one stored in DB right now
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File missing on server")
+
+    return FileResponse(
+        path=file_path,
+        filename=db_file_name,
+        media_type="application/octet-stream"
+    )
+    
 # Action update_assignee
 @router.post('/update_assignee', tags=['Ticketing'])
 async def ticketing_update_assignee(data: Ticketing_Update_AssigneeParams):
-    ...
+    ticket_id = data.ticket_id
+    new_assignee = data.assignee
+
+    # Check if ticket exists
+    params = QueryParams()
+    params.q = f"id='{ticket_id}'"
+    params.limit = 1
+    ticket_resp = await Ticketing.get_all(params, resp_type="plain")
+
+    if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Update assignee
+    await Ticketing(**{
+        "id": ticket_id,
+        "assignee": new_assignee
+    }).modify()
+
+    return {
+        "status": True,
+        "message": f"Ticket {ticket_id} assigned to {new_assignee} successfully",
+        "data": {
+            "ticket_id": ticket_id,
+            "assignee": new_assignee
+        }
+    }
 
 
 # Action update_reporter
 @router.post('/update_reporter', tags=['Ticketing'])
 async def ticketing_update_reporter(data: Ticketing_Update_ReporterParams):
-    ...
+    ticket_id = data.ticket_id
+    new_reporter = data.reporter  # from request
 
+    # Check if ticket exists
+    params = QueryParams()
+    params.q = f"id='{ticket_id}'"
+    params.limit = 1
+    ticket_resp = await Ticketing.get_all(params, resp_type="plain")
+
+    if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Update reporter
+    await Ticketing(**{
+        "id": ticket_id,
+        "reporter": new_reporter
+    }).modify()
+
+    return {
+        "status": True,
+        "message": f"Ticket {ticket_id} reporter updated to {new_reporter} successfully",
+        "data": {
+            "ticket_id": ticket_id,
+            "reporter": new_reporter
+        }
+    }
 
 # Action update_priority
 @router.post('/update_priority', tags=['Ticketing'])
@@ -473,31 +598,217 @@ async def ticketing_update_priority(data: Ticketing_Update_PriorityParams):
 # Action add_comment_to_ticket
 @router.post('/add_comment_to_ticket', tags=['Ticketing'])
 async def ticketing_add_comment_to_ticket(data: Ticketing_Add_Comment_To_TicketParams):
-    ...
+    ticket_id = data.ticket_id
+    comment_text = data.comment_text
+
+    # Check if ticket exists
+    params = QueryParams()
+    params.q = f"id='{ticket_id}'"
+    params.limit = 1
+    ticket_resp = await Ticketing.get_all(params, resp_type="plain")
+
+    if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Generate unique comment_id
+    comment_id = str(uuid.uuid4())
+
+    # Add comment to ticket (assumes your DB has a 'comments' list field)
+    ticket = ticket_resp["data"][0]
+    existing_comments = ticket.get("comments", [])
+    existing_comments.append({
+        "comment_id": comment_id,
+        "comment_text": comment_text
+    })
+
+    await Ticketing(**{
+        "id": ticket_id,
+        "comment_text": comment_text,
+        "comment_id": comment_id
+    }).modify()
+    # Return response
+    return {
+        "status": True,
+        "message": f"Comment added to ticket {ticket_id} successfully",
+        "data": {
+            "ticket_id": ticket_id,
+            "comment_id": comment_id,
+            "comment_text": comment_text
+        }
+    }
 
 
 # Action edit_comment
 @router.post('/edit_comment', tags=['Ticketing'])
 async def ticketing_edit_comment(data: Ticketing_Edit_CommentParams):
-    ...
+    ticket_id = data.ticket_id
+    comment_id = data.comment_id
+    new_comment = data.new_comment
+
+    # Fetch ticket details
+    params = QueryParams()
+    params.q = f"id='{ticket_id}'"
+    params.limit = 1
+    ticket_resp = await Ticketing.get_all(params, resp_type="plain")
+
+    if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    ticket = ticket_resp["data"][0]
+
+    # Verify comment_id matches
+    if ticket.get("comment_id") != comment_id:
+        raise HTTPException(status_code=404, detail="Comment not found for this ticket")
+
+    # Move old comment_text to comment (history)
+    old_comment = ticket.get("comment_text", "")
+    existing_history = ticket.get("comment", "")
+    updated_history = existing_history
+    if old_comment:
+        if existing_history:
+            updated_history += f"\n{old_comment}"
+        else:
+            updated_history = old_comment
+
+    # Update ticket with new comment_text
+    await Ticketing(**{
+        "id": ticket_id,
+        "comment_text": new_comment,
+        "comment": updated_history
+    }).modify()
+
+    # Return response
+    return {
+        "status": True,
+        "message": f"Comment {comment_id} on ticket {ticket_id} updated successfully",
+        "data": {
+            "ticket_id": ticket_id,
+            "comment_id": comment_id,
+            "comment_text": new_comment,
+            "comment_history": updated_history
+        }
+    }
 
 
 # Action delete_comment
 @router.post('/delete_comment', tags=['Ticketing'])
 async def ticketing_delete_comment(data: Ticketing_Delete_CommentParams):
-    ...
+    ticket_id = data.ticket_id
+    comment_id = data.comment_id
+    existing_comment_text = data.existing_comment_text
+
+    # Fetch ticket details
+    params = QueryParams()
+    params.q = f"id='{ticket_id}'"
+    params.limit = 1
+    ticket_resp = await Ticketing.get_all(params, resp_type="plain")
+
+    if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    ticket = ticket_resp["data"][0]
+
+    # Debug: show current comments
+    print("[DEBUG] Ticket data before deletion:", ticket)
+
+    # Check if the comment_id matches current comment_text
+    current_comment_text = ticket.get("comment_text", "")
+    current_comment_id = ticket.get("comment_id", "")
+
+    if current_comment_id != comment_id or current_comment_text != existing_comment_text:
+        raise HTTPException(status_code=400, detail="Comment ID or text does not match")
+
+    # Clear the comment_text, comment_id, and comment (history) columns
+    await Ticketing(**{
+        "id": ticket_id,
+        "comment_text": "",
+        "comment_id": "",
+        "comment": ""
+    }).modify()
+
+    # Debug: show after deletion
+    print(f"[DEBUG] Comment {comment_id} deleted. Updated ticket fields: comment_text='', comment_id='', comment=''")
+
+    return {
+        "status": True,
+        "message": f"Comment {comment_id} deleted successfully from ticket {ticket_id}",
+        "data": {
+            "ticket_id": ticket_id,
+            "comment_id": comment_id
+        }
+    }
 
 
 # Action edit_description
 @router.post('/edit_description', tags=['Ticketing'])
 async def ticketing_edit_description(data: Ticketing_Edit_DescriptionParams):
-    ...
+    ticket_id = data.ticket_id
+    new_description = data.new_description
+
+    # Fetch ticket details
+    params = QueryParams()
+    params.q = f"id='{ticket_id}'"
+    params.limit = 1
+    ticket_resp = await Ticketing.get_all(params, resp_type="plain")
+
+    if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Update description
+    await Ticketing(**{
+        "id": ticket_id,
+        "description": new_description
+    }).modify()
+
+    return {
+        "status": True,
+        "message": f"Description updated successfully for ticket {ticket_id}",
+        "data": {
+            "ticket_id": ticket_id,
+            "description": new_description
+        }
+    }
 
 
 # Action delete_description
 @router.post('/delete_description', tags=['Ticketing'])
 async def ticketing_delete_description(data: Ticketing_Delete_DescriptionParams):
-    ...
+    ticket_id = data.ticket_id
+    existing_description = data.delete_existing_desctiption  # value from request
+
+    # Fetch ticket details
+    params = QueryParams()
+    params.q = f"id='{ticket_id}'"
+    params.limit = 1
+    ticket_resp = await Ticketing.get_all(params, resp_type="plain")
+
+    if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    ticket = ticket_resp["data"][0]
+    current_description = ticket.get("description", "")
+    print(f"[DEBUG] Current description for ticket {ticket_id}: {current_description}")
+
+    # Validate existing description
+    if current_description != existing_description:
+        raise HTTPException(status_code=400, detail="Existing description does not match")
+
+    # Clear description
+    await Ticketing(**{
+        "id": ticket_id,
+        "description": ""
+    }).modify()
+
+    print(f"[DEBUG] Description cleared for ticket {ticket_id}")
+
+    return {
+        "status": True,
+        "message": f"Description deleted successfully for ticket {ticket_id}",
+        "data": {
+            "ticket_id": ticket_id,
+            "description": ""
+        }
+    }
 
 
 # Action attach_file_to_comment
@@ -512,13 +823,96 @@ async def ticketing_delete_file_from_comment(data: Ticketing_Delete_File_From_Co
     ...
 
 
-# Action create_ticket
-@router.post('/create_ticket', tags=['Ticketing'])
-async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
-    ...
+from hpcl_ceg_ticketing_model import Ticketing_Merge_TicketParams
+@router.post('/merge_ticket', tags=['Ticketing'])
+async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
+    ticket_id = data.ticket_id  # main ticket internal ID
+    merge_ticket_ids = data.merge_ticket_id or []
+    comment_text = data.comment or ""
 
+    # Fetch main ticket
+    params = urdhva_base.queryparams.QueryParams()
+    params.q = f"id='{ticket_id}'"
+    params.limit = 1
+    main_resp = await Ticketing.get_all(params, resp_type="plain")
+    
+    if not main_resp or len(main_resp.get("data", [])) == 0:
+        raise HTTPException(status_code=404, detail="Main ticket not found")
+    
+    main_ticket = main_resp["data"][0]
+    if "merge_history" not in main_ticket:
+        main_ticket["merge_history"] = []
+    if "ticket_history" not in main_ticket:
+        main_ticket["ticket_history"] = []
 
-# Action attach_file
-@router.post('/attach_file', tags=['Ticketing'])
-async def ticketing_attach_file(data: Ticketing_Attach_FileParams):
-    ...
+    processed_time = datetime.now()
+
+    for merge_ticket_id in merge_ticket_ids:
+        # Fetch ticket to merge by ticket_id (name)
+        merge_params = urdhva_base.queryparams.QueryParams()
+        merge_params.q = f"ticket_id='{merge_ticket_id}'"
+        merge_params.limit = 1
+        merge_resp = await Ticketing.get_all(merge_params, resp_type="plain")
+        
+        if not merge_resp or len(merge_resp.get("data", [])) == 0:
+            continue  # skip if merge ticket not found
+        
+        merge_ticket = merge_resp["data"][0]
+
+        # Determine if SAP IDs or ticket_status differ
+        main_sap_id = main_ticket.get("alert_data", {}).get("sap_id")
+        merge_sap_id = merge_ticket.get("alert_data", {}).get("sap_id")
+        main_status = main_ticket.get("ticket_status")
+        merge_status = merge_ticket.get("ticket_status")
+
+        entry_comment = comment_text
+        if main_sap_id != merge_sap_id or main_status != merge_status:
+            entry_comment = "Merging different SAP IDs or statuses"
+
+        # Build merge_history entry (add 'merge_ticket_id' for Pydantic validation)
+        merge_entry = {
+            "processed_time": processed_time.isoformat(),
+            "allocated_time": processed_time.isoformat(),
+            "action_msg": f"Ticket {merge_ticket_id} merged into {main_ticket['ticket_id']}",
+            "action_type": "TicketMerged",
+            "description": entry_comment,
+            "merge_ticket_id": [merge_ticket_id],  # <- list of strings
+            "comment": entry_comment
+        }
+
+        # Append to merge_history
+        main_ticket["merge_history"].append(merge_entry)
+
+        # ----- NEW: Update ticket_history also -----
+        ticket_history_entry = {
+            "processed_time": processed_time.isoformat(),
+            "allocated_time": processed_time.isoformat(),
+            "action_msg": f"Ticket {merge_ticket_id} merged into {main_ticket['ticket_id']}",
+            "action_type": "TicketMerged",
+            "comment": entry_comment
+        }
+        main_ticket["ticket_history"].append(ticket_history_entry)
+
+        # Update linked alerts (commented out if not needed)
+        # for alert in merge_ticket.get("linked_alerts", []):
+        #     alert_hist = alert.get("alert_history", [])
+        #     alert_hist.append({
+        #         "processed_time": processed_time.isoformat(),
+        #         "allocated_time": processed_time.isoformat(),
+        #         "action_msg": f"Ticket {merge_ticket_id} merged into {main_ticket['ticket_id']}",
+        #         "action_type": "TicketMerged"
+        #     })
+        #     await Alerts(id=alert["id"], alert_history=alert_hist).modify()
+        #     alert["alert_history"] = alert_hist
+
+        # Optionally keep linked_alerts in main ticket
+        main_ticket.setdefault("linked_alerts", []).extend(merge_ticket.get("linked_alerts", []))
+
+    # Save main ticket with updated merge_history and ticket_history
+    await Ticketing(id=main_ticket["id"], merge_history=main_ticket["merge_history"], ticket_history=main_ticket["ticket_history"]).modify()
+
+    return {
+        "message": "Tickets merged successfully",
+        "ticket": main_ticket
+    }
+
