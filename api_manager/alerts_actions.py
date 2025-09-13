@@ -269,7 +269,7 @@ async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
             "bu", "tt_number", "sap_id", "location_name", "severity","zone",
             "instance_level", "instance_status", "violation_type",
             "maker", "checker", "actual_trip_end_date", "novex_alert_created_date",
-            "vehicle_blocked_start_date", "vehicle_blocked_end_date","alert_id"
+            "vehicle_blocked_start_date", "vehicle_blocked_end_date", "alert_id", "id"
         ]
     if alert_data["data"]:
         alert_data = alert_data["data"]
