@@ -1011,6 +1011,9 @@
                 },
                 {
                     "name": "get_closed_alerts_details"
+                },
+                {
+                    "name": "vts_alert_manager"
                 }
             ]
         },
@@ -1086,6 +1089,9 @@
                 },
                 {
                     "name": "get_closed_alerts_details"
+                },
+                {
+                    "name": "vts_alert_manager"
                 }
             ]
         },
@@ -6597,6 +6603,10 @@
         {
             "name": "get_closed_alerts_details",
             "displayName": "get_closed_alerts_details"
+        },
+        {
+            "name": "vts_alert_manager",
+            "displayName": "vts_alert_manager"
         },
         {
             "name": "upload_cems_location_master",
