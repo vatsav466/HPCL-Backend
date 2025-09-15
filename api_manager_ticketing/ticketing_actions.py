@@ -1,4 +1,6 @@
 from hpcl_ceg_ticketing_enum import *
+from typing import Optional
+from fastapi import Form, File, UploadFile
 from hpcl_ceg_ticketing_model import (
     Ticketing,
     TicketingCreate,
@@ -197,6 +199,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         })
 
         # Create the ticket
+        print("ticket_data",ticket_data)
         ticket_resp = await TicketingCreate(**ticket_data).create()
         params = urdhva_base.queryparams.QueryParams()
         params.q = f"ticket_id='{ticket_data['ticket_id']}'"
@@ -239,7 +242,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
                 lr["alert_history"] = alert_hist
         # Append to results
         tickets_created.append({
-            "id": db_ticket_id,
+            "tid": db_ticket_id,
             "ticket_id": ticket_data['ticket_id'],
             "ticket_name": ticket_data['ticket_name'],
             "alert_type": selected_type,
@@ -267,6 +270,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     return {
         "message": "Tickets created successfully",
         "tickets": tickets_created
+        
     }
 
 
@@ -390,13 +394,15 @@ import os, uuid
 # # Action attach_file
 @router.post('/attach_file', tags=['Ticketing'])
 async def ticketing_attach_file(
-    ticket_id: str = Form(...),
-    tid: int = Form(...),
+    ticket_id:  Optional[str] = Form(...),
+    tid:  Optional[str] = Form(...),
     uploadfile: UploadFile = File(...)
 ):
     try:
         # Only create the directory if it doesn't exist
+        print("coming",urdhva_base.settings.ticketing_attachments)
         target_dir = urdhva_base.settings.ticketing_attachments
+        print("target_dir",target_dir)
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
 
@@ -592,7 +598,32 @@ async def ticketing_update_reporter(data: Ticketing_Update_ReporterParams):
 # Action update_priority
 @router.post('/update_priority', tags=['Ticketing'])
 async def ticketing_update_priority(data: Ticketing_Update_PriorityParams):
-    ...
+    ticket_id = data.ticket_id
+    new_priority = data.ticket_priority  # from request
+
+    # Check if ticket exists
+    params = QueryParams()
+    params.q = f"id='{ticket_id}'"
+    params.limit = 1
+    ticket_resp = await Ticketing.get_all(params, resp_type="plain")
+
+    if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    # Update ticket_severity (column in DB)
+    await Ticketing(**{
+        "id": ticket_id,
+        "ticket_severity": new_priority
+    }).modify()
+
+    return {
+        "status": True,
+        "message": f"Ticket {ticket_id} priority updated to {new_priority} successfully",
+        "data": {
+            "ticket_id": ticket_id,
+            "ticket_priority": new_priority
+        }
+    }
 
 
 # Action add_comment_to_ticket
@@ -813,14 +844,90 @@ async def ticketing_delete_description(data: Ticketing_Delete_DescriptionParams)
 
 # Action attach_file_to_comment
 @router.post('/attach_file_to_comment', tags=['Ticketing'])
-async def ticketing_attach_file_to_comment(data: Ticketing_Attach_File_To_CommentParams):
-    ...
+async def ticketing_attach_file_to_comment(
+    ticket_id: str = Form(...),
+    comment_id: str = Form(...),
+    uploadfile: UploadFile = File(...)
+):
+    try:
+        target_dir = urdhva_base.settings.ticketing_attachments
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
+
+        saved_file_path = os.path.join(target_dir, uploadfile.filename)
+        with open(saved_file_path, "wb") as f:
+            f.write(await uploadfile.read())
+
+        # Fetch ticket record by ticket_id
+        params = urdhva_base.queryparams.QueryParams(q=f"id='{ticket_id}'", limit=1)
+        ticket_resp = await Ticketing.get_all(params, resp_type='plain')
+        if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
+            return {"status": False, "message": "Ticket not found"}
+
+        ticket = ticket_resp["data"][0]
+
+        # Check comment_id matches the ticket's comment_id
+        if ticket.get("comment_id") != comment_id:
+            return {"status": False, "message": "Comment not found"}
+
+        # Update comment_attachment_path field
+        await Ticketing(
+            **{
+                "id": ticket.get("id"),
+                "comment_attachment_path": saved_file_path
+            }
+        ).modify()
+
+        return {
+            "status": True,
+            "message": f"File {uploadfile.filename} attached to comment successfully",
+            "comment_attached_path": saved_file_path
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": f"Error attaching file to comment: {str(e)}"
+        }
 
 
 # Action delete_file_from_comment
 @router.post('/delete_file_from_comment', tags=['Ticketing'])
 async def ticketing_delete_file_from_comment(data: Ticketing_Delete_File_From_CommentParams):
-    ...
+    try:
+        ticket_id = data.ticket_id
+        comment_id = data.comment_id
+
+        # Fetch ticket record by ticket_id
+        params = urdhva_base.queryparams.QueryParams(q=f"id='{ticket_id}'", limit=1)
+        ticket_resp = await Ticketing.get_all(params, resp_type='plain')
+        if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
+            return {"status": False, "message": "Ticket not found"}
+
+        ticket = ticket_resp["data"][0]
+
+        # Check if comment_id matches
+        if ticket.get("comment_id") != comment_id:
+            return {"status": False, "message": "Comment not found"}
+
+        # Clear the comment_attachment_path field
+        await Ticketing(
+            **{
+                "id": ticket.get("id"),
+                "comment_attachment_path": ""
+            }
+        ).modify()
+
+        return {
+            "status": True,
+            "message": f"Attachment cleared for comment {comment_id} successfully"
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": f"Error clearing attachment from comment: {str(e)}"
+        }
 
 
 from hpcl_ceg_ticketing_model import Ticketing_Merge_TicketParams
@@ -915,4 +1022,5 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
         "message": "Tickets merged successfully",
         "ticket": main_ticket
     }
+
 

@@ -66,6 +66,7 @@ class TicketingSchema(UrdhvaPostgresBase):
     file_attachment_id: Mapped[typing.Optional[str]] = mapped_column("file_attachment_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     comment_text: Mapped[typing.Optional[str]] = mapped_column("comment_text", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     comment_id: Mapped[typing.Optional[str]] = mapped_column("comment_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    comment_attachment_path: Mapped[typing.Optional[str]] = mapped_column("comment_attachment_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),)
 
@@ -102,6 +103,7 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     file_attachment_id: typing.Optional[str] = pydantic.Field("", **{})
     comment_text: typing.Optional[str] = pydantic.Field("", **{})
     comment_id: typing.Optional[str] = pydantic.Field("", **{})
+    comment_attachment_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -143,6 +145,7 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     file_attachment_id: typing.Optional[str] = pydantic.Field("", **{})
     comment_text: typing.Optional[str] = pydantic.Field("", **{})
     comment_id: typing.Optional[str] = pydantic.Field("", **{})
+    comment_attachment_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -243,7 +246,8 @@ class Ticketing_Delete_TicketParams(pydantic.BaseModel):
 
 
 class Ticketing_Attach_FileParams(pydantic.BaseModel):
-    ticket_id: str
+    ticket_id: typing.Optional[str] = pydantic.Field("", **{})
+    tid: typing.Optional[str] = pydantic.Field("", **{})
     file_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
@@ -356,7 +360,6 @@ class Ticketing_Attach_File_To_CommentParams(pydantic.BaseModel):
 class Ticketing_Delete_File_From_CommentParams(pydantic.BaseModel):
     ticket_id: str
     comment_id: str
-    attachment_id: str
     file_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:

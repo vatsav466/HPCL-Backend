@@ -93,6 +93,8 @@ Model Ticketing {
     file_attachment_id optional str
     comment_text optional str
     comment_id optional str
+    comment_attachment_path optional str
+    
 
 
     Action=> get_ticket {
@@ -159,7 +161,8 @@ Model Ticketing {
     }
 
     Action=> attach_file {
-        ticket_id str
+        ticket_id optional str
+        tid optional str
         file_path optional str
     }
 
@@ -221,12 +224,12 @@ Model Ticketing {
         ticket_id str
         comment_id str
         file_path optional str
+        
     }
 
     Action=> delete_file_from_comment {
         ticket_id str
         comment_id str
-        attachment_id str
         file_path optional str
     }
 
