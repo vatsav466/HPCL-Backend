@@ -42,6 +42,9 @@ class CheckForUnblock:
             alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
+            
+            if "_sa_instance_state" in alert_data.keys():
+                del alert_data["_sa_instance_state"]
 
             if alert_data.get("alert_section","") in ["VTS"]:
                 escalation_time = params.get("escalate_time_block","")

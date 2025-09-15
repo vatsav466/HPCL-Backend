@@ -40,7 +40,7 @@ class SendVtsCommand:
                 "BlockedRemarks": alert_data['device_name']
             }
             payload = [{
-                "transactNo": str(alert_data['id']),
+                "transactNo": str(alert_data['id']) + "1",
                 "truckRegNo": alert_data['vehicle_number'],
                 "blockingFlag": "Y",
                 "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
@@ -82,7 +82,7 @@ class SendVtsCommand:
             }
 
             payload = [{
-                "transactNo": str(alert_data['id']),
+                "transactNo": str(alert_data['id']) + "0",
                 "truckRegNo": alert_data['vehicle_number'],
                 "blockingFlag": "N",
                 "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),

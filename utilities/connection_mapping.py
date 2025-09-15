@@ -335,41 +335,27 @@ alert_action = {
             "alert_section": "VTS",
             "close_alert_func": "vts_alert_closer",
             "actions": {
-                "Justify": {
+                "UnBlock": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Location In-Charge SOD", "Zonal HSE SOD",
-                              "Zonal Operations Head SOD", "HQO HSE SOD", "HQO Operations SOD"]
+                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
+                              "Planning Officer SOD", "Zonal Transport Officer SOD", "Location In-Charge SOD"]
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Location In-Charge SOD", "Zonal HSE SOD",
-                              "Zonal Operations Head SOD", "HQO HSE SOD", "HQO Operations SOD"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Zonal HSE SOD", "Zonal Operations Head SOD",
-                              "HQO HSE SOD", "HQO Operations SOD"]
-                },
-                "FalseAlert": {
-                    "name": "FalseAlert",
-                    "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Location In-Charge SOD", "Zonal HSE SOD",
-                              "Zonal Operations Head SOD", "HQO HSE SOD", "HQO Operations SOD"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Zonal HSE SOD", "Zonal Operations Head SOD",
-                              "HQO HSE SOD", "HQO Operations SOD"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
                 }
-            },
-            "category": {
-                "Safety": "Safety",
-                "Pilferage": "Pilferage",
-                "Operations": "Operations"
             },
             "rca_reason": [
                 "Health Issue",
