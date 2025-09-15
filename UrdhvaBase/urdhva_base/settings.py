@@ -98,7 +98,7 @@ class Settings(pydantic_settings.BaseSettings):
     db_urls: typing.Dict[str, typing.List[pydantic.AnyUrl]] = Db_Urls_Base
     
     # VTS IMS blocking    
-    post_to_ims_url = ""
+    post_to_ims_url: str = ""
 
     # Postgresql settings
     enable_echo: bool = True
