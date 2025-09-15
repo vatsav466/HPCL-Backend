@@ -466,7 +466,7 @@ class IndentDryOut:
             #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             #    pytz.timezone('Asia/Kolkata')))
             todays_date = datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
-            if todays_date.date() > workflow_date.date():
+            if todays_date.date() >= workflow_date.date():
                 dry_alert_data = await Alerts.get(self.params["alert_id"])
                 if not isinstance(dry_alert_data, dict):
                     dry_alert_data = dry_alert_data.__dict__
@@ -641,6 +641,7 @@ class IndentDryOut:
                         self.params['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                     elif dry_alert_data['dry_out_in_days'] == '2':
                         self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
+                    self.params['dry_out_in_days'] = dry_alert_data['dry_out_in_days']
                     await create_alert(self.params, camunda_url)
                     await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                         connection_mapping.item_name_mapping.get(prod_code, ""),
