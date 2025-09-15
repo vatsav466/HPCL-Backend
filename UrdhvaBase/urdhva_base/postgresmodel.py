@@ -289,6 +289,7 @@ class BasePostgresModel(pydantic.BaseModel):
             if not query_.strip().upper().startswith("WITH ") and not query_.strip().upper().startswith("SELECT"):
                 query_ = f"select {query_}"
             result = await session.execute(text(query_))
+            print("query_: ",query_)
             resp = result.all()
             # Getting key columns from reults
             columns = [key for key in result.keys()]
@@ -307,6 +308,11 @@ class BasePostgresModel(pydantic.BaseModel):
             raise f"Exception while running aggregation query {e}"
         finally:
             await asyncio.shield(session.close())
+
+
+    @classmethod
+    async def create_database_table(cls):
+        await manager.create_all()
 
     @classmethod
     async def get_all(cls, params: urdhva_base.queryparams.QueryParams = None, entity_id=None, resp_type="encoded",

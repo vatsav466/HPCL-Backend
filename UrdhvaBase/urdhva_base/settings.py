@@ -93,6 +93,7 @@ class Settings(pydantic_settings.BaseSettings):
     uploads: str = ""
     downloads: str = ""
     downloads_url_base: str = "/downloads"
+    ticketing_attachments: str = ""
     kibana_dashboard_header: str = 'osd-xsrf'
     db_urls: typing.Dict[str, typing.List[pydantic.AnyUrl]] = Db_Urls_Base
 

@@ -6,6 +6,7 @@ import pandas as pd
 import charts_actions
 import dashboard_studio_model
 import time
+import random
 from requests.exceptions import RequestException, ConnectionError
 
 class Workflows_Deletion:
@@ -172,7 +173,7 @@ class Workflows_Deletion:
         print("camuda_urls--->",camunda_urls)
         runnig_instances_in_urls = await self.get_running_instances_in_urls(camunda_urls)
         print("runnig_instances_in_urls",len(runnig_instances_in_urls))
-        for key,details in runnig_instances_in_urls.items():
+        for key, details in runnig_instances_in_urls.items():
             if details["alert_id"] not in present_alert_ids_in_db:
                 business_keys.append(details["alert_id"])
                 #if details["url"] in camunda_urls:
@@ -217,8 +218,8 @@ class Workflows_Deletion:
         fetches the list of workflow IDs currently present in the database.
         It then deletes the running instances in Camunda that do not exist in the database.
         """
-        for idx,record in workflow_resp.iterrows():
-            if record["alert_section"] in ["VA"]:
+        for idx, record in workflow_resp.iterrows():
+            if record["alert_section"] in ["VTS"]:
                 # continue
                 query = (f"select * from alerts where alert_section='{record['alert_section']}' and alert_status!='Close'")
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1

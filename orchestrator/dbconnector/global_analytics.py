@@ -391,7 +391,7 @@ class GlobalAnalytics:
             hourly_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(hourly_alerts_query, filters, drill_state)
         try:
             # resp = await function(query=hourly_alerts_query_)
-            resp = urdhva_base.BasePostgresModel.get_aggr_data(query=hourly_alerts_query_, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=hourly_alerts_query_, limit=0)
             resp = resp.get('data', [])
             # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -4029,7 +4029,7 @@ class GlobalAnalytics:
                         "14_kg": "sum",
                         "19_kg": "sum"
                     })
-            resp["Cylinder_Filled"] = (resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64))
+            resp["Cylinder_Filled"] = (resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64)) / 100000
             
             for each_float_col in ["Cylinder_Filled"]:
                 if each_float_col in resp.columns:
@@ -4060,7 +4060,7 @@ class GlobalAnalytics:
                         "14_kg": "sum",
                         "19_kg": "sum"
                     })
-                    grouped_resp["Cylinder_Filled"] = (grouped_resp["14_kg"].fillna(0).astype(np.float64) + grouped_resp["19_kg"].fillna(0).astype(np.float64))
+                    grouped_resp["Cylinder_Filled"] = (grouped_resp["14_kg"].fillna(0).astype(np.float64) + grouped_resp["19_kg"].fillna(0).astype(np.float64)) / 100000
                     grouped_resp["Cylinder_Filled"] = grouped_resp["Cylinder_Filled"].fillna(0.0).round(2)
                 if grouped_resp is not None:
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
@@ -4165,9 +4165,6 @@ class GlobalAnalytics:
     
     @staticmethod
     async def productivity_overtime_vs_break_production(filters, cross_filters, drill_state):
-        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         productivity_overtime_query_ = lpg_plant_queries.lpg_plant_query.get("productivity_overtime_vs_break_production")        
         current_date = datetime.now().strftime("%Y-%m-%d")
         _filters = []
@@ -4213,26 +4210,27 @@ class GlobalAnalytics:
             elif daterange:
                 productivity_overtime_query_ += f' AND "process_date" BETWEEN {daterange} '
             productivity_overtime_query_ += ' GROUP BY "zone", "plant"'
-            # resp = await function(query=productivity_overtime_query_)
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_overtime_query_, limit=0)
             resp = resp.get("data", [])
             resp = pl.DataFrame(resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
             resp = resp.group_by(["zone"]).agg([
-                        pl.sum("break_production").round(1).alias("break_production"),
-                        pl.sum("overtime_production").round(1).alias("overtime_prouction"),
+                        pl.sum("break_production").round(2).alias("break_production"),
+                        pl.sum("overtime_production").round(2).alias("overtime_prouction"),
                     ])
+            resp = resp.with_columns((pl.col("break_production") / 60).alias("break_production"))
+            resp = resp.with_columns((pl.col("overtime_prouction") / 60).alias("overtime_prouction"))
+
             return {"status": True, "message": "success", "data": resp.to_dicts()}
         try:
-            # resp = await function(query=productivity_overtime_query_)
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_overtime_query_, limit=0)
             resp = resp.get("data", [])
             resp = pl.DataFrame(resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
             # Fill missing values
-            numerical_columns = ["break_production", "overtime_production"]
+            numerical_columns = ["break_production", "overtime_prouction"]
             string_columns = ["process_date", "zone", "plant"]
 
             for col in numerical_columns:
@@ -4252,6 +4250,8 @@ class GlobalAnalytics:
                         pl.sum("overtime_production").round(1).alias("overtime_prouction"),
                     ])                
                 if grouped_resp is not None:
+                    grouped_resp = grouped_resp.with_columns((pl.col("break_production") / 60).alias("break_production"))
+                    grouped_resp = grouped_resp.with_columns((pl.col("overtime_prouction") / 60).alias("overtime_prouction"))
                     return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
 
             return {"status": True, "message": "success", "data": resp.to_dicts()}

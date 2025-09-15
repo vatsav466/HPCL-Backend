@@ -1,13 +1,15 @@
 import urdhva_base
 from ingestion_api_enum import *
 from ingestion_api_model import *
-import fastapi
 import json
+import fastapi
+import datetime
 import requests
 import traceback
 import hpcl_ceg_model
 import orchestrator.analytics.vts_analysis as vts_analysis
 import orchestrator.alerting.alert_manager as alert_manager
+from fastapi.encoders import jsonable_encoder
 
 router = fastapi.APIRouter(prefix='/vts')
 
@@ -37,12 +39,13 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
         #
         # Ensure data.data is a list and contains items
         if isinstance(data.data, list) and len(data.data) > 0:
-            enriched_data = [
-                {
-                    **entry.dict()
-                }
-            for entry in data.data
-            ]
+            # enriched_data = [
+            #     {
+            #         **entry.dict()
+            #     }
+            # for entry in data.data
+            # ]
+            enriched_data = jsonable_encoder(data.data)
         else:
             logger.error(f"Invalid data structure: data.data is not a list or is empty")
             return {"status": False, "message": "Invalid data", "data": []}
@@ -116,3 +119,65 @@ async def vts_ingest_data_un_blocked_trucks(data: Vts_Ingest_Data_Un_Blocked_Tru
         print(traceback.format_exc())
         logger.error(e)
         return False, e
+
+
+# Action ingest_event_data
+@router.post('/ingest_event_data', tags=['VTS'])
+async def vts_ingest_event_data(data: Vts_Ingest_Event_DataParams):
+    """
+    API endpoint to ingest VTS data.
+
+    Args:
+    - data (Vts_Ingest_DataParams): Contains vendor ID, location ID, location type, 
+      and a list of vtsDataCreate objects with VTS interlock details.
+
+    Processes each VTS interlock data entry by constructing a payload with vendor, 
+    location, and interlock details, then sends it to the Camunda process engine for 
+    processing.
+
+    Returns:
+    - dict: Status message indicating the success of the data submission.
+    """
+    try:
+        logger.info(f"Received VTS data ingestion from vendor {data.dict()}")
+        if isinstance(data.data, list) and len(data.data) > 0:
+            enriched_data = [
+                {
+                    **entry.dict()
+                }
+            for entry in data.data
+            ]
+        else:
+            logger.error(f"Invalid data structure: data.data is not a list or is empty")
+            return {"status": False, "message": "Invalid data", "data": []}
+        # redis_queue = urdhva_base.redispool.RedisQueue('vts_alerts_queue')
+        # await redis_queue.put(json.dumps(enriched_data))
+        return True, "Success"
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return {"status": False, "message": "Error", "data": []}
+
+
+# Action ingest_trip_data
+@router.post('/ingest_trip_data', tags=['VTS'])
+async def vts_ingest_trip_data(data: Vts_Ingest_Trip_DataParams):
+    try:
+        logger.info(f"Received VTS data ingestion from vendor {data.dict()}")
+        if isinstance(data.data, list) and len(data.data) > 0:
+            enriched_data = [
+                {
+                    **entry.dict()
+                }
+            for entry in data.data
+            ]
+        else:
+            logger.error(f"Invalid data structure: data.data is not a list or is empty")
+            return {"status": False, "message": "Invalid data", "data": []}
+        # redis_queue = urdhva_base.redispool.RedisQueue('vts_alerts_queue')
+        # await redis_queue.put(json.dumps(enriched_data))
+        return True, "Success"
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return {"status": False, "message": "Error", "data": []}

@@ -1011,6 +1011,9 @@
                 },
                 {
                     "name": "get_closed_alerts_details"
+                },
+                {
+                    "name": "vts_alert_manager"
                 }
             ]
         },
@@ -1086,6 +1089,9 @@
                 },
                 {
                     "name": "get_closed_alerts_details"
+                },
+                {
+                    "name": "vts_alert_manager"
                 }
             ]
         },
@@ -4425,6 +4431,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "prooftest_data"
                 }
             ]
         },
@@ -4464,6 +4473,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "prooftest_data"
                 }
             ]
         },
@@ -5265,6 +5277,9 @@
                 },
                 {
                     "name": "delete_sod_data"
+                },
+                {
+                    "name": "get_updated_by_infra"
                 }
             ]
         },
@@ -5304,6 +5319,9 @@
                 },
                 {
                     "name": "get_download_data"
+                },
+                {
+                    "name": "get_updated_by_infra"
                 }
             ]
         },
@@ -5367,6 +5385,9 @@
                 },
                 {
                     "name": "delete_sod_data"
+                },
+                {
+                    "name": "get_updated_by_infra"
                 }
             ]
         },
@@ -5949,6 +5970,15 @@
                 },
                 {
                     "name": "get_top_five_ro_infra"
+                },
+                {
+                    "name": "get_zone_wise_ro_infra"
+                },
+                {
+                    "name": "get_ro_status_ro_infra"
+                },
+                {
+                    "name": "get_zone_table_ro_infra"
                 }
             ]
         },
@@ -5979,6 +6009,15 @@
                 },
                 {
                     "name": "get_top_five_ro_infra"
+                },
+                {
+                    "name": "get_zone_wise_ro_infra"
+                },
+                {
+                    "name": "get_ro_status_ro_infra"
+                },
+                {
+                    "name": "get_zone_table_ro_infra"
                 }
             ]
         },
@@ -6021,6 +6060,15 @@
                 },
                 {
                     "name": "get_top_five_ro_infra"
+                },
+                {
+                    "name": "get_zone_wise_ro_infra"
+                },
+                {
+                    "name": "get_ro_status_ro_infra"
+                },
+                {
+                    "name": "get_zone_table_ro_infra"
                 }
             ]
         },
@@ -6060,6 +6108,9 @@
                 },
                 {
                     "name": "get_top_five_cng_infra"
+                },
+                {
+                    "name": "get_zone_wise_cng_infra"
                 }
             ]
         },
@@ -6087,6 +6138,9 @@
                 },
                 {
                     "name": "get_top_five_cng_infra"
+                },
+                {
+                    "name": "get_zone_wise_cng_infra"
                 }
             ]
         },
@@ -6126,6 +6180,9 @@
                 },
                 {
                     "name": "get_top_five_cng_infra"
+                },
+                {
+                    "name": "get_zone_wise_cng_infra"
                 }
             ]
         },
@@ -6156,6 +6213,18 @@
                 },
                 {
                     "name": "get_plant_ev_count_infra"
+                },
+                {
+                    "name": "get_all_ev_infra"
+                },
+                {
+                    "name": "get_ev_company_infra"
+                },
+                {
+                    "name": "get_distinct_ev_retail_infra"
+                },
+                {
+                    "name": "get_zone_wise_ev_infra"
                 }
             ]
         },
@@ -6174,6 +6243,18 @@
                 },
                 {
                     "name": "get_plant_ev_count_infra"
+                },
+                {
+                    "name": "get_all_ev_infra"
+                },
+                {
+                    "name": "get_ev_company_infra"
+                },
+                {
+                    "name": "get_distinct_ev_retail_infra"
+                },
+                {
+                    "name": "get_zone_wise_ev_infra"
                 }
             ]
         },
@@ -6204,6 +6285,81 @@
                 },
                 {
                     "name": "get_plant_ev_count_infra"
+                },
+                {
+                    "name": "get_all_ev_infra"
+                },
+                {
+                    "name": "get_ev_company_infra"
+                },
+                {
+                    "name": "get_distinct_ev_retail_infra"
+                },
+                {
+                    "name": "get_zone_wise_ev_infra"
+                }
+            ]
+        },
+        {
+            "name": "dryoutdailyreport",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutDailyReport",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutdailyreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "dryoutdailyreport_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutDailyReport_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutdailyreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "dryoutdailyreport_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutDailyReport_admin",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutdailyreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
                 }
             ]
         }
@@ -6449,6 +6605,10 @@
             "displayName": "get_closed_alerts_details"
         },
         {
+            "name": "vts_alert_manager",
+            "displayName": "vts_alert_manager"
+        },
+        {
             "name": "upload_cems_location_master",
             "displayName": "upload_cems_location_master"
         },
@@ -6601,6 +6761,10 @@
             "displayName": "get_tags_data"
         },
         {
+            "name": "prooftest_data",
+            "displayName": "prooftest_data"
+        },
+        {
             "name": "architecture_details",
             "displayName": "architecture_details"
         },
@@ -6675,6 +6839,10 @@
         {
             "name": "delete_sod_data",
             "displayName": "delete_sod_data"
+        },
+        {
+            "name": "get_updated_by_infra",
+            "displayName": "get_updated_by_infra"
         },
         {
             "name": "upload_lpg_file",
@@ -6761,6 +6929,18 @@
             "displayName": "get_top_five_ro_infra"
         },
         {
+            "name": "get_zone_wise_ro_infra",
+            "displayName": "get_zone_wise_ro_infra"
+        },
+        {
+            "name": "get_ro_status_ro_infra",
+            "displayName": "get_ro_status_ro_infra"
+        },
+        {
+            "name": "get_zone_table_ro_infra",
+            "displayName": "get_zone_table_ro_infra"
+        },
+        {
             "name": "upload_plant_cng_file",
             "displayName": "upload_plant_cng_file"
         },
@@ -6781,12 +6961,32 @@
             "displayName": "get_top_five_cng_infra"
         },
         {
+            "name": "get_zone_wise_cng_infra",
+            "displayName": "get_zone_wise_cng_infra"
+        },
+        {
             "name": "upload_plant_ev_file",
             "displayName": "upload_plant_ev_file"
         },
         {
             "name": "get_plant_ev_count_infra",
             "displayName": "get_plant_ev_count_infra"
+        },
+        {
+            "name": "get_all_ev_infra",
+            "displayName": "get_all_ev_infra"
+        },
+        {
+            "name": "get_ev_company_infra",
+            "displayName": "get_ev_company_infra"
+        },
+        {
+            "name": "get_distinct_ev_retail_infra",
+            "displayName": "get_distinct_ev_retail_infra"
+        },
+        {
+            "name": "get_zone_wise_ev_infra",
+            "displayName": "get_zone_wise_ev_infra"
         }
     ]
 }

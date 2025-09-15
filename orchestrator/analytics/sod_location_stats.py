@@ -5,6 +5,8 @@ import pandas as pd
 import polars as pl
 import utilities.helpers as helpers
 from utilities.analog_data_mapping import Maintenance, Fault
+from datetime import datetime, timezone
+import pytz
 
 
 async def generate_sod_engineering_location_stats(sap_id):
@@ -298,8 +300,8 @@ async def generate_sod_engineering_location_stats(sap_id):
             maintenance_interlocks = maintenance_map.get(device_name, set())
             fault_interlocks = fault_map.get(device_name, set())
 
-            total_maintenance_count = await get_alert_count_for_interlock_set(maintenance_interlocks, mapped_name, sap_id)
-            total_fault_count = await get_alert_count_for_interlock_set(fault_interlocks, mapped_name, sap_id)
+            maintenance_device_names, total_maintenance_count = await get_alert_count_for_interlock_set(maintenance_interlocks, mapped_name, sap_id)
+            fault_device_names, total_fault_count = await get_alert_count_for_interlock_set(fault_interlocks, mapped_name, sap_id)
 
             result_dict[device_id] = {
                 "id": device_id,
@@ -307,7 +309,9 @@ async def generate_sod_engineering_location_stats(sap_id):
                 "status": None,
                 "total": total,
                 "faulty": total_fault_count,
-                "maintanance": total_maintenance_count
+                "faulty_device_names": fault_device_names,
+                "maintanance": total_maintenance_count,
+                "maintenance_device_names": maintenance_device_names
             }
 
         # Handle PLC status from helper
@@ -323,10 +327,10 @@ async def generate_sod_engineering_location_stats(sap_id):
             return None
 
         plc_status_dict = {
-            "safety_plc_a": {"id": "safety_plc_a", "name": "PLC A", "status": "offline"},
-            "safety_plc_b": {"id": "safety_plc_b", "name": "PLC B", "status": "offline"},
-            "process_plc_a": {"id": "process_plc_a", "name": "PLC A", "status": "offline"},
-            "process_plc_b": {"id": "process_plc_b", "name": "PLC B", "status": "offline"},
+            "safety_plc_a": {"id": "safety_plc_a", "name": "PLC A", "status": "slave"},
+            "safety_plc_b": {"id": "safety_plc_b", "name": "PLC B", "status": "slave"},
+            "process_plc_a": {"id": "process_plc_a", "name": "PLC A", "status": "slave"},
+            "process_plc_b": {"id": "process_plc_b", "name": "PLC B", "status": "slave"},
         }
 
         for plc in matching_plcs:
@@ -334,9 +338,9 @@ async def generate_sod_engineering_location_stats(sap_id):
             if plc_type:
                 a_key = f"{plc_type}_plc_a"
                 b_key = f"{plc_type}_plc_b"
-                if plc_status_dict[a_key]["status"] != "online" and plc["plc_a_status"] in ("online", "standby"):
+                if plc_status_dict[a_key]["status"] != "master" and plc["plc_a_status"] in ("master", "slave"):
                     plc_status_dict[a_key]["status"] = plc["plc_a_status"]
-                if plc_status_dict[b_key]["status"] != "online" and plc["plc_b_status"] in ("online", "standby"):
+                if plc_status_dict[b_key]["status"] != "master" and plc["plc_b_status"] in ("master", "slave"):
                     plc_status_dict[b_key]["status"] = plc["plc_b_status"]
 
         result_dict.update(plc_status_dict)
@@ -350,7 +354,7 @@ async def generate_sod_engineering_location_stats(sap_id):
 
 async def get_alert_count_for_interlock_set(interlocks, equipment, sap_id):
     if not interlocks or not equipment:
-        return 0
+        return {},0
 
     interlock_filter = ",".join(f"'{i}'" for i in interlocks)
     query = f"""
@@ -360,12 +364,32 @@ async def get_alert_count_for_interlock_set(interlocks, equipment, sap_id):
     """
     params = urdhva_base.queryparams.QueryParams()
     params.q = query
-    params.fields = ['device_name']
+    params.fields = ['device_name', 'created_at']
     result = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
     if not result.get("data"):
-        return 0
+        return {},0
 
-    return len({entry['device_name'] for entry in result['data'] if 'device_name' in entry})
+    ist = pytz.timezone('Asia/Kolkata')
+
+    device_dict = {}
+    for entry in result['data']:
+        if "device_name" in entry and "created_at" in entry:
+            device_name = entry['device_name'].split("@")[0]
+            raw_time = entry["created_at"]
+            
+            if isinstance(raw_time, str):
+                 dt = datetime.fromisoformat(raw_time.replace("Z", "+00:00"))
+            else:
+                  dt = raw_time
+                  
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            created_at_ist = dt.astimezone(ist).strftime("%Y-%m-%d %H:%M:%S")
+            
+            device_dict[device_name] = created_at_ist
+        
+    
+    return device_dict, len(device_dict)
 
 async def get_filtered_location_data(bu, location_onboard, specific_zone=None, specific_sap_id=None):
     """

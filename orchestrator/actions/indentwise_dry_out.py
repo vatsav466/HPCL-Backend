@@ -172,11 +172,29 @@ class IndentDryOut:
                             print(f"Found duplicate alert {record}")
                             # Todo:- Push to cleanup queue
                             continue
-                        query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
-                                 f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
-                                 f"""servicing_plant_id='{each_indent["LOCN_CODE"]}', """
-                                 f"""dry_out_in_days='{self.params["dry_out_in_days"]}'"""
-                                 f"""where id='{record["id"]}'""")
+                        if record['dry_out_in_days'] != self.params["dry_out_in_days"]:
+                            if self.params['dry_out_in_days'] == '1':
+                                query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
+                                    f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
+                                    f"""servicing_plant_id='{each_indent["LOCN_CODE"]}', """
+                                    f"""dry_out_in_days='{self.params["dry_out_in_days"]}', """
+                                    f"""dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', """
+                                    f"""intra_day_dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' """
+                                    f"""where id='{record["id"]}'""")
+                            elif self.params['dry_out_in_days'] == '2':
+                                query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
+                                    f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
+                                    f"""servicing_plant_id='{each_indent["LOCN_CODE"]}', """
+                                    f"""dry_out_in_days='{self.params["dry_out_in_days"]}', """
+                                    f"""dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', """
+                                    f"""intra_day_dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' """
+                                    f"""where id='{record["id"]}'""")
+                        else:
+                            query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
+                                    f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
+                                    f"""servicing_plant_id='{each_indent["LOCN_CODE"]}', """
+                                    f"""dry_out_in_days='{self.params["dry_out_in_days"]}' """
+                                    f"""where id='{record["id"]}'""")
                         if 'alert_id' not in self.params.keys():
                             self.params['alert_id'] = record["id"]
                         # f"""servicing_plant_name='{self.params['servicing_plant_name']}' """
@@ -202,15 +220,37 @@ class IndentDryOut:
                     # checking with indent_no from ims
                     if alerts_data['data']:
                         for record in alerts_data['data']:
-                            # if record['dry_out_in_days'] != self.params['dry_out_in_days']:
-                            query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
-                                     f"where id='{record['id']}'")
+                            if record['dry_out_in_days'] != self.params['dry_out_in_days']:
+                                if self.params['dry_out_in_days'] == '1':
+                                    query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}', "
+                                             f"dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', "
+                                             f"intra_day_dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
+                                             f"where id='{record['id']}'")
+                                elif self.params['dry_out_in_days'] == '2':
+                                    query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}', "
+                                             f"dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', "
+                                             f"intra_day_dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
+                                             f"where id='{record['id']}'")
+                            else:     
+                                query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
+                                        f"where id='{record['id']}'")
                             await hpcl_ceg_model.Alerts.update_by_query(query)
                     elif alerts_data_1['data']:
                         for record in alerts_data_1['data']:
-                            # if record['dry_out_in_days'] != self.params['dry_out_in_days']:
-                            query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
-                                     f"where id='{record['id']}'")
+                            if record['dry_out_in_days'] != self.params['dry_out_in_days']:
+                                if self.params['dry_out_in_days'] == '1':
+                                    query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}', "
+                                             f"dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', "
+                                             f"intra_day_dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
+                                             f"where id='{record['id']}'")
+                                elif self.params['dry_out_in_days'] == '2':
+                                    query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}', "
+                                             f"dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', "
+                                             f"intra_day_dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
+                                             f"where id='{record['id']}'")
+                            else:
+                                query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
+                                        f"where id='{record['id']}'")
                             await hpcl_ceg_model.Alerts.update_by_query(query)
                     else:
                         # not alerts with indent_no then create alerts
@@ -221,9 +261,14 @@ class IndentDryOut:
                             '%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                         self.params['prod_reqd_dt'] = each_indent.get('PROD_REQD_DT').strftime('%Y-%m-%dT%H:%M:%S.%f')[
                                                       :-3] + "Z"
+                        if self.params['dry_out_in_days'] == '1':
+                            self.params['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
+                        elif self.params['dry_out_in_days'] == '2':
+                            self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                         await create_alert(self.params, camunda_url)
                         await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
-                                                            connection_mapping.item_name_mapping.get(prod_code, ""))
+                                                            connection_mapping.item_name_mapping.get(prod_code, ""),
+                                                            self.params.get('dry_out_in_days'))
             return True, {"msg": "Alert raised"}
         else:
             query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
@@ -232,9 +277,20 @@ class IndentDryOut:
             alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
             if alerts_data['data']:
                 for record in alerts_data['data']:
-                    # if record['dry_out_in_days'] != self.params['dry_out_in_days']:
-                    query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
-                             f"where id='{record['id']}'")
+                    if record['dry_out_in_days'] != self.params['dry_out_in_days']:
+                        if self.params['dry_out_in_days'] == '1':
+                            query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}', "
+                                     f"dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', "
+                                     f"intra_day_dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
+                                     f"where id='{record['id']}'")
+                        elif self.params['dry_out_in_days'] == '2':
+                            query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}', "
+                                     f"dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', "
+                                     f"intra_day_dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
+                                     f"where id='{record['id']}'") 
+                    else:
+                        query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
+                                f"where id='{record['id']}'")
                     await hpcl_ceg_model.Alerts.update_by_query(query)
                 print("Already alert available nothing to do")
             else:
@@ -243,13 +299,18 @@ class IndentDryOut:
                 self.params['terminal_plant_id'] = ''
                 self.params['servicing_plant_id'] = ''
                 # self.params['indent_raised_date'] = ''
+                if self.params['dry_out_in_days'] == '1':
+                    self.params['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
+                elif self.params['dry_out_in_days'] == '2':
+                    self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                 await create_alert(self.params, camunda_url)
                 await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
-                                                    connection_mapping.item_name_mapping.get(prod_code, ""))
+                                                    connection_mapping.item_name_mapping.get(prod_code, ""),
+                                                    self.params.get('dry_out_in_days'))
             return True, {"msg": "Alert raised"}
 
     @classmethod
-    async def generate_dry_out_history(cls, location_id, product_code, item_name):
+    async def generate_dry_out_history(cls, location_id, product_code, item_name, dry_out_in_days):
         """
         Creating Dry out history based on dealer and product
         :param location_id:
@@ -257,7 +318,7 @@ class IndentDryOut:
         :param item_name:
         :return:
         """
-        query = (f"SELECT sap_id, product_no from dry_out_history where sap_id='{location_id}' "
+        query = (f"SELECT sap_id, product_no, dry_out_in_days, id from dry_out_history where sap_id='{location_id}' "
                  f"and product_no='{product_code}' and status='Open'")
         resp = await hpcl_ceg_model.DryOutHistory.get_aggr_data(query, limit=1)
         # If there was no alert then creating dry out history
@@ -268,7 +329,28 @@ class IndentDryOut:
                     "plant_name": loc_dt.get('terminal_plant_name',''), "bu": "RO",
                     "category": loc_dt.get('category', ""), "status": "Open",
                     "start_time": datetime.datetime.now(tz=datetime.timezone.utc)}
+            data['dry_out_in_days'] = dry_out_in_days
+            if dry_out_in_days == '1':
+                data['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
+            elif dry_out_in_days == '2':
+                data['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
             await hpcl_ceg_model.DryOutHistoryCreate(**data).create()
+        else:
+            dry_out_alert_history_data = resp['data'][0]
+            now_utc_time = datetime.datetime.now(tz=datetime.timezone.utc)
+            if dry_out_alert_history_data ['dry_out_in_days'] != dry_out_in_days:
+                if dry_out_in_days == '1':
+                    query = (f"""update dry_out_history set dry_out_start_time='{now_utc_time}', """
+                             f"""intra_day_dry_out_end_time='{now_utc_time}', """
+                             f"""dry_out_in_days='{dry_out_in_days}' """
+                             f"""where id='{dry_out_alert_history_data["id"]}'""")
+                    await hpcl_ceg_model.DryOutHistory.update_by_query(query)
+                elif dry_out_in_days == '2':
+                    query = (f"""update dry_out_history set intra_day_dry_out_start_time='{now_utc_time}', """
+                             f"""dry_out_end_time='{now_utc_time}', """
+                             f"""dry_out_in_days='{dry_out_in_days}' """
+                             f"""where id='{dry_out_alert_history_data["id"]}'""")
+                    await hpcl_ceg_model.DryOutHistory.update_by_query(query)                    
 
     async def check_indent_status_for_notification(self, params: dict):
         if not self.params:
@@ -532,6 +614,9 @@ class IndentDryOut:
                     await hpcl_ceg_model.Alerts.update_by_query(query)
                     count += 1
                 else:
+                    dry_alert_data = await Alerts.get(self.params["alert_id"])
+                    if not isinstance(dry_alert_data, dict):
+                        dry_alert_data = dry_alert_data.__dict__
                     self.params['sop_id'] = 'SOP292'
                     self.params['alert_type'] = 'RO'
                     self.params['bu'] = 'RO'
@@ -552,9 +637,14 @@ class IndentDryOut:
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[
                                                         :-3] + "Z"
                     # logger.info(f"Multiple Indents: {self.params}")
+                    if dry_alert_data['dry_out_in_days'] == '1':
+                        self.params['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
+                    elif dry_alert_data['dry_out_in_days'] == '2':
+                        self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                     await create_alert(self.params, camunda_url)
                     await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
-                                                        connection_mapping.item_name_mapping.get(prod_code, ""))
+                                                        connection_mapping.item_name_mapping.get(prod_code, ""),
+                                                        dry_alert_data['dry_out_in_days'])
             return await self.send_alert_action(is_raised=True)
 
     async def is_truck_allocated(self, params: dict):
@@ -1568,6 +1658,10 @@ class IndentDryOut:
             alert_data['alert_state'] = alert_state
             if str(progress_rate) != "0":
                 alert_data['progress_rate'] = str(progress_rate)
+            if alert_data['dry_out_in_days'] == '1' and alert_status == 'Close':
+                alert_data['dry_out_end_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
+            if alert_data['dry_out_in_days'] == '2' and alert_status == 'Close':
+                alert_data['intra_day_dry_out_end_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
             alert_data = Alerts(**alert_data)
             await alert_data.modify()
 

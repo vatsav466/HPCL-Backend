@@ -10,35 +10,35 @@ vts_interlock_mapping = {
             },
             "1": {
                 "interlock_name": "Speed Violation SecondTime",
-                "block_duration": 90,
+                "block_duration": 15,
                 "block_msg": "90 days",
                 "clear_count": True,
                 "instance": "Instance - 2"
             },
             "2": {
                 "interlock_name": "Speed Violation ThirdTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 3"
             },
             "3": {
                 "interlock_name": "Speed Violation FourthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 4"
             },
             "4": {
                 "interlock_name": "Speed Violation FifthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 5"
             },
             "5": {
                 "interlock_name": "Speed Violation SixthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 6"
@@ -59,35 +59,35 @@ vts_interlock_mapping = {
             },
             "1": {
                 "interlock_name": "Night Driving SecondTime",
-                "block_duration": 90,
+                "block_duration": 15,
                 "block_msg": "90 days",
                 "clear_count": True,
                 "instance": "Instance - 2"
             },
             "2": {
                 "interlock_name": "Night Driving ThirdTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 3"
             },
             "3": {
                 "interlock_name": "Night Driving FourthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 4"
             },
             "4": {
                 "interlock_name": "Night Driving FifthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 5"
             },
             "5": {
                 "interlock_name": "Night Driving SixthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 6"
@@ -101,42 +101,42 @@ vts_interlock_mapping = {
         "alerting_rules": {
             "0": {
                 "interlock_name": "VTS RouteDeviation FirstTime",
-                "block_duration": 90,
+                "block_duration": 30,
                 "block_msg": "90 days",
                 "clear_count": True,
                 "instance": "Instance - 1"
             },
             "1": {
                 "interlock_name": "VTS RouteDeviation SecondTime",
-                "block_duration": 365,
+                "block_duration": 90,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 2"
             },
             "2": {
                 "interlock_name": "VTS RouteDeviation ThirdTime",
-                "block_duration": 365,
+                "block_duration": 90,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 3"
             },
             "3": {
                 "interlock_name": "VTS RouteDeviation FourthTime",
-                "block_duration": 365,
+                "block_duration": 90,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 4"
             },
             "4": {
                 "interlock_name": "VTS RouteDeviation FifthTime",
-                "block_duration": 365,
+                "block_duration": 90,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 5"
             },
             "5": {
                 "interlock_name": "VTS RouteDeviation SixthTime",
-                "block_duration": 365,
+                "block_duration": 90,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 6"
@@ -150,42 +150,42 @@ vts_interlock_mapping = {
         "alerting_rules": {
             "0": {
                 "interlock_name": "Unauthorized Stoppage FirstTime",
-                "block_duration": 90,
+                "block_duration": 30,
                 "block_msg": "90 days",
                 "clear_count": True,
                 "instance": "Instance - 1"
             },
             "1": {
                 "interlock_name": "Unauthorized Stoppage SecondTime",
-                "block_duration": 365,
+                "block_duration": 90,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 2"
             },
             "2": {
                 "interlock_name": "Unauthorized Stoppage ThirdTime",
-                "block_duration": 365,
+                "block_duration": 90,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 3"
             },
             "3": {
                 "interlock_name": "Unauthorized Stoppage FourthTime",
-                "block_duration": 365,
+                "block_duration": 90,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 4"
             },
             "4": {
                 "interlock_name": "Unauthorized Stoppage FifthTime",
-                "block_duration": 365,
+                "block_duration": 90,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 5"
             },
             "5": {
                 "interlock_name": "Unauthorized Stoppage SixthTime",
-                "block_duration": 365,
+                "block_duration": 90,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 6"
@@ -297,42 +297,42 @@ vts_interlock_mapping = {
         "alerting_rules": {
             "0": {
                 "interlock_name": "VTS Device Tampering FirstTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 1"
             },
             "1": {
                 "interlock_name": "VTS Device Tampering SecondTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 2"
             },
             "2": {
                 "interlock_name": "VTS Device Tampering ThirdTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 3"
             },
             "3": {
                 "interlock_name": "VTS Device Tampering FourthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 4"
             },
             "4": {
                 "interlock_name": "VTS Device Tampering FifthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 5"
             },
             "5": {
                 "interlock_name": "VTS Device Tampering SixthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 6"
@@ -346,42 +346,42 @@ vts_interlock_mapping = {
         "alerting_rules": {
             "0": {
                 "interlock_name": "VTS PowerDisconnect FirstTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 1"
             },
             "1": {
                 "interlock_name": "VTS PowerDisconnect SecondTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 2"
             },
             "2": {
                 "interlock_name": "VTS PowerDisconnect ThirdTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 3"
             },
             "3": {
                 "interlock_name": "VTS PowerDisconnect FourthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 4"
             },
             "4": {
                 "interlock_name": "VTS PowerDisconnect FifthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 5"
             },
             "5": {
                 "interlock_name": "VTS PowerDisconnect SixthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 6"
@@ -416,35 +416,35 @@ vts_interlock_mapping = {
             },
             "1": {
                 "interlock_name": "Continuous Driving SecondTime",
-                "block_duration": 90,
+                "block_duration": 15,
                 "block_msg": "90 days",
                 "clear_count": True,
                 "instance": "Instance - 2"
             },
             "2": {
                 "interlock_name": "Continuous Driving ThirdTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 3"
             },
             "3": {
                 "interlock_name": "Continuous Driving FourthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 4"
             },
             "4": {
                 "interlock_name": "Continuous Driving FifthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 5"
             },
             "5": {
                 "interlock_name": "Continuous Driving SixthTime",
-                "block_duration": 365,
+                "block_duration": 30,
                 "block_msg": "1 year",
                 "clear_count": True,
                 "instance": "Instance - 6"

@@ -57,29 +57,55 @@ async def sod_infra(filters, cross_filters, drill_state, limit, time_grain):
         }
 
         exclude_keys = {"filename", "updated_by", "id", "created_at", "updated_at", "entity_id"}
+        lpg_only_columns = {"time_of_commissioning"}
         all_data = []
         for sbu in sbu_configs:
             query = f'''SELECT * FROM {sbu["table"]}'''
+            applied_filters = []
             if filters:
-                query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+                for f in filters:
+                    key_name = getattr(f, "key", None)
+                    if not key_name:
+                        continue
+
+                    if key_name.lower() in lpg_only_columns and sbu["name"] != "LPG":
+                        continue
+
+                    applied_filters.append(f)
+
+                if applied_filters:
+                    query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                        query, applied_filters, drill_state
+                    )
 
             result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
             records = result.get("data", [])
 
             rename_map_lower = {k.lower(): v for k, v in sbu.get("rename_map", {}).items()}
 
+            if not records:
+                placeholder = {"sbu": sbu["name"], "color_code": "#CCCCCC"}
+                for col in rename_map_lower.values():
+                    placeholder[col] = 0
+                records = [placeholder]
+
             for i in range(len(records)):
                 company = records[i].get('company', '').lower()
                 records[i]['color_code'] = company_color_map.get(company, '#CCCCCC')
-                records[i] = {k: v for k, v in records[i].items() if k not in exclude_keys}  # Remove unwanted columns
+                records[i] = {k: v for k, v in records[i].items() if k not in exclude_keys}
                 if rename_map_lower:
-                    records[i] = {rename_map_lower.get(k.lower(), k): v for k, v in records[i].items()}  # rename map
+                    records[i] = {
+                        rename_map_lower.get(k.lower(), k): v for k, v in records[i].items()
+                    }
+                records[i]["sbu"] = sbu["name"]
+
             all_data.extend(records)
 
         return {"status": True, "message": "success", "data": all_data}
+
     except Exception as e:
         logging.exception("Error while fetching SBU infra data")
-        return {"error": str(e)}
+        return {"status": False, "error": str(e)}
 
 
 
@@ -236,6 +262,9 @@ async def get_distinct_sod_lpg_info(sbu: str = "", zone=None, state=None, distri
             add_if_valid(row.get("company"), company_set)
             add_if_valid(row.get("location_name"), location_name_set)
 
+        sbu_values = {"SOD", "LPG", "AVIATION", "LUBES"}
+        sbu_set = sbu_set.union(sbu_values)
+
         return {
             "status": True,
             "message": "success",
@@ -306,6 +335,7 @@ async def get_sales_info(filters, cross_filters, drill_state, limit, time_grain)
 
         result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
         rows = result.get("data", [])
+        rows = [{k.upper(): v for k, v in row.items()} for row in rows]
 
         return {"status": True, "message": "success", "data": rows}
 
@@ -313,34 +343,26 @@ async def get_sales_info(filters, cross_filters, drill_state, limit, time_grain)
         print(f"Error in get_sales_info: {str(e)}")
         return {"status": False, "message": f"Error: {str(e)}", "data": []}
 
-async def get_sales_officer_info(sbu,sap_id):
+async def get_sales_officer_info(sbu, sap_id):
+    try:
+        query = f'''   
+                u.username, u.first_name, u.last_name, u.novex_role, u.contact_number, sbu.sap_id
+            FROM {sbu}_infra sbu
+            LEFT JOIN users u 
+                ON sbu.sap_id = ANY(u.sap_id)
+            WHERE sbu.sbu = '{sbu}' AND sbu.sap_id = '{sap_id}' 
+              AND (u.username IS NOT NULL OR u.first_name IS NOT NULL OR u.last_name IS NOT NULL OR u.novex_role IS NOT NULL )
+            ORDER BY username
+        '''
 
-    query = f'''   
-            u.username, 
-            u.first_name, 
-            u.last_name, 
-            u.novex_role ,
-            u.contact_number,
-            sbu.sap_id
-        FROM {sbu}_infra sbu
-        LEFT JOIN users u 
-            ON sbu.sap_id = ANY(u.sap_id)
-        WHERE sbu.sbu = '{sbu}' and sbu.sap_id = '{sap_id}' 
-            AND (
-        u.username IS NOT NULL 
-        OR u.first_name IS NOT NULL 
-        OR u.last_name IS NOT NULL 
-        OR u.novex_role IS NOT NULL
-    )
-    order by username
-    '''
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        records = result.get("data", [])
+        # Drop contract employees records
+        records = [r for r in records if r.get("username") != r.get("first_name")]
+        return {"status": True, "message": "Sales Officer Info fetched successfully", "data": records}
 
-
-    result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
-    records = result.get("data", [])
-
-    return {
-        "status": True, "message": "Sales Officer Info fetched successfully", "data": records}
+    except Exception as e:
+        return {"status": False, "message": f"Error while fetching Sales Officer Info: {str(e)}", "data": []}
 
 async def get_download_info(sbu, background_tasks):
     try:
@@ -351,7 +373,7 @@ async def get_download_info(sbu, background_tasks):
             return {"status": "error", "message": "No data found."}
 
         df = pd.DataFrame(rows)
-        output_dir = "/opt/ceg/algo/orchestrator/masterdata/infra_inputs"  # temporary folder
+        output_dir = "/opt/ceg/algo/orchestrator/masterdata/infra_inputs"
         os.makedirs(output_dir, exist_ok=True)
         template_file_path = os.path.join(output_dir, f"Updated_{sbu}_infra_data.xlsx")
         df.to_excel(template_file_path, index=False, sheet_name=sbu)
@@ -364,3 +386,35 @@ async def get_download_info(sbu, background_tasks):
         )
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+async def get_updated_by_info(sbu: str = ""):
+    try:
+        sbu_tables = ["sod_infra", "lpg_infra", "aviation_infra", "lubes_infra"]
+        select_columns = "sbu, created_at, updated_by"
+
+        union_queries = [f"SELECT {select_columns} FROM {table}" for table in sbu_tables]
+        union_block = "\nUNION ALL\n".join(union_queries)
+
+        query = f"""
+            SELECT sbu, created_at, updated_by
+            FROM (
+                SELECT 
+                    sbu,
+                    created_at,
+                    updated_by,
+                    ROW_NUMBER() OVER (PARTITION BY sbu ORDER BY created_at DESC) AS rn
+                FROM (
+                    {union_block}
+                ) AS combined_infra
+            ) ranked
+            WHERE rn = 1 AND sbu = '{sbu}'
+        """
+
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
+        rows = result.get("data", [])
+
+        return {"status": True, "message": "success", "data": rows}
+
+    except Exception as e:
+        print(f"Error in get_sales_info: {str(e)}")
+        return {"status": False, "message": f"Error: {str(e)}", "data": []}

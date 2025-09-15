@@ -97,6 +97,12 @@ Enum AlertActionType str {
     Cause='Cause'
     ESDFailure='ESDFailure'
     Maintenance='Maintenance'
+    TicketRaised='TicketRaised'
+    TicketInProgress='TicketInProgress'
+    TicketCancelled='TicketCancelled'
+    TicketResolved='TicketResolved'
+    TicketOnHold='TicketOnHold'
+
 }
 
 Enum IndentStatus str {
@@ -661,7 +667,7 @@ Model VTS {
     status optional AlertStatus
     report_duration optional str
     total_trips optional int
-
+    
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,sap_id'
@@ -757,6 +763,10 @@ Model Alerts {
     emlock_ack optional bool
     vts_return optional bool
     atg_ack_time optional datetime
+    dry_out_start_time optional datetime
+    dry_out_end_time optional datetime
+    intra_day_dry_out_start_time optional datetime
+    intra_day_dry_out_end_time optional datetime
 
     // VTS
     transporter_name optional str
@@ -817,6 +827,10 @@ Model Alerts {
         alert_id int min=1 max=9999999
         alert_section str
         interlock_name str
+    }
+
+    Action=> vts_alert_manager {
+        filters optional list WidgetFilters
     }
 
     Config=> {
@@ -956,6 +970,11 @@ Model DryOutHistory {
     plant_name str
     category optional str          // For category filter
     status index_field AlertStatus // To Check whether Dry-out in Open or Closed
+    dry_out_in_days optional str
+    dry_out_start_time optional datetime
+    dry_out_end_time optional datetime
+    intra_day_dry_out_start_time optional datetime
+    intra_day_dry_out_end_time optional datetime
 
     Config=> {
         crud_operations='read'
@@ -1366,6 +1385,8 @@ Model VtsAlertHistory {
     total_trips optional int
     stoppage_violations_count optional int
     route_deviation_count optional int
+    scheduled_trip_start_datetime optional datetime
+    scheduled_trip_end_datetime optional datetime
     speed_violation_count optional int
     main_supply_removal_count optional int
     night_driving_count optional int
@@ -1546,6 +1567,7 @@ Model IndustryPerformance {
     month_name optional str
     netweight_tmt optional float
     com_type optional str
+    RO optional str
 
     Action=> generate_ai_industry_performance {
         user_prompt str
@@ -2210,7 +2232,11 @@ Model TasProofTest{
     proof_test_created_at optional datetime
     next_proof_test_date optional datetime
 
+    Action=> prooftest_data {   
+             
+    }
 }
+
 
 Model ArchitectureData{
     sap_id optional unique_field str
@@ -2246,6 +2272,7 @@ Model PerformanceIndex {
         zone optional str
         sap_id optional str
         strategy str
+        filters optional list WidgetFilters
     }
 
     Action=> get_pi_score_by_category {
@@ -2289,6 +2316,7 @@ Model PerformanceScore {
         zone optional str
         sap_id optional str
         strategy str
+        filters optional list WidgetFilters
     }
 
     Config=> {
@@ -2570,6 +2598,10 @@ Model SodInfra {
 
     Action=> delete_sod_data {
         unique_id optional list str
+    }
+
+    Action=> get_updated_by_infra {
+        sbu str
     }
 
     Config=> {
@@ -2949,9 +2981,35 @@ Model PlantRoInfra {
         zone optional list str
         state optional list str
         status optional list str
+        ro_status optional list str
     }
 
     Action=> get_top_five_ro_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Action=> get_zone_wise_ro_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+
+    Action=> get_ro_status_ro_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+    Action=> get_zone_table_ro_infra {
         filters optional list WidgetFilters
         drill_state optional str
         cross_filters optional list WidgetFilters
@@ -3013,6 +3071,14 @@ Model PlantCngInfra {
         time_grain optional str
     }
 
+    Action=> get_zone_wise_cng_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone'
     }
@@ -3047,7 +3113,53 @@ Model PlantEvInfra {
         time_grain optional str
     }
 
+    Action=> get_all_ev_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+
+    Action=> get_ev_company_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
+
+    Action=> get_distinct_ev_retail_infra {
+        sbu str
+        company optional list str
+        zone optional list str
+        state optional list str
+        status optional list str
+    }
+
+    Action=> get_zone_wise_ev_infra {
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
     Config=> {
         access_key_mapping='sbu,zone'
     }
+}
+
+Model Zone_History_Counts internal {
+    zone optional str
+    count optional str
+}
+
+Model DryOutDailyReport {
+    dry_out_date optional str
+    dry_out_count optional str
+    dry_out_zone optional list Zone_History_Counts
+    dry_out_alert_ids optional list str
 }

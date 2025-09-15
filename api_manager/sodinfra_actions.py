@@ -39,7 +39,9 @@ async def sodinfra_upload_sod_file(file: fastapi.UploadFile):
         loc_df = pd.DataFrame(resp['data'])
 
         loc_df['updated_by'] = ''
-        df['updated_by'] = ''
+        rpt = urdhva_base.context.context.get('rpt', {})
+        username = rpt.get("username")
+        df['updated_by'] = username
         df['location code'] = df['location code'].apply(
             lambda x: str(int(float(x))) if pd.notnull(x) and str(x).strip() != "" else ""
         )
@@ -242,3 +244,9 @@ async def sodinfra_delete_sod_data(data: Sodinfra_Delete_Sod_DataParams):
         print("Error in delete_sod_data:", str(e))
         traceback.print_exc()
         return {"status": False, "message": "An error occurred while deleting SOD data", "error": str(e)}
+
+
+# Action get_updated_by_infra
+@router.post('/get_updated_by_infra', tags=['SodInfra'])
+async def sodinfra_get_updated_by_infra(data: Sodinfra_Get_Updated_By_InfraParams):
+    return await infra_functions.get_updated_by_info(data.sbu)

@@ -14,12 +14,19 @@ Enum AlertStatus str {
     OnHold='OnHold'
 }
 
+Model GeoCordinates internal {
+    latitude str
+    longitude str
+}
+
 Model vtsData internal {
     vendor_id str
     location_id str
     location_type str
     tl_number str
     report_duration str
+    scheduled_trip_start_datetime optional datetime
+    scheduled_trip_end_datetime optional datetime
     total_trips optional int
     stoppage_violations_count optional int
     route_deviation_count optional int
@@ -33,6 +40,48 @@ Model vtsData internal {
     approved_by optional str
     invoice_number optional str
     tt_type optional str
+}
+
+Model VtsEventData internal {
+    vendor_id str
+    location_id str
+    location_type str
+    tt_number str
+    event_id str
+    report_duration optional str    
+    event_start_time optional datetime
+    event_end_time optional datetime  
+    event_start_location optional str
+    event_end_location optional str  
+    coordinates optional GeoCordinates
+    distance optional str
+    total_trips optional int
+    stoppage_violations_count optional int
+    route_deviation_count optional int
+    speed_violation_count optional int
+    main_supply_removal_count optional int
+    night_driving_count optional int
+    no_halt_zone_count optional int
+    device_offline_count optional int
+    device_tamper_count optional int
+    continuous_driving_count optional int
+    approved_by optional str
+    invoice_number optional str
+    tt_type optional str
+    transporter optional str
+}
+
+Model VtsTripData internal {
+    vendor_id str
+    location_id str
+    location_type str
+    tt_number str
+    trip_start_time optional datetime
+    trip_end_time optional datetime
+    distance optional str
+    tt_type optional str
+    invoice_number optional str
+    transporter optional str
 }
 
 Model vtsDataUpdated internal {
@@ -101,6 +150,12 @@ Model vtsBlockedTruck internal {
 Model VTS crud_disable {
     Action=> ingest_data {
         data list vtsData
+    }
+    Action=> ingest_event_data {
+        data list VtsEventData
+    }
+    Action=> ingest_trip_data {
+        data list VtsEventData
     }
 
     Action=> ingest_data_blocked_trucks {
@@ -236,5 +291,49 @@ Model EMLock crud_disable {
 Model TasListener crud_disable {
     Action=> get_data {
         input_data dict
+    }
+}
+
+
+Model TasAgentCommStatus {
+
+    sap_id  str
+    status optional str
+    message optional str
+    opcda_status optional str
+    data_receiving_status optional str
+    configuration_healthy optional str
+    last_opc_failure optional str
+    last_rabbit_failure optional str
+    location_name optional str
+
+}
+
+Model TasAgentServiceStatus {
+      
+      sap_id  str
+      status optional str
+      message optional str
+      location_name optional str
+
+}
+
+Model TAS crud_disable {
+    Action=> get_agent_service_status {
+        sap_id  str
+        status optional str
+        message optional str
+    }
+
+    Action=> get_agent_comm_status {
+        sap_id  str
+        status optional str
+        message optional str
+        opcda_status optional str
+        data_receiving_status optional str
+        configuration_healthy optional str
+        last_opc_failure optional str
+        last_rabbit_failure optional str
+        
     }
 }

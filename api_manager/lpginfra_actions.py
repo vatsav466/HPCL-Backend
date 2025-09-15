@@ -36,8 +36,10 @@ async def lpginfra_upload_lpg_file(file: fastapi.UploadFile):
         query = ''' * FROM location_master'''
         resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
         loc_df = pd.DataFrame(resp['data'])
+        rpt = urdhva_base.context.context.get('rpt', {})
+        username = rpt.get("username")
         loc_df['updated_by'] = ''
-        df['updated_by'] = ''
+        df['updated_by'] = username
         df['sap code'] = df['sap code'].apply(
             lambda x: str(int(float(x))) if pd.notnull(x) and str(x).strip() != "" else ""
         )
