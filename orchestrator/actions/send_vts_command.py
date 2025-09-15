@@ -46,7 +46,10 @@ class SendVtsCommand:
                 "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
                 "blockingTo": (alert_data['vehicle_blocked_end_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
             }]
+            
+            # Blocking in IMS blockingFlag="Y"
             # await vts_analysis.post_blocked_tt_ims(payload)
+            
             # await vts_analysis.post_blocked_tt(input_data)
             alert_message = (
                 f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Block, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to block the Vehicle "
@@ -77,7 +80,20 @@ class SendVtsCommand:
                     "DocPaths": doc_link if doc_link else []
                 }
             }
+
+            payload = [{
+                "transactNo": str(alert_data['id']),
+                "truckRegNo": alert_data['vehicle_number'],
+                "blockingFlag": "N",
+                "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
+                "blockingTo": (alert_data['vehicle_blocked_end_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
+            }]
+
             # await vts_analysis.post_unblocked_tt(params1)
+
+            # UnBlocking in IMS blockingFlag="N"
+            # await vts_analysis.post_blocked_tt_ims(payload)
+
             if not params['auto_unblock']:
                 query = (f"location_id='{alert_data['sap_id']}' and tl_number='{alert_data['vehicle_number']}' "
                          f"and {alert_data['violation_type']}>=1 and created_at<'{alert_data['created_at']}' and location_type='{alert_data['bu']}' "

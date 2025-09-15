@@ -238,7 +238,7 @@ async def post_blocked_tt_ims(input_data: typing.List[typing.Dict[str, typing.An
         The response JSON parsed as a list. If the response is a single dict,
         it is wrapped in a list.
     """
-    url = f"https://webtest.hpcl.co.in/VTSBlocking/webresources/vtsBlocking/blockTT"
+    url = urdhva_base.settings.post_to_ims_url
     session = requests.Session()
     try:
         response = session.post(url, json=input_data, headers=default_headers)
