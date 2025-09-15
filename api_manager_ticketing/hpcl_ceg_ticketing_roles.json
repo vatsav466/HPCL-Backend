@@ -38,6 +38,9 @@
                     "name": "update_ticket"
                 },
                 {
+                    "name": "merge_ticket"
+                },
+                {
                     "name": "delete_ticket"
                 },
                 {
@@ -132,6 +135,9 @@
                 },
                 {
                     "name": "update_ticket"
+                },
+                {
+                    "name": "merge_ticket"
                 },
                 {
                     "name": "delete_ticket"
@@ -269,6 +275,10 @@
         {
             "name": "update_ticket",
             "displayName": "update_ticket"
+        },
+        {
+            "name": "merge_ticket",
+            "displayName": "merge_ticket"
         },
         {
             "name": "delete_ticket",

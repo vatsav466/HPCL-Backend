@@ -40,9 +40,18 @@ Model Ticket_History internal {
     allocated_time optional str
     action_msg optional str
     action_type optional str
-    
-
 }
+    
+Model Merge_History internal {
+    ticket_id optional str 
+    merge_ticket_id list str
+    comment optional str
+    processed_time optional str
+    allocated_time optional str
+    action_msg optional str
+    action_type optional str
+}
+
 
 Enum TicketType str{
     ToDo = 'TicketRaised'
@@ -75,6 +84,7 @@ Model Ticketing {
     assignee optional Assignee
     reporter optional str
     ticket_history optional list Ticket_History
+    merge_history optional list Merge_History
     linked_alert_id optional list str
     interlock_name optional list str
     comment optional str
@@ -83,6 +93,8 @@ Model Ticketing {
     file_attachment_id optional str
     comment_text optional str
     comment_id optional str
+    comment_attachment_path optional str
+    
 
 
     Action=> get_ticket {
@@ -138,28 +150,31 @@ Model Ticketing {
       
        
     }
+    Action=> merge_ticket {
+        ticket_id  str
+        merge_ticket_id optional list str
+        comment optional str
+    }
 
     Action=> delete_ticket {
         delete_id str
     }
 
     Action=> attach_file {
-        ticket_id str
+        ticket_id optional str
+        tid optional str
         file_path optional str
     }
 
     Action=> delete_file_attachment {
+       
         ticket_id str
-        attachment_id str
-        attachment_name str
-        file_path optional str
+       
     }
 
     Action=> download_file_attachment {
         ticket_id str
-        attachmentid str
-        attachmentname str
-        file_path optional str
+        file_attachment_name optional str
     }
 
     Action=> update_assignee {
@@ -209,12 +224,12 @@ Model Ticketing {
         ticket_id str
         comment_id str
         file_path optional str
+        
     }
 
     Action=> delete_file_from_comment {
         ticket_id str
         comment_id str
-        attachment_id str
         file_path optional str
     }
 
