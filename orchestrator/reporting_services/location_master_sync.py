@@ -54,7 +54,7 @@ async def fetch_data(cursor, query, getData=False, params=None):
     return data
 
 
-async def clear_existing_location_master(bu):
+async def clear_existing_location_master(bu, data):
     creds = credential_loader.get_credentials('APP_DB')
     pg_conn = psycopg2.connect(
                 host=creds["host"],
@@ -62,9 +62,14 @@ async def clear_existing_location_master(bu):
                 user=creds["user"],
                 password=creds["password"],
                 port=creds["port"]
-            )
-    query = f""" DELETE FROM location_master WHERE bu='{bu.upper()}' AND location_onboard IS FALSE; """
+            )    
     cursor = pg_conn.cursor()
+
+    required_data = await fetch_data(cursor, "select sap_id from location_master where location_onboard IS TRUE")
+    data["location_onboard"] = False
+    data.loc[data["sap_id"].isin(required_data["sap_id"]), "location_onboard"] = True
+
+    query = f""" DELETE FROM location_master WHERE bu='{bu.upper()}' AND location_onboard IS FALSE; """
     cursor.execute(query)
     pg_conn.commit()
     cursor.close()
@@ -156,7 +161,7 @@ async def sync_location_master():
                             left_on="REPORTING_OFFICE", right_on="RO_CODE", how="left")
         data["bu"] = config.get("bu", "").upper()
         data = await process_data(data)
-        await clear_existing_location_master(config.get("bu", ""))
+        await clear_existing_location_master(config.get("bu", ""), data)
         await insert_users(data.to_dict(orient="records"))
 
 
