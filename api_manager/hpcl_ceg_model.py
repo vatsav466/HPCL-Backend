@@ -1405,7 +1405,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     tas_device_name: Mapped[typing.Optional[str]] = mapped_column("tas_device_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_msg: Mapped[typing.Optional[str]] = mapped_column("device_msg", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     vehicle_number: Mapped[typing.Optional[str]] = mapped_column("vehicle_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    violation_type: Mapped[typing.Optional[str]] = mapped_column("violation_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    violation_type: Mapped[typing.Optional[str]] = mapped_column("violation_type", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     clear_count: Mapped[typing.Optional[bool]] = mapped_column("clear_count", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     maintenance_time: Mapped[typing.Optional[str]] = mapped_column("maintenance_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     closed_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closed_at", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
@@ -2393,6 +2393,7 @@ class Indentdryout_Get_Indent_DataParams(pydantic.BaseModel):
 
 class Indentdryout_Get_Dried_Out_RoParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
