@@ -550,6 +550,7 @@ async def fetch_dryout_data():
     summary_df = pivot.copy()
     summary_df["Day wise No. of Dryout ROs"] = pd.to_datetime(summary_df["Day wise No. of Dryout ROs"], errors="coerce").dt.strftime("%b %-d").fillna(summary_df["Day wise No. of Dryout ROs"])
     summary_df = summary_df.rename(columns={"Day wise No. of Dryout ROs": "Date", "Grand Total": "Dry out Count"})[["Date", "Dry out Count"]]
+    summary_df = summary_df[summary_df["Date"] != "Zone wise ROs"]
     summary_df["Dry out Count"] = summary_df["Dry out Count"].astype(int)
     summary_df = summary_df[~summary_df["Date"].str.contains("Day wise", na=False)]
     summary_df = summary_df.iloc[:-1]
