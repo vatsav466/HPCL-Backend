@@ -113,9 +113,10 @@ location_configs = [
                     INNER JOIN ZMMCV_PLANT_STG zps  ON PLT.PLANT = zps.PLANT
                     INNER JOIN ZSDCV_AY_INV3_STG zca  ON zca.SUPPLY_LOC = zps.PLANT
                 WHERE   
-                    zps.ZLOC_TYPE IN ('12', '17', '25', '32', '33','68')
+                    zps.ZLOC_TYPE IN ('33')
                     AND zca.INVOICE_DATE >= DATE_SUB(NOW(), INTERVAL 1 YEAR) AND zca.INVOICE_DATE <= NOW();
                 """,
+        # '12', '17', '25', '32', '33','68'
         "reporting_office_query":"""
                     SELECT
                         PLT.PLANT AS RO_CODE, ZN.SALES_OFFICE_DESC, ZN.SALES_GROUP_DESC
