@@ -2393,6 +2393,7 @@ class Indentdryout_Get_Indent_DataParams(pydantic.BaseModel):
 
 class Indentdryout_Get_Dried_Out_RoParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

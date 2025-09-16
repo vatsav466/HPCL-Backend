@@ -627,17 +627,34 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         stats[rec['present_stage']] += 1
         if str(rec['sap_id']) in dealer_tt:
             dealer_tt_count['Dealer TT'] += 1
-    dry_out_aging = await dry_out_analysis.get_dryout_aging(conditions)
+    dry_out_aging = {}
+    if data.bu_type == 'ro':
+        dry_out_aging = await dry_out_analysis.get_dryout_aging(conditions)
     less_than_2_days = dry_out_aging.get("less_than_2_days", 0)
     from_3_to_7_days = dry_out_aging.get("from_3_to_7_days", 0)
     from_8_to_15_days = dry_out_aging.get("from_8_to_15_days", 0)
     more_than_15_days = dry_out_aging.get("more_than_15_days", 0)
     indent_not_raised_count = less_than_2_days + from_3_to_7_days + from_8_to_15_days + more_than_15_days
-    count_50_klm = await dry_out_analysis.get_ro_count_less_50(conditions)
-    tar_analysis = await dry_out_analysis.get_tar_analysis(conditions)
-    dealer_truck_count = await dry_out_analysis.get_tt_counts(tt_count_filter)
-    closed_outlet = await dry_out_analysis.get_closed_outlet(dry_out_in_days=dry_out_in_days_query)
-    nozzle_sales = await dry_out_analysis.get_nozzle_sales(dry_out_in_days=dry_out_in_days_query)
+
+    count_50_klm = 0
+    if data.bu_type == 'ro':
+        count_50_klm = await dry_out_analysis.get_ro_count_less_50(conditions)
+
+    tar_analysis = {}
+    if data.bu_type == 'ro':
+        tar_analysis = await dry_out_analysis.get_tar_analysis(conditions)
+
+    dealer_truck_count = {}
+    if data.bu_type == 'sod':
+        dealer_truck_count = await dry_out_analysis.get_tt_counts(tt_count_filter)
+
+    closed_outlet = 0
+    if data.bu_type == 'ro':
+        closed_outlet = await dry_out_analysis.get_closed_outlet(dry_out_in_days=dry_out_in_days_query)
+
+    nozzle_sales = 0
+    if data.bu_type == 'ro':
+        nozzle_sales = await dry_out_analysis.get_nozzle_sales(dry_out_in_days=dry_out_in_days_query)
 
     stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
               "group": top_x_axis[key - 1]['group']}
@@ -719,7 +736,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     carry_fwd_indent = {"section": "Carry Fwd Indent", "value": 0, "serial": 12, "condition": "=", "group": "carry_fwd_indent"}
     ist = pytz.timezone('Asia/Kolkata')
     carry_fwd_indent_date = datetime.datetime.now(ist).strftime("%H")
-    if int(carry_fwd_indent_date) > 0:
+    if int(carry_fwd_indent_date) > 0 and data.bu_type == 'sod':
         # list_of_carry_fwd_indents = await dry_out_analysis.get_carry_fwd_indent(get_only_dry_out_ro=False)
         carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
         carry_fwd_data = pd.DataFrame(carry_fwd_data)
@@ -790,7 +807,9 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         }])
     # ro_not_in_ims_count = await dry_out_analysis.ro_not_in_ims()
     # atg_ack = await dry_out_analysis.get_atg_ack(sap_id="", product_code="")
-    atg_ack = await dry_out_analysis.get_atg_ack_count(dry_out_in_days=str(dry_out_in_days_query))
+    atg_ack = 0
+    if data.bu_type == 'sod':
+        atg_ack = await dry_out_analysis.get_atg_ack_count(dry_out_in_days=str(dry_out_in_days_query))
     # stats.append({"section": "RO Not In IMS", "value": len(ro_not_in_ims_count), "serial": 18, "condition": "=", "group": "ro_not_in_ims"})
     stats = sorted(stats, key=lambda x: x['serial'])
     updated_stats = []

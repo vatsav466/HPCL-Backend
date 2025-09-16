@@ -1083,6 +1083,7 @@ Model IndentDryOut {
 
     Action=> get_dried_out_ro {
         filters list IndentDryOutDataFilters
+        bu_type optional str
     }
 
     Action=> get_dried_out_ro_data {
