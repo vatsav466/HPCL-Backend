@@ -344,7 +344,8 @@ alert_action = {
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
+                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
+                              "Planning Officer SOD", "Location In-Charge SOD", "Zonal Transport Officer SOD"]
                 },
                 "Approve": {
                     "name": "Approved",
