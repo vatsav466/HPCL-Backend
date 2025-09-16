@@ -1926,12 +1926,12 @@ async def mark_as_false_for_potential_records(potential_records):
         print("update_query: ", update_query)
         await hpcl_ceg_model.Alerts.update_by_query(update_query)
 
-async def remove_ro_not_available_in_cris():
+async def remove_ro_not_available_in_cris(dry_out_in_days='1'):
     records = await dry_out_diff()
     records = records[
         (records['_merge'] == 'right_only') &
         (records['mark_as_false'].isin(["True", "TRUE", True])) &
-        (records['dry_out_in_days'] == '1')
+        (records['dry_out_in_days'] == str(dry_out_in_days))
     ]
     print("records: ", records)
     for record in records.to_dict(orient='records'):
