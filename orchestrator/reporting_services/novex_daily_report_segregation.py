@@ -211,9 +211,11 @@ def process_performance_data(data, limit=3):
 async def fetch_sales_data():
     present_month = int(datetime.datetime.now(datetime.timezone.utc).strftime("%m"))
     sales_data = {}
+
     # Filter for yesterday's data
     yesterday_date = helpers.get_time_stamp_by_delta(datetime.datetime.now(datetime.timezone.utc), days=1,
                                                      with_month_start_day=False, date_time_format="%Y-%m-%d")
+
     final_data = {"sales_data": sales_data}
 
     sbu_mapping = {'': '', "Retail": 'retail', 'LPG': 'lpg', 'I&C': 'i_c', 'Lubes': 'lubes', 'Aviation': 'aviation',
@@ -309,8 +311,6 @@ async def fetch_sales_data():
         else:
             final_data["sales_data"].update(sbu_sales_data)
     return final_data
-
-
     
 
 def dict_to_object(d):
@@ -816,31 +816,60 @@ async def publish_daily_novex_status_email():
     # print("status_data :", json.dumps(status_data))
     # print("-" * 50)
     # print("-------->status_data",status_data)
-    await send_notification(status_data)
+    await send_notification(
+        template_name="seg1.html",
+        to_recipients=["debeshp@hpcl.in","sanjayk@hpcl.in"],
+        cc_recipients=["gargam@hpcl.in","vikas.kaushal@hpcl.in","amitra@hpcl.in"],
+        bcc_recipients=["cvmallinath@hpcl.in"],
+        notification_data=status_data
+    )
+    await send_notification(
+        template_name="seg2.html",
+        to_recipients=["abalaji@hpcl.in"],
+        cc_recipients=["anujjain@hpcl.in","shubhra.Narayan@hpcl.in"],
+        bcc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
+        notification_data=status_data
+    )
+    await send_notification(
+        template_name="seg3.html",
+        to_recipients=["adsul@hpcl.in"],
+        cc_recipients=["kapild@hpcl.in"],
+        bcc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
+        notification_data=status_data
+    )
+    await send_notification(
+        template_name="seg4.html",
+        to_recipients=["dramarao@hpcl.in"],
+        cc_recipients=["subodh@hpcl.in"],
+        bcc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
+        notification_data=status_data
+    )
 
 
-async def send_notification(notification_data):
-    template_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..', 'orchestrator', 'reporting_services',
-                                 'templates', 'seg1.html')
+async def send_notification(template_name, to_recipients, cc_recipients=None, bcc_recipients=None, notification_data=None):
+    template_path = os.path.join(
+        os.path.dirname(hpcl_ceg_model.__file__),
+        '..', 'orchestrator', 'reporting_services',
+        'templates', template_name
+        )
     with open(template_path, 'r') as f:
         template_data = jinja2.Template(f.read())
     final_data = template_data.render(**notification_data)
 
-    with open(f'/tmp/seg1.html', 'w') as f:
+    tmp_file = f"/tmp/{template_name}"
+    with open(tmp_file, 'w') as f:
         f.write(final_data)
     # Send email
     ins = await notification_factory.get_notification_module("email")
-    for recipient in [
-        ["cvmallinath@hpcl.in","purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in", "adityapandey@hpcl.in"],
-        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"]
-        ]:
-        await ins.publish_message(
-            subject="Novex Daily Report",
-            recipients=recipient,
-            html_content=True,
-            body=final_data,
-            force_send=True
-        )
+    await ins.publish_message(
+        subject="Novex Daily Report",
+        recipients=to_recipients,
+        cc_recipients=cc_recipients or [],
+        bcc_recipients=bcc_recipients or [],
+        html_content=True,
+        body=final_data,
+        force_send=True
+    )
 
 if __name__ == "__main__":
     asyncio.run(publish_daily_novex_status_email())
