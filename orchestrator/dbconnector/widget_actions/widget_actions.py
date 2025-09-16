@@ -3,7 +3,14 @@ import re
 import polars as pl
 pl.Config(set_fmt_float="full")
 from orchestrator.dbconnector import global_analytics
-from orchestrator.dbconnector.widget_actions import lpg_plant, lpg_cdcms, model_mapping, lpg_plant_queries, lpg_plant_operations
+from orchestrator.dbconnector.widget_actions import (
+    lpg_plant, 
+    lpg_cdcms, 
+    model_mapping, 
+    vts_analytics,
+    lpg_plant_queries, 
+    lpg_plant_operations,    
+    )
 import hpcl_ceg_model
 
 lpg_dashboard_actions = [
@@ -249,6 +256,9 @@ class WidgetActions:
                 module = lpg_plant_operations.LPGOperationsActions
                 lp_operation = True
                 print(f"Function {func_name} found in LPGOperationsActions.")
+            elif hasattr(vts_analytics.VTSAnalyticsActions, func_name):
+                module = vts_analytics.VTSAnalyticsActions
+                print(f"Function {func_name} found in VTSAnalyticsActions.")
             elif hasattr(global_analytics.GlobalAnalytics, func_name):
                 module = global_analytics.GlobalAnalytics
                 print(f"Function {func_name} found in GlobalAnalytics.")
