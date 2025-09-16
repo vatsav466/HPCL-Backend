@@ -24,17 +24,25 @@ from hpcl_ceg_ticketing_model import (
     Ticketing_Delete_File_From_CommentParams
 
 )
-import os
-from fastapi import UploadFile, File, Depends
-from datetime import datetime
+import os, uuid
+import fastapi
+import traceback
 import urdhva_base
 import api_manager
 import hpcl_ceg_model
-import fastapi
-import traceback
-from hpcl_ceg_enum import AlertActionType
+from dateutil import parser
 from datetime import datetime
+from hpcl_ceg_enum import AlertActionType
+from fastapi import UploadFile, File, Depends
 from orchestrator.alerting import alert_helper
+from fastapi import APIRouter, HTTPException
+from urdhva_base.queryparams import QueryParams
+from fastapi import UploadFile, File, Form
+from hpcl_ceg_ticketing_model import Ticketing_Delete_File_AttachmentParams
+from hpcl_ceg_ticketing_model import Ticketing_Merge_TicketParams
+
+
+
 router = fastapi.APIRouter(prefix='/ticketing')
 
 
@@ -53,7 +61,7 @@ async def ticketing_get_ticket(data: Ticketing_Get_TicketParams):
         print(f"Error in getting ticket: {e}, InputData {data.dict()}, Traceback: {traceback.format_exc()}")
         return False, "Error in getting ticket"
 
-from dateutil import parser
+# Action create_ticket
 @router.post('/create_ticket', tags=['Ticketing'])
 async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     """
@@ -389,9 +397,8 @@ async def ticketing_delete_ticket(data: Ticketing_Delete_TicketParams):
     await Ticketing.delete(data.delete_id)
     return {"status": True, "message": "Ticket deleted successfully", "data": data.delete_id}
 
-from fastapi import UploadFile, File, Form
-import os, uuid
-# # Action attach_file
+
+# Action attach_file
 @router.post('/attach_file', tags=['Ticketing'])
 async def ticketing_attach_file(
     ticket_id:  Optional[str] = Form(...),
@@ -445,10 +452,7 @@ async def ticketing_attach_file(
     except Exception as e:
         return {"status": False, "message": f"Error saving file: {str(e)}"}
 
-from fastapi import APIRouter, HTTPException
-from hpcl_ceg_ticketing_model import Ticketing_Delete_File_AttachmentParams
-from urdhva_base.queryparams import QueryParams
-import os
+# Action delete_file_attachment
 @router.post('/delete_file_attachment', tags=['Ticketing'])
 async def ticketing_delete_file_attachment(data: Ticketing_Delete_File_AttachmentParams):
     ticket_id = data.ticket_id
@@ -929,8 +933,7 @@ async def ticketing_delete_file_from_comment(data: Ticketing_Delete_File_From_Co
             "message": f"Error clearing attachment from comment: {str(e)}"
         }
 
-
-from hpcl_ceg_ticketing_model import Ticketing_Merge_TicketParams
+# Action merge_ticket
 @router.post('/merge_ticket', tags=['Ticketing'])
 async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
     ticket_id = data.ticket_id  # main ticket internal ID
@@ -1022,5 +1025,4 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
         "message": "Tickets merged successfully",
         "ticket": main_ticket
     }
-
 
