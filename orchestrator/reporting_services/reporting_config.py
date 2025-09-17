@@ -106,7 +106,7 @@ location_configs = [
                 SELECT
                     DISTINCT PLT.PLANT, zca.SALES_ORG, zps.ZLOC_TYPE, PLT.PLANT_DESC,
                     PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1, PLT.STREET,PLT.STR_SUPPL1,
-                    PLT.REPORTING_OFFICE, PLT.STATE_NAME
+                    zps.REPORTING_OFFICE, PLT.STATE_NAME
                 FROM
                     EDW_DC_PLANT PLT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
@@ -133,7 +133,7 @@ location_configs = [
                 SELECT
                     DISTINCT PLT.PLANT, zca.SALES_ORG, zps.ZLOC_TYPE, PLT.PLANT_DESC,
                     PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1, PLT.STREET,PLT.STR_SUPPL1,
-                    PLT.REPORTING_OFFICE, PLT.STATE_NAME
+                    zps.REPORTING_OFFICE, PLT.STATE_NAME
                 FROM
                     EDW_DC_PLANT PLT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
