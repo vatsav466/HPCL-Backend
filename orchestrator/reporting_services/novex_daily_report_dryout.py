@@ -717,6 +717,7 @@ async def lpg_top_bottom_score_plants():
                     WHERE bu = 'LPG'
                     AND zone!=''
                     AND region!=''
+                    AND timestamp::DATE = CURRENT_DATE
                     AND sap_id in ({sap_ids_str})
                     AND name NOT ILIKE '%RO%'
                     ORDER BY score DESC
@@ -731,6 +732,7 @@ async def lpg_top_bottom_score_plants():
                     WHERE bu = 'LPG'
                     AND zone!=''
                     AND region!=''
+                    AND timestamp::DATE = CURRENT_DATE
                     AND sap_id in ({sap_ids_str})
                     AND name NOT ILIKE '%RO%'
                     ORDER BY score ASC

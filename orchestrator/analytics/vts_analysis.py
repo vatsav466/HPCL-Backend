@@ -374,6 +374,56 @@ async def last_closed_at(tt_number: str):
         return vts_alert_data['data'][0]['updated_at']
     return None
 
+async def last_opened_at(tt_number: str):
+    query = f"vehicle_number = '{tt_number}' and alert_status != 'Close' and alert_section = 'VTS'"
+    print("query: ", query)
+    vts_alert_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query,limit=5),resp_type='plain')
+    #print("vts_alert_data: ", vts_alert_data)
+    if len(vts_alert_data['data']):
+        return vts_alert_data['data'][0]['created_at'], vts_alert_data['data'][0]['id']
+    return None, None
+
+async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
+    vts_map = vts_mapping.vts_interlock_mapping
+    instance_mapping = vts_instance_mapping.instance_mapping
+    start_date, end_date = await va_analysis.get_period_datetime(period='fortnight')
+    start_date = start_date.strftime("%Y-%m-%d")
+    end_date = end_date.strftime("%Y-%m-%d")
+    vts_opened_alert_data, alert_id = await last_opened_at(tt_number)
+    vts_alert_data = []
+    if vts_opened_alert_data:
+        last_updated_at_ist = vts_opened_alert_data + datetime.timedelta(hours=5, minutes=30)
+        start_date_ = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date_ = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+        if start_date_ <= last_updated_at_ist.date() <= end_date_:
+            query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_alert_history where tl_number = '{tt_number}' "
+                    f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and created_at > '{vts_opened_alert_data}'")
+            vts_alert_data = await hpcl_ceg_model.VtsAlertHistory.get_aggr_data(query, limit=0)
+        else:
+            query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_alert_history where tl_number = '{tt_number}' "
+                    f"and vts_end_datetime::date between '{start_date}' and '{end_date}'")
+            vts_alert_data = await hpcl_ceg_model.VtsAlertHistory.get_aggr_data(query, limit=0)
+    else:
+        query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_alert_history where tl_number = '{tt_number}' "
+                f"and vts_end_datetime::date between '{start_date}' and '{end_date}'")
+        vts_alert_data = await hpcl_ceg_model.VtsAlertHistory.get_aggr_data(query, limit=0)
+    if not vts_alert_data:
+        return False
+    vts_alert_data = vts_alert_data.get("data", [])
+    print("vts_alert_data: ", vts_alert_data)
+    all_violations = [violation for d in vts_alert_data for violation in d["violation_type"]]
+    violations_ids = [str(d["id"]) for d in vts_alert_data]
+    violation_counts = dict(Counter(all_violations))
+    instance = {}
+    violation_name = ""
+    current_instance = await get_instance(tt_number,sap_id,bu)
+    instance_data = instance_mapping[bu].get(current_instance,{})
+    for key, violation_data in instance_data.items():
+        if key in violation_counts.keys() and violation_counts[key] > violation_data['violation_count']:
+            instance = vts_map[key]['alerting_rules'][current_instance]
+            instance['severity'] = vts_map[key]["severity"]
+            violation_name = key
+    return instance, violation_name, violations_ids, alert_id
 
 async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
     vts_map = vts_mapping.vts_interlock_mapping
@@ -452,6 +502,50 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
 
     return instance, violation_name, violations_ids
 
+async def update_vts_instance(alert_data):
+    instance_data, violation_name, vts_alert_history_ids, alert_id = await get_updated_vts_instance(alert_data['tl_number'],alert_data['location_id'],alert_data['location_type'])
+    if not instance_data:
+        logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
+        return
+    alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+    if "_sa_instance_state" in alert_data.keys():
+        del alert_data["_sa_instance_state"]
+
+    alert_message = (
+        f"Instance Updated for this Vehicle Number: {alert_data['vehicle_number']} from {alert_data['device_id']} to {instance_data['instance']} wiht violation {violation_name}"
+        )    
+    alert_data["action_msg"] = alert_message
+    alert_data["action_type"] = "Blocked"
+    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+
+    vehicle_blocked_end_date = (
+        alert_data['vehicle_blocked_start_date'] +
+        datetime.timedelta(days=instance_data['block_duration'])
+        )
+    
+    await hpcl_ceg_model.Alerts(**{"id": alert_data['id'], 
+                                        "vehicle_blocked_end_date": vehicle_blocked_end_date,
+                                        "device_id": instance_data['instance'],
+                                        "device_name": instance_data['instance']}).modify()
+    
+    if instance_data['instance'] == 'Instance - 1':
+        query = (f"update vts_truck_details set instance_1 = 1, truck_status = 'BLOCKED', block_start_datetime = '{alert_data['vehicle_blocked_start_date']}', block_end_datetime = '{vehicle_blocked_end_date}' "
+                 f"where truck_regno = '{alert_data['vehicle_number']}'")
+    if instance_data['instance'] == 'Instance - 2':
+        query = (f"update vts_truck_details set instance_2 = 1, truck_status = 'BLOCKED', block_start_datetime = '{alert_data['vehicle_blocked_start_date']}', block_end_datetime = '{vehicle_blocked_end_date}' "
+                 f"where truck_regno = '{alert_data['vehicle_number']}'")
+    if instance_data['instance'] == 'Instance - 3':
+        query = (f"update vts_truck_details set instance_3 = 1, truck_status = 'BLOCKED', block_start_datetime = '{alert_data['vehicle_blocked_start_date']}', block_end_datetime = '{vehicle_blocked_end_date}' "
+                 f"where truck_regno = '{alert_data['vehicle_number']}'")
+    if query:
+        await hpcl_ceg_model.VtsTruckDetails.update_by_query(query)
+
+    await update_alert_id_to_vts_history(alert_id=str(alert_data['id']), vts_alert_id=vts_alert_history_ids)
+
+    return True
+    
 async def create_vts_alerts(enriched_data):
     try:
         for entry in enriched_data:
@@ -462,6 +556,8 @@ async def create_vts_alerts(enriched_data):
             await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
             if not await is_alert_exists(entry['tl_number']):
                 await alert_manager.create_alert({**entry, "alert_type": "VTS"})
+            else:
+                await update_vts_instance(entry)
     except Exception as e:
         logger.error(f"Error creating VTS Alert : {str(e)}")
 

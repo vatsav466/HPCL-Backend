@@ -1464,6 +1464,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     transporter_code: Mapped[typing.Optional[str]] = mapped_column("transporter_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     vehicle_blocked_start_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vehicle_blocked_start_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     vehicle_blocked_end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vehicle_blocked_end_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    vehicle_unblocked_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vehicle_unblocked_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     mark_as_false: Mapped[typing.Optional[bool]] = mapped_column("mark_as_false", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     vts_alert_history_ids: Mapped[typing.Optional[typing.List[str]]] = mapped_column("vts_alert_history_ids", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
@@ -1553,6 +1554,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     transporter_code: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_blocked_start_date: typing.Optional[datetime.datetime] | None = None
     vehicle_blocked_end_date: typing.Optional[datetime.datetime] | None = None
+    vehicle_unblocked_date: typing.Optional[datetime.datetime] | None = None
     mark_as_false: typing.Optional[bool] = pydantic.Field(False, )
     vts_alert_history_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
@@ -1651,6 +1653,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     transporter_code: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_blocked_start_date: typing.Optional[datetime.datetime] | None = None
     vehicle_blocked_end_date: typing.Optional[datetime.datetime] | None = None
+    vehicle_unblocked_date: typing.Optional[datetime.datetime] | None = None
     mark_as_false: typing.Optional[bool] = pydantic.Field(False, )
     vts_alert_history_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 

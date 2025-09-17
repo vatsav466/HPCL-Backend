@@ -356,6 +356,11 @@ alert_action = {
                     "name": "Rejected",
                     "close_alert": False,
                     "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
+                },
+                "Send It Back": {
+                    "name": "SendItBack",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
                 }
             },
             "rca_reason": [
