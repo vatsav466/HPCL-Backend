@@ -85,6 +85,7 @@ class DryoutCollector:
         records = pl.DataFrame(records)
         # records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
         records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
+        # potential_records = records.filter(pl.col('status') > 2)
         records = records.filter(pl.col('status') <= 2)
         records = cls.assign_values_to_dataframe(records,
                                                  list(connection_mapping.camunda_listener_mapping.values()))
@@ -195,6 +196,7 @@ class DryoutCollector:
                     f"WHERE id IN {ids_text}"
                 )
                 await hpcl_ceg_model.DryOutHistory.update_by_query(query)
+        # await dry_out_analysis.mark_as_false_for_potential_records(potential_records)
 
 if __name__ == "__main__":
     print(f"Executing dry-out alert creation at {datetime.datetime.now(datetime.timezone.utc)}")
