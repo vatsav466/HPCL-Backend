@@ -245,6 +245,7 @@ class WidgetActions:
             # Debugging: Log the input function name
             print(f"Received func_name: {func_name}")
             lp_operation = False
+            vts = False
             # Determine the module containing the function
             if hasattr(lpg_plant.LPGPlantActions, func_name):
                 module = lpg_plant.LPGPlantActions
@@ -258,6 +259,7 @@ class WidgetActions:
                 print(f"Function {func_name} found in LPGOperationsActions.")
             elif hasattr(vts_analytics.VTSAnalyticsActions, func_name):
                 module = vts_analytics.VTSAnalyticsActions
+                vts = True
                 print(f"Function {func_name} found in VTSAnalyticsActions.")
             elif hasattr(global_analytics.GlobalAnalytics, func_name):
                 module = global_analytics.GlobalAnalytics
@@ -279,6 +281,8 @@ class WidgetActions:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, resp_level=resp_level)
             elif lp_operation:
                 res = await func(data=payload)
+            elif vts:
+                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, payload=payload)
             else:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
             return res

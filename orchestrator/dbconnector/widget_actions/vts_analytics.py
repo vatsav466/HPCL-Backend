@@ -9,7 +9,7 @@ from collections import defaultdict
 class VTSAnalyticsActions:
 
     @staticmethod
-    async def card_chart(filters, cross_filters, drill_state):
+    async def card_chart(filters, cross_filters, drill_state, payload):
         try:
             # Get base query
             card_query = vts_query.vts_query.get(drill_state.split(",")[0])
@@ -88,15 +88,30 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
                 
+   
     @staticmethod     
-    async def location_level_voilation_breakup(filters, cross_filters, drill_state):
+    async def location_level_voilation_breakup(filters, cross_filters, drill_state, payload):
         try:
+            # Get query type from payload, default to original query
+            if payload and payload.get("query_type", None):
+                query_type = payload["query_type"]  
+            # Get the base query from vts_query
+            base_query = vts_query.vts_query.get(query_type)
+            if not base_query:
+                print(f"Error: Query key '{query_type}' not found.")
+                return {"status": False, "message": "Query not found", "data": []}
+            
             # Step 1: Determine the grouping column
             if drill_state and "location_name" in drill_state.lower():
                 group_by_column = "location_name"
             elif drill_state and "zone" in drill_state.lower():
                 group_by_column = "zone"
             
+            
+            # Step 2: Format the base query with group_by_column first
+            query = base_query.format(group_by_column=group_by_column)
+            
+            # Step 3: Build conditions
             all_conditions = []
             
             if filters:
@@ -131,40 +146,52 @@ class VTSAnalyticsActions:
                         else:
                             all_conditions.append(f"{rec.key} IN {tuple(values)}")
 
-            # Step 3: Build the `additional_where` clause from the combined conditions
-            additional_where = ""
+            # Step 4: Add WHERE conditions to the formatted query
             if all_conditions:
-                additional_where = " AND " + " AND ".join(all_conditions)
+                if "group by" in query.lower():
+                    idx = query.lower().index("group by")
+                    base_part = query[:idx].strip()
+                    group_by_part = query[idx:].strip()
 
-            base_query = vts_query.vts_query.get("location_level_voilation_breakup")
-            if not base_query:
-                # Handle the error, e.g., by logging a message or raising a specific exception
-                print("Error: Query key 'location_level_voilation_breakup' not found.")
-                return {"status": False, "message": "Query not found", "data": []}
+                    if "where" not in base_part.lower():
+                        query = base_part + " WHERE " + " AND ".join(all_conditions)
+                    else:
+                        query = base_part + " AND " + " AND ".join(all_conditions)
 
-        
-            card_query = base_query.format(
-                group_by_column=group_by_column,
-                additional_where=additional_where
-            )
+                    query += " " + group_by_part
+                else:
+                    if "where" not in query.lower():
+                        query += " WHERE "
+                    else:
+                        query += " AND "
+                    query += " AND ".join(all_conditions)
 
             print("-" * 50)
-            print("card_query ---->", card_query)
+            print("Final query ---->", query)
             
-            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=card_query, limit=0)
+            # Step 5: Execute query
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
             resp = resp.get("data", [])
             resp = pd.DataFrame(resp)
+            
             nested_data = defaultdict(list)
             for _, row in resp.iterrows():
-                nested_data[row['group_key']].append({
-                    "violation_type": row['violation_type'],
-                    "count": row['count']
-                })
-            
+                group_key = row[group_by_column]
+                if not group_key or str(group_key).strip() == "":
+                    continue
+        
+                for col in resp.columns:
+                    if col != group_by_column:
+                            
+                        nested_data[group_key].append({
+                            "violation_type": col,
+                            "count" : row[col]
+                        })            
+                    
             return {"status": True, "message": "success", "data": dict(nested_data)}
-
+      
         except Exception as e:
             print("Exception in Location Level Violation Breakup:", str(e))
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
-    
+        
