@@ -856,7 +856,7 @@ async def sync_user_roles():
                     }
                 ]
             },
-{
+            {
                 "menu_name": "Sales Performance",
                 "allowed_sub_menus": [
                     {
@@ -1131,6 +1131,19 @@ async def sync_user_roles():
                         "title": "LPG Analytics"
                     }
                 ]
+            },
+            {
+                "menu_name": "Sales Performance",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Performance",
+                        "allowed_sub_menus": [
+                        {
+                        "title": "LPG Insights"
+                        }
+                        ]
+                    }
+                ]
             }
         ],
         "name": "LPG",
@@ -1184,7 +1197,7 @@ async def sync_user_roles():
                     }
                 ]
             },
-{
+            {
                 "menu_name": "Sales Performance",
                 "allowed_sub_menus": [
                     {
@@ -1193,7 +1206,7 @@ async def sync_user_roles():
                         {
                         "title": "LPG Insights"
                         }
-          ]
+                        ]
                     }
                 ]
             }

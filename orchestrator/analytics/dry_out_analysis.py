@@ -1904,3 +1904,38 @@ async def _get_distinct_plants(bu, zone):
     resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
     resp = pd.DataFrame(resp.get("data", []))
     return resp['sap_id'].unique().tolist() if 'sap_id' in resp.columns else []
+
+async def mark_as_false_for_potential_records(potential_records):
+    query = ("select id, sap_id, product_code from alerts where "
+             "interlock_name = 'Dry Out Each Indent Wise MainFlow' and "
+             "mark_as_false = true and alert_status != 'Close' ")
+    resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    resp = pd.DataFrame(resp.get("data", []))
+    potential_records = potential_records.to_pandas()
+    records = pd.merge(
+        left=resp.drop_duplicates(subset=['sap_id', 'product_code'], keep='first'),
+        right=potential_records, left_on=['sap_id', 'product_code'],
+        right_on=['rosapcode', 'product_no'], how='left', indicator=True
+    )
+    records = records[records['_merge'] == 'both']
+    print("records: ", records)
+    del records['_merge']
+    for record in records.to_dict(orient='records'):
+        # update_query = f"""update alerts set mark_as_false=false and dry_out_in_days = '{int(record["status"])}' where id = '{record["id"]}' """
+        update_query = f"""update alerts set mark_as_false=false where id = '{record["id"]}' """
+        print("update_query: ", update_query)
+        await hpcl_ceg_model.Alerts.update_by_query(update_query)
+
+async def remove_ro_not_available_in_cris(dry_out_in_days='1'):
+    records = await dry_out_diff()
+    records = records[
+        (records['_merge'] == 'right_only') &
+        (records['mark_as_false'].isin(["True", "TRUE", True])) &
+        (records['dry_out_in_days'] == str(dry_out_in_days))
+    ]
+    print("records: ", records)
+    for record in records.to_dict(orient='records'):
+        # update_query = f"""update alerts set mark_as_false=false and dry_out_in_days = '{int(record["status"])}' where id = '{record["id"]}' """
+        update_query = f"""update alerts set mark_as_false=false where id = '{record["id"]}' """
+        print("update_query: ", update_query)
+        await hpcl_ceg_model.Alerts.update_by_query(update_query)
