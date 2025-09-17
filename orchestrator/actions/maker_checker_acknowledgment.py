@@ -20,11 +20,13 @@ class MakerCheckerAcknowledgment:
         if "_sa_instance_state" in alert_data.keys():
             del alert_data["_sa_instance_state"]
         
-        rpt = urdhva_base.context.context.get("rpt", {})
+        # rpt = urdhva_base.context.context.get("rpt", {})
 
-        if rpt:
-            role = ", ".join(map(str, rpt.get('novex_role')))
-            roles = f"{rpt.get('username')} ({role})"
+        # if rpt:
+        #     role = ", ".join(map(str, rpt.get('novex_role')))
+        #     roles = f"{rpt.get('username')} ({role})"
+
+        roles = ", ".join(f"'{roles_name}'" for roles_name in alert_data["assigned_user_roles"])
 
         if params.get('vts_alert_justified','') == 'checker':
             alert_message = (
