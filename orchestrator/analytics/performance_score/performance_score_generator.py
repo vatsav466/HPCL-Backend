@@ -30,12 +30,12 @@ async def generate_performance_score(bu, location_id=None):
     locations = []
     required_keys = ['sap_id', 'zone', 'region', 'name']
     if not location_id:
-        query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}'"""
+        query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}' AND name not ilike '%import%'"""
     else:
         location_id = [location_id] if isinstance(location_id, str) else location_id
         location_id = ", ".join(f"'{value}'" for value in location_id)
-        query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}' and 
-        sap_id in ({location_id})"""
+        query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}' AND 
+        sap_id in ({location_id}) AND name not ilike '%import%'"""
     limit = 1000
     skip = 0
 
