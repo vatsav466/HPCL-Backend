@@ -381,7 +381,7 @@ class AlertAction:
                         "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert",
                         "AcceptClose": "accept_close", "InvalidAlert": "invalid_alert", "FalseAlert": "false_alert", "ValidAlert": "valid_alert",
                         "Blocked": "block_alert", "UnBlocked": "unblock_alert", "Interrupt": "interrupt_alert", "Request": "request_alert", 
-                        "Maintenance": "maintenance_alert"}
+                        "Maintenance": "maintenance_alert","SendItBack": "send_it_back"}
         event_tag_map = {"Justification": "is_justify", "Approved": "is_approved", "AcceptClose": "accept", "InvalidAlert": "invalid"}
         alert_id = input_data['alert_id']
         if input_data['doc_link']:
@@ -899,3 +899,13 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "Request")
+    
+    @classmethod
+    async def send_it_back(cls, input_data, alert_data):
+        """
+        Function to justify an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "SendItBack")

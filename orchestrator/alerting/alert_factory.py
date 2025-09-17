@@ -154,6 +154,7 @@ class AlertFactory:
                                                         'vehicle_blocked_end_date': alert_data.get("vehicle_blocked_end_date", None),
                                                         'dry_out_start_time': alert_data.get("dry_out_start_time", None),
                                                         'intra_day_dry_out_start_time': alert_data.get("intra_day_dry_out_start_time", None),
+                                                        'vehicle_unblocked_date': alert_data.get("vehicle_unblocked_date", None),
                                                         'dry_out_end_time': alert_data.get("dry_out_end_time",None),
                                                         'intra_day_dry_out_end_time': alert_data.get("intra_day_dry_out_end_time",None),
                                                         'origin_altid': alert_data.get('origin_altid',''),
