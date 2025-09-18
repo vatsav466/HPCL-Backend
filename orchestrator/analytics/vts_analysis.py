@@ -380,7 +380,15 @@ async def last_opened_at(tt_number: str):
     vts_alert_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query,limit=5),resp_type='plain')
     #print("vts_alert_data: ", vts_alert_data)
     if len(vts_alert_data['data']):
-        return vts_alert_data['data'][0]['created_at'], vts_alert_data['data'][0]['id']
+        alert_history = list(reversed(vts_alert_data['data'][0]['alert_history']))
+        created_at = vts_alert_data['data'][0]['created_at']
+        for record in alert_history:
+            action_msg = record.get("action_msg", "")
+            if action_msg.startswith("Instance Updated for this Vehicle Number:"):
+                created_at = datetime.datetime.fromisoformat(record.get("processed_time"))
+                #print("First processed_time:", created_at)
+                break
+        return created_at, vts_alert_data['data'][0]['id']
     return None, None
 
 async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
