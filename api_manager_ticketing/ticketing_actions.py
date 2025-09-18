@@ -68,7 +68,9 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     Create a new ticket
     """
     rpt = urdhva_base.context.context.get('rpt', None)
+    print("rpt",rpt)
     user_name = rpt.get('user_name') if rpt else None
+    
 
     tdata = data.model_dump()
 
@@ -389,8 +391,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
                 "ticket_history": updated_history
             }
         }
-
-
+    
 # Action delete_ticket
 @router.post('/delete_ticket', tags=['Ticketing'])
 async def ticketing_delete_ticket(data: Ticketing_Delete_TicketParams):
@@ -401,9 +402,9 @@ async def ticketing_delete_ticket(data: Ticketing_Delete_TicketParams):
 # Action attach_file
 @router.post('/attach_file', tags=['Ticketing'])
 async def ticketing_attach_file(
-    ticket_id:  Optional[str] = Form(...),
-    tid:  Optional[str] = Form(...),
-    uploadfile: UploadFile = File(...)
+    ticket_id:  Optional[str] = Form(None),
+    tid:  Optional[str] = Form(None),
+    uploadfile: UploadFile = File(None)
 ):
     try:
         # Only create the directory if it doesn't exist
@@ -420,21 +421,24 @@ async def ticketing_attach_file(
         with open(temp_file_path, "wb") as file_to_attach:
             file_to_attach.write(await uploadfile.read())
 
+        print(" ticket_id --> ", ticket_id)
+        print(" tid --> ", tid)
         # Query ticket
-        query = f"ticket_id='{ticket_id}' and id = {tid}"  # tid ==> id column
-        params = urdhva_base.queryparams.QueryParams(q=query)
-        result = await Ticketing.get_all(params, resp_type='plain')
-        resp = result.get("data", [])
-        if not resp:
-            return {"status": False, "message": "Ticket not found"}
+        if ticket_id and tid:
+            query = f"ticket_id='{ticket_id}' and id = {tid}"  # tid ==> id column
+            params = urdhva_base.queryparams.QueryParams(q=query)
+            result = await Ticketing.get_all(params, resp_type='plain')
+            resp = result.get("data", [])
+            if not resp:
+                return {"status": False, "message": "Ticket not found"}
 
-        # Attach file to ticket (must be a list)
-        await Ticketing(
-            **{
-                "id": resp[0].get("id"),
-                "file_attachment": [temp_file_path]
-            }
-        ).modify()
+            # Attach file to ticket (must be a list)
+            await Ticketing(
+                **{
+                    "id": resp[0].get("id"),
+                    "file_attachment": [temp_file_path]
+                }
+            ).modify()
         
 
         # Generate UUID for file
