@@ -511,6 +511,7 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
     return instance, violation_name, violations_ids
 
 async def update_vts_instance(alert_data):
+    vts_end_datetime = alert_data.get('vts_end_datetime',None)
     instance_data, violation_name, vts_alert_history_ids, alert_id = await get_updated_vts_instance(alert_data['tl_number'],alert_data['location_id'],alert_data['location_type'])
     if not instance_data:
         logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
@@ -536,6 +537,7 @@ async def update_vts_instance(alert_data):
     await hpcl_ceg_model.Alerts(**{"id": alert_data['id'], 
                                         "vehicle_blocked_end_date": vehicle_blocked_end_date,
                                         "device_id": instance_data['instance'],
+                                        "external_timestamp": vts_end_datetime,
                                         "device_name": instance_data['instance']}).modify()
     
     if instance_data['instance'] == 'Instance - 1':
