@@ -98,6 +98,9 @@ class AlertFactory:
                 alert_data['alert_id'] = alert_id
             unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
 
+            if alert_data.get("alert_section", bu) == 'VTS':
+                unique_id = await alert_helper.get_alert_unique_id(alert_data.get("alert_section"), sap_id, sop_id)
+
             # assign roles for emlock and ro alerts
             if alert_data.get("alert_section", bu) == 'EMLock':
                 assigned_user_roles = ["Planning Officer SOD"]
