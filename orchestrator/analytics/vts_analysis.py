@@ -371,7 +371,7 @@ async def last_closed_at(tt_number: str):
     vts_alert_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query,limit=5),resp_type='plain')
     #print("vts_alert_data: ", vts_alert_data)
     if len(vts_alert_data['data']):
-        return vts_alert_data['data'][0]['updated_at']
+        return vts_alert_data['data'][0]['closed_at']
     return None
 
 async def last_opened_at(tt_number: str):

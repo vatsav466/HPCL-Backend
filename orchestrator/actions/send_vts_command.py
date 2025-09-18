@@ -109,7 +109,7 @@ class SendVtsCommand:
             alert_message = (
                 f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Unblock, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to Unblock the Vehicle "
             )
-            vehicle_unblocked_date = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
+            vehicle_unblocked_date = datetime.datetime.now(tz=datetime.timezone.utc)
             alert_data["action_msg"] = alert_message
             alert_data["action_type"] = "VTS"
             await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
