@@ -9,7 +9,7 @@ from collections import defaultdict
 class VTSAnalyticsActions:
 
     @staticmethod
-    async def card_chart(filters, cross_filters, drill_state, payload):    
+    async def vts_card_chart(filters, cross_filters, drill_state, payload):    
 
         try:
             # Get base query
