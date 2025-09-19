@@ -118,7 +118,7 @@ class AlertFactory:
 
 
 
-            if alert_data.get("alert_section", bu) == 'VTS':
+            if alert_data.get("alert_section", "") == 'VTS':
                 unique_id = await alert_helper.get_alert_unique_id(alert_data.get("alert_section"), sap_id, sop_id)
 
             # assign roles for emlock and ro alerts
