@@ -14,6 +14,7 @@ from orchestrator.workflow.workflow_process import Camunda
 import orchestrator.analytics.vts_analysis as vts_analysis
 import cache_gateway.cache_api_actions as cache_api_actions
 import asyncio
+import httpx
 
 logger = urdhva_base.logger.Logger.getInstance('alert_factory_log')
 
@@ -93,10 +94,29 @@ class AlertFactory:
                               "location_name": location_data.get('name', '')})
 
             # Create Alert
-            alert_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id, alert_data.get('device_id'))
+            #alert_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id, alert_data.get('device_id'))
+            async with httpx.AsyncClient(verify=False) as client:
+                base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
+                resp = await client.get(f"{base_url}/api_cache/v1/get_unique_alert_id", params={"bu": bu, 
+                                                                                                "sap_id": sap_id,
+                                                                                                  "sop_id": sop_id, 
+                                                                                                  "device_id": alert_data.get('device_id')})
+                if resp.status_code // 100 == 2:
+                    alert_id = resp.text.strip('"')
+
             if not alert_data.get('alert_id'):
                 alert_data['alert_id'] = alert_id
-            unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
+            #unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
+            async with httpx.AsyncClient(verify=False) as client:
+                base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
+                resp = await client.get(f"{base_url}/api_cache/v1/get_unique_alert_id", params={"bu": bu, 
+                                                                                                "sap_id": sap_id,
+                                                                                                "sop_id": sop_id})
+                
+                if resp.status_code // 100 == 2:
+                    unique_id = resp.text.strip('"')
+
+
 
             if alert_data.get("alert_section", bu) == 'VTS':
                 unique_id = await alert_helper.get_alert_unique_id(alert_data.get("alert_section"), sap_id, sop_id)

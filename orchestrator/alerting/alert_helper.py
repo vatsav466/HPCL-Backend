@@ -151,12 +151,13 @@ async def get_alert_unique_id(bu, sap_id, sop_id=None, device_id=None):
 
     for attempt in range(MAX_RETRIES):
         try:
+            date = urdhva_base.utilities.get_present_time().strftime("%d%m%y")
             redis_key = [f"{bu.upper()}", f"{sap_id.upper()}", f"{sop_id.upper()}"]
             if device_id:
                 redis_key.append(f"_{str(device_id).upper()}")
 
             number = await redis_ins.incr("_".join(redis_key))
-            redis_key.append(f"{pad_digits(number, 8)}")
+            redis_key.extend([date, f"{pad_digits(number, 6)}"])
             return "_".join(redis_key)
         except Exception as e:
             print(f"Error in getting unique ID (Attempt {attempt + 1}): {e}")
