@@ -98,6 +98,9 @@ class AlertFactory:
                 alert_data['alert_id'] = alert_id
             unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
 
+            if alert_data.get("alert_section", bu) == 'VTS':
+                unique_id = await alert_helper.get_alert_unique_id(alert_data.get("alert_section"), sap_id, sop_id)
+
             # assign roles for emlock and ro alerts
             if alert_data.get("alert_section", bu) == 'EMLock':
                 assigned_user_roles = ["Planning Officer SOD"]
@@ -154,6 +157,7 @@ class AlertFactory:
                                                         'vehicle_blocked_end_date': alert_data.get("vehicle_blocked_end_date", None),
                                                         'dry_out_start_time': alert_data.get("dry_out_start_time", None),
                                                         'intra_day_dry_out_start_time': alert_data.get("intra_day_dry_out_start_time", None),
+                                                        'vehicle_unblocked_date': alert_data.get("vehicle_unblocked_date", None),
                                                         'dry_out_end_time': alert_data.get("dry_out_end_time",None),
                                                         'intra_day_dry_out_end_time': alert_data.get("intra_day_dry_out_end_time",None),
                                                         'origin_altid': alert_data.get('origin_altid',''),

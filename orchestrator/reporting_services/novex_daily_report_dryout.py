@@ -427,7 +427,8 @@ async def fetch_dryout_data():
                                 {"key": "sales_area", "cond": "=", "value": []},
                                 {"key": "progress_rate", "cond": "=", "value": []},
                                 {"key": "dry_out_in_days", "cond": "=", "value": ["1"]},
-                                {"key": "category", "cond": "=", "value": []}]}
+                                {"key": "category", "cond": "=", "value": []}],
+                    "bu_type": "ro"}
     payload_obj = indentdryout_actions.Indentdryout_Get_Dried_Out_RoParams(**payload_dict)
     response = await indentdryout_actions.indentdryout_get_dried_out_ro(payload_obj)
     cat_a = carry_fwd_dry_out = carry_fwd_indent = indent_not_raised = indent_raised = 0
@@ -716,6 +717,7 @@ async def lpg_top_bottom_score_plants():
                     WHERE bu = 'LPG'
                     AND zone!=''
                     AND region!=''
+                    AND timestamp::DATE = CURRENT_DATE
                     AND sap_id in ({sap_ids_str})
                     AND name NOT ILIKE '%RO%'
                     ORDER BY score DESC
@@ -730,6 +732,7 @@ async def lpg_top_bottom_score_plants():
                     WHERE bu = 'LPG'
                     AND zone!=''
                     AND region!=''
+                    AND timestamp::DATE = CURRENT_DATE
                     AND sap_id in ({sap_ids_str})
                     AND name NOT ILIKE '%RO%'
                     ORDER BY score ASC

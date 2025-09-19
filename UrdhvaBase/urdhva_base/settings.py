@@ -132,11 +132,13 @@ class Settings(pydantic_settings.BaseSettings):
     # SMTP
     smtp_host: str = "smtp.hpcl.co.in"
     smtp_port: int = 25
-    smtp_from_url: str = "novex@hpcl.co.in"
+    #smtp_from_url: str = "novex@hpcl.co.in"
+    smtp_from_url:str = "Novex<novex@hpcl.in>"
     smtp_username: str = ""
     smtp_password: str = ""
     smtp_tls_enabled: bool = False
     smtp_ssl_enabled: bool = False
+    smtp_reply_url : str = "novex@hpcl.in"
 
     # Whatsapp
     whatsapp_creds: typing.Dict[str, str] = {}

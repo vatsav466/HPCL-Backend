@@ -1,5 +1,6 @@
 import urdhva_base
 import traceback
+import hpcl_ceg_model
 import orchestrator.alerting.alert_factory as af
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
@@ -39,6 +40,16 @@ class CloseAlert:
             close = params.get("close")
             if not close:
                 return {"status": "error", "message": "Invalid close request"}
+            
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
+            
+            if not isinstance(alert_data, dict):
+                alert_data = alert_data.__dict__
+            if "_sa_instance_state" in alert_data.keys():
+                del alert_data["_sa_instance_state"]
+            
+            if alert_data.get("alert_section","") in ["VTS"] and alert_data.get("alert_status","") == 'Close':
+                return True, { "message": "Alert Already Closed"}
             return await af.AlertFactory().close_alert(params)
         
         except Exception as e:

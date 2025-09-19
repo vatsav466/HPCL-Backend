@@ -34,11 +34,10 @@ async def generate_performance_score(bu, location_id=None):
     else:
         location_id = [location_id] if isinstance(location_id, str) else location_id
         location_id = ", ".join(f"'{value}'" for value in location_id)
-        query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}' and 
+        query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}' AND 
         sap_id in ({location_id})"""
     limit = 1000
     skip = 0
-
     # Listing all locations for the given BU
     while True:
         resp = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=limit, skip=skip)
@@ -86,8 +85,17 @@ async def generate_performance_score(bu, location_id=None):
 async def main():
     supported_bus = ['LPG', 'TAS']
     for bu in supported_bus:
-        await generate_performance_score(bu)
-
+        if bu == 'LPG':
+            location_id = ['2662','2693','2241','2935','2371','2121','2520','2401','2324','2811',
+                           '2435','2891','2663','2314','2844','2402','2455','2203','2892','2504',
+                           '2248','2171','2262','2655','2215','2623','2204','2472','2959','2921',
+                           '2330','2126','2947','2539','2777','2507','2829','2779','2373','2657',
+                           '2949','2173','2707','2568','2659','2792','2660','2692','2471','2731',
+                           '2630','2408','2316','2117','2732'
+                        ]
+            await generate_performance_score(bu,location_id)
+        else:
+            await generate_performance_score(bu)
 
 if __name__ == "__main__":
     asyncio.run(main())

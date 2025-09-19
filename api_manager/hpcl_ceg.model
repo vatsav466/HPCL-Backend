@@ -102,7 +102,7 @@ Enum AlertActionType str {
     TicketCancelled='TicketCancelled'
     TicketResolved='TicketResolved'
     TicketOnHold='TicketOnHold'
-
+    SendItBack='SendItBack'
 }
 
 Enum IndentStatus str {
@@ -773,6 +773,7 @@ Model Alerts {
     transporter_code optional str
     vehicle_blocked_start_date optional datetime
     vehicle_blocked_end_date optional datetime
+    vehicle_unblocked_date optional datetime
     mark_as_false optional bool
     vts_alert_history_ids optional list str
 
