@@ -523,7 +523,7 @@ async def update_vts_instance(alert_data):
         del alert_data["_sa_instance_state"]
 
     alert_message = (
-        f"Instance Updated for this Vehicle Number: {alert_data['vehicle_number']} from {alert_data['device_id']} to {instance_data['instance']} wiht violation {violation_name}"
+        f"Instance Updated for this Vehicle Number: {alert_data['vehicle_number']} from {alert_data['device_id']} to {instance_data['instance']} with violation {violation_name}"
         )    
     alert_data["action_msg"] = alert_message
     alert_data["action_type"] = "Blocked"
