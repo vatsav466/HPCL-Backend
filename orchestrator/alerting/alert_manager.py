@@ -592,7 +592,7 @@ class AlertAction:
             print(f"Error while sending message to camunda: {r.status_code} - {r.text} - {alert_data.unique_id}")
         else:
             print("Message sent to camunda")
-        return True, "Successfully sent message to camunda"
+        return True, "Successfull"
 
     @classmethod
     async def verify_user_access_permissions(cls, bu, sap_id, action_type):
