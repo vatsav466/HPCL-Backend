@@ -23,7 +23,7 @@ DB_CONFIG = {
     'database': creds['database'],
     'user': creds['user'],
     'password': creds['password'],
-    'port': creds['port'],
+    'port': creds['port']
 }
 
 # List of servers to check, adjust IP range as needed
@@ -315,11 +315,11 @@ async def send_disk_report(all_reports):
                 "subject": f"Disk Usage Report - {now_ist}",
                 "recipients": [
                     "sreedhar.maddipati@algofusiontech.com",
+                    "bala@algofusiontech.com",
                     "venu@algofusiontech.com",
                     "moufikali@algofusiontech.com",
                     "shrihari.b@algofusiontech.com",
                     "keerthesrep@algofusiontech.com",
-                    "bala@algofusiontech.com",
                     "vamsi.c@urdhvapay.com",
                     "yesu.p@algofusiontech.com",
                     "manohar.v@algofusiontech.com",
