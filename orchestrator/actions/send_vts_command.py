@@ -49,7 +49,7 @@ class SendVtsCommand:
             
             # Blocking in IMS blockingFlag="Y"
 
-            if str(alert_data.get('sap_id','')) in ['1509']:
+            if str(alert_data.get('sap_id','')) in ['1509','1435']:
                 await vts_analysis.post_blocked_tt_ims(payload)
             
             #await vts_analysis.post_blocked_tt_ims(payload)
@@ -96,7 +96,7 @@ class SendVtsCommand:
             # await vts_analysis.post_unblocked_tt(params1)
 
             # UnBlocking in IMS blockingFlag="N"
-            if str(alert_data.get('sap_id','')) in ['1509']:
+            if str(alert_data.get('sap_id','')) in ['1509','1435']:
                 await vts_analysis.post_blocked_tt_ims(payload)
             # await vts_analysis.post_blocked_tt_ims(payload)
 

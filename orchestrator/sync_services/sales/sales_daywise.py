@@ -56,7 +56,7 @@ def get_db_connection(params):
 
 
 def insertToDB(data, table_name, indexing_col=()):
-    data.write_csv(f"/tmp/table_name.csv",separator='~')
+    #data.write_csv(f"/tmp/table_name.csv",separator='~')
     '''
     for col in data.columns:
         try:
@@ -107,7 +107,7 @@ def insertToDB(data, table_name, indexing_col=()):
         month_key = each_month[4:]
         month_value = month_map.get(month_key)
         data = data.with_columns(pl.when(pl.col("YEARMONTH") == each_month).then(pl.lit(month_value)).otherwise(pl.col("month_name")) .alias("month_name") )
-    data.write_csv(f"/tmp/table_name1.csv",separator='~')
+    #data.write_csv(f"/tmp/table_name1.csv",separator='~')
     print("-" * 50)
     print(f"-- Inserting Data to {table_name} --")
     print("Length of Data :", len(data))
@@ -195,7 +195,7 @@ def insertToDB(data, table_name, indexing_col=()):
     data = data.select(columns)
     #data.write_csv('/tmp/sales_data.csv')
     print(data)
-    data.write_csv(f"/tmp/table_name.csv",separator='~')
+    #data.write_csv(f"/tmp/table_name.csv",separator='~')
     pg_conn.commit()
     try:
         
