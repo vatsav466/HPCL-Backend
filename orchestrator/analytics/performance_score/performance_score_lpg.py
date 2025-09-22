@@ -4,6 +4,7 @@ import datetime
 import requests
 import pandas as pd
 import hpcl_ceg_model
+from collections import defaultdict
 from utilities.helpers import map_device_category
 import orchestrator.analytics.va_analysis as va_analysis
 from orchestrator.dbconnector.widget_actions import widget_actions
@@ -42,50 +43,138 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
         :param location_id:
         :return:
         """
+        # pi_score = []
+        # interlocks = list(set([rule['interlock_name'] for rule in rules['rules']]))
+        # in_clause_raw = ", ".join(f"'{value}'" for value in interlocks)
+        # query = (f"select interlock_name, device_name from alerts where interlock_name in ({in_clause_raw}) and "
+        #          f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'LPG' and bu = 'LPG'")
+        # data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+        # open_alerts = {data['interlock_name']: data['device_name'] for data in data['data']}
+        # Todo:- if location was disconnected, Need to mark PI score as zero
+        # for rule in rules['rules']:
+        #     rule_weightage = rule['weightage']
+        #     score = 0
+        #     # For open alerts
+        #     if rule['model'] == 'open_alerts':
+        #         if rule['interlock_name'] in open_alerts:
+        #             score = 0
+        #         else:
+        #             score = 100
+        #     # For percentage rejection
+        #     elif rule['model'] == 'percentage_rejection':
+        #         if rule['interlock_name'] in open_alerts:
+        #             for percentage_rule in rule['rules']:
+        #                 value_rejection = float(open_alerts[rule['interlock_name']])
+        #                 if float(percentage_rule['min']) > value_rejection <= float(percentage_rule['max']):
+        #                     weightage = rule['weightage']
+        #                     # For waterfall model diving the weightage based on difference between max and min
+        #                     if weightage and percentage_rule.get('method') == 'waterfall':
+        #                         diff_range = float(percentage_rule['max']) - float(percentage_rule['min'])
+        #                         rejection_percentage = (float(open_alerts[rule['interlock_name']]) -
+        #                                                 float(percentage_rule['max']))
+        #                         score = (weightage / diff_range) * rejection_percentage
+        #                     else:
+        #                         score = 0
+        #                     break
+        #         else:
+        #             score = 100
+        #     score = (score * rule_weightage) / 100
+        #     pi_score.append({"name": rule['name'], "score": score, "weightage": rule_weightage,
+        #                      'module': rules.get('name', name)})
+        # final_score = sum([score['score'] for score in pi_score])
+        # final_score = round((final_score * rules['weightage']) / 100, 2)
+        # for rec in pi_score:
+        #     rec['score'] = round(rec['score'], 2)
+        # return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'],
+        #         "results": pi_score}
         pi_score = []
         interlocks = list(set([rule['interlock_name'] for rule in rules['rules']]))
         in_clause_raw = ", ".join(f"'{value}'" for value in interlocks)
-        query = (f"select interlock_name, device_name from alerts where interlock_name in ({in_clause_raw}) and "
-                 f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'LPG' and bu = 'LPG'")
+
+        query = (
+            f"select interlock_name, device_name "
+            f"from alerts "
+            f"where interlock_name in ({in_clause_raw}) "
+            f"and sap_id = '{location_id}' "
+            f"and alert_status != 'Close' "
+            f"and alert_section = 'LPG' and bu = 'LPG'"
+        )
+
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
-        open_alerts = {data['interlock_name']: data['device_name'] for data in data['data']}
-        # Todo:- if location was disconnected, Need to mark PI score as zero
+
+        # Collect ALL rows instead of overwriting
+        open_alerts = defaultdict(list)
+        for rec in data['data']:
+            try:
+                open_alerts[rec['interlock_name']].append(float(rec['device_name']))
+            except (ValueError, TypeError):
+                continue
+
+        # Process each rule
         for rule in rules['rules']:
             rule_weightage = rule['weightage']
-            score = 0
-            # For open alerts
+            weighted_score = 0  # Final weighted score for this rule
+            raw_score = 0  # Score before applying weightage (0–100)
+
+            # -------------------- OPEN ALERT RULE --------------------
             if rule['model'] == 'open_alerts':
                 if rule['interlock_name'] in open_alerts:
-                    score = 0
+                    raw_score = 0  # Alert open → bad
                 else:
-                    score = 100
-            # For percentage rejection
+                    raw_score = 100  # No alert → perfect
+                weighted_score = (raw_score * rule_weightage) / 100
+
+            # ---------------- PERCENTAGE REJECTION RULE ----------------
             elif rule['model'] == 'percentage_rejection':
                 if rule['interlock_name'] in open_alerts:
+                    values = open_alerts[rule['interlock_name']]
+                    value_rejection = sum(values) / len(values)
+
+                    matched = False
                     for percentage_rule in rule['rules']:
-                        value_rejection = float(open_alerts[rule['interlock_name']])
-                        if float(percentage_rule['min']) > value_rejection <= float(percentage_rule['max']):
-                            weightage = rule['weightage']
-                            # For waterfall model diving the weightage based on difference between max and min
-                            if weightage and percentage_rule.get('method') == 'waterfall':
-                                diff_range = float(percentage_rule['max']) - float(percentage_rule['min'])
-                                rejection_percentage = (float(open_alerts[rule['interlock_name']]) -
-                                                        float(percentage_rule['max']))
-                                score = (weightage / diff_range) * rejection_percentage
+                        min_val = float(percentage_rule['min'])
+                        max_val = float(percentage_rule['max'])
+                        method = percentage_rule.get('method')
+
+                        if min_val <= value_rejection <= max_val:
+                            matched = True
+                            if method == 'waterfall':
+                                diff_range = max_val - min_val
+                                # Scale proportionally 0–100
+                                raw_score = 100 - ((max_val - value_rejection) / diff_range * 100)
                             else:
-                                score = 0
+                                raw_score = 100
                             break
+
+                    # If value outside all defined ranges
+                    if not matched:
+                        if value_rejection < float(rule['rules'][0]['min']):
+                            raw_score = (value_rejection / float(rule['rules'][0]['min'])) * 100
+                        elif value_rejection > float(rule['rules'][-1]['max']):
+                            raw_score = (float(rule['rules'][-1]['max']) / value_rejection) * 100
                 else:
-                    score = 100
-            score = (score * rule_weightage) / 100
-            pi_score.append({"name": rule['name'], "score": score, "weightage": rule_weightage,
-                             'module': rules.get('name', name)})
+                    raw_score = 100
+
+                weighted_score = (raw_score * rule_weightage) / 100
+
+            # Store rule result
+            pi_score.append({
+                "name": rule['name'],
+                "score": round(weighted_score, 2),  # already weighted
+                "weightage": rule_weightage,
+                'module': rules.get('name', name)
+            })
+
+        # Final PI score (sum of weighted scores)
         final_score = sum([score['score'] for score in pi_score])
         final_score = round((final_score * rules['weightage']) / 100, 2)
-        for rec in pi_score:
-            rec['score'] = round(rec['score'], 2)
-        return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'],
-                "results": pi_score}
+
+        return {
+            "name": rules.get('name', name),
+            "score": final_score,
+            "weightage": rules['weightage'],
+            "results": pi_score
+        }
 
     async def _compute_va_pi_score(self, name, rules, location_id):
         pi_score = []
@@ -258,15 +347,37 @@ and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date DESC"""
             carousel_productivity = productivity.get(rule['search_value'], 0)
             weightage = rule['weightage']
             score = weightage
-            if carousel_productivity in productivity:
+            if carousel_productivity in productivity.values():
+                # for percentage_rule in rule['rules']:
+                #     if float(percentage_rule['min']) > carousel_productivity <= float(percentage_rule['max']):
+                #         # For waterfall model diving the weightage based on difference between max and min
+                #         if weightage and percentage_rule.get('method') == 'waterfall':
+                #             diff_range = float(percentage_rule['max']) - float(percentage_rule['min'])
+                #             score = ((weightage - (float(percentage_rule['max']) - carousel_productivity) / diff_range) *
+                #                      weightage)
+                #         break
                 for percentage_rule in rule['rules']:
-                    if float(percentage_rule['min']) > carousel_productivity <= float(percentage_rule['max']):
-                        # For waterfall model diving the weightage based on difference between max and min
-                        if weightage and percentage_rule.get('method') == 'waterfall':
-                            diff_range = float(percentage_rule['max']) - float(percentage_rule['min'])
-                            score = ((weightage - (float(percentage_rule['max']) - carousel_productivity) / diff_range) *
-                                     weightage)
+                    min_val = float(percentage_rule['min'])
+                    max_val = float(percentage_rule['max'])
+                    method = percentage_rule.get('method')
+
+                    if min_val <= carousel_productivity <= max_val:
+                        # if inside range
+                        if weightage and method == 'waterfall':
+                            diff_range = max_val - min_val
+                            score = ((weightage - (max_val - carousel_productivity) / diff_range) * weightage)
+                        else:
+                            score = weightage
                         break
+                    else:
+                        # Outside range → calculate proportional penalty or fallback
+                        if carousel_productivity < min_val:
+                            # Below range → reduce score proportionally
+                            score = (carousel_productivity / min_val) * weightage
+                        elif carousel_productivity > max_val:
+                            # Above range → cap at weightage or scale down
+                            score = (max_val / carousel_productivity) * weightage
+
             pi_score.append({"name": rule['name'], "score": score, "weightage": weightage,
                              'module': rules.get('name', name)})
         final_score = sum([score['score'] for score in pi_score]) / len(pi_score) if len(pi_score) else 0

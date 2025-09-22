@@ -106,11 +106,11 @@
         ]
       },
       {
-        "name": "74 Head Productivity",
+        "name": "72 Head Productivity",
         "model": "productivity",
         "weightage": 100,
         "search_key": "productivity_normal_productivity",
-        "search_value": "74H",
+        "search_value": "72H",
         "interlock_name": "productivity_normal_productivity",
         "rules": [
           {"min":  3600, "max": 4200, "weightage": 100, "method": "waterfall"},
