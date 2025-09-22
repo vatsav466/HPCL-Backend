@@ -66,59 +66,63 @@
     ]
   },
   "productivity": {
-    "name": "Productivity",
-    "weightage": 15,
-    "rules": [
-      {
-        "name": "12 Head Productivity",
-        "model": "productivity",
-        "weightage": 100,
-        "search_key": "productivity_normal_productivity",
-        "search_value": "12H",
-        "interlock_name": "productivity_normal_productivity",
-        "rules": [
-          {"min":  650, "max": 800, "weightage": 100, "method": "waterfall"},
-          {"min":  650, "max": 10000.0, "weightage": 0, "method": "waterfall"}
-        ]
-      },
-      {
-        "name": "24 Head Productivity",
-        "model": "productivity",
-        "weightage": 100,
-        "search_key": "productivity_normal_productivity",
-        "search_value": "24H",
-        "interlock_name": "productivity_normal_productivity",
-        "rules": [
-          {"min":  1400, "max": 1600, "weightage": 100, "method": "waterfall"},
-          {"min":  1600, "max": 10000.0, "weightage": 0, "method": "waterfall"}
-        ]
-      },
-      {
-        "name": "48 Head Productivity",
-        "model": "productivity",
-        "weightage": 100,
-        "search_key": "productivity_normal_productivity",
-        "search_value": "48H",
-        "interlock_name": "productivity_normal_productivity",
-        "rules": [
-          {"min":  2600, "max": 3200, "weightage": 100, "method": "waterfall"},
-          {"min":  3200, "max": 10000.0, "weightage": 0, "method": "waterfall"}
-        ]
-      },
-      {
-        "name": "72 Head Productivity",
-        "model": "productivity",
-        "weightage": 100,
-        "search_key": "productivity_normal_productivity",
-        "search_value": "72H",
-        "interlock_name": "productivity_normal_productivity",
-        "rules": [
-          {"min":  3600, "max": 4200, "weightage": 100, "method": "waterfall"},
-          {"min":  4200, "max": 10000.0, "weightage": 0, "method": "waterfall"}
-        ]
-      }
-    ]
-  },
+  "name": "Productivity",
+  "weightage": 15,
+  "rules": [
+    {
+      "name": "12 Head Productivity",
+      "model": "productivity",
+      "weightage": 100,
+      "search_key": "productivity_normal_productivity",
+      "search_value": "12H",
+      "interlock_name": "productivity_normal_productivity",
+      "rules": [
+        {"min": 0, "max": 650, "weightage": 0, "method": "waterfall"},
+        {"min": 650, "max": 800, "weightage": 100, "method": "waterfall"},
+        {"min": 800, "max": 10000, "weightage": 100, "method": "waterfall"}
+      ]
+    },
+    {
+      "name": "24 Head Productivity",
+      "model": "productivity",
+      "weightage": 100,
+      "search_key": "productivity_normal_productivity",
+      "search_value": "24H",
+      "interlock_name": "productivity_normal_productivity",
+      "rules": [
+        {"min": 0, "max": 1400, "weightage": 0, "method": "waterfall"},
+        {"min": 1400, "max": 1600, "weightage": 100, "method": "waterfall"},
+        {"min": 1600, "max": 10000, "weightage": 100, "method": "waterfall"}
+      ]
+    },
+    {
+      "name": "48 Head Productivity",
+      "model": "productivity",
+      "weightage": 100,
+      "search_key": "productivity_normal_productivity",
+      "search_value": "48H",
+      "interlock_name": "productivity_normal_productivity",
+      "rules": [
+        {"min": 0, "max": 2600, "weightage": 0, "method": "waterfall"},
+        {"min": 2600, "max": 3200, "weightage": 100, "method": "waterfall"},
+        {"min": 3200, "max": 10000, "weightage": 100, "method": "waterfall"}
+      ]
+    },
+    {
+      "name": "72 Head Productivity",
+      "model": "productivity",
+      "weightage": 100,
+      "search_key": "productivity_normal_productivity",
+      "search_value": "72H",
+      "interlock_name": "productivity_normal_productivity",
+      "rules": [
+        {"min": 0, "max": 3600, "weightage": 0, "method": "waterfall"},
+        {"min": 3600, "max": 4200, "weightage": 100, "method": "waterfall"},
+        {"min": 4200, "max": 10000, "weightage": 100, "method": "waterfall"}
+      ]
+    }
+  ]
+},
   "production": {
     "name": "Production",
     "weightage": 5
