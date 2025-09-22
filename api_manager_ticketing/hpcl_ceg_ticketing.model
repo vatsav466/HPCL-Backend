@@ -60,6 +60,13 @@ Enum TicketType str{
     Resolved = 'TicketResolved'
     OnHold = 'TicketOnHold'
 
+}
+
+Enum ContextType str{
+    Hpcl = 'Hpcl'
+    Recon = 'Recon'
+    DataValidation = 'DataValidation'
+    
 
 }
 
@@ -94,6 +101,7 @@ Model Ticketing {
     comment_text optional str
     comment_id optional str
     comment_attachment_path optional str
+    context optional str
     
 
 

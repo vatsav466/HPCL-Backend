@@ -301,7 +301,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
     try:
         data_dict = data.model_dump()
         ticket_id = data.update_id
-
+        # print("data_dict",data_dict)
         # Fetch existing ticket
         params = urdhva_base.queryparams.QueryParams()
         params.q = f"id='{ticket_id}'"
@@ -330,6 +330,10 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             "processed_time": processed_time.isoformat()
         }
         updated_history = existing_history + [ticket_update_entry]
+        if ticket_state == "Resolved":
+            # print("ticket_state---",ticket_state)
+            data_dict["ticket_status"] = "Close"
+            # print("ticket_status>>>>>>>",data_dict["ticket_status"])
         data_dict["ticket_history"] = updated_history
 
         # --- UPDATE THE TICKET ---

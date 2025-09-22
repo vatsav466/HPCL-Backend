@@ -67,6 +67,7 @@ class TicketingSchema(UrdhvaPostgresBase):
     comment_text: Mapped[typing.Optional[str]] = mapped_column("comment_text", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     comment_id: Mapped[typing.Optional[str]] = mapped_column("comment_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     comment_attachment_path: Mapped[typing.Optional[str]] = mapped_column("comment_attachment_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    context: Mapped[typing.Optional[str]] = mapped_column("context", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),)
 
@@ -104,6 +105,7 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     comment_text: typing.Optional[str] = pydantic.Field("", **{})
     comment_id: typing.Optional[str] = pydantic.Field("", **{})
     comment_attachment_path: typing.Optional[str] = pydantic.Field("", **{})
+    context: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -146,6 +148,7 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     comment_text: typing.Optional[str] = pydantic.Field("", **{})
     comment_id: typing.Optional[str] = pydantic.Field("", **{})
     comment_attachment_path: typing.Optional[str] = pydantic.Field("", **{})
+    context: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
