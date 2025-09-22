@@ -6362,6 +6362,84 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "rointerlockdisable",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "RoInterlockDisable",
+            "attributes": {},
+            "uris": [
+                "/api/rointerlockdisable/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_service_request_raise_details"
+                },
+                {
+                    "name": "submit_service_request"
+                }
+            ]
+        },
+        {
+            "name": "rointerlockdisable_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "RoInterlockDisable_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/rointerlockdisable/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_service_request_raise_details"
+                }
+            ]
+        },
+        {
+            "name": "rointerlockdisable_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "RoInterlockDisable_admin",
+            "attributes": {},
+            "uris": [
+                "/api/rointerlockdisable/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_service_request_raise_details"
+                },
+                {
+                    "name": "submit_service_request"
+                }
+            ]
         }
     ],
     "policies": [
@@ -6987,6 +7065,14 @@
         {
             "name": "get_zone_wise_ev_infra",
             "displayName": "get_zone_wise_ev_infra"
+        },
+        {
+            "name": "get_service_request_raise_details",
+            "displayName": "get_service_request_raise_details"
+        },
+        {
+            "name": "submit_service_request",
+            "displayName": "submit_service_request"
         }
     ]
 }

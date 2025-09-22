@@ -85,7 +85,8 @@ async def get_ro_levels(bu: str, violation_type: str, sap_id: str):
     ro_mapping = cris_alert_mapping.Cris_Alert_Mapping
     if bu in ro_mapping.keys() and violation_type in ro_mapping[bu].keys():
         ro_mapping = ro_mapping[bu][violation_type]
-        ro_alert_count = await get_ro_alerts_count(bu=bu, violation_type=violation_type, sap_id=sap_id)
+        # ro_alert_count = await get_ro_alerts_count(bu=bu, violation_type=violation_type, sap_id=sap_id)
+        ro_alert_count = await get_ro_approved_count(bu=bu, violation_type=violation_type, sap_id=sap_id)
         previous_count = 0
         for key, value in ro_mapping['escalations'].items():
             if value['condition'] == "<":
@@ -178,3 +179,22 @@ async def close_camunda_workflow(alert_data, camunda_url):
                 return False
         return True
     return False
+
+async def get_ro_approved_count(bu: str, violation_type: str, sap_id: str):
+    ro_mapping = cris_alert_mapping.Cris_Alert_Mapping
+    if bu in ro_mapping.keys() and violation_type in ro_mapping[bu].keys():
+        ro_mapping = ro_mapping[bu][violation_type]
+        start_date, end_date = await va_analysis.get_period_datetime(ro_mapping['period'])
+        violation_type = ro_mapping['name']
+        query = (f"""select count(*) as "count" from ro_interlock_disable """
+                 f"where bu = '{bu}' and "
+                 f"interlock_name = '{violation_type}' and "
+                 f"sap_id = '{sap_id}' and "
+                 f"created_at BETWEEN TO_DATE('{start_date}', 'YYYY-MM-DD') AND TO_DATE('{end_date}', 'YYYY-MM-DD')")
+        resp = await hpcl_ceg_model.RoInterlockDisable.get_aggr_data(query, limit=0)
+        resp = resp.get("data", [])
+        print(resp)
+        if resp:
+            resp = resp[0]
+            return resp.get("count", 0)
+    return 0

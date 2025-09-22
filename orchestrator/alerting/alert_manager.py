@@ -410,6 +410,13 @@ class AlertAction:
         function_name = function_map.get(input_data['action_type'], None)
         if function_name:
             await cls.update_alert_history(input_data, alert_data)
+            if input_data['action_type'] == 'Approved' and input_data['bu'] == 'RO':
+                interlock_disable_data = {
+                    "sap_id": alert_data.sap_id,
+                    "interlock_name": alert_data.interlock_name,
+                    "bu": input_data['bu']
+                }
+                await hpcl_ceg_model.RoInterlockDisableCreate(**interlock_disable_data).create()
             # call the function
             # return await getattr(cls, function_name)(input_data, alert_data)
 
