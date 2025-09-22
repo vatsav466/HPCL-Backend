@@ -8898,3 +8898,93 @@ class DryOutDailyReportGetResp(pydantic.BaseModel):
     data: typing.List[DryOutDailyReport]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class RoInterlockDisableSchema(UrdhvaPostgresBase):
+    __tablename__ = 'ro_interlock_disable'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    interlock_name: Mapped[str] = mapped_column("interlock_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    is_sales_officer_approved: Mapped[typing.Optional[bool]] = mapped_column("is_sales_officer_approved", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    is_regional_manager_approved: Mapped[typing.Optional[bool]] = mapped_column("is_regional_manager_approved", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    is_zonal_head_approved: Mapped[typing.Optional[bool]] = mapped_column("is_zonal_head_approved", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+
+
+class RoInterlockDisableCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'ro_interlock_disable'
+    
+    sap_id: str
+    interlock_name: str
+    bu: str
+    is_sales_officer_approved: typing.Optional[bool] = pydantic.Field(False, )
+    is_regional_manager_approved: typing.Optional[bool] = pydantic.Field(False, )
+    is_zonal_head_approved: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = RoInterlockDisableSchema
+        upsert_keys = []
+
+
+class RoInterlockDisable(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'ro_interlock_disable'
+    
+    sap_id: typing.Optional[str] | None = None
+    interlock_name: typing.Optional[str] | None = None
+    bu: typing.Optional[str] | None = None
+    is_sales_officer_approved: typing.Optional[bool] = pydantic.Field(False, )
+    is_regional_manager_approved: typing.Optional[bool] = pydantic.Field(False, )
+    is_zonal_head_approved: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = RoInterlockDisableSchema
+        upsert_keys = []
+
+
+class RoInterlockDisableGetResp(pydantic.BaseModel):
+    data: typing.List[RoInterlockDisable]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Rointerlockdisable_Get_Service_Request_Raise_DetailsParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Rointerlockdisable_Submit_Service_RequestParams(pydantic.BaseModel):
+    vendor_name: typing.Optional[str] = pydantic.Field("", **{})
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: str
+    sap_id: str
+    location_type: str
+    violation_type: str
+    interlock_description: typing.Optional[str] = pydantic.Field("", **{})
+    device_name: str
+    device_id: str
+    action_type: hpcl_ceg_enum.AlertActionType
+    action_msg: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    rca_reason: typing.Optional[str] = pydantic.Field("", **{})
+    action_description: typing.Optional[str] = pydantic.Field("", **{})
+    doc_link: typing.Optional[str] = pydantic.Field("", **{})
+    severity: typing.Optional[str] = pydantic.Field("", **{})
+    alarm_id: typing.Optional[str] = pydantic.Field("", **{})
+    tank_id: typing.Optional[str] = pydantic.Field("", **{})
+    nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
+    pump_no: typing.Optional[str] = pydantic.Field("", **{})
+    occurrence_date: typing.Optional[str] = pydantic.Field("", **{})
+    closure_date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

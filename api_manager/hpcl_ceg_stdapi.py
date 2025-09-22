@@ -1815,3 +1815,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/dryoutdailyreport/{id}', tags=['DryOutDailyReport'])
 async def delete(id: str):
     return await DryOutDailyReport.delete(id)
+
+
+@router.post('/rointerlockdisable', response_model=RoInterlockDisable, tags=['RoInterlockDisable'])
+async def create(inputObj: RoInterlockDisableCreate):
+    return await inputObj.create()
+
+
+@router.put('/rointerlockdisable', response_model=RoInterlockDisable, tags=['RoInterlockDisable'])
+async def update(inputObj: RoInterlockDisable):
+    return await inputObj.modify()
+
+
+@router.get('/rointerlockdisable/{id}', response_model=RoInterlockDisable, tags=['RoInterlockDisable'])
+async def get(id: str):
+    return await RoInterlockDisable.get(id, skip_secrets=True)
+
+
+@router.get('/rointerlockdisable', response_model=RoInterlockDisableGetResp, tags=['RoInterlockDisable'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await RoInterlockDisable.get_all(params, skip_secrets=True)
+
+
+@router.delete('/rointerlockdisable/{id}', tags=['RoInterlockDisable'])
+async def delete(id: str):
+    return await RoInterlockDisable.delete(id)

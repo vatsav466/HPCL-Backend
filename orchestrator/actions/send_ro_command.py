@@ -9,7 +9,26 @@ class SendRoCommand:
         self.params = dict()
 
     async def get_required_variables(self):
-        return ["alert_id", "va_level", "vehicle"]
+        return ["alert_id", "va_level", "vehicle", "level"]
+
+    async def check_ro_level(self, params: dict):
+        if not self.params:
+            self.params = params
+
+        alert_data = await hpcl_ceg_model.Alerts.get(self.params['alert_id'])
+        if not isinstance(alert_data, dict):
+            alert_data = alert_data.__dict__
+        levels = await ro_analysis.get_ro_levels("RO", alert_data['violation_type'], alert_data['sap_id'])
+        if self.params['level'] == 'sales_officer':
+            if levels in ['level - 2', 'level - 3']:
+                return True, {"ok": True}
+            return True, {"ok": False}
+        elif self.params['level'] == 'regional_manager':
+            if levels in ["level - 3"]:
+                return True, {"ok": True}
+            return True, {"ok": False}
+        return False, {"ok": False}
+
 
     async def interlock_disable_command(self, params: dict):
         if not self.params:
