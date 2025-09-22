@@ -3165,3 +3165,41 @@ Model DryOutDailyReport {
     dry_out_zone optional list Zone_History_Counts
     dry_out_alert_ids optional list str
 }
+
+Model RoInterlockDisable {
+    sap_id str
+    interlock_name str
+    bu str
+    is_sales_officer_approved optional bool
+    is_regional_manager_approved optional bool
+    is_zonal_head_approved optional bool
+
+    Action=> get_service_request_raise_details {
+
+    }
+
+    Action=> submit_service_request {
+        vendor_name optional str
+        vendor_id optional str
+        location_id str
+        sap_id str
+        location_type str
+        violation_type str
+        interlock_description optional str
+        device_name str
+        device_id str
+        action_type AlertActionType
+        action_msg optional str
+        category optional str
+        rca_reason optional str
+        action_description optional str
+        doc_link optional str
+        severity optional str
+        alarm_id optional str
+        tank_id optional str
+        nozzle_id optional str
+        pump_no optional str
+        occurrence_date optional str
+        closure_date optional str
+    }
+}
