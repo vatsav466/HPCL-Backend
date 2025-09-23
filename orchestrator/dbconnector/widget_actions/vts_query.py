@@ -280,30 +280,30 @@ vts_query = {
             ORDER BY period
           """,
 
-    "alert_summary_route_deviation" : """
+    "alert_summary" : """
             SELECT
             {group_by_column},
             device_id as instance_level,
             SUM(CASE WHEN alert_status = 'Open' 
-                    AND violation_type = 'route_deviation_count' 
+                    AND violation_type = '{violation_type}' 
                 THEN 1 ELSE 0 END) AS "Blocked",
 
             SUM(CASE WHEN alert_status = 'Close' 
                     AND mark_as_false = false 
-                    AND violation_type = 'route_deviation_count' 
+                    AND violation_type = '{violation_type}' 
                 THEN 1 ELSE 0 END) AS "Auto Unblock",
 
             SUM(CASE WHEN alert_status = 'Close' 
                     AND mark_as_false = true 
-                    AND violation_type = 'route_deviation_count' 
+                    AND violation_type = '{violation_type}' 
                 THEN 1 ELSE 0 END) AS "Manual Unblock",
 
-            SUM(CASE WHEN violation_type = 'route_deviation_count' THEN 1 ELSE 0 END) AS "Total"
+            SUM(CASE WHEN violation_type = '{violation_type}' THEN 1 ELSE 0 END) AS "Total"
 
         FROM alerts
         WHERE 
             alert_section = 'VTS'
-            AND violation_type = 'route_deviation_count'
+            AND violation_type = '{violation_type}'
             AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
         GROUP BY {group_by_column}, device_id
         ORDER BY {group_by_column}, device_id;

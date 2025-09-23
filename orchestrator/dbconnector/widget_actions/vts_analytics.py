@@ -555,18 +555,24 @@ class VTSAnalyticsActions:
             instance_cols = numeric_cols[4:]
             summary_counts = [{col: int(df[col].sum()) for col in summary_cols}]
             
-            
+            overall_instance_totals = {}
+            for col in instance_cols:
+                overall_instance_totals[col] = int(df[col].sum())
+                
+            grand_total = sum(overall_instance_totals.values())
+
+            instance_breakup = {}
+            for col, total_count in overall_instance_totals.items():
+                instance_breakup[col] = {
+                    "total_count": total_count,
+                    "percentage": round((total_count / grand_total) * 100, 2) if grand_total > 0 else 0
+                }
+
             period_data = []
             for _, row in df.iterrows():
-                total_alerts = int(row[summary_cols[0]])
-                instances = {}
-                for col in instance_cols:
-                    count = int(row[col])
-                    instances[col] = {
-                        "count": count,
-                        "percentage": round((count / total_alerts) * 100, 2) if total_alerts > 0 else 0
-                    }
-                
+                # Collect counts for this date
+                counts = {col: int(row[col]) for col in instance_cols}
+
                 if drill_state and drill_state.lower() == "day_wise":
                         formatted_date = pd.to_datetime(row["period"]).strftime("%b-%d-%Y")
                 elif drill_state and drill_state.lower() == "month_wise":
@@ -574,18 +580,21 @@ class VTSAnalyticsActions:
               
               
                 period_data.append({
-                        "date": formatted_date,
-                        "value": instances
-                    })
+                "date": formatted_date,
+                "value": {
+                    "counts": counts
+                }
+              })
         
             return {
-                "status": True,
-                "message": "success",
-                "data": {
-                    violation_type: summary_counts,
-                    "period_wise": period_data
-                }
+            "status": True,
+            "message": "success",
+            "data": {
+                violation_type: summary_counts,
+                "period_wise": period_data,
+                "instance_breakup": instance_breakup
             }
+          }
         
         except Exception as e:
             print("Exception:", str(e))
@@ -593,10 +602,11 @@ class VTSAnalyticsActions:
             return {"status": False, "message": str(e), "data": {}}
         
     @staticmethod
-    async def alert_summary_route_deviation(filters,cross_filters,drill_state,payload):
+    async def alert_summary(filters,cross_filters,drill_state,payload):
         try:
             # 1. Get query type from payload
             query_type = payload.get("query_type") if payload else None
+            violation_type = payload.get("violation_type")
             query = vts_query.vts_query.get(query_type)
             if not query:
                 return {"status": False, "message": "Query not found", "data": []}
@@ -630,7 +640,7 @@ class VTSAnalyticsActions:
                         else:
                             all_conditions.append(f"{rec.key} IN {tuple(values)}")
             
-            query = query.format(group_by_column=group_by_column)
+            query = query.format(group_by_column=group_by_column, violation_type = violation_type)
 
             if all_conditions:
                 if "group by" in query.lower():
