@@ -1654,6 +1654,75 @@
             ]
         },
         {
+            "name": "lpgplantoperations",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgPlantOperations",
+            "attributes": {},
+            "uris": [
+                "/api/lpgplantoperations/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "check_connection_status"
+                }
+            ]
+        },
+        {
+            "name": "lpgplantoperations_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgPlantOperations_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgplantoperations/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgplantoperations_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgPlantOperations_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgplantoperations/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "check_connection_status"
+                }
+            ]
+        },
+        {
             "name": "lpgoperationssummary",
             "type": "all",
             "ownerManagedAccess": false,
@@ -6966,6 +7035,10 @@
         {
             "name": "generate_dryout_group_data",
             "displayName": "generate_dryout_group_data"
+        },
+        {
+            "name": "check_connection_status",
+            "displayName": "check_connection_status"
         },
         {
             "name": "get_productions_rate",
