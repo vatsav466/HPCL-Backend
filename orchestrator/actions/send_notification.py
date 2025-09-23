@@ -57,6 +57,9 @@ class SendNotification:
         self.subject = ""
         self.body = ""
         self.sms = ""
+        self.usernames = set()
+        self.transporter_details = {}
+        self.template_path = ""
 
     async def get_required_variables(self):
         """
@@ -121,9 +124,15 @@ class SendNotification:
         alert_id = self.params.get("alert_id")
         print("alert_id --> ", alert_id)
         alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
-        
+
         if alert_data:
             self.alert_data = alert_data.__dict__ if not isinstance(alert_data, dict) else alert_data
+            if self.alert_data['transporter_code']:
+                query = (f"transporter_code='{self.alert_data['transporter_code']}'")
+                transporter_details_data = await hpcl_ceg_model.EmailMaster.get_all(urdhva_base.queryparams.QueryParams(q=query),
+                                                                                    resp_type='plain')
+                if len(transporter_details_data.get("data",[])):
+                    self.alert_data['transporter_name'] = transporter_details_data['data'][0]['transporter_name']
             return True
         return False
 
@@ -174,6 +183,7 @@ class SendNotification:
             role_name = role.get("novex_role", "")  # Choose appropriate key
             email = role.get("email", "")
             phone = role.get("phone", "")
+            self.usernames.add(role.get("username",""))
             
             if email or phone:  # Ensure we only add roles with at least one contact detail
                 self.roles_mapper["rolemailto"][role_name].append({"email": email, "phone": phone})
@@ -222,6 +232,12 @@ class SendNotification:
         self.mail_recipients = list(dict.fromkeys(self.mail_recipients))
         self.sms_recipients = list(dict.fromkeys(self.sms_recipients))
 
+    async def get_subject_for_vts(self):
+        if self.params.get('messagetype') == 'active':
+            #VTS Alert: Blocking of truck TS06UA8786 at HPCL SECUNDERABAD TERMINAL;
+            subject_template = f"VTS Alert: Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
+            return subject_template
+
 
     async def _prepare_message_content(self, bu: str, message_type: str):
         """
@@ -258,6 +274,9 @@ class SendNotification:
         # Construct the subject template
         subject_template = f"{self.params.get('msg_subject', '')} for BU: {bu}, Location Name: {location_name}({sap_id})"
 
+        if self.alert_data["alert_section"] in ['VTS']:
+            subject_template = await self.get_subject_for_vts()
+
         # Append alert_section only if it exists and is different from BU
         if alert_section and bu != alert_section:
             subject_template += f", Alert Section: {alert_section}"
@@ -285,7 +304,8 @@ class SendNotification:
             Dict[str, str]: A dictionary containing the template and body content.
         """
         message_type = self.params.get("messagetype", "").upper()
-
+        if self.alert_data.get("alert_section") in ["VTS"] and message_type=='active':
+            message_type = 'BLOCKING'
         template_value = getattr(TemplateMapping, message_type, None)
         template = template_value.value if template_value else ""
         interlock_value = getattr(InterlockTemplateMapping, template_name.upper(), None)
@@ -337,6 +357,9 @@ class SendNotification:
             dict: A dictionary containing the base alert data.
         """
         # logger.info(f"self.alert_data: {self.alert_data}")
+        if self.alert_data["alert_section"] in ['VTS'] and self.params.get("messagetype") == 'active':
+            days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
+
         self.base_alert_data = {
             "alert_id": self.params.get("alert_id"),
             "interlock_name": await self._get_interlock_name(),
@@ -347,6 +370,10 @@ class SendNotification:
             "asset_name": self.alert_data["device_type"],
             "date_time": datetime.datetime.now(self.IST).strftime('%d-%m-%Y %H:%M:%S'),
             "opened_time": self.alert_data['created_at'].strftime('%d-%m-%Y %H:%M:%S'),
+            "days": days if days else 0,
+            "transporter_name": self.alert_data['transporter_name'] if self.alert_data['transporter_name'] else "",
+            "block_start_date": self.alert_data['vehicle_blocked_start_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_blocked_start_date'] else None,
+            "block_end_date": self.alert_data['vehicle_blocked_end_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_blocked_end_date'] else None,
             "asset_id": self.alert_data.get("device_name", self.alert_data["location_name"]) # this should be location_id
         }
         return self.base_alert_data
@@ -531,6 +558,58 @@ class SendNotification:
         else:
             await self._send_standard_notification()
 
+    async def get_vts_recipients(self):
+        query = (f"transporter_code='{self.alert_data['transporter_code']}'")
+        transporter_details_data = await hpcl_ceg_model.EmailMaster.get_all(urdhva_base.queryparams.QueryParams(q=query),
+                                                                                    resp_type='plain')
+        transporter_mail = []
+        if len(transporter_details_data.get("data",[])):
+            transporter_details_data = transporter_details_data['data'][0]
+            self.transporter_details["transporter_name"] = transporter_details_data['transporter_name']
+            if transporter_details_data.get('transporter_email1',""):
+                transporter_mail.append(transporter_details_data['transporter_email1'])
+            if transporter_details_data.get('transporter_email2',""):
+                transporter_mail.append(transporter_details_data['transporter_email2'])
+            self.transporter_details['transporter_email'] = ",".join(str(x) for x in transporter_mail)
+        
+        cc_query = (f"sap_id='{self.alert_data['sap_id']}'")
+        cc_query_data = await hpcl_ceg_model.EmailMaster.get_all(urdhva_base.queryparams.QueryParams(q=cc_query),
+                                                                                    resp_type='plain')
+        cc_recipients = []
+        if len(cc_query_data.get("data",[])):
+            cc_recipients_data = cc_recipients_data['data'][0]
+            keys = ["location_officer","zonal_transport_officer","zonal_head","hqo1","hqo2","hqo2","hqo4"]
+            for key in keys:
+                if self.alert_data['violation_type'] in ['speed_violation_count']:
+                    cc_recipients.append(cc_recipients_data.get("key",""))
+                else:
+                    # For other violation types, exclude hqo4
+                    if key != "hqo4":
+                        cc_recipients.append(cc_recipients_data.get(key, ""))
+        self.usernames = set(cc_recipients)        
+        mail_recipients = transporter_mail
+        cc_recipients = cc_recipients
+        from_url = "VTS<VTSGovernance@hpcl.co.in>"
+        return mail_recipients, cc_recipients, from_url
+    
+    async def update_notication_audit_log(self):
+        notification_record = {
+            "bu": self.alert_data['bu'],
+            "sap_id": self.alert_data['sap_id'],
+            "alert_section": self.alert_data['alert_section'],
+            "interlock_name": self.alert_data['interlock_name'], 
+            "vehicle_number": self.alert_data.get("vehicle_number",""),
+            "officers_username": ",".join(str(username) for username in self.usernames),
+            "notification_type": self.params.get("messagetype"), 
+            "template_path": self.template_path, 
+            "alert_id": self.alert_data['id'],
+            "transporter_details": self.transporter_details
+        }
+        #print("notification_record",notification_record)
+        await hpcl_ceg_model.NotificationAuditLogCreate(**notification_record).create()
+
+
+
     async def _send_active_notification(self):
         """
         Send notifications for LPG/TAS active messages
@@ -551,6 +630,13 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
+            if self.alert_data['alert_section'] in ['VTS']:
+                self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
+                await self.update_notication_audit_log()
+                res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
+                return res
+            
+            await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 
@@ -572,6 +658,7 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
+            await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 
@@ -593,6 +680,7 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
+            await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 
@@ -614,6 +702,7 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
+            await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 
@@ -770,6 +859,7 @@ class SendNotification:
         """
         try:
             filepath = os.path.join(urdhva_base.settings.template_path, filename)
+            self.template_path = filepath
             async with aiofiles.open(filepath, 'r') as f:
                 return await f.read()
         except FileNotFoundError:

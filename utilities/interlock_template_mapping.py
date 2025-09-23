@@ -6,6 +6,7 @@ class InterlockTemplateMapping(str, Enum):
     INTERLOCK_ALERT_CLOSURE = "interlock_alert_closure.html"
     INTERLOCK_ESCALATE = "interlock_escalate.html"
     INTERLOCK_EXCEPTION = "interlock_exception.html"
+    BLOCKING_ALERT = "interlock_truck_blocking.html"
 
 
 class TemplateMapping(str, Enum):
@@ -18,3 +19,4 @@ class TemplateMapping(str, Enum):
     UNBLOCK = ""
     JUSTIFIED="INTERLOCK_ALERT"
     RESOLVED=""
+    BLOCKING="BLOCKING_ALERT"
