@@ -3258,4 +3258,6 @@ Model EmailMaster {
     hqo3 optional str
     hqo4 optional str
     others optional str
+    driver_name optional str
+    driver_number optional str
 }

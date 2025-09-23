@@ -9158,6 +9158,8 @@ class EmailMasterSchema(UrdhvaPostgresBase):
     hqo3: Mapped[typing.Optional[str]] = mapped_column("hqo3", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     hqo4: Mapped[typing.Optional[str]] = mapped_column("hqo4", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     others: Mapped[typing.Optional[str]] = mapped_column("others", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    driver_name: Mapped[typing.Optional[str]] = mapped_column("driver_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    driver_number: Mapped[typing.Optional[str]] = mapped_column("driver_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class EmailMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -9181,6 +9183,8 @@ class EmailMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     hqo3: typing.Optional[str] = pydantic.Field("", **{})
     hqo4: typing.Optional[str] = pydantic.Field("", **{})
     others: typing.Optional[str] = pydantic.Field("", **{})
+    driver_name: typing.Optional[str] = pydantic.Field("", **{})
+    driver_number: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -9211,6 +9215,8 @@ class EmailMaster(urdhva_base.postgresmodel.PostgresModel):
     hqo3: typing.Optional[str] = pydantic.Field("", **{})
     hqo4: typing.Optional[str] = pydantic.Field("", **{})
     others: typing.Optional[str] = pydantic.Field("", **{})
+    driver_name: typing.Optional[str] = pydantic.Field("", **{})
+    driver_number: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
