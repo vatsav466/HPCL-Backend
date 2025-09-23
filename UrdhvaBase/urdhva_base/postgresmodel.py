@@ -289,7 +289,6 @@ class BasePostgresModel(pydantic.BaseModel):
             if not query_.strip().upper().startswith("WITH ") and not query_.strip().upper().startswith("SELECT"):
                 query_ = f"select {query_}"
             result = await session.execute(text(query_))
-            print("query_: ",query_)
             resp = result.all()
             # Getting key columns from reults
             columns = [key for key in result.keys()]

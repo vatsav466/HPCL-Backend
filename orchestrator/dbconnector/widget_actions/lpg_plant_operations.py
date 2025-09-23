@@ -144,7 +144,7 @@ class LPGOperationsActions:
             processId = '4,24'
             
             query = f"""SELECT
-                            process_id,
+                            system_id,
                             process_status,
                             COUNT(event_log_id)
                         FROM event_log
@@ -152,7 +152,7 @@ class LPGOperationsActions:
                             AND system_id IN ({carousal})
                             AND process_id IN ({processId})
                             AND sap_id = {data['sap_id']}
-                        GROUP BY  process_status, process_id"""
+                        GROUP BY  process_status, system_id"""
 
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
             if results['data']:
