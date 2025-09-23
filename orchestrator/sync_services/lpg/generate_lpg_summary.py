@@ -4,14 +4,13 @@ import asyncio
 import psycopg2
 import traceback
 import pandas as pd
-import polars as pl
 import numpy as np
-from sqlalchemy import create_engine
-from datetime import datetime, timedelta
+from datetime import datetime
 sys.path.append("/opt/ceg/algo")
 from utilities.helpers import get_location_details
 import orchestrator.dbconnector.credential_loader as credential_loader
 from orchestrator.dbconnector.widget_actions import lpg_plant_operations
+from api_manager.hpcl_ceg_model import LpgPlantOperationsCreate
 
 logger = urdhva_base.logger.Logger.getInstance("generate_lpg_summary")
 
@@ -118,14 +117,31 @@ class GenerateLPGSummary():
             summary = summary.groupby("carousal").sum().reset_index()
 
             status, location_data = await get_location_details("LPG", self.params["sap_id"])
-            print("location_data :", location_data)
             summary["zone"] = location_data["zone"]
             summary["region"] = location_data["region"]
             summary["sales_area"] = location_data["sales_area"]
             summary["location_name"] = location_data["name"]
 
+            carousals = await lpg_plant_operations.LPGOperationsActions.get_carousals('full', self.params["sap_id"])
+            for carousal, data in carousals.items():
+                summary.loc[summary["carousal"].astype(int) == int(carousal), "filling_heads"] = str(int(data["heads"])) + "H"
+            
+            for col in summary.columns:
+                try:
+                    summary[col] = summary[col].fillna(0).astype(np.float64).abs().round(2)
+                except Exception:
+                    continue
+            summary["carousal"] = summary["carousal"].astype(int).astype(str)
+            summary.rename({"carousal": "carousel"}, inplace=True)
+            summary["process_date"] = datetime.strptime(self.params["to_date"], "%Y-%m-%d")
+
+            for data in summary.to_dict(orient="records"):
+                print(f"Inserting the {self.params["from_date"]} summary for the plant {self.params["sap_id"]}")
+                LpgPlantOperationsCreate(**data).create()
+
             return summary
         except Exception as e:
+            print("traceback :", traceback.format_exc())
             logger.info("--- Error in Generating Summary ---")
             logger.info(f"Traceback : {traceback.format_exc()}")
 
