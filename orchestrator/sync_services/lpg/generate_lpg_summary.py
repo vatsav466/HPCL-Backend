@@ -5,7 +5,8 @@ import psycopg2
 import traceback
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta
 sys.path.append("/opt/ceg/algo")
 from utilities.helpers import get_location_details
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -37,7 +38,7 @@ class GenerateLPGSummary():
             net_hours_column = ["normal_net_hours", "break_net_hours", "overtime_net_hours"]
             production_columns = ["normal_total_production", "break_total_production", "overtime_total_production"]
             
-            for col in net_hours_column+production_columns:
+            for col in net_hours_column + production_columns:
                 if col in df.columns:
                     df[col] = df[col].fillna(0).astype(np.float64).abs()
 
@@ -113,6 +114,10 @@ class GenerateLPGSummary():
             rejections = await self.calculate_rejections()
             bottling_summary = await self.calculate_bottling_summary()
             summary = pd.concat([productivity, rejections, bottling_summary])
+            if summary.empty:
+                print(f"--- No Data Found for {self.params['sap_id']} ---")
+                logger.info(f"--- No Data Found for {self.params['sap_id']} ---")
+                return
             summary = summary.fillna(0)
             summary = summary.groupby("carousal").sum().reset_index()
 
@@ -124,7 +129,7 @@ class GenerateLPGSummary():
 
             carousals = await lpg_plant_operations.LPGOperationsActions.get_carousals('full', self.params["sap_id"])
             for carousal, data in carousals.items():
-                summary.loc[summary["carousal"].astype(int) == int(carousal), "filling_heads"] = str(int(data["heads"])) + "H"
+                summary.loc[summary["carousal"].astype(int) == int(carousal), "filling_head"] = str(int(data["heads"])) + "H"
             
             for col in summary.columns:
                 try:
@@ -132,12 +137,13 @@ class GenerateLPGSummary():
                 except Exception:
                     continue
             summary["carousal"] = summary["carousal"].astype(int).astype(str)
-            summary.rename({"carousal": "carousel"}, inplace=True)
+            summary.rename(columns={"carousal": "carousel"}, inplace=True)
             summary["process_date"] = datetime.strptime(self.params["to_date"], "%Y-%m-%d")
+            summary["sap_id"] = self.params["sap_id"]
 
-            for data in summary.to_dict(orient="records"):
-                print(f"Inserting the {self.params["from_date"]} summary for the plant {self.params["sap_id"]}")
-                LpgPlantOperationsCreate(**data).create()
+            print(f"Inserting the {self.params["from_date"]} summary for the plant {self.params["sap_id"]}")
+            for data in summary.to_dict(orient="records"):                
+                await LpgPlantOperationsCreate(**data).create()
 
             return summary
         except Exception as e:
@@ -146,12 +152,43 @@ class GenerateLPGSummary():
             logger.info(f"Traceback : {traceback.format_exc()}")
 
 
-if __name__ == "__main__":
-    params = {
-        "sap_id": "2330", 
-        "from_date": "2025-09-21", 
-        "to_date": "2025-09-21"
-    }
-    ins = GenerateLPGSummary(**params)
-    summary = asyncio.run(ins.generate_summary())
-    summary.to_csv("/tmp/summary.csv", index=False)
+async def main():
+    plants = pd.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
+    print(plants[["erp_id", "plant_name", "host_ip"]])
+
+    for plant in plants.to_dict(orient="records"):
+        # query = f"""
+        #     SELECT MAX(DATE(process_date)) AS max_date
+        #     FROM production_log
+        #     WHERE sap_id='{plant["erp_id"]}'
+        # """
+        # res = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=1)
+
+        # if res.get("data", None) and res["data"][0]["max_date"]:
+        #     from_date = res["data"][0]["max_date"]
+        # else:
+        #     print(f"No records found for {plant['plant_name']}, skipping...")
+        #     continue
+
+        to_date = datetime.now(ZoneInfo("Asia/Kolkata")).date()
+
+        # current_date = from_date
+        current_date = datetime.strptime("2025-09-16", "%Y-%m-%d").date()
+
+        while current_date <= to_date:
+            print(f"Processing plant={plant['plant_name']} date={current_date}")
+
+            params = {
+                "sap_id": str(plant["erp_id"]),
+                "from_date": current_date.strftime("%Y-%m-%d"),
+                "to_date": current_date.strftime("%Y-%m-%d")
+            }
+            
+            ins = GenerateLPGSummary(**params)
+            await ins.generate_summary()
+
+            current_date += timedelta(days=1)
+
+
+if __name__ == "__main__":   
+    asyncio.run(main())
