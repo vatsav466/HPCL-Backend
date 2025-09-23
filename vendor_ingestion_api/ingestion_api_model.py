@@ -468,3 +468,30 @@ class Tas_Get_Agent_Comm_StatusParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class emlockStatusDataCreate(pydantic.BaseModel):
+    event_id: str
+    vendor_id: str
+    location_type: str
+    emlock_exception_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_code: typing.Optional[str] = pydantic.Field("", **{})
+    truck_number: typing.Optional[str] = pydantic.Field("", **{})
+    swipein_l1: typing.Optional[bool] = pydantic.Field(False, )
+    swipein_l2: typing.Optional[bool] = pydantic.Field(False, )
+    swipeout_l1: typing.Optional[bool] = pydantic.Field(False, )
+    swipeout_l2: typing.Optional[bool] = pydantic.Field(False, )
+    l1_id: typing.Optional[str] = pydantic.Field("", **{})
+    l2_id: typing.Optional[str] = pydantic.Field("", **{})
+    created_date: typing.Optional[datetime.datetime] | None = None
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class Emlockstatus_Ingest_DataParams(pydantic.BaseModel):
+    vendor_id: str
+    event_id: str
+    data: typing.Optional[typing.List[emlockStatusDataCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

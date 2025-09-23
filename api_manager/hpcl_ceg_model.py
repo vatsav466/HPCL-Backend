@@ -8988,3 +8988,80 @@ class Rointerlockdisable_Submit_Service_RequestParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class EMLockStatusSchema(UrdhvaPostgresBase):
+    __tablename__ = 'em_lock_status'
+    
+    event_id: Mapped[str] = mapped_column("event_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    vendor_id: Mapped[str] = mapped_column("vendor_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location_type: Mapped[str] = mapped_column("location_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    emlock_exception_id: Mapped[typing.Optional[str]] = mapped_column("emlock_exception_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    terminal_code: Mapped[typing.Optional[str]] = mapped_column("terminal_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    truck_number: Mapped[typing.Optional[str]] = mapped_column("truck_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    swipein_l1: Mapped[typing.Optional[bool]] = mapped_column("swipein_l1", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    swipein_l2: Mapped[typing.Optional[bool]] = mapped_column("swipein_l2", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    swipeout_l1: Mapped[typing.Optional[bool]] = mapped_column("swipeout_l1", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    swipeout_l2: Mapped[typing.Optional[bool]] = mapped_column("swipeout_l2", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    l1_id: Mapped[typing.Optional[str]] = mapped_column("l1_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    l2_id: Mapped[typing.Optional[str]] = mapped_column("l2_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    created_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("created_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    invoice_number: Mapped[typing.Optional[str]] = mapped_column("invoice_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class EMLockStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'em_lock_status'
+    
+    event_id: str
+    vendor_id: str
+    location_type: str
+    emlock_exception_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_code: typing.Optional[str] = pydantic.Field("", **{})
+    truck_number: typing.Optional[str] = pydantic.Field("", **{})
+    swipein_l1: typing.Optional[bool] = pydantic.Field(False, )
+    swipein_l2: typing.Optional[bool] = pydantic.Field(False, )
+    swipeout_l1: typing.Optional[bool] = pydantic.Field(False, )
+    swipeout_l2: typing.Optional[bool] = pydantic.Field(False, )
+    l1_id: typing.Optional[str] = pydantic.Field("", **{})
+    l2_id: typing.Optional[str] = pydantic.Field("", **{})
+    created_date: typing.Optional[datetime.datetime] | None = None
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = EMLockStatusSchema
+        upsert_keys = []
+
+
+class EMLockStatus(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'em_lock_status'
+    
+    event_id: typing.Optional[str] | None = None
+    vendor_id: typing.Optional[str] | None = None
+    location_type: typing.Optional[str] | None = None
+    emlock_exception_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_code: typing.Optional[str] = pydantic.Field("", **{})
+    truck_number: typing.Optional[str] = pydantic.Field("", **{})
+    swipein_l1: typing.Optional[bool] = pydantic.Field(False, )
+    swipein_l2: typing.Optional[bool] = pydantic.Field(False, )
+    swipeout_l1: typing.Optional[bool] = pydantic.Field(False, )
+    swipeout_l2: typing.Optional[bool] = pydantic.Field(False, )
+    l1_id: typing.Optional[str] = pydantic.Field("", **{})
+    l2_id: typing.Optional[str] = pydantic.Field("", **{})
+    created_date: typing.Optional[datetime.datetime] | None = None
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = EMLockStatusSchema
+        upsert_keys = []
+
+
+class EMLockStatusGetResp(pydantic.BaseModel):
+    data: typing.List[EMLockStatus]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

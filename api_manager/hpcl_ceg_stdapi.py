@@ -1840,3 +1840,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/rointerlockdisable/{id}', tags=['RoInterlockDisable'])
 async def delete(id: str):
     return await RoInterlockDisable.delete(id)
+
+
+@router.post('/emlockstatus', response_model=EMLockStatus, tags=['EMLockStatus'])
+async def create(inputObj: EMLockStatusCreate):
+    return await inputObj.create()
+
+
+@router.put('/emlockstatus', response_model=EMLockStatus, tags=['EMLockStatus'])
+async def update(inputObj: EMLockStatus):
+    return await inputObj.modify()
+
+
+@router.get('/emlockstatus/{id}', response_model=EMLockStatus, tags=['EMLockStatus'])
+async def get(id: str):
+    return await EMLockStatus.get(id, skip_secrets=True)
+
+
+@router.get('/emlockstatus', response_model=EMLockStatusGetResp, tags=['EMLockStatus'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await EMLockStatus.get_all(params, skip_secrets=True)
+
+
+@router.delete('/emlockstatus/{id}', tags=['EMLockStatus'])
+async def delete(id: str):
+    return await EMLockStatus.delete(id)

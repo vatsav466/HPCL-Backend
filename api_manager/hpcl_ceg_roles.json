@@ -6440,6 +6440,69 @@
                     "name": "submit_service_request"
                 }
             ]
+        },
+        {
+            "name": "emlockstatus",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "EMLockStatus",
+            "attributes": {},
+            "uris": [
+                "/api/emlockstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "emlockstatus_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "EMLockStatus_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/emlockstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "emlockstatus_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "EMLockStatus_admin",
+            "attributes": {},
+            "uris": [
+                "/api/emlockstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

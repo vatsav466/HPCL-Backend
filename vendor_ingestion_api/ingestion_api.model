@@ -337,3 +337,28 @@ Model TAS crud_disable {
         
     }
 }
+
+Model emlockStatusData internal {
+    event_id str
+    vendor_id str
+    location_type str
+    emlock_exception_id optional str
+    terminal_code optional str
+    truck_number optional str
+    swipein_l1 optional bool
+    swipein_l2 optional bool
+    swipeout_l1 optional bool
+    swipeout_l2 optional bool
+    l1_id optional str
+    l2_id optional str
+    created_date optional datetime
+    invoice_number optional str
+}
+
+Model EMLockStatus crud_disable {
+    Action=> ingest_data {
+        vendor_id str
+        event_id str
+        data optional list emlockStatusData
+    }
+}
