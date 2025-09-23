@@ -58,24 +58,31 @@ class GenerateLPGSummary():
             cs_rejection = await lpg_plant_operations.LPGOperationsActions.get_cs_rejection(self.params)
             gd_rejection = await lpg_plant_operations.LPGOperationsActions.get_gd_rejection(self.params)
             pt_rejection = await lpg_plant_operations.LPGOperationsActions.get_pt_rejection(self.params)
+            
             #### CS REJECTION ####
-            cs_rejection_data = {
-                "cs_handled": 0,
-                "cs_sortout": 0,
-                "cs_rejection": 0
-            }
-            for key, val in cs_rejection.items():
-                cs_rejection_data["cs_handled"] = cs_rejection_data["cs_handled"] + val["handled"]
-                cs_rejection_data["cs_sortout"] = cs_rejection_data["cs_sortout"] + val["sortout"]
-                cs_rejection_data["cs_rejection"] = cs_rejection_data["cs_rejection"] + val["rejection_rate"]
+            cs_rejection = pd.DataFrame.from_dict(cs_rejection, orient="index").reset_index()
+            cs_rejection.rename(columns={"index": "carousal"}, inplace=True)
+            cs_rejection.rename(columns={"handled": "cs_handled", "sortout": "cs_sortout", 
+                                         "rejection_rate": "cs_rejection"}, inplace=True)
+            cs_rejection = cs_rejection[["carousal", "cs_handled", "cs_sortout", "cs_rejection"]]
 
-            cs_rejection = pd.DataFrame([cs_rejection_data])
-            gd_rejection = pd.DataFrame([gd_rejection]).rename(
-                        columns={"handled": "gd_handled", "sortout": "gd_sortout", "rejection_rate": "gd_rejection"})
-            pt_rejection = pd.DataFrame([pt_rejection]).rename(
-                        columns={"handled": "pt_handled", "sortout": "pt_sortout", "rejection_rate": "pt_rejection"})
+            #### GD REJECTION ####
+            gd_rejection = pd.DataFrame.from_dict(gd_rejection, orient="index").reset_index()
+            gd_rejection.rename(columns={"index": "carousal"}, inplace=True)
+            gd_rejection.rename(columns={"handled": "gd_handled", "sortout": "gd_sortout", 
+                                         "rejection_rate": "gd_rejection"}, inplace=True)
+            gd_rejection = gd_rejection[["carousal", "gd_handled", "gd_sortout", "gd_rejection"]]
+            
+            #### PT REJECTION ####
+            pt_rejection = pd.DataFrame.from_dict(pt_rejection, orient="index").reset_index()
+            pt_rejection.rename(columns={"index": "carousal"}, inplace=True)
+            pt_rejection.rename(columns={"handled": "pt_handled", "sortout": "pt_sortout", 
+                                         "rejection_rate": "pt_rejection"}, inplace=True)
+            pt_rejection = pt_rejection[["carousal", "pt_handled", "pt_sortout", "pt_rejection"]]
 
-            df = pd.concat([cs_rejection, gd_rejection, pt_rejection], axis=1)
+            df = pd.concat([cs_rejection, gd_rejection, pt_rejection])
+            df = df.fillna(0)
+            df = df.groupby("carousal").sum().reset_index()
             print("Rejections :", df)
             return df
         except Exception as e:
