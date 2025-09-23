@@ -86,7 +86,7 @@ class LPGOperationsActions:
                 processId = '3,23'
 
             query = f"""SELECT
-                            process_id,
+                            system_id,
                             process_status,
                             COUNT(event_log_id)
                         FROM event_log
@@ -94,26 +94,36 @@ class LPGOperationsActions:
                             AND system_id IN ({carousal})
                             AND process_id IN ({processId})
                             AND sap_id = {data['sap_id']}
-                        GROUP BY  process_status, process_id """
+                        GROUP BY  process_status, system_id """
             
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
             if results['data']:
                 results = results['data']
 
             if results:
-                data = {
-                    'handled' : 0,
-                    'sortout' : 0
-                }
+                carousal_wise_data = {}
 
                 for row in results:
-                    data['handled'] += row['count'] 
-                    if row['process_status'] != 0:
-                        data['sortout'] += row['count'] 
+                    sys_id = row['system_id']
+                    if sys_id not in carousal_wise_data:
+                        carousal_wise_data[sys_id] = {
+                            'handled': 0,
+                            'sortout': 0
+                        }
 
-                data['rejection_rate'] = round((data['sortout'] / data['handled']) * 100, 2)
-                return data
-            return False
+                    carousal_wise_data[sys_id]['handled'] += row['count']
+                    if row['process_status'] != 0:
+                        carousal_wise_data[sys_id]['sortout'] += row['count']
+
+                # compute rejection_rate per system_id
+                for sys_id, stats in carousal_wise_data.items():
+                    if stats['handled'] > 0:
+                        stats['rejection_rate'] = round((stats['sortout'] / stats['handled']) * 100, 2)
+                    else:
+                        stats['rejection_rate'] = 0.0
+
+                return carousal_wise_data
+            return False, "No data found"
         except Exception as e:
             print("Exception in getting filling accuracy :", str(e))
             print("Traceback :", traceback.format_exc())
@@ -149,18 +159,28 @@ class LPGOperationsActions:
                 results = results['data']
 
             if results:
-                data = {
-                    'handled' : 0,
-                    'sortout' : 0
-                }
+                carousal_wise_data = {}
 
                 for row in results:
-                    data['handled'] += row['count'] 
-                    if row['process_status'] != 0:
-                        data['sortout'] += row['count'] 
+                    sys_id = row['system_id']
+                    if sys_id not in carousal_wise_data:
+                        carousal_wise_data[sys_id] = {
+                            'handled': 0,
+                            'sortout': 0
+                        }
 
-                data['rejection_rate'] = round((data['sortout'] / data['handled']) * 100, 2)
-                return data
+                    carousal_wise_data[sys_id]['handled'] += row['count']
+                    if row['process_status'] != 0:
+                        carousal_wise_data[sys_id]['sortout'] += row['count']
+
+                # compute rejection_rate per system_id
+                for sys_id, stats in carousal_wise_data.items():
+                    if stats['handled'] > 0:
+                        stats['rejection_rate'] = round((stats['sortout'] / stats['handled']) * 100, 2)
+                    else:
+                        stats['rejection_rate'] = 0.0
+
+                return carousal_wise_data
             return False, "No data found"
         except Exception as e:
             print("Exception in getting filling accuracy :", str(e))
