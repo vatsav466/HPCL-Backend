@@ -102,6 +102,7 @@ Model Ticketing {
     comment_id optional str
     comment_attachment_path optional str
     context optional str
+    merge_status optional str
     
 
 
@@ -162,6 +163,7 @@ Model Ticketing {
         ticket_id  str
         merge_ticket_id optional list str
         comment optional str
+        merge_status optional str
     }
 
     Action=> delete_ticket {

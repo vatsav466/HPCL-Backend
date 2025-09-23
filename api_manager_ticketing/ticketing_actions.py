@@ -331,8 +331,9 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         }
         updated_history = existing_history + [ticket_update_entry]
         if ticket_state == "Resolved":
-            # print("ticket_state---",ticket_state)
             data_dict["ticket_status"] = "Close"
+        else:
+            data_dict["ticket_status"] = "Open"
             # print("ticket_status>>>>>>>",data_dict["ticket_status"])
         data_dict["ticket_history"] = updated_history
 
@@ -1000,6 +1001,35 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
 
         # Append to merge_history
         main_ticket["merge_history"].append(merge_entry)
+        merge_ticket.setdefault("merge_history", [])
+        merge_ticket.setdefault("ticket_history", [])
+
+        merge_ticket_entry = {
+            "processed_time": processed_time.isoformat(),
+            "allocated_time": processed_time.isoformat(),
+            "action_msg": f"Ticket {merge_ticket_id} merged into {main_ticket['ticket_id']}",
+            "action_type": "TicketMerged",
+            "description": entry_comment,
+            "merge_ticket_id": [main_ticket["ticket_id"]],
+            "comment": entry_comment
+        }
+        if merge_ticket["merge_history"] is None:
+            merge_ticket["merge_history"] = []
+        merge_ticket["merge_history"].append(merge_ticket_entry)
+
+        if merge_ticket["ticket_history"] is None:
+            merge_ticket["ticket_history"] = []
+        merge_ticket_history_entry = {
+            "processed_time": processed_time.isoformat(),
+            "allocated_time": processed_time.isoformat(),
+            "action_msg": f"Ticket {merge_ticket_id} merged into {main_ticket['ticket_id']}",
+            "action_type": "TicketMerged",
+            "comment": entry_comment
+        }
+        merge_ticket["ticket_history"].append(merge_ticket_history_entry)
+        merge_ticket["merge_status"] = "Merged"
+
+        await Ticketing(id=merge_ticket["id"], merge_history=merge_ticket["merge_history"], ticket_history=merge_ticket["ticket_history"],merge_status=merge_ticket["merge_status"]).modify()
 
         # ----- NEW: Update ticket_history also -----
         ticket_history_entry = {
@@ -1025,9 +1055,10 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
 
         # Optionally keep linked_alerts in main ticket
         main_ticket.setdefault("linked_alerts", []).extend(merge_ticket.get("linked_alerts", []))
+        main_ticket["merge_status"] = None
 
     # Save main ticket with updated merge_history and ticket_history
-    await Ticketing(id=main_ticket["id"], merge_history=main_ticket["merge_history"], ticket_history=main_ticket["ticket_history"]).modify()
+    await Ticketing(id=main_ticket["id"], merge_history=main_ticket["merge_history"], ticket_history=main_ticket["ticket_history"], merge_status=None).modify()
 
     return {
         "message": "Tickets merged successfully",
