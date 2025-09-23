@@ -3220,3 +3220,42 @@ Model EMLockStatus {
     created_date optional datetime
     invoice_number optional str
 }
+
+Model TransporterDetails internal {
+    transporter_name optional str
+    transporter_email optional str
+    }
+
+Model NotificationAuditLog {
+    bu str
+    sap_id str
+    alert_section str
+    interlock_name str
+    vehicle_number optional str
+    officers_username optional str
+    notification_type optional str
+    template_path optional str
+    alert_id optional str
+    transporter_details optional list TransporterDetails
+}
+
+Model EmailMaster {
+    user optional str
+    section optional str
+    bu optional str
+    sap_id optional str
+    location_name optional str
+    zone optional str
+    transporter_name optional str
+    transporter_code optional str
+    transporter_email1 optional str
+    transporter_email2 optional str
+    location_officer optional str
+    zonal_transport_officer optional str
+    zonal_head optional str
+    hqo1 optional str
+    hqo2 optional str
+    hqo3 optional str
+    hqo4 optional str
+    others optional str
+}

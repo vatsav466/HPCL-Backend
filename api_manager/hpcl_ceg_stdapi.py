@@ -1865,3 +1865,53 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/emlockstatus/{id}', tags=['EMLockStatus'])
 async def delete(id: str):
     return await EMLockStatus.delete(id)
+
+
+@router.post('/notificationauditlog', response_model=NotificationAuditLog, tags=['NotificationAuditLog'])
+async def create(inputObj: NotificationAuditLogCreate):
+    return await inputObj.create()
+
+
+@router.put('/notificationauditlog', response_model=NotificationAuditLog, tags=['NotificationAuditLog'])
+async def update(inputObj: NotificationAuditLog):
+    return await inputObj.modify()
+
+
+@router.get('/notificationauditlog/{id}', response_model=NotificationAuditLog, tags=['NotificationAuditLog'])
+async def get(id: str):
+    return await NotificationAuditLog.get(id, skip_secrets=True)
+
+
+@router.get('/notificationauditlog', response_model=NotificationAuditLogGetResp, tags=['NotificationAuditLog'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await NotificationAuditLog.get_all(params, skip_secrets=True)
+
+
+@router.delete('/notificationauditlog/{id}', tags=['NotificationAuditLog'])
+async def delete(id: str):
+    return await NotificationAuditLog.delete(id)
+
+
+@router.post('/emailmaster', response_model=EmailMaster, tags=['EmailMaster'])
+async def create(inputObj: EmailMasterCreate):
+    return await inputObj.create()
+
+
+@router.put('/emailmaster', response_model=EmailMaster, tags=['EmailMaster'])
+async def update(inputObj: EmailMaster):
+    return await inputObj.modify()
+
+
+@router.get('/emailmaster/{id}', response_model=EmailMaster, tags=['EmailMaster'])
+async def get(id: str):
+    return await EmailMaster.get(id, skip_secrets=True)
+
+
+@router.get('/emailmaster', response_model=EmailMasterGetResp, tags=['EmailMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await EmailMaster.get_all(params, skip_secrets=True)
+
+
+@router.delete('/emailmaster/{id}', tags=['EmailMaster'])
+async def delete(id: str):
+    return await EmailMaster.delete(id)
