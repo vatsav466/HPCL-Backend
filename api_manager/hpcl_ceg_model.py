@@ -8988,3 +8988,239 @@ class Rointerlockdisable_Submit_Service_RequestParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class EMLockStatusSchema(UrdhvaPostgresBase):
+    __tablename__ = 'em_lock_status'
+    
+    event_id: Mapped[str] = mapped_column("event_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    vendor_id: Mapped[str] = mapped_column("vendor_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location_type: Mapped[str] = mapped_column("location_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    emlock_exception_id: Mapped[typing.Optional[str]] = mapped_column("emlock_exception_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    terminal_code: Mapped[typing.Optional[str]] = mapped_column("terminal_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    truck_number: Mapped[typing.Optional[str]] = mapped_column("truck_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    swipein_l1: Mapped[typing.Optional[bool]] = mapped_column("swipein_l1", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    swipein_l2: Mapped[typing.Optional[bool]] = mapped_column("swipein_l2", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    swipeout_l1: Mapped[typing.Optional[bool]] = mapped_column("swipeout_l1", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    swipeout_l2: Mapped[typing.Optional[bool]] = mapped_column("swipeout_l2", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    l1_id: Mapped[typing.Optional[str]] = mapped_column("l1_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    l2_id: Mapped[typing.Optional[str]] = mapped_column("l2_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    created_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("created_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    invoice_number: Mapped[typing.Optional[str]] = mapped_column("invoice_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class EMLockStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'em_lock_status'
+    
+    event_id: str
+    vendor_id: str
+    location_type: str
+    emlock_exception_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_code: typing.Optional[str] = pydantic.Field("", **{})
+    truck_number: typing.Optional[str] = pydantic.Field("", **{})
+    swipein_l1: typing.Optional[bool] = pydantic.Field(False, )
+    swipein_l2: typing.Optional[bool] = pydantic.Field(False, )
+    swipeout_l1: typing.Optional[bool] = pydantic.Field(False, )
+    swipeout_l2: typing.Optional[bool] = pydantic.Field(False, )
+    l1_id: typing.Optional[str] = pydantic.Field("", **{})
+    l2_id: typing.Optional[str] = pydantic.Field("", **{})
+    created_date: typing.Optional[datetime.datetime] | None = None
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = EMLockStatusSchema
+        upsert_keys = []
+
+
+class EMLockStatus(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'em_lock_status'
+    
+    event_id: typing.Optional[str] | None = None
+    vendor_id: typing.Optional[str] | None = None
+    location_type: typing.Optional[str] | None = None
+    emlock_exception_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_code: typing.Optional[str] = pydantic.Field("", **{})
+    truck_number: typing.Optional[str] = pydantic.Field("", **{})
+    swipein_l1: typing.Optional[bool] = pydantic.Field(False, )
+    swipein_l2: typing.Optional[bool] = pydantic.Field(False, )
+    swipeout_l1: typing.Optional[bool] = pydantic.Field(False, )
+    swipeout_l2: typing.Optional[bool] = pydantic.Field(False, )
+    l1_id: typing.Optional[str] = pydantic.Field("", **{})
+    l2_id: typing.Optional[str] = pydantic.Field("", **{})
+    created_date: typing.Optional[datetime.datetime] | None = None
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = EMLockStatusSchema
+        upsert_keys = []
+
+
+class EMLockStatusGetResp(pydantic.BaseModel):
+    data: typing.List[EMLockStatus]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class TransporterDetailsCreate(pydantic.BaseModel):
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_email: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class NotificationAuditLogSchema(UrdhvaPostgresBase):
+    __tablename__ = 'notification_audit_log'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    alert_section: Mapped[str] = mapped_column("alert_section", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    interlock_name: Mapped[str] = mapped_column("interlock_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    vehicle_number: Mapped[typing.Optional[str]] = mapped_column("vehicle_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    officers_username: Mapped[typing.Optional[str]] = mapped_column("officers_username", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    notification_type: Mapped[typing.Optional[str]] = mapped_column("notification_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    template_path: Mapped[typing.Optional[str]] = mapped_column("template_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    transporter_details: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("transporter_details", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+
+class NotificationAuditLogCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'notification_audit_log'
+    
+    bu: str
+    sap_id: str
+    alert_section: str
+    interlock_name: str
+    vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
+    officers_username: typing.Optional[str] = pydantic.Field("", **{})
+    notification_type: typing.Optional[str] = pydantic.Field("", **{})
+    template_path: typing.Optional[str] = pydantic.Field("", **{})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_details: typing.Optional[typing.List[TransporterDetailsCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = NotificationAuditLogSchema
+        upsert_keys = []
+
+
+class NotificationAuditLog(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'notification_audit_log'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    alert_section: typing.Optional[str] | None = None
+    interlock_name: typing.Optional[str] | None = None
+    vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
+    officers_username: typing.Optional[str] = pydantic.Field("", **{})
+    notification_type: typing.Optional[str] = pydantic.Field("", **{})
+    template_path: typing.Optional[str] = pydantic.Field("", **{})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_details: typing.Optional[typing.List[TransporterDetailsCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = NotificationAuditLogSchema
+        upsert_keys = []
+
+
+class NotificationAuditLogGetResp(pydantic.BaseModel):
+    data: typing.List[NotificationAuditLog]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class EmailMasterSchema(UrdhvaPostgresBase):
+    __tablename__ = 'email_master'
+    
+    user: Mapped[typing.Optional[str]] = mapped_column("user", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    section: Mapped[typing.Optional[str]] = mapped_column("section", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    transporter_name: Mapped[typing.Optional[str]] = mapped_column("transporter_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    transporter_code: Mapped[typing.Optional[str]] = mapped_column("transporter_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    transporter_email1: Mapped[typing.Optional[str]] = mapped_column("transporter_email1", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    transporter_email2: Mapped[typing.Optional[str]] = mapped_column("transporter_email2", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_officer: Mapped[typing.Optional[str]] = mapped_column("location_officer", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zonal_transport_officer: Mapped[typing.Optional[str]] = mapped_column("zonal_transport_officer", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zonal_head: Mapped[typing.Optional[str]] = mapped_column("zonal_head", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    hqo1: Mapped[typing.Optional[str]] = mapped_column("hqo1", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    hqo2: Mapped[typing.Optional[str]] = mapped_column("hqo2", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    hqo3: Mapped[typing.Optional[str]] = mapped_column("hqo3", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    hqo4: Mapped[typing.Optional[str]] = mapped_column("hqo4", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    others: Mapped[typing.Optional[str]] = mapped_column("others", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class EmailMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'email_master'
+    
+    user: typing.Optional[str] = pydantic.Field("", **{})
+    section: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_code: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_email1: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_email2: typing.Optional[str] = pydantic.Field("", **{})
+    location_officer: typing.Optional[str] = pydantic.Field("", **{})
+    zonal_transport_officer: typing.Optional[str] = pydantic.Field("", **{})
+    zonal_head: typing.Optional[str] = pydantic.Field("", **{})
+    hqo1: typing.Optional[str] = pydantic.Field("", **{})
+    hqo2: typing.Optional[str] = pydantic.Field("", **{})
+    hqo3: typing.Optional[str] = pydantic.Field("", **{})
+    hqo4: typing.Optional[str] = pydantic.Field("", **{})
+    others: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = EmailMasterSchema
+        upsert_keys = []
+
+
+class EmailMaster(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'email_master'
+    
+    user: typing.Optional[str] = pydantic.Field("", **{})
+    section: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_code: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_email1: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_email2: typing.Optional[str] = pydantic.Field("", **{})
+    location_officer: typing.Optional[str] = pydantic.Field("", **{})
+    zonal_transport_officer: typing.Optional[str] = pydantic.Field("", **{})
+    zonal_head: typing.Optional[str] = pydantic.Field("", **{})
+    hqo1: typing.Optional[str] = pydantic.Field("", **{})
+    hqo2: typing.Optional[str] = pydantic.Field("", **{})
+    hqo3: typing.Optional[str] = pydantic.Field("", **{})
+    hqo4: typing.Optional[str] = pydantic.Field("", **{})
+    others: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = EmailMasterSchema
+        upsert_keys = []
+
+
+class EmailMasterGetResp(pydantic.BaseModel):
+    data: typing.List[EmailMaster]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

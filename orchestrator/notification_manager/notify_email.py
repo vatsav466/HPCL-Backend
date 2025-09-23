@@ -103,6 +103,15 @@ class NotifyEMail(NotificationManager):
         # Attaching files if any attachments
         for file_name in kwargs.get("attachments", []):
             mail_content.attach(self._attach_file(file_name))
+
+        for cid, path in kwargs.get("inline_images", {}).items():
+            if os.path.isfile(path):
+                with open(path, "rb") as f:
+                    img = MIMEImage(f.read())
+                    img.add_header('Content-ID', f'<{cid}>')
+                    img.add_header('Content-Disposition', 'inline', filename=os.path.basename(path))
+                    mail_content.attach(img)
+
         try:
             context = ssl.create_default_context()
             if creds['connection_type'] == "SSL/TLS":

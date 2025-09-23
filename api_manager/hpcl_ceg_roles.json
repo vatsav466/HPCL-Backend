@@ -6440,6 +6440,195 @@
                     "name": "submit_service_request"
                 }
             ]
+        },
+        {
+            "name": "emlockstatus",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "EMLockStatus",
+            "attributes": {},
+            "uris": [
+                "/api/emlockstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "emlockstatus_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "EMLockStatus_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/emlockstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "emlockstatus_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "EMLockStatus_admin",
+            "attributes": {},
+            "uris": [
+                "/api/emlockstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "notificationauditlog",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "NotificationAuditLog",
+            "attributes": {},
+            "uris": [
+                "/api/notificationauditlog/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "notificationauditlog_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "NotificationAuditLog_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/notificationauditlog/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "notificationauditlog_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "NotificationAuditLog_admin",
+            "attributes": {},
+            "uris": [
+                "/api/notificationauditlog/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "emailmaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "EmailMaster",
+            "attributes": {},
+            "uris": [
+                "/api/emailmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "emailmaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "EmailMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/emailmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "emailmaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "EmailMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/emailmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
