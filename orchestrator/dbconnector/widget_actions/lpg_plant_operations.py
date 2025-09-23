@@ -1,5 +1,6 @@
 import urdhva_base
 import math
+import sys
 import asyncio
 import traceback
 from datetime import datetime, timedelta
@@ -7,7 +8,49 @@ from dateutil.relativedelta import relativedelta
 from orchestrator.dbconnector.widget_actions import lpg_config
 
 
+
 class LPGOperationsActions:
+    async def plants_dropdown(data: dict):
+        query = """
+            SELECT sap_id AS sap_id, name AS location_name, zone AS zone, region AS region
+            FROM location_master
+            WHERE bu = 'LPG'
+            AND name NOT ILIKE '%import%'
+            AND name NOT ILIKE '%facility%'
+            ORDER BY name
+        """
+        try:
+            result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+
+            plants = []
+            zones = set()
+            regions = set()
+
+            if result and "data" in result and result["data"]:
+                for row in result["data"]:
+                    plants.append({
+                        "sap_id": str(row["sap_id"]),
+                        "location_name": row["location_name"]
+                    })
+                    zones.add(row["zone"])
+                    regions.add(row["region"])
+
+            return {
+                "status": True,
+                "message": "Success",
+                "data": {
+                    "plant": plants,
+                    "zone": list(zones),
+                    "region": list(regions)
+                }
+            }
+
+        except Exception:
+            return {
+                "status": False,
+                "message": "DB Error: " + "".join(traceback.format_exception_only(*sys.exc_info()[:2])),
+                "data": {"plant": [], "zone": [], "region": []}
+            }
 
     async def get_breaks(plant_id, carousal_id):
         query = f"""SELECT start_time, stop_time FROM public.breaks WHERE plant_id = {plant_id} AND carousal_id = {carousal_id}"""
