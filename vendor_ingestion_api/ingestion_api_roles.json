@@ -668,6 +668,75 @@
                     "name": "get_agent_comm_status"
                 }
             ]
+        },
+        {
+            "name": "emlockstatus",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "EMLockStatus",
+            "attributes": {},
+            "uris": [
+                "/api/emlockstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
+        },
+        {
+            "name": "emlockstatus_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "EMLockStatus_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/emlockstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "emlockstatus_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "EMLockStatus_admin",
+            "attributes": {},
+            "uris": [
+                "/api/emlockstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
         }
     ],
     "policies": [
@@ -805,6 +874,10 @@
         {
             "name": "get_agent_comm_status",
             "displayName": "get_agent_comm_status"
+        },
+        {
+            "name": "ingest_data",
+            "displayName": "ingest_data"
         }
     ]
 }
