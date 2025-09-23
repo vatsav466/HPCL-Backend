@@ -302,6 +302,31 @@ async def delete(id: str):
     return await IndentDryOut.delete(id)
 
 
+@router.post('/lpgplantoperations', response_model=LpgPlantOperations, tags=['LpgPlantOperations'])
+async def create(inputObj: LpgPlantOperationsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgplantoperations', response_model=LpgPlantOperations, tags=['LpgPlantOperations'])
+async def update(inputObj: LpgPlantOperations):
+    return await inputObj.modify()
+
+
+@router.get('/lpgplantoperations/{id}', response_model=LpgPlantOperations, tags=['LpgPlantOperations'])
+async def get(id: str):
+    return await LpgPlantOperations.get(id, skip_secrets=True)
+
+
+@router.get('/lpgplantoperations', response_model=LpgPlantOperationsGetResp, tags=['LpgPlantOperations'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgPlantOperations.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgplantoperations/{id}', tags=['LpgPlantOperations'])
+async def delete(id: str):
+    return await LpgPlantOperations.delete(id)
+
+
 @router.post('/lpgoperationssummary', response_model=LpgOperationsSummary, tags=['LpgOperationsSummary'])
 async def create(inputObj: LpgOperationsSummaryCreate):
     return await inputObj.create()

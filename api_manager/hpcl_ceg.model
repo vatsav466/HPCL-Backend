@@ -1112,6 +1112,52 @@ Model IndentDryOut {
      }
 }
 
+Model LpgPlantOperations {
+    carousel index_field str
+    filling_head index_field str
+    process_date index_field datetime
+    sap_id index_field str
+    location_name index_field optional str
+    zone index_field optional str
+    region index_field optional str
+    sales_area optional str
+    // normal hours
+    normal_net_hours optional float
+    normal_total_production optional float
+    normal_productivity optional float
+    // break hours
+    break_net_hours optional float
+    break_total_production optional float
+    break_productivity optional float
+    // overtime hours
+    overtime_net_hours optional float
+    overtime_total_production optional float
+    overtime_productivity optional float
+    // total hours
+    total_net_hours optional float
+    total_production optional float
+    total_productivity optional float
+    // cs rejection
+    cs_handled optional float
+    cs_sortout optional float
+    cs_rejection optional float
+    // gd rejection
+    gd_handled optional float
+    gd_sortout optional float
+    gd_rejection optional float
+    // pt rejection
+    pt_handled optional float
+    pt_sortout optional float
+    pt_rejection optional float
+    // bottiling summary
+    production_14_2kg optional default=0 float
+    production_19kg optional default=0 float
+
+    Action=> check_connection_status {        
+        sap_id str
+    }
+}
+    
 Model LpgOperationsSummary {
     is_additional_carousel float
     short_name str

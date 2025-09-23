@@ -2443,6 +2443,142 @@ class Indentdryout_Generate_Dryout_Group_DataParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class LpgPlantOperationsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_plant_operations'
+    
+    carousel: Mapped[str] = mapped_column("carousel", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    filling_head: Mapped[str] = mapped_column("filling_head", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    process_date: Mapped[datetime.datetime] = mapped_column("process_date", DateTime(timezone=True), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    normal_net_hours: Mapped[typing.Optional[float]] = mapped_column("normal_net_hours", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    normal_total_production: Mapped[typing.Optional[float]] = mapped_column("normal_total_production", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    normal_productivity: Mapped[typing.Optional[float]] = mapped_column("normal_productivity", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    break_net_hours: Mapped[typing.Optional[float]] = mapped_column("break_net_hours", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    break_total_production: Mapped[typing.Optional[float]] = mapped_column("break_total_production", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    break_productivity: Mapped[typing.Optional[float]] = mapped_column("break_productivity", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    overtime_net_hours: Mapped[typing.Optional[float]] = mapped_column("overtime_net_hours", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    overtime_total_production: Mapped[typing.Optional[float]] = mapped_column("overtime_total_production", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    overtime_productivity: Mapped[typing.Optional[float]] = mapped_column("overtime_productivity", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    total_net_hours: Mapped[typing.Optional[float]] = mapped_column("total_net_hours", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    total_production: Mapped[typing.Optional[float]] = mapped_column("total_production", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    total_productivity: Mapped[typing.Optional[float]] = mapped_column("total_productivity", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    cs_handled: Mapped[typing.Optional[float]] = mapped_column("cs_handled", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    cs_sortout: Mapped[typing.Optional[float]] = mapped_column("cs_sortout", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    cs_rejection: Mapped[typing.Optional[float]] = mapped_column("cs_rejection", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    gd_handled: Mapped[typing.Optional[float]] = mapped_column("gd_handled", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    gd_sortout: Mapped[typing.Optional[float]] = mapped_column("gd_sortout", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    gd_rejection: Mapped[typing.Optional[float]] = mapped_column("gd_rejection", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    pt_handled: Mapped[typing.Optional[float]] = mapped_column("pt_handled", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    pt_sortout: Mapped[typing.Optional[float]] = mapped_column("pt_sortout", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    pt_rejection: Mapped[typing.Optional[float]] = mapped_column("pt_rejection", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    production_14_2kg: Mapped[typing.Optional[float]] = mapped_column("production_14_2kg", Numeric, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    production_19kg: Mapped[typing.Optional[float]] = mapped_column("production_19kg", Numeric, index=False, nullable=True, default=0, primary_key=False, unique=False)
+
+
+class LpgPlantOperationsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_plant_operations'
+    
+    carousel: str
+    filling_head: str
+    process_date: datetime.datetime
+    sap_id: str
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    normal_net_hours: typing.Optional[float] = pydantic.Field(0.0, **{})
+    normal_total_production: typing.Optional[float] = pydantic.Field(0.0, **{})
+    normal_productivity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    break_net_hours: typing.Optional[float] = pydantic.Field(0.0, **{})
+    break_total_production: typing.Optional[float] = pydantic.Field(0.0, **{})
+    break_productivity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    overtime_net_hours: typing.Optional[float] = pydantic.Field(0.0, **{})
+    overtime_total_production: typing.Optional[float] = pydantic.Field(0.0, **{})
+    overtime_productivity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    total_net_hours: typing.Optional[float] = pydantic.Field(0.0, **{})
+    total_production: typing.Optional[float] = pydantic.Field(0.0, **{})
+    total_productivity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    cs_handled: typing.Optional[float] = pydantic.Field(0.0, **{})
+    cs_sortout: typing.Optional[float] = pydantic.Field(0.0, **{})
+    cs_rejection: typing.Optional[float] = pydantic.Field(0.0, **{})
+    gd_handled: typing.Optional[float] = pydantic.Field(0.0, **{})
+    gd_sortout: typing.Optional[float] = pydantic.Field(0.0, **{})
+    gd_rejection: typing.Optional[float] = pydantic.Field(0.0, **{})
+    pt_handled: typing.Optional[float] = pydantic.Field(0.0, **{})
+    pt_sortout: typing.Optional[float] = pydantic.Field(0.0, **{})
+    pt_rejection: typing.Optional[float] = pydantic.Field(0.0, **{})
+    production_14_2kg: typing.Optional[float] = pydantic.Field(0, **{})
+    production_19kg: typing.Optional[float] = pydantic.Field(0, **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = LpgPlantOperationsSchema
+        upsert_keys = []
+
+
+class LpgPlantOperations(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_plant_operations'
+    
+    carousel: typing.Optional[str] | None = None
+    filling_head: typing.Optional[str] | None = None
+    process_date: typing.Optional[datetime.datetime] | None = None
+    sap_id: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    normal_net_hours: typing.Optional[float] = pydantic.Field(0.0, **{})
+    normal_total_production: typing.Optional[float] = pydantic.Field(0.0, **{})
+    normal_productivity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    break_net_hours: typing.Optional[float] = pydantic.Field(0.0, **{})
+    break_total_production: typing.Optional[float] = pydantic.Field(0.0, **{})
+    break_productivity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    overtime_net_hours: typing.Optional[float] = pydantic.Field(0.0, **{})
+    overtime_total_production: typing.Optional[float] = pydantic.Field(0.0, **{})
+    overtime_productivity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    total_net_hours: typing.Optional[float] = pydantic.Field(0.0, **{})
+    total_production: typing.Optional[float] = pydantic.Field(0.0, **{})
+    total_productivity: typing.Optional[float] = pydantic.Field(0.0, **{})
+    cs_handled: typing.Optional[float] = pydantic.Field(0.0, **{})
+    cs_sortout: typing.Optional[float] = pydantic.Field(0.0, **{})
+    cs_rejection: typing.Optional[float] = pydantic.Field(0.0, **{})
+    gd_handled: typing.Optional[float] = pydantic.Field(0.0, **{})
+    gd_sortout: typing.Optional[float] = pydantic.Field(0.0, **{})
+    gd_rejection: typing.Optional[float] = pydantic.Field(0.0, **{})
+    pt_handled: typing.Optional[float] = pydantic.Field(0.0, **{})
+    pt_sortout: typing.Optional[float] = pydantic.Field(0.0, **{})
+    pt_rejection: typing.Optional[float] = pydantic.Field(0.0, **{})
+    production_14_2kg: typing.Optional[float] = pydantic.Field(0, **{})
+    production_19kg: typing.Optional[float] = pydantic.Field(0, **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = LpgPlantOperationsSchema
+        upsert_keys = []
+
+
+class LpgPlantOperationsGetResp(pydantic.BaseModel):
+    data: typing.List[LpgPlantOperations]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Lpgplantoperations_Check_Connection_StatusParams(pydantic.BaseModel):
+    sap_id: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class LpgOperationsSummarySchema(UrdhvaPostgresBase):
     __tablename__ = 'lpg_operations_summary'
     
