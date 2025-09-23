@@ -64,21 +64,24 @@ class GenerateLPGSummary():
             cs_rejection.rename(columns={"index": "carousal"}, inplace=True)
             cs_rejection.rename(columns={"handled": "cs_handled", "sortout": "cs_sortout", 
                                          "rejection_rate": "cs_rejection"}, inplace=True)
-            cs_rejection = cs_rejection[["carousal", "cs_handled", "cs_sortout", "cs_rejection"]]
+            if not cs_rejection.empty:
+                cs_rejection = cs_rejection[["carousal", "cs_handled", "cs_sortout", "cs_rejection"]]
 
             #### GD REJECTION ####
             gd_rejection = pd.DataFrame.from_dict(gd_rejection, orient="index").reset_index()
             gd_rejection.rename(columns={"index": "carousal"}, inplace=True)
             gd_rejection.rename(columns={"handled": "gd_handled", "sortout": "gd_sortout", 
                                          "rejection_rate": "gd_rejection"}, inplace=True)
-            gd_rejection = gd_rejection[["carousal", "gd_handled", "gd_sortout", "gd_rejection"]]
+            if not gd_rejection.empty:
+                gd_rejection = gd_rejection[["carousal", "gd_handled", "gd_sortout", "gd_rejection"]]
             
             #### PT REJECTION ####
             pt_rejection = pd.DataFrame.from_dict(pt_rejection, orient="index").reset_index()
             pt_rejection.rename(columns={"index": "carousal"}, inplace=True)
             pt_rejection.rename(columns={"handled": "pt_handled", "sortout": "pt_sortout", 
                                          "rejection_rate": "pt_rejection"}, inplace=True)
-            pt_rejection = pt_rejection[["carousal", "pt_handled", "pt_sortout", "pt_rejection"]]
+            if not pt_rejection.empty:
+                pt_rejection = pt_rejection[["carousal", "pt_handled", "pt_sortout", "pt_rejection"]]
 
             df = pd.concat([cs_rejection, gd_rejection, pt_rejection])
             df = df.fillna(0)
