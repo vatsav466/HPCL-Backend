@@ -239,8 +239,12 @@ class SendNotification:
 
     async def get_subject_for_vts(self):
         if self.params.get('messagetype','') in ['active']:
-            subject_template = f"VTS Alert: Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
-            return subject_template
+            if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
+                subject_template = f"VTS Alert: Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
+                return subject_template
+            else:
+                subject_template = f"VTS Alert: Blacklisting of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
+                return subject_template
         if self.params.get('messagetype','') in ['resolved']:
             subject_template = f"VTS Alert: Unblocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
             return subject_template
@@ -298,7 +302,9 @@ class SendNotification:
     
     async def get_vts_messagetype(self):
         if self.params.get('messagetype','') in ['active']:
-            return 'BLOCKING'
+            if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
+                return 'BLOCKING'
+            return 'BLACKLISTED'
         elif self.params.get('messagetype','') in ['resolved']:
             return 'VTSRESOLVED'
         

@@ -12,6 +12,7 @@ class InterlockTemplateMapping(str, Enum):
     VTSRESOLVED = "vts_truck_unblocked.html"
     SENDITBACK = "vts_interlock_senditback.html"
     VTSACCEPT = "vts_blocking_accepted.html"
+    BLACKLISTED = "vts_truck_blacklisted.html"
 
 
 class TemplateMapping(str, Enum):
@@ -30,3 +31,4 @@ class TemplateMapping(str, Enum):
     VTSRESOLVED="VTS_RESOLVED"
     SENDITBACK="VTS_SENDITBACK"
     VTSACCEPT="VTS_ACCEPT"
+    BLACKLISTED="BLACKLISTED"
