@@ -94,7 +94,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                 urdhva_base.utilities.get_present_time() +
                 datetime.timedelta(days=instance_data['block_duration']) +
                 datetime.timedelta(days=1)
-        ) if not vts_analysis.is_vehicle_blacklisted(alert_data['tl_number']) else None
+        ) if not await vts_analysis.is_vehicle_blacklisted(alert_data['tl_number']) else None
         # vts_alert_data['vehicle_blocked_end_date'] = helpers.get_time_stamp_by_delta(
         #     days=instance_data['block_duration'],
         #     with_month_start_day=False,

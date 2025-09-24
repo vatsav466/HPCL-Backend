@@ -8,10 +8,10 @@ class InterlockTemplateMapping(str, Enum):
     INTERLOCK_EXCEPTION = "interlock_exception.html"
     BLOCKING_ALERT = "vts_truck_blocking.html"
     VTS_REJECTED = "vts_truck_unblocking_rejected.html"
-    VTSJUSTIFIED = "vts_truck_blocked_justification.html"
-    VTSRESOLVED = "vts_truck_unblocked.html"
-    SENDITBACK = "vts_interlock_senditback.html"
-    VTSACCEPT = "vts_blocking_accepted.html"
+    VTS_JUSTIFIED = "vts_truck_blocked_justification.html"
+    VTS_RESOLVED = "vts_truck_unblocked.html"
+    VTS_SENDITBACK = "vts_interlock_senditback.html"
+    VTS_ACCEPT = "vts_blocking_accepted.html"
     BLACKLISTED = "vts_truck_blacklisted.html"
 
 

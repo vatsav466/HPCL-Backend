@@ -285,7 +285,7 @@ class SendNotification:
         # Construct the subject template
         subject_template = f"{self.params.get('msg_subject', '')} for BU: {bu}, Location Name: {location_name}({sap_id})"
 
-        if self.alert_data["alert_section"] in ['VTS']:
+        if self.alert_data["alert_section"] in ['VTS'] and self.params.get('messagetype','') in ['active','resolved']:
             subject_template = await self.get_subject_for_vts()
 
         # Append alert_section only if it exists and is different from BU
@@ -324,7 +324,7 @@ class SendNotification:
             Dict[str, str]: A dictionary containing the template and body content.
         """
         message_type = self.params.get("messagetype", "").upper()
-        if self.alert_data.get("alert_section") in ["VTS"]:
+        if self.alert_data.get("alert_section") in ["VTS"] and self.params.get('messagetype','') in ['active','resolved']:
             message_type = await self.get_vts_messagetype()
         template_value = getattr(TemplateMapping, message_type, None)
         template = template_value.value if template_value else ""
