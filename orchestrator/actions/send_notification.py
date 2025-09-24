@@ -180,13 +180,14 @@ class SendNotification:
         self.roles_mapper["rolemailto"] = defaultdict(list)
         print("self.roles_mapper['rolemailto']", self.roles_mapper["rolemailto"])
         for role in roles:
-            role_name = role.get("novex_role", "")  # Choose appropriate key
+            role_name = role.get("novex_role", [])  # Choose appropriate key
             email = role.get("email", "")
             phone = role.get("phone", "")
             self.usernames.add(role.get("username",""))
             
             if email or phone:  # Ensure we only add roles with at least one contact detail
-                self.roles_mapper["rolemailto"][role_name].append({"email": email, "phone": phone})
+                for single_role in role_name:
+                    self.roles_mapper["rolemailto"][single_role].append({"email": email, "phone": phone})
 
         # Convert defaultdict to a normal dictionary
         self.roles_mapper["rolemailto"] = dict(self.roles_mapper["rolemailto"])
@@ -642,7 +643,7 @@ class SendNotification:
         cc_recipients = []
         if len(cc_query_data.get("data",[])):
             cc_recipients_data = cc_query_data['data'][0]
-            keys = ["location_officer","zonal_transport_officer","zonal_head","hqo1","hqo2","hqo2","hqo4"]
+            keys = ["location_officer","zonal_transport_officer","zonal_head","hqo1","hqo2","hqo3","hqo4"]
             for key in keys:
                 if self.alert_data['violation_type'] in ['speed_violation_count']:
                     cc_recipients.append(cc_recipients_data.get("key",""))
