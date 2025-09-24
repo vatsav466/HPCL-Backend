@@ -379,7 +379,7 @@ class SendNotification:
         # logger.info(f"self.alert_data: {self.alert_data}") 
         if self.alert_data["alert_section"] in ['VTS']:
             self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
-            self.vts_assigned_role = (await self._role_configuration_mqofrole() or "")
+            self.vts_assigned_role = "Location In-Charge SOD" if self.alert_data.get('violation_type','') not in ['device_tamper_count','main_supply_removal_count'] else (await self._role_configuration_mqofrole() or "")
             if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
                 self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
 
@@ -685,14 +685,15 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
-            if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['active']:
+            if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['active'] and self.alert_data['bu'] in ['TAS']:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
-                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
-                return res
+                if self.mail_recipients:
+                    res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
+                    return res
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
-        return res
+            return res
 
     async def _send_resolved_notification(self):
         """
@@ -712,10 +713,17 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
-            if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['resolved']:
+            if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['resolved'] and self.alert_data['bu'] in ['TAS']:
+                alert_history = list(reversed(self.alert_data.get('alert_history', [])))
+                if len(alert_history) >= 2:
+                    if alert_history[1]['action_type'] in ["AcceptClose", "Rejected"]:
+                        await self.update_notication_audit_log()
+                        res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
+                        return res
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
-                if self.alert_data["created_at"] > datetime.datetime.strptime('2025-09-23', '%Y-%m-%d'):
+                #if self.mail_recipients and self.alert_data["created_at"] > datetime.datetime.strptime('2025-09-23', '%Y-%m-%d'):
+                if self.mail_recipients:
                     res = await notification_module.publish_message(from_url=self.from_url, 
                                                                     recipients=self.mail_recipients, 
                                                                     cc_recipients=self.cc_recipients, 
@@ -724,7 +732,7 @@ class SendNotification:
                     return res
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
-        return res
+            return res
 
     async def _send_other_notification(self):
         """
@@ -746,7 +754,7 @@ class SendNotification:
             self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
-        return res
+            return res
 
     async def _send_standard_notification(self):
         """
@@ -768,7 +776,7 @@ class SendNotification:
             self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
-        return res
+            return res
 
     # async def _update_alert_status(self):
     #     """Update alert status in database"""
