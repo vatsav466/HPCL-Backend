@@ -74,3 +74,14 @@ class TicketType(str, enum.Enum):
 
 
 
+
+
+
+class ContextType(str, enum.Enum):
+    Hpcl = 'Hpcl'
+    Recon = 'Recon'
+    DataValidation = 'DataValidation'
+
+
+
+

@@ -6,3 +6,16 @@ api_manager/.algo_env
 .scannerwork/.sonar_lock
 .scannerwork/report-task.txt
 /UrdhvaBase/urdhva_base.egg-info
+/my_env
+UrdhvaBase/urdhva_base.egg-info/PKG-INFO
+UrdhvaBase/urdhva_base.egg-info/requires.txt
+UrdhvaBase/urdhva_base.egg-info/PKG-INFO
+UrdhvaBase/urdhva_base.egg-info/requires.txt
+UrdhvaBase/urdhva_base.egg-info/SOURCES.txt
+UrdhvaBase/urdhva_base/restapi.py
+UrdhvaBase/urdhva_base/settings.py
+UrdhvaBase/urdhva_base.egg-info/PKG-INFO
+UrdhvaBase/urdhva_base/settings.py
+UrdhvaBase/urdhva_base/restapi.py
+UrdhvaBase/urdhva_base.egg-info/PKG-INFO
+/UrdhvaBase/urdhva_base.egg-info
