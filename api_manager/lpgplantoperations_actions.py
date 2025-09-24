@@ -1,7 +1,6 @@
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
-import telnetlib
 import csv
 import time
 import asyncio
@@ -14,8 +13,13 @@ CSV_PATH = "/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.
 async def check_telnet(host_ip: str, port: int):
     start_time = time.time()
     try:
-        tn = telnetlib.Telnet(host_ip, port, timeout=5)
-        tn.close()
+        # asyncio open_connection is fully async
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(host_ip, port),
+            timeout=5
+            )
+        writer.close()
+        await writer.wait_closed()
         latency = round((time.time() - start_time) * 1000)  # ms
         return {"status": "live", "latency": f"{latency}"}
     except Exception:
@@ -25,6 +29,7 @@ async def check_telnet(host_ip: str, port: int):
 async def lpgplantoperations_check_connection_status(data: Lpgplantoperations_Check_Connection_StatusParams):
     sap_id = data.sap_id
 
+    # Read CSV and filter plants for this SAP ID
     plants = []
     try:
         with open(CSV_PATH, mode='r') as f:
@@ -32,7 +37,7 @@ async def lpgplantoperations_check_connection_status(data: Lpgplantoperations_Ch
             for row in reader:
                 if row.get("erp_id") == sap_id:
                     port_str = row.get("port")
-                    if not port_str:  # skip if missing
+                    if not port_str:
                         continue
                     plants.append({
                         "plant_name": row.get("plant_name"),
@@ -45,10 +50,11 @@ async def lpgplantoperations_check_connection_status(data: Lpgplantoperations_Ch
     if not plants:
         return {"status": True, "message": "success", "data": {sap_id: []}}
 
-    # Run telnet checks concurrently
+    # Run checks concurrently using asyncio
     tasks = [check_telnet(p['host_ip'], p['port']) for p in plants]
     statuses = await asyncio.gather(*tasks)
 
+    # Combine results
     results = []
     for plant, status in zip(plants, statuses):
         results.append({
@@ -60,8 +66,8 @@ async def lpgplantoperations_check_connection_status(data: Lpgplantoperations_Ch
     return {
         "status": True,
         "message": "success",
-        "data": {"sap_id": sap_id,
-                 "connection_status" : results
-                }
-
+        "data": {
+            "sap_id": sap_id,
+            "connection_status": results
+        }
     }
