@@ -233,9 +233,26 @@ class SendNotification:
         self.sms_recipients = list(dict.fromkeys(self.sms_recipients))
 
     async def get_subject_for_vts(self):
-        if self.params.get('messagetype') == 'active':
-            #VTS Alert: Blocking of truck TS06UA8786 at HPCL SECUNDERABAD TERMINAL;
+        if self.params.get('messagetype','') in ['active']:
             subject_template = f"VTS Alert: Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
+            return subject_template
+        elif self.params.get('messagetype','') in ['escalation']:
+            subject_template = f"VTS Alert Remainder: Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
+            return subject_template
+        elif self.params.get('messagetype','') in ['reject']:
+            subject_template = f"VTS Alert: Rejected Unblocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
+            return subject_template
+        elif self.params.get('messagetype','') in ['justified']:
+            subject_template = f"VTS Alert: Justification Received For Blocked truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
+            return subject_template
+        elif self.params.get('messagetype','') in ['resolved']:
+            subject_template = f"VTS Alert: Unblocked truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
+            return subject_template
+        elif self.params.get('messagetype','') in ['senditback']:
+            subject_template = f"VTS Alert: Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
+            return subject_template
+        elif self.params.get('messagetype','') in ['accept']:
+            subject_template = f"VTS Alert: Accepted Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
             return subject_template
 
 
@@ -287,6 +304,22 @@ class SendNotification:
         # self.subject = Template(self.params.get("msg_subject")).render(**template_data)
         self.body = Template(templates["body"]).render(**template_data)
         # self.sms = Template(templates["sms"]).render(**template_data)
+    
+    async def get_vts_messagetype(self):
+        if self.params.get('messagetype','') in ['active']:
+            return 'BLOCKING'
+        elif self.params.get('messagetype','') in ['escalation']:
+            return 'BLOCKING'
+        elif self.params.get('messagetype','') in ['reject']:
+            return 'VTSREJECTED'
+        elif self.params.get('messagetype','') in ['justified']:
+            return 'VTSJUSTIFIED'
+        elif self.params.get('messagetype','') in ['resolved']:
+            return 'VTSRESOLVED'
+        elif self.params.get('messagetype','') in ['senditback']:
+            return 'SENDITBACK'
+        elif self.params.get('messagetype','') in ['accept']:
+            return 'VTSACCEPT'
 
     async def _load_message_templates(self, template_name: str) -> Dict[str, str]:
         """
@@ -304,11 +337,11 @@ class SendNotification:
             Dict[str, str]: A dictionary containing the template and body content.
         """
         message_type = self.params.get("messagetype", "").upper()
-        if self.alert_data.get("alert_section") in ["VTS"] and message_type=='active':
-            message_type = 'BLOCKING'
+        if self.alert_data.get("alert_section") in ["VTS"]:
+            message_type = await self.get_vts_messagetype()
         template_value = getattr(TemplateMapping, message_type, None)
         template = template_value.value if template_value else ""
-        interlock_value = getattr(InterlockTemplateMapping, template_name.upper(), None)
+        interlock_value = getattr(InterlockTemplateMapping, template.upper(), None)
         body = await self.read_template(interlock_value.value) if interlock_value else ""
         return {"template": template, "body": body}
 
@@ -374,6 +407,7 @@ class SendNotification:
             "transporter_name": self.alert_data['transporter_name'] if self.alert_data['transporter_name'] else "",
             "block_start_date": self.alert_data['vehicle_blocked_start_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_blocked_start_date'] else None,
             "block_end_date": self.alert_data['vehicle_blocked_end_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_blocked_end_date'] else None,
+            "unblock_date": self.alert_data['vehicle_unblocked_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_unblocked_date'] else None,
             "asset_id": self.alert_data.get("device_name", self.alert_data["location_name"]) # this should be location_id
         }
         return self.base_alert_data
@@ -476,6 +510,34 @@ class SendNotification:
         """
         self.base_alert_data["action_type"] = hpcl_ceg_enum.AlertState.Resolved.value
         self.base_alert_data["action_msg"] = self.params.get("msg_subject")
+    
+    async def _process_senditback(self):
+        """
+        Handle resolved type notifications.
+
+        This method updates the base alert data by setting the action type to
+        "Resolved" and the action message to the subject of the message from the
+        parameters.
+
+        Returns:
+            None
+        """
+        self.base_alert_data["action_type"] = hpcl_ceg_enum.AlertActionType.SendItBack.value
+        self.base_alert_data["action_msg"] = self.params.get("msg_subject")
+    
+    async def _process_accept(self):
+        """
+        Handle resolved type notifications.
+
+        This method updates the base alert data by setting the action type to
+        "Resolved" and the action message to the subject of the message from the
+        parameters.
+
+        Returns:
+            None
+        """
+        self.base_alert_data["action_type"] = hpcl_ceg_enum.AlertActionType.AcceptClose.value
+        self.base_alert_data["action_msg"] = self.params.get("msg_subject")
 
     async def _process_message_type(self):
         """
@@ -502,7 +564,9 @@ class SendNotification:
             "notify": self._process_notify,
             "reject": self._process_reject,
             "justified": self._process_justified,
-            "resolved": self._process_resolved
+            "resolved": self._process_resolved,
+            "senditback": self._process_senditback,
+            "accept": self._process_accept
         }
         processor = processors.get(message_type)  # Retrieve the function
         if processor:
@@ -577,7 +641,7 @@ class SendNotification:
                                                                                     resp_type='plain')
         cc_recipients = []
         if len(cc_query_data.get("data",[])):
-            cc_recipients_data = cc_recipients_data['data'][0]
+            cc_recipients_data = cc_query_data['data'][0]
             keys = ["location_officer","zonal_transport_officer","zonal_head","hqo1","hqo2","hqo2","hqo4"]
             for key in keys:
                 if self.alert_data['violation_type'] in ['speed_violation_count']:
@@ -602,8 +666,8 @@ class SendNotification:
             "officers_username": ",".join(str(username) for username in self.usernames),
             "notification_type": self.params.get("messagetype"), 
             "template_path": self.template_path, 
-            "alert_id": self.alert_data['id'],
-            "transporter_details": self.transporter_details
+            "alert_id": str(self.alert_data['id']),
+            "transporter_details": [self.transporter_details]
         }
         #print("notification_record",notification_record)
         await hpcl_ceg_model.NotificationAuditLogCreate(**notification_record).create()
@@ -633,9 +697,8 @@ class SendNotification:
             if self.alert_data['alert_section'] in ['VTS']:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
-                res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
+                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=False, html_content=True)
                 return res
-            
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
@@ -658,6 +721,11 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
+            if self.alert_data['alert_section'] in ['VTS']:
+                self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
+                await self.update_notication_audit_log()
+                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=False, html_content=True)
+                return res
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
@@ -680,6 +748,11 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
+            if self.alert_data['alert_section'] in ['VTS']:
+                self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
+                await self.update_notication_audit_log()
+                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=False, html_content=True)
+                return res
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
@@ -702,6 +775,11 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
+            if self.alert_data['alert_section'] in ['VTS']:
+                self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
+                await self.update_notication_audit_log()
+                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=False, html_content=True)
+                return res
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
@@ -858,6 +936,7 @@ class SendNotification:
             FileNotFoundError: If the template file is not found.
         """
         try:
+            print("filename---->",filename)
             filepath = os.path.join(urdhva_base.settings.template_path, filename)
             self.template_path = filepath
             async with aiofiles.open(filepath, 'r') as f:
