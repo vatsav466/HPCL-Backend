@@ -142,6 +142,8 @@ class LPGOperationsActions:
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
             if results['data']:
                 results = results['data']
+            else:
+                return {}
 
             if results:
                 carousal_wise_data = {}
@@ -301,7 +303,7 @@ class LPGOperationsActions:
                 'other_errors'	: int(otherErrors[id]),
                 'sortout':int(totalSortout[id]),
                 'commErrorSortout':int(commErrorSortout[id]),
-                'rejection_rate' : round((int(totalSortout[id]) / int(total[id])) * 100, 2)
+                'rejection_rate' : round((int(totalSortout[id]) / int(total[id])) * 100, 2) if int(total[id]) > 0 else 0.0
                 }
 
             return refData
