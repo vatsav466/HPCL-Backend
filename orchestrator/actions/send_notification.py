@@ -685,7 +685,7 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
-            if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['active']:
+            if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['active'] and self.alert_data['bu'] in ['TAS']:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
                 if self.mail_recipients:
@@ -713,7 +713,7 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
-            if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['resolved']:
+            if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['resolved'] and self.alert_data['bu'] in ['TAS']:
                 alert_history = list(reversed(self.alert_data.get('alert_history', [])))
                 if len(alert_history) >= 2:
                     if alert_history[1]['action_type'] in ["AcceptClose", "Rejected"]:
