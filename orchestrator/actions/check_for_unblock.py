@@ -5,6 +5,7 @@ import hpcl_ceg_model
 import utilities.emlock_mapping as emlock_mapping
 import utilities.va_alert_mapping as va_alert_mapping
 import utilities.role_configuration as role_configuration
+import orchestrator.analytics.vts_analysis as vts_analysis
 import utilities.tas_role_configuration as tas_role_configuration
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
@@ -49,7 +50,9 @@ class CheckForUnblock:
             if alert_data.get("alert_section","") in ["VTS"]:
                 escalation_time = params.get("escalate_time_block","")
                 totalWaitTime = role_configuration.role_Mapping[alert_data["alert_section"]][alert_data.get("bu","")][alert_data["interlock_name"]]["block_time"][escalation_time]
-                print("totalWaittime---------->",totalWaitTime)
+                if await vts_analysis.is_vehicle_blacklisted(alert_data['vehicle_number']):
+                    return True, {"blacklist": True}
+                return True, {"blacklist": False,"waitTime": totalWaitTime}
             if alert_data.get("alert_section", "") == "VA":
                 va_mapping = va_alert_mapping.VA_Alert_Mapping[alert_data.get("bu","")][alert_data['violation_type']]['escalations'][params.get("va_level", "level - 1")]
                 totalWaitTime = va_mapping['escalation_time']

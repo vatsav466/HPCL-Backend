@@ -2464,6 +2464,7 @@ Model VtsTruckDetails {
     instance_2 optional int
     instance_3 optional int
     alert_id optional str
+    blacklist optional bool
 }
 
 Model DryOutRoLoss {

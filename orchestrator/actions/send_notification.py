@@ -13,6 +13,7 @@ from collections import defaultdict
 import utilities.va_alert_mapping as va_alert_mapping
 import utilities.role_configuration as role_configuration
 import utilities.emlock_mapping as emlock_mapping
+import orchestrator.analytics.vts_analysis as vts_analysis
 import utilities.lpg_role_configuration as lpg_role_configuration
 import utilities.cris_alert_mapping as cris_alert_mapping
 import utilities.tas_role_configuration as tas_role_configuration
@@ -60,6 +61,9 @@ class SendNotification:
         self.usernames = set()
         self.transporter_details = {}
         self.template_path = ""
+        self.interlock_name = ""
+        self.days = 0
+        self.vts_assigned_role = ""
 
     async def get_required_variables(self):
         """
@@ -180,13 +184,14 @@ class SendNotification:
         self.roles_mapper["rolemailto"] = defaultdict(list)
         print("self.roles_mapper['rolemailto']", self.roles_mapper["rolemailto"])
         for role in roles:
-            role_name = role.get("novex_role", "")  # Choose appropriate key
+            role_name = role.get("novex_role", [])  # Choose appropriate key
             email = role.get("email", "")
             phone = role.get("phone", "")
             self.usernames.add(role.get("username",""))
             
             if email or phone:  # Ensure we only add roles with at least one contact detail
-                self.roles_mapper["rolemailto"][role_name].append({"email": email, "phone": phone})
+                for single_role in role_name:
+                    self.roles_mapper["rolemailto"][single_role].append({"email": email, "phone": phone})
 
         # Convert defaultdict to a normal dictionary
         self.roles_mapper["rolemailto"] = dict(self.roles_mapper["rolemailto"])
@@ -234,25 +239,14 @@ class SendNotification:
 
     async def get_subject_for_vts(self):
         if self.params.get('messagetype','') in ['active']:
-            subject_template = f"VTS Alert: Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
-            return subject_template
-        elif self.params.get('messagetype','') in ['escalation']:
-            subject_template = f"VTS Alert Remainder: Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
-            return subject_template
-        elif self.params.get('messagetype','') in ['reject']:
-            subject_template = f"VTS Alert: Rejected Unblocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
-            return subject_template
-        elif self.params.get('messagetype','') in ['justified','notify']:
-            subject_template = f"VTS Alert: Justification Received For Blocked truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
-            return subject_template
-        elif self.params.get('messagetype','') in ['resolved']:
-            subject_template = f"VTS Alert: Unblocked truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
-            return subject_template
-        elif self.params.get('messagetype','') in ['senditback']:
-            subject_template = f"VTS Alert: Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
-            return subject_template
-        elif self.params.get('messagetype','') in ['accept']:
-            subject_template = f"VTS Alert: Accepted Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")}"
+            if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
+                subject_template = f"VTS Alert: Blocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
+                return subject_template
+            else:
+                subject_template = f"VTS Alert: Blacklisting of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
+                return subject_template
+        if self.params.get('messagetype','') in ['resolved']:
+            subject_template = f"VTS Alert: Unblocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
             return subject_template
 
 
@@ -296,7 +290,8 @@ class SendNotification:
 
         # Append alert_section only if it exists and is different from BU
         if alert_section and bu != alert_section:
-            subject_template += f", Alert Section: {alert_section}"
+            if alert_section not in ['VTS']:
+                subject_template += f", Alert Section: {alert_section}"
 
         # Render the final subject
         self.subject = Template(subject_template).render(**template_data)
@@ -307,20 +302,12 @@ class SendNotification:
     
     async def get_vts_messagetype(self):
         if self.params.get('messagetype','') in ['active']:
-            return 'BLOCKING'
-        elif self.params.get('messagetype','') in ['escalation']:
-            return 'BLOCKING'
-        elif self.params.get('messagetype','') in ['reject']:
-            return 'VTSREJECTED'
-        elif self.params.get('messagetype','') in ['justified','notify']:
-            return 'VTSJUSTIFIED'
+            if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
+                return 'BLOCKING'
+            return 'BLACKLISTED'
         elif self.params.get('messagetype','') in ['resolved']:
             return 'VTSRESOLVED'
-        elif self.params.get('messagetype','') in ['senditback']:
-            return 'SENDITBACK'
-        elif self.params.get('messagetype','') in ['accept']:
-            return 'VTSACCEPT'
-
+        
     async def _load_message_templates(self, template_name: str) -> Dict[str, str]:
         """
         Load message templates based on the provided template name.
@@ -389,13 +376,16 @@ class SendNotification:
         Returns:
             dict: A dictionary containing the base alert data.
         """
-        # logger.info(f"self.alert_data: {self.alert_data}")
-        if self.alert_data["alert_section"] in ['VTS'] and self.params.get("messagetype") == 'active':
-            days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
+        # logger.info(f"self.alert_data: {self.alert_data}") 
+        if self.alert_data["alert_section"] in ['VTS']:
+            self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
+            self.vts_assigned_role = (await self._role_configuration_mqofrole() or "")
+            if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
+                self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
 
         self.base_alert_data = {
             "alert_id": self.params.get("alert_id"),
-            "interlock_name": await self._get_interlock_name(),
+            "interlock_name": self.interlock_name if self.interlock_name else await self._get_interlock_name(),
             "plant_id": self.alert_data.get("sap_id", ''),
             "plant_location": self.alert_data["location_name"][:30],
             "portal_link": "https://ceg.hpcl.co.in",
@@ -403,11 +393,12 @@ class SendNotification:
             "asset_name": self.alert_data["device_type"],
             "date_time": datetime.datetime.now(self.IST).strftime('%d-%m-%Y %H:%M:%S'),
             "opened_time": self.alert_data['created_at'].strftime('%d-%m-%Y %H:%M:%S'),
-            "days": days if days else 0,
+            "days": self.days if self.days else 0,
             "transporter_name": self.alert_data['transporter_name'] if self.alert_data['transporter_name'] else "",
             "block_start_date": self.alert_data['vehicle_blocked_start_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_blocked_start_date'] else None,
             "block_end_date": self.alert_data['vehicle_blocked_end_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_blocked_end_date'] else None,
             "unblock_date": self.alert_data['vehicle_unblocked_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_unblocked_date'] else None,
+            "vts_assigned_role": self.vts_assigned_role if self.vts_assigned_role else "",
             "asset_id": self.alert_data.get("device_name", self.alert_data["location_name"]) # this should be location_id
         }
         return self.base_alert_data
@@ -642,7 +633,7 @@ class SendNotification:
         cc_recipients = []
         if len(cc_query_data.get("data",[])):
             cc_recipients_data = cc_query_data['data'][0]
-            keys = ["location_officer","zonal_transport_officer","zonal_head","hqo1","hqo2","hqo2","hqo4"]
+            keys = ["location_officer","zonal_transport_officer","zonal_head","hqo1","hqo2","hqo3","hqo4"]
             for key in keys:
                 if self.alert_data['violation_type'] in ['speed_violation_count']:
                     cc_recipients.append(cc_recipients_data.get("key",""))
@@ -694,7 +685,7 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
-            if self.alert_data['alert_section'] in ['VTS']:
+            if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['active']:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
                 res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
@@ -721,7 +712,7 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
-            if self.alert_data['alert_section'] in ['VTS']:
+            if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['resolved']:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
                 res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
@@ -748,11 +739,6 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
-            if self.alert_data['alert_section'] in ['VTS']:
-                self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
-                await self.update_notication_audit_log()
-                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
-                return res
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
@@ -775,11 +761,6 @@ class SendNotification:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
             self.mail_recipients = ['default@example.com']
-            if self.alert_data['alert_section'] in ['VTS']:
-                self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
-                await self.update_notication_audit_log()
-                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
-                return res
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
