@@ -1000,9 +1000,16 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
         }
 
         # Append to merge_history
+        # Ensure merge_history and ticket_history are always lists
+        main_ticket["merge_history"] = main_ticket.get("merge_history") or []
+        main_ticket["ticket_history"] = main_ticket.get("ticket_history") or []
+
+        # Append the merge entry
         main_ticket["merge_history"].append(merge_entry)
-        merge_ticket.setdefault("merge_history", [])
-        merge_ticket.setdefault("ticket_history", [])
+
+        # For the merge ticket as well
+        merge_ticket["merge_history"] = merge_ticket.get("merge_history") or []
+        merge_ticket["ticket_history"] = merge_ticket.get("ticket_history") or []
 
         merge_ticket_entry = {
             "processed_time": processed_time.isoformat(),
@@ -1056,6 +1063,7 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
         # Optionally keep linked_alerts in main ticket
         main_ticket.setdefault("linked_alerts", []).extend(merge_ticket.get("linked_alerts", []))
         main_ticket["merge_status"] = None
+        print("coming")
 
     # Save main ticket with updated merge_history and ticket_history
     await Ticketing(id=main_ticket["id"], merge_history=main_ticket["merge_history"], ticket_history=main_ticket["ticket_history"], merge_status=None).modify()
