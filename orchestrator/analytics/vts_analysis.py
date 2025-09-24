@@ -343,7 +343,8 @@ async def get_instance(tt_number: str, sap_id: str, bu: str, get_raw_data=False)
             "instance_1": 0, 
             "instance_2": 0,
             "instance_3": 0,
-            "alert_id": ""
+            "alert_id": "",
+            "blacklist": False
         }
         #print("vts_truck_record",vts_truck_record)
         await hpcl_ceg_model.VtsTruckDetailsCreate(**vts_truck_record).create()
@@ -355,6 +356,13 @@ async def get_instance(tt_number: str, sap_id: str, bu: str, get_raw_data=False)
     if not vts_truck_data['instance_2']:
         return "1"
     return "2"
+
+async def is_vehicle_blacklisted(tl_number: str):
+    black_list_query = f"select * from vts_truck_details where truck_regno = '{tl_number}' and blacklist='true'"
+    vts_blacklist_data = await hpcl_ceg_model.VtsTruckDetails.get_aggr_data(black_list_query, limit=0)
+    if vts_blacklist_data.get("data", []):
+        return True
+    return False
 
 async def is_alert_exists(tl_number: str):
     query = f"select id from alerts where vehicle_number = '{tl_number}' and alert_status != 'Close' and alert_section = 'VTS'"
@@ -373,6 +381,17 @@ async def last_closed_at(tt_number: str):
     if len(vts_alert_data['data']):
         return vts_alert_data['data'][0]['closed_at']
     return None
+
+async def is_vehicle_blacklisted_in_alerts(tl_number, sap_id, bu):
+    query = (f"vehicle_number = '{tl_number}' and bu = '{bu}' and alert_section = 'VTS' and "
+            f"violation_type in ('device_tamper_count','main_supply_removal_count')")
+    vts_alert_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query,limit=5),resp_type='plain')
+    if len(vts_alert_data['data']):
+        query = (f"update vts_truck_details set blacklist='true' "
+                 f"where truck_regno = '{tl_number}'")
+        await hpcl_ceg_model.VtsTruckDetails.update_by_query(query)
+        return True
+    return False
 
 async def last_opened_at(tt_number: str):
     query = f"vehicle_number = '{tt_number}' and alert_status != 'Close' and alert_section = 'VTS'"
@@ -428,6 +447,8 @@ async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
     instance_data = instance_mapping[bu].get(current_instance,{})
     for key, violation_data in instance_data.items():
         if key in violation_counts.keys() and violation_counts[key] > violation_data['violation_count']:
+            if key in ['device_tamper_count', 'main_supply_removal_count']:
+                await is_vehicle_blacklisted_in_alerts(tt_number,sap_id,bu)
             instance = vts_map[key]['alerting_rules'][current_instance]
             instance['severity'] = vts_map[key]["severity"]
             violation_name = key
@@ -470,6 +491,8 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
     instance_data = instance_mapping[bu].get(current_instance,{})
     for key, violation_data in instance_data.items():
         if key in violation_counts.keys() and violation_counts[key] > violation_data['violation_count']:
+            if key in ['device_tamper_count', 'main_supply_removal_count']:
+                await is_vehicle_blacklisted_in_alerts(tt_number,sap_id,bu)
             instance = vts_map[key]['alerting_rules'][current_instance]
             instance['severity'] = vts_map[key]["severity"]
             violation_name = key
@@ -559,6 +582,8 @@ async def update_vts_instance(alert_data):
 async def create_vts_alerts(enriched_data):
     try:
         for entry in enriched_data:
+            if await is_vehicle_blacklisted(entry['tl_number']):
+                continue
             entry['auto_unblock'] = True
             entry['violation_type'] = await get_vts_violation(entry)
             entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
