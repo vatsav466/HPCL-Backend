@@ -698,7 +698,7 @@ class SendNotification:
             if self.alert_data['alert_section'] in ['VTS']:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
-                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
+                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=False, html_content=True)
                 return res
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
@@ -725,7 +725,7 @@ class SendNotification:
             if self.alert_data['alert_section'] in ['VTS']:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
-                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
+                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=False, html_content=True)
                 return res
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
@@ -752,7 +752,7 @@ class SendNotification:
             if self.alert_data['alert_section'] in ['VTS']:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
-                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
+                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=False, html_content=True)
                 return res
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
@@ -779,7 +779,7 @@ class SendNotification:
             if self.alert_data['alert_section'] in ['VTS']:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
-                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
+                res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=False, html_content=True)
                 return res
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
