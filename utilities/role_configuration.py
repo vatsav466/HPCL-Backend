@@ -177,7 +177,7 @@ role_Mapping={
                     "1": "Zonal Head SOD"
                 },
                 "block_time": {
-                    "0": "P1825D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -192,7 +192,7 @@ role_Mapping={
                     "1": "Zonal Head SOD"
                 },
                 "block_time": {
-                    "0": "P1825D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -312,7 +312,7 @@ role_Mapping={
                     "1": "Zonal Head SOD"
                 },
                 "block_time": {
-                    "0": "P1825D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
@@ -327,7 +327,7 @@ role_Mapping={
                     "1": "Zonal Head SOD"
                 },
                 "block_time": {
-                    "0": "P1825D",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
