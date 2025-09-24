@@ -7118,6 +7118,7 @@ class VtsTruckDetailsSchema(UrdhvaPostgresBase):
     instance_2: Mapped[typing.Optional[int]] = mapped_column("instance_2", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     instance_3: Mapped[typing.Optional[int]] = mapped_column("instance_3", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    blacklist: Mapped[typing.Optional[bool]] = mapped_column("blacklist", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(truck_regno, name="vts_truck_details_truck_regno"),)
 
@@ -7136,6 +7137,7 @@ class VtsTruckDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     instance_2: typing.Optional[int] = pydantic.Field(0, **{})
     instance_3: typing.Optional[int] = pydantic.Field(0, **{})
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    blacklist: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -7159,6 +7161,7 @@ class VtsTruckDetails(urdhva_base.postgresmodel.PostgresModel):
     instance_2: typing.Optional[int] = pydantic.Field(0, **{})
     instance_3: typing.Optional[int] = pydantic.Field(0, **{})
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    blacklist: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -9294,6 +9297,8 @@ class EmailMasterSchema(UrdhvaPostgresBase):
     hqo3: Mapped[typing.Optional[str]] = mapped_column("hqo3", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     hqo4: Mapped[typing.Optional[str]] = mapped_column("hqo4", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     others: Mapped[typing.Optional[str]] = mapped_column("others", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    driver_name: Mapped[typing.Optional[str]] = mapped_column("driver_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    driver_number: Mapped[typing.Optional[str]] = mapped_column("driver_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class EmailMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -9317,6 +9322,8 @@ class EmailMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     hqo3: typing.Optional[str] = pydantic.Field("", **{})
     hqo4: typing.Optional[str] = pydantic.Field("", **{})
     others: typing.Optional[str] = pydantic.Field("", **{})
+    driver_name: typing.Optional[str] = pydantic.Field("", **{})
+    driver_number: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -9347,6 +9354,8 @@ class EmailMaster(urdhva_base.postgresmodel.PostgresModel):
     hqo3: typing.Optional[str] = pydantic.Field("", **{})
     hqo4: typing.Optional[str] = pydantic.Field("", **{})
     others: typing.Optional[str] = pydantic.Field("", **{})
+    driver_name: typing.Optional[str] = pydantic.Field("", **{})
+    driver_number: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
