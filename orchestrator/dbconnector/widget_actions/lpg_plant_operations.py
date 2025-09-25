@@ -142,6 +142,8 @@ class LPGOperationsActions:
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
             if results['data']:
                 results = results['data']
+            else:
+                return {}
 
             if results:
                 carousal_wise_data = {}
@@ -168,7 +170,7 @@ class LPGOperationsActions:
                 return carousal_wise_data
             return False, "No data found"
         except Exception as e:
-            print("Exception in getting filling accuracy :", str(e))
+            print("Exception in gd_rejection :", str(e))
             print("Traceback :", traceback.format_exc())
             return False, "No data found"
     
@@ -200,6 +202,8 @@ class LPGOperationsActions:
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
             if results['data']:
                 results = results['data']
+            else:
+                return {}
 
             if results:
                 carousal_wise_data = {}
@@ -226,7 +230,7 @@ class LPGOperationsActions:
                 return carousal_wise_data
             return False, "No data found"
         except Exception as e:
-            print("Exception in getting filling accuracy :", str(e))
+            print("Exception in pt_rejection :", str(e))
             print("Traceback :", traceback.format_exc())
             return False, "No data found"
     
@@ -257,6 +261,8 @@ class LPGOperationsActions:
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
             if results['data']:
                 results = results['data']
+            else:
+                return {}
             data = {}
             total = {}
             totalSortout = {}
@@ -297,12 +303,12 @@ class LPGOperationsActions:
                 'other_errors'	: int(otherErrors[id]),
                 'sortout':int(totalSortout[id]),
                 'commErrorSortout':int(commErrorSortout[id]),
-                'rejection_rate' : round((int(totalSortout[id]) / int(total[id])) * 100, 2)
+                'rejection_rate' : round((int(totalSortout[id]) / int(total[id])) * 100, 2) if int(total[id]) > 0 else 0.0
                 }
 
             return refData
         except Exception as e:
-            print("Exception in getting filling accuracy :", str(e))
+            print("Exception in cs_rejection :", str(e))
             print("Traceback :", traceback.format_exc())
             return False, "No data found"
     
@@ -332,6 +338,8 @@ class LPGOperationsActions:
             results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
             if results['data']:
                 results = results['data']
+            else:
+                return {}
             data = {}
             total = {}
             totalSortout = {}
@@ -741,19 +749,20 @@ class LPGOperationsActions:
     async def get_phase_wise_production(carousal, data):
         queryString = await LPGOperationsActions.get_phased_production_data_query_string(carousal, data)
         data = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
-        if data['data']:
-            data = data['data']
+        
         blankProdData = {
-        'prod_14_2':0,
-        'prod_19':0}
+            'prod_14_2': 0,
+            'prod_19': 0
+            }
 
         returnData = {
-        'normal':blankProdData,
-        'break':blankProdData,
-        'overtime':blankProdData}
-
-        for phase_data in data:
-            returnData[phase_data['phase']] = phase_data
+            'normal': blankProdData,
+            'break': blankProdData,
+            'overtime': blankProdData
+            }
+        if data['data']:
+            for phase_data in data['data']:
+                returnData[phase_data['phase']] = phase_data
      
         return returnData
 
@@ -765,7 +774,14 @@ class LPGOperationsActions:
             bottling[carousal] = prodData
         return bottling
 
-    async def production_hours_data(data: dict):
+    async def production_hours_data(data: dict):   
+        def none_to_zero(d):
+            for k, v in d.items():
+                if isinstance(v, dict):
+                    none_to_zero(v)
+                elif v is None:
+                    d[k] = 0.0
+            return d     
         from_date = datetime.strptime(f"{data['from_date']}", "%Y-%m-%d").date()
         to_date = datetime.strptime(f"{data['to_date']}","%Y-%m-%d").date()
         if from_date > to_date:
@@ -778,6 +794,7 @@ class LPGOperationsActions:
         production_hours = {}
         for carousal in carousalsArray: 
             production_hours[carousal] = await LPGOperationsActions.get_production_gaps(carousal, data)
+            production_hours = {k: none_to_zero(v) for k, v in production_hours.items()}
             production_hours[carousal]['carousal'] = carousal
             production_hours[carousal]['intervening_days'] = total_intervening_days
             production_hours[carousal]['non_op_days'] = await LPGOperationsActions.get_non_operating_days(carousal, data)
@@ -821,18 +838,20 @@ class LPGOperationsActions:
                     productivityData[key][phase]={}
                     if phase != 'overtime':                                        
                         maxHours = production_hours_data[key]['max_op_hours'][phase]
-                        productivityData[key][phase]['net_hours'] =  round(float(maxHours) - float(gapHours), 2)
+                        productivityData[key][phase]['net_hours'] =  abs(float(maxHours) - float(gapHours))
                     else:
-                        if ot_production_time[key]['total_post_shift_time'] is None:
+                        total_pre_shift_time = ot_production_time[key]['total_pre_shift_time']
+                        total_post_shift_time = ot_production_time[key]['total_post_shift_time']
+                        if total_pre_shift_time is None:
+                            total_pre_shift_time = 0
+                        if total_post_shift_time is None:
                             total_post_shift_time = 0
-                        else:
-                            total_post_shift_time = ot_production_time[key]['total_post_shift_time']                    
-                        productivityData[key][phase]['net_hours'] =  round(total_post_shift_time + total_post_shift_time - gapHours, 2)
+                        productivityData[key][phase]['net_hours'] =  abs(total_pre_shift_time + total_post_shift_time - gapHours)
                     productivityData[key][phase]['total_production'] = totalProduction
                     if not (productivityData[key][phase]['net_hours']):
                         productivityData[key][phase]['productivity'] =  0
                     else:
-                        productivityData[key][phase]['productivity'] = round(float(totalProduction) / float(productivityData[key][phase]['net_hours']), 2)
+                        productivityData[key][phase]['productivity'] = abs(round(float(totalProduction) / float(productivityData[key][phase]['net_hours']), 2))
             return productivityData    
         except Exception as e:
             print("Exception in getting filling accuracy :", str(e))
@@ -952,6 +971,8 @@ class LPGOperationsActions:
             bottling_data = await urdhva_base.BasePostgresModel.get_aggr_data(queryString, limit=0)
             if bottling_data['data']:
                 bottling_data = bottling_data['data']
+            else:
+                return {}
             carousals = await LPGOperationsActions.get_carousals('array', data["sap_id"])
             result = {}
 
@@ -970,8 +991,10 @@ class LPGOperationsActions:
 
 ############## Hourly Production Data ###################
     async def hourly_production_data(data: dict):
-        from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
-        to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
+        # from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
+        # to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
+        from_date = datetime.now().strftime("%Y-%m-%d") + " 00:00:00"
+        to_date = datetime.now().strftime("%Y-%m-%d") + " 23:59:59"
         
         cyl_type = ", ".join(map(str, lpg_config.cyl_types))
         carousal = await LPGOperationsActions.get_carousals('string', data['sap_id'])

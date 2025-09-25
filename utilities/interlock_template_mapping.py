@@ -6,6 +6,13 @@ class InterlockTemplateMapping(str, Enum):
     INTERLOCK_ALERT_CLOSURE = "interlock_alert_closure.html"
     INTERLOCK_ESCALATE = "interlock_escalate.html"
     INTERLOCK_EXCEPTION = "interlock_exception.html"
+    BLOCKING_ALERT = "vts_truck_blocking.html"
+    VTS_REJECTED = "vts_truck_unblocking_rejected.html"
+    VTS_JUSTIFIED = "vts_truck_blocked_justification.html"
+    VTS_RESOLVED = "vts_truck_unblocked.html"
+    VTS_SENDITBACK = "vts_interlock_senditback.html"
+    VTS_ACCEPT = "vts_blocking_accepted.html"
+    BLACKLISTED = "vts_truck_blacklisted.html"
 
 
 class TemplateMapping(str, Enum):
@@ -18,3 +25,10 @@ class TemplateMapping(str, Enum):
     UNBLOCK = ""
     JUSTIFIED="INTERLOCK_ALERT"
     RESOLVED=""
+    BLOCKING="BLOCKING_ALERT"
+    VTSREJECTED="VTS_REJECTED"
+    VTSJUSTIFIED="VTS_JUSTIFIED"
+    VTSRESOLVED="VTS_RESOLVED"
+    SENDITBACK="VTS_SENDITBACK"
+    ACCEPT="VTS_ACCEPT"
+    BLACKLISTED="BLACKLISTED"

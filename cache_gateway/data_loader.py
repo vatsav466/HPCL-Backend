@@ -91,9 +91,15 @@ async def load_roles_master(bu, sap_id, role):
     df = pl.DataFrame(resp)
     # Now apply the filter with .arr.contains for all list columns
     print("role before resp_filtered ", role)
+    role_condition = None
+    for r in role:
+        cond = pl.col("novex_role").list.contains(r)
+        role_condition = cond if role_condition is None else (role_condition | cond)
+
+    print("role_condition ", role_condition)
     resp_filtered = df.filter(
-        (pl.col("sap_id").list.contains(str(sap_id))) &
-        (pl.col("novex_role").list.contains(str(role)))
+        (pl.col("sap_id").list.contains(str(sap_id))) &   
+        role_condition
     )
     return resp_filtered.to_dicts()
 

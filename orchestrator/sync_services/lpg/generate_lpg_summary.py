@@ -1,17 +1,15 @@
 import urdhva_base
 import sys
 import asyncio
-import psycopg2
 import traceback
-import pandas as pd
-import polars as pl
 import numpy as np
-from sqlalchemy import create_engine
-from datetime import datetime, timedelta
+import pandas as pd
+from zoneinfo import ZoneInfo
 sys.path.append("/opt/ceg/algo")
+from datetime import datetime, timedelta
 from utilities.helpers import get_location_details
-import orchestrator.dbconnector.credential_loader as credential_loader
 from orchestrator.dbconnector.widget_actions import lpg_plant_operations
+from api_manager.hpcl_ceg_model import LpgPlantOperations, LpgPlantOperationsCreate
 
 logger = urdhva_base.logger.Logger.getInstance("generate_lpg_summary")
 
@@ -38,18 +36,21 @@ class GenerateLPGSummary():
             net_hours_column = ["normal_net_hours", "break_net_hours", "overtime_net_hours"]
             production_columns = ["normal_total_production", "break_total_production", "overtime_total_production"]
             
-            for col in net_hours_column+production_columns:
+            for col in net_hours_column + production_columns:
                 if col in df.columns:
                     df[col] = df[col].fillna(0).astype(np.float64).abs()
 
             df["total_net_hours"] = df["normal_net_hours"] + df["break_net_hours"] + df["overtime_net_hours"]
             df["total_production"] = df["normal_total_production"] + df["break_total_production"] + df["overtime_total_production"]
             df["total_productivity"] = df["total_production"] / df["total_net_hours"]
-            print("productivity :", df[["total_production", "total_net_hours", "total_productivity"]])
+            print("*"*20)
+            print("--- productivity ---")
+            print(df[["carousal", "total_production", "total_net_hours", "total_productivity"]])
+            print("*"*20)
             return df
         except Exception as e:
-            logger.info(f"--- Error In Calculating Productivity {e}---")
-            logger.info(f"Traceback : {traceback.format_exc()}")
+            logger.error(f"--- Error In Calculating Productivity {e}---")
+            logger.error(f"Traceback : {traceback.format_exc()}")
             return pd.DataFrame()
         
     async def calculate_rejections(self):
@@ -64,31 +65,37 @@ class GenerateLPGSummary():
             cs_rejection.rename(columns={"index": "carousal"}, inplace=True)
             cs_rejection.rename(columns={"handled": "cs_handled", "sortout": "cs_sortout", 
                                          "rejection_rate": "cs_rejection"}, inplace=True)
-            cs_rejection = cs_rejection[["carousal", "cs_handled", "cs_sortout", "cs_rejection"]]
+            if not cs_rejection.empty:
+                cs_rejection = cs_rejection[["carousal", "cs_handled", "cs_sortout", "cs_rejection"]]
 
             #### GD REJECTION ####
             gd_rejection = pd.DataFrame.from_dict(gd_rejection, orient="index").reset_index()
             gd_rejection.rename(columns={"index": "carousal"}, inplace=True)
             gd_rejection.rename(columns={"handled": "gd_handled", "sortout": "gd_sortout", 
                                          "rejection_rate": "gd_rejection"}, inplace=True)
-            gd_rejection = gd_rejection[["carousal", "gd_handled", "gd_sortout", "gd_rejection"]]
+            if not gd_rejection.empty:
+                gd_rejection = gd_rejection[["carousal", "gd_handled", "gd_sortout", "gd_rejection"]]
             
             #### PT REJECTION ####
             pt_rejection = pd.DataFrame.from_dict(pt_rejection, orient="index").reset_index()
             pt_rejection.rename(columns={"index": "carousal"}, inplace=True)
             pt_rejection.rename(columns={"handled": "pt_handled", "sortout": "pt_sortout", 
                                          "rejection_rate": "pt_rejection"}, inplace=True)
-            pt_rejection = pt_rejection[["carousal", "pt_handled", "pt_sortout", "pt_rejection"]]
+            if not pt_rejection.empty:
+                pt_rejection = pt_rejection[["carousal", "pt_handled", "pt_sortout", "pt_rejection"]]
 
             df = pd.concat([cs_rejection, gd_rejection, pt_rejection])
             df = df.fillna(0)
             df = df.groupby("carousal").sum().reset_index()
-            print("Rejections :", df)
+            print("*"*20)
+            print("--- Rejections ---")
+            print(df)
+            print("*"*20)
             return df
         except Exception as e:
             print("traceback :", traceback.format_exc())
-            logger.info("--- Error In Calculating Rejections ---")
-            logger.info(f"Traceback : {traceback.format_exc()}")
+            logger.error("--- Error In Calculating Rejections ---")
+            logger.error(f"Traceback : {traceback.format_exc()}")
             return pd.DataFrame()
         
     async def calculate_bottling_summary(self):
@@ -100,11 +107,14 @@ class GenerateLPGSummary():
                 row.update(metrics)
                 rows.append(row)
             df = pd.DataFrame(rows)
-            print("bottling_summary :", df)
+            print("*"*20)
+            print("--- Bottling Summary ---")
+            print(df)
+            print("*"*20)
             return df
         except Exception as e:
-            logger.info("--- Error In Calculating Rejections ---")
-            logger.info(f"Traceback : {traceback.format_exc()}")
+            logger.error("--- Error In Calculating Rejections ---")
+            logger.error(f"Traceback : {traceback.format_exc()}")
             return pd.DataFrame()
     
 
@@ -114,28 +124,106 @@ class GenerateLPGSummary():
             rejections = await self.calculate_rejections()
             bottling_summary = await self.calculate_bottling_summary()
             summary = pd.concat([productivity, rejections, bottling_summary])
+            if summary.empty or summary['total_production'].sum() == 0:
+                print(f"--- No Data Found for {self.params['sap_id']} ---")
+                logger.info(f"--- No Data Found for {self.params['sap_id']} ---")
+                return
             summary = summary.fillna(0)
             summary = summary.groupby("carousal").sum().reset_index()
 
             status, location_data = await get_location_details("LPG", self.params["sap_id"])
-            print("location_data :", location_data)
             summary["zone"] = location_data["zone"]
             summary["region"] = location_data["region"]
             summary["sales_area"] = location_data["sales_area"]
             summary["location_name"] = location_data["name"]
 
+            carousals = await lpg_plant_operations.LPGOperationsActions.get_carousals('full', self.params["sap_id"])
+            for carousal, data in carousals.items():
+                summary.loc[summary["carousal"].astype(int) == int(carousal), "filling_head"] = str(int(data["heads"])) + "H"
+            
+            for col in summary.columns:
+                try:
+                    summary[col] = summary[col].fillna(0).astype(np.float64).abs().round(2)
+                except Exception:
+                    continue
+            summary["carousal"] = summary["carousal"].astype(int).astype(str)
+            summary.rename(columns={"carousal": "carousel", 
+                                    "production_19": "production_19kg", 
+                                    "production_14_2": "production_14_2kg"}, inplace=True)
+            summary["process_date"] = datetime.strptime(self.params["to_date"], "%Y-%m-%d")
+            summary["sap_id"] = self.params["sap_id"]
+
+            print(f"Inserting the {self.params["from_date"]} summary for the plant {self.params["sap_id"]}")
+            for data in summary.to_dict(orient="records"):                
+                await LpgPlantOperationsCreate(**data).create()
+
             return summary
         except Exception as e:
-            logger.info("--- Error in Generating Summary ---")
-            logger.info(f"Traceback : {traceback.format_exc()}")
+            print("traceback :", traceback.format_exc())
+            logger.error("--- Error in Generating Summary ---")
+            logger.error(f"Traceback : {traceback.format_exc()}")
 
 
-if __name__ == "__main__":
-    params = {
-        "sap_id": "2330", 
-        "from_date": "2025-09-21", 
-        "to_date": "2025-09-21"
-    }
-    ins = GenerateLPGSummary(**params)
-    summary = asyncio.run(ins.generate_summary())
-    summary.to_csv("/tmp/summary.csv", index=False)
+async def main():
+    plants = pd.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
+    print(plants[["erp_id", "plant_name", "host_ip"]])
+
+    for plant in plants.to_dict(orient="records"):
+        print("-"*50)
+        query = f"""
+            SELECT MAX(DATE(process_date)) AS max_date
+            FROM lpg_plant_operations
+            WHERE sap_id='{plant["erp_id"]}'
+        """
+        res = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=1)
+
+        if res.get("data", None) and res["data"][0]["max_date"]:
+            from_date = res["data"][0]["max_date"]
+        else:
+            print(f"No records found in summary for {plant['plant_name']}, Checking data in production_log...")
+            query = f"""
+                    SELECT MAX(DATE(process_date)) AS max_date
+                    FROM production_log
+                    WHERE sap_id='{plant["erp_id"]}'
+                """
+            raw_availability = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=1)
+            if raw_availability.get("data", None) and raw_availability["data"][0]["max_date"]:
+                from_date = raw_availability["data"][0]["max_date"]
+            else:
+                print(f"No records found in production_log for {plant['plant_name']}, skipping...")
+                continue
+        
+        to_date = datetime.now(ZoneInfo("Asia/Kolkata")).date()
+
+        current_date = from_date
+        count = 1
+        while current_date <= to_date:   
+            print("-"*20)         
+            print(f"Processing plant={plant['plant_name']} date={current_date}")
+            if count == 1:
+                query = f"""
+                        SELECT id FROM lpg_plant_operations 
+                        WHERE sap_id='{plant["erp_id"]}' AND DATE(process_date)='{from_date.strftime("%Y-%m-%d")}' 
+                        """
+                old_summary = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+                if old_summary.get("data", None):
+                    print("-"*20)
+                    print(f"Deleting total {len(old_summary['data'])} records")
+                    print("-"*20)
+                    for x in old_summary["data"]:
+                        await LpgPlantOperations.delete(x["id"])
+
+            params = {
+                "sap_id": str(plant["erp_id"]),
+                "from_date": current_date.strftime("%Y-%m-%d"),
+                "to_date": current_date.strftime("%Y-%m-%d")
+            }
+            
+            ins = GenerateLPGSummary(**params)
+            await ins.generate_summary()
+
+            current_date += timedelta(days=1)
+            count += 1
+
+if __name__ == "__main__":   
+    asyncio.run(main())

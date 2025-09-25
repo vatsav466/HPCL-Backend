@@ -33,13 +33,13 @@ role_Mapping={
             },
             "VTS PowerDisconnect FirstTime": {
                 "rolemailto": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
-                    "1": "Location In-Charge SOD",
-                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
                 },
                 "mqof": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
-                    "1": "Location In-Charge SOD"
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD"
                 },
                 "block_time": {
                     "0": "P30D",
@@ -48,13 +48,13 @@ role_Mapping={
             },
             "VTS Device Tampering FirstTime": {
                 "rolemailto": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
-                    "1": "Location In-Charge SOD",
-                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
                 },
                 "mqof": {
-                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
-                    "1": "Location In-Charge SOD"
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD"
                 },
                 "block_time": {
                     "0": "P30D",
@@ -168,13 +168,13 @@ role_Mapping={
             },
             "VTS PowerDisconnect SecondTime": {
                 "rolemailto": {
-                    "0": "Location In-Charge SOD",
-                    "1": "Zonal Transport Officer SOD",
-                    "2": "Location In-Charge SOD,Zonal Transport Officer SOD"
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
                 },
                 "mqof": {
-                    "0": "Location In-Charge SOD",
-                    "1": "Zonal Transport Officer SOD"
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD"
                 },
                 "block_time": {
                     "0": "P30D",
@@ -183,16 +183,16 @@ role_Mapping={
             },
             "VTS Device Tampering SecondTime": {
                 "rolemailto": {
-                    "0": "Location In-Charge SOD",
-                    "1": "Zonal Transport Officer SOD",
-                    "2": "Location In-Charge SOD,Zonal Transport Officer SOD"
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
                 },
                 "mqof": {
-                    "0": "Location In-Charge SOD",
-                    "1": "Zonal Transport Officer SOD"
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD"
                 },
                 "block_time": {
-                    "0": "P30",
+                    "0": "P30D",
                     "1": "PT1H"
                 }
             },
