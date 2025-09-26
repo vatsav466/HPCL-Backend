@@ -581,15 +581,33 @@ async def update_vts_instance(alert_data):
     
 async def create_vts_alerts(enriched_data):
     try:
-        for entry in enriched_data:
-            if await is_vehicle_blacklisted(entry['tl_number']):
-                continue
+        for entry in enriched_data:            
             entry['auto_unblock'] = True
             entry['violation_type'] = await get_vts_violation(entry)
             entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
                 lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
             await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
-            if not await is_alert_exists(entry['tl_number']):
+            # Skipping if the truck is already blacklisted
+            if await is_vehicle_blacklisted(entry['tl_number']):
+                black_list_query = f"select * from vts_truck_details where truck_regno = '{entry['tl_number']}'"
+                vts_blacklist_data = await hpcl_ceg_model.VtsTruckDetails.get_aggr_data(black_list_query, limit=0)
+                vts_truck_data = vts_blacklist_data['data'][0]
+                await hpcl_ceg_model.VtsTruckDetails(**{"id": vts_truck_data['id'], 
+                                        "violated_date": entry['vts_end_datetime'],
+                                        "transporter_code": entry['vendor_id'],
+                                        "invoice_number": entry['invoice_number'],
+                                        "stoppage_violations_count": entry['stoppage_violations_count'],
+                                        "route_deviation_count": entry['route_deviation_count'],
+                                        "speed_violation_count": entry['speed_violation_count'],
+                                        "main_supply_removal_count": entry['main_supply_removal_count'],
+                                        "night_driving_count": entry['night_driving_count'],
+                                        "no_halt_zone_count": entry['no_halt_zone_count'],
+                                        "device_offline_count": entry['device_offline_count'],
+                                        "device_tamper_count": entry['device_tamper_count'],
+                                        "continuous_driving_count": entry['continuous_driving_count'],
+                                        "last_violated_date": vts_truck_data['last_violated_date'] if vts_truck_data['last_violated_date'] else None}).modify()
+                continue
+            if not await is_alert_exists(entry['tl_number']):                
                 await alert_manager.create_alert({**entry, "alert_type": "VTS"})
             else:
                 await update_vts_instance(entry)
