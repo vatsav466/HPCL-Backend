@@ -262,7 +262,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
         # query = f"""SELECT filling_heads, ROUND(AVG(productivity_normal_productivity)::NUMERIC, 2) as
         # productivity_yesterday FROM lpg_operations_summary WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
         # and sap_id='{location_id}' group by filling_heads"""
-        query = f""" SELECT filling_head, 
+        query = f""" SELECT filling_head as filling_heads, 
                     ROUND(SUM(total_production)/SUM(total_net_hours), 2) as productivity_yesterday
                     FROM lpg_plant_operations WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
                     and sap_id='{location_id}' group by filling_head """
@@ -344,9 +344,9 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
         break_down = {key: max(value) for key, value in break_down.items()}
         total_hours = 0
         for carousel in distinct_carousels:
-            total_hours += float(df_working_hours[df_working_hours['PlantID'] == f"{location_id}"][carousel].sum())
+            total_hours += float(df_working_hours[df_working_hours['PlantID'] == f"{location_id}"][int(carousel)].sum())
         if not total_hours:
             total_hours = 16
-        uptime = 100 - ((sum([value for _, value in break_down.items()]) / total_hours) * 100)
+        uptime = 100 - (float((sum([value for _, value in break_down.items()])) / float(total_hours)) * 100)
         return {"name": rules.get('name', name), "score": round((uptime * rules['weightage']) / 100, 2),
                 "weightage": rules['weightage'], "results": []}
