@@ -344,7 +344,8 @@ async def get_instance(tt_number: str, sap_id: str, bu: str, get_raw_data=False)
             "instance_2": 0,
             "instance_3": 0,
             "alert_id": "",
-            "blacklist": False
+            "blacklist": False,
+            "truck_history": []
         }
         #print("vts_truck_record",vts_truck_record)
         await hpcl_ceg_model.VtsTruckDetailsCreate(**vts_truck_record).create()
@@ -592,23 +593,22 @@ async def create_vts_alerts(enriched_data):
                 black_list_query = f"select * from vts_truck_details where truck_regno = '{entry['tl_number']}'"
                 vts_blacklist_data = await hpcl_ceg_model.VtsTruckDetails.get_aggr_data(black_list_query, limit=0)
                 vts_truck_data = vts_blacklist_data['data'][0]
-                truck_history = {
-                    "violated_date": entry['vts_end_datetime'],
-                    "transporter_code": entry['vendor_id'],
-                    "invoice_number": entry['invoice_number'],
-                    "stoppage_violations_count": entry['stoppage_violations_count'],
-                    "route_deviation_count": entry['route_deviation_count'],
-                    "speed_violation_count": entry['speed_violation_count'],
-                    "main_supply_removal_count": entry['main_supply_removal_count'],
-                    "night_driving_count": entry['night_driving_count'],
-                    "no_halt_zone_count": entry['no_halt_zone_count'],
-                    "device_offline_count": entry['device_offline_count'],
-                    "device_tamper_count": entry['device_tamper_count'],
-                    "continuous_driving_count": entry['continuous_driving_count'],
-                    "last_violated_date": vts_truck_data['last_violated_date'] if vts_truck_data['last_violated_date'] else None
-                }
-                await hpcl_ceg_model.VtsTruckDetails(**{"id": vts_truck_data['id'], 
-                                                        "truck_history": truck_history}).modify()
+                truck_history = vts_truck_data.get('truck_history',[])
+                truck_history.append({
+                    "violated_date": entry["vts_end_datetime"].isoformat() if isinstance(entry["vts_end_datetime"], datetime.datetime) else entry["vts_end_datetime"],
+                    "transporter_code": entry["vendor_id"],
+                    "invoice_number": entry["invoice_number"],
+                    "stoppage_violations_count": entry["stoppage_violations_count"],
+                    "route_deviation_count": entry["route_deviation_count"],
+                    "speed_violation_count": entry["speed_violation_count"],
+                    "main_supply_removal_count": entry["main_supply_removal_count"],
+                    "night_driving_count": entry["night_driving_count"],
+                    "no_halt_zone_count": entry["no_halt_zone_count"],
+                    "device_offline_count": entry["device_offline_count"],
+                    "device_tamper_count": entry["device_tamper_count"],
+                    "continuous_driving_count": entry["continuous_driving_count"],
+                    "last_violated_date": truck_history[-1]['violated_date'] if len(truck_history) else ""})
+                await hpcl_ceg_model.VtsTruckDetails(**{"id": vts_truck_data['id'], "truck_history": truck_history}).modify()
                 continue
             if not await is_alert_exists(entry['tl_number']):                
                 await alert_manager.create_alert({**entry, "alert_type": "VTS"})

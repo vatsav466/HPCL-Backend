@@ -7105,7 +7105,7 @@ class VendorApiAuditGetResp(pydantic.BaseModel):
 
 
 class VtsTruckHistoryCreate(pydantic.BaseModel):
-    violated_date: typing.Optional[datetime.datetime] | None = None
+    violated_date: typing.Optional[str] = pydantic.Field("", **{})
     transporter_code: typing.Optional[str] = pydantic.Field("", **{})
     invoice_number: typing.Optional[str] = pydantic.Field("", **{})
     stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
@@ -7117,7 +7117,7 @@ class VtsTruckHistoryCreate(pydantic.BaseModel):
     device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
     device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
     continuous_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
-    last_violated_date: typing.Optional[datetime.datetime] | None = None
+    last_violated_date: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class VtsTruckDetailsSchema(UrdhvaPostgresBase):
