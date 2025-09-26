@@ -1,7 +1,5 @@
 import os
 import json
-import datetime
-import requests
 import pandas as pd
 import hpcl_ceg_model
 from utilities.helpers import map_device_category
@@ -37,55 +35,103 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
 
     async def _compute_pq_pi_score(self, name, rules, location_id):
         """
-        Compute PI score for PQ based Alerts
-        :param rules:
-        :param location_id:
-        :return:
+        Compute PI score for PQ based Alerts & Percentage Rejections.
         """
         pi_score = []
+
         interlocks = list(set([rule['interlock_name'] for rule in rules['rules']]))
         in_clause_raw = ", ".join(f"'{value}'" for value in interlocks)
-        query = (f"select interlock_name, device_name from alerts where interlock_name in ({in_clause_raw}) and "
-                 f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'LPG' and bu = 'LPG'")
+        query = (
+            f"SELECT interlock_name, device_name "
+            f"FROM alerts "
+            f"WHERE interlock_name IN ({in_clause_raw}) "
+            f"AND sap_id = '{location_id}' "
+            f"AND alert_status != 'Close' "
+            f"AND alert_section = 'LPG' "
+            f"AND bu = 'LPG'"
+        )
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
-        open_alerts = {data['interlock_name']: data['device_name'] for data in data['data']}
-        # Todo:- if location was disconnected, Need to mark PI score as zero
-        for rule in rules['rules']:
-            rule_weightage = rule['weightage']
+        open_alerts = {rec['interlock_name']: rec['device_name'] for rec in data['data']}
+
+        rejection_query = (
+            f"SELECT "
+            f"ROUND((SUM(cs_sortout) / NULLIF(SUM(cs_handled), 0)) * 100, 2) AS cs_rejection, "
+            f"ROUND((SUM(gd_sortout) / NULLIF(SUM(gd_handled), 0)) * 100, 2) AS gd_rejection, "
+            f"ROUND((SUM(pt_sortout) / NULLIF(SUM(pt_handled), 0)) * 100, 2) AS pt_rejection "
+            f"FROM lpg_plant_operations "
+            f"WHERE sap_id = '{location_id}' and process_date::DATE = CURRENT_DATE - INTERVAL '1 day'"
+        )
+        rej_data = await hpcl_ceg_model.LpgPlantOperations.get_aggr_data(rejection_query)
+        rejection_values = rej_data["data"][0] if rej_data["data"] else {}
+
+        for rule in rules["rules"]:
+            rule_weightage = rule["weightage"]
             score = 0
-            # For open alerts
-            if rule['model'] == 'open_alerts':
-                if rule['interlock_name'] in open_alerts:
+
+            # Open Alerts
+            if rule["model"] == "open_alerts":
+                if rule["interlock_name"] in open_alerts:
                     score = 0
                 else:
                     score = 100
-            # For percentage rejection
-            elif rule['model'] == 'percentage_rejection':
-                if rule['interlock_name'] in open_alerts:
-                    for percentage_rule in rule['rules']:
-                        value_rejection = float(open_alerts[rule['interlock_name']])
-                        if float(percentage_rule['min']) > value_rejection <= float(percentage_rule['max']):
-                            weightage = rule['weightage']
-                            # For waterfall model diving the weightage based on difference between max and min
-                            if weightage and percentage_rule.get('method') == 'waterfall':
-                                diff_range = float(percentage_rule['max']) - float(percentage_rule['min'])
-                                rejection_percentage = (float(open_alerts[rule['interlock_name']]) -
-                                                        float(percentage_rule['max']))
-                                score = (weightage / diff_range) * rejection_percentage
-                            else:
-                                score = 0
-                            break
+
+            # Percentage Rejection
+            elif rule["model"] == "percentage_rejection":
+                # mapping interlock to correct column in lpg_plant_operations
+                if "Check Scale" in rule["interlock_name"]:
+                    value_rejection = rejection_values.get("cs_rejection", 0) or 0
+                elif "Valve Leak" in rule["interlock_name"]:
+                    value_rejection = rejection_values.get("gd_rejection", 0) or 0
+                elif "O-Ring" in rule["interlock_name"]:
+                    value_rejection = rejection_values.get("pt_rejection", 0) or 0
                 else:
-                    score = 100
+                    value_rejection = 0
+
+                if value_rejection is None:
+                    value_rejection = 0
+
+                # Apply thresholds
+                score = 0
+                for percentage_rule in rule.get("rules", []):
+                    min_val = float(percentage_rule["min"])
+                    max_val = float(percentage_rule["max"])
+                    base = rule_weightage  # base = weightage
+
+                    if value_rejection < min_val:
+                        score = base  # full score
+                        break
+                    elif value_rejection > max_val:
+                        score = 0
+                        continue
+                    else:
+                        score = ((float(max_val) - float(value_rejection)) / (float(max_val) - float(min_val))) * float(base)
+                        break
+
+                # Convert to percentage of rule weightage
+                score = (score / base) * 100 if base > 0 else 0
+
+            # Weightage scaling
             score = (score * rule_weightage) / 100
-            pi_score.append({"name": rule['name'], "score": score, "weightage": rule_weightage,
-                             'module': rules.get('name', name)})
-        final_score = sum([score['score'] for score in pi_score])
-        final_score = round((final_score * rules['weightage']) / 100, 2)
-        for rec in pi_score:
-            rec['score'] = round(rec['score'], 2)
-        return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'],
-                "results": pi_score}
+
+            pi_score.append(
+                {
+                    "name": rule["name"],
+                    "score": round(score, 2),
+                    "weightage": rule_weightage,
+                    "module": rules.get("name", name),
+                }
+            )
+
+        # Final PI Score
+        final_score = sum([s["score"] for s in pi_score])
+        final_score = round((final_score * rules["weightage"]) / 100, 2)
+
+        return {
+            "name": rules.get("name", name),
+            "score": final_score,
+            "weightage": rules["weightage"],
+            "results": pi_score,
+        }
 
     async def _compute_va_pi_score(self, name, rules, location_id):
         pi_score = []
@@ -220,29 +266,29 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
 
     async def _compute_production_pi_score(self, name, rules, location_id):
         score = 0
-        # query_week_sale = f"""SELECT 
+        # query_week_sale = f"""SELECT
         #                         DATE(process_date) AS date,
         #                         ROUND(SUM(productivity_normal_production)::NUMERIC, 2) AS avg_production
         #                     FROM lpg_operations_summary
-        #                     WHERE process_date::DATE >= CURRENT_DATE - INTERVAL '8 days' and process_date::DATE < CURRENT_DATE - INTERVAL '1 day'  
+        #                     WHERE process_date::DATE >= CURRENT_DATE - INTERVAL '8 days' and process_date::DATE < CURRENT_DATE - INTERVAL '1 day'
         #                     and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date DESC"""
 
-        query_week_sale = f""" SELECT 
+        query_week_sale = f""" SELECT
                                 DATE(process_date) AS date,
                                 ROUND(SUM(total_production)::NUMERIC, 2) AS avg_production
                             FROM lpg_plant_operations
-                            WHERE process_date::DATE >= CURRENT_DATE - INTERVAL '8 days' and process_date::DATE < CURRENT_DATE - INTERVAL '1 day'  
+                            WHERE process_date::DATE >= CURRENT_DATE - INTERVAL '8 days' and process_date::DATE < CURRENT_DATE - INTERVAL '1 day'
                             and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date desc """
 
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query_week_sale)
         production_data = [float(rec['avg_production']) for rec in resp['data'] if rec['avg_production']]
         production_avg = float(sum(production_data) / len(production_data) if production_data else 0)
-        
-        # query_yesterday_sale = f"""SELECT ROUND(SUM(productivity_normal_production)::NUMERIC, 2) 
-        # as production_yesterday FROM lpg_operations_summary WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' 
+
+        # query_yesterday_sale = f"""SELECT ROUND(SUM(productivity_normal_production)::NUMERIC, 2)
+        # as production_yesterday FROM lpg_operations_summary WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
         # and sap_id = '{location_id}'"""
-        query_yesterday_sale = f"""SELECT ROUND(SUM(total_production)::NUMERIC, 2) 
-        as production_yesterday FROM lpg_plant_operations WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' 
+        query_yesterday_sale = f"""SELECT ROUND(SUM(total_production)::NUMERIC, 2)
+        as production_yesterday FROM lpg_plant_operations WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
         and sap_id = '{location_id}' """
 
 
@@ -252,20 +298,22 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
         if production_yesterday < production_avg:
             score = (((production_yesterday / production_avg) * 100) * rules['weightage']) / 100
         else:
-           score = rules['weightage']
+            score = rules['weightage']
         return {"name": rules.get('name', name), "score": round(score, 2), "weightage": rules['weightage'],
                 "results": [{"name": rules['name'], "score": round(score, 2), "weightage": rules['weightage'],
                              'module': rules['name'], "msg": f"Last Week Production({production_avg}) is less than "
                                                              f"Yesterdays Production({production_yesterday})"}]}
 
     async def _compute_productivity_pi_score(self, name, rules, location_id):
-        # query = f"""SELECT filling_heads, ROUND(AVG(productivity_normal_productivity)::NUMERIC, 2) as
-        # productivity_yesterday FROM lpg_operations_summary WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
-        # and sap_id='{location_id}' group by filling_heads"""
-        query = f""" SELECT filling_head as filling_heads, 
-                    ROUND(SUM(total_production)/SUM(total_net_hours), 2) as productivity_yesterday
-                    FROM lpg_plant_operations WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
-                    and sap_id='{location_id}' group by filling_head """
+        query = f"""
+            SELECT filling_head as filling_heads,
+                ROUND(SUM(total_production) / SUM(total_net_hours), 2) as productivity_yesterday
+            FROM lpg_plant_operations
+            WHERE
+                process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
+                AND sap_id='{location_id}'
+            GROUP BY filling_head
+        """
 
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         productivity = {rec['filling_heads']: float(rec['productivity_yesterday']) for rec in resp['data']}
@@ -280,14 +328,35 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             score = 0
 
             for percentage_rule in rule['rules']:
-                if percentage_rule.get('method') == 'waterfall':
+                method = percentage_rule.get('method', 'waterfall')
+
+                if method == 'excel_like':
+                    min_val = float(percentage_rule['min'])
+                    max_val = float(percentage_rule['max'])
+                    w = float(percentage_rule['weightage'])
+
+                    if carousel_productivity >= max_val:
+                        score = w
+                    elif carousel_productivity <= min_val:
+                        score = 0
+                    else:
+                        diff_range = max_val - min_val
+                        score = ((carousel_productivity - min_val) / diff_range) * w
+
+                    break  # stop once matched
+
+                elif method == 'waterfall':
                     if float(percentage_rule['min']) <= carousel_productivity < float(percentage_rule['max']):
                         diff_range = float(percentage_rule['max']) - float(percentage_rule['min'])
-                        score = ((carousel_productivity - float(percentage_rule['min'])) / diff_range) * float(
-                            percentage_rule['weightage'])
-                        break  # break after finding the matching range
+                        # If full weightage, give it directly; else interpolate
+                        if percentage_rule['weightage'] in (0, 100):
+                            score = float(percentage_rule['weightage'])
+                        else:
+                            score = ((carousel_productivity - float(percentage_rule['min'])) / diff_range) * float(
+                                percentage_rule['weightage'])
+                        break
 
-            # If productivity is above the last waterfall max, give full score
+            # If productivity is above the last max → full score
             if carousel_productivity >= float(rule['rules'][-1]['max']):
                 score = weightage
 
@@ -298,8 +367,10 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 'module': rules.get('name', 'Productivity')
             })
 
-        final_score = round((sum([s['score'] for s in pi_score]) / len(pi_score) * rules['weightage'] / 100),
-                            2) if pi_score else 0
+        final_score = round(
+            (sum([s['score'] for s in pi_score]) / len(pi_score) * rules['weightage'] / 100),
+            2
+        ) if pi_score else 0
 
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
@@ -315,24 +386,24 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
         file_path = f"{os.path.dirname(performance_score_factory.__file__)}/pi_masters/lpg_working_hours.xlsx"
         df_working_hours = pd.read_excel(file_path).fillna(0)
         df_working_hours['PlantID'] = df_working_hours['PlantID'].astype(str)
-        
+
         distinct_carousels_query = f"""
-        SELECT 
+        SELECT
             DISTINCT carousel, filling_head as filling_heads FROM lpg_plant_operations
-        WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' and sap_id='{location_id}' 
+        WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' and sap_id='{location_id}'
         group by carousel, filling_head
         """
-        
+
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(distinct_carousels_query)
         distinct_carousels = {rec['carousel']: rec['filling_heads'] for rec in resp['data']}
 
         query = f"""
-        SELECT 
+        SELECT
             DISTINCT carousel, filling_head as filling_heads, SUM(break_net_hours) as break_net_hours
-        FROM lpg_plant_operations WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' and 
+        FROM lpg_plant_operations WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' and
         sap_id='{location_id}' group by carousel, filling_heads
         """
-        
+
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         break_down = {}
         for rec in resp['data']:
@@ -347,6 +418,6 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             total_hours += float(df_working_hours[df_working_hours['PlantID'] == f"{location_id}"][int(carousel)].sum())
         if not total_hours:
             total_hours = 16
-        uptime = 100 - (float((sum([value for _, value in break_down.items()])) / float(total_hours)) * 100)
+        uptime = 100 - (float(float((sum([value for _, value in break_down.items()]))) / float(total_hours)) * 100)
         return {"name": rules.get('name', name), "score": round((uptime * rules['weightage']) / 100, 2),
                 "weightage": rules['weightage'], "results": []}
