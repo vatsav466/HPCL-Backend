@@ -300,6 +300,9 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
     # return {"status": True,"message": "Ticket updated successfully", "data": data.update_id}
     try:
         data_dict = data.model_dump()
+        print("data_dict",data_dict)
+        if "alert_type" in data_dict:
+            data_dict["interlock_name"] = data_dict.pop("alert_type")
         ticket_id = data.update_id
         # print("data_dict",data_dict)
         # Fetch existing ticket
