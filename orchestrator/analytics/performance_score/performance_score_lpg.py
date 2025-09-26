@@ -220,19 +220,32 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
 
     async def _compute_production_pi_score(self, name, rules, location_id):
         score = 0
-        query_week_sale = f"""SELECT 
-    DATE(process_date) AS date,
-    ROUND(SUM(productivity_normal_production)::NUMERIC, 2) AS avg_production
-FROM lpg_operations_summary
-WHERE process_date::DATE >= CURRENT_DATE - INTERVAL '8 days' and process_date::DATE < CURRENT_DATE - INTERVAL '1 day'  
-and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date DESC"""
+        # query_week_sale = f"""SELECT 
+        #                         DATE(process_date) AS date,
+        #                         ROUND(SUM(productivity_normal_production)::NUMERIC, 2) AS avg_production
+        #                     FROM lpg_operations_summary
+        #                     WHERE process_date::DATE >= CURRENT_DATE - INTERVAL '8 days' and process_date::DATE < CURRENT_DATE - INTERVAL '1 day'  
+        #                     and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date DESC"""
+
+        query_week_sale = f""" SELECT 
+                                DATE(process_date) AS date,
+                                ROUND(SUM(total_production)::NUMERIC, 2) AS avg_production
+                            FROM lpg_plant_operations
+                            WHERE process_date::DATE >= CURRENT_DATE - INTERVAL '8 days' and process_date::DATE < CURRENT_DATE - INTERVAL '1 day'  
+                            and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date desc """
 
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query_week_sale)
         production_data = [float(rec['avg_production']) for rec in resp['data'] if rec['avg_production']]
         production_avg = float(sum(production_data) / len(production_data) if production_data else 0)
-        query_yesterday_sale = f"""SELECT ROUND(SUM(productivity_normal_production)::NUMERIC, 2) 
-        as production_yesterday FROM lpg_operations_summary WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' 
-        and sap_id = '{location_id}'"""
+        
+        # query_yesterday_sale = f"""SELECT ROUND(SUM(productivity_normal_production)::NUMERIC, 2) 
+        # as production_yesterday FROM lpg_operations_summary WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' 
+        # and sap_id = '{location_id}'"""
+        query_yesterday_sale = f"""SELECT ROUND(SUM(total_production)::NUMERIC, 2) 
+        as production_yesterday FROM lpg_plant_operations WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' 
+        and sap_id = '{location_id}' """
+
+
         production = await hpcl_ceg_model.Alerts.get_aggr_data(query_yesterday_sale)
         production_yesterday = float(production['data'][0]['production_yesterday'] if
                                      production['data'] and production['data'][0].get('production_yesterday') else 0)
@@ -246,9 +259,14 @@ and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date DESC"""
                                                              f"Yesterdays Production({production_yesterday})"}]}
 
     async def _compute_productivity_pi_score(self, name, rules, location_id):
-        query = f"""SELECT filling_heads, ROUND(AVG(productivity_normal_productivity)::NUMERIC, 2) as
-        productivity_yesterday FROM lpg_operations_summary WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
-        and sap_id='{location_id}' group by filling_heads"""
+        # query = f"""SELECT filling_heads, ROUND(AVG(productivity_normal_productivity)::NUMERIC, 2) as
+        # productivity_yesterday FROM lpg_operations_summary WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
+        # and sap_id='{location_id}' group by filling_heads"""
+        query = f""" SELECT filling_head, 
+                    ROUND(SUM(total_production)/SUM(total_net_hours), 2) as productivity_yesterday
+                    FROM lpg_plant_operations WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
+                    and sap_id='{location_id}' group by filling_head """
+
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         productivity = {rec['filling_heads']: float(rec['productivity_yesterday']) for rec in resp['data']}
         pi_score = []
@@ -297,22 +315,31 @@ and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date DESC"""
         file_path = f"{os.path.dirname(performance_score_factory.__file__)}/pi_masters/lpg_working_hours.xlsx"
         df_working_hours = pd.read_excel(file_path).fillna(0)
         df_working_hours['PlantID'] = df_working_hours['PlantID'].astype(str)
-        distinct_carousels_query = f"""SELECT DISTINCT carousel, filling_heads FROM lpg_operations_summary 
+        
+        distinct_carousels_query = f"""
+        SELECT 
+            DISTINCT carousel, filling_head as filling_heads FROM lpg_plant_operations
         WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' and sap_id='{location_id}' 
-        group by carousel, filling_heads"""
+        group by carousel, filling_head
+        """
+        
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(distinct_carousels_query)
         distinct_carousels = {rec['carousel']: rec['filling_heads'] for rec in resp['data']}
 
-        query = f"""SELECT DISTINCT carousel, filling_heads, SUM(productivity_break_net_hours)  as productivity_break_net_hours
-        FROM lpg_operations_summary WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' and 
-        sap_id='{location_id}' group by carousel, filling_heads"""
+        query = f"""
+        SELECT 
+            DISTINCT carousel, filling_head as filling_heads, SUM(break_net_hours) as break_net_hours
+        FROM lpg_plant_operations WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day' and 
+        sap_id='{location_id}' group by carousel, filling_heads
+        """
+        
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         break_down = {}
         for rec in resp['data']:
             rec['carousel'] = int(rec['carousel'])
             if rec['carousel'] not in break_down:
                 break_down[rec['carousel']] = []
-            break_down[rec['carousel']].append(rec['productivity_break_net_hours'])
+            break_down[rec['carousel']].append(rec['break_net_hours'])
         # Todo:- need to fetch no of carousels and what was the max run time
         break_down = {key: max(value) for key, value in break_down.items()}
         total_hours = 0
