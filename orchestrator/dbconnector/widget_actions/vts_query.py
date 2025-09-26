@@ -345,20 +345,29 @@ vts_query = {
                 GROUP BY sap_id, location_name, vehicle_number, transporter_code,zone
                   """,
     "vts_insite_violation_type" : """
-                                    SELECT 
+                                     SELECT 
                                         sap_id,
                                         location_name,
                                         vehicle_number,
                                         transporter_code,
                                         zone,
-                                        SUM(CASE WHEN violation_type = '{violation_type}' THEN 1 ELSE 0 END) AS {violation_type}
+                                        {select_clause}
                                     FROM alerts 
                                     WHERE transporter_code != '' 
                                     AND location_name != '' 
                                     AND alert_section = 'VTS'
                                     GROUP BY sap_id, location_name, vehicle_number, transporter_code, zone
-                                    HAVING SUM(CASE WHEN violation_type = '{violation_type}' THEN 1 ELSE 0 END) != 0
-                                  """
+                                    HAVING {having_clause}
+                                  """,
+    
+    "all_violations" : [    "route_deviation_count",
+                            "stoppage_violations_count",
+                            "device_tamper_count",
+                            "main_supply_removal_count",
+                            "night_driving_count",
+                            "speed_violation_count",
+                            "continuous_driving_count"
+                      ]
                               
     }
  
