@@ -307,7 +307,59 @@ vts_query = {
             AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
         GROUP BY {group_by_column}, device_id
         ORDER BY {group_by_column}, device_id;
-             """ 
+             """ ,
+    
+    "shortage_tibco" : """
+                          SELECT PLANT_CD, ZONE_CD, INVOICE_NO, VEHICLE_ID,QTY_SHORTAGE
+                          FROM SALES_BASED_TRIPS_TILL_DATE
+                        """,
+    "shoratage_vts_history" : """
+                              SELECT 
+                                    invoice_number,
+                                    route_deviation_count,
+                                    stoppage_violations_count,
+                                    device_tamper_count,
+                                    main_supply_removal_count,
+                                    night_driving_count,
+                                    speed_violation_count,
+                                    continuous_driving_count
+                              FROM vts_alert_history  
+                              """,
+    
+    "vts_insite" : """        
+                SELECT
+                    sap_id,
+                    location_name,
+                    vehicle_number,
+                    transporter_code,
+                    zone,
+                    SUM(CASE WHEN violation_type = 'route_deviation_count' THEN 1 ELSE 0 END) AS route_deviation_count,
+                    SUM(CASE WHEN violation_type = 'stoppage_violations_count' THEN 1 ELSE 0 END) AS stoppage_violations_count,
+                    SUM(CASE WHEN violation_type = 'device_tamper_count' THEN 1 ELSE 0 END) AS device_tamper_count,
+                    SUM(CASE WHEN violation_type = 'main_supply_removal_count' THEN 1 ELSE 0 END) AS main_supply_removal_count,
+                    SUM(CASE WHEN violation_type = 'night_driving_count' THEN 1 ELSE 0 END) AS night_driving_count,
+                    SUM(CASE WHEN violation_type = 'speed_violation_count' THEN 1 ELSE 0 END) AS speed_violation_count,
+                    SUM(CASE WHEN violation_type = 'continuous_driving_count' THEN 1 ELSE 0 END) AS continuous_driving_count
+                FROM alerts 
+                WHERE transporter_code != '' and location_name != '' and alert_section = 'VTS'
+                GROUP BY sap_id, location_name, vehicle_number, transporter_code,zone
+                  """,
+    "vts_insite_violation_type" : """
+                                    SELECT 
+                                        sap_id,
+                                        location_name,
+                                        vehicle_number,
+                                        transporter_code,
+                                        zone,
+                                        SUM(CASE WHEN violation_type = '{violation_type}' THEN 1 ELSE 0 END) AS {violation_type}
+                                    FROM alerts 
+                                    WHERE transporter_code != '' 
+                                    AND location_name != '' 
+                                    AND alert_section = 'VTS'
+                                    GROUP BY sap_id, location_name, vehicle_number, transporter_code, zone
+                                    HAVING SUM(CASE WHEN violation_type = '{violation_type}' THEN 1 ELSE 0 END) != 0
+                                  """
+                              
     }
  
 
