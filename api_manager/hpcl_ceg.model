@@ -2481,7 +2481,7 @@ Model VtsTruckDetails {
     instance_3 optional int
     alert_id optional str
     blacklist optional bool
-    truck_history optional VtsTruckHistory
+    truck_history optional list VtsTruckHistory
 }
 
 Model DryOutRoLoss {
