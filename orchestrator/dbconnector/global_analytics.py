@@ -133,7 +133,7 @@ class GlobalAnalytics:
             for filter_ in filters:
                 if filter_.key:
                     # Update the key of the filter to include the alias 'a.'
-                    filter_.key = f"a.{filter_.key}"
+                    filter_.key = f"{filter_.key}"
                 
             # After modifying the filters, send the updated filters to apply_filter_drilldown
             analytics_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(analytics_query, filters, drill_state)
