@@ -2452,6 +2452,22 @@ Model VendorApiAudit {
     api_ack_datetime optional datetime
 }
 
+Model VtsTruckHistory internal {
+    violated_date optional str
+    transporter_code optional str
+    invoice_number optional str
+    stoppage_violations_count optional int
+    route_deviation_count optional int
+    speed_violation_count optional int
+    main_supply_removal_count optional int
+    night_driving_count optional int
+    no_halt_zone_count optional int
+    device_offline_count optional int
+    device_tamper_count optional int
+    continuous_driving_count optional int
+    last_violated_date optional str
+}
+
 Model VtsTruckDetails {
     truck_regno unique_field index_field primary_key str
     sap_id index_field str
@@ -2465,6 +2481,7 @@ Model VtsTruckDetails {
     instance_3 optional int
     alert_id optional str
     blacklist optional bool
+    truck_history optional list VtsTruckHistory
 }
 
 Model DryOutRoLoss {
