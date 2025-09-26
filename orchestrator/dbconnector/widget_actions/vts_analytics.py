@@ -192,26 +192,41 @@ class VTSAnalyticsActions:
         try:
            query = vts_query.vts_query.get(drill_state.split(",")[0])
            alert_type = payload.get("alert_type") if payload else None
+           all_violations = vts_query.vts_query.get("all_violations", [])
            violation_types = payload.get("violation_type", [])
            if violation_types:
-                results = []
                 violation_type_query = vts_query.vts_query.get("vts_insite_violation_type")
+                if not violation_type_query:
+                    return {"status": False, "message": "Query template not found", "data": []}
+                    
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, violation_type_query)
                 conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
+
+                select_parts = []
+                for v_type in all_violations:
+                    select_parts.append(f"SUM(CASE WHEN violation_type = '{v_type}' THEN 1 ELSE 0 END) AS {v_type}")
+                having_parts = []
+                for v_type in violation_types:
+                    having_parts.append(f"SUM(CASE WHEN violation_type = '{v_type}' THEN 1 ELSE 0 END) > 0")
+                
+                select_clause = ",\n        ".join(select_parts)
+                having_clause = " AND ".join(having_parts)
+  
+                final_query = violation_type_query.format(select_clause=select_clause, having_clause=having_clause)
+                final_query = VTSAnalyticsActions.apply_conditions_to_query(final_query, conditions)
+                print(final_query)
+
+                df_data = await VTSAnalyticsActions.execute_query(final_query)
 
                 email_query = """SELECT transporter_code, transporter_name FROM email_master"""
                 df_email = await VTSAnalyticsActions.execute_query(email_query)
                 
-                for v_type in violation_types:
-                    formatted_query = violation_type_query.format(violation_type=v_type)
-                    final_query = VTSAnalyticsActions.apply_conditions_to_query(formatted_query, conditions)
-                    df_data = await VTSAnalyticsActions.execute_query(final_query)
-                    merged_df = df_data.merge(df_email, on="transporter_code", how="left")
-                    merged_df.drop(columns=["transporter_code"], inplace=True)
-                    merged_df.dropna(inplace=True)
-                    results.extend(merged_df.to_dict(orient="records"))
+                merged_df = df_data.merge(df_email, on="transporter_code", how="left")
+                merged_df.drop(columns=["transporter_code"], inplace=True)
+                merged_df.dropna(inplace=True)
 
-                return {"status": True, "message": "success", "data": results}
+                return {"status": True, "message": "success", "data": merged_df.to_dict(orient="records")}
+
                                       
            # Build and apply conditions (pass the query for key transformation)
            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
