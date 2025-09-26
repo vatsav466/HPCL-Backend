@@ -192,8 +192,27 @@ class VTSAnalyticsActions:
         try:
            query = vts_query.vts_query.get(drill_state.split(",")[0])
            alert_type = payload.get("alert_type") if payload else None
-           
+           violation_types = payload.get("violation_type", [])
+           if violation_types:
+                results = []
+                violation_type_query = vts_query.vts_query.get("vts_insite_violation_type")
+                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, violation_type_query)
+                conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
 
+                email_query = """SELECT transporter_code, transporter_name FROM email_master"""
+                df_email = await VTSAnalyticsActions.execute_query(email_query)
+                
+                for v_type in violation_types:
+                    formatted_query = violation_type_query.format(violation_type=v_type)
+                    final_query = VTSAnalyticsActions.apply_conditions_to_query(formatted_query, conditions)
+                    df_data = await VTSAnalyticsActions.execute_query(final_query)
+                    merged_df = df_data.merge(df_email, on="transporter_code", how="left")
+                    merged_df.drop(columns=["transporter_code"], inplace=True)
+                    merged_df.dropna(inplace=True)
+                    results.extend(merged_df.to_dict(orient="records"))
+
+                return {"status": True, "message": "success", "data": results}
+                                      
            # Build and apply conditions (pass the query for key transformation)
            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
            conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
@@ -210,6 +229,7 @@ class VTSAnalyticsActions:
            merged_df.dropna(inplace=True)
 
            return {"status": True, "message": "success", "data": merged_df.to_dict(orient="records")}
+        
         
         except Exception as e:
             print("traceback:", traceback.format_exc())
