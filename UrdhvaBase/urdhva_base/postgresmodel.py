@@ -149,10 +149,15 @@ class BasePostgresModel(pydantic.BaseModel):
                                 where_clause.append({'key': key, "cond": 'equals', "value": rpt[value][0]})
                             else:
                                 if key in or_condition_keys:
-                                    conditions = [f"{k}='{rpt[value][0]}'" for k in or_condition_keys[key]]
+                                    # conditions = [f"{k}='{rpt[value][0]}'" for k in or_condition_keys[key]]
+                                    conditions = [
+                                            f"{k} IN ({', '.join([f"'{v}'" for v in rpt[value]])})"
+                                            for k in or_condition_keys[key]
+                                    ]                                    
                                     where_clause.append(f"({' OR '.join(conditions)})")
                                 else:
-                                    where_clause.append(f"{key}='{rpt[value][0]}'")
+                                    # where_clause.append(f"{key}='{rpt[value][0]}'")
+                                    where_clause.append(f"{key} IN ({', '.join([f"'{v}'" for v in rpt[value]])})")
                         else:
                             if formated:
                                 where_clause.append({'key': key, "cond": ' ', "value": rpt[value]})
