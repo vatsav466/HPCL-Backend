@@ -87,7 +87,7 @@ class NotifyEMail(NotificationManager):
         mail_content = MIMEMultipart('alternative' if creds.get("html_content") else 'mixed')
         mail_content['Subject'] = kwargs['subject']
         mail_content['To'] = ",".join(kwargs['recipients'])
-        mail_content['From'] = kwargs.get("from", creds['from'])
+        mail_content['From'] = kwargs.get("from_url", creds['from'])
         all_recipients = recipients
         if cc_recipients:
             mail_content['Cc'] = ",".join(cc_recipients)

@@ -50,8 +50,9 @@ class CheckForUnblock:
             if alert_data.get("alert_section","") in ["VTS"]:
                 escalation_time = params.get("escalate_time_block","")
                 totalWaitTime = role_configuration.role_Mapping[alert_data["alert_section"]][alert_data.get("bu","")][alert_data["interlock_name"]]["block_time"][escalation_time]
-                if await vts_analysis.is_vehicle_blacklisted(alert_data['vehicle_number']):
-                    return True, {"blacklist": True}
+                if escalation_time in ['0']:
+                    if await vts_analysis.is_vehicle_blacklisted(alert_data['vehicle_number']):
+                        return True, {"blacklist": True}
                 return True, {"blacklist": False,"waitTime": totalWaitTime}
             if alert_data.get("alert_section", "") == "VA":
                 va_mapping = va_alert_mapping.VA_Alert_Mapping[alert_data.get("bu","")][alert_data['violation_type']]['escalations'][params.get("va_level", "level - 1")]
