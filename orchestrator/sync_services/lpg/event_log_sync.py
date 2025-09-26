@@ -375,14 +375,14 @@ def get_data_chunks(params):
     """Process data retrieval in chunks with better error handling"""
     table_name = "event_log"
     plant_name = params['PlantName']
-
+        
     try:
         # Get last extracted date from extraction log
         last_extracted_date = get_extraction_date(plant_name)
 
         # Query without LIMIT - the fetch_data function will handle chunking
         if params["db_type"] == "mysql":
-            production_table = "event_data"
+            production_table = "gd_pt_data"
         else:
             production_table = "event_log"
         query = f"""
