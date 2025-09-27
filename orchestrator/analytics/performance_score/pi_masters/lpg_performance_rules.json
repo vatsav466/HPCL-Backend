@@ -6,7 +6,7 @@
       {
         "name": "PQ Check Scale Rejection Alert",
         "model": "open_alerts",
-        "weightage": 16.67,
+        "weightage": 15,
         "search_key": "interlock_name",
         "search_value": "Check Scale Rejection",
         "interlock_name": "Check Scale Rejection"
@@ -14,7 +14,7 @@
       {
         "name": "PQ Valve Leak Rejection Alert",
         "model": "open_alerts",
-        "weightage": 16.67,
+        "weightage": 17.5,
         "search_key": "interlock_name",
         "search_value": "Valve Leak Rejection",
         "interlock_name": "Valve Leak Rejection"
@@ -22,7 +22,7 @@
       {
         "name": "PQ O-Ring Leak Rejection Alert",
         "model": "open_alerts",
-        "weightage": 16.67,
+        "weightage": 17.5,
         "search_key": "interlock_name",
         "search_value": "O-Ring Leak Rejection",
         "interlock_name": "O-Ring Leak Rejection"
@@ -30,7 +30,7 @@
       {
         "name": "PQ Check Scale Rejection",
         "model": "percentage_rejection",
-        "weightage": 16.67,
+        "weightage": 15,
         "search_key": "interlock_name",
         "search_value": "Check Scale Rejection",
         "interlock_name": "Check Scale Rejection",
@@ -42,7 +42,7 @@
       {
         "name": "PQ Valve Leak Rejection",
         "model": "percentage_rejection",
-        "weightage": 16.67,
+        "weightage": 17.5,
         "search_key": "interlock_name",
         "search_value": "Valve Leak Rejection",
         "interlock_name": "Valve Leak Rejection",
@@ -54,7 +54,7 @@
       {
         "name": "PQ O-Ring Leak Rejection",
         "model": "percentage_rejection",
-        "weightage": 16.67,
+        "weightage": 17.5,
         "search_key": "interlock_name",
         "search_value": "O-Ring Leak Rejection",
         "interlock_name": "O-Ring Leak Rejection",
