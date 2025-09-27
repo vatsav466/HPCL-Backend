@@ -48,8 +48,8 @@ class SendVtsCommand:
             }]
             
             # Blocking in IMS blockingFlag="Y"
-
-            await vts_analysis.post_blocked_tt_ims(payload)
+            if alert_data['bu'] in ['TAS']:
+                await vts_analysis.post_blocked_tt_ims(payload)
             
             #await vts_analysis.post_blocked_tt_ims(payload)
             
@@ -95,7 +95,8 @@ class SendVtsCommand:
             # await vts_analysis.post_unblocked_tt(params1)
 
             # UnBlocking in IMS blockingFlag="N"
-            await vts_analysis.post_blocked_tt_ims(payload)
+            if alert_data['bu'] in ['TAS']:
+                await vts_analysis.post_blocked_tt_ims(payload)
             # await vts_analysis.post_blocked_tt_ims(payload)
 
             if not params['auto_unblock']:
@@ -117,7 +118,7 @@ class SendVtsCommand:
             alert_data["action_msg"] = alert_message
             alert_data["action_type"] = "VTS"
             await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
-            unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED' where truck_regno = '{alert_data['vehicle_number']}'"
+            unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED', blacklist='false' where truck_regno = '{alert_data['vehicle_number']}'"
             await hpcl_ceg_model.VtsTruckDetails.update_by_query(unblock_query)
             await hpcl_ceg_model.Alerts(**{"id": alert_data["id"], 
                                            "vehicle_unblocked_date": vehicle_unblocked_date}).modify()

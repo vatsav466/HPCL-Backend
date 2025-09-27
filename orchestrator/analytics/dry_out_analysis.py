@@ -68,7 +68,10 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
             if isinstance(rec['value'], list):
                 plant.extend(rec['value'])
             else:
-                plant.append(rec['value'])
+                if "," in rec['value']:
+                    plant.extend([x for x in rec['value'].split(",")])
+                else:
+                    plant.append(rec['value'])
         elif rec['key'] == 'sales_area':
             if not sales_area:
                 sales_area = []
