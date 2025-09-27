@@ -593,7 +593,7 @@ async def create_vts_alerts(enriched_data):
                 black_list_query = f"select * from vts_truck_details where truck_regno = '{entry['tl_number']}'"
                 vts_blacklist_data = await hpcl_ceg_model.VtsTruckDetails.get_aggr_data(black_list_query, limit=0)
                 vts_truck_data = vts_blacklist_data['data'][0]
-                truck_history = vts_truck_data.get('truck_history',[])
+                truck_history = vts_truck_data.get("truck_history") or []
                 truck_history.append({
                     "violated_date": entry["vts_end_datetime"].isoformat() if isinstance(entry["vts_end_datetime"], datetime.datetime) else entry["vts_end_datetime"],
                     "transporter_code": entry["vendor_id"],
