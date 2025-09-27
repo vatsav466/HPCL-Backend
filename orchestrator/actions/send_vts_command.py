@@ -48,8 +48,8 @@ class SendVtsCommand:
             }]
             
             # Blocking in IMS blockingFlag="Y"
-
-            await vts_analysis.post_blocked_tt_ims(payload)
+            if alert_data['bu'] in ['TAS']:
+                await vts_analysis.post_blocked_tt_ims(payload)
             
             #await vts_analysis.post_blocked_tt_ims(payload)
             
@@ -95,7 +95,8 @@ class SendVtsCommand:
             # await vts_analysis.post_unblocked_tt(params1)
 
             # UnBlocking in IMS blockingFlag="N"
-            await vts_analysis.post_blocked_tt_ims(payload)
+            if alert_data['bu'] in ['TAS']:
+                await vts_analysis.post_blocked_tt_ims(payload)
             # await vts_analysis.post_blocked_tt_ims(payload)
 
             if not params['auto_unblock']:
