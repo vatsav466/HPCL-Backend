@@ -638,7 +638,7 @@ class SendNotification:
             keys = ["location_officer","zonal_transport_officer","zonal_head","hqo1","hqo2","hqo3","hqo4"]
             for key in keys:
                 if self.alert_data['violation_type'] in ['speed_violation_count']:
-                    cc_recipients.append(cc_recipients_data.get("key",""))
+                    cc_recipients.append(cc_recipients_data.get(key,""))
                 else:
                     # For other violation types, exclude hqo4
                     if key != "hqo4":

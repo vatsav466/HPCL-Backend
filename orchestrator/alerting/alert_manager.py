@@ -479,17 +479,14 @@ class AlertAction:
         event_tags = input_data.get("event_tags", {})
         if not event_tags:
             event_tags = {}
-        
-        #"remarks": input_data.get("remarks", "")
-        remarks = input_data.get("remarks", "")
         if alert_data['alert_section'] in ['VTS']:
-            remarks = input_data.get("remarks", "") + ((" " if input_data.get("remarks") else "") + "initiated by " + ", ".join(alert_data.get("assigned_user_roles", [])) if alert_data.get("assigned_user_roles") else "")
+            input_data['action_msg'] = input_data.get("action_msg", "") + ((" " if input_data.get("action_msg") else "") + "initiated by " + ", ".join(alert_data.get("assigned_user_roles", [])) if alert_data.get("assigned_user_roles") else "")
         # Append the updated alert history with the converted datetime strings
         alert_history.append({"allocated_time": allocated_time.isoformat() if isinstance(allocated_time, datetime.datetime) else allocated_time,
                             "processed_time": processed_time.isoformat(), "action_type": input_data["action_type"],
                             "action_msg": input_data["action_msg"], "mail_sent_to": "",
                             "action_by": rpt.get("email", "NOVEX_USER"),
-                            "remarks": remarks if remarks else "",
+                            "remarks": input_data.get("remarks", ""),
                             "ims_datetime": input_data.get("ims_datetime", ""),
                             "prod_reqd_dt": input_data.get("prod_reqd_dt", ""),
                             "doc_link": input_data.get("doc_link", ""),
