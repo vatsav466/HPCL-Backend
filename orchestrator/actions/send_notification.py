@@ -486,6 +486,8 @@ class SendNotification:
             None
         """
         self.base_alert_data["action_type"] = hpcl_ceg_enum.AlertActionType.Justification.value
+        if self.alert_data['alert_section'] in ['VTS'] and self.alert_data['bu'] in ['TAS']:
+            self.base_alert_data["action_type"] = hpcl_ceg_enum.AlertState.Notified.value
         self.base_alert_data["action_msg"] = self.params.get("msg_subject")
 
     async def _process_resolved(self):
@@ -906,6 +908,19 @@ class SendNotification:
             "last_escalated_to": self.update_alert.get("last_escalated_to", []),
             "last_mailed_to": self.update_alert["last_mailed_to"]
         })
+
+        if alert_data.get('alert_section','') in ['VTS'] and self.params.get('messagetype','') in ['active','senditback'] and alert_data['bu'] in ['TAS']:
+            alert_data['action_on'] = hpcl_ceg_enum.MakerChecker.MAKER.value
+        
+        if alert_data.get('alert_section','') in ['VTS'] and self.params.get('messagetype','') in ['justified'] and alert_data['bu'] in ['TAS']:
+            alert_data['action_on'] = hpcl_ceg_enum.MakerChecker.CHECKER.value
+        
+        if alert_data.get('alert_section','') in ['VTS'] and self.params.get('messagetype','') in ['notify'] and alert_data['bu'] in ['TAS']:
+            alert_data_history = alert_data['alert_history'][-2]
+            if alert_data_history.get('action_type',"") in ['Justification']:
+                alert_data['action_on'] = hpcl_ceg_enum.MakerChecker.CHECKER.value
+            if alert_data_history.get('action_type',"") in ['SendItBack']:
+                alert_data['action_on'] = hpcl_ceg_enum.MakerChecker.MAKER.value
 
         print("before updating alert_data ---> ", alert_data)
 
