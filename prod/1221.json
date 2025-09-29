@@ -2,10 +2,10 @@
     "data": [
         {
             "device_name": "TK-01_BS VI HSD@Delhi",
-            "device_id": "222acd20-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c7b1db80-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "Z7jwZTJ98DzDk5HcRTsN",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "fbWPKnGjnkOfis36zk3l",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -187,10 +187,10 @@
         },
         {
             "device_name": "TK-02_BS VI HSD@Delhi",
-            "device_id": "2233a6c0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c7c53c70-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "0nnEPIESZb6JCyujAHJn",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "1SYNhhLlIbDn49ko9ANF",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -372,10 +372,10 @@
         },
         {
             "device_name": "TK-03_BS VI HSD@Delhi",
-            "device_id": "22397320-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c7cd04a0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "L8r8vgUyHQW4nb5zcGol",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "gDZWzcGiQ3LbboT58z5F",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -557,10 +557,10 @@
         },
         {
             "device_name": "TK-04_ETHANOL@Delhi",
-            "device_id": "22429ae0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c7d47eb0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "iQvHqu8vrfoIuo2howxt",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "dmQJnXQXwlEwRlfteIo2",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -742,10 +742,10 @@
         },
         {
             "device_name": "TK-05_ETHANOL@Delhi",
-            "device_id": "22499fc0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c7de90d0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "T0BNfkgC1zdHBeMPqWyj",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "9CsfiLBIbBpjWZ02rFJS",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -927,10 +927,10 @@
         },
         {
             "device_name": "TK-06_BS VI MS@Delhi",
-            "device_id": "2251dd20-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c7eb13f0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "cQHXzI1tIIRYY3rqHfoN",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "wVAt5tW3x9NIDgH3T2Iv",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1112,10 +1112,10 @@
         },
         {
             "device_name": "TK-07_BS VI MS@Delhi",
-            "device_id": "22581eb0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c7f30330-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "V3IPNyPbFDTdPJ65PhqL",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "xNmzfD7un015XPsE3WpD",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1297,10 +1297,10 @@
         },
         {
             "device_name": "TK-08_BS VI MS@Delhi",
-            "device_id": "225fe6e0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c7fb4090-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "ckvMCJGCYkcaV67nGqre",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "rCnVemxVS16NULDSbcQb",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1482,10 +1482,10 @@
         },
         {
             "device_name": "TK-09_ETHANOL@Delhi",
-            "device_id": "2268e790-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c801a930-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "c6cZeERBnlOjanTXuSOF",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "OtmCPnBEWt9B2wKVgS5l",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1667,10 +1667,10 @@
         },
         {
             "device_name": "TK-10_ETHANOL@Delhi",
-            "device_id": "226e8ce0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c80c3080-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "oBTsVXQsTbgg5Np8nZCA",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "IYBpRLL0VJykUZgnuA1J",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -1852,10 +1852,10 @@
         },
         {
             "device_name": "TK-11_SOLVANT@Delhi",
-            "device_id": "2276a330-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c819c510-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "pCnWihvljhYPt7CdP1b0",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Ynse84gty9vhC2Zpuf0s",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2037,10 +2037,10 @@
         },
         {
             "device_name": "TK-12_BS VI HSD@Delhi",
-            "device_id": "227e6b60-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c81fb880-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "VNgHFA1HCpkzdpgt9lqz",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Iuiwyd0CZJtOEYG5IOS2",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2222,10 +2222,10 @@
         },
         {
             "device_name": "TK-13_SOLVANT@Delhi",
-            "device_id": "2287ba30-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8281cf0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "hmk7jqZUklvIFzAFxBow",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "mXnvQyBMFxduxCdKxR7C",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2407,10 +2407,10 @@
         },
         {
             "device_name": "TK-14_BS VI MS@Delhi",
-            "device_id": "228dada0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8300c30-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "an1R8lEYCeKcj1xPu2CQ",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "nTKka41t31ooJKy6YGj5",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2592,10 +2592,10 @@
         },
         {
             "device_name": "TK-15_MTO@Delhi",
-            "device_id": "2294b280-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c837ad50-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "MxJ1AXSDp73zCUh0siHQ",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "uUL5JfRSoAiJmt3KM9DR",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2777,10 +2777,10 @@
         },
         {
             "device_name": "TK-16_ETHANOL@Delhi",
-            "device_id": "229e0150-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c83e8b20-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "KvXMdopd10p1Ttikk44s",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "exbK4VPx6K0lpvmmj6WW",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -2962,10 +2962,10 @@
         },
         {
             "device_name": "TK-17_BS VI HSD@Delhi",
-            "device_id": "22a4b810-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c846c880-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "Zwa7HPLbhHPwXt2zj6fl",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "yQfVKArktZJUWmQmecLz",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3147,10 +3147,10 @@
         },
         {
             "device_name": "TK-18_WATER@Delhi",
-            "device_id": "22ac3220-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c84dcd60-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "prSH8fb0zoWVWK7xWAu1",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "atHn6iFcymw4CIhdZjeP",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3332,10 +3332,10 @@
         },
         {
             "device_name": "TK-19_WATER@Delhi",
-            "device_id": "22b42160-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c856f520-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "KqJz9N7teMrl0jdZO0Js",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Ge04pMaAQIA2NI18vh5L",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3517,10 +3517,10 @@
         },
         {
             "device_name": "TK-20_WATER@Delhi",
-            "device_id": "22bd4920-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c85e6f30-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "JQmjLG6I2ZAlW04J0FtK",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "7slC7wtL2f5xqkednqZF",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3702,10 +3702,10 @@
         },
         {
             "device_name": "TK-23_BIOHSD@Delhi",
-            "device_id": "22c31580-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8654d00-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "nC75GuQxqDSOLO8dXJxz",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Ab2QsOsnZmh7RcJOchHc",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -3887,10 +3887,10 @@
         },
         {
             "device_name": "TK-24_BIOHSD@Delhi",
-            "device_id": "22ca6880-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c86d3c40-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "Ol5XTku7kLqAXft3tjn5",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "cMSecgpXI1P71mYENRPL",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4072,10 +4072,10 @@
         },
         {
             "device_name": "TK-25_BIOHSD@Delhi",
-            "device_id": "22d209a0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c875c7c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "wBwWgjaJvEz9XY2ZQ5g4",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "gLLvQhoDP2G5wTKiYAdC",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4257,10 +4257,10 @@
         },
         {
             "device_name": "TK-26_BIOHSD@Delhi",
-            "device_id": "22d9f8e0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c87f1690-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank",
-            "device_key": "ZmX4vQd5jedC8k5mgseu",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "giEdUvm3MtImP6yt2evK",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -4442,10 +4442,10 @@
         },
         {
             "device_name": "TK-01_BS VI HSD@Delhi_M",
-            "device_id": "22e14be0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c88afd70-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "7VMBke7RV0PTi6x4lACt",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "9HZhQLnMXywfxVvBj8Kp",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4531,10 +4531,10 @@
         },
         {
             "device_name": "TK-02_BS VI HSD@Delhi_M",
-            "device_id": "22e8ed00-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c89361e0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "t93SyrZgDxep5Ea8CzGW",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "RakLgQAHHN3OeovfDkEZ",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4620,10 +4620,10 @@
         },
         {
             "device_name": "TK-03_BS VI HSD@Delhi_M",
-            "device_id": "22f17880-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c89d9b10-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "2eELYr367CuYMWO1bE68",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "2xz05NDYj5jq90WRi1fX",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4709,10 +4709,10 @@
         },
         {
             "device_name": "TK-04_ETHANOL@Delhi_M",
-            "device_id": "22f940b0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8a2a420-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "XrCI7vjjdsliKfnm6cY3",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "2Mb4eugbT6Xh4K7tgTpn",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4798,10 +4798,10 @@
         },
         {
             "device_name": "TK-05_ETHANOL@Delhi_M",
-            "device_id": "23001e80-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8acb640-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "99GSXESap23vE0yOKEAj",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "SAL4FzmCgix3ejILdk8i",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4887,10 +4887,10 @@
         },
         {
             "device_name": "TK-06_BS VI MS@Delhi_M",
-            "device_id": "23080dc0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8b568d0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "HfSI9dOewsJKsg3YfNGi",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "JntyEdEmOnFz5erWEXdL",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -4976,10 +4976,10 @@
         },
         {
             "device_name": "TK-07_BS VI MS@Delhi_M",
-            "device_id": "23109940-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8c14fb0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "hzZOjzCDLApZQhJ3imVA",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "okzQkxAXkTvGkffSHBUm",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5065,10 +5065,10 @@
         },
         {
             "device_name": "TK-08_BS VI MS@Delhi_M",
-            "device_id": "23175000-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8c9b420-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "yn1vIeqLfIE3pJJ8aboJ",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "UqX5Abb1MdRMFgxeElPA",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5154,10 +5154,10 @@
         },
         {
             "device_name": "TK-09_ETHANOL@Delhi_M",
-            "device_id": "231eca10-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8d2dbe0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "3IhpnDjEJtuJbH3W1iXr",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "O5sepfl8XdCtATHGivDu",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5243,10 +5243,10 @@
         },
         {
             "device_name": "TK-10_ETHANOL@Delhi_M",
-            "device_id": "2329c690-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8df37f0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "RFhJqhrHDBZpUigxmaMG",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "zSt5JBBuwJPLWpoHduwJ",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5332,10 +5332,10 @@
         },
         {
             "device_name": "TK-11_SOLVANT@Delhi_M",
-            "device_id": "23370d00-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8e886c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "ro5XhrLCXw5qeAbbsXHs",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Ue9xNg30BWwqxCkS2STs",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5421,10 +5421,10 @@
         },
         {
             "device_name": "TK-12_BS VI HSD@Delhi_M",
-            "device_id": "233efc40-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8ef1670-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "fWd1TwACw3Sfe0tNDP08",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "PXtm2032NN6gg4BRiE7x",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5510,10 +5510,10 @@
         },
         {
             "device_name": "TK-13_SOLVANT@Delhi_M",
-            "device_id": "234564e0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8f77ae0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "i20cSkgzcZfFafGb97zp",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Z0cqR3cvxvjwUmUxVknz",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5599,10 +5599,10 @@
         },
         {
             "device_name": "TK-14_BS VI MS@Delhi_M",
-            "device_id": "234df060-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c8ff4310-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "FjUqAkXUt6hFv26ny9iU",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "BsRNr6CGINEvyepRnyBy",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5688,10 +5688,10 @@
         },
         {
             "device_name": "TK-15_MTO@Delhi_M",
-            "device_id": "2354ce30-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9073250-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "id6W1RbwFOn5uNRjgKB9",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "6KDEf09Jj7B49yvKWidB",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5777,10 +5777,10 @@
         },
         {
             "device_name": "TK-16_ETHANOL@Delhi_M",
-            "device_id": "235da7d0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c90e1020-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Tank Maintenance",
-            "device_key": "5lAytz8v1GELqDjf0oYX",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "lMYAe3B6pst53FMGVCJn",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -5866,10 +5866,10 @@
         },
         {
             "device_name": "ADTV-PMP-01_POWERMS_DISPATCH@Delhi",
-            "device_id": "236521e0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c915b140-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "k4en0hYLSijOgZqVnxGZ",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "X6zphrEKETgKUpvV5Ngg",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5890,10 +5890,10 @@
         },
         {
             "device_name": "ADTV-PMP-02_POWERMS_DISPATCH@Delhi",
-            "device_id": "236c9bf0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c91fc360-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "Dkd0TM8th9R1DlnkrFpq",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "OgYb3zyfVz3cy3E60NI4",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5914,10 +5914,10 @@
         },
         {
             "device_name": "ADTV-PMP-03_POWERMS_DISPATCH@Delhi",
-            "device_id": "2375c3b0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9278b90-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "VdRmE8wY7NHIiAQi9JIO",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "m62tkk5LyRvq1nZlnYtA",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5938,10 +5938,10 @@
         },
         {
             "device_name": "ADTV-PMP-04_POWERMS_DISPATCH@Delhi",
-            "device_id": "237bb720-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c933c090-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "dUPkwuIrHOC87OrQ9bUA",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "eIb7wleo2NWBVUxu5Pc7",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5962,10 +5962,10 @@
         },
         {
             "device_name": "ADTV-PMP-05_TURBOHSD_DISPATCH@Delhi",
-            "device_id": "2383a660-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c93e47e0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "HXuWkqQssFcPJ0YvQVB1",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "soCSzEHrB2LGljMAHmwS",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -5986,10 +5986,10 @@
         },
         {
             "device_name": "ADTV-PMP-06_TURBOHSD_DISPATCH@Delhi",
-            "device_id": "238a0f00-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c94b4030-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "NP2TRizPxMjTcOhyxQSb",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "pqZhNT4pZtYTFoBhE0XJ",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6010,10 +6010,10 @@
         },
         {
             "device_name": "PMP-01_BS VI HSD_DISPATCH@Delhi",
-            "device_id": "23918910-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c951cfe0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "tEyqmfM7IbLQwvg1EaNB",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Vi1Vjt3ArXmvdm5pSPlC",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6034,10 +6034,10 @@
         },
         {
             "device_name": "PMP-02_BS VI HSD_DISPATCH@Delhi",
-            "device_id": "239ab0d0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c95ca550-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "tfcyZNAN6zDmmgWWlxb7",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "oq9EQB9GcHAVZoANBTj5",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6058,10 +6058,10 @@
         },
         {
             "device_name": "PMP-03_BS VI HSD_DISPATCH@Delhi",
-            "device_id": "23a16790-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9697690-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "TSbmmpexUnFTwOrNjQDV",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "EGPYgLflmXQSWjAOF93v",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6082,10 +6082,10 @@
         },
         {
             "device_name": "PMP-04_BS VI HSD_DISPATCH@Delhi",
-            "device_id": "23a9a4f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9702d50-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "hGrQYsbx5IRwIzqXApUG",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "kAzfoe3XWJ9Q4E9Mp6Sa",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6106,10 +6106,10 @@
         },
         {
             "device_name": "PMP-05_BS VI MS_DISPATCH@Delhi",
-            "device_id": "23afe680-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c97891c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "ncH9k2lIFwnA62BlwXh1",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "REyvc2dAi5toP6fXkkBI",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6130,10 +6130,10 @@
         },
         {
             "device_name": "PMP-06_BS VI MS_DISPATCH@Delhi",
-            "device_id": "23b823e0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c97fe4c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "yMGHNEnzp68F5EsHbe4w",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "nTJC181e3XC793Vqm84W",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6154,10 +6154,10 @@
         },
         {
             "device_name": "PMP-07_BS VI MS_DISPATCH@Delhi",
-            "device_id": "23bf9df0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c98b2f60-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "tDyHJcpxxlhtaBmBmwMv",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "iuh7JWtSpjcFFUbPuHcC",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6178,10 +6178,10 @@
         },
         {
             "device_name": "PMP-08_BS VI MS_DISPATCH@Delhi",
-            "device_id": "23c93ae0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9976460-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "UBQDbceF52CIhIrriSnT",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "p3ogLIeHh921FsfoNFKh",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6202,10 +6202,10 @@
         },
         {
             "device_name": "PMP-09_ETHANOL_DISPATCH@Delhi",
-            "device_id": "23cf2e50-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9a260e0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "hjpf8sq6ZtGNCw1TRt8e",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "pLvE6tUbSEeztURon0in",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6226,10 +6226,10 @@
         },
         {
             "device_name": "PMP-10_ETHANOL_DISPATCH@Delhi",
-            "device_id": "23d87d20-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9ae47c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "G7AZhwop4qDOg583zXi3",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "2l89bRXzQayRuWh7xEKR",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6250,10 +6250,10 @@
         },
         {
             "device_name": "PMP-11_ETHANOL_DISPATCH@Delhi",
-            "device_id": "23de2270-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9b6ac30-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "3nn5BJnNo2Auh7KJEWah",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "HGmTcHc5fVZg8eiBBhUE",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6274,10 +6274,10 @@
         },
         {
             "device_name": "PMP-12_ETHANOL_DISPATCH@Delhi",
-            "device_id": "23e5eaa0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9be2640-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "JSwOiHhQZd9nU251NzuO",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "S8Jg3TKCWjC7Nc6nRojT",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6298,10 +6298,10 @@
         },
         {
             "device_name": "PMP-13_ETHANOL_DISPATCH@Delhi",
-            "device_id": "23ee00f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9c55230-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "QJwmtTK5drEh0Cx7gYCD",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Bz62ZU1CgFFXe5tc3LS9",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6322,10 +6322,10 @@
         },
         {
             "device_name": "PMP-VT-12_BS VI HSD_DISPATCH@Delhi",
-            "device_id": "23f66560-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9cc5710-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "l3jFx9DZ6qW2LyfFUya7",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "HT4kvEBwmvTeBpZ9Tvb3",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6346,10 +6346,10 @@
         },
         {
             "device_name": "PMP-VT-14_BS VI MS_DISPATCH@Delhi",
-            "device_id": "23fca6f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9d46d60-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "y5mV0RIA8mvshNrpVI2H",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "qMyqLDfaHlcp8OlO4qRQ",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6370,10 +6370,10 @@
         },
         {
             "device_name": "PMP-VT-15_ETHANOL_DISPATCH@Delhi",
-            "device_id": "24042100-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9dc3590-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "BqbKi1RHTWulloaJ6iND",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "XgaR6bgPAB10YdqnCD3L",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6394,10 +6394,10 @@
         },
         {
             "device_name": "PMP-VT-16_ETHANOL_DISPATCH@Delhi",
-            "device_id": "240c5e60-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9e70b00-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "FW6LCQqaX7ehXxiiimus",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "JJXJTQw8c983LCf23pxA",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6418,10 +6418,10 @@
         },
         {
             "device_name": "PMP-VT-23_BIO DIESEL_DISPATCH@Delhi",
-            "device_id": "241474b0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9f2a3c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "SkrMBHiELWKQbDBDEhTo",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "MOnRGWPchiWzLK0tOOiE",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6442,10 +6442,10 @@
         },
         {
             "device_name": "PMP-VT-25_BIO DIESEL_DISPATCH@Delhi",
-            "device_id": "241c3ce0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "c9faba10-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "IizyRwBxY3PHIxS0JFq2",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "dkRHXLcpKrh2xC5kMuJB",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6466,10 +6466,10 @@
         },
         {
             "device_name": "PMP-VT-26_BIO DIESEL_DISPATCH@Delhi",
-            "device_id": "24240510-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca028240-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Pump",
-            "device_key": "I5ISoFO6xdI87C0cnYew",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "B6DsQJc2dI4Gsg7DrXFa",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6490,10 +6490,10 @@
         },
         {
             "device_name": "FWP-01_Water_DISPATCH@Delhi",
-            "device_id": "242b5810-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca0911f0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Pump",
-            "device_key": "4LZEXauHV1GbfJ6JsNH3",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "skrsjrjHpUW5HQgxFYYK",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6559,10 +6559,10 @@
         },
         {
             "device_name": "FWP-02_Water_DISPATCH@Delhi",
-            "device_id": "243458c0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca1260c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Pump",
-            "device_key": "itqpbrwHNbCqsv1tyYyD",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "rTaRX2RZtPClMasbNgIL",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6628,10 +6628,10 @@
         },
         {
             "device_name": "FWP-03_Water_DISPATCH@Delhi",
-            "device_id": "24419f30-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca18a250-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Pump",
-            "device_key": "WyIl1GNpthz5VdILoOys",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "VImxwpcCvltx1w0NUAXK",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6697,10 +6697,10 @@
         },
         {
             "device_name": "FWP-04_Water_DISPATCH@Delhi",
-            "device_id": "244b8a40-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca20dfb0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Pump",
-            "device_key": "d3TWcXHJ9Je7HlElfgLM",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "b8c9MuJ4GoF3au7ngbL8",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6766,10 +6766,10 @@
         },
         {
             "device_name": "FWP-05_Water_DISPATCH@Delhi",
-            "device_id": "2458a9a0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca2880d0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Pump",
-            "device_key": "eATyxKJlJcjjCDqEake0",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "3SY3MIh1IrLxBIt7t6w8",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6835,10 +6835,10 @@
         },
         {
             "device_name": "JCY-01_Water_DISPATCH@Delhi",
-            "device_id": "246071d0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca2facc0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Pump",
-            "device_key": "Ewuvu1RolfM81zal7a59",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "YYoBJM3NXvawjGaI0w2a",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6904,10 +6904,10 @@
         },
         {
             "device_name": "JCY-02_Water_DISPATCH@Delhi",
-            "device_id": "2467ebe0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca3b93a0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Pump",
-            "device_key": "wNLuHZ4i3BiUr6AkLbaA",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "NXTPQxJdbXuZK8yXLNwQ",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -6973,10 +6973,10 @@
         },
         {
             "device_name": "Farthest Point PT_WP_DISPATCH@Delhi",
-            "device_id": "24713ab0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca466910-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Pump",
-            "device_key": "dhaXOWR0doLUVoYe4FB5",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "8qPAWN9j4qsxylftOJ94",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -7042,10 +7042,10 @@
         },
         {
             "device_name": "Nearest Point PT_WP_DISPATCH@Delhi",
-            "device_id": "2477a350-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca52ec30-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Pump",
-            "device_key": "FsvVzJxHO1zSQPTwEfsr",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "1CEDTPhuJPY7UtmukKLM",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PUMP ON STATUS",
@@ -7111,10 +7111,10 @@
         },
         {
             "device_name": "UPS-01_Control Room@Delhi",
-            "device_id": "247ef650-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca5e5de0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "UPS",
-            "device_key": "posYRl2QKCc6NAeJvojo",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "NiPjZrl86cfno9bGeVtW",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "UPS FAIL",
@@ -7140,10 +7140,10 @@
         },
         {
             "device_name": "UPS-02_Control Room@Delhi",
-            "device_id": "24864950-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca6848f0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "UPS",
-            "device_key": "sKUceBUjGfgzRVnZmVYI",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "ZueVN45monSB60i16ygX",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "UPS FAIL",
@@ -7169,10 +7169,10 @@
         },
         {
             "device_name": "GEPLC_Process PLC@Delhi",
-            "device_id": "248e3890-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca703830-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "PLC",
-            "device_key": "JNYUznqTPndebodnFrFj",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "updyic4a7Os8e1KhrTeY",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PLC A IS MASTER",
@@ -7219,10 +7219,10 @@
         },
         {
             "device_name": "SFT PLC_Safety PLC@Delhi",
-            "device_id": "24958b90-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca7b82d0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "PLC",
-            "device_key": "eSIaO2mXId5QSAuZf6yc",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "V6DRsyujXLG3Da8bEZVy",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "PLC A IS MASTER",
@@ -7269,10 +7269,10 @@
         },
         {
             "device_name": "HCD-01_OPEN PATH_HCD-01 TLF PUMP HOUSE@Delhi",
-            "device_id": "249f0170-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca845c70-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "o8rj0uJDoQgEoA6EW94P",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "vggSzjW6TF8MJQYT6x4h",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7308,10 +7308,10 @@
         },
         {
             "device_name": "HCD-02_OPEN PATH_HCD-02@Delhi",
-            "device_id": "24a62d60-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca8b1330-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "14THvB5F6MfHYxRs7Yrb",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "6IS8BK57VMx9iV8OAVhB",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7347,10 +7347,10 @@
         },
         {
             "device_name": "HCD-03_OPEN PATH_HCD-03@Delhi",
-            "device_id": "24ac6ef0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ca9636c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "r6CxLAiOsF6p97sBH0Bq",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "ZTOME49ppXGL4Bykrids",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7386,10 +7386,10 @@
         },
         {
             "device_name": "HCD-04_POINT TYPE_HCD-04@Delhi",
-            "device_id": "24b3c1f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "caa21da0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "hEZQNotx7l28wYg5TTYq",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "DOTNSQyxzGs3BznCu3EM",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7425,10 +7425,10 @@
         },
         {
             "device_name": "HCD-05_OPEN PATH_HCD-05@Delhi",
-            "device_id": "24bbd840-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "caaa33f0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "cc9h5VTW1XfbbDhujLwS",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "W1a4VCYy252l9eJIsjOm",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7464,10 +7464,10 @@
         },
         {
             "device_name": "HCD-06_POINT TYPE_HCD-06@Delhi",
-            "device_id": "24c4b1e0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cab49430-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "sZAo7UoJXweXuX6q1DJT",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "spCJCKUywiBFg9bphUbe",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7503,10 +7503,10 @@
         },
         {
             "device_name": "HCD-07_POINT TYPE_HCD-07@Delhi",
-            "device_id": "24ca7e40-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cac16570-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "eDUybqyogWjV0iHktRzU",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "tEC2PqVeePmGAepoOJXQ",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7542,10 +7542,10 @@
         },
         {
             "device_name": "HCD-08_POINT TYPE_HCD-08@Delhi",
-            "device_id": "24d21f60-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cac7ce10-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "4QMLyhWxtlJskZ6WFrIR",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Sa0HEquEZ1Pj3MYWYN2E",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7581,10 +7581,10 @@
         },
         {
             "device_name": "HCD-09_POINT TYPE_HCD-09@Delhi",
-            "device_id": "24da83d0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cad080a0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "LstpNZlD5JyPCzgrw4gj",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "ToAv9G2TLPrgdbkKJemZ",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7620,10 +7620,10 @@
         },
         {
             "device_name": "HCD-10_POINT TYPE_HCD-10@Delhi",
-            "device_id": "24e188b0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cad821c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "vHvCbSbz61urnnoQDZ0x",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "v993GyVepc6CazYwfXN5",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7659,10 +7659,10 @@
         },
         {
             "device_name": "HCD-11_POINT TYPE_HCD-11@Delhi",
-            "device_id": "24e929d0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cae34550-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "32l9t7W0Njj6FPD6BjUp",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "y0VuMMJvbJxtFWlHMYoB",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7698,10 +7698,10 @@
         },
         {
             "device_name": "HCD-12_POINT TYPE_HCD-12@Delhi",
-            "device_id": "24f1b550-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "caef0520-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "os60rXO3DWH92xIxqRdw",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "3DFZpiEfHUdRlt0cq3U0",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7737,10 +7737,10 @@
         },
         {
             "device_name": "HCD-13_POINT TYPE_HCD-13@Delhi",
-            "device_id": "24f90850-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "caf6a640-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "CRnqKZ176gG20Wz8sfdH",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "tCsboICJhG5BzdeFW2ki",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7776,10 +7776,10 @@
         },
         {
             "device_name": "HCD-14_POINT TYPE_HCD-14@Delhi",
-            "device_id": "2500a970-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cafe4760-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "q3LTRkgcLhffJ9m9GHWk",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "okMlo6eBobJ3PiRgjeHZ",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7815,10 +7815,10 @@
         },
         {
             "device_name": "HCD-15_POINT TYPE_HCD-15@Delhi",
-            "device_id": "25082380-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb060f90-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "2jqIowup3pdRT95ED2ax",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Z4OpBwlfQmmbcvAbGwPW",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7854,10 +7854,10 @@
         },
         {
             "device_name": "HCD-16_POINT TYPE_HCD-16@Delhi",
-            "device_id": "25145880-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb106fd0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "alFGdMf5JPAxXddVuyrS",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "TA9t3Ljn8GiuBZxHgawH",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7893,10 +7893,10 @@
         },
         {
             "device_name": "HCD-17_POINT TYPE_HCD-17@Delhi",
-            "device_id": "251fa320-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb185f10-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "HCD",
-            "device_key": "z1LBAyFqZjbwxRP2lATW",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "DefkFcPpN7vWABQDLT7E",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HCD 40 % ALARM",
@@ -7932,10 +7932,10 @@
         },
         {
             "device_name": "DV-02@Delhi",
-            "device_id": "25274440-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb1f8b00-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Dyke",
-            "device_key": "Pdw9XjdcBO0VZqcLURif",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "QwQpUMjiodpsIAHhM8qk",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -7951,10 +7951,10 @@
         },
         {
             "device_name": "DV-04@Delhi",
-            "device_id": "252e7030-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb2be710-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Dyke",
-            "device_key": "hHAzHBImd21Qk4opA4bc",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "MXBffKFhRRBekq01w5EL",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -7970,10 +7970,10 @@
         },
         {
             "device_name": "DV-06@Delhi",
-            "device_id": "253749d0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb329dd0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Dyke",
-            "device_key": "9fekentJU7U4JQ9wvtM8",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "eZ1frwxjmVIN0FLc978i",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -7989,10 +7989,10 @@
         },
         {
             "device_name": "DV-07@Delhi",
-            "device_id": "253f3910-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb3de870-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Dyke",
-            "device_key": "CtS6SwQkFO3JnJlcko6L",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "QIK5MZwTBDsvSLM7bHRp",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -8008,10 +8008,10 @@
         },
         {
             "device_name": "DV-08@Delhi",
-            "device_id": "25449040-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb4a6b90-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Dyke",
-            "device_key": "MLUPm7PYUm2hQKSJ6jxJ",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "zr1kD0Fd7aH8sQyBw1mF",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -8027,10 +8027,10 @@
         },
         {
             "device_name": "DV-09@Delhi",
-            "device_id": "254c3160-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb51e5a0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Dyke",
-            "device_key": "WrbFcvYorlTxbQ5U4w8Q",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "3homyRv96qLf3d7TTW6P",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "DYKE VALVE STATUS",
@@ -8046,10 +8046,10 @@
         },
         {
             "device_name": "EntryGate@Delhi",
-            "device_id": "255447b0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb595fb0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Barrier Gate",
-            "device_key": "11ktLqAS7wbCrlnbAwNG",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "NMUwrZrFOzG7ErQMVAzY",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "BARRIER GATE OPEN STATUS",
@@ -8065,10 +8065,10 @@
         },
         {
             "device_name": "ExitGate@Delhi",
-            "device_id": "255d9680-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb640e10-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Barrier Gate",
-            "device_key": "7kfRGWTnGpsjUe2U0lSt",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "juZ2TKH2DeoSQnWEGKvg",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "BARRIER GATE OPEN STATUS",
@@ -8084,10 +8084,10 @@
         },
         {
             "device_name": "Hooter1_EFFECT_HOOTER_FOR_DYKE_FWP_CR@Delhi",
-            "device_id": "256389f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb6c7280-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Hooter",
-            "device_key": "qn4sqvCW7hEukv5xd1j4",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "cPOgvLiTb7mDPk7X3n7s",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -8098,10 +8098,10 @@
         },
         {
             "device_name": "Hooter2_EFFECT_HOOTER_FOR_ESD_CR@Delhi",
-            "device_id": "256b7930-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb77e430-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Hooter",
-            "device_key": "L8cyUIG31C6e1uhwAJGA",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "TGFJXIZiurR3X3WobpW1",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -8112,10 +8112,10 @@
         },
         {
             "device_name": "Hooter3_EFFECT_HOOTER_FOR_HC_CR@Delhi",
-            "device_id": "2574c800-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb7f5e40-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Hooter",
-            "device_key": "Ysz8FScgGAijeAF4fgio",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "uQE0qo5eO6itltr3mrLj",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -8126,10 +8126,10 @@
         },
         {
             "device_name": "Hooter4_EFFECT_HOOTER_FOR_HC_FIELD@Delhi",
-            "device_id": "257a6d50-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb8a81d0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Hooter",
-            "device_key": "gflPMx4Gclf90pgbuqu5",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "mVwPNMwSzWWcKnpu12xf",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "HOOTER STATUS",
@@ -8140,10 +8140,10 @@
         },
         {
             "device_name": "ESD-01_SECURITY ROOM@Delhi",
-            "device_id": "2581c050-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb961a90-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "ZZzBVEQl2HA1ACiazZEc",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "PQHafjCWlqAFfxoQP0fd",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8214,10 +8214,10 @@
         },
         {
             "device_name": "ESD-02_TERMINAL MANAGER ROOM@Delhi",
-            "device_id": "258a24c0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cb9f4250-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "zsHPzrUt1jre1HaM8ifY",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "tyVyzxDFxY6xsmO9U3Rr",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8288,10 +8288,10 @@
         },
         {
             "device_name": "ESD-03_LICENSE ENTRY GATE@Delhi",
-            "device_id": "259177c0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cba69550-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "ssKaZ7STwHfJI8kg5QPp",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "cmETIMPPTijGSQCmbE5f",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8362,10 +8362,10 @@
         },
         {
             "device_name": "ESD-04_BAY-04 GANTRY 01@Delhi",
-            "device_id": "259aeda0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cbb08060-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "qLjRyZnPos7dEFmyMpmZ",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "4QIC3q8zE8FOnNbfwngH",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8436,10 +8436,10 @@
         },
         {
             "device_name": "ESD-05_BAY-09 GANTRY 02@Delhi",
-            "device_id": "25a092f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cbb5b080-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "ZR2fG0w2PII6byJSL6Vr",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Y9oJDHpsTiUV3UK5fYua",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8510,10 +8510,10 @@
         },
         {
             "device_name": "ESD-06_BAY-18 GANTRY 03@Delhi",
-            "device_id": "25a88230-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cbbfc2a0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "oYzIV4UZsP8rTOueTFIA",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "YlHu5v3yLYVWodFnP4Dg",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8584,10 +8584,10 @@
         },
         {
             "device_name": "ESD-07_BAY-12 GANTRY 02@Delhi",
-            "device_id": "25affc40-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cbc763c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "cPwptJPeCeI7tQlXbK36",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "LiWUbCnbL13goWSykrUb",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8658,10 +8658,10 @@
         },
         {
             "device_name": "ESD-08_SAMPLE ROOM@Delhi",
-            "device_id": "25b99930-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cbccbaf0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "JMumOmBJVygQXwsKPVhK",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "6rBYJZZvhDfuZGCIincU",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8732,10 +8732,10 @@
         },
         {
             "device_name": "ESD-09_PUMP HOUSE@Delhi",
-            "device_id": "25c69180-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cbd7de80-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "JpmTk04dQdNRetLpMPZX",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "7gYga1C4fiFvminV4RZL",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8806,10 +8806,10 @@
         },
         {
             "device_name": "ESD-10_MCC ROOM@Delhi",
-            "device_id": "25d07c90-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cbe3ec70-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "i7HbT5wBNPNtfFbz5l09",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "xQ23yQWehMhSppVE2fML",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8880,10 +8880,10 @@
         },
         {
             "device_name": "ESD-11_NEAR TANK 08@Delhi",
-            "device_id": "25d621e0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cbebb4a0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "7Gs3zFjmxgkKDMIcTQHy",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "TtOSzehtZ7rwc0UiNWGx",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -8954,10 +8954,10 @@
         },
         {
             "device_name": "ESD-12_NEAR TANK 03@Delhi",
-            "device_id": "25df70b0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cbf307a0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "ZwhUKdsadvF7s8ERxnHo",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "0CEv02HHm2RYIjI1Okxe",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -9028,10 +9028,10 @@
         },
         {
             "device_name": "ESD-13_ETP@Delhi",
-            "device_id": "25e738e0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cbfcf2b0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "STNM8yvkCAYWv27iY2pG",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "yU5Dy68RbG6TGDC4gLKo",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -9102,10 +9102,10 @@
         },
         {
             "device_name": "ESD-14_CONTROL ROOM@Delhi",
-            "device_id": "25edc890-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc030d30-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "iIaWlwk8KH6Cee6fkOO7",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "JjuRols1e68ztgqurEcN",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -9176,10 +9176,10 @@
         },
         {
             "device_name": "ESD-CENTRAL_ESD-CENTRAL@Delhi",
-            "device_id": "25f4f480-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc0c5c00-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "PRsAO9uQQ0mkEgcNVkWN",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "ODntOio2TxupOwPB5nKC",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -9250,10 +9250,10 @@
         },
         {
             "device_name": "ESD-POWER_ESD-POWER@Delhi",
-            "device_id": "25feb880-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc18df20-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "MFF0hDRv3HFeKJrkHRUv",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "6ol7Ws0g3poleg41MNpF",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -9324,10 +9324,10 @@
         },
         {
             "device_name": "ESD-PPL_ESD-PPL@Delhi",
-            "device_id": "26056f40-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc1f95e0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "smcaHavwqZdiIhS99cwi",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "5Nzg5izDfI2dEq5tH0oP",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -9397,11 +9397,11 @@
             ]
         },
         {
-            "device_name": "ESD-RIO_ESD-RIO@Delhi",
-            "device_id": "260b1490-826a-11f0-8ce4-45e721ab4ec5",
+            "device_name": "ESD-RIO_ESD-Pipe Line@Delhi",
+            "device_id": "cc2b0790-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "aGmU7Q7DgRGrNPCka58s",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "OqH9llc9ktkI5YFEaXRo",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -9472,10 +9472,10 @@
         },
         {
             "device_name": "ESD-SOFT_SOFT FROM OIC@Delhi",
-            "device_id": "261351f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc36ee70-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "ESD",
-            "device_key": "6DLDFr7404HLtEKV1rRG",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "QvVCMHCy68PPgcxezaYY",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "ESD STATUS",
@@ -9546,10 +9546,10 @@
         },
         {
             "device_name": "LP 01_BC-01A_BS VI MS@Delhi",
-            "device_id": "261acc00-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc3e8f90-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "MB7fpJ4HTCGYgmYO46Ir",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "XCa2vV8lj1cpIVsNcR0Z",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -9650,10 +9650,10 @@
         },
         {
             "device_name": "LP 02_BC-01B_BS VI MS@Delhi",
-            "device_id": "26229430-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc482c80-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "oct7OmpCA6MOI0kNj1Qu",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "X8KcFWBxIasKQ6AB4zBF",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -9754,10 +9754,10 @@
         },
         {
             "device_name": "LP 03_BC-02A_BS VI MS@Delhi",
-            "device_id": "262d1b80-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc51f080-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "7WixsicPqTwAA9bQ6jS3",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "6qc3f5andldcD397lzC3",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -9858,10 +9858,10 @@
         },
         {
             "device_name": "LP 04_BC-02B_BS VI MS@Delhi",
-            "device_id": "2639c5b0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc594380-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "VqDvB6EokiUXT5hE59T3",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "RLVG3nvBig0MGSnG0zJr",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -9962,10 +9962,10 @@
         },
         {
             "device_name": "LP 05_BC-03A_BS VI MS@Delhi",
-            "device_id": "2641b4f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc6689f0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "J9DbKoIGruyjXijHLyaW",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "p58kviK2MBOG57VuUwlg",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -10066,10 +10066,10 @@
         },
         {
             "device_name": "LP 06_BC-03B_BS VI MS@Delhi",
-            "device_id": "264a4070-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc6fb1b0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "fwkt1CGZe7PmhlYZvPQI",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "cqR0rDnocQmFyBqkQ7O4",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -10170,10 +10170,10 @@
         },
         {
             "device_name": "LP 07_BC-04A_BS VI MS@Delhi",
-            "device_id": "26508200-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc7752d0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "iyIDP2ofj9goTaPO3iQS",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "gCYnDYTF7S2NIMxbEtbe",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -10274,10 +10274,10 @@
         },
         {
             "device_name": "LP 08_BC-04B_BS VI MS@Delhi",
-            "device_id": "2659f7e0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc7cd110-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "9gJlGxV4M5yoY1NirHRQ",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "qtVVRtvZwznJVHFuOjxs",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -10378,10 +10378,10 @@
         },
         {
             "device_name": "LP 09_BC-05A_BS VI MS@Delhi",
-            "device_id": "265feb50-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc849940-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "BqJkAlTLu49SCMRVlKrX",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Owq98YHXTCuCjsg0ZbmN",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -10482,10 +10482,10 @@
         },
         {
             "device_name": "LP 10_BC-05B_BS VI MS@Delhi",
-            "device_id": "26671740-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc8ab3c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "OOHgMGXjRzp1U4S5aIuQ",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "kF9JAvBy9gMx71qobTpV",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -10586,10 +10586,10 @@
         },
         {
             "device_name": "LP 11_BC-06A_BS VI MS@Delhi",
-            "device_id": "266f0680-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc95d750-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "07E7tKPKsqgcq0SYDO1G",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "hMchhKOB4Fj8Wts83kBG",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -10690,10 +10690,10 @@
         },
         {
             "device_name": "LP 12_BC-06B_BS VI HSD@Delhi",
-            "device_id": "26768090-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cc9b2e80-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "SbeYiUVt7ul21Y63WHX5",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "bbrn4FYNsjV5sXaTFZ3X",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -10794,10 +10794,10 @@
         },
         {
             "device_name": "LP 13_BC-07A_BS VI MS@Delhi",
-            "device_id": "267e6fd0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cca4cb70-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "y1yjaqhJKbH4isEuq9t0",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "6ZHmFNFSw04eQzfqTKzG",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -10898,10 +10898,10 @@
         },
         {
             "device_name": "LP 14_BC-07B_BS VI HSD@Delhi",
-            "device_id": "26863800-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ccad2fe0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "JHcEZ3wwgPr0UJCrM03y",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Pa8zscktThgbNxkrqyVM",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -11002,10 +11002,10 @@
         },
         {
             "device_name": "LP 15_BC-08A_BS VI MS@Delhi",
-            "device_id": "268fade0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ccb85370-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "AR2DMhVRgYL7D4QpLjWC",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "7OTvUrvgS7NYBPZmeguw",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -11106,10 +11106,10 @@
         },
         {
             "device_name": "LP 16_BC-08B_BS VI HSD@Delhi",
-            "device_id": "269d1b60-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ccbff490-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "Eq9CF1YHDYNJ7RZ3ijcx",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "Qc6Kdd4pNIwWPcwcnmaW",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -11210,10 +11210,10 @@
         },
         {
             "device_name": "LP 17_BC-09A_BS VI MS@Delhi",
-            "device_id": "26a4bc80-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ccc91c50-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "Xx8K1vrt2v9Csg3lK1zw",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "rtwKU2QuhzeyzUaHABhK",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -11314,10 +11314,10 @@
         },
         {
             "device_name": "LP 18_BC-09B_BS VI HSD@Delhi",
-            "device_id": "26adbd30-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ccd10b90-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "7Qg0Ne7Erj273GUOjG0M",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "ZfLJWiLX2CgxPW4legr0",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -11418,10 +11418,10 @@
         },
         {
             "device_name": "LP 19_BC-10A_BS VI MS@Delhi",
-            "device_id": "26b3d7b0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ccd7e960-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "uv703RXZNGA6zH0epmu8",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "tzjKXrCtqOfCo10EYNt7",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -11522,10 +11522,10 @@
         },
         {
             "device_name": "LP 20_BC-10B_BS VI HSD@Delhi",
-            "device_id": "26bbee00-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cce297c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "LliqZINl5KFjM4SW29sT",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "QVuVkKtZM59HXqEZygYk",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -11626,10 +11626,10 @@
         },
         {
             "device_name": "LP 21_BC-11A_BS VI MS@Delhi",
-            "device_id": "26c40450-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ccea5ff0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "ebSnPlQZKks53tkMnOj5",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "otdIKcEinTIPQKJEhGZF",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -11730,10 +11730,10 @@
         },
         {
             "device_name": "LP 22_BC-11B_BS VI HSD@Delhi",
-            "device_id": "26cb0930-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ccf20110-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "QA1qsFqIEzQPHcaUBAkG",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "aCqe35ibwW2Bz9pojydp",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -11834,10 +11834,10 @@
         },
         {
             "device_name": "LP 23_BC-12A_BS VI MS@Delhi",
-            "device_id": "26d2aa50-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "ccfd24a0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "O09rQgXStbiPl6dg0NZx",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "gMXQCDKQSnLuVpqDkwSH",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -11938,10 +11938,10 @@
         },
         {
             "device_name": "LP 24_BC-12B_BS VI HSD@Delhi",
-            "device_id": "26da7280-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd069a80-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "7pats46v7B1qc0l8NhaS",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "OkhHLw1JaTiQfG30z2ff",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12042,10 +12042,10 @@
         },
         {
             "device_name": "LP 25_BC-13A_BS VI HSD@Delhi",
-            "device_id": "26e1ec90-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd105e80-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "4UGq9aEwxiaqN3ftobyh",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "HmLO5tPegm1hde3DZOky",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12146,10 +12146,10 @@
         },
         {
             "device_name": "LP 26_BC-13B_BS VI HSD@Delhi",
-            "device_id": "26e93f90-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd1603d0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "1anky290NTNvGKjSNChn",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "e1voEZ2mH1H6DSx6Q0Wb",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12250,10 +12250,10 @@
         },
         {
             "device_name": "LP 27_BC-14A_BS VI HSD@Delhi",
-            "device_id": "26f107c0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd1f79b0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "kCjs3UxZGIxZsXgdR9t6",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "DWrlMDI0uOTQ1Wr8CZ8a",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12354,10 +12354,10 @@
         },
         {
             "device_name": "LP 28_BC-14B_BS VI HSD@Delhi",
-            "device_id": "26f8cff0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd282c40-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "ONx2lOkAITfcecaS9zzL",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "lX4bzJbCXpYYnBrCQEdo",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12458,10 +12458,10 @@
         },
         {
             "device_name": "LP 29_BC-15A_BS VI HSD@Delhi",
-            "device_id": "27009820-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd2f0a10-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "YJLRCFcf0KNPVExQVvVg",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "8JtBWYRC20grsT7Pt8Xw",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12562,10 +12562,10 @@
         },
         {
             "device_name": "LP 30_BC-15B_BS VI HSD@Delhi",
-            "device_id": "27088760-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd35c0d0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "AbwGMMPxiDHeILU8zQWg",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "lLcsDUCrEodxfYEJkZEg",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12666,10 +12666,10 @@
         },
         {
             "device_name": "LP 31_BC-16A_BS VI HSD@Delhi",
-            "device_id": "270fb350-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd3e7360-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "pyxsTjOkcQ5VEh8dCVp8",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "2jFjdEwlC2SzhGhxFvsq",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12770,10 +12770,10 @@
         },
         {
             "device_name": "LP 32_BC-16B_BS VI HSD@Delhi",
-            "device_id": "27172d60-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd49e510-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "hr9r19IZe56h53XVSDEp",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "04IlnM2q6UsCXqVWGToC",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12874,10 +12874,10 @@
         },
         {
             "device_name": "LP 33_BC-17A_BS VI HSD@Delhi",
-            "device_id": "271fdff0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd52beb0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "qMsxLYQaLaearo5zqXZG",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "v01wa2KqmsOUWdqgMjxn",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -12978,10 +12978,10 @@
         },
         {
             "device_name": "LP 34_BC-17B_SOLVENT@Delhi",
-            "device_id": "2726e4d0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd5a11b0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "mGNntIx00oRFqMGKLYo0",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "rvNfqWjwWqdmE9FY07Yb",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13082,10 +13082,10 @@
         },
         {
             "device_name": "LP 35_BC-18A_BS VI HSD@Delhi",
-            "device_id": "273081c0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd644ae0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "rd2jXIZ1F1TYYgGXk1AZ",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "abrf1QMaN3r924XcWnsT",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13186,10 +13186,10 @@
         },
         {
             "device_name": "LP 36_BC-18B_SOLVENT@Delhi",
-            "device_id": "2735d8f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd6c1310-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "Nknp2Blj5PPC16XiUCOV",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "v5Ae8JpYG8ThA1dcnlZm",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13290,10 +13290,10 @@
         },
         {
             "device_name": "LP 37_BC-19A_BS VI HSD@Delhi",
-            "device_id": "273d7a10-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd7784c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "r3AshX00uKyzkRPOAneJ",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "i8n1NX7uZt1ABiS8YBUr",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13394,10 +13394,10 @@
         },
         {
             "device_name": "LP 38_BC-19B_BS VI HSD@Delhi",
-            "device_id": "27459060-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd8148c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "jaTnemvNQbUrCXFGLqUE",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "3jkuSs5zOz3tFKuG3lRr",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13498,10 +13498,10 @@
         },
         {
             "device_name": "LP 39_BC-20A_BS VI HSD@Delhi",
-            "device_id": "274d0a70-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd8874b0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "PZ9hAksPC750XKorvJDA",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "0I6QU2YzqlFayQKf3EF4",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13602,10 +13602,10 @@
         },
         {
             "device_name": "LP 40_BC-20B_BS VI HSD@Delhi",
-            "device_id": "2755e410-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd92ade0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Loading Point",
-            "device_key": "S8njYGJZ8trf93z2r0Ob",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "I4F9be08grfA9xHvaUhf",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LP Earthing STATUS",
@@ -13706,10 +13706,10 @@
         },
         {
             "device_name": "Gantry Permissive override@Delhi",
-            "device_id": "275c4cb0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cd99d9d0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Gantry override",
-            "device_key": "5QdIOmhTHtaZte4HNH4y",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "9eik0i8wQyigEpqH8KaA",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "OVERRIDE STATUS",
@@ -13720,10 +13720,10 @@
         },
         {
             "device_name": "Gantry Permissive Write CMD status@Delhi",
-            "device_id": "2763edd0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cda52470-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Gantry override",
-            "device_key": "fG8fXSGpASzf913ykkbj",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "qJgCA65BqHW0UGX3ZuBO",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "OVERRIDE STATUS",
@@ -13734,10 +13734,10 @@
         },
         {
             "device_name": "ESD Write CMD status@Delhi",
-            "device_id": "276b67e0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cdac5060-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Gantry override",
-            "device_key": "DysJjwLBUBrFXzPRyNmC",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "pNTZ4RBRpFMiM4cjgL7t",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "OVERRIDE STATUS",
@@ -13748,10 +13748,10 @@
         },
         {
             "device_name": "Two Fire Engine Running status@Delhi",
-            "device_id": "27733010-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cdb5c640-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Effect",
-            "device_key": "OWAeqkNa2q8kdvpVoDQ0",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "qWe0yCtwDz8aYdXaegen",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -13782,10 +13782,10 @@
         },
         {
             "device_name": "WATER Level below Ref. Volume@Delhi",
-            "device_id": "277af840-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cdbe2ab0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Effect",
-            "device_key": "U9vUVhB3ELcbaGNltx13",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "W0Pa5WfruFTgUOh9bQzs",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -13816,10 +13816,10 @@
         },
         {
             "device_name": "Main Fire Engines not in REMOTE@Delhi",
-            "device_id": "278b7300-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cdc381e0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Effect",
-            "device_key": "i4G1obMwODcy2O97JyOA",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "VfX6ybew9GmvEr2ma2Lx",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -13850,10 +13850,10 @@
         },
         {
             "device_name": "Gantry Permissive Off@Delhi",
-            "device_id": "2792ed10-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cdccf7c0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "Fire Effect",
-            "device_key": "GyAHGFXMitNNBLdW5Kjr",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "saKkJGy7HVA2jnngK0BB",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "Cause",
@@ -13884,10 +13884,10 @@
         },
         {
             "device_name": "LRC Switch Over@Delhi",
-            "device_id": "279ab540-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cdd6bbc0-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "LRC Switchover",
-            "device_key": "VM0vjenaEyJ2lIysIdQp",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "MXxcxDC1weGYl64bYrFR",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "LRC SWITCHOVER 30 DAYS STATUS",
@@ -13898,10 +13898,10 @@
         },
         {
             "device_name": "Operability Index@Delhi",
-            "device_id": "27a0a8b0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_id": "cde1df50-961f-11f0-b2bb-7b6e6b3fdc10",
             "device_type": "OI",
-            "device_key": "0UhQG6eyrrbZhsZEt50F",
-            "entity_id": "221e22f0-826a-11f0-8ce4-45e721ab4ec5",
+            "device_key": "VfVSilb4M0GHuuKx6Qmg",
+            "entity_id": "c7a2c050-961f-11f0-b2bb-7b6e6b3fdc10",
             "sensors": [
                 {
                     "sensor_name": "Fire Engine1",
