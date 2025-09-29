@@ -32,28 +32,29 @@ class SendVtsCommand:
         else:
             rpt = {}
 
-        if params.get("interrupt").lower() == 'block':
-            input_data = {
-                "TT_No": alert_data['vehicle_number'],
-                "BlockStartDate": alert_data['vehicle_blocked_start_date'].isoformat(),
-                "BlockEndDate": alert_data['vehicle_blocked_end_date'].isoformat(),
-                "BlockedRemarks": alert_data['device_name']
-            }
-            payload = [{
-                "transactNo": str(alert_data['id']) + "1",
-                "truckRegNo": alert_data['vehicle_number'],
-                "blockingFlag": "Y",
-                "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
-                "blockingTo": (alert_data['vehicle_blocked_end_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
-            }]
-            
+        if params.get("interrupt").lower() == 'block':            
             # Blocking in IMS blockingFlag="Y"
             if alert_data['bu'] in ['TAS']:
+                payload = [{
+                    "transactNo": str(alert_data['id']) + "1",
+                    "truckRegNo": alert_data['vehicle_number'],
+                    "blockingFlag": "Y",
+                    "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
+                    "blockingTo": (alert_data['vehicle_blocked_end_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
+                }]
                 await vts_analysis.post_blocked_tt_ims(payload)
             
-            #await vts_analysis.post_blocked_tt_ims(payload)
-            
-            # await vts_analysis.post_blocked_tt(input_data)
+            if alert_data['bu'] in ['LPG']:
+                payload = {
+                    "Request":{
+                        "Request_ID": str(alert_data['id'])+"1",
+                        "Vehicle_ID": alert_data['vehicle_number'],
+                        "Status": "B",
+                        "User_ID": "NOVEX_SYSTEM",
+                        "IP_Address": urdhva_base.settings.server_ip
+                    }
+                }
+                #await vts_analysis.post_lpg_tt(payload)
             alert_message = (
                 f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Block, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to block the Vehicle "
             )
@@ -63,42 +64,28 @@ class SendVtsCommand:
             return True, {"sapcommandsent": True}
 
         if params.get("interrupt").lower() == 'unblock':
-            un_block_datetime = str(alert_data['vehicle_blocked_end_date'].isoformat()) if params.get(
-                "auto_unblock", False) else str(urdhva_base.utilities.get_present_time().isoformat())
-            approved_datetime = await alert_manager.get_approved_remarks(alert_data, is_approved=False, get_approved_time=True)
-            doc_link = await alert_manager.get_doc_link_from_alert_history(alert_data)
-            params1 = {
-                "TT_No": alert_data['vehicle_number'],
-                "UnBlockedBy": rpt.get("email", "NOVEX_USER"),
-                "UnBlockedDateTime": un_block_datetime,
-                "UnBlockedRemarks": await alert_manager.get_approved_remarks(alert_data, is_approved=False),
-                "ApprovedBy": rpt.get("email", "NOVEX_USER"),
-                "ApprovedDateTime": approved_datetime,
-                "ApprovedRemarks": await alert_manager.get_approved_remarks(alert_data, is_approved=True),
-                "BlockStartDate": str(alert_data['vehicle_blocked_end_date'].isoformat()),
-                "BlockEndDate": str(alert_data['vehicle_blocked_start_date'].isoformat()),
-                "WaivedOff": params.get("WaivedOff", False),
-                "AlertID": alert_data['id'],
-                "DocLink": {
-                    "DocPaths": doc_link if doc_link else []
-                }
-            }
-
-            payload = [{
-                "transactNo": str(alert_data['id']) + "0",
-                "truckRegNo": alert_data['vehicle_number'],
-                "blockingFlag": "N",
-                "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
-                "blockingTo": (alert_data['vehicle_blocked_end_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
-            }]
-
-            # await vts_analysis.post_unblocked_tt(params1)
-
             # UnBlocking in IMS blockingFlag="N"
             if alert_data['bu'] in ['TAS']:
+                payload = [{
+                    "transactNo": str(alert_data['id']) + "0",
+                    "truckRegNo": alert_data['vehicle_number'],
+                    "blockingFlag": "N",
+                    "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
+                    "blockingTo": (alert_data['vehicle_blocked_end_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
+                }]
                 await vts_analysis.post_blocked_tt_ims(payload)
-            # await vts_analysis.post_blocked_tt_ims(payload)
 
+            if alert_data['bu'] in ['LPG']:
+                payload = {
+                    "Request":{
+                    "Request_ID": str(alert_data['id'])+"0",
+                    "Vehicle_ID": alert_data['vehicle_number'],
+                    "Status": "U",
+                    "User_ID": "NOVEX_SYSTEM",
+                    "IP_Address": urdhva_base.settings.server_ip
+                    }
+                }
+                #await vts_analysis.post_lpg_tt(payload)            
             if not params['auto_unblock']:
                 query = (f"location_id='{alert_data['sap_id']}' and tl_number='{alert_data['vehicle_number']}' "
                          f"and {alert_data['violation_type']}>=1 and created_at<'{alert_data['created_at']}' and location_type='{alert_data['bu']}' "
