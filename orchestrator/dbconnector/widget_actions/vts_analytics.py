@@ -82,6 +82,20 @@ class VTSAnalyticsActions:
         
         conditions_str = " AND ".join(conditions)
         query_lower = query.lower()
+
+        if ") as history_data" in query_lower:
+            # Split into two parts: before and after the subquery alias
+            idx = query_lower.index(") as history_data")
+            subquery_part = query[:idx]  # everything inside the subquery
+            rest_part = query[idx:]      # the alias + group by etc.
+
+            # Insert conditions inside the subquery WHERE clause
+            if "where" in subquery_part.lower():
+                subquery_part = subquery_part.rstrip() + f" AND {conditions_str}"
+            else:
+                subquery_part = subquery_part.rstrip() + f" WHERE {conditions_str}"
+
+            return subquery_part + rest_part
         
         # Handle queries with GROUP BY
         if "group by" in query_lower:
@@ -246,6 +260,102 @@ class VTSAnalyticsActions:
            return {"status": True, "message": "success", "data": merged_df.to_dict(orient="records")}
         
         
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+    
+    @staticmethod
+    async def vts_insite_violation(filters, cross_filters, drill_state, payload):
+        try:
+            query = vts_query.vts_query.get(drill_state.split(",")[0])
+            all_violations = vts_query.vts_query.get("all_violations", [])
+            violation_types = payload.get("violation_type", []) if payload else []
+            if violation_types:
+                violation_type_query = vts_query.vts_query.get("vts_insite_history_type")
+                if not violation_type_query:
+                    return {"status": False, "message": "Query template not found", "data": []}
+                
+                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, violation_type_query)
+                select_parts = []
+                for v_type in all_violations:
+                    select_parts.append(f"COUNT(DISTINCT CASE WHEN {v_type} != 0 THEN invoice_number END) AS {v_type}")
+                having_parts = []
+                for v_type in violation_types:
+                    having_parts.append(f"COUNT(DISTINCT CASE WHEN {v_type} != 0 THEN invoice_number END) > 0")
+                
+                select_clause = ",\n        ".join(select_parts)
+                having_clause = " AND ".join(having_parts)
+
+                final_query = violation_type_query.format(select_clause=select_clause, having_clause=having_clause)
+                final_query = VTSAnalyticsActions.apply_conditions_to_query(final_query, conditions)
+                print(final_query)
+                
+                df_history = await VTSAnalyticsActions.execute_query(final_query)
+                if df_history.empty:
+                     return {"status": True, "message": "No history data found", "data": []}
+                
+               
+                tl_numbers_list = df_history['tl_number'].tolist()
+                tl_numbers_str = "', '".join(map(str, tl_numbers_list))
+                alerts_query = f"""SELECT DISTINCT  location_name, vehicle_number, transporter_code, zone 
+                                  FROM alerts 
+                                  WHERE vehicle_number IN ('{tl_numbers_str}') 
+                                  AND transporter_code != '' AND location_name != ''"""
+                print(alerts_query)
+                df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
+
+                # Check if alerts data exists
+                if df_alerts.empty:
+                      return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
+                
+                # Merge history with alerts data
+                merged_df = df_history.merge(df_alerts, left_on="tl_number", right_on="vehicle_number", how="left")
+                    
+                    
+                email_query = """SELECT transporter_code, transporter_name FROM email_master"""
+                print(email_query)
+                df_email = await VTSAnalyticsActions.execute_query(email_query)
+                # Final merge with email master
+                final_df = merged_df.merge(df_email, on="transporter_code", how="left")
+                final_df.drop(columns=["transporter_code"], inplace=True)
+                final_df.dropna(inplace=True)
+
+                return {"status": True, "message": "success", "data": final_df.to_dict(orient="records")}
+                
+            
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+            print(query)
+            df_history = await VTSAnalyticsActions.execute_query(query)
+            if df_history.empty:
+                 return {"status": True, "message": "No history data found", "data": []}
+
+            # Get vehicle details from alerts table using tl_numbers from history data
+            tl_numbers_list = df_history['tl_number'].tolist()
+            tl_numbers_str = "', '".join(map(str, tl_numbers_list))
+            alerts_query = f"""SELECT DISTINCT  location_name, vehicle_number, transporter_code, zone 
+                              FROM alerts 
+                              WHERE vehicle_number IN ('{tl_numbers_str}') 
+                              AND transporter_code != '' AND location_name != ''"""
+            df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
+
+            # Check if alerts data exists
+            if df_alerts.empty:
+                return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
+            
+            # Merge history with alerts data
+            merged_df = df_history.merge(df_alerts, left_on="tl_number", right_on="vehicle_number", how="left")
+
+            # Get transporter names
+            email_query = """SELECT transporter_code, transporter_name FROM email_master"""
+            df_email = await VTSAnalyticsActions.execute_query(email_query)
+            
+            # Final merge with email master
+            final_df = merged_df.merge(df_email, on="transporter_code", how="left")
+            final_df.drop(columns=["transporter_code"], inplace=True)
+            final_df.dropna(inplace=True)
+
+            return {"status": True, "message": "success", "data": final_df.to_dict(orient="records")}
+         
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
@@ -473,6 +583,8 @@ class VTSAnalyticsActions:
             print("Exception in violation_trends_over_time:", str(e))
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+        
+
 
     @staticmethod
     async def violation_details(filters, cross_filters, drill_state, payload):
@@ -652,6 +764,8 @@ class VTSAnalyticsActions:
 
         except Exception as e:
             return {"status": False, "message": str(e), "data": {}}
+    
+    
 
     @staticmethod
     async def tibco_connection():
