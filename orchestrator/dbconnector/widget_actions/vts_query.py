@@ -230,18 +230,17 @@ vts_query = {
                 )
           """,
 
-          "vts_history_query" : """   
-             SELECT DISTINCT invoice_number, 
-                             tl_number, 
-                             route_deviation_count, 
-                             stoppage_violations_count, 
-                             device_tamper_count, 
-                             main_supply_removal_count, 
-                             night_driving_count, 
-                             speed_violation_count, 
-                             continuous_driving_count 
-             FROM vts_alert_history
-
+        "vts_history_query" : """   
+                    SELECT DISTINCT invoice_number, 
+                                    tl_number, 
+                                    route_deviation_count, 
+                                    stoppage_violations_count, 
+                                    device_tamper_count, 
+                                    main_supply_removal_count, 
+                                    night_driving_count, 
+                                    speed_violation_count, 
+                                    continuous_driving_count 
+                    FROM vts_alert_history
            """,
         
         "violation_trend_alerts" : """
@@ -344,6 +343,7 @@ vts_query = {
                 WHERE transporter_code != '' and location_name != '' and alert_section = 'VTS'
                 GROUP BY sap_id, location_name, vehicle_number, transporter_code,zone
                   """,
+
     "vts_insite_violation_type" : """
                                      SELECT 
                                         sap_id,
@@ -360,7 +360,42 @@ vts_query = {
                                     HAVING {having_clause}
                                   """,
     
-    "all_violations" : [    "route_deviation_count",
+    "vts_insite_history": """
+                            SELECT
+                                tl_number,
+                                COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END) AS stoppage_violations_count,
+                                COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END) AS route_deviation_count,
+                                COUNT(DISTINCT CASE WHEN device_tamper_count != 0 THEN invoice_number END) AS device_tamper_count,
+                                COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END) AS main_supply_removal_count,
+                                COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END) AS night_driving_count,
+                                COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END) AS speed_violation_count,
+                                COUNT(DISTINCT CASE WHEN continuous_driving_count != 0 THEN invoice_number END) AS continuous_driving_count
+                            FROM (
+                                SELECT DISTINCT tl_number, invoice_number, 
+                                    stoppage_violations_count, route_deviation_count, device_tamper_count,
+                                    main_supply_removal_count, night_driving_count, speed_violation_count, continuous_driving_count
+                                FROM vts_alert_history
+                                WHERE invoice_number IS NOT NULL
+                            ) AS history_data
+                            GROUP BY tl_number
+                          """,
+    "vts_insite_history_type": """
+                               SELECT 
+                                tl_number,
+                                {select_clause}
+                            FROM (
+                                SELECT DISTINCT tl_number, invoice_number,
+                                       stoppage_violations_count, route_deviation_count, device_tamper_count,
+                                       main_supply_removal_count, night_driving_count, speed_violation_count, continuous_driving_count
+                                FROM vts_alert_history
+                                WHERE invoice_number IS NOT NULL
+                            ) AS history_data
+                            GROUP BY tl_number
+                            HAVING {having_clause}
+                               """,
+    
+    "all_violations" : [   
+                            "route_deviation_count",
                             "stoppage_violations_count",
                             "device_tamper_count",
                             "main_supply_removal_count",
