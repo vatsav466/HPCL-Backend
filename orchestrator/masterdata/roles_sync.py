@@ -636,20 +636,20 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS Home"
-                    }
-                ]
-            },
-            {
-                "menu_name": "Governance",
-                "allowed_sub_menus": [
-                    {
-                        "title": "VTS Dashboard"
                     },
                     {
-                        "title": "VTS Analytics"
-                    },
-                    {
-                        "title": "VTS Insights"
+                        "title": "Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Analytics"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1180,16 +1180,24 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Governance",
+                "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Dashboard"
+                        "title": "VTS Home"
                     },
                     {
-                        "title": "VTS Analytics"
-                    },
-                    {
-                        "title": "VTS Insights"
+                        "title": "Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Analytics"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            }
+                        ]
                     }
                 ]
             }
