@@ -1,5 +1,6 @@
 import urdhva_base
 import sys
+import time
 import asyncio
 import traceback
 import numpy as np
@@ -302,7 +303,7 @@ async def main_concurrent():
     
     # Create semaphore to limit concurrent operations (adjust based on your system capacity)
     # Start with 10-15 concurrent operations, adjust based on database/API limits
-    semaphore = asyncio.Semaphore(10)  
+    semaphore = asyncio.Semaphore(15)
     
     # Create tasks for all plants
     tasks = [process_plant_concurrent(plant, semaphore) for plant in plants.to_dict(orient="records")]
@@ -311,5 +312,10 @@ async def main_concurrent():
     await asyncio.gather(*tasks, return_exceptions=True)
     print("All plants processed!")
 
-if __name__ == "__main__":   
+if __name__ == "__main__":
+    start_time = time.time()
     asyncio.run(main_concurrent())
+    
+    end_time = time.time()
+    total_time = end_time - start_time    
+    print(f"Total time taken: {total_time/60:.2f} minutes")
