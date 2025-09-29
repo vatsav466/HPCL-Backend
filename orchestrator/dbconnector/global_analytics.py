@@ -1,6 +1,5 @@
 import urdhva_base
-import csv
-import json
+import asyncio
 import calendar
 import psycopg2
 import traceback
@@ -52,6 +51,47 @@ async def filter_data(df, _filters):
         print("Exception in filtering data :", str(e))
     return df
 
+async def generate_cross_filter(cross_filters):
+    _filters, daterange = [], None
+    try:
+        if cross_filters:
+            for f in cross_filters:
+                if "DATE" in f.key:
+                    start = f.value.split(",")[0]
+                    end = (datetime.strptime(f.value.split(",")[-1], "%Y-%m-%d")
+                        + relativedelta(days=1)).strftime("%Y-%m-%d")
+                    daterange = f"'{start}' AND '{end}'"
+                else:
+                    _filters.append({f.key: f.value})
+        return _filters, daterange
+    except Exception as e:
+        print("--- Exception in cross filters ---")
+        print("Exception :", str(e))
+        return _filters, daterange
+
+async def get_drill_down_filter(filters, query):
+    try:
+        conditions = []
+        _key = None
+        if filters:
+            for rec in filters:
+                if (rec.key).lower().replace('"', '') in ["rejection_type"]:
+                    _key = (rec.value).lower().replace('"', '')
+                    continue
+                values = rec.value.split(",")
+                if len(values) == 1:
+                    conditions.append(f'{rec.key} = \'{values[0]}\'')
+                else:
+                    conditions.append(f"{rec.key} IN {tuple(values)}")
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        if _key:
+            return query, _key
+        return query
+    except Exception as e:
+        print("--- Exception in drill down filters ---")
+        print("Exception :", str(e))
+        return query
 
 async def addFilterValue(rec):
     if ',' in rec.value:
@@ -3727,227 +3767,134 @@ class GlobalAnalytics:
         resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cp_query, limit=0)
         resp = resp.get("data", [])
         return {"status": True, "message": "success", "data": resp}
-    
-    
+
     @staticmethod
     async def lpg_operations_productivity_zone(filters, cross_filters, drill_state):
-        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        productivity_zone_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_productivity_zone")
-        _filters = []
-        daterange = None
-        if cross_filters:
-            for filter in cross_filters:
-                if "DATE" in filter.key:
-                    start = filter.value.split(",")[0]
-                    end = (datetime.strptime(filter.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-                    daterange = f" '{start}' AND '{end}' "
-                    continue
-                _filters.append({f"{filter.key}": f"{filter.value}"})
-        if filters:
-            conditions = []
-            for rec in filters:
-                rec.value = rec.value.split(",")
-                # Now handle other cases
-                if isinstance(rec.value, str):
-                    condition = f"{rec.key} = '{rec.value}'"
-                else:
-                    if len(rec.value) == 1:
-                        condition = f"{rec.key} = '{rec.value[0]}'"
-                    else:
-                        condition = f"{rec.key} in {tuple(rec.value)}"
-                conditions.append(condition)
-            if conditions:
-                productivity_zone_query_  += ' WHERE '
-                productivity_zone_query_  += ' AND '.join(conditions)
+        try:
+            # Cross filters
+            _filters, daterange = await generate_cross_filter(cross_filters)
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            query = lpg_plant_queries.lpg_plant_query.get("lpg_operations_productivity_zone")
+            # Drill Down filters
+            query = await get_drill_down_filter(filters, query)
+
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
-            productivity_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(productivity_zone_query_, access_filters, drill_state)
-            if not daterange:
-                productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            elif daterange:
-                productivity_zone_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "process_date", "filling_heads", "short_name" '
-        else:
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
-            productivity_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(productivity_zone_query_, access_filters, drill_state)
-            if not "where" in productivity_zone_query_.lower() and not daterange:
-                productivity_zone_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            elif not "where" in productivity_zone_query_.lower() and daterange:
-                productivity_zone_query_ += f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            elif not daterange:
-                productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            elif daterange:
-                productivity_zone_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "process_date", "filling_heads", "short_name" '
+                            for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, access_filters, drill_state)
             
-            print("productivity_zone_query_ :", productivity_zone_query_)
-            # resp = await function(query=productivity_zone_query_)
-            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
-            resp = resp.get("data", [])
-            resp = pd.DataFrame(resp)
+            clause = "WHERE" if "where" not in query.lower() else "AND"
+            if daterange:
+                query += f" {clause} process_date BETWEEN {daterange} AND zone IS NOT NULL"
+            else:
+                query += f" {clause} CAST(process_date AS DATE) = '{current_date}' AND zone IS NOT NULL"
+
+            query += ' GROUP BY "zone", "process_date", "filling_head", "location_name"'
+
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+            df = pd.DataFrame(resp.get("data", []))
+
+            df = await filter_data(df, _filters)
+            if df.empty:
+                return {"status": True, "message": "success", "data": []}
+
+            def process_productivity(df, group_cols):
+                df = df.groupby(group_cols, as_index=False).agg({
+                    "total_production": "sum",
+                    "total_net_hours": "sum"
+                })
+                for col in ["total_production", "total_net_hours"]:
+                    df[col] = df[col].fillna(0).astype(np.float64)
+                df["productivity"] = (df["total_production"] / df["total_net_hours"]).fillna(0).round(2)
+                return df
+
+            if filters:
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "zone" in filter_keys and "plant" not in filter_keys:
+                    df = process_productivity(df, ["zone", "plant", "carousel_type"]).rename(columns={"plant": "name"})
+                else:
+                    if "productivity" in df.columns:
+                        df["productivity"] = df["productivity"].fillna(0).round(2)
+            else:
+                df = process_productivity(df, ["zone", "carousel_type"])
+
+            for col in ["zone", "plant", "carousel_type"]:
+                if col in df.columns:
+                    df[col] = df[col].fillna("").astype(str)
+
+            return {"status": True, "message": "success", "data": df}
+        except Exception as e:
+            print("-- Exception in zone wise productivity widget --")
+            print("traceback :", traceback.format_exc())            
+            
+    
+    @staticmethod
+    async def lpg_operations_production_zone(filters, cross_filters, drill_state):        
+        try:
+            _filters, daterange = await generate_cross_filter(cross_filters)
+
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            query = lpg_plant_queries.lpg_plant_query.get("lpg_operations_production_zone")
+
+            # Apply drill down filter
+            query = await get_drill_down_filter(filters, query)
+
+            # Apply access filters + drilldown
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                            for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, access_filters, drill_state)
+            
+            clause = "WHERE" if "where" not in query.lower() else "AND"
+
+            if daterange:
+                query += f" {clause} process_date BETWEEN {daterange} AND zone IS NOT NULL"
+            else:
+                query += f" {clause} DATE(process_date) = '{current_date}' AND zone IS NOT NULL"
+
+            query += ' GROUP BY "zone", "location_name", "filling_head"'
+
+            # Execute query
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+            resp = pd.DataFrame(resp.get("data", []))
+
             resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["zone", "carousel_type"], as_index=False).agg({
-                        "productivity": "mean"
-                    })
-            for each_float_col in ["productivity"]:
-                if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0).round()
-            # Fill missing values for string columns
-            for each_str_col in ["zone", "plant", "carousel_type"]:
-                if each_str_col in resp.columns:
-                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-            return {"status": True, "message": "success", "data": resp}
-        # resp = await function(query=productivity_zone_query_)
-        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_zone_query_, limit=0)
-        resp = resp.get("data", [])
-        if resp:
-            resp = pd.DataFrame(resp)
-            resp = await filter_data(resp, _filters)
-            for each_float_col in ["productivity"]:
-                if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0).round()
-            for each_str_col in ["zone","plant","carousel_type"]:
-                if each_str_col in resp.columns:
-                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            def process_production(df, group_cols):
+                df = df.groupby(group_cols, as_index=False).agg({
+                    "14_kg": "sum",
+                    "19_kg": "sum"
+                })
+                df["14_kg"] = df["14_kg"].fillna(0).astype(np.float64) * 14.2
+                df["19_kg"] = df["19_kg"].fillna(0).astype(np.float64) * 19
+                df["Productions"] = ((df["14_kg"].fillna(0) + df["19_kg"].fillna(0)) / 1000).round(2)
+                return df
+
             if filters:
-                grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "plant" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","plant","carousel_type"], as_index=False).agg({
-                        "productivity": "mean"
-                    }).rename(columns={"plant": "name"})
-                if grouped_resp is not None:
-                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-        else:
-            return {"status": True, "message":"success", "data":[]}
-        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
-    
-    
-    @staticmethod
-    async def lpg_operations_production_zone(filters, cross_filters, drill_state):
-        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        _filters = []
-        daterange = None
-        if cross_filters:
-            for filter in cross_filters:
-                if "DATE" in filter.key:
-                    start = filter.value.split(",")[0]
-                    end = (datetime.strptime(filter.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-                    daterange = f" '{start}' AND '{end}' "
-                    continue
-                _filters.append({f"{filter.key}": f"{filter.value}"})
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        production_zone_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_production_zone")
-        if filters:
-            conditions = []
-            for rec in filters:
-                rec.value = rec.value.split(",")
-                if isinstance(rec.value, str):
-                    condition = f"{rec.key} = '{rec.value}'"
+                    resp = process_production(resp, ["zone", "plant"]).rename(columns={"plant": "name"})
                 else:
-                    if len(rec.value) == 1:
-                        condition = f"{rec.key} = '{rec.value[0]}'"
-                    else:
-                        condition = f"{rec.key} in {tuple(rec.value)}"
-                conditions.append(condition)
-            if conditions:
-                production_zone_query_  += ' WHERE '
-                production_zone_query_  += ' AND '.join(conditions)
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
-            production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
-            if not daterange:
-                production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
-            elif daterange:
-                production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '
-            production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
-        else:
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
-            production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
-            if not "where" in production_zone_query_.lower() and not daterange:
-                production_zone_query_ +=  f' WHERE DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL' 
-            elif not "where" in production_zone_query_.lower() and daterange:
-                production_zone_query_ +=  f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            elif not daterange:
-                production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
-            elif daterange:
-                production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
-                        
-            # resp = await function(query=production_zone_query_)
-            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=production_zone_query_, limit=0)
-            resp = resp.get("data", [])
-            resp = pd.DataFrame(resp)
-            resp = await filter_data(resp, _filters)
-            if resp.empty:
-                return {"status": True, "message": "success", "data": []}            
-            resp = resp.groupby(["zone"], as_index=False).agg({
-                        "14_kg": "sum",
-                        "19_kg": "sum"
-                    })
-            resp["14_kg"] = resp["14_kg"] * 14.2
-            resp["19_kg"] = resp["19_kg"] * 19
-            resp["Productions"] = (resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64)) / 1000
-            
-            for each_float_col in ["Productions"]:
-                if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
-            for each_str_col in ["zone", "plant"]:
-                if each_str_col in resp.columns:
-                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-            return {"status": True, "message": "success", "data": resp}
-        # resp = await function(query=production_zone_query_)
-        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=production_zone_query_, limit=0)
-        resp = resp.get("data", [])
-        if resp:
-            # Convert the response to a DataFrame for further processing
-            resp = pd.DataFrame(resp)
-            resp = await filter_data(resp, _filters)
-            for each_float_col in ["Productions"]:
-                if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
-            # Fill missing values for string columns
-            for each_str_col in ["zone", "plant"]:
-                if each_str_col in resp.columns:
-                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-            if filters:
-                grouped_resp = None
-                filter_keys = [rec.key.strip('"') for rec in filters]
-                if "zone" in filter_keys and "plant" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","plant"], as_index=False).agg({
-                        "14_kg": "sum",
-                        "19_kg": "sum"
-                    }).rename(columns={"plant": "name"})
-                    grouped_resp["14_kg"] = grouped_resp["14_kg"] * 14.2
-                    grouped_resp["19_kg"] = grouped_resp["19_kg"] * 19
-                    grouped_resp["Productions"] = (grouped_resp["14_kg"].fillna(0).astype(np.float64) + grouped_resp["19_kg"].fillna(0).astype(np.float64)) / 1000
-                    grouped_resp["Productions"] = grouped_resp["Productions"].fillna(0.0).round(2)
-                if grouped_resp is not None:
-                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-        else:
-            return {"status": True, "message":"success", "data":[]}
-        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
-    
+                    for col in ["Productions"]:
+                        if col in resp.columns:
+                            resp[col] = resp[col].fillna(0.0).round(2)
+            else:
+                resp = process_production(resp, ["zone"])
+
+            for col in ["zone", "plant"]:
+                if col in resp.columns:
+                    resp[col] = resp[col].fillna("").astype(str)
+            return {"status": True, "message": "success", "data": resp.to_dict(orient="records")}
+        except Exception as e:
+            print("-- Exception in zone wise production widget --")
+            print("traceback :", traceback.format_exc())            
+
     
     @staticmethod
     async def plants_connected(filters, cross_filters, drill_state):
-        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         try:            
             lpg_query = f"SELECT DISTINCT(short_name) as plant_name FROM lpg_operations_summary where DATE(process_date)='{datetime.now().strftime('%Y-%m-%d')}'"
             master_query = "SELECT DISTINCT(plant) as plant_name FROM lpg_plant_operations_masters"
-            # df = await function(query=lpg_query)
-            # master_df = await function(query=master_query)
             df = await urdhva_base.BasePostgresModel.get_aggr_data(query=lpg_query, limit=0)
             master_df = await urdhva_base.BasePostgresModel.get_aggr_data(query=master_query, limit=0)
             df = df.get("data", [])
@@ -3966,306 +3913,120 @@ class GlobalAnalytics:
     
     @staticmethod
     async def lpg_operations_filled_cylinder(filters, cross_filters, drill_state):
-        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        _filters = []
-        daterange = None
-        if cross_filters:
-            for filter in cross_filters:
-                if "DATE" in filter.key:
-                    start = filter.value.split(",")[0]
-                    end = (datetime.strptime(filter.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-                    daterange = f" '{start}' AND '{end}' "
-                    continue
-                _filters.append({f"{filter.key}": f"{filter.value}"})
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        production_zone_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_production_zone")
-        if filters:
-            conditions = []
-            for rec in filters:
-                rec.value = rec.value.split(",")
-                if isinstance(rec.value, str):
-                    condition = f"{rec.key} = '{rec.value}'"
-                else:
-                    if len(rec.value) == 1:
-                        condition = f"{rec.key} = '{rec.value[0]}'"
-                    else:
-                        condition = f"{rec.key} in {tuple(rec.value)}"
-                conditions.append(condition)
-            if conditions:
-                production_zone_query_  += ' WHERE '
-                production_zone_query_  += ' AND '.join(conditions)
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
-            production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
-            if not daterange:
-                production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
-            elif daterange:
-                production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '
-            production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
-        else:
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
-            production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
-            if not "where" in production_zone_query_.lower() and not daterange:
-                production_zone_query_ +=  f' WHERE DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL' 
-            elif not "where" in production_zone_query_.lower() and daterange:
-                production_zone_query_ +=  f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            elif not daterange:
-                production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
-            elif daterange:
-                production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
+        try:
+            _filters, daterange = await generate_cross_filter(cross_filters)
+
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            query = lpg_plant_queries.lpg_plant_query.get("lpg_operations_production_zone")
+
+            # Apply drill down filter
+            query = await get_drill_down_filter(filters, query)    
             
-            # resp = await function(query=production_zone_query_)
-            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=production_zone_query_, limit=0)
-            resp = resp.get("data", [])
-            resp = pd.DataFrame(resp)
-            resp = await filter_data(resp, _filters)
-            if resp.empty:
-                return {"status": True, "message": "success", "data": []}            
-            resp = resp.groupby(["zone"], as_index=False).agg({
-                        "14_kg": "sum",
-                        "19_kg": "sum"
-                    })
-            resp["Cylinder_Filled"] = (resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64)) / 100000
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                            for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, access_filters, drill_state)
             
-            for each_float_col in ["Cylinder_Filled"]:
-                if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
-            for each_str_col in ["zone", "plant"]:
-                if each_str_col in resp.columns:
-                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-            return {"status": True, "message": "success", "data": resp}
-        # resp = await function(query=production_zone_query_)
-        resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=production_zone_query_, limit=0)
-        resp = resp.get("data", [])
-        if resp:
-            # Convert the response to a DataFrame for further processing
-            resp = pd.DataFrame(resp)
-            resp = await filter_data(resp, _filters)
-            for each_float_col in ["Cylinder_Filled"]:
-                if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
-            # Fill missing values for string columns
-            for each_str_col in ["zone", "plant"]:
-                if each_str_col in resp.columns:
-                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            clause = "WHERE" if "where" not in query.lower() else "AND"
+            if daterange:
+                query += f" {clause} process_date BETWEEN {daterange} AND zone IS NOT NULL"
+            else:
+                query += f" {clause} DATE(process_date) = '{current_date}' AND zone IS NOT NULL"
+
+            query += ' GROUP BY "zone", "location_name", "filling_head"'
+
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+            df = pd.DataFrame(resp.get("data", []))
+
+            df = await filter_data(df, _filters)
+            if df.empty:
+                return {"status": True, "message": "success", "data": []}
+
+            def process_cylinders(df, group_cols):
+                df = df.groupby(group_cols, as_index=False).agg({
+                    "14_kg": "sum",
+                    "19_kg": "sum"
+                })
+                df["Cylinder_Filled"] = (
+                    df["14_kg"].fillna(0).astype(np.float64) +
+                    df["19_kg"].fillna(0).astype(np.float64)
+                ) / 100000
+                df["Cylinder_Filled"] = df["Cylinder_Filled"].fillna(0.0).round(2)
+                return df
+
             if filters:
-                grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "plant" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","plant"], as_index=False).agg({
-                        "14_kg": "sum",
-                        "19_kg": "sum"
-                    })
-                    grouped_resp["Cylinder_Filled"] = (grouped_resp["14_kg"].fillna(0).astype(np.float64) + grouped_resp["19_kg"].fillna(0).astype(np.float64)) / 100000
-                    grouped_resp["Cylinder_Filled"] = grouped_resp["Cylinder_Filled"].fillna(0.0).round(2)
-                if grouped_resp is not None:
-                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-        else:
-            return {"status": True, "message":"success", "data":[]}
-        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+                    df = process_cylinders(df, ["zone", "plant"])
+            else:
+                df = process_cylinders(df, ["zone"])
+
+            for col in ["zone", "plant"]:
+                if col in df.columns:
+                    df[col] = df[col].fillna("").astype(str)
+
+            return {"status": True, "message": "success", "data": df.to_dict(orient="records")}
+        except Exception as e:
+            print("-- Exception in zone wise filled cylinder --")
+            print("traceback :", traceback.format_exc())
     
-    
-    # @staticmethod
-    # async def lpg_operations_filled_cylinder(filters, cross_filters, drill_state):
-    #     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    #     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    #     current_date = datetime.now().strftime("%Y-%m-%d")
-    #     handled_cylinder_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_filled_cylinder")
-    #     _filters = []
-    #     daterange = None
-    #     if cross_filters:
-    #         for filter in cross_filters:
-    #             if "DATE" in filter.key:
-    #                 daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
-    #                 continue
-    #             _filters.append({f"{filter.key}": f"{filter.value}"})
-    #     if filters:
-    #         conditions = []
-    #         for rec in filters:
-    #             rec.value = rec.value.split(",")
-    #             if isinstance(rec.value, str):
-    #                 condition = f"{rec.key} = '{rec.value}'"
-    #             else:
-    #                 if len(rec.value) == 1:
-    #                     condition = f"{rec.key} = '{rec.value[0]}'"
-    #                 else:
-    #                     condition = f"{rec.key} in {tuple(rec.value)}"
-    #             conditions.append(condition)
-    #         if conditions:
-    #             handled_cylinder_query_ += ' WHERE '
-    #             handled_cylinder_query_ += ' AND '.join(conditions)
-    #         if not daterange:
-    #             handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\') '
-    #         elif daterange:
-    #             handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
-    #         handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant" '
-    #         access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-    #                                   for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
-    #         handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
-    #     else:
-    #         access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-    #                                   for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
-    #         handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
-    #         if not "where" in handled_cylinder_query_.lower() and not daterange:
-    #             handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
-    #         elif not "where" in handled_cylinder_query_.lower() and daterange:
-    #             handled_cylinder_query_ += f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
-    #         elif not daterange:
-    #             handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
-    #         elif daterange:
-    #             handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
-    #         handled_cylinder_query_ += ' GROUP BY "zone", "plant" '
-    #         print("handled_cylinder_query_ :", handled_cylinder_query_)
-    #         resp = await function(query=handled_cylinder_query_)
-    #         resp = pd.DataFrame(resp)
-    #         resp = await filter_data(resp, _filters)
-    #         if resp.empty:
-    #             return {"status": True, "message": "success", "data": []}
-    #         resp = resp.groupby(["zone"], as_index=False).agg({
-    #                 "Cylinder_Filled": "sum"
-    #             })
-    #         if resp.empty:
-    #             return {"status": True, "message": "success", "data": []}
-    #         for each_float_col in ["Cylinder_Filled"]:
-    #             if each_float_col in resp.columns:
-    #                 resp[each_float_col] = resp[each_float_col].fillna(0.0)            
-    #         for each_str_col in ["zone", "plant"]:
-    #             if each_str_col in resp.columns:
-    #                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-    #         return {"status": True, "message": "success", "data": resp}
-    #     # Execute the query
-    #     resp = await function(query=handled_cylinder_query_)
-    #     resp = pd.DataFrame(resp)
-    #     resp = await filter_data(resp, _filters)
-    #     if resp.empty:
-    #         return {"status": True, "message": "success", "data": []}
-    #     for each_float_col in ["Cylinder_Filled"]:
-    #         if each_float_col in resp.columns:
-    #             resp[each_float_col] = resp[each_float_col].fillna(0.0)
-    #     # Fill missing values for string columns
-    #     for each_str_col in ["zone", "plant"]:
-    #         if each_str_col in resp.columns:
-    #             resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-    #     if filters:
-    #         grouped_resp = None
-    #         filter_keys = [rec.key.strip('"') for rec in filters]
-    #         if "zone" in filter_keys and "plant" not in filter_keys:
-    #             grouped_resp = resp.groupby(["zone", "plant"], as_index=False).agg({
-    #                 "Cylinder_Filled": "sum"
-    #             })
-    #         if grouped_resp is not None:
-    #             return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-    #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
-    
-    
+
     @staticmethod
     async def productivity_overtime_vs_break_production(filters, cross_filters, drill_state):
-        productivity_overtime_query_ = lpg_plant_queries.lpg_plant_query.get("productivity_overtime_vs_break_production")        
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        _filters = []
-        daterange = None
-        if cross_filters:
-            for filter in cross_filters:
-                if "DATE" in filter.key:
-                    start = filter.value.split(",")[0]
-                    end = (datetime.strptime(filter.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-                    daterange = f" '{start}' AND '{end}' "
-                    continue
-                _filters.append({f"{filter.key}": f"{filter.value}"})
-        if filters:
-            conditions = []
-            for rec in filters:
-                rec.value = rec.value.split(",")
-                if rec.value:
-                    if len(rec.value) == 1:
-                        condition = f"{rec.key} = '{rec.value[0]}'"
-                    else:
-                        condition = f"{rec.key} IN {tuple(rec.value)}"
-                    conditions.append(condition)
-            if conditions:
-                productivity_overtime_query_ += ' WHERE ' + ' AND '.join(conditions)
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
-            productivity_overtime_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(productivity_overtime_query_, access_filters, drill_state)
-            if not daterange:
-                productivity_overtime_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' '
-            elif daterange:
-                productivity_overtime_query_ += f' AND "process_date" BETWEEN {daterange} '
-            productivity_overtime_query_ += ' GROUP BY "zone", "plant"'
-        else:
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
-            productivity_overtime_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(productivity_overtime_query_, access_filters, drill_state)
-            if not "where" in productivity_overtime_query_.lower() and not daterange:
-                productivity_overtime_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' '
-            elif not "where" in productivity_overtime_query_.lower() and daterange:
-                productivity_overtime_query_ += f' WHERE "process_date" BETWEEN {daterange} '
-            elif not daterange:
-                productivity_overtime_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' '
-            elif daterange:
-                productivity_overtime_query_ += f' AND "process_date" BETWEEN {daterange} '
-            productivity_overtime_query_ += ' GROUP BY "zone", "plant"'
-            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_overtime_query_, limit=0)
-            resp = resp.get("data", [])
-            resp = pl.DataFrame(resp)
-            resp = await filter_data(resp.to_pandas(), _filters)
-            resp = pl.from_pandas(resp)
-            resp = resp.group_by(["zone"]).agg([
-                        pl.sum("break_production").round(2).alias("break_production"),
-                        pl.sum("overtime_production").round(2).alias("overtime_prouction"),
-                    ])
-            resp = resp.with_columns((pl.col("break_production") / 60).alias("break_production"))
-            resp = resp.with_columns((pl.col("overtime_prouction") / 60).alias("overtime_prouction"))
+        try:    
+            _filters, daterange = await generate_cross_filter(cross_filters)
+            query = lpg_plant_queries.lpg_plant_query.get("productivity_overtime_vs_break_production")
+            current_date = datetime.now().strftime("%Y-%m-%d")        
 
-            return {"status": True, "message": "success", "data": resp.to_dicts()}
-        try:
-            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=productivity_overtime_query_, limit=0)
-            resp = resp.get("data", [])
-            resp = pl.DataFrame(resp)
-            resp = await filter_data(resp.to_pandas(), _filters)
-            resp = pl.from_pandas(resp)
-            # Fill missing values
-            numerical_columns = ["break_production", "overtime_prouction"]
-            string_columns = ["process_date", "zone", "plant"]
+            # Apply drill down filter
+            query = await get_drill_down_filter(filters, query)
+            
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                            for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, access_filters, drill_state)
+            
+            clause = "WHERE" if "where" not in query.lower() else "AND"
+            if daterange:
+                query += f" {clause} process_date BETWEEN {daterange} AND zone IS NOT NULL"
+            else:
+                query += f" {clause} DATE(process_date) = '{current_date}' AND zone IS NOT NULL"
 
-            for col in numerical_columns:
-                if col in resp.columns:
-                    resp = resp.with_columns(pl.col(col).fill_null(0.0))
-            for col in string_columns:
-                if col in resp.columns:
-                    resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
-            # Grouping and filtering based on provided filters
+            query += ' GROUP BY "zone", "location_name", "filling_head"'
+
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+            df = pd.DataFrame(resp.get("data", []))
+
+            df = await filter_data(df, _filters)
+            if df.empty:
+                return {"status": True, "message": "success", "data": []}
+
+            def process_production_hours(df, group_cols):
+                df = df.groupby(group_cols, as_index=False).agg({
+                    "break_production": "sum",
+                    "overtime_production": "sum"
+                })
+                df["break_production"] = df["break_production"].fillna(0).round(2)
+                df["overtime_production"] = df["overtime_production"].fillna(0).round(2)
+                return df
+
             if filters:
-                grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
-
                 if "zone" in filter_keys and "plant" not in filter_keys:
-                    grouped_resp = resp.group_by(["zone", "plant"]).agg([
-                        pl.sum("break_production").round(1).alias("break_production"),
-                        pl.sum("overtime_production").round(1).alias("overtime_prouction"),
-                    ])                
-                if grouped_resp is not None:
-                    grouped_resp = grouped_resp.with_columns((pl.col("break_production") / 60).alias("break_production"))
-                    grouped_resp = grouped_resp.with_columns((pl.col("overtime_prouction") / 60).alias("overtime_prouction"))
-                    return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
+                    df = process_production_hours(df, ["zone", "plant"])
+            else:
+                df = process_production_hours(df, ["zone"])
 
-            return {"status": True, "message": "success", "data": resp.to_dicts()}
+            for col in ["zone", "plant"]:
+                if col in df.columns:
+                    df[col] = df[col].fillna("").astype(str)
+
+            return {"status": True, "message": "success", "data": df.to_dict(orient="records")}
         except Exception as e:
-            print(traceback.format_exc())
-            print(f"Error executing query: {e}")
-            return {"status": False, "message": f"Error: {e}"}
+            print("-- Exception in zone wise filled cylinder --")
+            print("traceback :", traceback.format_exc())
     
     
     @staticmethod
     async def lpg_operations_daywise_productivity(filters, cross_filters, drill_state):
-        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         daywise_productivity_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_productivity")
         current_date = datetime.now().strftime("%Y-%m-%d")
         _filters = []
@@ -4340,9 +4101,6 @@ class GlobalAnalytics:
     
     @staticmethod
     async def lpg_operations_daywise_production(filters ,cross_filters, drill_state):
-        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         daywise_production_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_production")        
         current_date = datetime.now().strftime("%Y-%m-%d")
         _filters = []
@@ -4623,191 +4381,68 @@ class GlobalAnalytics:
     
     @staticmethod
     async def lpg_operations_rejections(filters, cross_filters, drill_state):
-        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        current_date = datetime.now().strftime("%Y-%m-%d")
+        try:
+            _filters, daterange = await generate_cross_filter(cross_filters)
+            query = lpg_plant_queries.lpg_plant_query.get("pq_rejection")
+            current_date = datetime.now().strftime("%Y-%m-%d")        
 
-        cs_resp_ = lpg_plant_queries.lpg_plant_query.get("cs_query")
-        pt_resp_ = lpg_plant_queries.lpg_plant_query.get("pt_query")
-        gd_resp_ = lpg_plant_queries.lpg_plant_query.get("gd_query")
-        
-        daterange = None
-        _filters = []
-        if cross_filters:
-            for filter in cross_filters:
-                if "DATE" in filter.key:
-                    start = filter.value.split(",")[0]
-                    end = (datetime.strptime(filter.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-                    daterange = f" '{start}' AND '{end}' "
-                    continue
-                _filters.append({f"{filter.key}": f"{filter.value}"})
-        if filters:
-            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsRejections.get_clause_conditions(formated=True)]
-            conditions = []
-            for rec in filters:
-                rec.value = rec.value.split(",")
-                if rec.key == '"rejection_type"':
-                    rejection_filter = rec
-                    continue
-                if len(rec.value) == 1:
-                    condition = f"{rec.key} = '{rec.value[0]}'"
-                else:
-                    condition = f"{rec.key} in {tuple(rec.value)}"
-                conditions.append(condition)
-
-            if conditions:
-                cs_resp_ += ' WHERE ' + ' AND '.join(conditions)
-                pt_resp_ += ' WHERE ' + ' AND '.join(conditions)
-                gd_resp_ += ' WHERE ' + ' AND '.join(conditions)
-                if "process_date" in conditions:
-                    common_filter = f''' AND "zone" IS NOT NULL '''                    
-                else:
-                    if daterange:
-                        common_filter = f''' "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '''
-                    else:
-                        common_filter = f''' AND DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
-            else:
-                cs_resp_ += 'WHERE '
-                pt_resp_ += ' WHERE '
-                gd_resp_ += ' WHERE '
-                if daterange:
-                    common_filter = f''' "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '''
-                else:
-                    common_filter = f''' DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
+            # Apply drill down filter
+            query, _key = await get_drill_down_filter(filters, query)
             
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
-            cs_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cs_resp_, access_filters, drill_state)
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgPtRejections.get_clause_conditions(formated=True)]
-            pt_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(pt_resp_, access_filters, drill_state)
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgGdRejections.get_clause_conditions(formated=True)]
-            gd_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(gd_resp_, access_filters, drill_state)            
-
-            cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
-            pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
-            gd_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
-        else:            
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
-            cs_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cs_resp_, access_filters, drill_state)
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgPtRejections.get_clause_conditions(formated=True)]
-            pt_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(pt_resp_, access_filters, drill_state)
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgGdRejections.get_clause_conditions(formated=True)]
-            gd_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(gd_resp_, access_filters, drill_state)
+                            for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, access_filters, drill_state)
             
-            cs_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cs_resp_, access_filters, drill_state)
-            pt_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(pt_resp_, access_filters, drill_state)
-            gd_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(gd_resp_, access_filters, drill_state)
-            if not "where" in cs_resp_.lower():
-                common_filter = f''' WHERE DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
+            clause = "WHERE" if "where" not in query.lower() else "AND"
+            if daterange:
+                query += f" {clause} process_date BETWEEN {daterange} AND zone IS NOT NULL"
             else:
-                common_filter = f''' AND DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
-            cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
-            pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
-            gd_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
+                query += f" {clause} DATE(process_date) = '{current_date}' AND zone IS NOT NULL"
 
-            # cs_resp = await function(query=cs_resp_)
-            # pt_resp = await function(query=pt_resp_)
-            # gd_resp = await function(query=gd_resp_)
-            cs_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cs_resp_, limit=0)
-            pt_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=pt_resp_, limit=0)
-            gd_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=gd_resp_, limit=0)
+            query += ' GROUP BY "zone", "location_name"'
 
-            cs_resp = cs_resp.get("data", [])
-            pt_resp = pt_resp.get("data", [])
-            gd_resp = gd_resp.get("data", [])
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+            df = pd.DataFrame(resp.get("data", []))
 
-            cs_df = pd.DataFrame(cs_resp)
-            pt_df = pd.DataFrame(pt_resp)
-            gd_df = pd.DataFrame(gd_resp)
-            combined_df = pd.concat([cs_df, pt_df, gd_df], ignore_index=True)
-            combined_df = combined_df.groupby(["rejection_type"], as_index=False).agg({
-                    "total": "sum",
-                    "sortout": "sum",
+            df = await filter_data(df, _filters)
+            if df.empty:
+                return {"status": True, "message": "success", "data": []}
+
+            def process_production_hours(df, group_cols):
+                df = df.groupby(group_cols, as_index=False).agg({
+                    "cs_handled": "sum",
+                    "cs_sortout": "sum",                    
+                    "pt_handled": "sum",
+                    "pt_sortout": "sum",
+                    "gd_handled": "sum",
+                    "gd_sortout": "sum"
                 })
-            combined_df["Rejections"] = combined_df["sortout"] / combined_df["total"]
-            combined_df["Rejections"] = combined_df["Rejections"].round(1)
+                return df
 
-            combined_df["Rejections"] = combined_df["Rejections"].fillna(0.0)
-            for each_str_col in ["zone", "plant", "rejection_type"]:
-                if each_str_col in combined_df.columns:
-                    combined_df[each_str_col] = combined_df[each_str_col].fillna('').astype(str)
+            if filters:                
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "rejection_type" in filter_keys and "zone" not in filter_keys:
+                    df = process_production_hours(df, ["zone"])
+                else:
+                    df = process_production_hours(df, ["zone", "plant"])
+            
+            df["Rejections"] = (df[f"{_key.lower()}_sortout"] / df[f"{_key.lower()}_handled"]) * 100
 
-            return {"status": True, "message": "success", "data": combined_df.to_dict(orient="records")}
+            for col in df.columns:
+                if f"{_key.lower()}_sortout" in df.columns:
+                    del df[f"{_key.lower()}_sortout"]
+                if f"{_key.lower()}_handled" in df.columns:
+                    del df[f"{_key.lower()}_handled"]
+            df["Rejections"] = df["Rejections"].fillna(0).astype(np.float64).round(2)
 
-        # cs_resp = await function(query=cs_resp_)
-        # pt_resp = await function(query=pt_resp_)
-        # gd_resp = await function(query=gd_resp_)
-        cs_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cs_resp_, limit=0)
-        pt_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=pt_resp_, limit=0)
-        gd_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=gd_resp_, limit=0)
-
-        cs_resp = cs_resp.get("data", [])
-        pt_resp = pt_resp.get("data", [])
-        gd_resp = gd_resp.get("data", [])
-
-        # Convert the responses to DataFrames
-        cs_df = pd.DataFrame(cs_resp)
-        pt_df = pd.DataFrame(pt_resp)
-        gd_df = pd.DataFrame(gd_resp)
-        for col in ['plant']:
-            if col in cs_df.columns:
-                cs_df[col] = cs_df[col].str.lower()
-            if col in pt_df.columns:
-                pt_df[col] = pt_df[col].str.lower()
-            if col in gd_df.columns:
-                gd_df[col] = gd_df[col].str.lower()
-        cs_df = await filter_data(cs_df, _filters)
-        pt_df = await filter_data(pt_df, _filters)
-        gd_df = await filter_data(gd_df, _filters)
-
-        # Combine DataFrames
-        combined_df = pd.concat([cs_df, pt_df, gd_df], ignore_index=True)
-        if rejection_filter:
-            combined_df = combined_df[combined_df['rejection_type'] == rejection_filter.value[0]]
-        # Fill missing values
-        for col in ["total", "sortout"]:
-            combined_df[col] = combined_df[col].fillna(0.0)
-        for each_str_col in ["zone", "plant", "rejection_type"]:
-            if each_str_col in combined_df.columns:
-                combined_df[each_str_col] = combined_df[each_str_col].fillna('').astype(str)
-
-        # Group data based on filters if required
-        if filters:
-            filter_keys = [rec.key.strip('"') for rec in filters]
-            if "rejection_type" in filter_keys and "zone" not in filter_keys:
-                grouped_resp = combined_df.groupby(["rejection_type","zone"], as_index=False).agg({
-                    "total": "sum",
-                    "sortout": "sum",
-                })
-                grouped_resp["Rejections"] = grouped_resp["sortout"] / grouped_resp["total"]
-            elif "rejection_type" in filter_keys and "zone"  in filter_keys and "plant" not in filter_keys:
-                grouped_resp = combined_df.groupby(["rejection_type","zone", "plant"], as_index=False).agg({
-                    "total": "sum",
-                    "sortout": "sum",
-                })
-                grouped_resp["Rejections"] = grouped_resp["sortout"] / grouped_resp["total"]
-            if grouped_resp is not None:
-                grouped_resp["Rejections"] = grouped_resp["Rejections"] * 100
-                grouped_resp["Rejections"] = grouped_resp["Rejections"].round(1)
-                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-
-        # Final response
-        return {"status": True, "message": "success", "data": combined_df.to_dict(orient="records")}
+            return {"status": True, "message": "success", "data": df.to_dict(orient="records")}
+        except Exception as e:
+            print("-- Exception in zone wise filled cylinder --")
+            print("traceback :", traceback.format_exc())
 
     @staticmethod
     async def sales_drop_down(filters, cross_filters, drill_state):
-        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         _query = ''' select * from alerts '''
-        # resp = await function(query=_query)
         resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=_query, limit=0)
         resp = resp.get("data", [])
         df = pl.from_pandas(pd.DataFrame(resp))
