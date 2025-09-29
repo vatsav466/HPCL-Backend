@@ -982,6 +982,73 @@ LIMIT 10000;''',
                         FROM
                             "LPG_CONSUMERS_SUMMARY"
                         ''',
+    'lpg_operations_current_month_production': '''
+                                                    SELECT 
+                                                        ROUND(
+                                                            (SUM(production_14_2kg) * 14.2 + SUM(production_19kg) * 19)::NUMERIC / 1000, 
+                                                            0
+                                                        ) AS current_month_production
+                                                    FROM 
+                                                        lpg_plant_operations
+                                                    WHERE 
+                                                        DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE)
+                                                ''',
+                                                
+    'lpg_operations_current_month_productivity': '''
+                                                    SELECT
+                                                        ROUND(SUM(total_production) / SUM(total_net_hours), 0) AS "Total Productivity"
+                                                    FROM
+                                                        "lpg_plant_operations"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE)
+                                                ''',
+
+    'lpg_operations_current_month_cylinder_filled': ''' SELECT
+                                                            ROUND(((SUM(production_14_2kg) + SUM(production_19kg)) / 100000), 2) AS "Cylinders_Filled"
+                                                        FROM
+                                                            "lpg_plant_operations"
+                                                        WHERE
+                                                            DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
+
+    'lpg_operations_current_month_cs_rejection': ''' SELECT
+                                                        ROUND(
+                                                            CASE 
+                                                            WHEN SUM(cs_handled) = 0 THEN 0
+                                                            ELSE ((SUM(cs_sortout)::float / SUM(cs_handled)) * 100)::numeric
+                                                        END, 1) AS cs_rejection
+                                                    FROM
+                                                        "lpg_plant_operations"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
+
+    'lpg_operations_current_month_gd_rejection': ''' SELECT                                                        
+                                                        ROUND(
+                                                            CASE 
+                                                            WHEN SUM(gd_handled) = 0 THEN 0
+                                                            ELSE ((SUM(gd_sortout)::float / SUM(gd_handled)) * 100)::numeric
+                                                        END, 1) AS gd_rejection
+                                                    FROM
+                                                        "lpg_plant_operations"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
+
+    'lpg_operations_current_month_pt_rejection': ''' SELECT
+                                                        ROUND(
+                                                            CASE 
+                                                            WHEN SUM(pt_handled) = 0 THEN 0
+                                                            ELSE ((SUM(pt_sortout)::float / SUM(pt_handled)) * 100)::numeric
+                                                        END, 1) AS pt_rejection
+                                                    FROM
+                                                        "lpg_plant_operations"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
+    
+    'lpg_operations_notconnected_plants': ''' SELECT DISTINCT m."short_name"
+                                            FROM 
+                                                "lpg_operations_masters" m
+                                            LEFT JOIN "lpg_operations_summary" s ON m."short_name" = s."short_name"
+                                            WHERE s."short_name" IS NULL
+                                            ORDER BY m."short_name"; ''',
     
     "lpg_operations_productivity_zone": '''   
                         select
@@ -1024,22 +1091,25 @@ LIMIT 10000;''',
     
     'lpg_operations_daywise_productivity': '''  
                                 SELECT 
-                                "zone",
-                                "short_name" AS "plant",
-                                "filling_heads" as "carousel_type",
-                                AVG("productivity_normal_productivity") AS "avg_productivity", 
-                                DATE("process_date") AS "process_date"
-                                FROM "lpg_operations_summary" ''',
+                                    zone,
+                                    location_name AS plant,
+                                    filling_head as carousel_type,
+                                    ROUND(SUM(total_production), 2) as total_production,
+                                    ROUND(SUM(total_net_hours), 2) as total_net_hours,
+                                    DATE(process_date) AS process_date
+                                FROM 
+                                    lpg_plant_operations ''',
     
     'lpg_operations_daywise_production': '''  
                             SELECT 
-                                "zone",
-                                "short_name" AS "plant",
-                                "filling_heads" as "carousel_type",
-                                SUM(bottling_14_2kg) AS "14_kg",
-                                SUM(bottling_19kg) AS "19_kg",
-                                DATE("process_date") AS "process_date"
-                            FROM "lpg_operations_summary" ''',
+                                zone,
+                                location_name AS plant,
+                                filling_head as carousel_type,
+                                SUM(production_14_2kg) AS "14_kg",
+                                SUM(production_19kg) AS "19_kg",
+                                DATE("process_date") AS process_date
+                            FROM
+                                lpg_plant_operations ''',
     
     'lpg_cdcms_daywise_subsidy_failure_statistics': '''
                                 SELECT
@@ -1096,35 +1166,7 @@ LIMIT 10000;''',
                                     SUM("Refills") as "Refills"
                                 FROM
                                     "lpg_cdcms_subsidy_exception_statistics" ''',
-    
-    'lpg_operations_current_month_production': '''
-                                                    SELECT 
-                                                        ROUND(
-                                                            (SUM(production_14_2kg) * 14.2 + SUM(production_19kg) * 19)::NUMERIC / 1000, 
-                                                            0
-                                                        ) AS current_month_production
-                                                    FROM 
-                                                        lpg_plant_operations
-                                                    WHERE 
-                                                        DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE)
-                                                ''',
-                                                
-    'lpg_operations_current_month_productivity': '''
-                                                    SELECT
-                                                        ROUND(SUM(total_production) / SUM(total_net_hours), 0) AS "Total Productivity"
-                                                    FROM
-                                                        "lpg_plant_operations"
-                                                    WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE)
-                                                ''',
-    
-    'lpg_operations_notconnected_plants': ''' SELECT DISTINCT m."short_name"
-                                            FROM 
-                                                "lpg_operations_masters" m
-                                            LEFT JOIN "lpg_operations_summary" s ON m."short_name" = s."short_name"
-                                            WHERE s."short_name" IS NULL
-                                            ORDER BY m."short_name"; ''',
-    
+            
     "cp_total_locations": 'select count(distinct("sap_id")) as "total_plants" from "consumer_pump_transactions" ',
 
     "cp_total_dus": '''SELECT SUM("du") AS "total_du"
@@ -1348,47 +1390,7 @@ ORDER BY
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
-                                        "ZOName" IS NOT NULL ''',        
-
-    'lpg_operations_current_month_cylinder_filled': ''' SELECT
-                                                            ROUND(((SUM(production_14_2kg) + SUM(production_19kg)) / 100000), 2) AS "Cylinders_Filled"
-                                                        FROM
-                                                            "lpg_plant_operations"
-                                                        WHERE
-                                                            DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
-
-    'lpg_operations_current_month_cs_rejection': ''' SELECT
-                                                        ROUND(
-                                                            CASE 
-                                                            WHEN SUM(cs_handled) = 0 THEN 0
-                                                            ELSE ((SUM(cs_sortout)::float / SUM(cs_handled)) * 100)::numeric
-                                                        END, 1) AS cs_rejection
-                                                    FROM
-                                                        "lpg_plant_operations"
-                                                    WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
-
-    'lpg_operations_current_month_gd_rejection': ''' SELECT                                                        
-                                                        ROUND(
-                                                            CASE 
-                                                            WHEN SUM(gd_handled) = 0 THEN 0
-                                                            ELSE ((SUM(gd_sortout)::float / SUM(gd_handled)) * 100)::numeric
-                                                        END, 1) AS gd_rejection
-                                                    FROM
-                                                        "lpg_plant_operations"
-                                                    WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
-
-    'lpg_operations_current_month_pt_rejection': ''' SELECT
-                                                        ROUND(
-                                                            CASE 
-                                                            WHEN SUM(pt_handled) = 0 THEN 0
-                                                            ELSE ((SUM(pt_sortout)::float / SUM(pt_handled)) * 100)::numeric
-                                                        END, 1) AS pt_rejection
-                                                    FROM
-                                                        "lpg_plant_operations"
-                                                    WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
+                                        "ZOName" IS NOT NULL ''',
 
     "lpg_cdcms_domestic_sales_table": f''' select 
                                         "ZOName" as "ZOName",
@@ -2547,12 +2549,6 @@ ORDER BY
                                     "lpg_operations_summary"
                                 HAVING 
                                     COUNT(DISTINCT "short_name") > 0 ''',
-    
-    'lpg_operations_total_handled': f''' SELECT 
-                                        ROUND(CAST(SUM("total") AS NUMERIC) / 100000, 2) AS "Total Handled"
-                                    FROM 
-                                        "lpg_cs_rejections"
-                                    WHERE DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
 
     'cdcms_current_date_pending_count': f''' select
                                                 CAST(SUM("Total_Pending")AS NUMERIC) AS "Total Pending"
