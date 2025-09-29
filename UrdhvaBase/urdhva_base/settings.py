@@ -100,6 +100,12 @@ class Settings(pydantic_settings.BaseSettings):
     # VTS IMS blocking    
     post_to_ims_url: str = ""
 
+    # LPG VTS blocking and unblocking
+    lpg_vts_auth_url:str = ""
+    lpg_publish_url: str = ""
+    lpg_vts_client_id: str = ""
+    lpg_vts_client_secret_key: str = ""
+    
     # Postgresql settings
     enable_echo: bool = True
 

@@ -479,6 +479,8 @@ class AlertAction:
         event_tags = input_data.get("event_tags", {})
         if not event_tags:
             event_tags = {}
+        if alert_data['alert_section'] in ['VTS']:
+            input_data['action_msg'] = input_data.get("action_msg", "") + ((" " if input_data.get("action_msg") else "") + "initiated by " + ", ".join(alert_data.get("assigned_user_roles", [])) if alert_data.get("assigned_user_roles") else "")
         # Append the updated alert history with the converted datetime strings
         alert_history.append({"allocated_time": allocated_time.isoformat() if isinstance(allocated_time, datetime.datetime) else allocated_time,
                             "processed_time": processed_time.isoformat(), "action_type": input_data["action_type"],

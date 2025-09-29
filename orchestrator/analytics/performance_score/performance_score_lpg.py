@@ -306,7 +306,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
     async def _compute_productivity_pi_score(self, name, rules, location_id):
         query = f"""
             SELECT filling_head as filling_heads,
-                ROUND(SUM(total_production) / SUM(total_net_hours), 2) as productivity_yesterday
+                COALESCE(ROUND(SUM(total_production) / NULLIF(SUM(total_net_hours), 0), 2), 0) AS productivity_yesterday
             FROM lpg_plant_operations
             WHERE
                 process_date::DATE = CURRENT_DATE - INTERVAL '1 day'

@@ -21,6 +21,11 @@ Enum LoginStatus str {
     logout='Logged Out'
 }
 
+Enum MakerChecker str {
+    MAKER='maker'
+    CHECKER='checker'
+}
+
 Enum NotificationLevel str {
     InitialNotification='InitialNotification'
     InitialEscalation='InitialEscalation'
@@ -776,6 +781,7 @@ Model Alerts {
     vehicle_unblocked_date optional datetime
     mark_as_false optional bool
     vts_alert_history_ids optional list str
+    action_on optional MakerChecker
 
     Action=> alert_action {
         bu optional str
