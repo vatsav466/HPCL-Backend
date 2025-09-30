@@ -29,7 +29,7 @@ class Camunda:
         if camunda_url:
             self.camunda_url = camunda_url
         url = f" {self.camunda_url}/engine-rest/process-definition/key/{workflowId}/start"
-        MAX_RETRIES = 3
+        MAX_RETRIES = 5
         RETRY_DELAY = 10
 
         for attempt in range(1, MAX_RETRIES + 1):

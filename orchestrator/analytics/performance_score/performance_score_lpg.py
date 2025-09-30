@@ -137,10 +137,9 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
         pi_score = []
         for rule in rules['rules']:
             score = 0
-            rule_weightage = rule['weightage']
             if rule['model'] == 'va_portal':
                 if self.va_data:
-                    score = round((float(self.va_data['OVERALL_SCORE']) * 10 * rules['weightage']) / 100, 2)
+                    score = round((float(self.va_data['OVERALL_SCORE']) * 10 * rule['weightage']) / 100, 2)
                 else:
                     score = 0
             elif rule['model'] == 'va_alerts':
