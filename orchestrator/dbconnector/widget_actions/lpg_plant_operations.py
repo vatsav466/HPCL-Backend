@@ -36,7 +36,8 @@ class LPGOperationsActions:
                 "data": {
                     "plant": plants,
                     "zone": list(zones),
-                    "region": list(regions)
+                    "region": list(regions),
+                    "carousel_type": ["12H", "24H", "48H", "72H"]
                 }
             }
 

@@ -3694,7 +3694,7 @@ class GlobalAnalytics:
     async def lpg_operations_rejections(filters, cross_filters, drill_state):
         try:
             _filters, daterange = await generate_cross_filter(cross_filters)
-            query = lpg_plant_queries.lpg_plant_query.get("pq_rejection")
+            query = lpg_plant_queries.lpg_plant_query.get("lpg_operations_pq_rejection")
             current_date = datetime.now().strftime("%Y-%m-%d")        
 
             # Apply drill down filter
