@@ -11,14 +11,7 @@ from orchestrator.dbconnector.widget_actions import lpg_config
 
 class LPGOperationsActions:
     async def plants_dropdown(data: dict):
-        query = """
-            SELECT sap_id AS sap_id, name AS location_name, zone AS zone, region AS region
-            FROM location_master
-            WHERE bu = 'LPG'
-            AND name NOT ILIKE '%import%'
-            AND name NOT ILIKE '%facility%'
-            ORDER BY name
-        """
+        query = """ select * from lpg_plant_operations_masters """
         try:
             result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
 
@@ -30,10 +23,12 @@ class LPGOperationsActions:
                 for row in result["data"]:
                     plants.append({
                         "sap_id": str(row["sap_id"]),
-                        "location_name": row["location_name"]
+                        "plant": row["plant_name"]
                     })
-                    zones.add(row["zone"])
-                    regions.add(row["region"])
+                    if not row["zone"] is None:
+                        zones.add(row["zone"])
+                    if not row["region"] is None:
+                        regions.add(row["region"])
 
             return {
                 "status": True,
@@ -46,11 +41,8 @@ class LPGOperationsActions:
             }
 
         except Exception:
-            return {
-                "status": False,
-                "message": "DB Error: " + "".join(traceback.format_exception_only(*sys.exc_info()[:2])),
-                "data": {"plant": [], "zone": [], "region": []}
-            }
+            print("Exception in plants_dropdown")
+            print("traceback :", traceback.format_exc())
 
     async def get_breaks(plant_id, carousal_id):
         query = f"""SELECT start_time, stop_time FROM public.breaks WHERE plant_id = {plant_id} AND carousal_id = {carousal_id}"""
