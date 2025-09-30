@@ -86,7 +86,7 @@ class SendVtsCommand:
                     }
                 }
                 #await vts_analysis.post_lpg_tt(payload)            
-            if not params['auto_unblock']:
+            if params.get('auto_unblock').lower() == 'false':
                 query = (f"location_id='{alert_data['sap_id']}' and tl_number='{alert_data['vehicle_number']}' "
                          f"and {alert_data['violation_type']}>=1 and created_at<'{alert_data['created_at']}' and location_type='{alert_data['bu']}' "
                          f"and auto_unblock!='false'")
