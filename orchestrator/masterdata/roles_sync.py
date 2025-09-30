@@ -636,6 +636,20 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS Home"
+                    },
+                    {
+                        "title": "Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Analytics"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1161,6 +1175,28 @@ async def sync_user_roles():
                         {
                         "title": "LPG Insights"
                         }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Home"
+                    },
+                    {
+                        "title": "Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Analytics"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            }
                         ]
                     }
                 ]

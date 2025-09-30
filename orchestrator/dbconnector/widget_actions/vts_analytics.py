@@ -9,6 +9,7 @@ import orchestrator.dbconnector.credential_loader as credential_loader
 import asyncio
 import mysql.connector
 
+
 class VTSAnalyticsActions:
     
     @staticmethod
@@ -270,6 +271,66 @@ class VTSAnalyticsActions:
             query = vts_query.vts_query.get(drill_state.split(",")[0])
             all_violations = vts_query.vts_query.get("all_violations", [])
             violation_types = payload.get("violation_type", []) if payload else []
+            truck_number = payload.get("view", "")
+            if truck_number:
+                all_violations = vts_query.vts_query.get("all_violations", [])
+                select_parts = []
+                for v_type in all_violations:
+                    select_parts.append(
+                    f"SUM(CASE WHEN {v_type} != 0 THEN 1 ELSE 0 END) AS {v_type}"
+                )
+                select_clause = ",\n        ".join(select_parts)
+                view_query = f"""
+                SELECT 
+                    tl_number,
+                    invoice_number,
+                    DATE(created_at) as violation_date,
+                    {select_clause}
+                FROM vts_alert_history
+                WHERE tl_number = '{truck_number}'
+                GROUP BY tl_number, invoice_number, DATE(created_at)
+                ORDER BY violation_date DESC, invoice_number
+                """
+                print("View Query:", view_query)
+                df_view = await VTSAnalyticsActions.execute_query(view_query)
+                if df_view.empty:
+                    return {"status": True, "message": "No violation history found for this vehicle", "data": []}
+                alerts_query = f"""SELECT DISTINCT location_name, vehicle_number, transporter_code, zone 
+                              FROM alerts 
+                              WHERE vehicle_number = '{truck_number}' 
+                              AND transporter_code != '' AND location_name != ''"""
+                print("Alerts Query:", alerts_query)
+                df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
+                
+                if df_alerts.empty:
+                    return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
+                
+                # Merge with alerts data
+                merged_df = df_view.merge(df_alerts, left_on="tl_number", right_on="vehicle_number", how="left")
+                
+                # Get transporter names
+                email_query = """SELECT transporter_code, transporter_name FROM email_master"""
+                print("Email Query:", email_query)
+                df_email = await VTSAnalyticsActions.execute_query(email_query)
+                
+                # Final merge with email master
+                final_df = merged_df.merge(df_email, on="transporter_code", how="left")
+                final_df.drop(columns=["transporter_code"], inplace=True)
+                final_df.dropna(inplace=True)
+                
+                if final_df.empty:
+                    return {"status": False, "message": "No valid data after filtering transporter details", "data": []}
+                
+                cleaned_records = []
+                for _, row in final_df.iterrows():
+                    record = row.to_dict()
+                    if all(record.get(v_type, 0) == 0 for v_type in all_violations):
+                        continue 
+                    cleaned_records.append(record)
+                    if not cleaned_records:
+                        return {"status": True, "message": "No non-zero violations found", "data": []}
+                
+                return {"status": True, "message": "success", "data": cleaned_records}
             if violation_types:
                 violation_type_query = vts_query.vts_query.get("vts_insite_history_type")
                 if not violation_type_query:
@@ -322,7 +383,6 @@ class VTSAnalyticsActions:
 
                 return {"status": True, "message": "success", "data": final_df.to_dict(orient="records")}
                 
-            
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             print(query)
             df_history = await VTSAnalyticsActions.execute_query(query)
@@ -355,11 +415,15 @@ class VTSAnalyticsActions:
             final_df.dropna(inplace=True)
 
             return {"status": True, "message": "success", "data": final_df.to_dict(orient="records")}
-         
+        
+       
+            
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
-        
+
+
+
     @staticmethod
     async def location_level_voilation_breakup(filters, cross_filters, drill_state, payload):
         try:
@@ -798,3 +862,92 @@ class VTSAnalyticsActions:
         except mysql.connector.Error as e:
             print("Query execution failed:", e)
             return {"data": []}
+        
+    @staticmethod
+    async def integrate_shortage_trips(filters, cross_filters, drill_state, payload):
+        alerts_query = """SELECT location_name, bu, vehicle_number, transporter_code FROM alerts where alert_section = 'VTS'"""
+        conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, alerts_query)
+        final_query = VTSAnalyticsActions.apply_conditions_to_query(alerts_query, conditions)
+        print("final_query --->", final_query)
+        alerts_df = await VTSAnalyticsActions.execute_query(final_query)
+        print(alerts_df.head(5))
+        # Extract parameters from filters/payload
+        # bu = filters.get("bu") if filters else None
+        # violation_type = filters.get("violation_type") if filters else None
+        # sap_id = filters.get("sap_id") if filters else None
+
+        print("=== Starting shortage_trips logic ===")
+       # print(f"Parameters: BU={bu}, Violation={violation_type}, SAP_ID={sap_id}")
+
+       # alerts_result = await hpcl_ceg_model.Alerts.get_aggr_data(final_query, limit=0)
+        #alerts_df = pd.DataFrame(alerts_result['data'])
+        
+
+        # Step 2: Fetch trips
+        trips_query = "SELECT * FROM sales_trips_till_date"
+        trips_df = await VTSAnalyticsActions.execute_query(trips_query)
+        #trips_df = pd.DataFrame(trips_result['data'])
+        print(f"Trips fetched: {len(trips_df)} rows")
+
+        # Step 3: Assign BU based on plant_nm
+        plant_bu_mapping = alerts_df[['location_name', 'bu']].drop_duplicates()
+        trips_df = trips_df.merge(
+            plant_bu_mapping,
+            how='left',
+            left_on='plant_nm',
+            right_on='location_name'
+        ).drop(columns=['location_name'], errors='ignore')
+        print(f"Trips after BU mapping: {len(trips_df)}")
+
+        # Step 4: Filter by BU
+        # if bu:
+        #     trips_df = trips_df[trips_df['bu'] == bu]
+        #     print(f"Trips after BU filter: {len(trips_df)}")
+
+        # Step 5: Assign transporter_code based on plant_nm + vehicle_id
+        alerts_vehicle_mapping = alerts_df[['location_name', 'vehicle_number', 'transporter_code']].drop_duplicates()
+        trips_df = trips_df.merge(
+            alerts_vehicle_mapping,
+            how='left',
+            left_on=['plant_nm', 'vehicle_id'],
+            right_on=['location_name', 'vehicle_number']
+        ).drop(columns=['vehicle_number', 'location_name'], errors='ignore')
+        print(f"Trips after transporter_code mapping: {len(trips_df)}")
+
+        # Step 6: Fetch transporter_name from email_master
+        email_query = "SELECT transporter_code, transporter_name FROM email_master"
+        email_df = await VTSAnalyticsActions.execute_query(email_query)
+        #email_df = pd.DataFrame(email_result['data'])
+
+        # Step 7: Merge transporter_name
+        trips_df = trips_df.merge(email_df, how='left', on='transporter_code')
+        print(f"Trips after transporter_name merge: {len(trips_df)}")
+
+        # Step 8: Count unique invoices
+        invoice_count = trips_df['invoice_no'].nunique() if 'invoice_no' in trips_df.columns else 0
+        print(f"Unique invoices: {invoice_count}")
+
+        # Step 9: Prepare final trips list
+        trips_list = trips_df[['plant_nm', 'vehicle_id', 'qty_shortage', 'transporter_name']].rename(
+            columns={
+                "plant_nm": "Plant Name",
+                "vehicle_id": "Vehicle No",
+                "qty_shortage": "Shortage",
+                "transporter_name": "Transporter Name"
+            }
+        )
+        trips_list = trips_list.where(pd.notnull(trips_list), None).to_dict(orient="records")
+        print(f"Prepared trips list with {len(trips_list)} records")
+
+        # Step 10: Write final DataFrame to CSV (optional, for debugging)
+        trips_df.to_csv("shortage_trips_output.csv", index=False)
+        print("CSV write complete.")
+
+        response_data = {
+            "status": "success",
+            "invoice_count": invoice_count,
+            "trips": trips_list
+        }
+
+        print("=== Finished shortage_trips logic ===\n")
+        return response_data

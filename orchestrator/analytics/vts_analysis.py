@@ -1,6 +1,7 @@
 import urdhva_base
 import pandas as pd
 import typing
+import json
 import aiohttp
 import asyncio
 import requests
@@ -680,6 +681,43 @@ async def close_vts_alerts(alert_id):
     alert_data['alert_status'] = 'Close'
     alert_data['alert_state'] = 'Resolved'
     await hpcl_ceg_model.Alerts(**{"id": alert_id, "alert_history": alert_history, "alert_status": "Close", "alert_state": "Resolved"}).modify()
+
+async def fetch_access_token():
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    data = {
+        "grant_type": "client_credentials",
+        "client_id": urdhva_base.settings.lpg_vts_client_id,
+        "client_secret": urdhva_base.settings.lpg_vts_client_secret_key,
+        "client_authentication": "send_as_basic_auth_header"
+    }
+    try:
+        response = requests.post(urdhva_base.settings.lpg_vts_auth_url, headers=headers, data=data, timeout=10, verify=False)
+        response.raise_for_status()
+        token_data = response.json()
+        return token_data.get("access_token")
+    except requests.exceptions.RequestException as e:
+        print(f"[ERROR] Failed to fetch token: {e}")
+        return None
+
+async def post_lpg_tt(payload):
+    access_token = await fetch_access_token()
+    if not access_token:
+        print(f"[ERROR] Failed to fetch token")
+        return None
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    try:
+        response = requests.post(urdhva_base.settings.lpg_publish_url, headers=headers, data=json.dumps(payload),
+                                 timeout=15, verify=False)
+        response.raise_for_status()
+        print("response->",response.json())
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"[ERROR] Publish API call failed: {e}")
+        return None
 
 # device_tamper_count
 # main_supply_removal_count
