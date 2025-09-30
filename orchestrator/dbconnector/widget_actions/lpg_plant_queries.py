@@ -1070,20 +1070,28 @@ LIMIT 10000;''',
                             SUM(production_19kg) AS "19_kg"
                         from
                             "lpg_plant_operations" ''',
-    
-    "lpg_operations_filled_cylinder": ''' 
-                        select 
-                            sum("total") as "Handled",
-                            sum("cylfilled") as "Cylinder_Filled",
-                            "zone" as "zone",
-                            "plant" as "plant"
-                        from
-                            "lpg_cs_rejections" ''',
+
+    "lpg_operations_pq_rejection": '''
+                    SELECT
+                        zone as zone,
+                        location_name as plant,
+                        'CS' AS rejection_type,
+                        filling_head as carousel_type,
+                        SUM(cs_handled) as cs_handled,
+                        SUM(cs_sortout) as cs_sortout,
+                        SUM(pt_handled) as pt_handled,
+                        SUM(pt_sortout) as pt_sortout,
+                        SUM(gd_handled) as gd_handled,
+                        SUM(gd_sortout) as gd_sortout
+                    FROM
+                        "lpg_plant_operations"
+                ''',
     
     'productivity_overtime_vs_break_production': '''  
                             SELECT 
                                 zone,
                                 location_name as plant,
+                                filling_head as carousel_type,
                                 SUM(break_net_hours) as break_production,
                                 SUM(overtime_net_hours) as overtime_production
                             FROM 
@@ -1329,22 +1337,7 @@ ORDER BY
                                 "Financial_Year",
                                 SUM("SubsidyAmount") as "SubsidyAmount"
                             FROM
-                                "lpg_cdcms_subsidy_state" ''',
-    
-    "pq_rejection": '''
-                    SELECT
-                        zone as zone,
-                        location_name as plant,
-                        'CS' AS rejection_type,
-                        SUM(cs_handled) as cs_handled,
-                        SUM(cs_sortout) as cs_sortout,
-                        SUM(pt_handled) as pt_handled,
-                        SUM(pt_sortout) as pt_sortout,
-                        SUM(gd_handled) as gd_handled,
-                        SUM(gd_sortout) as gd_sortout
-                    FROM
-                        "lpg_plant_operations"
-                ''',    
+                                "lpg_cdcms_subsidy_state" ''',        
                     
     'cdcms_current_year_sales':''' SELECT 
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
