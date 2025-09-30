@@ -215,6 +215,7 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
     alert_section: typing.Optional[str] = pydantic.Field("", **{})
+    alert_type: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     assignee: typing.Optional[str] = pydantic.Field("", **{})
     summary: typing.Optional[str] = pydantic.Field("", **{})
