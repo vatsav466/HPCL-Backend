@@ -17,6 +17,8 @@ class VTSAnalyticsActions:
         """Transform keys based on query context"""
         if query and "vts_alert_history" in query.lower() and key.lower() == "bu":
             return "location_type"
+        if query and "vts_alert_history" in query.lower() and key.lower() == "sap_id":
+            return "location_id"
         return key
     
     @staticmethod
@@ -136,7 +138,7 @@ class VTSAnalyticsActions:
         if alert_type.lower() == "blocked":
             conditions.append("alert_status = 'Open'")
         elif alert_type.lower() == "auto_unblock":
-            conditions.append("alert_status = 'Close' AND mark_as_false = false")
+            conditions.append("alert_status = 'Close' AND mark_as_false = false AND vehicle_unblocked_date is not null")
         elif alert_type.lower() == "manual_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = true")
         # 'all_alerts' -> no extra conditions
@@ -232,6 +234,9 @@ class VTSAnalyticsActions:
                 print(final_query)
 
                 df_data = await VTSAnalyticsActions.execute_query(final_query)
+                if not df_data.empty:
+                    df_data['transporter_code'] = df_data['transporter_code'].astype(str).str.lstrip("0")
+
 
                 email_query = """SELECT transporter_code, transporter_name FROM email_master"""
                 df_email = await VTSAnalyticsActions.execute_query(email_query)
@@ -250,6 +255,8 @@ class VTSAnalyticsActions:
            vts_insite_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
            print(vts_insite_query)
            df1 = await VTSAnalyticsActions.execute_query(vts_insite_query)
+           if not df1.empty:
+               df1['transporter_code'] = df1['transporter_code'].astype(str).str.lstrip("0")
 
            email_query = """select transporter_code,transporter_name from email_master"""
 
@@ -291,7 +298,11 @@ class VTSAnalyticsActions:
                 GROUP BY tl_number, invoice_number, DATE(created_at)
                 ORDER BY violation_date DESC, invoice_number
                 """
+                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, view_query)
+                view_query = VTSAnalyticsActions.apply_conditions_to_query(view_query, conditions)
+
                 print("View Query:", view_query)
+
                 df_view = await VTSAnalyticsActions.execute_query(view_query)
                 if df_view.empty:
                     return {"status": True, "message": "No violation history found for this vehicle", "data": []}
@@ -301,6 +312,8 @@ class VTSAnalyticsActions:
                               AND transporter_code != '' AND location_name != ''"""
                 print("Alerts Query:", alerts_query)
                 df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
+                if not df_alerts.empty:
+                    df_alerts['transporter_code'] = df_alerts['transporter_code'].astype(str).str.lstrip("0")
                 
                 if df_alerts.empty:
                     return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
@@ -364,6 +377,9 @@ class VTSAnalyticsActions:
                                   AND transporter_code != '' AND location_name != ''"""
                 print(alerts_query)
                 df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
+                if not df_alerts.empty:
+                    df_alerts['transporter_code'] = df_alerts['transporter_code'].astype(str).str.lstrip("0")
+                
 
                 # Check if alerts data exists
                 if df_alerts.empty:
@@ -381,9 +397,19 @@ class VTSAnalyticsActions:
                 final_df.drop(columns=["transporter_code"], inplace=True)
                 final_df.dropna(inplace=True)
 
-                return {"status": True, "message": "success", "data": final_df.to_dict(orient="records")}
+                cleaned_records = []
+                for _, row in final_df.iterrows():
+                    record = row.to_dict()
+                    if all(record.get(v_type, 0) == 0 for v_type in all_violations):
+                        continue 
+                    cleaned_records.append(record)
+                    if not cleaned_records:
+                        return {"status": True, "message": "No non-zero violations found", "data": []}
+                
+                return {"status": True, "message": "success", "data": cleaned_records}
                 
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
             print(query)
             df_history = await VTSAnalyticsActions.execute_query(query)
             if df_history.empty:
@@ -397,6 +423,8 @@ class VTSAnalyticsActions:
                               WHERE vehicle_number IN ('{tl_numbers_str}') 
                               AND transporter_code != '' AND location_name != ''"""
             df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
+            if not df_alerts.empty:
+                    df_alerts['transporter_code'] = df_alerts['transporter_code'].astype(str).str.lstrip("0")
 
             # Check if alerts data exists
             if df_alerts.empty:
@@ -414,7 +442,25 @@ class VTSAnalyticsActions:
             final_df.drop(columns=["transporter_code"], inplace=True)
             final_df.dropna(inplace=True)
 
-            return {"status": True, "message": "success", "data": final_df.to_dict(orient="records")}
+            group_by_col = payload.get("group_by")
+            if group_by_col and group_by_col in final_df.columns:
+                 violation_cols = [v for v in all_violations if v in final_df.columns]
+                 agg_df = final_df.groupby(group_by_col)[violation_cols].sum().reset_index()
+                 agg_df['total_count'] = agg_df[violation_cols].sum(axis=1)
+                 cleaned_records = agg_df.to_dict(orient='records')
+                 return {"status": True, "message": "success", "data": cleaned_records}
+                     
+
+            cleaned_records = []
+            for _, row in final_df.iterrows():
+                    record = row.to_dict()
+                    if all(record.get(v_type, 0) == 0 for v_type in all_violations):
+                        continue 
+                    cleaned_records.append(record)
+                    if not cleaned_records:
+                        return {"status": True, "message": "No non-zero violations found", "data": []}
+                
+            return {"status": True, "message": "success", "data": cleaned_records}
         
        
             
@@ -496,82 +542,64 @@ class VTSAnalyticsActions:
             query_type = payload.get("query_type") if payload else None
             alert_type = payload.get("alert_type") if payload else None
             base_query = vts_query.vts_query.get(query_type)
-            history_query = vts_query.vts_query.get("vts_history_query")
             
-            if not base_query or not history_query:
+            if not base_query:
                 return {"status": False, "message": "Query not found", "data": [], "percentages": []}
 
-            # Build conditions with alert type (pass base_query for key transformation)
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
             conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
             
-            # Apply conditions to alerts query
             alerts_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
+
+            print(alerts_query)
 
             # Execute queries
             alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
-            history_df = await VTSAnalyticsActions.execute_query(history_query)
             
-            if alerts_df.empty or history_df.empty:
+            if alerts_df.empty:
                 return {"status": True, "message": "success", "data": [], "percentages": []}
-
-            # Merge dataframes
-            merged_df = pd.merge(
-                alerts_df, history_df,
-                left_on="vehicle_number", right_on="tl_number",
-                how="inner"
-            )
 
             # Get group by column
             group_by_column = VTSAnalyticsActions.get_group_by_column(drill_state)
-            if not group_by_column or group_by_column not in merged_df.columns:
+            if not group_by_column or group_by_column not in alerts_df.columns:
                 return {"status": False, "message": f"Column '{group_by_column}' not found", "data": [], "percentages": []}
             
-            # Filter out null/empty values
-            merged_df = merged_df[
-                merged_df[group_by_column].notnull() & 
-                (merged_df[group_by_column] != "")
-            ]
+            if 'violation_type' not in alerts_df.columns:
+                return {"status": False, "message": "violation_type column not found", "data": [], "percentages": []}
             
-            if merged_df.empty:
-                return {"status": True, "message": "success", "data": [], "percentages": []}
+            alerts_df = alerts_df[
+                  alerts_df[group_by_column].notnull() & 
+                 (alerts_df[group_by_column] != "")
+                ]
             
-            # Get violation columns and filter non-zero violations
-            violation_columns = [col for col in history_df.columns if col not in ["invoice_number", "tl_number"]]
-            existing_violation_columns = [col for col in violation_columns if col in merged_df.columns]
+            if alerts_df.empty:
+                 return {"status": True, "message": "success", "data": [], "percentages": []}
             
-            if not existing_violation_columns:
-                return {"status": True, "message": "success", "data": [], "percentages": []}
+            grouped = alerts_df.groupby([group_by_column, 'violation_type']).size().reset_index(name='count')
             
-            merged_df = merged_df[merged_df[existing_violation_columns].sum(axis=1) != 0]
-            
-            if merged_df.empty:
-                return {"status": True, "message": "success", "data": [], "percentages": []}
-
-            # Group and aggregate
-            grouped = merged_df.groupby(group_by_column)[existing_violation_columns].sum().reset_index()
-
+            if grouped.empty:
+                 return {"status": True, "message": "success", "data": [], "percentages": []}
+        
             # Prepare response data
             data_response = []
-            for _, row in grouped.iterrows():
+            for group_value in grouped[group_by_column].unique():
+                group_data = grouped[grouped[group_by_column] == group_value]
                 violations_list = [
-                    {"violation_type": col, "count": int(row[col])}
-                    for col in existing_violation_columns
-                    if row[col] != 0
+                    {"violation_type": row['violation_type'], "count": int(row['count'])}
+                    for _, row in group_data.iterrows()
                 ]
                 
                 if violations_list:
-                    data_response.append({row[group_by_column]: violations_list})
+                    data_response.append({group_value: violations_list})
 
             # Calculate percentages
-            totals = grouped[existing_violation_columns].sum().to_dict()
-            grand_total = sum(totals.values())
+            violation_totals = grouped.groupby('violation_type')['count'].sum().to_dict()
+            grand_total = sum(violation_totals.values())
             percentages = []
             if grand_total > 0:
                 percentages = [
                     {"violation_type": vtype, "percentage": round((count / grand_total) * 100, 2)}
-                    for vtype, count in totals.items()
-                    if count > 0
+                    for vtype, count in violation_totals.items()
                 ]
 
             return {
@@ -590,9 +618,8 @@ class VTSAnalyticsActions:
             query_type = payload.get("query_type") if payload else None
             alert_type = payload.get("alert_type") if payload else None
             base_query = vts_query.vts_query.get(query_type)
-            history_query = vts_query.vts_query.get("vts_history_query")
-            
-            if not base_query or not history_query:
+
+            if not base_query:
                 return {"status": False, "message": "Query not found", "data": []}
 
             # Build conditions with alert type (pass base_query for key transformation)
@@ -604,42 +631,45 @@ class VTSAnalyticsActions:
             alerts_query = base_query.format(period_expr=period_expr)
             alerts_query = VTSAnalyticsActions.apply_conditions_to_query(alerts_query, conditions)
 
+            print(alerts_query)
+
             # Execute queries
             alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
-            history_df = await VTSAnalyticsActions.execute_query(history_query)
             
-            if alerts_df.empty or history_df.empty:
+            if alerts_df.empty:
                 return {"status": True, "message": "success", "data": []}
 
-            # Merge and process data
-            merged_df = pd.merge(
-                alerts_df, history_df,
-                left_on="vehicle_number", right_on="tl_number",
-                how="inner"
-            )
-
-            violation_columns = [col for col in history_df.columns 
-                               if col not in ["period", "invoice_number", "tl_number"]]
+            if 'violation_type' not in alerts_df.columns or 'period' not in alerts_df.columns:
+                 return {"status": False, "message": "Required columns not found", "data": []}
             
-            merged_df = merged_df[
-                (merged_df[violation_columns].sum(axis=1) != 0) &
-                (merged_df["period"].notna()) &                      
-                (merged_df["period"].astype(str).str.strip() != "")
+            alerts_df = alerts_df[
+                (alerts_df["period"].notna()) &                      
+                (alerts_df["period"].astype(str).str.strip() != "")
             ]
 
-            # Group by period and format results
+            if alerts_df.empty:
+                return {"status": True, "message": "success", "data": []}
+            
+            grouped = alerts_df.groupby(['period', 'violation_type']).size().reset_index(name='count')
+            
+            if grouped.empty:
+                return {"status": True, "message": "success", "data": []}
+            
             result = []
-            for period, group_df in merged_df.groupby("period"):
+            for period in grouped['period'].unique():
+                period_data = grouped[grouped['period'] == period]
                 formatted_date = VTSAnalyticsActions.format_date(period, drill_state)
-                period_totals = group_df[violation_columns].sum()
                 
                 values = [
-                    {"violation_type": col, "count": int(period_totals[col])}
-                    for col in violation_columns
-                    if period_totals[col] != 0
+                    {"violation_type": row['violation_type'], "count": int(row['count'])}
+                    for _, row in period_data.iterrows()
                 ]
-
-                result.append({"date": formatted_date, "records": values})
+                
+                if values:
+                    result.append({"date": formatted_date, "records": values})
+            
+            # Sort by period (assuming period is sortable)
+            result.sort(key=lambda x: x['date'])
             
             return {"status": True, "message": "success", "data": result}
 
@@ -648,8 +678,6 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
         
-
-
     @staticmethod
     async def violation_details(filters, cross_filters, drill_state, payload):
         try:
@@ -863,91 +891,114 @@ class VTSAnalyticsActions:
             print("Query execution failed:", e)
             return {"data": []}
         
+    
     @staticmethod
     async def integrate_shortage_trips(filters, cross_filters, drill_state, payload):
-        alerts_query = """SELECT location_name, bu, vehicle_number, transporter_code FROM alerts where alert_section = 'VTS'"""
+        # Step 1: Fetch alerts
+        alerts_query = """
+            SELECT location_name, bu, vehicle_number, transporter_code
+            FROM alerts
+            WHERE alert_section = 'VTS'
+        """
         conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, alerts_query)
         final_query = VTSAnalyticsActions.apply_conditions_to_query(alerts_query, conditions)
-        print("final_query --->", final_query)
         alerts_df = await VTSAnalyticsActions.execute_query(final_query)
-        print(alerts_df.head(5))
-        # Extract parameters from filters/payload
-        # bu = filters.get("bu") if filters else None
-        # violation_type = filters.get("violation_type") if filters else None
-        # sap_id = filters.get("sap_id") if filters else None
 
-        print("=== Starting shortage_trips logic ===")
-       # print(f"Parameters: BU={bu}, Violation={violation_type}, SAP_ID={sap_id}")
+        print("=== Alerts DataFrame ===")
+        print(alerts_df.head())
+        print("Columns:", alerts_df.columns)
 
-       # alerts_result = await hpcl_ceg_model.Alerts.get_aggr_data(final_query, limit=0)
-        #alerts_df = pd.DataFrame(alerts_result['data'])
-        
+        if alerts_df.empty:
+            print("No alerts found. Returning empty response.")
+            return {"status": "success", "invoice_count": 0, "trips": []}
 
-        # Step 2: Fetch trips
-        trips_query = "SELECT * FROM sales_trips_till_date"
+        # Lowercase alerts columns
+        alerts_df.columns = [c.lower() for c in alerts_df.columns]
+
+        # Step 2: Fetch trips (include invoice_no, keep columns uppercase)
+        trips_query = 'SELECT "PLANT_NM", "VEHICLE_ID", "QTY_SHORTAGE", "INVOICE_NO" FROM sales_trips_till_date'
         trips_df = await VTSAnalyticsActions.execute_query(trips_query)
-        #trips_df = pd.DataFrame(trips_result['data'])
-        print(f"Trips fetched: {len(trips_df)} rows")
 
-        # Step 3: Assign BU based on plant_nm
-        plant_bu_mapping = alerts_df[['location_name', 'bu']].drop_duplicates()
-        trips_df = trips_df.merge(
-            plant_bu_mapping,
-            how='left',
-            left_on='plant_nm',
-            right_on='location_name'
-        ).drop(columns=['location_name'], errors='ignore')
-        print(f"Trips after BU mapping: {len(trips_df)}")
+        print("=== Trips DataFrame ===")
+        print(trips_df.head())
+        print("Columns:", trips_df.columns)
 
-        # Step 4: Filter by BU
-        # if bu:
-        #     trips_df = trips_df[trips_df['bu'] == bu]
-        #     print(f"Trips after BU filter: {len(trips_df)}")
+        if trips_df.empty:
+            print("No trips found. Returning empty response.")
+            return {"status": "success", "invoice_count": 0, "trips": []}
 
-        # Step 5: Assign transporter_code based on plant_nm + vehicle_id
-        alerts_vehicle_mapping = alerts_df[['location_name', 'vehicle_number', 'transporter_code']].drop_duplicates()
-        trips_df = trips_df.merge(
-            alerts_vehicle_mapping,
-            how='left',
-            left_on=['plant_nm', 'vehicle_id'],
-            right_on=['location_name', 'vehicle_number']
-        ).drop(columns=['vehicle_number', 'location_name'], errors='ignore')
-        print(f"Trips after transporter_code mapping: {len(trips_df)}")
+        # Step 3: Assign BU based on PLANT_NM
+        if 'location_name' in alerts_df.columns and 'bu' in alerts_df.columns:
+            plant_bu_mapping = alerts_df[['location_name', 'bu']].drop_duplicates()
+            print("=== Plant BU Mapping ===")
+            print(plant_bu_mapping.head())
+            trips_df = trips_df.merge(
+                plant_bu_mapping,
+                how='left',
+                left_on='PLANT_NM',
+                right_on='location_name'
+            ).drop(columns=['location_name'], errors='ignore')
+            print("After merging BU:")
+            print(trips_df.head())
 
-        # Step 6: Fetch transporter_name from email_master
+        # Step 4: Assign transporter_code based on PLANT_NM + VEHICLE_ID
+        if {'location_name', 'vehicle_number', 'transporter_code'}.issubset(alerts_df.columns):
+            alerts_vehicle_mapping = alerts_df[['location_name', 'vehicle_number', 'transporter_code']].drop_duplicates()
+            print("=== Alerts Vehicle Mapping ===")
+            print(alerts_vehicle_mapping.head())
+            trips_df = trips_df.merge(
+                alerts_vehicle_mapping,
+                how='left',
+                left_on=['PLANT_NM', 'VEHICLE_ID'],
+                right_on=['location_name', 'vehicle_number']
+            ).drop(columns=['vehicle_number', 'location_name'], errors='ignore')
+            print("After merging transporter_code:")
+            print(trips_df.head())
+
+        # Step 5: Fetch transporter_name from email_master
         email_query = "SELECT transporter_code, transporter_name FROM email_master"
         email_df = await VTSAnalyticsActions.execute_query(email_query)
-        #email_df = pd.DataFrame(email_result['data'])
+        print("=== Email Master DataFrame ===")
+        print(email_df.head())
+        if not email_df.empty:
+            email_df.columns = [c.lower() for c in email_df.columns]
+            trips_df = trips_df.merge(email_df, how='left', left_on='transporter_code', right_on='transporter_code')
+            print("After merging transporter_name:")
+            print(trips_df.head())
 
-        # Step 7: Merge transporter_name
-        trips_df = trips_df.merge(email_df, how='left', on='transporter_code')
-        print(f"Trips after transporter_name merge: {len(trips_df)}")
+        # Step 6: Convert QTY_SHORTAGE to numeric
+        trips_df['QTY_SHORTAGE'] = pd.to_numeric(trips_df['QTY_SHORTAGE'], errors='coerce')
+        print("After converting QTY_SHORTAGE to numeric:")
+        print(trips_df[['PLANT_NM', 'VEHICLE_ID', 'QTY_SHORTAGE']].head())
 
-        # Step 8: Count unique invoices
-        invoice_count = trips_df['invoice_no'].nunique() if 'invoice_no' in trips_df.columns else 0
-        print(f"Unique invoices: {invoice_count}")
+        # Step 7: Filter trips
+        trips_df = trips_df[
+            trips_df['transporter_name'].notnull() &
+            trips_df['transporter_code'].notnull() &
+            (trips_df['QTY_SHORTAGE'] > 0)
+        ]
+        print("After filtering trips:")
+        print(trips_df.head())
+
+        # Step 8: Count invoices
+        invoice_count = trips_df['INVOICE_NO'].nunique() if 'INVOICE_NO' in trips_df.columns else 0
+        print("Invoice count:", invoice_count)
 
         # Step 9: Prepare final trips list
-        trips_list = trips_df[['plant_nm', 'vehicle_id', 'qty_shortage', 'transporter_name']].rename(
+        trips_list = trips_df[['PLANT_NM', 'VEHICLE_ID', 'QTY_SHORTAGE', 'transporter_name']].rename(
             columns={
-                "plant_nm": "Plant Name",
-                "vehicle_id": "Vehicle No",
-                "qty_shortage": "Shortage",
+                "PLANT_NM": "Plant Name",
+                "VEHICLE_ID": "Vehicle No",
+                "QTY_SHORTAGE": "Shortage",
                 "transporter_name": "Transporter Name"
             }
         )
         trips_list = trips_list.where(pd.notnull(trips_list), None).to_dict(orient="records")
-        print(f"Prepared trips list with {len(trips_list)} records")
+        print("Final trips list sample:")
+        print(trips_list[:5])
 
-        # Step 10: Write final DataFrame to CSV (optional, for debugging)
-        trips_df.to_csv("shortage_trips_output.csv", index=False)
-        print("CSV write complete.")
-
-        response_data = {
+        return {
             "status": "success",
             "invoice_count": invoice_count,
             "trips": trips_list
         }
-
-        print("=== Finished shortage_trips logic ===\n")
-        return response_data
