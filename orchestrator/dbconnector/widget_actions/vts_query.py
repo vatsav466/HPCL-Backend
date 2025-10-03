@@ -57,6 +57,7 @@ vts_query = {
     "manual_unblock" : """ SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
                                                               AND alert_status = 'Close' and mark_as_false = true and
+                                                              vehicle_unblocked_date is not null and
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id """,
 
@@ -229,6 +230,7 @@ vts_query = {
             FROM alerts
             WHERE 
                 alert_section = 'VTS' and alert_status = 'Close' and mark_as_false = true
+                and vehicle_unblocked_date is not null
                 AND violation_type IN ('route_deviation_count', 'stoppage_violations_count', 'device_tamper_count', 'main_supply_removal_count', 'night_driving_count', 'speed_violation_count', 'continuous_driving_count')
             GROUP BY {group_by_column}
            """,
@@ -287,7 +289,7 @@ vts_query = {
                     COUNT(*) AS total_alerts,
                     SUM(CASE WHEN alert_status = 'Open' THEN 1 ELSE 0 END) AS "Blocked",
                     SUM(CASE WHEN alert_status = 'Close' AND mark_as_false = false and vehicle_unblocked_date is not null THEN 1 ELSE 0 END) AS "Auto Unblock",
-                    SUM(CASE WHEN alert_status = 'Close' AND mark_as_false = true THEN 1 ELSE 0 END) AS "Manual Unblock",
+                    SUM(CASE WHEN alert_status = 'Close' AND mark_as_false = true and vehicle_unblocked_date is not null THEN 1 ELSE 0 END) AS "Manual Unblock",
                     SUM(CASE WHEN device_id = 'Instance - 1' THEN 1 ELSE 0 END) AS instance_1,
                     SUM(CASE WHEN device_id = 'Instance - 2' THEN 1 ELSE 0 END) AS instance_2,
                     SUM(CASE WHEN device_id = 'Instance - 3' THEN 1 ELSE 0 END) AS instance_3
@@ -315,6 +317,7 @@ vts_query = {
 
             SUM(CASE WHEN alert_status = 'Close' 
                     AND mark_as_false = true 
+                    and vehicle_unblocked_date is not null
                     AND violation_type = '{violation_type}' 
                 THEN 1 ELSE 0 END) AS "Manual Unblock",
 
