@@ -1940,3 +1940,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/emailmaster/{id}', tags=['EmailMaster'])
 async def delete(id: str):
     return await EmailMaster.delete(id)
+
+
+@router.post('/salestripstilldate', response_model=SalesTripsTillDate, tags=['SalesTripsTillDate'])
+async def create(inputObj: SalesTripsTillDateCreate):
+    return await inputObj.create()
+
+
+@router.put('/salestripstilldate', response_model=SalesTripsTillDate, tags=['SalesTripsTillDate'])
+async def update(inputObj: SalesTripsTillDate):
+    return await inputObj.modify()
+
+
+@router.get('/salestripstilldate/{id}', response_model=SalesTripsTillDate, tags=['SalesTripsTillDate'])
+async def get(id: str):
+    return await SalesTripsTillDate.get(id, skip_secrets=True)
+
+
+@router.get('/salestripstilldate', response_model=SalesTripsTillDateGetResp, tags=['SalesTripsTillDate'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await SalesTripsTillDate.get_all(params, skip_secrets=True)
+
+
+@router.delete('/salestripstilldate/{id}', tags=['SalesTripsTillDate'])
+async def delete(id: str):
+    return await SalesTripsTillDate.delete(id)
