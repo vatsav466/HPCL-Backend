@@ -2381,8 +2381,8 @@ Model PerformanceScore {
 
 Model PerformanceScoreHistory {
     bu index_field str
-    sap_id index_field str
-    timestamp datetime
+    sap_id unique_field index_field str
+    timestamp unique_field datetime
     zone index_field str
     region index_field str
     name index_field str
