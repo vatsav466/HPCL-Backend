@@ -8,6 +8,7 @@ from collections import defaultdict
 import orchestrator.dbconnector.credential_loader as credential_loader
 import asyncio
 import mysql.connector
+from datetime import datetime, timedelta
 
 
 class VTSAnalyticsActions:
@@ -891,10 +892,8 @@ class VTSAnalyticsActions:
             print("Query execution failed:", e)
             return {"data": []}
         
-    
     @staticmethod
     async def integrate_shortage_trips(filters, cross_filters, drill_state, payload):
-        # Step 1: Fetch alerts
         alerts_query = """
             SELECT location_name, bu, vehicle_number, transporter_code
             FROM alerts
@@ -903,100 +902,93 @@ class VTSAnalyticsActions:
         conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, alerts_query)
         final_query = VTSAnalyticsActions.apply_conditions_to_query(alerts_query, conditions)
         alerts_df = await VTSAnalyticsActions.execute_query(final_query)
-
-        print("=== Alerts DataFrame ===")
-        print(alerts_df.head())
-        print("Columns:", alerts_df.columns)
-
         if alerts_df.empty:
-            print("No alerts found. Returning empty response.")
+            print("No alerts found, returning empty response")
             return {"status": "success", "invoice_count": 0, "trips": []}
 
-        # Lowercase alerts columns
         alerts_df.columns = [c.lower() for c in alerts_df.columns]
+        trips_query = 'SELECT plant_nm, vehicle_id, qty_shortage, invoice_no, created_on FROM sales_trips_till_date'
 
-        # Step 2: Fetch trips (include invoice_no, keep columns uppercase)
-        trips_query = 'SELECT "PLANT_NM", "VEHICLE_ID", "QTY_SHORTAGE", "INVOICE_NO" FROM sales_trips_till_date'
+        # Extract date from cross_filters safely
+        today = datetime.now().date()
+        date_selection = None
+        for f in cross_filters:
+            print("Cross filter:", f)
+            if getattr(f, "key", None) == "date":
+                date_selection = getattr(f, "value", None)
+                break
+
+        trip_date_filter = ""
+        if date_selection:
+            if "," in date_selection:  # handle between dates like "2025-09-03,2025-10-03"
+                start_date, end_date = date_selection.split(",")
+                trip_date_filter = f"WHERE created_on::date BETWEEN '{start_date}' AND '{end_date}'"
+            else:
+                date_selection = date_selection.lower()
+                if date_selection == "today":
+                    trip_date_filter = f"WHERE created_on::date = '{today}'"
+                elif date_selection == "yesterday":
+                    yesterday = today - timedelta(days=1)
+                    trip_date_filter = f"WHERE created_on::date = '{yesterday}'"
+
+        if trip_date_filter:
+            trips_query += f" {trip_date_filter}"
+        # print("Final trips query:", trips_query)
+
         trips_df = await VTSAnalyticsActions.execute_query(trips_query)
-
-        print("=== Trips DataFrame ===")
-        print(trips_df.head())
-        print("Columns:", trips_df.columns)
-
         if trips_df.empty:
-            print("No trips found. Returning empty response.")
+            print("No trips found, returning empty response")
             return {"status": "success", "invoice_count": 0, "trips": []}
-
-        # Step 3: Assign BU based on PLANT_NM
         if 'location_name' in alerts_df.columns and 'bu' in alerts_df.columns:
             plant_bu_mapping = alerts_df[['location_name', 'bu']].drop_duplicates()
-            print("=== Plant BU Mapping ===")
-            print(plant_bu_mapping.head())
             trips_df = trips_df.merge(
                 plant_bu_mapping,
                 how='left',
-                left_on='PLANT_NM',
+                left_on='plant_nm',
                 right_on='location_name'
             ).drop(columns=['location_name'], errors='ignore')
-            print("After merging BU:")
-            print(trips_df.head())
 
-        # Step 4: Assign transporter_code based on PLANT_NM + VEHICLE_ID
         if {'location_name', 'vehicle_number', 'transporter_code'}.issubset(alerts_df.columns):
             alerts_vehicle_mapping = alerts_df[['location_name', 'vehicle_number', 'transporter_code']].drop_duplicates()
-            print("=== Alerts Vehicle Mapping ===")
-            print(alerts_vehicle_mapping.head())
             trips_df = trips_df.merge(
                 alerts_vehicle_mapping,
                 how='left',
-                left_on=['PLANT_NM', 'VEHICLE_ID'],
+                left_on=['plant_nm', 'vehicle_id'],
                 right_on=['location_name', 'vehicle_number']
             ).drop(columns=['vehicle_number', 'location_name'], errors='ignore')
-            print("After merging transporter_code:")
-            print(trips_df.head())
-
-        # Step 5: Fetch transporter_name from email_master
+            
         email_query = "SELECT transporter_code, transporter_name FROM email_master"
         email_df = await VTSAnalyticsActions.execute_query(email_query)
-        print("=== Email Master DataFrame ===")
-        print(email_df.head())
         if not email_df.empty:
             email_df.columns = [c.lower() for c in email_df.columns]
             trips_df = trips_df.merge(email_df, how='left', left_on='transporter_code', right_on='transporter_code')
-            print("After merging transporter_name:")
-            print(trips_df.head())
-
-        # Step 6: Convert QTY_SHORTAGE to numeric
-        trips_df['QTY_SHORTAGE'] = pd.to_numeric(trips_df['QTY_SHORTAGE'], errors='coerce')
-        print("After converting QTY_SHORTAGE to numeric:")
-        print(trips_df[['PLANT_NM', 'VEHICLE_ID', 'QTY_SHORTAGE']].head())
-
-        # Step 7: Filter trips
+        trips_df['qty_shortage'] = pd.to_numeric(trips_df['qty_shortage'], errors='coerce')
         trips_df = trips_df[
             trips_df['transporter_name'].notnull() &
             trips_df['transporter_code'].notnull() &
-            (trips_df['QTY_SHORTAGE'] > 0)
+            (trips_df['qty_shortage'] > 0)
         ]
-        print("After filtering trips:")
-        print(trips_df.head())
 
-        # Step 8: Count invoices
-        invoice_count = trips_df['INVOICE_NO'].nunique() if 'INVOICE_NO' in trips_df.columns else 0
-        print("Invoice count:", invoice_count)
+        invoice_count = trips_df['invoice_no'].nunique() if 'invoice_no' in trips_df.columns else 0
+        # print("Invoice count:", invoice_count)
 
-        # Step 9: Prepare final trips list
-        trips_list = trips_df[['PLANT_NM', 'VEHICLE_ID', 'QTY_SHORTAGE', 'transporter_name']].rename(
+        trips_list = trips_df[['plant_nm', 'vehicle_id', 'qty_shortage', 'transporter_name']].copy()
+
+        # Convert NaNs to None for JSON serialization
+        trips_list['qty_shortage'] = trips_list['qty_shortage'].where(trips_list['qty_shortage'].notnull(), None)
+        trips_list['plant_nm'] = trips_list['plant_nm'].where(trips_list['plant_nm'].notnull(), None)
+        trips_list['vehicle_id'] = trips_list['vehicle_id'].where(trips_list['vehicle_id'].notnull(), None)
+        trips_list['transporter_name'] = trips_list['transporter_name'].where(trips_list['transporter_name'].notnull(), None)
+
+        # Rename columns
+        trips_list = trips_list.rename(
             columns={
-                "PLANT_NM": "Plant Name",
-                "VEHICLE_ID": "Vehicle No",
-                "QTY_SHORTAGE": "Shortage",
+                "plant_nm": "Plant Name",
+                "vehicle_id": "Vehicle No",
+                "qty_shortage": "Shortage",
                 "transporter_name": "Transporter Name"
             }
-        )
-        trips_list = trips_list.where(pd.notnull(trips_list), None).to_dict(orient="records")
-        print("Final trips list sample:")
-        print(trips_list[:5])
-
+        ).to_dict(orient="records")
         return {
             "status": "success",
             "invoice_count": invoice_count,

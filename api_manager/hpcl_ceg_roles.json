@@ -6698,6 +6698,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "salestripstilldate",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "SalesTripsTillDate",
+            "attributes": {},
+            "uris": [
+                "/api/salestripstilldate/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "salestripstilldate_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "SalesTripsTillDate_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/salestripstilldate/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "salestripstilldate_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "SalesTripsTillDate_admin",
+            "attributes": {},
+            "uris": [
+                "/api/salestripstilldate/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
