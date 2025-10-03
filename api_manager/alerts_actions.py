@@ -199,10 +199,25 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
     action_data = connection_mapping.alert_action.get(data.bu)[data.alert_section]
     close_alert_details['category'] = action_data.get("category", {"Others": "Others"})
     close_alert_details['rca_reason'] = action_data.get("rca_reason", ["Other"])
-    close_alert_details['actions'] = {
+    # close_alert_details['actions'] = {
+    #     key: value['name'] for key, value in action_data.get("actions", {}).items()
+    #     if alert_role in value.get("roles", [])
+    # }
+    all_actions = {
         key: value['name'] for key, value in action_data.get("actions", {}).items()
         if alert_role in value.get("roles", [])
     }
+    if data.alert_section in ["VTS"] and data.bu in ['TAS']:
+        if alert_data.get("action_on","") in ['maker']:
+            allowed = {"UnBlock", "Accept & Close"}
+            close_alert_details['actions'] = {k: v for k, v in all_actions.items() if k in allowed}
+        elif alert_data.get("action_on","") in ['checker']:
+            allowed = {"Approve", "Reject", "Send It Back"}
+            close_alert_details['actions'] = {k: v for k, v in all_actions.items() if k in allowed}
+        else:
+            close_alert_details['actions'] = all_actions
+    else:
+        close_alert_details['actions'] = all_actions
     return close_alert_details
     # close_alert_details = {
     #     "actions": {

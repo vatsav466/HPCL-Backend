@@ -1467,6 +1467,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     vehicle_unblocked_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vehicle_unblocked_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     mark_as_false: Mapped[typing.Optional[bool]] = mapped_column("mark_as_false", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     vts_alert_history_ids: Mapped[typing.Optional[typing.List[str]]] = mapped_column("vts_alert_history_ids", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    action_on: Mapped[typing.Optional[typing.Any]] = mapped_column("action_on", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1557,6 +1558,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     vehicle_unblocked_date: typing.Optional[datetime.datetime] | None = None
     mark_as_false: typing.Optional[bool] = pydantic.Field(False, )
     vts_alert_history_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    action_on: typing.Optional[hpcl_ceg_enum.MakerChecker] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -1656,6 +1658,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     vehicle_unblocked_date: typing.Optional[datetime.datetime] | None = None
     mark_as_false: typing.Optional[bool] = pydantic.Field(False, )
     vts_alert_history_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    action_on: typing.Optional[hpcl_ceg_enum.MakerChecker] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -7104,6 +7107,22 @@ class VendorApiAuditGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class VtsTruckHistoryCreate(pydantic.BaseModel):
+    violated_date: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_code: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+    stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
+    route_deviation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    speed_violation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    main_supply_removal_count: typing.Optional[int] = pydantic.Field(0, **{})
+    night_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
+    no_halt_zone_count: typing.Optional[int] = pydantic.Field(0, **{})
+    device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
+    device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
+    continuous_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
+    last_violated_date: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class VtsTruckDetailsSchema(UrdhvaPostgresBase):
     __tablename__ = 'vts_truck_details'
     
@@ -7119,6 +7138,7 @@ class VtsTruckDetailsSchema(UrdhvaPostgresBase):
     instance_3: Mapped[typing.Optional[int]] = mapped_column("instance_3", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     blacklist: Mapped[typing.Optional[bool]] = mapped_column("blacklist", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    truck_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("truck_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(truck_regno, name="vts_truck_details_truck_regno"),)
 
@@ -7138,6 +7158,7 @@ class VtsTruckDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     instance_3: typing.Optional[int] = pydantic.Field(0, **{})
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
     blacklist: typing.Optional[bool] = pydantic.Field(False, )
+    truck_history: typing.Optional[typing.List[VtsTruckHistoryCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -7162,6 +7183,7 @@ class VtsTruckDetails(urdhva_base.postgresmodel.PostgresModel):
     instance_3: typing.Optional[int] = pydantic.Field(0, **{})
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
     blacklist: typing.Optional[bool] = pydantic.Field(False, )
+    truck_history: typing.Optional[typing.List[VtsTruckHistoryCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'

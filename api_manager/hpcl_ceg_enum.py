@@ -41,6 +41,16 @@ class LoginStatus(str, enum.Enum):
 
 
 
+class MakerChecker(str, enum.Enum):
+    MAKER = 'maker'
+    CHECKER = 'checker'
+
+
+
+
+
+
+
 class NotificationLevel(str, enum.Enum):
     InitialNotification = 'InitialNotification'
     InitialEscalation = 'InitialEscalation'

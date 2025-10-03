@@ -1,6 +1,7 @@
 import urdhva_base
 import pandas as pd
 import typing
+import json
 import aiohttp
 import asyncio
 import requests
@@ -344,7 +345,8 @@ async def get_instance(tt_number: str, sap_id: str, bu: str, get_raw_data=False)
             "instance_2": 0,
             "instance_3": 0,
             "alert_id": "",
-            "blacklist": False
+            "blacklist": False,
+            "truck_history": []
         }
         #print("vts_truck_record",vts_truck_record)
         await hpcl_ceg_model.VtsTruckDetailsCreate(**vts_truck_record).create()
@@ -581,15 +583,35 @@ async def update_vts_instance(alert_data):
     
 async def create_vts_alerts(enriched_data):
     try:
-        for entry in enriched_data:
-            if await is_vehicle_blacklisted(entry['tl_number']):
-                continue
+        for entry in enriched_data:            
             entry['auto_unblock'] = True
             entry['violation_type'] = await get_vts_violation(entry)
             entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
                 lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
             await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
-            if not await is_alert_exists(entry['tl_number']):
+            # Skipping if the truck is already blacklisted
+            if await is_vehicle_blacklisted(entry['tl_number']):
+                black_list_query = f"select * from vts_truck_details where truck_regno = '{entry['tl_number']}'"
+                vts_blacklist_data = await hpcl_ceg_model.VtsTruckDetails.get_aggr_data(black_list_query, limit=0)
+                vts_truck_data = vts_blacklist_data['data'][0]
+                truck_history = vts_truck_data.get("truck_history") or []
+                truck_history.append({
+                    "violated_date": entry["vts_end_datetime"].isoformat() if isinstance(entry["vts_end_datetime"], datetime.datetime) else entry["vts_end_datetime"],
+                    "transporter_code": entry["vendor_id"],
+                    "invoice_number": entry["invoice_number"],
+                    "stoppage_violations_count": entry["stoppage_violations_count"],
+                    "route_deviation_count": entry["route_deviation_count"],
+                    "speed_violation_count": entry["speed_violation_count"],
+                    "main_supply_removal_count": entry["main_supply_removal_count"],
+                    "night_driving_count": entry["night_driving_count"],
+                    "no_halt_zone_count": entry["no_halt_zone_count"],
+                    "device_offline_count": entry["device_offline_count"],
+                    "device_tamper_count": entry["device_tamper_count"],
+                    "continuous_driving_count": entry["continuous_driving_count"],
+                    "last_violated_date": truck_history[-1]['violated_date'] if len(truck_history) else ""})
+                await hpcl_ceg_model.VtsTruckDetails(**{"id": vts_truck_data['id'], "truck_history": truck_history}).modify()
+                continue
+            if not await is_alert_exists(entry['tl_number']):                
                 await alert_manager.create_alert({**entry, "alert_type": "VTS"})
             else:
                 await update_vts_instance(entry)
@@ -659,6 +681,43 @@ async def close_vts_alerts(alert_id):
     alert_data['alert_status'] = 'Close'
     alert_data['alert_state'] = 'Resolved'
     await hpcl_ceg_model.Alerts(**{"id": alert_id, "alert_history": alert_history, "alert_status": "Close", "alert_state": "Resolved"}).modify()
+
+async def fetch_access_token():
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    data = {
+        "grant_type": "client_credentials",
+        "client_id": urdhva_base.settings.lpg_vts_client_id,
+        "client_secret": urdhva_base.settings.lpg_vts_client_secret_key,
+        "client_authentication": "send_as_basic_auth_header"
+    }
+    try:
+        response = requests.post(urdhva_base.settings.lpg_vts_auth_url, headers=headers, data=data, timeout=10, verify=False)
+        response.raise_for_status()
+        token_data = response.json()
+        return token_data.get("access_token")
+    except requests.exceptions.RequestException as e:
+        print(f"[ERROR] Failed to fetch token: {e}")
+        return None
+
+async def post_lpg_tt(payload):
+    access_token = await fetch_access_token()
+    if not access_token:
+        print(f"[ERROR] Failed to fetch token")
+        return None
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    try:
+        response = requests.post(urdhva_base.settings.lpg_publish_url, headers=headers, data=json.dumps(payload),
+                                 timeout=15, verify=False)
+        response.raise_for_status()
+        print("response->",response.json())
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"[ERROR] Publish API call failed: {e}")
+        return None
 
 # device_tamper_count
 # main_supply_removal_count

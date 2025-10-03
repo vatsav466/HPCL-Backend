@@ -25,6 +25,26 @@ async def sync_user_roles():
         "name": "SOD",
         "status": True
     },
+    "Zonal Head SOD": {
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    }
+                ]
+            }
+        ],
+        "name": "SOD",
+        "status": True
+    },
     "Zonal Operations LPG": {
         "allowed_pages": [
             {
@@ -616,6 +636,20 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS Home"
+                    },
+                    {
+                        "title": "Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Analytics"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            }
+                        ]
                     }
                 ]
             }
@@ -1141,6 +1175,28 @@ async def sync_user_roles():
                         {
                         "title": "LPG Insights"
                         }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Home"
+                    },
+                    {
+                        "title": "Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Analytics"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            }
                         ]
                     }
                 ]
