@@ -40,7 +40,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                 table = "performance_score_history"
 
             query = f"select * from {table} where bu='{data.bu}' {location_str} {clause}"
-            score = await (PerformanceScore if table == "performance_score" else PerformanceScoreHistory).get_aggr_data(query)
+            score = await (PerformanceScore if table == "performance_score" else PerformanceScoreHistory).get_aggr_data(query, limit=100000)
 
             print("query ", query)
             if not score['data']:

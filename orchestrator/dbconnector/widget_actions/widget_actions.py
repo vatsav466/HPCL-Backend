@@ -360,6 +360,14 @@ class WidgetActions:
                     conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '1 MONTH'") 
                 elif value == '3m':
                     conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '3 MONTH'")
+                elif len(value.split(",")) == 2:
+                    value = value.split(",")
+                    start, end = value
+                    if not isinstance(value, str):
+                        if len(value) == 1:
+                            conditions.append(f"{key}::DATE = '{value}'")
+                        else:
+                            conditions.append(f"{key}::DATE BETWEEN '{start}' AND '{end}'")
             elif condition == 'date_range':
                 value = value.split(",")
                 start, end = value

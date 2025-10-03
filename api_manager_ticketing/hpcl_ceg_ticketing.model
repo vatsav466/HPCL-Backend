@@ -144,6 +144,7 @@ Model Ticketing {
         sap_id optional str
         sop_id optional str
         alert_section optional str
+        alert_type optional list str
         location_name optional str
         assignee optional str
         summary optional str
