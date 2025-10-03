@@ -79,7 +79,7 @@ async def generate_performance_score(bu, location_id=None):
     print("performance_score --> ", performance_score)
     # Updating performance score to database
     await hpcl_ceg_model.PerformanceScore.bulk_update(performance_score.copy(), upsert=True)
-    await hpcl_ceg_model.PerformanceScoreHistory.bulk_update(performance_score, upsert=False)
+    await hpcl_ceg_model.PerformanceScoreHistory.bulk_update(performance_score, upsert=True)
     return performance_score
 
 
