@@ -6800,6 +6800,8 @@ class PerformanceScoreHistorySchema(UrdhvaPostgresBase):
     rank: Mapped[int] = mapped_column("rank", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
     category: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("category", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(sap_id, timestamp, name="performance_score_history_sap_id_timestamp"),)
+
 
 class PerformanceScoreHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'performance_score_history'
@@ -6820,7 +6822,7 @@ class PerformanceScoreHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel)
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = PerformanceScoreHistorySchema
-        upsert_keys = []
+        upsert_keys = ['sap_id', 'timestamp']
         access_key_mapping = ['location_id:sap_id']
 
 
@@ -6843,7 +6845,7 @@ class PerformanceScoreHistory(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = PerformanceScoreHistorySchema
-        upsert_keys = []
+        upsert_keys = ['sap_id', 'timestamp']
         access_key_mapping = ['location_id:sap_id']
 
 
