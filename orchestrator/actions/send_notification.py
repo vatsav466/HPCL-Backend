@@ -997,8 +997,10 @@ class SendNotification:
         interlock_name = self.alert_data.get("interlock_name","")
         alert_section = self.alert_data.get("alert_section","")
         if self.alert_data.get("alert_section","") in ["VTS"]:
-            if self.alert_data['created_at']> datetime.datetime(2025, 10, 3, 23, 59, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
+            if self.alert_data['created_at']> datetime.datetime(2025, 10, 3, 13, 20, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                if self.alert_data['sap_id'] in ['1652','1672','1693','1462','1649']:
+                    rolemapping = role_configuration.vts_sod_top_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if mailto and mailto in ["0","1","2"]:
                     print("taking roles using va_level---->",rolemapping["rolemailto"].get(mailto,""))
                     return rolemapping["rolemailto"].get(mailto,"")   
@@ -1027,8 +1029,10 @@ class SendNotification:
         if self.alert_data.get("alert_section","") in ["VTS"]:
             interlock_name = self.alert_data.get("interlock_name","")
             alert_section = self.alert_data.get("alert_section","")
-            if self.alert_data['created_at']> datetime.datetime(2025, 10, 1, 13, 22, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
+            if self.alert_data['created_at']> datetime.datetime(2025, 10, 3, 13, 20, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                if self.alert_data['sap_id'] in ['1652','1672','1693','1462','1649']:
+                    rolemapping = role_configuration.vts_sod_top_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if mqof and mqof in ["0","1","2"]:
                     return rolemapping["mqof"].get(mqof,"")
             if mqof and mqof in ["0","1","2"]:
