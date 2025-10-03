@@ -869,6 +869,8 @@ class SendNotification:
             else:
                 self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",")
             self.update_alert["action_msg"] = "Mail sent to " + ", ".join(f"'{roles_name}'" for roles_name in self.update_alert["last_notified_to"])
+            if self.params.get("messagetype") in ["resolved"] and self.alert_data.get("alert_section","") in ["VTS"]:
+                self.update_alert["action_msg"] = f"ALERT ID: {self.alert_data.get('unique_id')}, MOVED TO CLOSED TAB"
 
         # Convert assigned_user_roles to a list
         self.update_alert["assigned_user_roles"] = (
@@ -888,8 +890,11 @@ class SendNotification:
         processed_time = datetime.datetime.now(datetime.timezone.utc)
         self.update_alert["processed_time"] = processed_time.isoformat()
         # Ensure alert_history is a list and append the new update
-        alert_data.setdefault("alert_history", []).append(self.update_alert)
-
+        if self.params.get("messagetype") in ["escalation", "escalate"]:
+            if self.alert_data['alert_section'] in ['TAS','RO','VA','LPG','EMLock']:
+                alert_data.setdefault("alert_history", []).append(self.update_alert)
+        else:
+            alert_data.setdefault("alert_history", []).append(self.update_alert)
         # Append to assigned_user_roles only if message_type is "escalation"
         if self.params.get("messagetype", "") == "escalation":
             # Ensure existing roles are a list
@@ -992,8 +997,13 @@ class SendNotification:
         interlock_name = self.alert_data.get("interlock_name","")
         alert_section = self.alert_data.get("alert_section","")
         if self.alert_data.get("alert_section","") in ["VTS"]:
-            rolemapping = role_configuration.role_Mapping[alert_section][self.alert_data.get("bu","")].get(interlock_name, {})
+            if self.alert_data['created_at']> datetime.datetime(2025, 10, 1, 13, 22, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
+                rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                if mailto and mailto in ["0","1","2"]:
+                    print("taking roles using va_level---->",rolemapping["rolemailto"].get(mailto,""))
+                    return rolemapping["rolemailto"].get(mailto,"")   
             if mailto and mailto in ["0","1","2"]:
+                rolemapping = role_configuration.role_Mapping[alert_section][self.alert_data.get("bu","")].get(interlock_name, {})
                 return rolemapping["rolemailto"].get(mailto,"")
             
         elif self.alert_data.get("alert_section","") in ["RO"]:
@@ -1017,8 +1027,12 @@ class SendNotification:
         if self.alert_data.get("alert_section","") in ["VTS"]:
             interlock_name = self.alert_data.get("interlock_name","")
             alert_section = self.alert_data.get("alert_section","")
-            rolemapping = role_configuration.role_Mapping[alert_section][self.alert_data.get("bu","")].get(interlock_name, {})
+            if self.alert_data['created_at']> datetime.datetime(2025, 10, 1, 13, 22, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
+                rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                if mqof and mqof in ["0","1","2"]:
+                    return rolemapping["mqof"].get(mqof,"")
             if mqof and mqof in ["0","1","2"]:
+                rolemapping = role_configuration.role_Mapping[alert_section][self.alert_data.get("bu","")].get(interlock_name, {})
                 return rolemapping["mqof"].get(mqof,"")
             
         elif self.alert_data.get("alert_section","") in ["VA"]:

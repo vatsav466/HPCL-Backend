@@ -206,6 +206,13 @@ class AlertFactory:
                     bu=base_data['bu'], violation_type=alert_data.get('violation_type', ''),
                     sap_id=str(base_data['sap_id'])
                 )
+            elif alert_data.get("alert_section", '') in ["VTS"] and base_data['bu'] in ["TAS"]:
+                alert_level = await vts_analysis.get_vts_levels(
+                    bu=base_data['bu'], vehicle_number=alert_data.get('vehicle_number', ''),
+                    sap_id=str(base_data['sap_id']),
+                    alert_section=alert_data.get('alert_section','')
+                )
+                print("alert_level----->",alert_level)
             else:
                 await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
