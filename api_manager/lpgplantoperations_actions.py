@@ -25,6 +25,7 @@ async def check_telnet(host_ip: str, port: int):
     except Exception:
         return {"status": "down", "latency": "-"}
 
+# Action check_connection_status
 @router.post('/check_connection_status', tags=['LpgPlantOperations'])
 async def lpgplantoperations_check_connection_status(data: Lpgplantoperations_Check_Connection_StatusParams):
     sap_id = data.sap_id

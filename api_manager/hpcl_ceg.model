@@ -2381,8 +2381,8 @@ Model PerformanceScore {
 
 Model PerformanceScoreHistory {
     bu index_field str
-    sap_id index_field str
-    timestamp datetime
+    sap_id unique_field index_field str
+    timestamp unique_field datetime
     zone index_field str
     region index_field str
     name index_field str
@@ -3330,4 +3330,37 @@ Model EmailMaster {
     others optional str
     driver_name optional str
     driver_number optional str
+}
+
+Model SalesTripsTillDate {
+    sbu_cd optional str
+    sbu_nm optional str
+    plant_cd optional str
+    plant_nm optional str
+    zone_cd optional str
+    zone_nm optional str
+    state_cd optional str
+    state_nm optional str
+    location_type optional str
+    division optional str
+    material_group_cd optional str
+    material_group_nm optional str
+    item_no optional str
+    item_nm optional str
+    customer optional str
+    cust_nm optional str
+    invoice_no optional str
+    invoice_type optional str
+    invoice_date optional datetime
+    load_status optional str
+    qty_shortage optional float
+    route optional str
+    load_no optional str
+    vehicle_id optional str
+    carrier_no optional str
+    date_shipped optional datetime
+    load_date optional datetime
+    created_on optional datetime
+    load_dt optional datetime
+    engine_id optional str
 }

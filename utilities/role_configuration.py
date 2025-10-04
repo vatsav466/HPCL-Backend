@@ -816,3 +816,82 @@ role_Mapping={
         }
     }
 }
+
+vts_unblocking_matrix = {
+    "VTS":{
+        "TAS": {
+            "level - 1": {
+                "rolemailto": {
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
+                    "1": "Location In-Charge SOD",
+                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Location In-Charge SOD"
+                },
+                "mqof": {
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
+                    "1": "Location In-Charge SOD"
+                },
+                "condition": "<",
+                "value": 3
+            },
+            "level - 2": {
+                "rolemailto": {
+                    "0": "Location In-Charge SOD",
+                    "1": "Zonal Transport Officer SOD",
+                    "2": "Location In-Charge SOD,Zonal Transport Officer SOD"
+                },
+                "mqof": {
+                    "0": "Location In-Charge SOD",
+                    "1": "Zonal Transport Officer SOD"
+                },
+                "condition": "<>",
+                "value": 5
+            },
+            "level - 3": {
+                "rolemailto": {
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
+                },
+                "mqof": {
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD"
+                },
+                "condition": ">",
+                "value": 5
+            }
+        }
+    }
+}
+
+vts_sod_top_unblocking_matrix = {
+    "VTS":{
+        "TAS": {
+            "level - 1": {
+                "rolemailto": {
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
+                    "1": "Zonal Transport Officer SOD",
+                    "2": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD,Zonal Transport Officer SOD"
+                },
+                "mqof": {
+                    "0": "Safety Officer SOD,Maintenance Officer SOD,Planning Officer SOD",
+                    "1": "Zonal Transport Officer SOD"
+                },
+                "condition": "<",
+                "value": 5
+            },
+            "level - 2": {
+                "rolemailto": {
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
+                },
+                "mqof": {
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD"
+                },
+                "condition": ">",
+                "value": 5
+            }
+        }
+    }
+}

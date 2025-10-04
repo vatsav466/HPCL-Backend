@@ -15,6 +15,7 @@ import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.dbconnector.credential_loader as credential_loader
+import utilities.role_configuration as vts_role_mapping
 
 logger = urdhva_base.logger.Logger.getInstance('vts_alert_log')
 
@@ -718,6 +719,48 @@ async def post_lpg_tt(payload):
     except requests.exceptions.RequestException as e:
         print(f"[ERROR] Publish API call failed: {e}")
         return None
+
+async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_section:str):
+    vts_mapping = vts_role_mapping.vts_unblocking_matrix[alert_section]
+    if sap_id in ['1652','1672','1693','1462','1649']:
+        vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
+    if bu in vts_mapping.keys():
+        query = (f"""select count(*) as "count" from alerts """
+                 f"where bu = '{bu}' and "
+                 f"alert_section = 'VTS' and "
+                 f"vehicle_number = '{vehicle_number}' and "
+                 f"sap_id = '{sap_id}'")
+        # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+        # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        # resp = await function(query=query)
+        resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+        resp = resp.get("data", [])
+        if resp:
+            resp = resp[0]
+            return resp.get("count", 0)
+    return 0
+
+async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_section:str):
+    vts_mapping = vts_role_mapping.vts_unblocking_matrix[alert_section]
+    if sap_id in ['1652','1672','1693','1462','1649']:
+        vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
+    if bu in vts_mapping.keys():
+        vts_level_data = vts_mapping[bu]
+        vts_alert_count = await get_vts_alerts_count(bu=bu, vehicle_number=vehicle_number, sap_id=sap_id, alert_section=alert_section)
+        previous_count = 0
+        for key, value in vts_level_data.items():
+            if value['condition'] == "<":
+                if int(vts_alert_count) <= int(value['value']):
+                    return "level - 1"
+            if value['condition'] == "<>":
+                if int(previous_count) < vts_alert_count <= int(value['value']):
+                    return "level - 2"
+            if value['condition'] == ">":
+                if vts_alert_count > int(value['value']):
+                    return "level - 3"
+            previous_count = value['value']
+    return ""
 
 # device_tamper_count
 # main_supply_removal_count

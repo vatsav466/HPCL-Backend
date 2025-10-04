@@ -52,7 +52,8 @@ async def generate_performance_score(bu, location_id=None):
     va_data = await fetch_va_score(bu)
     # generating performance score for every plant
     performance_score = {}
-    present_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
+    present_timestamp = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d")
+    present_timestamp = datetime.datetime.strptime(present_timestamp, "%Y-%m-%d")
     for location in locations:
         print("location --> ", location)
         # Generating performance score for each location
@@ -78,7 +79,7 @@ async def generate_performance_score(bu, location_id=None):
     print("performance_score --> ", performance_score)
     # Updating performance score to database
     await hpcl_ceg_model.PerformanceScore.bulk_update(performance_score.copy(), upsert=True)
-    await hpcl_ceg_model.PerformanceScoreHistory.bulk_update(performance_score, upsert=False)
+    await hpcl_ceg_model.PerformanceScoreHistory.bulk_update(performance_score, upsert=True)
     return performance_score
 
 
