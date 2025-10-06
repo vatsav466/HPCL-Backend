@@ -922,14 +922,20 @@ async def publish_daily_novex_status_email():
         to_recipients=["debeshp@hpcl.in","sanjayk@hpcl.in"],
         cc_recipients=["gargam@hpcl.in","vikas.kaushal@hpcl.in","amitra@hpcl.in"],
         bcc_recipients=["cvmallinath@hpcl.in"],
-        notification_data=status_data
+        notification_data=status_data,
+        inline_images={
+            "dry_out_lost": f"{chart_path}"
+        }
     )
     await send_notification(
         template_name="seg2.html",
         to_recipients=["abalaji@hpcl.in"],
         cc_recipients=["anujjain@hpcl.in","shubhra.Narayan@hpcl.in"],
         bcc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
-        notification_data=status_data
+        notification_data=status_data,
+        inline_images={
+            "dry_out_lost": f"{chart_path}"
+        }
     )
     await send_notification(
         template_name="seg3.html",
@@ -947,7 +953,7 @@ async def publish_daily_novex_status_email():
     )
 
 
-async def send_notification(template_name, to_recipients, cc_recipients=None, bcc_recipients=None, notification_data=None):
+async def send_notification(template_name, to_recipients, cc_recipients=None, bcc_recipients=None, notification_data=None, inline_images=None):
     template_path = os.path.join(
         os.path.dirname(hpcl_ceg_model.__file__),
         '..', 'orchestrator', 'reporting_services',
@@ -960,11 +966,6 @@ async def send_notification(template_name, to_recipients, cc_recipients=None, bc
     tmp_file = f"/tmp/{template_name}"
     with open(tmp_file, 'w') as f:
         f.write(final_data)
-    
-    inline_images={
-        "dry_out_lost": f"{chart_path}"
-    }
-    
     # Send email
     ins = await notification_factory.get_notification_module("email")
     await ins.publish_message(
@@ -975,7 +976,7 @@ async def send_notification(template_name, to_recipients, cc_recipients=None, bc
         html_content=True,
         body=final_data,
         force_send=True,
-        inline_images=inline_images or {},
+        inline_images=inline_images or {}
     )
 
 if __name__ == "__main__":
