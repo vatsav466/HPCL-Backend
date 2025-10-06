@@ -7,9 +7,11 @@ import decimal
 import asyncio
 import datetime
 import pandas as pd
+import numpy as np
 import hpcl_ceg_model
 import indentdryout_actions
 import urdhva_base.utilities
+import matplotlib.pyplot as plt
 from types import SimpleNamespace
 import utilities.helpers as helpers
 import dateutil.parser as dt_parser
@@ -28,6 +30,7 @@ ytd = {"key": "\"YTD\"", "cond": "equals", "value": "true"}
 ytpm = {"key": "\"YTDPM\"", "cond": "equals", "value": "true"}
 cumulative = {"key": "\"C\"", "cond": "equals", "value": "true"}
 
+chart_path = ""
 
 def round_off(value, input_type='growth'):
     """Round off functionality with rules"""
@@ -61,6 +64,53 @@ def get_growth_percentage(current, hist):
     else:
         return round_off(0)
 
+async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
+    global chart_path
+    chart_path = out_path
+    df = zone_fuel_df.copy()
+    df['Month'] = df['Month'].astype(str)
+    df['MS in KL'] = pd.to_numeric(df['MS in KL'], errors='coerce').fillna(0)
+    df['HSD in KL'] = pd.to_numeric(df['HSD in KL'], errors='coerce').fillna(0)
+
+    df['MS in KL'] = df['MS in KL'] / 1000.0
+    df['HSD in KL'] = df['HSD in KL'] / 1000.0
+
+    try:
+        order_key = pd.to_datetime(df['Month'], format="%b'%y")
+        df = df.assign(_order=order_key).sort_values('_order')
+    except Exception:
+        df = df.reset_index(drop=True)
+
+    months = df['Month'].tolist()
+    ms_vals = df['MS in KL'].to_numpy()
+    hsd_vals = df['HSD in KL'].to_numpy()
+
+    x = np.arange(len(months))
+    width = 0.32   # Reduced for gap
+    bar_gap = 0.10 # Small gap between bars
+
+    plt.style.use('default')
+    fig, ax = plt.subplots(figsize=(10, 5.2))
+    ms_color = '#1f77b4'
+    hsd_color = '#ff7f0e'
+
+    # Add small gap between side-by-side bars
+    ax.bar(x - width/2 - bar_gap/2, ms_vals, width, label='MS', color=ms_color)
+    ax.bar(x + width/2 + bar_gap/2, hsd_vals, width, label='HSD', color=hsd_color)
+
+    ax.set_title('Monthly Loss of Sales Due to Partial Dryouts', fontsize=14, pad=10)
+    ax.set_xticks(x)
+    ax.set_xticklabels(months, fontsize=10)
+    ax.yaxis.grid(True, linestyle='-', linewidth=0.6, alpha=0.35)
+    ax.set_axisbelow(True)
+    ax.margins(x=0.02)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.12), ncol=2, frameon=False)
+
+    fig.tight_layout()
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    fig.savefig(out_path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    return out_path
 
 def get_zones_by_performance(actual, target, by_sbu=False, req_key='Zone_Name'):
     # Getting top and least performing zones
@@ -564,54 +614,38 @@ async def fetch_dryout_data():
                                                date_time_format=None)
     month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
                                                date_time_format="%Y-%m-%d")
-    loss_query = f"""SELECT
-                        CASE zone
-                            WHEN 'CEN' THEN 'CZ'
-                            WHEN 'ECZ' THEN 'ECZ'
-                            WHEN 'EAS' THEN 'EZ'
-                            WHEN 'NCR' THEN 'NCZ'
-                            WHEN 'NFZ' THEN 'NFZ'
-                            WHEN 'NWF' THEN 'NWFZ'
-                            WHEN 'NWR' THEN 'NWZ'
-                            WHEN 'NOR' THEN 'NZ'
-                            WHEN 'SCR' THEN 'SCZ'
-                            WHEN 'SWZ' THEN 'SWZ'
-                            WHEN 'SOU' THEN 'SZ'
-                            WHEN 'WES' THEN 'WZ'
-                            ELSE zone
-                        END AS "Zone",
+    loss_query = f"""WITH financial_year_bounds AS (
+                        SELECT
+                            CASE
+                                WHEN EXTRACT(MONTH FROM CURRENT_DATE) >= 4 THEN
+                                    DATE_TRUNC('year', CURRENT_DATE) + INTERVAL '3 months'  -- April 1 current year
+                                ELSE 
+                                    DATE_TRUNC('year', CURRENT_DATE) - INTERVAL '9 months'  -- April 1 last year
+                            END AS fy_start
+                    )
+                    SELECT
+                        TO_CHAR(stock_date, 'Mon''YY') AS "Month",
                         SUM(CASE WHEN product_name = 'MS' THEN loss_of_sale ELSE 0 END) AS "MS in KL",
                         SUM(CASE WHEN product_name = 'HSD' THEN loss_of_sale ELSE 0 END) AS "HSD in KL",
                         SUM(CASE WHEN product_name IN ('HSD', 'MS') THEN loss_of_sale ELSE 0 END) AS "TMF in KL"
                     FROM
-                        daily_product_dry_out
+                        daily_product_dry_out, financial_year_bounds
                     WHERE
-                        stock_date >= '{month_start}' and stock_date<='{date_yes.strftime('%Y-%m-%d')}'
+                        stock_date >= fy_start
+                        AND stock_date < fy_start + INTERVAL '1 year'
+                        AND product_no in (1322000, 1683000)
                     GROUP BY
-                        CASE zone
-                            WHEN 'CEN' THEN 'CZ'
-                            WHEN 'ECZ' THEN 'ECZ'
-                            WHEN 'EAS' THEN 'EZ'
-                            WHEN 'NCR' THEN 'NCZ'
-                            WHEN 'NFZ' THEN 'NFZ'
-                            WHEN 'NWF' THEN 'NWFZ'
-                            WHEN 'NWR' THEN 'NWZ'
-                            WHEN 'NOR' THEN 'NZ'
-                            WHEN 'SCR' THEN 'SCZ'
-                            WHEN 'SWZ' THEN 'SWZ'
-                            WHEN 'SOU' THEN 'SZ'
-                            WHEN 'WES' THEN 'WZ'
-                            ELSE zone
-                        END
+                        TO_CHAR(stock_date, 'Mon''YY'),
+                        DATE_TRUNC('month', stock_date)
                     ORDER BY
-                        "Zone"
+                        DATE_TRUNC('month', stock_date)
                     """
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     zone_data = await function(query=loss_query)
-    # Create DataFrame
     zone_fuel_df = pd.DataFrame(zone_data)
+    chart_path = await generate_chart(zone_fuel_df)
 
     dry_out_cf = {
         'cat_a': cat_a,
@@ -926,6 +960,11 @@ async def send_notification(template_name, to_recipients, cc_recipients=None, bc
     tmp_file = f"/tmp/{template_name}"
     with open(tmp_file, 'w') as f:
         f.write(final_data)
+    
+    inline_images={
+        "dry_out_lost": f"{chart_path}"
+    }
+    
     # Send email
     ins = await notification_factory.get_notification_module("email")
     await ins.publish_message(
@@ -935,7 +974,8 @@ async def send_notification(template_name, to_recipients, cc_recipients=None, bc
         bcc_recipients=bcc_recipients or [],
         html_content=True,
         body=final_data,
-        force_send=True
+        force_send=True,
+        inline_images=inline_images or {},
     )
 
 if __name__ == "__main__":
