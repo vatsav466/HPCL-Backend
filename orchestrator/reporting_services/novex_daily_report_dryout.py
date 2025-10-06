@@ -74,14 +74,14 @@ async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
 
     plt.style.use('default')
     fig, ax = plt.subplots(figsize=(10, 5.2))
-    ms_color = '#1f77b4'
-    hsd_color = '#ff7f0e'
+    ms_color = '#ff7f0e'  
+    hsd_color = '#1f77b4'
 
     # Add small gap between side-by-side bars
     ax.bar(x - width/2 - bar_gap/2, ms_vals, width, label='MS', color=ms_color)
     ax.bar(x + width/2 + bar_gap/2, hsd_vals, width, label='HSD', color=hsd_color)
 
-    ax.set_title('Monthly Loss of Sales Due to Partial Dryouts', fontsize=14, pad=10)
+    ax.set_title('Monthly Loss of Sales Due to Partial Dryouts (KL)', fontsize=14, pad=10)
     ax.set_xticks(x)
     ax.set_xticklabels(months, fontsize=10)
     ax.yaxis.grid(True, linestyle='-', linewidth=0.6, alpha=0.35)
