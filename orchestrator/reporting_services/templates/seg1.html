@@ -50,6 +50,7 @@
         .openAlert th{
             width: 300px;
         }
+        .logo { margin: 15px 0; }
     </style>
 </head>
 
@@ -184,25 +185,10 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>2.6 Zone wise loss of Sales due to Partial Dry outs ({{present_month}})</h5>
-    <table>
-        <thead>
-            <tr>
-                {% for col in zone_fuel_df.columns %}
-                    <th>{{ col }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in zone_fuel_df.to_dict(orient='records') %}
-            <tr>
-                {% for col in zone_fuel_df.columns %}
-                    <td>{{ row[col] }}</td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h5>2.6 Monthly Loss of Sales due to Partial Dry-outs</h5>
+    <div class="logo">
+        <img src="cid:dry_out_lost" alt="HP Pay Logo" width="800" height="auto">
+    </div>
     <h4>3. LPG Operations Summary</h4>
     <h5>3.1. Top 3 LPG plants based on performance score ({{present_month}})</h5>
     <table>
