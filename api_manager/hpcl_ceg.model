@@ -2377,7 +2377,6 @@ Model PerformanceScore {
 
     Config=> {
         crud_operations='read'
-        access_key_mapping='location_id:sap_id'
     }
 }
 
@@ -2395,7 +2394,6 @@ Model PerformanceScoreHistory {
 
     Config=> {
         crud_operations='read'
-        access_key_mapping='location_id:sap_id'
     }
 }
 

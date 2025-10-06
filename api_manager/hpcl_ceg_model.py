@@ -6744,7 +6744,6 @@ class PerformanceScoreCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = PerformanceScoreSchema
         upsert_keys = ['sap_id']
-        access_key_mapping = ['location_id:sap_id']
 
 
 class PerformanceScore(urdhva_base.postgresmodel.PostgresModel):
@@ -6767,7 +6766,6 @@ class PerformanceScore(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = PerformanceScoreSchema
         upsert_keys = ['sap_id']
-        access_key_mapping = ['location_id:sap_id']
 
 
 class PerformanceScoreGetResp(pydantic.BaseModel):
@@ -6827,7 +6825,6 @@ class PerformanceScoreHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel)
             extra = "forbid"  # Disallow extra fields
         schema_class = PerformanceScoreHistorySchema
         upsert_keys = ['sap_id', 'timestamp']
-        access_key_mapping = ['location_id:sap_id']
 
 
 class PerformanceScoreHistory(urdhva_base.postgresmodel.PostgresModel):
@@ -6850,7 +6847,6 @@ class PerformanceScoreHistory(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = PerformanceScoreHistorySchema
         upsert_keys = ['sap_id', 'timestamp']
-        access_key_mapping = ['location_id:sap_id']
 
 
 class PerformanceScoreHistoryGetResp(pydantic.BaseModel):
