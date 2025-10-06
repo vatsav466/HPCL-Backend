@@ -2318,6 +2318,7 @@ Model PerformanceIndex {
     region str
     name str
     score float
+    is_plant optional bool
 
     Action=> get_pi_score {
         bu str
@@ -2327,6 +2328,7 @@ Model PerformanceIndex {
         sap_id optional str
         strategy str
         filters optional list WidgetFilters
+        is_plant optional bool
     }
 
     Action=> get_pi_score_by_category {

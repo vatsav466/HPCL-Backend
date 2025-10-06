@@ -6618,6 +6618,7 @@ class PerformanceIndexSchema(UrdhvaPostgresBase):
     region: Mapped[str] = mapped_column("region", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     score: Mapped[float] = mapped_column("score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    is_plant: Mapped[typing.Optional[bool]] = mapped_column("is_plant", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
 
 class PerformanceIndexCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -6630,6 +6631,7 @@ class PerformanceIndexCreate(urdhva_base.postgresmodel.BasePostgresModel):
     region: str
     name: str
     score: float
+    is_plant: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -6649,6 +6651,7 @@ class PerformanceIndex(urdhva_base.postgresmodel.PostgresModel):
     region: typing.Optional[str] | None = None
     name: typing.Optional[str] | None = None
     score: typing.Optional[float] | None = None
+    is_plant: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -6672,6 +6675,7 @@ class Performanceindex_Get_Pi_ScoreParams(pydantic.BaseModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     strategy: str
     filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    is_plant: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

@@ -9,7 +9,6 @@ from orchestrator.analytics.performance_index import lpg_performance_index
 router = fastapi.APIRouter(prefix='/performanceindex')
 
 
-# Action get_pi_score
 @router.post('/get_pi_score', tags=['PerformanceIndex'])
 async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParams):
     """
@@ -25,6 +24,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
         resp = await widget_actions.WidgetActions().generate_filter_clause(data.filters) if data.filters else ""
         clause = f" and {resp}" if resp else ""
         table = ""
+        is_plant = getattr(data, "is_plant", False)
         if data.bu in ["TAS", "LPG"]:
             location_str = f" and sap_id='{data.sap_id}'" if data.sap_id else ''
 
@@ -46,42 +46,70 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
             if not score['data']:
                 return {}
 
-            sap_scores = {}
-            for rec in score['data']:
-                sid = rec.get('sap_id', 'UNKNOWN')
-                if sid not in sap_scores:
-                    sap_scores[sid] = {
-                        'total_scores': [],
-                        'categories': {}
-                    }
-                sap_scores[sid]['total_scores'].append(rec['score'])
+            if is_plant:
+                sap_scores = {}
+                for rec in score['data']:
+                    sid = rec.get('sap_id')
+                    if not sid:
+                        continue  # skip records without sap_id
+                    if sid not in sap_scores:
+                        sap_scores[sid] = {
+                            'total_scores': [],
+                            'categories': {}
+                        }
+                    sap_scores[sid]['total_scores'].append(rec['score'])
 
-                for category_ in rec['category']:
-                    cat_name = category_['name']
-                    if cat_name not in sap_scores[sid]['categories']:
-                        sap_scores[sid]['categories'][cat_name] = []
-                    sap_scores[sid]['categories'][cat_name].append({
-                        'score': category_['score'],
-                        'weightage': category_['weightage']
-                    })
+                    for category_ in rec['category']:
+                        cat_name = category_['name']
+                        if cat_name not in sap_scores[sid]['categories']:
+                            sap_scores[sid]['categories'][cat_name] = []
+                        sap_scores[sid]['categories'][cat_name].append({
+                            'score': category_['score'],
+                            'weightage': category_['weightage']
+                        })
 
-            result = {}
-            for sid, details in sap_scores.items():
+                result = {}
+                for sid, details in sap_scores.items():
+                    category_scores = {}
+                    for cat, scores in details['categories'].items():
+                        if scores:
+                            category_scores[cat] = {
+                                'oi_score': round(sum(s['score'] for s in scores) / len(scores), 2),
+                                'weightage': round(sum(s['weightage'] for s in scores) / len(scores), 2)
+                            }
+                    total_scores = details['total_scores']
+                    if total_scores:
+                        result[sid] = [{
+                            'overall_oi_score': round(sum(total_scores) / len(total_scores), 2),
+                            f"{data.bu.lower()}_category_scores": category_scores
+                        }]
+
+                return result
+            else:
+                category = {}
+                for rec in score['data']:
+                    for category_ in rec['category']:
+                        category.setdefault(category_['name'], []).append({
+                            'score': category_['score'],
+                            'weightage': category_['weightage']
+                        })
+
                 category_scores = {}
-                for cat, scores in details['categories'].items():
+                for cat, scores in category.items():
                     if scores:
                         category_scores[cat] = {
                             'oi_score': round(sum(s['score'] for s in scores) / len(scores), 2),
                             'weightage': round(sum(s['weightage'] for s in scores) / len(scores), 2)
                         }
-                total_scores = details['total_scores']
-                if total_scores:
-                    result[sid] = [{
-                        'overall_oi_score': round(sum(total_scores) / len(total_scores), 2),
-                        f"{data.bu.lower()}_category_scores": category_scores
-                    }]
 
-            return result
+                total_scores = [rec['score'] for rec in score['data']]
+                if not total_scores:
+                    return {}
+
+                return {
+                    'overall_oi_score': round(sum(total_scores) / len(total_scores), 2),
+                    f"{data.bu.lower()}_category_scores": category_scores
+                }
         elif data.bu == "RO":
             return {}
 
