@@ -558,13 +558,57 @@ async def fetch_dryout_data():
 
     print("\n===== Summary (Date vs Dry out Count) =====")
     print(summary_df.to_string(index=False))
-
-    zone_data = {
-        "Zone": ["CZ", "EZ", "ECZ", "NZ", "NCZ", "NFZ", "NWFZ", "NWZ", "SZ", "SCZ", "SWZ", "WZ"],
-        "MS in KL":  [81581, 64049, 72322, 32347, 77729, 36448, 24834, 29651, 65788, 137683, 196462, 164138],
-        "HSD in KL": [87799, 36892, 73807, 69353, 96755, 38824, 43669, 26357, 108406, 162920, 157633, 192443],
-        "TMF in KL": [169380, 100941, 146129, 101700, 174484, 75272, 68503, 56008, 174194, 300603, 354095, 356581]
-    }
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                               date_time_format="%Y-%m-%d")
+    loss_query = f"""SELECT
+                        CASE zone
+                            WHEN 'CEN' THEN 'CZ'
+                            WHEN 'ECZ' THEN 'ECZ'
+                            WHEN 'EAS' THEN 'EZ'
+                            WHEN 'NCR' THEN 'NCZ'
+                            WHEN 'NFZ' THEN 'NFZ'
+                            WHEN 'NWF' THEN 'NWFZ'
+                            WHEN 'NWR' THEN 'NWZ'
+                            WHEN 'NOR' THEN 'NZ'
+                            WHEN 'SCR' THEN 'SCZ'
+                            WHEN 'SWZ' THEN 'SWZ'
+                            WHEN 'SOU' THEN 'SZ'
+                            WHEN 'WES' THEN 'WZ'
+                            ELSE zone
+                        END AS "Zone",
+                        SUM(CASE WHEN product_name = 'MS' THEN loss_of_sale ELSE 0 END) AS "MS in KL",
+                        SUM(CASE WHEN product_name = 'HSD' THEN loss_of_sale ELSE 0 END) AS "HSD in KL",
+                        SUM(CASE WHEN product_name IN ('HSD', 'MS') THEN loss_of_sale ELSE 0 END) AS "TMF in KL"
+                    FROM
+                        daily_product_dry_out
+                    WHERE
+                        stock_date >= '{month_start}' and stock_date<='{date_yes.strftime('%Y-%m-%d')}'
+                    GROUP BY
+                        CASE zone
+                            WHEN 'CEN' THEN 'CZ'
+                            WHEN 'ECZ' THEN 'ECZ'
+                            WHEN 'EAS' THEN 'EZ'
+                            WHEN 'NCR' THEN 'NCZ'
+                            WHEN 'NFZ' THEN 'NFZ'
+                            WHEN 'NWF' THEN 'NWFZ'
+                            WHEN 'NWR' THEN 'NWZ'
+                            WHEN 'NOR' THEN 'NZ'
+                            WHEN 'SCR' THEN 'SCZ'
+                            WHEN 'SWZ' THEN 'SWZ'
+                            WHEN 'SOU' THEN 'SZ'
+                            WHEN 'WES' THEN 'WZ'
+                            ELSE zone
+                        END
+                    ORDER BY
+                        "Zone"
+                    """
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    zone_data = await function(query=loss_query)
 
     # Create DataFrame
     zone_fuel_df = pd.DataFrame(zone_data)
@@ -706,37 +750,57 @@ async def lpg_top_bottom_score_plants():
         "2630", "2408", "2316", "2117", "2732"
     ]
     sap_ids_str = ", ".join([f"'{sid}'" for sid in sap_ids])
+    top_query = f"""WITH plant_avg_scores AS (
+                        SELECT
+                        name AS "Plant Name",
+                        zone AS "Zone",
+                        region AS "Region",
+                        AVG(score) AS avg_score
+                        FROM public.performance_score_history
+                        WHERE
+                        bu = 'LPG'
+                        AND zone != ''
+                        AND region != ''
+                        AND timestamp::DATE BETWEEN date_trunc('month', CURRENT_DATE) AND CURRENT_DATE
+                        AND sap_id IN ({sap_ids_str})
+                        AND name NOT ILIKE '%RO%'
+                        GROUP BY name, zone, region
+                        ORDER BY avg_score DESC
+                        LIMIT 3
+                    )
+                    SELECT
+                        ROW_NUMBER() OVER (ORDER BY avg_score DESC) AS "Sl No",
+                        "Plant Name",
+                        "Zone",
+                        "Region",
+                        ROUND(avg_score::numeric, 2) AS "Score"
+                        FROM plant_avg_scores"""
+    bottom_query = f"""WITH plant_avg_scores AS (
+                        SELECT
+                        name AS "Plant Name",
+                        zone AS "Zone",
+                        region AS "Region",
+                        AVG(score) AS avg_score
+                        FROM public.performance_score_history
+                        WHERE
+                        bu = 'LPG'
+                        AND zone != ''
+                        AND region != ''
+                        AND timestamp::DATE BETWEEN date_trunc('month', CURRENT_DATE) AND CURRENT_DATE
+                        AND sap_id IN ({sap_ids_str})
+                        AND name NOT ILIKE '%RO%'
+                        GROUP BY name, zone, region
+                        ORDER BY avg_score ASC
+                        LIMIT 3
+                    )
+                    SELECT
+                        ROW_NUMBER() OVER (ORDER BY avg_score ASC) AS "Sl No",
+                        "Plant Name",
+                        "Zone",
+                        "Region",
+                        ROUND(avg_score::numeric, 2) AS "Score"
+                        FROM plant_avg_scores"""
 
-    top_query = f"""SELECT 
-                        ROW_NUMBER() OVER (ORDER BY score DESC) AS "Sl No",
-                        name AS "Plant Name",
-                        zone AS "Zone",
-                        region AS "Region",
-                        ROUND(score::numeric, 2) AS "Score"
-                    FROM public.performance_score
-                    WHERE bu = 'LPG'
-                    AND zone!=''
-                    AND region!=''
-                    AND timestamp::DATE = CURRENT_DATE
-                    AND sap_id in ({sap_ids_str})
-                    AND name NOT ILIKE '%RO%'
-                    ORDER BY score DESC
-                    LIMIT 3"""
-    bottom_query = f"""SELECT 
-                        ROW_NUMBER() OVER (ORDER BY score ASC) AS "Sl No",
-                        name AS "Plant Name",
-                        zone AS "Zone",
-                        region AS "Region",
-                        ROUND(score::numeric, 2) AS "Score"
-                    FROM public.performance_score
-                    WHERE bu = 'LPG'
-                    AND zone!=''
-                    AND region!=''
-                    AND timestamp::DATE = CURRENT_DATE
-                    AND sap_id in ({sap_ids_str})
-                    AND name NOT ILIKE '%RO%'
-                    ORDER BY score ASC
-                    LIMIT 3"""
     top_resp = await function(query=top_query)
     bottom_resp = await function(query=bottom_query)
     top_resp = pd.DataFrame(top_resp)
@@ -835,7 +899,7 @@ async def send_notification(notification_data):
     # Send email
     ins = await notification_factory.get_notification_module("email")
     for recipient in [
-        ["cvmallinath@hpcl.in","purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in", "adityapandey@hpcl.in"],
+        ["purushm@hpcl.in", "sachinkwarghane@hpcl.in", "adityapandey@hpcl.in"],
         ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"]
         ]:
         await ins.publish_message(
