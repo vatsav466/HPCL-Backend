@@ -156,6 +156,25 @@
             {% endfor %}
         </tbody>
     </table>
+    <h5>1.6 Zone wise loss of Sales due to Partial Dry outs ({{present_month}})</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in zone_fuel_df.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in zone_fuel_df.to_dict(orient='records') %}
+            <tr>
+                {% for col in zone_fuel_df.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 <script>
     window.onload = function () {
         document.querySelectorAll(".growth").forEach(td => {
