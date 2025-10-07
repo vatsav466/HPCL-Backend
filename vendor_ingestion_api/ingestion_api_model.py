@@ -148,6 +148,7 @@ class VtsTripNotClosedCreate(pydantic.BaseModel):
     transporter_id: typing.Optional[str] = pydantic.Field("", **{})
     transporter_name: typing.Optional[str] = pydantic.Field("", **{})
     invoice_no: typing.Optional[str] = pydantic.Field("", **{})
+    trip_id: typing.Optional[str] = pydantic.Field("", **{})
     load_no: typing.Optional[str] = pydantic.Field("", **{})
     route_no: typing.Optional[str] = pydantic.Field("", **{})
     driver_name: typing.Optional[str] = pydantic.Field("", **{})
@@ -170,6 +171,7 @@ class VtsTripWithoutRouteCreate(pydantic.BaseModel):
     transporter_id: typing.Optional[str] = pydantic.Field("", **{})
     transporter_name: typing.Optional[str] = pydantic.Field("", **{})
     invoice_no: typing.Optional[str] = pydantic.Field("", **{})
+    trip_id: typing.Optional[str] = pydantic.Field("", **{})
     load_no: typing.Optional[str] = pydantic.Field("", **{})
     driver_name: typing.Optional[str] = pydantic.Field("", **{})
     scheduled_datetime: typing.Optional[datetime.datetime] | None = None
@@ -178,7 +180,8 @@ class VtsTripWithoutRouteCreate(pydantic.BaseModel):
 
 class VtsRouteTwoKmCreate(pydantic.BaseModel):
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
-    event_date: typing.Optional[datetime.datetime] | None = None
+    event_start_datetime: typing.Optional[datetime.datetime] | None = None
+    event_end_datetime: typing.Optional[datetime.datetime] | None = None
     zone: typing.Optional[str] = pydantic.Field("", **{})
     location_code: typing.Optional[str] = pydantic.Field("", **{})
     destination_code: typing.Optional[str] = pydantic.Field("", **{})
@@ -188,6 +191,7 @@ class VtsRouteTwoKmCreate(pydantic.BaseModel):
     transporter_id: typing.Optional[str] = pydantic.Field("", **{})
     transporter_name: typing.Optional[str] = pydantic.Field("", **{})
     invoice_no: typing.Optional[str] = pydantic.Field("", **{})
+    trip_id: typing.Optional[str] = pydantic.Field("", **{})
     load_no: typing.Optional[str] = pydantic.Field("", **{})
     route_no: typing.Optional[str] = pydantic.Field("", **{})
     driver_name: typing.Optional[str] = pydantic.Field("", **{})
@@ -210,6 +214,7 @@ class VtsUnauthStoppageCreate(pydantic.BaseModel):
     transporter_id: typing.Optional[str] = pydantic.Field("", **{})
     transporter_name: typing.Optional[str] = pydantic.Field("", **{})
     invoice_no: typing.Optional[str] = pydantic.Field("", **{})
+    trip_id: typing.Optional[str] = pydantic.Field("", **{})
     load_no: typing.Optional[str] = pydantic.Field("", **{})
     driver_name: typing.Optional[str] = pydantic.Field("", **{})
     scheduled_datetime: typing.Optional[datetime.datetime] | None = None
