@@ -91,8 +91,8 @@ async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
 
     plt.style.use('default')
     fig, ax = plt.subplots(figsize=(10, 5.2))
-    ms_color = '#ff7f0e' 
-    hsd_color = '#1f77b4'
+    ms_color = '#ff0000'
+    hsd_color = '#00008B'
 
     # Add small gap between side-by-side bars
     ax.bar(x - width/2 - bar_gap/2, ms_vals, width, label='MS', color=ms_color)
