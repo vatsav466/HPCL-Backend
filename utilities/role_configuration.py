@@ -891,6 +891,19 @@ vts_sod_top_unblocking_matrix = {
                 },
                 "condition": ">",
                 "value": 5
+            },
+            "level - 3": {
+                "rolemailto": {
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
+                },
+                "mqof": {
+                    "0": "Zonal Transport Officer SOD",
+                    "1": "Zonal Head SOD"
+                },
+                "condition": ">",
+                "value": 5
             }
         }
     }

@@ -3710,7 +3710,7 @@ class GlobalAnalytics:
             else:
                 query += f" {clause} DATE(process_date) = '{current_date}' AND zone IS NOT NULL"
 
-            query += ' GROUP BY "zone", "location_name"'
+            query += ' GROUP BY "zone", "location_name", "filling_head"'
 
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
             df = pd.DataFrame(resp.get("data", []))

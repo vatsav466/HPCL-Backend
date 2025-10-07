@@ -650,6 +650,9 @@ async def sync_user_roles():
                             "title": "VTS Insights"
                             }
                         ]
+                    },
+                    {
+                        "title": "Alert Manager"
                     }
                 ]
             }
@@ -1198,6 +1201,9 @@ async def sync_user_roles():
                             "title": "VTS Insights"
                             }
                         ]
+                    },
+                    {
+                        "title": "Alert Manager"
                     }
                 ]
             }

@@ -302,6 +302,24 @@ class AlertFactory:
                 if alert_data_dict.get("alert_section") in ["EMLock"]:
                     print("Workflow Skipped")
                     return True, "alert created"
+                # Analog data dont have workflows so skippng it.
+                Analog_data = ['BCU Local Loading',
+                                'Unauthorized flow_BCU',
+                                'Cancel TT Reported',
+                                'Manual FAN printed less than 5% of total TT loaded',
+                                'Manual FAN printed more than 5% of total TT loaded',
+                                'TT Overloaded', 'BCU K- Factor Change',
+                                'Bay reassignment',
+                                'Manual Bay assignment of more than 5% of total TT loaded',
+                                'SickTT Reported',
+                                'MFM K Factor Change',
+                                'Day End Report',
+                                'TAS User access report'
+                                 ]
+                if alert_data_dict.get("alert_section") in ["TAS"] and interlock_name.get("interlock_name") in Analog_data:
+                    print("Workflow Skipped for TAS No Workflow ILs")
+                    logger.info(f"Workflow Skipped for TAS No Workflow ILs: {interlock_name.get('interlock_name')}")
+                    return True, "alert created"
                 await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                 await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
             else:

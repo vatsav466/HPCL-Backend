@@ -149,7 +149,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 query_open = (
                     f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
                     f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'VA' and "
-                    f"bu = 'LPG' group by severity")
+                    f"bu = 'LPG' and created_at >= NOW() - INTERVAL '30 days ' group by severity")
                 data = await hpcl_ceg_model.Alerts.get_aggr_data(query_open)
                 open_alerts = {data['severity']: data['count'] for data in data['data']}
 
@@ -164,15 +164,22 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
 
                 for rule_ in rule['rules']:
                     int_name = rule_['interlock_name']
-                    if int_name in open_alerts or int_name in close_alerts:
+                    if not open_alerts and not close_alerts:
+                        alert_score.append(rule_['weightage'])
+                        print("alert_score:",alert_score)
+                    elif int_name in open_alerts or int_name in close_alerts:
                         close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
                                                                  (close_alerts.get(int_name, 0) +
                                                                   open_alerts.get(int_name, 0)))
                         alert_score.append(close_percentage)
                     else:
                         alert_score.append(rule_['weightage'])
-                print(alert_score, rules['weightage'])
-                score = round((sum(alert_score) * rules['weightage']) / 100, 2)
+                print(alert_score, rule['weightage'])
+                if all(s == 0 for s in alert_score):
+                    # If perfect compliance is achieved, force the module score to 100.0
+                    score = 100 # rules['weightage']
+                else:
+                    score = round((sum(alert_score) * rule['weightage']) / 100, 2)
             else:
                 ...
             pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
