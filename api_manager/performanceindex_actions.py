@@ -31,6 +31,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
         clause = f" and {resp}" if resp else ""
         table = ""
         is_plant = getattr(data, "is_plant", False)
+
         if data.bu in ["TAS", "LPG"]:
             location_str = f" and sap_id='{data.sap_id}'" if data.sap_id else ''
 
@@ -43,6 +44,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
             query = f"select * from {table} where bu='{data.bu}' {location_str} {clause}"
             score_data = await (PerformanceScore if table == "performance_score" else PerformanceScoreHistory).get_aggr_data(query, limit=100000)
             print(query)
+
             if not score_data['data']:
                 return {}
 
@@ -53,7 +55,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                 for rec in score_data['data']:
                     sid = rec.get('sap_id')
                     if not sid:
-                        continue  # skip records without sap_id
+                        continue
                     if sid not in sap_scores:
                         sap_scores[sid] = {
                             'total_scores': [],
@@ -63,7 +65,6 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                             'zone': rec.get('zone') or None
                         }
                     else:
-                        # Fill missing details if available
                         sap_scores[sid]['name'] = sap_scores[sid]['name'] or rec.get('name')
                         sap_scores[sid]['region'] = sap_scores[sid]['region'] or rec.get('region')
                         sap_scores[sid]['zone'] = sap_scores[sid]['zone'] or rec.get('zone')
@@ -90,23 +91,33 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                                 'oi_score': round(sum(s['score'] for s in scores) / len(scores), 2),
                                 'weightage': round(sum(s['weightage'] for s in scores) / len(scores), 2)
                             }
+
                     total_scores = details['total_scores']
                     if total_scores:
                         overall = round(sum(total_scores) / len(total_scores), 2)
+
+                        # ---- Get full category from the record if exists ----
+                        full_category = None
+                        for rec in score_data['data']:
+                            if rec.get('sap_id') == sid and 'category' in rec:
+                                full_category = rec.get('category')
+                                break
+
                         temp_result.append({
                             'sap_id': sid,
                             'name': details['name'],
                             'region': details['region'],
                             'zone': details['zone'],
                             'overall_oi_score': overall,
+                            'category': full_category,  # ✅ Full category list from DB
                             f"{data.bu.lower()}_category_scores": category_scores
                         })
 
                 if not temp_result:
                     return {}
 
-                # Ranking
-                temp_result.sort(key=lambda x: (x['overall_oi_score'], str(x['sap_id'])))
+                # ----- Ranking (descending = higher score = better rank) -----
+                temp_result.sort(key=lambda x: (-x['overall_oi_score'], str(x['sap_id'])))
                 rank_mode = 'competition'
                 prev_score = None
                 prev_rank = 0
@@ -123,7 +134,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                     prev_score = cur_score
                     prev_rank = rank
 
-                # Convert to DataFrame to compute national average
+                # Compute national average
                 df = pd.DataFrame(temp_result)
                 national_avg = round(float(df['overall_oi_score'].mean()), 2)
                 performance_score = {rec['sap_id']: rec for rec in temp_result}
@@ -164,7 +175,6 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                     f"{data.bu.lower()}_category_scores": category_scores
                 }
 
-        # Other BUs
         elif data.bu == "RO":
             return {}
         else:
@@ -173,6 +183,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
     except Exception as e:
         print(traceback.format_exc())
         return False, "Error in getting performance index score"
+
 
 
 
