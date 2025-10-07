@@ -514,6 +514,7 @@ Model TASAssetMaster {
     }
 }
 
+
 Model LPGAssetMaster {
     bu index_field BusinessUnit
     sap_id index_field str
@@ -3363,4 +3364,30 @@ Model SalesTripsTillDate {
     created_on optional datetime
     load_dt optional datetime
     engine_id optional str
+}
+
+Model VtsOngoingTrips {
+    violation_type optional str
+    event_start_date optional datetime
+    event_end_date optional datetime
+    sap_id optional str
+    region optional str
+    zone optional str
+    destination_code optional str
+    location_type optional str
+    tt_type optional str
+    tt_number optional str
+    transporter_id optional str
+    transporter_name optional str
+    invoice_no optional str
+    load_no optional str
+    route_no optional str
+    driver_name optional str
+    scheduled_start_datetime optional datetime
+    scheduled_end_datetime optional datetime
+    actual_trip_start_datetime optional datetime
+    actual_end_start_datetime optional datetime
+    vehicle_latitude optional float
+    vehicle_longitude optional float
+    vehicle_location optional str
 }
