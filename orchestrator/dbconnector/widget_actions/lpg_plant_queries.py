@@ -1053,6 +1053,7 @@ LIMIT 10000;''',
     "lpg_operations_productivity_zone": '''   
                         select
                             zone,
+                            sap_id,
                             location_name AS plant,
                             filling_head as carousel_type,
                             SUM(total_production) as total_production,
@@ -1064,6 +1065,7 @@ LIMIT 10000;''',
     "lpg_operations_production_zone": ''' 
                         select
                             zone,
+                            sap_id,
                             location_name AS plant,
                             filling_head as carousel_type,
                             SUM(production_14_2kg) AS "14_kg",
@@ -1073,7 +1075,8 @@ LIMIT 10000;''',
 
     "lpg_operations_pq_rejection": '''
                     SELECT
-                        zone as zone,
+                        zone,
+                        sap_id,
                         location_name as plant,
                         'CS' AS rejection_type,
                         filling_head as carousel_type,
@@ -1090,6 +1093,7 @@ LIMIT 10000;''',
     'productivity_overtime_vs_break_production': '''  
                             SELECT 
                                 zone,
+                                sap_id,
                                 location_name as plant,
                                 filling_head as carousel_type,
                                 SUM(break_net_hours) as break_production,
@@ -1100,6 +1104,7 @@ LIMIT 10000;''',
     'lpg_operations_daywise_productivity': '''  
                                 SELECT 
                                     zone,
+                                    sap_id,
                                     location_name AS plant,
                                     filling_head as carousel_type,
                                     ROUND(SUM(total_production), 2) as total_production,
@@ -1111,6 +1116,7 @@ LIMIT 10000;''',
     'lpg_operations_daywise_production': '''  
                             SELECT 
                                 zone,
+                                sap_id,
                                 location_name AS plant,
                                 filling_head as carousel_type,
                                 SUM(production_14_2kg) AS "14_kg",
