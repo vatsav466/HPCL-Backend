@@ -116,10 +116,14 @@ class AlertFactory:
                 if resp.status_code // 100 == 2:
                     unique_id = resp.text.strip('"')
 
-
-
             if alert_data.get("alert_section", "") == 'VTS':
-                unique_id = await alert_helper.get_alert_unique_id(alert_data.get("alert_section"), sap_id, sop_id)
+                async with httpx.AsyncClient(verify=False) as client:
+                    base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
+                    resp = await client.get(f"{base_url}/api_cache/v1/get_unique_alert_id", params={"bu": alert_data.get("alert_section"), 
+                                                                                                    "sap_id": sap_id,
+                                                                                                    "sop_id": sop_id})
+                    if resp.status_code // 100 == 2:
+                        unique_id = resp.text.strip('"')
 
             # assign roles for emlock and ro alerts
             if alert_data.get("alert_section", bu) == 'EMLock':
