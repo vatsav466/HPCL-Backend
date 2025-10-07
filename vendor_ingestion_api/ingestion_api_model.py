@@ -136,6 +136,88 @@ class vtsBlockedTruckOldCreate(pydantic.BaseModel):
     unblocked_datetime: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class VtsTripNotClosedCreate(pydantic.BaseModel):
+    violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    event_date: typing.Optional[datetime.datetime] | None = None
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    location_code: typing.Optional[str] = pydantic.Field("", **{})
+    destination_code: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_number: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_id: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_no: typing.Optional[str] = pydantic.Field("", **{})
+    load_no: typing.Optional[str] = pydantic.Field("", **{})
+    route_no: typing.Optional[str] = pydantic.Field("", **{})
+    driver_name: typing.Optional[str] = pydantic.Field("", **{})
+    scheduled_datetime: typing.Optional[datetime.datetime] | None = None
+    scheduled_end_datetime: typing.Optional[datetime.datetime] | None = None
+    vehicle_latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_location: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class VtsTripWithoutRouteCreate(pydantic.BaseModel):
+    violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    event_date: typing.Optional[datetime.datetime] | None = None
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    location_code: typing.Optional[str] = pydantic.Field("", **{})
+    destination_code: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_number: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_id: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_no: typing.Optional[str] = pydantic.Field("", **{})
+    load_no: typing.Optional[str] = pydantic.Field("", **{})
+    driver_name: typing.Optional[str] = pydantic.Field("", **{})
+    scheduled_datetime: typing.Optional[datetime.datetime] | None = None
+    scheduled_end_datetime: typing.Optional[datetime.datetime] | None = None
+
+
+class VtsRouteTwoKmCreate(pydantic.BaseModel):
+    violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    event_date: typing.Optional[datetime.datetime] | None = None
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    location_code: typing.Optional[str] = pydantic.Field("", **{})
+    destination_code: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_number: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_id: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_no: typing.Optional[str] = pydantic.Field("", **{})
+    load_no: typing.Optional[str] = pydantic.Field("", **{})
+    route_no: typing.Optional[str] = pydantic.Field("", **{})
+    driver_name: typing.Optional[str] = pydantic.Field("", **{})
+    scheduled_datetime: typing.Optional[datetime.datetime] | None = None
+    scheduled_end_datetime: typing.Optional[datetime.datetime] | None = None
+    vehicle_latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_location: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class VtsUnauthStoppageCreate(pydantic.BaseModel):
+    violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    event_date: typing.Optional[datetime.datetime] | None = None
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    location_code: typing.Optional[str] = pydantic.Field("", **{})
+    destination_code: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_number: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_id: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_no: typing.Optional[str] = pydantic.Field("", **{})
+    load_no: typing.Optional[str] = pydantic.Field("", **{})
+    driver_name: typing.Optional[str] = pydantic.Field("", **{})
+    scheduled_datetime: typing.Optional[datetime.datetime] | None = None
+    vehicle_latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_location: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class vtsBlockedTruckCreate(pydantic.BaseModel):
     tt_no: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
@@ -189,6 +271,38 @@ class Vts_Ingest_Data_Un_Blocked_TrucksParams(pydantic.BaseModel):
     location_id: str
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.List[vtsBlockedTruckCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Vts_Trip_Not_ClosedParams(pydantic.BaseModel):
+    data: typing.List[VtsTripNotClosedCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Vts_Trip_Without_RouteParams(pydantic.BaseModel):
+    data: typing.List[VtsTripWithoutRouteCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Vts_Route_Deviation_More_Than_Two_KmParams(pydantic.BaseModel):
+    data: typing.List[VtsRouteTwoKmCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Vts_Trip_Unauthorised_StoppageParams(pydantic.BaseModel):
+    data: typing.List[VtsUnauthStoppageCreate]
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

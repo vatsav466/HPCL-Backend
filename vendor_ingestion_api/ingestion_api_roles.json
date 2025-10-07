@@ -39,6 +39,18 @@
                 },
                 {
                     "name": "ingest_data_un_blocked_trucks"
+                },
+                {
+                    "name": "trip_not_closed"
+                },
+                {
+                    "name": "trip_without_route"
+                },
+                {
+                    "name": "route_deviation_more_than_two_km"
+                },
+                {
+                    "name": "trip_unauthorised_stoppage"
                 }
             ]
         },
@@ -93,6 +105,18 @@
                 },
                 {
                     "name": "ingest_data_un_blocked_trucks"
+                },
+                {
+                    "name": "trip_not_closed"
+                },
+                {
+                    "name": "trip_without_route"
+                },
+                {
+                    "name": "route_deviation_more_than_two_km"
+                },
+                {
+                    "name": "trip_unauthorised_stoppage"
                 }
             ]
         },
@@ -834,6 +858,22 @@
         {
             "name": "ingest_data_un_blocked_trucks",
             "displayName": "ingest_data_un_blocked_trucks"
+        },
+        {
+            "name": "trip_not_closed",
+            "displayName": "trip_not_closed"
+        },
+        {
+            "name": "trip_without_route",
+            "displayName": "trip_without_route"
+        },
+        {
+            "name": "route_deviation_more_than_two_km",
+            "displayName": "route_deviation_more_than_two_km"
+        },
+        {
+            "name": "trip_unauthorised_stoppage",
+            "displayName": "trip_unauthorised_stoppage"
         },
         {
             "name": "ingest_data",

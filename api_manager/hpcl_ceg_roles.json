@@ -6761,6 +6761,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "vtsongoingtrips",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VtsOngoingTrips",
+            "attributes": {},
+            "uris": [
+                "/api/vtsongoingtrips/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "vtsongoingtrips_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VtsOngoingTrips_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vtsongoingtrips/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vtsongoingtrips_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VtsOngoingTrips_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vtsongoingtrips/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
