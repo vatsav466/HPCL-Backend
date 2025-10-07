@@ -118,21 +118,14 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
 
                 # ----- Ranking (descending = higher score = better rank) -----
                 temp_result.sort(key=lambda x: (-x['overall_oi_score'], str(x['sap_id'])))
-                rank_mode = 'competition'
+                rank = 1
                 prev_score = None
-                prev_rank = 0
                 for idx, rec in enumerate(temp_result):
                     cur_score = rec['overall_oi_score']
-                    if prev_score is None:
-                        rank = 1
-                    else:
-                        if cur_score == prev_score:
-                            rank = prev_rank
-                        else:
-                            rank = idx + 1 if rank_mode == 'competition' else prev_rank + 1
+                    if prev_score is not None and cur_score < prev_score:
+                        rank = idx + 1  # next rank after previous group
                     rec['rank'] = rank
                     prev_score = cur_score
-                    prev_rank = rank
 
                 # Compute national average
                 df = pd.DataFrame(temp_result)
