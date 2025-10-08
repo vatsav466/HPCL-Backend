@@ -7,9 +7,11 @@ import decimal
 import asyncio
 import datetime
 import pandas as pd
+import numpy as np
 import hpcl_ceg_model
 import indentdryout_actions
 import urdhva_base.utilities
+import matplotlib.pyplot as plt
 from types import SimpleNamespace
 import utilities.helpers as helpers
 import dateutil.parser as dt_parser
@@ -28,6 +30,7 @@ ytd = {"key": "\"YTD\"", "cond": "equals", "value": "true"}
 ytpm = {"key": "\"YTDPM\"", "cond": "equals", "value": "true"}
 cumulative = {"key": "\"C\"", "cond": "equals", "value": "true"}
 
+chart_path = ""
 
 def round_off(value, input_type='growth'):
     """Round off functionality with rules"""
@@ -61,6 +64,53 @@ def get_growth_percentage(current, hist):
     else:
         return round_off(0)
 
+async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
+    global chart_path
+    chart_path = out_path
+    df = zone_fuel_df.copy()
+    df['Month'] = df['Month'].astype(str)
+    df['MS in KL'] = pd.to_numeric(df['MS in KL'], errors='coerce').fillna(0)
+    df['HSD in KL'] = pd.to_numeric(df['HSD in KL'], errors='coerce').fillna(0)
+
+    df['MS in KL'] = df['MS in KL'] / 1000.0
+    df['HSD in KL'] = df['HSD in KL'] / 1000.0
+
+    try:
+        order_key = pd.to_datetime(df['Month'], format="%b'%y")
+        df = df.assign(_order=order_key).sort_values('_order')
+    except Exception:
+        df = df.reset_index(drop=True)
+
+    months = df['Month'].tolist()
+    ms_vals = df['MS in KL'].to_numpy()
+    hsd_vals = df['HSD in KL'].to_numpy()
+
+    x = np.arange(len(months))
+    width = 0.32   # Reduced for gap
+    bar_gap = 0.10 # Small gap between bars
+
+    plt.style.use('default')
+    fig, ax = plt.subplots(figsize=(10, 5.2))
+    ms_color = '#ff0000'
+    hsd_color = '#00008B'
+
+    # Add small gap between side-by-side bars
+    ax.bar(x - width/2 - bar_gap/2, ms_vals, width, label='MS', color=ms_color)
+    ax.bar(x + width/2 + bar_gap/2, hsd_vals, width, label='HSD', color=hsd_color)
+
+    ax.set_title('Monthly Loss of Sales Due to Partial Dryouts (KL)', fontsize=14, pad=10)
+    ax.set_xticks(x)
+    ax.set_xticklabels(months, fontsize=10)
+    ax.yaxis.grid(True, linestyle='-', linewidth=0.6, alpha=0.35)
+    ax.set_axisbelow(True)
+    ax.margins(x=0.02)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.12), ncol=2, frameon=False)
+
+    fig.tight_layout()
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    fig.savefig(out_path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    return out_path
 
 def get_zones_by_performance(actual, target, by_sbu=False, req_key='Zone_Name'):
     # Getting top and least performing zones
@@ -559,15 +609,43 @@ async def fetch_dryout_data():
     print("\n===== Summary (Date vs Dry out Count) =====")
     print(summary_df.to_string(index=False))
 
-    zone_data = {
-        "Zone": ["CZ", "EZ", "ECZ", "NZ", "NCZ", "NFZ", "NWFZ", "NWZ", "SZ", "SCZ", "SWZ", "WZ"],
-        "MS in KL":  [81581, 64049, 72322, 32347, 77729, 36448, 24834, 29651, 65788, 137683, 196462, 164138],
-        "HSD in KL": [87799, 36892, 73807, 69353, 96755, 38824, 43669, 26357, 108406, 162920, 157633, 192443],
-        "TMF in KL": [169380, 100941, 146129, 101700, 174484, 75272, 68503, 56008, 174194, 300603, 354095, 356581]
-    }
-
-    # Create DataFrame
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                               date_time_format="%Y-%m-%d")
+    loss_query = f"""WITH financial_year_bounds AS (
+                        SELECT
+                            CASE
+                                WHEN EXTRACT(MONTH FROM CURRENT_DATE) >= 4 THEN
+                                    DATE_TRUNC('year', CURRENT_DATE) + INTERVAL '3 months'  -- April 1 current year
+                                ELSE 
+                                    DATE_TRUNC('year', CURRENT_DATE) - INTERVAL '9 months'  -- April 1 last year
+                            END AS fy_start
+                    )
+                    SELECT
+                        TO_CHAR(stock_date, 'Mon''YY') AS "Month",
+                        SUM(CASE WHEN product_name = 'MS' THEN loss_of_sale ELSE 0 END) AS "MS in KL",
+                        SUM(CASE WHEN product_name = 'HSD' THEN loss_of_sale ELSE 0 END) AS "HSD in KL",
+                        SUM(CASE WHEN product_name IN ('HSD', 'MS') THEN loss_of_sale ELSE 0 END) AS "TMF in KL"
+                    FROM
+                        daily_product_dry_out, financial_year_bounds
+                    WHERE
+                        stock_date >= fy_start
+                        AND stock_date < fy_start + INTERVAL '1 year'
+                        AND product_no in (1322000, 1683000)
+                    GROUP BY
+                        TO_CHAR(stock_date, 'Mon''YY'),
+                        DATE_TRUNC('month', stock_date)
+                    ORDER BY
+                        DATE_TRUNC('month', stock_date)
+                    """
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    zone_data = await function(query=loss_query)
     zone_fuel_df = pd.DataFrame(zone_data)
+    chart_path = await generate_chart(zone_fuel_df)
 
     dry_out_cf = {
         'cat_a': cat_a,
@@ -706,37 +784,56 @@ async def lpg_top_bottom_score_plants():
         "2630", "2408", "2316", "2117", "2732"
     ]
     sap_ids_str = ", ".join([f"'{sid}'" for sid in sap_ids])
-
-    top_query = f"""SELECT 
-                        ROW_NUMBER() OVER (ORDER BY score DESC) AS "Sl No",
+    top_query = f"""WITH plant_avg_scores AS (
+                        SELECT
                         name AS "Plant Name",
                         zone AS "Zone",
                         region AS "Region",
-                        ROUND(score::numeric, 2) AS "Score"
-                    FROM public.performance_score
-                    WHERE bu = 'LPG'
-                    AND zone!=''
-                    AND region!=''
-                    AND timestamp::DATE = CURRENT_DATE
-                    AND sap_id in ({sap_ids_str})
-                    AND name NOT ILIKE '%RO%'
-                    ORDER BY score DESC
-                    LIMIT 3"""
-    bottom_query = f"""SELECT 
-                        ROW_NUMBER() OVER (ORDER BY score ASC) AS "Sl No",
+                        AVG(score) AS avg_score
+                        FROM public.performance_score_history
+                        WHERE
+                        bu = 'LPG'
+                        AND zone != ''
+                        AND region != ''
+                        AND timestamp::DATE BETWEEN date_trunc('month', CURRENT_DATE) AND CURRENT_DATE
+                        AND sap_id IN ({sap_ids_str})
+                        AND name NOT ILIKE '%RO%'
+                        GROUP BY name, zone, region
+                        ORDER BY avg_score DESC
+                        LIMIT 3
+                    )
+                    SELECT
+                        ROW_NUMBER() OVER (ORDER BY avg_score DESC) AS "Sl No",
+                        "Plant Name",
+                        "Zone",
+                        "Region",
+                        ROUND(avg_score::numeric, 2) AS "Score"
+                        FROM plant_avg_scores"""
+    bottom_query = f"""WITH plant_avg_scores AS (
+                        SELECT
                         name AS "Plant Name",
                         zone AS "Zone",
                         region AS "Region",
-                        ROUND(score::numeric, 2) AS "Score"
-                    FROM public.performance_score
-                    WHERE bu = 'LPG'
-                    AND zone!=''
-                    AND region!=''
-                    AND timestamp::DATE = CURRENT_DATE
-                    AND sap_id in ({sap_ids_str})
-                    AND name NOT ILIKE '%RO%'
-                    ORDER BY score ASC
-                    LIMIT 3"""
+                        AVG(score) AS avg_score
+                        FROM public.performance_score_history
+                        WHERE
+                        bu = 'LPG'
+                        AND zone != ''
+                        AND region != ''
+                        AND timestamp::DATE BETWEEN date_trunc('month', CURRENT_DATE) AND CURRENT_DATE
+                        AND sap_id IN ({sap_ids_str})
+                        AND name NOT ILIKE '%RO%'
+                        GROUP BY name, zone, region
+                        ORDER BY avg_score ASC
+                        LIMIT 3
+                    )
+                    SELECT
+                        ROW_NUMBER() OVER (ORDER BY avg_score ASC) AS "Sl No",
+                        "Plant Name",
+                        "Zone",
+                        "Region",
+                        ROUND(avg_score::numeric, 2) AS "Score"
+                        FROM plant_avg_scores"""
     top_resp = await function(query=top_query)
     bottom_resp = await function(query=bottom_query)
     top_resp = pd.DataFrame(top_resp)
@@ -825,14 +922,20 @@ async def publish_daily_novex_status_email():
         to_recipients=["debeshp@hpcl.in","sanjayk@hpcl.in"],
         cc_recipients=["gargam@hpcl.in","vikas.kaushal@hpcl.in","amitra@hpcl.in"],
         bcc_recipients=["cvmallinath@hpcl.in"],
-        notification_data=status_data
+        notification_data=status_data,
+        inline_images={
+            "dry_out_lost": f"{chart_path}"
+        }
     )
     await send_notification(
         template_name="seg2.html",
         to_recipients=["abalaji@hpcl.in"],
         cc_recipients=["anujjain@hpcl.in","shubhra.Narayan@hpcl.in"],
         bcc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
-        notification_data=status_data
+        notification_data=status_data,
+        inline_images={
+            "dry_out_lost": f"{chart_path}"
+        }
     )
     await send_notification(
         template_name="seg3.html",
@@ -850,7 +953,7 @@ async def publish_daily_novex_status_email():
     )
 
 
-async def send_notification(template_name, to_recipients, cc_recipients=None, bcc_recipients=None, notification_data=None):
+async def send_notification(template_name, to_recipients, cc_recipients=None, bcc_recipients=None, notification_data=None, inline_images=None):
     template_path = os.path.join(
         os.path.dirname(hpcl_ceg_model.__file__),
         '..', 'orchestrator', 'reporting_services',
@@ -872,7 +975,8 @@ async def send_notification(template_name, to_recipients, cc_recipients=None, bc
         bcc_recipients=bcc_recipients or [],
         html_content=True,
         body=final_data,
-        force_send=True
+        force_send=True,
+        inline_images=inline_images or {}
     )
 
 if __name__ == "__main__":

@@ -58,7 +58,7 @@
     <p><strong>Date:</strong> {{today_date}} | <strong>Day:</strong> {{today_week}}</p>
     <hr>
     <h4>1. LPG Operations Summary</h4>
-    <h5>1.1. Top 3 LPG plants based on performance score</h5>
+    <h5>1.1. Top 3 LPG plants based on performance score ({{present_month}})</h5>
     <table>
         <thead>
             <tr>
@@ -77,7 +77,7 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>1.2. Bottom 3 LPG plants based on performance score</h5>
+    <h5>1.2. Bottom 3 LPG plants based on performance score ({{present_month}})</h5>
     <table>
         <thead>
             <tr>
@@ -113,12 +113,12 @@
                     <td>{{va_high_lpg}}</td>
                 </tr>
                 <tr>
-                    <td>VTS</td>
+                    <td>VTS ITDG Violation</td>
                     <td>{{vts_critical_lpg}}</td>
                     <td>{{vts_high_lpg}}</td>
                 </tr>
                 <tr>
-                    <td>PQ</td>
+                    <td>Production Quality</td>
                     <td>{{pq_critical_lpg}}</td>
                     <td>{{pq_high_lpg}}</td>
                 </tr>
