@@ -32,7 +32,7 @@ vts_query = {
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id""",
 
-    "blocked_in_ims" : """SELECT count (*) from alerts where alert_status = 'Open' and alert_section = 'VTS'""",
+    "blocked_in_ims" : """SELECT count (*) from alerts where and alert_section = 'VTS' and vehicle_unblocked_date is null""",
 
     "total_alerts" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
@@ -42,7 +42,7 @@ vts_query = {
 
     "blocked_alerts" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
-                                                              AND alert_status = 'Open' and
+                                                              AND vehicle_unblocked_date is null and
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id""",
 
