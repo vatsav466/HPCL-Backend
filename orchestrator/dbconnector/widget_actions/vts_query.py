@@ -32,7 +32,7 @@ vts_query = {
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id""",
 
-    "blocked_in_ims" : """SELECT count (*) from alerts where alert_status = 'Open' and alert_section = 'VTS'""",
+    "blocked_in_ims" : """SELECT count (*) from alerts where vehicle_unblocked_date is null and alert_section = 'VTS'""",
 
     "total_alerts" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
@@ -42,7 +42,7 @@ vts_query = {
 
     "blocked_alerts" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
-                                                              AND alert_status = 'Open' and
+                                                              AND vehicle_unblocked_date is null and 
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id""",
 
@@ -86,58 +86,93 @@ vts_query = {
            """,
 
     "route_violation_percentage": """
-                SELECT ROUND(
-                100.0 * SUM(route_deviation_count) /
-                NULLIF(
-                    SUM(stoppage_violations_count + route_deviation_count + night_driving_count + device_tamper_count + speed_violation_count),
-                    0
-                    ), 2
-                ) AS "Route violation"
+               SELECT
+                    ROUND(
+                        100.0 *
+                        COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END) /
+                        NULLIF(
+                            COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END),
+                            0
+                        ),
+                        2
+                    ) AS "Route violation"
                 FROM vts_alert_history
                """,
     
     "speed_violation_percentage": """ 
-                SELECT ROUND(
-                100.0 * SUM(speed_violation_count) /
-                NULLIF(
-                    SUM(stoppage_violations_count + route_deviation_count + night_driving_count + device_tamper_count + speed_violation_count),
-                    0 
-                    ), 2
-                ) AS "Over speed"
+                   SELECT
+                     ROUND(
+                        100.0 *
+                        COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END) /
+                        NULLIF(
+                            COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END),
+                            0
+                        ),
+                        2
+                    ) AS "Over speed"
                 FROM vts_alert_history
                """,
 
     "night_driving_percentage": """
-                SELECT ROUND(
-                100.0 * SUM(night_driving_count) /
-                NULLIF(
-                    SUM(stoppage_violations_count + route_deviation_count + night_driving_count + device_tamper_count + speed_violation_count),
-                    0
-                    ), 2
-                ) AS "Night driving"
-                FROM vts_alert_history
+                  SELECT
+                     ROUND(
+                        100.0 *
+                        COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END) /
+                        NULLIF(
+                            COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END),
+                            0
+                        ),
+                        2
+                    ) AS "Night driving"
+                FROM vts_alert_history           
                """,
 
     "unauthorized_stoppage_percentage": """
-                SELECT ROUND(
-                100.0 * SUM(stoppage_violations_count) /
-                NULLIF(
-                    SUM(stoppage_violations_count + route_deviation_count + night_driving_count + device_tamper_count + speed_violation_count),
-                    0
-                    ), 2
-                ) AS "Unauthorized stoppage"
+                    SELECT
+                     ROUND(
+                        100.0 *
+                        COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END) /
+                        NULLIF(
+                            COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END),
+                            0
+                        ),
+                        2
+                    ) AS "Unauthorized stoppage"
                 FROM vts_alert_history
                """,
 
     "device_tampering_percentage": """
-                SELECT ROUND(
-                100.0 * SUM(device_tamper_count) /
-                NULLIF(
-                    SUM(stoppage_violations_count + route_deviation_count + night_driving_count + device_tamper_count + speed_violation_count),
-                    0
-                    ), 2
-                ) AS "Device tampering"
-                FROM vts_alert_history
+                SELECT
+                     ROUND(
+                        100.0 *
+                        COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END) /
+                        NULLIF(
+                            COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END)
+                            + COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END),
+                            0
+                        ),
+                        2
+                    ) AS "Device tampering"
+                FROM vts_alert_history              
                """,
 
     "product_safety": """
