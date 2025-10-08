@@ -918,7 +918,7 @@ class VTSAnalyticsActions:
         alerts_df.columns = [c.lower() for c in alerts_df.columns]
 
         # ----- Fetch trips -----
-        trips_query = 'SELECT zone_nm, plant_nm, vehicle_id, qty_shortage, invoice_no, created_on FROM sales_trips_till_date'
+        trips_query = 'SELECT zone_nm, plant_nm,load_date, vehicle_id, qty_shortage, invoice_no, created_on FROM sales_trips_till_date'
 
         # Extract date from cross_filters
         today = datetime.now().date()
@@ -1000,10 +1000,11 @@ class VTSAnalyticsActions:
         filtered_invoice_count = filtered_trips_df['invoice_no'].nunique() if 'invoice_no' in filtered_trips_df.columns else 0
 
         # ----- Prepare trips list for response -----
-        trips_list = filtered_trips_df[['zone_nm','plant_nm','transporter_name', 'vehicle_id', 'qty_shortage']].copy()
+        trips_list = filtered_trips_df[['load_date','zone_nm','plant_nm','transporter_name', 'vehicle_id', 'qty_shortage']].copy()
         trips_list = trips_list.where(pd.notnull(trips_list), None)
         trips_list = trips_list.rename(
             columns={
+                "load_date":"load_date",
                 "zone_nm" :"zone_nm",
                 "plant_nm": "Plant Name",
                 "transporter_name": "Transporter Name",
