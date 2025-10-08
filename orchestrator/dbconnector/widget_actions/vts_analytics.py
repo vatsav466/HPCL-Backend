@@ -998,6 +998,15 @@ class VTSAnalyticsActions:
 
         # ----- Count after filtering -----
         filtered_invoice_count = filtered_trips_df['invoice_no'].nunique() if 'invoice_no' in filtered_trips_df.columns else 0
+        import pytz
+
+        # ----- Prepare trips list for response -----
+        # Convert load_date to IST
+        if 'load_date' in filtered_trips_df.columns:
+            ist = pytz.timezone("Asia/Kolkata")
+            filtered_trips_df['load_date'] = pd.to_datetime(filtered_trips_df['load_date']).dt.tz_convert(ist)
+            # Format nicely if desired
+            filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.strftime("%Y-%m-%d %H:%M:%S%z")
 
         # ----- Prepare trips list for response -----
         trips_list = filtered_trips_df[['load_date','zone_nm','plant_nm','transporter_name', 'vehicle_id', 'qty_shortage']].copy()
