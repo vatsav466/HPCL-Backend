@@ -158,76 +158,13 @@ class GenerateLPGSummary():
             for data in summary.to_dict(orient="records"):                
                 await LpgPlantOperationsCreate(**data).create()
 
-            return summary
+            return True
         except Exception as e:
             print("traceback :", traceback.format_exc())
             logger.error("--- Error in Generating Summary ---")
             logger.error(f"Traceback : {traceback.format_exc()}")
+            return False
 
-
-# async def main():
-#     plants = pd.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
-#     print(plants[["erp_id", "plant_name", "host_ip"]])
-
-#     for plant in plants.to_dict(orient="records"):
-#         print("-"*50)
-#         query = f"""
-#             SELECT MAX(DATE(process_date)) AS max_date
-#             FROM lpg_plant_operations
-#             WHERE sap_id='{plant["erp_id"]}'
-#         """
-#         res = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=1)
-
-#         if res.get("data", None) and res["data"][0]["max_date"]:
-#             from_date = res["data"][0]["max_date"]
-#         else:
-#             print(f"No records found in summary for {plant['plant_name']}, Checking data in production_log...")
-#             query = f"""
-#                     SELECT MAX(DATE(process_date)) AS max_date
-#                     FROM production_log
-#                     WHERE sap_id='{plant["erp_id"]}'
-#                 """
-#             raw_availability = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=1)
-#             if raw_availability.get("data", None) and raw_availability["data"][0]["max_date"]:
-#                 from_date = raw_availability["data"][0]["max_date"]
-#             else:
-#                 print(f"No records found in production_log for {plant['plant_name']}, skipping...")
-#                 continue
-        
-#         to_date = datetime.now(ZoneInfo("Asia/Kolkata")).date()
-
-#         current_date = from_date
-#         count = 1
-#         while current_date <= to_date:   
-#             print("-"*20)         
-#             print(f"Processing plant={plant['plant_name']} date={current_date}")
-#             if count == 1:
-#                 query = f"""
-#                         SELECT id FROM lpg_plant_operations 
-#                         WHERE sap_id='{plant["erp_id"]}' AND DATE(process_date)='{from_date.strftime("%Y-%m-%d")}' 
-#                         """
-#                 old_summary = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
-#                 if old_summary.get("data", None):
-#                     print("-"*20)
-#                     print(f"Deleting total {len(old_summary['data'])} records")
-#                     print("-"*20)
-#                     for x in old_summary["data"]:
-#                         await LpgPlantOperations.delete(x["id"])
-
-#             params = {
-#                 "sap_id": str(plant["erp_id"]),
-#                 "from_date": current_date.strftime("%Y-%m-%d"),
-#                 "to_date": current_date.strftime("%Y-%m-%d")
-#             }
-            
-#             ins = GenerateLPGSummary(**params)
-#             await ins.generate_summary()
-
-#             current_date += timedelta(days=1)
-#             count += 1
-
-
-# CONCURRENT PROCESSING WITH ASYNCIO
 async def process_plant_concurrent(plant, semaphore):
     """Process a single plant with concurrency control"""
     async with semaphore:  # Limit concurrent operations
@@ -261,7 +198,7 @@ async def process_plant_concurrent(plant, semaphore):
             to_date = datetime.now(ZoneInfo("Asia/Kolkata")).date()
             current_date = from_date
             count = 1
-            
+            old_summary = {}
             while current_date <= to_date:            
                 print(f"Processing plant={plant['plant_name']} date={current_date}")
                 
@@ -271,11 +208,7 @@ async def process_plant_concurrent(plant, semaphore):
                             SELECT id FROM lpg_plant_operations 
                             WHERE sap_id='{plant["erp_id"]}' AND DATE(process_date)='{from_date.strftime("%Y-%m-%d")}' 
                             """
-                    old_summary = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
-                    if old_summary.get("data", None):
-                        print(f"Deleting {len(old_summary['data'])} existing records for {plant['plant_name']}")
-                        for x in old_summary["data"]:
-                            await LpgPlantOperations.delete(x["id"])
+                    old_summary = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)                    
 
                 params = {
                     "sap_id": str(plant["erp_id"]),
@@ -286,6 +219,11 @@ async def process_plant_concurrent(plant, semaphore):
                 ins = GenerateLPGSummary(**params)
                 await ins.generate_summary()
 
+                if count == 1:
+                    if old_summary.get("data", None):
+                        print(f"Deleting {len(old_summary['data'])} existing records for {plant['plant_name']}")
+                        for x in old_summary["data"]:
+                            await LpgPlantOperations.delete(x["id"])
                 current_date += timedelta(days=1)
                 count += 1
                 
