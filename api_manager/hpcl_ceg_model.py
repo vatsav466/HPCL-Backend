@@ -9810,3 +9810,14 @@ class Vtsviolationhistory_Vts_Alert_ActionParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class Vtsviolationhistory_Get_Closed_Alerts_Details_VtsParams(pydantic.BaseModel):
+    bu: str
+    alert_id: int = pydantic.Field(**{'ge': 1, 'le': 9999999})
+    alert_section: str
+    interlock_name: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

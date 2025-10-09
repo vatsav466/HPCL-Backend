@@ -499,11 +499,6 @@ class AlertAction:
                 meg_resp = await getattr(cls, function_name)(input_data, alert_data)
             else:
                 meg_resp = {"status": "True", "message": "Alert Closed", "data": []}
-
-            status, func = await _is_close_alert(input_data)
-            if status and func:
-                print("func: ", func)
-                await eval(func)(alert_data=alert_data, input_data=input_data)
             return meg_resp
         return False, "Alert action is not valid"
     
@@ -728,8 +723,8 @@ class AlertAction:
         # print("messaged_data: ", messaged_data)
         # Posting data to camunda
         url = await helpers.get_camunda_url(
-            bu=alert_data.bu,
-            sap_id=alert_data.sap_id,
+            bu=alert_data.bu if alert_data.bu else alert_data.location_type,
+            sap_id=alert_data.sap_id if alert_data.sap_id else alert_data.location_id,
             alert_section=alert_data.alert_section
         )
         # url = urdhva_base.settings.camunda_url + "/engine-rest/message"
