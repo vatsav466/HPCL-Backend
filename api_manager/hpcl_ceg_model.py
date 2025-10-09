@@ -9524,8 +9524,8 @@ class VtsOngoingTripsSchema(UrdhvaPostgresBase):
     __tablename__ = 'vts_ongoing_trips'
     
     violation_type: Mapped[typing.Optional[str]] = mapped_column("violation_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    event_start_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("event_start_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    event_end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("event_end_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    event_start_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("event_start_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    event_end_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("event_end_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -9533,6 +9533,7 @@ class VtsOngoingTripsSchema(UrdhvaPostgresBase):
     location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tt_number: Mapped[typing.Optional[str]] = mapped_column("tt_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    trip_id: Mapped[typing.Optional[str]] = mapped_column("trip_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     transporter_id: Mapped[typing.Optional[str]] = mapped_column("transporter_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     transporter_name: Mapped[typing.Optional[str]] = mapped_column("transporter_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     invoice_no: Mapped[typing.Optional[str]] = mapped_column("invoice_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -9552,8 +9553,8 @@ class VtsOngoingTripsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'vts_ongoing_trips'
     
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
-    event_start_date: typing.Optional[datetime.datetime] | None = None
-    event_end_date: typing.Optional[datetime.datetime] | None = None
+    event_start_datetime: typing.Optional[datetime.datetime] | None = None
+    event_end_datetime: typing.Optional[datetime.datetime] | None = None
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
@@ -9561,6 +9562,7 @@ class VtsOngoingTripsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_type: typing.Optional[str] = pydantic.Field("", **{})
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     tt_number: typing.Optional[str] = pydantic.Field("", **{})
+    trip_id: typing.Optional[str] = pydantic.Field("", **{})
     transporter_id: typing.Optional[str] = pydantic.Field("", **{})
     transporter_name: typing.Optional[str] = pydantic.Field("", **{})
     invoice_no: typing.Optional[str] = pydantic.Field("", **{})
@@ -9587,8 +9589,8 @@ class VtsOngoingTrips(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'vts_ongoing_trips'
     
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
-    event_start_date: typing.Optional[datetime.datetime] | None = None
-    event_end_date: typing.Optional[datetime.datetime] | None = None
+    event_start_datetime: typing.Optional[datetime.datetime] | None = None
+    event_end_datetime: typing.Optional[datetime.datetime] | None = None
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
@@ -9596,6 +9598,7 @@ class VtsOngoingTrips(urdhva_base.postgresmodel.PostgresModel):
     location_type: typing.Optional[str] = pydantic.Field("", **{})
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     tt_number: typing.Optional[str] = pydantic.Field("", **{})
+    trip_id: typing.Optional[str] = pydantic.Field("", **{})
     transporter_id: typing.Optional[str] = pydantic.Field("", **{})
     transporter_name: typing.Optional[str] = pydantic.Field("", **{})
     invoice_no: typing.Optional[str] = pydantic.Field("", **{})

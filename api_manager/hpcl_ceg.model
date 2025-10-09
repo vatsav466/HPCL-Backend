@@ -3368,8 +3368,8 @@ Model SalesTripsTillDate {
 
 Model VtsOngoingTrips {
     violation_type optional str
-    event_start_date optional datetime
-    event_end_date optional datetime
+    event_start_datetime optional datetime
+    event_end_datetime optional datetime
     sap_id optional str
     region optional str
     zone optional str
@@ -3377,6 +3377,7 @@ Model VtsOngoingTrips {
     location_type optional str
     tt_type optional str
     tt_number optional str
+    trip_id optional str
     transporter_id optional str
     transporter_name optional str
     invoice_no optional str
