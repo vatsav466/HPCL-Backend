@@ -995,6 +995,22 @@ LIMIT 10000;''',
                                             "lpg_plant_operations"
                                         HAVING
                                             COUNT(DISTINCT "location_name") > 0 ''',
+    
+    'lpg_plant_status': """ SELECT
+                                p.erp_id as sap_id,
+                                p.plant_name,
+                                CASE
+                                    WHEN EXISTS (
+                                        SELECT 1
+                                        FROM lpg_plant_operations lpo
+                                        WHERE CAST(lpo.sap_id AS TEXT) = CAST(p.erp_id AS TEXT)
+                                        AND lpo.process_date = CURRENT_DATE
+                                    )
+                                    THEN 'Connected'
+                                    ELSE 'Not Connected'
+                                END AS connection_status
+                            FROM plants p
+                            ORDER BY connection_status DESC """,
 
     'lpg_operations_current_month_production': '''
                                                     SELECT 
