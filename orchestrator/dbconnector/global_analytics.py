@@ -3215,8 +3215,8 @@ class GlobalAnalytics:
                 for rec in cross_filters:
                     if "DATE" in rec.key:
                         start = rec.value.split(",")[0]
-                        end = (datetime.strptime(rec.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-                        conditions.append(f"process_date BETWEEN '{start}' AND '{end}' ")
+                        end = rec.value.split(",")[-1]
+                        conditions.append(f"process_date BETWEEN '{start} 00:00:00' AND '{end} 23:59:59' ")
                         card_query = card_query.split("WHERE")[0].split("where")[0]
                         continue
                     rec.value = rec.value.split(",")

@@ -6,9 +6,11 @@ from orchestrator.dbconnector.widget_actions import widget_actions
 from orchestrator.analytics.performance_index import tas_performance_index
 from orchestrator.analytics.performance_index import lpg_performance_index
 import pandas as pd
+from datetime import datetime
 router = fastapi.APIRouter(prefix='/performanceindex')
 
 
+# Action get_pi_score
 @router.post('/get_pi_score', tags=['PerformanceIndex'])
 async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParams):
     """
@@ -29,18 +31,13 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
 
         resp = await widget_actions.WidgetActions().generate_filter_clause(data.filters) if data.filters else ""
         clause = f" and {resp}" if resp else ""
-        table = ""
         is_plant = getattr(data, "is_plant", False)
 
         if data.bu in ["TAS", "LPG"]:
             location_str = f" and sap_id='{data.sap_id}'" if data.sap_id else ''
 
             # choose table based on filters
-            if data.filters:
-                table = "performance_score" if any(f.value == "t" for f in data.filters) else "performance_score_history"
-            else:
-                table = "performance_score_history"
-
+            table = "performance_score" if data.filters and any(f.value == "t" for f in data.filters) else "performance_score_history"
             query = f"select * from {table} where bu='{data.bu}' {location_str} {clause}"
             score_data = await (PerformanceScore if table == "performance_score" else PerformanceScoreHistory).get_aggr_data(query, limit=100000)
             print(query)
@@ -81,7 +78,29 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                             'weightage': safe_float(category_.get('weightage', 0))
                         })
 
-                # Build final list
+                # Detect date range and whether to show msg
+                has_date_range = False
+                show_msg = True
+                today = datetime.now().date()
+
+                for f in getattr(data, 'filters', []):
+                    key = getattr(f, 'key', '')
+                    cond = getattr(f, 'cond', '')
+                    value = getattr(f, 'value', '')
+
+                    if cond == 'date_filter' or key in ['date_from', 'date_to', 'created_at']:
+                        if value:
+                            has_date_range = True
+                            try:
+                                parts = [v.strip() for v in value.split(',') if v.strip()]
+                                if len(parts) == 2:
+                                    start = datetime.strptime(parts[0], "%Y-%m-%d").date()
+                                    end = datetime.strptime(parts[1], "%Y-%m-%d").date()
+                                    # msg only if start == end == today
+                                    show_msg = (start == end == today)
+                            except Exception:
+                                pass
+
                 temp_result = []
                 for sid, details in sap_scores.items():
                     category_scores = {}
@@ -96,12 +115,18 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                     if total_scores:
                         overall = round(sum(total_scores) / len(total_scores), 2)
 
-                        # ---- Get full category from the record if exists ----
                         full_category = None
                         for rec in score_data['data']:
                             if rec.get('sap_id') == sid and 'category' in rec:
                                 full_category = rec.get('category')
                                 break
+
+                        # Remove "msg" only if date range exists AND today is not exactly the range
+                        if has_date_range and not show_msg and full_category:
+                            for cat in full_category:
+                                if 'results' in cat:
+                                    for res in cat['results']:
+                                        res.pop('msg', None)
 
                         temp_result.append({
                             'sap_id': sid,
@@ -109,7 +134,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                             'region': details['region'],
                             'zone': details['zone'],
                             'overall_oi_score': overall,
-                            'category': full_category,  # ✅ Full category list from DB
+                            'category': full_category,
                             f"{data.bu.lower()}_category_scores": category_scores
                         })
 
@@ -123,7 +148,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                 for idx, rec in enumerate(temp_result):
                     cur_score = rec['overall_oi_score']
                     if prev_score is not None and cur_score < prev_score:
-                        rank = idx + 1  # next rank after previous group
+                        rank = idx + 1
                     rec['rank'] = rank
                     prev_score = cur_score
 
