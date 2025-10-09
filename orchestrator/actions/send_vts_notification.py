@@ -74,7 +74,7 @@ class SendVTSNotification:
         """
         return [
             "alert_id", "BU", "interlock_name", "messagetype",
-            "msg_subject", "mqofrole", "location_type", "vts_level",
+            "msg_subject", "mqofrole", "bu", "vts_level",
             "rolemailto", "escalationlevel_inmail", "sap_id", "escalationtime_inmail"
         ]
     
@@ -223,7 +223,7 @@ class SendVTSNotification:
         # Load templates based on message type and business unit
         templates = await self._load_message_templates(template_data['template'])
         # Render templates
-        sap_id = self.alert_data.get("location_id", "")
+        sap_id = self.alert_data.get("sap_id", "")
         alert_section = self.alert_data.get("alert_section", "")
         location_name = self.alert_data.get("location_name", "")
 
@@ -256,7 +256,7 @@ class SendVTSNotification:
             None
         """
         bu = self.params.get("BU")
-        sap_id = self.alert_data.get("location_id", "")
+        sap_id = self.alert_data.get("sap_id", "")
         message_type = self.params.get("messagetype", '')
         roles_list = ""
         roles_list = (await self._role_configuration_rolemailto() or "")
@@ -307,7 +307,7 @@ class SendVTSNotification:
         self.base_alert_data = {
             "alert_id": self.params.get("alert_id"),
             "interlock_name": self.interlock_name if self.interlock_name else await self._get_interlock_name(),
-            "plant_id": self.alert_data.get("location_id", ''),
+            "plant_id": self.alert_data.get("sap_id", ''),
             "plant_location": self.alert_data["location_name"][:30],
             "portal_link": "https://ceg.hpcl.co.in",
             "user": self.params.get("user") or '',
@@ -474,8 +474,8 @@ class SendVTSNotification:
     
     async def update_notication_audit_log(self):
         notification_record = {
-            "bu": self.alert_data['location_type'],
-            "sap_id": self.alert_data['location_id'],
+            "bu": self.alert_data['bu'],
+            "sap_id": self.alert_data['sap_id'],
             "alert_section": self.alert_data['alert_section'],
             "interlock_name": self.alert_data['violation_name'], 
             "vehicle_number": self.alert_data.get("tl_number",""),
@@ -796,7 +796,7 @@ class SendVTSNotification:
         mailto=self.params.get("rolemailto","")
         violation_type = self.alert_data.get("violation_type","")
         alert_section = self.alert_data.get("alert_section","")
-        rolemapping = vts_violation_role_mapping.violation_mapping[alert_section][self.alert_data.get("location_type","")][violation_type][self.params.get('va_level','level - 1')]
+        rolemapping = vts_violation_role_mapping.violation_mapping[alert_section][self.alert_data.get("bu","")][violation_type][self.params.get('va_level','level - 1')]
         if mailto and mailto in ["0","1","2"]:
             print("taking roles using va_level---->",rolemapping["rolemailto"].get(mailto,""))
             return rolemapping["rolemailto"].get(mailto,"")   
@@ -807,7 +807,7 @@ class SendVTSNotification:
         if self.alert_data.get("alert_section","") in ["VTS"]:
             violation_type = self.alert_data.get("violation_type","")
             alert_section = self.alert_data.get("alert_section","")
-            rolemapping = vts_violation_role_mapping.violation_mapping[alert_section][self.alert_data.get("location_type","")][violation_type][self.params.get('va_level','level - 1')]
+            rolemapping = vts_violation_role_mapping.violation_mapping[alert_section][self.alert_data.get("bu","")][violation_type][self.params.get('va_level','level - 1')]
             if mqof and mqof in ["0","1","2"]:
                 return rolemapping["mqof"].get(mqof,"")
         return mqof
