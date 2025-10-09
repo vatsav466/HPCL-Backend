@@ -3255,9 +3255,7 @@ class GlobalAnalytics:
                 card_query = card_query.format(financial_year=financial_year, current_month=current_month)
             elif "," in drill_state and "financial_year" in drill_state.lower() and not "month" in drill_state.lower():
                 financial_year = drill_state.split(",")[-1].split("=")[-1].replace("'","")
-                card_query = card_query.format(financial_year=financial_year)
-            print("-"*50)
-            print("card_query ---->", card_query)
+                card_query = card_query.format(financial_year=financial_year)            
             if "cdcms" in drill_state.lower():
                 access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -3267,7 +3265,9 @@ class GlobalAnalytics:
                                         for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
                 card_query =  await widget_actions.WidgetActions.apply_filter_drilldown(card_query, access_filters, drill_state)
             
-            # resp = await function(query=card_query)
+            print("-"*50)
+            print("card_query ---->", card_query)
+            print("-"*50)
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=card_query, limit=0)
             resp = resp.get("data", [])
             resp = pd.DataFrame(resp)

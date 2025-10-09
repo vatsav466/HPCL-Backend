@@ -1006,11 +1006,11 @@ LIMIT 10000;''',
                                         WHERE CAST(lpo.sap_id AS TEXT) = CAST(p.erp_id AS TEXT)
                                         AND lpo.process_date = CURRENT_DATE
                                     )
-                                    THEN 'Connected'
-                                    ELSE 'Not Connected'
-                                END AS connection_status
+                                    THEN 'Available'
+                                    ELSE 'Not Available'
+                                END AS data_status
                             FROM plants p
-                            ORDER BY connection_status DESC """,
+                            ORDER BY data_status DESC """,
 
     'lpg_operations_current_month_production': '''
                                                     SELECT 
