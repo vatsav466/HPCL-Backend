@@ -1,27 +1,17 @@
 import urdhva_base
-import time
 import pytz
 import asyncio
-import requests
 import datetime
 import polars as pl
-import pandas as pd
-import charts_actions
 import hpcl_ceg_model
-import urdhva_base.redispool
 import utilities.helpers as helpers
 from dateutil.relativedelta import relativedelta
 from hpcl_ceg_enum import AlertState as AlertState
 from hpcl_ceg_enum import AlertStatus as AlertStatus
-import orchestrator.alerting.alert_helper as alert_helper
 from hpcl_ceg_enum import IndentStatus as IndentStatus
 import utilities.connection_mapping as connection_mapping
-# import orchestrator.analytics.vts_analysis as vts_analysis
 from charts_actions import charts_connection_vault_routing
-import orchestrator.alerting.alert_manager as alert_manager
-from orchestrator.alerting.alert_manager import close_alert
 from orchestrator.alerting.alert_manager import create_alert
-from hpcl_ceg_model import Alerts_Alert_ActionParams, Alerts
 from hpcl_ceg_enum import AlertActionType as AlertActionType
 from alerts_actions import alerts_alert_action as alerts_alert_action
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
@@ -35,19 +25,16 @@ class LpgRejections:
         return ["alert_id", "interlock_name", "bu", "interlock_id", "sap_id"]
 
     async def get_current_cs_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 00:00:00"
-        today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
-        table = f"lpg_cs_rejections"
+        yesterday = (datetime.datetime.now(pytz.timezone("Asia/Kolkata")) - relativedelta(days=1)).strftime("%Y-%m-%d")
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         query = f""" SELECT 
-                        SUM(total) AS total, SUM(totalsortout) AS totalsortout, sap_id, plant, zone
+                        SUM(cs_handled) AS total, SUM(cs_sortout) AS totalsortout, sap_id, location_name as plant, zone
                     FROM 
-                        "{table}"
+                        "lpg_plant_operations"
                     WHERE
-                        process_date='{yesterday}' GROUP BY sap_id, plant, zone"""
-        # process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
+                        DATE(process_date)='{yesterday}' GROUP BY sap_id, location_name, zone """
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
@@ -62,10 +49,6 @@ class LpgRejections:
                                 "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='Check Scale Rejection' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
-        # if not check_alerts.is_empty():
-        #     check_alerts = check_alerts.rename({"device_name": "rejection"}
-        #                                     ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-        #     rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
@@ -89,20 +72,16 @@ class LpgRejections:
 
 
     async def get_current_gd_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 00:00:00"
-        today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
-        table = f"lpg_gd_rejections"
+        yesterday = (datetime.datetime.now(pytz.timezone("Asia/Kolkata")) - relativedelta(days=1)).strftime("%Y-%m-%d")
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-
-        query = f""" SELECT
-                        SUM(total) AS total, SUM(sortout) as totalsortout, sap_id, plant, zone
-                    FROM
-                        "{table}"
+        query = f""" SELECT 
+                        SUM(gd_handled) AS total, SUM(gd_sortout) AS totalsortout, sap_id, location_name as plant, zone
+                    FROM 
+                        "lpg_plant_operations"
                     WHERE
-                        process_date='{yesterday}' GROUP BY sap_id, plant, zone"""
-        # process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
+                        DATE(process_date)='{yesterday}' GROUP BY sap_id, location_name, zone """
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
@@ -117,10 +96,6 @@ class LpgRejections:
                                 "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='Valve Leak Rejection' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
-        # if not check_alerts.is_empty():
-        #     check_alerts = check_alerts.rename({"device_name": "rejection"}
-        #                                     ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-        #     rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
@@ -147,20 +122,16 @@ class LpgRejections:
 
 
     async def get_current_pt_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 00:00:00"
-        today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
-        table = f"lpg_pt_rejections"
+        yesterday = (datetime.datetime.now(pytz.timezone("Asia/Kolkata")) - relativedelta(days=1)).strftime("%Y-%m-%d")
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        
         query = f""" SELECT 
-                        SUM(total) AS total, SUM(sortout) as totalsortout, sap_id, plant, zone
-                    FROM
-                        "{table}"
+                        SUM(pt_handled) AS total, SUM(pt_sortout) AS totalsortout, sap_id, location_name as plant, zone
+                    FROM 
+                        "lpg_plant_operations"
                     WHERE
-                        process_date='{yesterday}' GROUP BY sap_id, plant, zone"""
-        # process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
+                        DATE(process_date)='{yesterday}' GROUP BY sap_id, location_name, zone """
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
@@ -175,10 +146,6 @@ class LpgRejections:
                                 "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='O-Ring Leak Rejection' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
-        # if not check_alerts.is_empty():
-        #     check_alerts = check_alerts.rename({"device_name": "rejection"}
-        #                                     ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-        #     rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
@@ -207,8 +174,7 @@ class LpgRejections:
         if not self.params:
             self.params = params
         rejection_type = params["interlock_name"]
-        table = f"lpg_{rejection_type}"
-        print(f"- Checking Rejection of {table} -")
+        print(f"- Checking Rejection of {rejection_type} -")
 
         check_alerts = await hpcl_ceg_model.Alerts.get(self.params['alert_id'])
         if not isinstance(check_alerts, dict):
