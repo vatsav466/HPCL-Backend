@@ -134,6 +134,98 @@ Model vtsBlockedTruckOld internal {
     unblocked_datetime optional str
 }
 
+Model VtsTripNotClosed internal {
+    violation_type optional str
+    event_date optional datetime
+    zone optional str
+    location_code optional str
+    destination_code optional str
+    location_type optional str
+    tt_type optional str
+    tt_number optional str
+    transporter_id optional str
+    transporter_name optional str
+    invoice_no optional str
+    trip_id optional str
+    load_no optional str
+    route_no optional str
+    driver_name optional str
+    scheduled_datetime optional datetime
+    scheduled_end_datetime optional datetime
+    vehicle_latitude optional float
+    vehicle_longitude optional float
+    vehicle_location optional str
+    
+}
+
+Model VtsTripWithoutRoute internal {
+    violation_type optional str
+    event_date optional datetime
+    zone optional str
+    location_code optional str
+    destination_code optional str
+    location_type optional str
+    tt_type optional str
+    tt_number optional str
+    transporter_id optional str
+    transporter_name optional str
+    invoice_no optional str
+    trip_id optional str
+    load_no optional str
+    driver_name optional str
+    scheduled_datetime optional datetime
+    scheduled_end_datetime optional datetime
+
+}
+
+Model VtsRouteTwoKm internal {
+    violation_type optional str
+    event_start_datetime optional datetime
+    event_end_datetime optional datetime
+    zone optional str
+    location_code optional str
+    destination_code optional str
+    location_type optional str
+    tt_type optional str
+    tt_number optional str
+    transporter_id optional str
+    transporter_name optional str
+    invoice_no optional str
+    trip_id optional str
+    load_no optional str
+    route_no optional str
+    driver_name optional str
+    scheduled_datetime optional datetime
+    scheduled_end_datetime optional datetime
+    vehicle_latitude optional float
+    vehicle_longitude optional float
+    vehicle_location optional str
+
+}
+
+Model VtsUnauthStoppage internal {
+
+    violation_type optional str
+    event_date optional datetime
+    zone optional str
+    location_code optional str
+    destination_code optional str
+    location_type optional str
+    tt_type optional str
+    tt_number optional str
+    transporter_id optional str
+    transporter_name optional str
+    invoice_no optional str
+    trip_id optional str
+    load_no optional str
+    driver_name optional str
+    scheduled_datetime optional datetime
+    vehicle_latitude optional float
+    vehicle_longitude optional float
+    vehicle_location optional str
+
+}
+
 Model vtsBlockedTruck internal {
     tt_no optional str
     location_name optional str
@@ -172,6 +264,23 @@ Model VTS crud_disable {
         data list vtsBlockedTruck
 
     }
+
+    Action=> trip_not_closed {
+        data list VtsTripNotClosed
+    }
+
+    Action=> trip_without_route {
+        data list VtsTripWithoutRoute
+    }
+
+    Action=> route_deviation_more_than_two_km {
+        data list VtsRouteTwoKm
+    }
+
+    Action=> trip_unauthorised_stoppage {
+        data list VtsUnauthStoppage
+    }
+    
 }
 
 Model vaData internal {

@@ -52,9 +52,8 @@ async def generate_cross_filter(cross_filters):
             for f in cross_filters:
                 if "DATE" in f.key:
                     start = f.value.split(",")[0]
-                    end = (datetime.strptime(f.value.split(",")[-1], "%Y-%m-%d")
-                        + relativedelta(days=1)).strftime("%Y-%m-%d")
-                    daterange = f"'{start}' AND '{end}'"
+                    end = f.value.split(",")[-1]
+                    daterange = f"'{start} 00:00:00' AND '{end} 23:59:59'"
                 else:
                     _filters.append({f.key: f.value})
         return _filters, daterange
@@ -3470,11 +3469,11 @@ class GlobalAnalytics:
             
             clause = "WHERE" if "where" not in query.lower() else "AND"
             if daterange:
-                query += f" {clause} process_date BETWEEN {daterange} AND zone IS NOT NULL"
+                query += f" {clause} process_date BETWEEN {daterange}"
             else:
-                query += f" {clause} CAST(process_date AS DATE) = '{current_date}' AND zone IS NOT NULL"
+                query += f" {clause} CAST(process_date AS DATE) = '{current_date}'"
 
-            query += ' GROUP BY "zone", "process_date", "filling_head", "location_name"'
+            query += ' GROUP BY "zone", "sap_id", "process_date", "filling_head", "location_name"'
 
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
             df = pd.DataFrame(resp.get("data", []))
@@ -3532,11 +3531,11 @@ class GlobalAnalytics:
             clause = "WHERE" if "where" not in query.lower() else "AND"
 
             if daterange:
-                query += f" {clause} process_date BETWEEN {daterange} AND zone IS NOT NULL"
+                query += f" {clause} process_date BETWEEN {daterange}"
             else:
-                query += f" {clause} DATE(process_date) = '{current_date}' AND zone IS NOT NULL"
+                query += f" {clause} DATE(process_date) = '{current_date}'"
 
-            query += ' GROUP BY "zone", "location_name", "filling_head"'
+            query += ' GROUP BY "zone", "sap_id", "location_name", "filling_head"'
 
             # Execute query
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
@@ -3593,11 +3592,11 @@ class GlobalAnalytics:
             
             clause = "WHERE" if "where" not in query.lower() else "AND"
             if daterange:
-                query += f" {clause} process_date BETWEEN {daterange} AND zone IS NOT NULL"
+                query += f" {clause} process_date BETWEEN {daterange}"
             else:
-                query += f" {clause} DATE(process_date) = '{current_date}' AND zone IS NOT NULL"
+                query += f" {clause} DATE(process_date) = '{current_date}'"
 
-            query += ' GROUP BY "zone", "location_name", "filling_head"'
+            query += ' GROUP BY "zone", "sap_id", "location_name", "filling_head"'
 
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
             df = pd.DataFrame(resp.get("data", []))
@@ -3655,7 +3654,7 @@ class GlobalAnalytics:
             else:
                 query += f" {clause} DATE(process_date) = '{current_date}' AND zone IS NOT NULL"
 
-            query += ' GROUP BY "zone", "location_name", "filling_head"'
+            query += ' GROUP BY "zone", "sap_id", "location_name", "filling_head"'
 
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
             df = pd.DataFrame(resp.get("data", []))
@@ -3710,7 +3709,7 @@ class GlobalAnalytics:
             else:
                 query += f" {clause} DATE(process_date) = '{current_date}' AND zone IS NOT NULL"
 
-            query += ' GROUP BY "zone", "location_name", "filling_head"'
+            query += ' GROUP BY "zone", "sap_id", "location_name", "filling_head"'
 
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
             df = pd.DataFrame(resp.get("data", []))
@@ -3787,7 +3786,7 @@ class GlobalAnalytics:
                 daywise_productivity_query_ += f' AND "process_date" BETWEEN {daterange} '
             else:
                 daywise_productivity_query_ += f' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
-            daywise_productivity_query_ += ' GROUP BY DATE("process_date"), "zone", "location_name", "filling_head" '
+            daywise_productivity_query_ += ' GROUP BY DATE("process_date"), "zone", "sap_id", "location_name", "filling_head" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
@@ -3800,7 +3799,7 @@ class GlobalAnalytics:
                 daywise_productivity_query_ += f' AND "process_date" BETWEEN {daterange} '
             else:
                 daywise_productivity_query_ += f' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
-            daywise_productivity_query_ += ' GROUP BY DATE("process_date"), "zone", "location_name", "filling_head" '
+            daywise_productivity_query_ += ' GROUP BY DATE("process_date"), "zone", "sap_id", "location_name", "filling_head" '
         try:
             query_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=daywise_productivity_query_, limit=0)
             query_resp = query_resp.get("data", [])
@@ -3860,7 +3859,7 @@ class GlobalAnalytics:
                 daywise_production_query_ += f' AND "process_date" BETWEEN {daterange} '
             else:
                 daywise_production_query_ += f' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
-            daywise_production_query_ += ' GROUP BY DATE("process_date"), "zone", "location_name", "filling_head" '
+            daywise_production_query_ += ' GROUP BY DATE("process_date"), "zone", "sap_id", "location_name", "filling_head" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
@@ -3873,7 +3872,7 @@ class GlobalAnalytics:
                 daywise_production_query_ += f' AND "process_date" BETWEEN {daterange} '
             else:
                 daywise_production_query_ += f' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
-            daywise_production_query_ += ' GROUP BY DATE("process_date"), "zone", "location_name", "filling_head" '
+            daywise_production_query_ += ' GROUP BY DATE("process_date"), "zone", "sap_id", "location_name", "filling_head" '
         try:
             query_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=daywise_production_query_, limit=0)
             query_resp = query_resp.get("data", [])

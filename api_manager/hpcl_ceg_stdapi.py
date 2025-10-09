@@ -1965,3 +1965,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/salestripstilldate/{id}', tags=['SalesTripsTillDate'])
 async def delete(id: str):
     return await SalesTripsTillDate.delete(id)
+
+
+@router.post('/vtsongoingtrips', response_model=VtsOngoingTrips, tags=['VtsOngoingTrips'])
+async def create(inputObj: VtsOngoingTripsCreate):
+    return await inputObj.create()
+
+
+@router.put('/vtsongoingtrips', response_model=VtsOngoingTrips, tags=['VtsOngoingTrips'])
+async def update(inputObj: VtsOngoingTrips):
+    return await inputObj.modify()
+
+
+@router.get('/vtsongoingtrips/{id}', response_model=VtsOngoingTrips, tags=['VtsOngoingTrips'])
+async def get(id: str):
+    return await VtsOngoingTrips.get(id, skip_secrets=True)
+
+
+@router.get('/vtsongoingtrips', response_model=VtsOngoingTripsGetResp, tags=['VtsOngoingTrips'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await VtsOngoingTrips.get_all(params, skip_secrets=True)
+
+
+@router.delete('/vtsongoingtrips/{id}', tags=['VtsOngoingTrips'])
+async def delete(id: str):
+    return await VtsOngoingTrips.delete(id)

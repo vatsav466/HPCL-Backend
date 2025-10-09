@@ -9518,3 +9518,107 @@ class SalesTripsTillDateGetResp(pydantic.BaseModel):
     data: typing.List[SalesTripsTillDate]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class VtsOngoingTripsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'vts_ongoing_trips'
+    
+    violation_type: Mapped[typing.Optional[str]] = mapped_column("violation_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    event_start_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("event_start_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    event_end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("event_end_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    destination_code: Mapped[typing.Optional[str]] = mapped_column("destination_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tt_number: Mapped[typing.Optional[str]] = mapped_column("tt_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    transporter_id: Mapped[typing.Optional[str]] = mapped_column("transporter_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    transporter_name: Mapped[typing.Optional[str]] = mapped_column("transporter_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    invoice_no: Mapped[typing.Optional[str]] = mapped_column("invoice_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    load_no: Mapped[typing.Optional[str]] = mapped_column("load_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    route_no: Mapped[typing.Optional[str]] = mapped_column("route_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    driver_name: Mapped[typing.Optional[str]] = mapped_column("driver_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    scheduled_start_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("scheduled_start_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    scheduled_end_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("scheduled_end_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    actual_trip_start_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("actual_trip_start_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    actual_end_start_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("actual_end_start_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    vehicle_latitude: Mapped[typing.Optional[float]] = mapped_column("vehicle_latitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    vehicle_longitude: Mapped[typing.Optional[float]] = mapped_column("vehicle_longitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    vehicle_location: Mapped[typing.Optional[str]] = mapped_column("vehicle_location", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class VtsOngoingTripsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'vts_ongoing_trips'
+    
+    violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    event_start_date: typing.Optional[datetime.datetime] | None = None
+    event_end_date: typing.Optional[datetime.datetime] | None = None
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    destination_code: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_number: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_id: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_no: typing.Optional[str] = pydantic.Field("", **{})
+    load_no: typing.Optional[str] = pydantic.Field("", **{})
+    route_no: typing.Optional[str] = pydantic.Field("", **{})
+    driver_name: typing.Optional[str] = pydantic.Field("", **{})
+    scheduled_start_datetime: typing.Optional[datetime.datetime] | None = None
+    scheduled_end_datetime: typing.Optional[datetime.datetime] | None = None
+    actual_trip_start_datetime: typing.Optional[datetime.datetime] | None = None
+    actual_end_start_datetime: typing.Optional[datetime.datetime] | None = None
+    vehicle_latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_location: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = VtsOngoingTripsSchema
+        upsert_keys = []
+
+
+class VtsOngoingTrips(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'vts_ongoing_trips'
+    
+    violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    event_start_date: typing.Optional[datetime.datetime] | None = None
+    event_end_date: typing.Optional[datetime.datetime] | None = None
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    destination_code: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    tt_number: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_id: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_no: typing.Optional[str] = pydantic.Field("", **{})
+    load_no: typing.Optional[str] = pydantic.Field("", **{})
+    route_no: typing.Optional[str] = pydantic.Field("", **{})
+    driver_name: typing.Optional[str] = pydantic.Field("", **{})
+    scheduled_start_datetime: typing.Optional[datetime.datetime] | None = None
+    scheduled_end_datetime: typing.Optional[datetime.datetime] | None = None
+    actual_trip_start_datetime: typing.Optional[datetime.datetime] | None = None
+    actual_end_start_datetime: typing.Optional[datetime.datetime] | None = None
+    vehicle_latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
+    vehicle_location: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = VtsOngoingTripsSchema
+        upsert_keys = []
+
+
+class VtsOngoingTripsGetResp(pydantic.BaseModel):
+    data: typing.List[VtsOngoingTrips]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
