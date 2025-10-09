@@ -9786,3 +9786,27 @@ class VtsViolationHistoryGetResp(pydantic.BaseModel):
     data: typing.List[VtsViolationHistory]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class Vtsviolationhistory_Vts_Alert_ActionParams(pydantic.BaseModel):
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    alert_section: typing.Optional[str] = pydantic.Field("", **{})
+    action_type: hpcl_ceg_enum.AlertActionType
+    alert_id: int = pydantic.Field(**{'ge': 1, 'le': 9999999})
+    action_msg: typing.Optional[str] = pydantic.Field("", **{})
+    days: typing.Optional[int] = pydantic.Field(0, **{})
+    justification_type: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    rca_reason: typing.Optional[str] = pydantic.Field("", **{})
+    action_description: typing.Optional[str] = pydantic.Field("", **{})
+    doc_link: typing.Optional[str] = pydantic.Field("", **{})
+    acknowledged_by: typing.Optional[str] = pydantic.Field("", **{})
+    load_number: typing.Optional[str] = pydantic.Field("", **{})
+    fan_number: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+    trip_type: typing.Optional[str] = pydantic.Field("", **{})
+    event_tags: typing.Optional[tagsCreate] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

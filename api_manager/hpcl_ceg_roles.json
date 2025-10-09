@@ -6846,6 +6846,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "vts_alert_action"
                 }
             ]
         },
@@ -6885,6 +6888,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "vts_alert_action"
                 }
             ]
         }
@@ -7524,6 +7530,10 @@
         {
             "name": "submit_service_request",
             "displayName": "submit_service_request"
+        },
+        {
+            "name": "vts_alert_action",
+            "displayName": "vts_alert_action"
         }
     ]
 }

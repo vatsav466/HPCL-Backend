@@ -108,6 +108,8 @@ Enum AlertActionType str {
     TicketResolved='TicketResolved'
     TicketOnHold='TicketOnHold'
     SendItBack='SendItBack'
+    FalseViolation='FalseViolation'
+    AcceptViolation='AcceptViolation'
 }
 
 Enum IndentStatus str {
@@ -3440,4 +3442,24 @@ Model VtsViolationHistory {
     assigned_to_role optional str           // User Role for whom alert is assigned to
     assigned_users optional list str        // User email for whom alert is assigned to
     assigned_user_roles optional index_field list str   // User Role for whom alert is assigned to
+
+    Action=> vts_alert_action {
+        bu optional str
+        alert_section optional str
+        action_type AlertActionType
+        alert_id int min=1 max=9999999
+        action_msg optional str
+        days optional int
+        justificationType optional str
+        category optional str
+        rca_reason optional str
+        action_description optional str
+        doc_link optional str
+        acknowledged_by optional str
+        load_number optional str
+        fan_number optional str
+        invoice_number optional str
+        trip_type optional str
+        event_tags optional tags
+    }
 }
