@@ -982,6 +982,20 @@ LIMIT 10000;''',
                         FROM
                             "LPG_CONSUMERS_SUMMARY"
                         ''',
+    'lpg_operations_connected_plants': f''' SELECT
+                                                COUNT(DISTINCT "location_name") AS short_name_count
+                                            FROM
+                                                "lpg_plant_operations"
+                                            HAVING
+                                                COUNT(DISTINCT "location_name") > 0 ''',
+                                    
+    'lpg_operations_total_plants': f''' SELECT
+                                            COUNT(DISTINCT "location_name") AS short_name_count
+                                        FROM
+                                            "lpg_plant_operations"
+                                        HAVING
+                                            COUNT(DISTINCT "location_name") > 0 ''',
+
     'lpg_operations_current_month_production': '''
                                                     SELECT 
                                                         ROUND(
@@ -1004,7 +1018,7 @@ LIMIT 10000;''',
                                                 ''',
 
     'lpg_operations_current_month_cylinder_filled': ''' SELECT
-                                                            ROUND(((SUM(production_14_2kg) + SUM(production_19kg)) / 100000), 2) AS "Cylinders_Filled"
+                                                            ROUND(((SUM(production_14_2kg) + SUM(production_19kg)) / 100000), 1) AS "Cylinders_Filled"
                                                         FROM
                                                             "lpg_plant_operations"
                                                         WHERE
@@ -2534,20 +2548,6 @@ GROUP BY
     product_name, period
 ORDER BY 
     avg_total_sales ''',
-
-    'lpg_operations_connected_plants': f''' SELECT 
-                                                COUNT(DISTINCT "short_name") AS short_name_count
-                                            FROM 
-                                                "lpg_operations_summary"
-                                            HAVING 
-                                                COUNT(DISTINCT "short_name") > 0 ''',
-                                    
-    'lpg_operations_total_plants': f''' SELECT 
-                                    COUNT(DISTINCT "short_name") AS short_name_count
-                                FROM 
-                                    "lpg_operations_summary"
-                                HAVING 
-                                    COUNT(DISTINCT "short_name") > 0 ''',
 
     'cdcms_current_date_pending_count': f''' select
                                                 CAST(SUM("Total_Pending")AS NUMERIC) AS "Total Pending"
