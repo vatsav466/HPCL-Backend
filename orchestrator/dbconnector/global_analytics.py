@@ -52,9 +52,8 @@ async def generate_cross_filter(cross_filters):
             for f in cross_filters:
                 if "DATE" in f.key:
                     start = f.value.split(",")[0]
-                    end = (datetime.strptime(f.value.split(",")[-1], "%Y-%m-%d")
-                        + relativedelta(days=1)).strftime("%Y-%m-%d")
-                    daterange = f"'{start}' AND '{end}'"
+                    end = f.value.split(",")[-1]
+                    daterange = f"'{start} 00:00:00' AND '{end} 23:59:59'"
                 else:
                     _filters.append({f.key: f.value})
         return _filters, daterange
@@ -3470,9 +3469,9 @@ class GlobalAnalytics:
             
             clause = "WHERE" if "where" not in query.lower() else "AND"
             if daterange:
-                query += f" {clause} process_date BETWEEN {daterange} AND zone IS NOT NULL"
+                query += f" {clause} process_date BETWEEN {daterange}"
             else:
-                query += f" {clause} CAST(process_date AS DATE) = '{current_date}' AND zone IS NOT NULL"
+                query += f" {clause} CAST(process_date AS DATE) = '{current_date}'"
 
             query += ' GROUP BY "zone", "sap_id", "process_date", "filling_head", "location_name"'
 
@@ -3532,9 +3531,9 @@ class GlobalAnalytics:
             clause = "WHERE" if "where" not in query.lower() else "AND"
 
             if daterange:
-                query += f" {clause} process_date BETWEEN {daterange} AND zone IS NOT NULL"
+                query += f" {clause} process_date BETWEEN {daterange}"
             else:
-                query += f" {clause} DATE(process_date) = '{current_date}' AND zone IS NOT NULL"
+                query += f" {clause} DATE(process_date) = '{current_date}'"
 
             query += ' GROUP BY "zone", "sap_id", "location_name", "filling_head"'
 
@@ -3593,9 +3592,9 @@ class GlobalAnalytics:
             
             clause = "WHERE" if "where" not in query.lower() else "AND"
             if daterange:
-                query += f" {clause} process_date BETWEEN {daterange} AND zone IS NOT NULL"
+                query += f" {clause} process_date BETWEEN {daterange}"
             else:
-                query += f" {clause} DATE(process_date) = '{current_date}' AND zone IS NOT NULL"
+                query += f" {clause} DATE(process_date) = '{current_date}'"
 
             query += ' GROUP BY "zone", "sap_id", "location_name", "filling_head"'
 
