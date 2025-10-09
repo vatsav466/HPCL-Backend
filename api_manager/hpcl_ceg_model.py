@@ -9622,3 +9622,164 @@ class VtsOngoingTripsGetResp(pydantic.BaseModel):
     data: typing.List[VtsOngoingTrips]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class VtsViolationHistorySchema(UrdhvaPostgresBase):
+    __tablename__ = 'vts_violation_history'
+    
+    vendor_id: Mapped[typing.Optional[str]] = mapped_column("vendor_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_id: Mapped[typing.Optional[str]] = mapped_column("location_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tl_number: Mapped[str] = mapped_column("tl_number", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    unique_id: Mapped[str] = mapped_column("unique_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    report_duration: Mapped[typing.Optional[str]] = mapped_column("report_duration", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_section: Mapped[str] = mapped_column("alert_section", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    severity: Mapped[typing.Any] = mapped_column("severity", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    scheduled_trip_start_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("scheduled_trip_start_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    scheduled_trip_end_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("scheduled_trip_end_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    vts_start_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vts_start_datetime", DateTime(timezone=False), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    vts_end_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vts_end_datetime", DateTime(timezone=False), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    total_trips: Mapped[typing.Optional[int]] = mapped_column("total_trips", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    violation_name: Mapped[typing.Optional[str]] = mapped_column("violation_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    violation_type: Mapped[typing.Optional[str]] = mapped_column("violation_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    violation_count: Mapped[typing.Optional[int]] = mapped_column("violation_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    alert_status: Mapped[typing.Optional[typing.Any]] = mapped_column("alert_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    approved_status: Mapped[typing.Optional[bool]] = mapped_column("approved_status", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    invoice_number: Mapped[typing.Optional[str]] = mapped_column("invoice_number", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    workflow_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("workflow_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    workflow_url: Mapped[typing.Optional[str]] = mapped_column("workflow_url", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    workflow_port: Mapped[typing.Optional[str]] = mapped_column("workflow_port", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("alert_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    last_sms_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_sms_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    last_mailed_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_mailed_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    last_escalated_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_escalated_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    last_notified_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_notified_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    assigned_to: Mapped[typing.Optional[str]] = mapped_column("assigned_to", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    assigned_to_role: Mapped[typing.Optional[str]] = mapped_column("assigned_to_role", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    assigned_users: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_users", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    assigned_user_roles: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_user_roles", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
+
+
+class VtsViolationHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'vts_violation_history'
+    
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    tl_number: str
+    sop_id: typing.Optional[str] = pydantic.Field("", **{})
+    unique_id: str
+    report_duration: typing.Optional[str] = pydantic.Field("", **{})
+    alert_section: str
+    severity: hpcl_ceg_enum.Severity
+    scheduled_trip_start_datetime: typing.Optional[datetime.datetime] | None = None
+    scheduled_trip_end_datetime: typing.Optional[datetime.datetime] | None = None
+    vts_start_datetime: typing.Optional[datetime.datetime] | None = None
+    vts_end_datetime: typing.Optional[datetime.datetime] | None = None
+    total_trips: typing.Optional[int] = pydantic.Field(0, **{})
+    violation_name: typing.Optional[str] = pydantic.Field("", **{})
+    violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    violation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
+    approved_status: typing.Optional[bool] = pydantic.Field(False, )
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_datetime: typing.Optional[datetime.datetime] | None = None
+    workflow_url: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_port: typing.Optional[str] = pydantic.Field("", **{})
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
+    last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_escalated_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_notified_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assigned_to: typing.Optional[str] = pydantic.Field("", **{})
+    assigned_to_role: typing.Optional[str] = pydantic.Field("", **{})
+    assigned_users: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assigned_user_roles: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = VtsViolationHistorySchema
+        upsert_keys = []
+
+
+class VtsViolationHistory(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'vts_violation_history'
+    
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    tl_number: typing.Optional[str] | None = None
+    sop_id: typing.Optional[str] = pydantic.Field("", **{})
+    unique_id: typing.Optional[str] | None = None
+    report_duration: typing.Optional[str] = pydantic.Field("", **{})
+    alert_section: typing.Optional[str] | None = None
+    severity: typing.Optional[hpcl_ceg_enum.Severity] | None = None
+    scheduled_trip_start_datetime: typing.Optional[datetime.datetime] | None = None
+    scheduled_trip_end_datetime: typing.Optional[datetime.datetime] | None = None
+    vts_start_datetime: typing.Optional[datetime.datetime] | None = None
+    vts_end_datetime: typing.Optional[datetime.datetime] | None = None
+    total_trips: typing.Optional[int] = pydantic.Field(0, **{})
+    violation_name: typing.Optional[str] = pydantic.Field("", **{})
+    violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    violation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
+    approved_status: typing.Optional[bool] = pydantic.Field(False, )
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_datetime: typing.Optional[datetime.datetime] | None = None
+    workflow_url: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_port: typing.Optional[str] = pydantic.Field("", **{})
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
+    last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_escalated_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_notified_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assigned_to: typing.Optional[str] = pydantic.Field("", **{})
+    assigned_to_role: typing.Optional[str] = pydantic.Field("", **{})
+    assigned_users: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assigned_user_roles: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = VtsViolationHistorySchema
+        upsert_keys = []
+
+
+class VtsViolationHistoryGetResp(pydantic.BaseModel):
+    data: typing.List[VtsViolationHistory]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

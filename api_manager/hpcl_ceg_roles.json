@@ -6824,6 +6824,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "vtsviolationhistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VtsViolationHistory",
+            "attributes": {},
+            "uris": [
+                "/api/vtsviolationhistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "vtsviolationhistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VtsViolationHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vtsviolationhistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vtsviolationhistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VtsViolationHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vtsviolationhistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
