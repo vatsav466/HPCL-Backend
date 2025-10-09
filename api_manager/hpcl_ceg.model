@@ -3397,8 +3397,8 @@ Model VtsOngoingTrips {
 
 Model VtsViolationHistory {
     vendor_id optional str
-    location_id optional str
-    location_type optional str
+    sap_id optional str
+    bu optional str
     location_name optional str
     tl_number index_field str
     sop_id optional index_field str

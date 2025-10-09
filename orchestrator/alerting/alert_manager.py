@@ -723,8 +723,8 @@ class AlertAction:
         # print("messaged_data: ", messaged_data)
         # Posting data to camunda
         url = await helpers.get_camunda_url(
-            bu=alert_data.bu if alert_data.bu else alert_data.location_type,
-            sap_id=alert_data.sap_id if alert_data.sap_id else alert_data.location_id,
+            bu=alert_data.bu,
+            sap_id=alert_data.sap_id,
             alert_section=alert_data.alert_section
         )
         # url = urdhva_base.settings.camunda_url + "/engine-rest/message"

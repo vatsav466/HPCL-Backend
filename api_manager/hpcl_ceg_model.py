@@ -9631,8 +9631,8 @@ class VtsViolationHistorySchema(UrdhvaPostgresBase):
     __tablename__ = 'vts_violation_history'
     
     vendor_id: Mapped[typing.Optional[str]] = mapped_column("vendor_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    location_id: Mapped[typing.Optional[str]] = mapped_column("location_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tl_number: Mapped[str] = mapped_column("tl_number", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
@@ -9678,8 +9678,8 @@ class VtsViolationHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'vts_violation_history'
     
     vendor_id: typing.Optional[str] = pydantic.Field("", **{})
-    location_id: typing.Optional[str] = pydantic.Field("", **{})
-    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     tl_number: str
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -9732,8 +9732,8 @@ class VtsViolationHistory(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'vts_violation_history'
     
     vendor_id: typing.Optional[str] = pydantic.Field("", **{})
-    location_id: typing.Optional[str] = pydantic.Field("", **{})
-    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     tl_number: typing.Optional[str] | None = None
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
