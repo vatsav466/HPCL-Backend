@@ -250,12 +250,12 @@
       {
         "name": "Active Vehicles",
         "model": "vts_active_vehicles",
-        "weightage": 40
+        "weightage": 20
       },
       {
         "name": "VTS Closure Status ",
         "model": "vts_alerts",
-        "weightage": 50,
+        "weightage": 40,
         "rules": [
           {
             "name": "Critical",
