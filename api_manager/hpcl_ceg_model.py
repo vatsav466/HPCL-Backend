@@ -9627,8 +9627,8 @@ class VtsOngoingTripsGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
-class VtsViolationHistorySchema(UrdhvaPostgresBase):
-    __tablename__ = 'vts_violation_history'
+class ViolationHistoryVtsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'violation_history_vts'
     
     vendor_id: Mapped[typing.Optional[str]] = mapped_column("vendor_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -9674,8 +9674,8 @@ class VtsViolationHistorySchema(UrdhvaPostgresBase):
     assigned_user_roles: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_user_roles", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
 
 
-class VtsViolationHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'vts_violation_history'
+class ViolationHistoryVtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'violation_history_vts'
     
     vendor_id: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -9724,12 +9724,12 @@ class VtsViolationHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
-        schema_class = VtsViolationHistorySchema
+        schema_class = ViolationHistoryVtsSchema
         upsert_keys = []
 
 
-class VtsViolationHistory(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'vts_violation_history'
+class ViolationHistoryVts(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'violation_history_vts'
     
     vendor_id: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -9778,17 +9778,17 @@ class VtsViolationHistory(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
-        schema_class = VtsViolationHistorySchema
+        schema_class = ViolationHistoryVtsSchema
         upsert_keys = []
 
 
-class VtsViolationHistoryGetResp(pydantic.BaseModel):
-    data: typing.List[VtsViolationHistory]
+class ViolationHistoryVtsGetResp(pydantic.BaseModel):
+    data: typing.List[ViolationHistoryVts]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
 
 
-class Vtsviolationhistory_Vts_Alert_ActionParams(pydantic.BaseModel):
+class Violationhistoryvts_Alert_Action_VtsParams(pydantic.BaseModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
     alert_section: typing.Optional[str] = pydantic.Field("", **{})
     action_type: hpcl_ceg_enum.AlertActionType
@@ -9812,7 +9812,7 @@ class Vtsviolationhistory_Vts_Alert_ActionParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
-class Vtsviolationhistory_Get_Closed_Alerts_Details_VtsParams(pydantic.BaseModel):
+class Violationhistoryvts_Get_Closed_Alerts_Details_VtsParams(pydantic.BaseModel):
     bu: str
     alert_id: int = pydantic.Field(**{'ge': 1, 'le': 9999999})
     alert_section: str

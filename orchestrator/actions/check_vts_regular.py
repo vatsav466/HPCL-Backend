@@ -42,7 +42,7 @@ class CheckRegularViolation:
             if 'regular' in params.keys():
                 params['regular'] = True if params['regular'] == 'true' else False
             
-            alert_data = await hpcl_ceg_model.VtsViolationHistory.get(params.get('alert_id'))
+            alert_data = await hpcl_ceg_model.ViolationHistoryVts.get(params.get('alert_id'))
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
             
@@ -63,7 +63,7 @@ class CheckRegularViolation:
                     alert_data["action_type"] = "Resolved"
                     await alert_manager.AlertAction().update_alert_history_vts(input_data=alert_data, alert_data=alert_data)
                 
-                await hpcl_ceg_model.VtsViolationHistory(**{"id": alert_data["id"],
+                await hpcl_ceg_model.ViolationHistoryVts(**{"id": alert_data["id"],
                                                             "alert_status": "Close",
                                                             "approved_status": False}).modify()
                 return True, {"Violation Closed": True}
@@ -88,7 +88,7 @@ class CheckRegularViolation:
                 alert_data["action_msg"] = alert_message
                 alert_data["action_type"] = "Resolved"
                 await alert_manager.AlertAction().update_alert_history_vts(input_data=alert_data, alert_data=alert_data)
-                await hpcl_ceg_model.VtsViolationHistory(**{"id": alert_data["id"],
+                await hpcl_ceg_model.ViolationHistoryVts(**{"id": alert_data["id"],
                                                             "alert_status": "Close",
                                                             "approved_status": True}).modify()
                 return True, {"sapcommandsent": True}
