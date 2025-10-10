@@ -256,8 +256,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                         if rule_['search_value'] in record['interlock_name']:
                             alert_data.setdefault(rule_['search_value'], 0)
                             alert_data[rule_['search_value']] += record['count']
-
-
+                alert_score.append(100)
 
             elif rule['model'] == 'vts_alerts':
                 severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
