@@ -189,7 +189,7 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
 
-    alert_role = alert_data['assigned_user_roles'][0] if alert_data['assigned_user_roles'] else ""
+    alert_role = alert_data['assigned_user_roles'] if alert_data['assigned_user_roles'] else ""
 
     close_alert_details = {
         "actions": {},
@@ -205,7 +205,7 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
     # }
     all_actions = {
         key: value['name'] for key, value in action_data.get("actions", {}).items()
-        if alert_role in value.get("roles", [])
+        if any(role in value.get("roles", []) for role in alert_role)
     }
     if data.alert_section in ["VTS"] and data.bu in ['TAS']:
         if alert_data.get("action_on","") in ['maker']:
