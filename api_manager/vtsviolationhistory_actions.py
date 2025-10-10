@@ -11,8 +11,8 @@ router = fastapi.APIRouter(prefix='/vtsviolationhistory')
 logger = urdhva_base.logger.Logger.getInstance("api_manager")
 
 # Action vts_alert_action
-@router.post('/vts_alert_action', tags=['VtsViolationHistory'])
-async def vtsviolationhistory_vts_alert_action(data: Vtsviolationhistory_Vts_Alert_ActionParams):
+@router.post('/vts_alert_action', tags=['ViolationHistoryVts'])
+async def vtsviolationhistory_vts_alert_action(data: Violationhistoryvts_Vts_Alert_ActionParams):
     """
     API endpoint to perform an action on an alert.
 
@@ -32,14 +32,14 @@ async def vtsviolationhistory_vts_alert_action(data: Vtsviolationhistory_Vts_Ale
 
 
 # Action get_closed_alerts_details_vts
-@router.post('/get_closed_alerts_details_vts', tags=['VtsViolationHistory'])
-async def vtsviolationhistory_get_closed_alerts_details_vts(data: Vtsviolationhistory_Get_Closed_Alerts_Details_VtsParams):
+@router.post('/get_closed_alerts_details_vts', tags=['ViolationHistoryVts'])
+async def vtsviolationhistory_get_closed_alerts_details_vts(data: Violationhistoryvts_Get_Closed_Alerts_Details_VtsParams):
     if urdhva_base.context.context.exists():
         rpt = urdhva_base.context.context.get('rpt', {})
     else:
         rpt = {}
 
-    alert_data = await VtsViolationHistory.get(int(data.alert_id))
+    alert_data = await ViolationHistoryVts.get(int(data.alert_id))
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
 

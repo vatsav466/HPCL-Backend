@@ -3395,7 +3395,7 @@ Model VtsOngoingTrips {
     vehicle_location optional str
 }
 
-Model VtsViolationHistory {
+Model ViolationHistoryVts {
     vendor_id optional str
     sap_id optional str
     bu optional str

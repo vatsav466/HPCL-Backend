@@ -6826,13 +6826,13 @@
             ]
         },
         {
-            "name": "vtsviolationhistory",
+            "name": "violationhistoryvts",
             "type": "all",
             "ownerManagedAccess": false,
-            "displayName": "VtsViolationHistory",
+            "displayName": "ViolationHistoryVts",
             "attributes": {},
             "uris": [
-                "/api/vtsviolationhistory/*"
+                "/api/violationhistoryvts/*"
             ],
             "scopes": [
                 {
@@ -6856,13 +6856,13 @@
             ]
         },
         {
-            "name": "vtsviolationhistory_readOnly",
+            "name": "violationhistoryvts_readOnly",
             "type": "readOnly",
             "ownerManagedAccess": false,
-            "displayName": "VtsViolationHistory_readOnly",
+            "displayName": "ViolationHistoryVts_readOnly",
             "attributes": {},
             "uris": [
-                "/api/vtsviolationhistory/*"
+                "/api/violationhistoryvts/*"
             ],
             "scopes": [
                 {
@@ -6874,13 +6874,13 @@
             ]
         },
         {
-            "name": "vtsviolationhistory_admin",
+            "name": "violationhistoryvts_admin",
             "type": "admin",
             "ownerManagedAccess": false,
-            "displayName": "VtsViolationHistory_admin",
+            "displayName": "ViolationHistoryVts_admin",
             "attributes": {},
             "uris": [
-                "/api/vtsviolationhistory/*"
+                "/api/violationhistoryvts/*"
             ],
             "scopes": [
                 {

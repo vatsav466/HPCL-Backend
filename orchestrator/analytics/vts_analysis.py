@@ -591,7 +591,7 @@ async def update_vts_instance(alert_data):
 
 async def is_violation_exists(tl_number,invoice_number,violation):
     query = (f"select * from vts_violation_history where tl_number = '{tl_number}' and invoice_number= '{invoice_number}' and violation_name='{violation}'")
-    vts_alert_data = await hpcl_ceg_model.VtsViolationHistory.get_aggr_data(query, limit=0)
+    vts_alert_data = await hpcl_ceg_model.ViolationHistoryVts.get_aggr_data(query, limit=0)
     if vts_alert_data.get("data", []):
         return True
     return False

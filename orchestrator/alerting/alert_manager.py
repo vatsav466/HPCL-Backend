@@ -470,7 +470,7 @@ class AlertAction:
             input_data['doc_link'] = await helpers.get_doc_link(input_data['doc_link'])
         # input_data.update({"event_tags": {event_tag_map.get(input_data['action_type'], "is_approved"): True}})
         try:
-            alert_data = await hpcl_ceg_model.VtsViolationHistory.get(alert_id)
+            alert_data = await hpcl_ceg_model.ViolationHistoryVts.get(alert_id)
         except Exception as e:
             print("Exception in getting alert data:%s" % e)
             return False, "Provided alert id is not valid"
@@ -579,7 +579,7 @@ class AlertAction:
             raise ValueError("Alert data does not have an 'id' field.")
 
         # Modify the alert with the updated alert_history
-        await hpcl_ceg_model.VtsViolationHistory(**{"id": alert_id, "alert_history": alert_history}).modify()
+        await hpcl_ceg_model.ViolationHistoryVts(**{"id": alert_id, "alert_history": alert_history}).modify()
         # await hpcl_ceg_model.Alerts(**{"id": alert_data.id, "alert_history": alert_history}).modify()
 
     @classmethod
