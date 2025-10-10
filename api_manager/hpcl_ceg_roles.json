@@ -6848,7 +6848,7 @@
                     "name": "delete"
                 },
                 {
-                    "name": "vts_alert_action"
+                    "name": "alert_action_vts"
                 },
                 {
                     "name": "get_closed_alerts_details_vts"
@@ -6896,7 +6896,7 @@
                     "name": "delete"
                 },
                 {
-                    "name": "vts_alert_action"
+                    "name": "alert_action_vts"
                 },
                 {
                     "name": "get_closed_alerts_details_vts"
@@ -7541,8 +7541,8 @@
             "displayName": "submit_service_request"
         },
         {
-            "name": "vts_alert_action",
-            "displayName": "vts_alert_action"
+            "name": "alert_action_vts",
+            "displayName": "alert_action_vts"
         },
         {
             "name": "get_closed_alerts_details_vts",

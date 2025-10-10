@@ -3443,7 +3443,7 @@ Model ViolationHistoryVts {
     assigned_users optional list str        // User email for whom alert is assigned to
     assigned_user_roles optional index_field list str   // User Role for whom alert is assigned to
 
-    Action=> vts_alert_action {
+    Action=> alert_action_vts {
         bu optional str
         alert_section optional str
         action_type AlertActionType

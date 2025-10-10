@@ -9788,7 +9788,7 @@ class ViolationHistoryVtsGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
-class Violationhistoryvts_Vts_Alert_ActionParams(pydantic.BaseModel):
+class Violationhistoryvts_Alert_Action_VtsParams(pydantic.BaseModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
     alert_section: typing.Optional[str] = pydantic.Field("", **{})
     action_type: hpcl_ceg_enum.AlertActionType
