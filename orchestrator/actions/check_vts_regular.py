@@ -38,7 +38,7 @@ class CheckRegularViolation:
             "waitTime" set to the value of the calculated wait time.
         """
         try:
-            print("params --->", params)
+            #print("params --->", params)
             if 'regular' in params.keys():
                 params['regular'] = True if params['regular'] == 'true' else False
             
@@ -46,10 +46,10 @@ class CheckRegularViolation:
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
             
-            alert_history = list(reversed(self.alert_data.get('alert_history', [])))
+            alert_history = list(reversed(alert_data.get('alert_history', [])))
             last_notified_to = ", ".join(f"'{roles_name}'" for roles_name in alert_data.get("last_notified_to",[]))
-            
             if not params['regular']:
+                #print("alert_history----->",alert_history)
                 if alert_history[0]['action_type'] in ["Approved"]:
                     if alert_history[2]['action_type'] in ['Justification']:
                         alert_message = (
@@ -66,7 +66,7 @@ class CheckRegularViolation:
                 await hpcl_ceg_model.VtsViolationHistory(**{"id": alert_data["id"],
                                                             "alert_status": "Close",
                                                             "approved_status": False}).modify()
-                return True, {"sapcommandsent": True}
+                return True, {"Violation Closed": True}
             
             if params['regular']:
                 alert_message = (

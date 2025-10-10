@@ -591,9 +591,7 @@ async def update_vts_instance(alert_data):
 
 async def is_violation_exists(tl_number,invoice_number,violation):
     query = (f"select * from vts_violation_history where tl_number = '{tl_number}' and invoice_number= '{invoice_number}' and violation_name='{violation}'")
-    print("query------>",query)
     vts_alert_data = await hpcl_ceg_model.VtsViolationHistory.get_aggr_data(query, limit=0)
-    print("vts_alert_data--------->", vts_alert_data)
     if vts_alert_data.get("data", []):
         return True
     return False
@@ -628,12 +626,13 @@ async def trigger_vts_alarm_alert(entry):
     base_data.update({"location_name": location_data.get('name', '')})
 
     for v_field in violation_fields.keys():
-        violation_data_mapping = vts_instance_mapping.violation_mapping["VTS"][v_field]
+        violation_data_mapping = vts_instance_mapping.violation_mapping["VTS"][entry['location_type']][v_field]
         violation_name = violation_data_mapping['violation_name']
         sop_id = violation_data_mapping['sop_id']
         severity = violation_data_mapping['severity']
-        if not await is_violation_exists(entry['tl_number'],entry['invoice_number'],violation_name) and entry[v_field]>0:
-            #unique_id = await alert_helper.get_alert_unique_id("TAS", entry['location_id'], sop_id)
+        if entry[v_field] <= 0:
+            continue
+        if not await is_violation_exists(entry['tl_number'],entry['invoice_number'],violation_name):
             async with httpx.AsyncClient(verify=False) as client:
                 base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
                 resp = await client.get(f"{base_url}/api_cache/v1/get_unique_alert_id", params={"bu": "VTS",
@@ -657,10 +656,11 @@ async def trigger_vts_alarm_alert(entry):
                     "processed_time": processed_time.isoformat()
                 }
             ]
+            #print("alert_history",alert_history)
             violation_data = {
                 "vendor_id": entry['vendor_id'],
-                "location_id": str(entry['location_id']),
-                "location_type": entry['location_type'],
+                "sap_id": str(entry['location_id']),
+                "bu": entry['location_type'],
                 "tl_number": entry['tl_number'],
                 "unique_id": unique_id,
                 "sop_id": sop_id,
@@ -698,7 +698,7 @@ async def trigger_vts_alarm_alert(entry):
             payload = {"businessKey": unique_id,
                         "variables": {"alert_id": {"value": vts_history_resp['id'], "type": "String"},
                                       "interlock_name": {"value": violation_name, "type": "String"},
-                                      "location_type": {"value": entry['location_type'], "type": "String"},
+                                      "bu": {"value": entry['location_type'], "type": "String"},
                                       "sap_id": {"value": entry['location_id'], "type": "String"},
                                       "sop_id": {"value": sop_id, "type": "String"},
                                       "tt_type": {"value": entry['tt_type'], "type": "String"},
@@ -718,9 +718,9 @@ async def trigger_vts_alarm_alert(entry):
 
 async def create_vts_violation_alerts(enriched_data):
     try:
+        #print("enriched_data",enriched_data)
         for entry in enriched_data:
             entry['auto_unblock'] = True
-            entry['violation_type'] = await get_vts_violation(entry)
             entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
                 lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
             await trigger_vts_alarm_alert(entry)

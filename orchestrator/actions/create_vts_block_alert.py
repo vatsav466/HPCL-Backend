@@ -48,7 +48,6 @@ class CreateVTSBlockAlert:
         query = f"vehicle_number = '{tt_number}' and alert_status = 'Close' and alert_section = 'VTS'"
         print("query: ", query)
         vts_alert_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query,limit=5),resp_type='plain')
-        #print("vts_alert_data: ", vts_alert_data)
         if len(vts_alert_data['data']):
             return vts_alert_data['data'][0]['closed_at']
         return None
@@ -110,15 +109,15 @@ class CreateVTSBlockAlert:
             end_date_ = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
             if start_date_ <= last_updated_at_ist.date() <= end_date_:
                 query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_violation_history where tl_number = '{tt_number}' "
-                         f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and created_at > '{vts_closed_alert_data}' and violation_type = '{violation_type}' and alert_status='true'")
+                         f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and created_at > '{vts_closed_alert_data}' and violation_type = '{violation_type}' and approved_status='true'")
                 vts_alert_data = await hpcl_ceg_model.VtsViolationHistory.get_aggr_data(query, limit=0)
             else:
                 query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_violation_history where tl_number = '{tt_number}' "
-                         f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and violation_type = '{violation_type}' and alert_status='true'")
+                         f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and violation_type = '{violation_type}' and approved_status='true'")
                 vts_alert_data = await hpcl_ceg_model.VtsViolationHistory.get_aggr_data(query, limit=0)
         else:
             query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_violation_history where tl_number = '{tt_number}' "
-                     f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and violation_type = '{violation_type}' and alert_status='true'")
+                     f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and violation_type = '{violation_type}' and approved_status='true'")
             vts_alert_data = await hpcl_ceg_model.VtsViolationHistory.get_aggr_data(query, limit=0)
 
         if not vts_alert_data.get("data", []):
@@ -160,25 +159,25 @@ class CreateVTSBlockAlert:
         Returns:
             dict: A dictionary containing the status, message and the created alert document
         """
-        status, location_details = await alert_helper.get_location_details(alert_data['location_type'],
-                                                                           alert_data['location_id'])
+        status, location_details = await alert_helper.get_location_details(alert_data['bu'],
+                                                                           alert_data['sap_id'])
         if not status:
-            logger.info(f"Error in finding location {alert_data['location_id']} "
-                        f"for bu {alert_data['location_type']} - {location_details}")
+            logger.info(f"Error in finding location {alert_data['sap_id']} "
+                        f"for bu {alert_data['bu']} - {location_details}")
             location_details = {'name': ""}
         
-        instance_data, violation_name, vts_alert_history_ids = await self.get_vts_instance(alert_data['tl_number'],alert_data['location_id'],alert_data['location_type'],alert_data['violation_type'])
+        instance_data, violation_name, vts_alert_history_ids = await self.get_vts_instance(alert_data['tl_number'],alert_data['sap_id'],alert_data['bu'],alert_data['violation_type'])
         if not instance_data:
             logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
             return True, {"sapcommandsent": True}
         
-        vts_alert_data = {"bu": alert_data['location_type'],
-                          "sap_id": alert_data['location_id'],
+        vts_alert_data = {"bu": alert_data['bu'],
+                          "sap_id": alert_data['sap_id'],
                           "location_name": location_details['name'],
                           "vehicle_number": alert_data['tl_number'],
                           "violation_type": violation_name}
         interlock_details = utilities.interlock_mapping.get_interlock_name(
-            alert_data['location_type'], instance_data['interlock_name'])
+            alert_data['bu'], instance_data['interlock_name'])
         
         alert_message = (
             f"Vehicle Number: {alert_data['tl_number']} \n"
@@ -230,7 +229,7 @@ class CreateVTSBlockAlert:
         if query:
             await hpcl_ceg_model.VtsTruckDetails.update_by_query(query)
 
-        camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=alert_data['location_id'],
+        camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
                                                     alert_section="VTS")
         await alert_factory.AlertFactory().create_alert(vts_alert_data, camunda_url)
     
@@ -265,15 +264,15 @@ class CreateVTSBlockAlert:
             end_date_ = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
             if start_date_ <= last_updated_at_ist.date() <= end_date_:
                 query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_violation_history where tl_number = '{tt_number}' "
-                         f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and created_at > '{vts_opened_alert_data}' and violation_type = '{violation_type}'")
+                         f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and created_at > '{vts_opened_alert_data}' and violation_type = '{violation_type}' and approved_status='true'")
                 vts_alert_data = await hpcl_ceg_model.VtsViolationHistory.get_aggr_data(query, limit=0)
             else:
                 query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_violation_history where tl_number = '{tt_number}' "
-                         f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and violation_type = '{violation_type}'")
+                         f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and violation_type = '{violation_type}' and approved_status='true'")
                 vts_alert_data = await hpcl_ceg_model.VtsViolationHistory.get_aggr_data(query, limit=0)
         else:
             query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_violation_history where tl_number = '{tt_number}' "
-                     f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and violation_type = '{violation_type}'")
+                     f"and vts_end_datetime::date between '{start_date}' and '{end_date}' and violation_type = '{violation_type}' and approved_status='true'")
             vts_alert_data = await hpcl_ceg_model.VtsViolationHistory.get_aggr_data(query, limit=0)
         
         if not vts_alert_data.get("data", []):
@@ -308,7 +307,7 @@ class CreateVTSBlockAlert:
     
     async def update_vts_instance(self, alert_data):
         vts_end_datetime = alert_data.get('vts_end_datetime',None)
-        instance_data, violation_name, vts_alert_history_ids, alert_id = await self.get_updated_vts_instance(alert_data['tl_number'],alert_data['location_id'],alert_data['location_type'])
+        instance_data, violation_name, vts_alert_history_ids, alert_id = await self.get_updated_vts_instance(alert_data['tl_number'],alert_data['sap_id'],alert_data['bu'],alert_data['violation_type'])
         if not instance_data:
             logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
             return True, {"sapcommandsent": True}
@@ -323,6 +322,8 @@ class CreateVTSBlockAlert:
         )
         alert_data["action_msg"] = alert_message
         alert_data["action_type"] = "Blocked"
+
+        await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
 
         vehicle_blocked_end_date = (
             alert_data['vehicle_blocked_start_date'] +
@@ -368,7 +369,7 @@ class CreateVTSBlockAlert:
             "waitTime" set to the value of the calculated wait time.
         """
         try:
-            print("params --->", params)
+            #print("params --->", params)
             alert_data = await hpcl_ceg_model.VtsViolationHistory.get(params.get('alert_id'))
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
