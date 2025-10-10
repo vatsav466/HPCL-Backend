@@ -2,6 +2,7 @@ import os
 import json
 import pandas as pd
 import hpcl_ceg_model
+from collections import defaultdict
 from utilities.helpers import map_device_category
 import orchestrator.analytics.va_analysis as va_analysis
 from orchestrator.dbconnector.widget_actions import widget_actions
@@ -42,17 +43,21 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
         interlocks = list(set([rule['interlock_name'] for rule in rules['rules']]))
         in_clause_raw = ", ".join(f"'{value}'" for value in interlocks)
         query = (
-            f"SELECT interlock_name, device_name "
+            f"SELECT interlock_name, device_name, count(device_name) as alert_count "
             f"FROM alerts "
             f"WHERE interlock_name IN ({in_clause_raw}) "
             f"AND sap_id = '{location_id}' "
             f"AND alert_status != 'Close' "
             f"AND alert_section = 'LPG' "
-            f"AND bu = 'LPG'"
+            f"AND bu = 'LPG' "
+            f"GROUP BY interlock_name, device_name"
         )
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         open_alerts = {rec['interlock_name']: rec['device_name'] for rec in data['data']}
-
+        alert_count = defaultdict(int)
+        for x in data['data']:
+            alert_count[f"{x['interlock_name']}_count"] += x['alert_count']
+        alert_count = dict(alert_count)
         rejection_query = (
             f"SELECT "
             f"ROUND((SUM(cs_sortout) / NULLIF(SUM(cs_handled), 0)) * 100, 2) AS cs_rejection, "
@@ -63,7 +68,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
         )
         rej_data = await hpcl_ceg_model.LpgPlantOperations.get_aggr_data(rejection_query)
         rejection_values = rej_data["data"][0] if rej_data["data"] else {}
-
+        msg = ""
         for rule in rules["rules"]:
             rule_weightage = rule["weightage"]
             score = 0
@@ -72,8 +77,14 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             if rule["model"] == "open_alerts":
                 if rule["interlock_name"] in open_alerts:
                     score = 0
+                    interlock_name_count = f"{rule['interlock_name']}_count"
+                    count_value = alert_count.get(interlock_name_count, 0)
+                    verb = "is" if count_value == 1 else "are"
+                    verb_alert = "alert" if count_value == 1 else "alerts"
+                    msg = f"There {verb} {count_value} open {verb_alert} for {rule['interlock_name']}"
                 else:
                     score = 100
+                    msg = f"No open alert found for {rule['interlock_name']}"
 
             # Percentage Rejection
             elif rule["model"] == "percentage_rejection":
@@ -99,12 +110,15 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
 
                     if value_rejection < min_val:
                         score = base  # full score
+                        msg = f"{rule['interlock_name']} is less than {min_val}. Current rejection is {value_rejection}"
                         break
                     elif value_rejection > max_val:
                         score = 0
+                        msg = f"{rule['interlock_name']} is more than {max_val}. Current rejection is {value_rejection}"
                         continue
                     else:
                         score = ((float(max_val) - float(value_rejection)) / (float(max_val) - float(min_val))) * float(base)
+                        msg = f"Current rejection rate is {float(value_rejection)}, Calculation : (({float(max_val)} - {float(value_rejection)}) / ({float(max_val)} - {float(min_val)})) * {float(base)}"
                         break
 
                 # Convert to percentage of rule weightage
@@ -119,6 +133,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                     "score": round(score, 2),
                     "weightage": rule_weightage,
                     "module": rules.get("name", name),
+                    "msg": msg
                 }
             )
 
@@ -130,18 +145,21 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             "name": rules.get("name", name),
             "score": final_score,
             "weightage": rules["weightage"],
-            "results": pi_score,
+            "results": pi_score
         }
 
     async def _compute_va_pi_score(self, name, rules, location_id):
         pi_score = []
+        msg = ""
         for rule in rules['rules']:
             score = 0
             if rule['model'] == 'va_portal':
                 if self.va_data:
                     score = round((float(self.va_data['OVERALL_SCORE']) * 10 * rule['weightage']) / 100, 2)
+                    msg = f"VA Portal overall score: {self.va_data['OVERALL_SCORE']} * 10 * {rule['weightage']} / 100"
                 else:
                     score = 0
+                    msg = "VA Portal data not available, score set to 0"
             elif rule['model'] == 'va_alerts':
                 severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
                 in_clause_raw = ", ".join(f"'{value}'" for value in severity)
@@ -175,11 +193,13 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                     else:
                         alert_score.append(rule_['weightage'])
                 print(alert_score, rule['weightage'])
+                total_alerts = sum(open_alerts.values()) + sum(close_alerts.values())
                 if all(s == 0 for s in alert_score):
                     # If perfect compliance is achieved, force the module score to 100.0
                     score = 100 # rules['weightage']
                 else:
                     score = round((sum(alert_score) * rule['weightage']) / 100, 2)
+                msg = f"Total alerts: {total_alerts}. Calculation: ({sum(alert_score)}) * ({rule['weightage']}) / 100"
             else:
                 ...
             pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
@@ -193,6 +213,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
     async def _compute_vts_pi_score(self, name, rules, location_id):
         pi_score = []
         total_vehicles = 190
+        msg = ""
         for rule in rules['rules']:
             alert_score = []
             if rule['model'] == 'vts_interlock':
@@ -215,8 +236,10 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                     if rule_['search_value'] in alert_data:
                         score = ((total_vehicles - alert_data[rule_['search_value']]) / total_vehicles)
                         score = round(score * (rule_['weightage'] / 100), 2)
+                        msg = f"(({total_vehicles} - {alert_data[rule_['search_value']]}) / {total_vehicles})"
                         alert_score.append(score)
                     else:
+                        msg = "Provided full score"
                         alert_score.append(rule_['weightage'])
             # Generating score by comparing number of active vehicles with no of open alerts
             elif rule['model'] == 'vts_active_vehicles':
@@ -257,13 +280,21 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                         close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
                                                                  (close_alerts.get(int_name, 0) +
                                                                   open_alerts.get(int_name, 0)))
+                        msg = f"Calculation : weightage: {rule_['weightage']} * (closed_alert: {close_alerts.get(int_name, 0)} / (closed_alert: {close_alerts.get(int_name, 0)} + open_alerts: {open_alerts.get(int_name, 0)}))"
                         alert_score.append(close_percentage)
-                    else:
+                    else:   
+                        msg = "No closed alerts found"
                         alert_score.append(rule_['weightage'])
+                if not data.get("data", None):
+                    msg = f"No Open alerts found"
                 print(alert_score, rules['weightage'])
-            score = round((sum(alert_score) * rule['weightage']) / 100, 2)
-            pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
-                             'module': rules.get('name', name)})
+            score = round((sum(alert_score) * rule['weightage']) / 100, 2)            
+            pi_score.append({"name": rule['name'], 
+                             "score": score, 
+                             "weightage": rule['weightage'],
+                             'module': rules.get('name', name),
+                             "msg": msg
+                             })
         final_score = sum([score['score'] for score in pi_score])
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:
@@ -272,13 +303,6 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
 
     async def _compute_production_pi_score(self, name, rules, location_id):
         score = 0
-        # query_week_sale = f"""SELECT
-        #                         DATE(process_date) AS date,
-        #                         ROUND(SUM(productivity_normal_production)::NUMERIC, 2) AS avg_production
-        #                     FROM lpg_operations_summary
-        #                     WHERE process_date::DATE >= CURRENT_DATE - INTERVAL '8 days' and process_date::DATE < CURRENT_DATE - INTERVAL '1 day'
-        #                     and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date DESC"""
-
         query_week_sale = f""" SELECT
                                 DATE(process_date) AS date,
                                 ROUND(SUM(total_production)::NUMERIC, 2) AS avg_production
@@ -288,11 +312,8 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
 
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query_week_sale)
         production_data = [float(rec['avg_production']) for rec in resp['data'] if rec['avg_production']]
-        production_avg = float(sum(production_data) / len(production_data) if production_data else 0)
+        production_avg = round(float(sum(production_data) / len(production_data) if production_data else 0), 2)
 
-        # query_yesterday_sale = f"""SELECT ROUND(SUM(productivity_normal_production)::NUMERIC, 2)
-        # as production_yesterday FROM lpg_operations_summary WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
-        # and sap_id = '{location_id}'"""
         query_yesterday_sale = f"""SELECT ROUND(SUM(total_production)::NUMERIC, 2)
         as production_yesterday FROM lpg_plant_operations WHERE process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
         and sap_id = '{location_id}' """
@@ -307,79 +328,70 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             score = rules['weightage']
         return {"name": rules.get('name', name), "score": round(score, 2), "weightage": rules['weightage'],
                 "results": [{"name": rules['name'], "score": round(score, 2), "weightage": rules['weightage'],
-                             'module': rules['name'], "msg": f"Last Week Production({production_avg}) is less than "
+                             'module': rules['name'], "msg": f"Last Week Production({production_avg})   is less than "
                                                              f"Yesterdays Production({production_yesterday})"}]}
 
     async def _compute_productivity_pi_score(self, name, rules, location_id):
         query = f"""
-            SELECT filling_head as filling_heads,
+            SELECT filling_head AS filling_heads,
                 COALESCE(ROUND(SUM(total_production) / NULLIF(SUM(total_net_hours), 0), 2), 0) AS productivity_yesterday
             FROM lpg_plant_operations
             WHERE
                 process_date::DATE = CURRENT_DATE - INTERVAL '1 day'
-                AND sap_id='{location_id}'
+                AND sap_id = '{location_id}'
             GROUP BY filling_head
         """
 
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         productivity = {rec['filling_heads']: float(rec['productivity_yesterday']) for rec in resp['data']}
         pi_score = []
-
+        msg = ""
         for rule in rules['rules']:
-            if rule['search_value'] not in productivity:
+            head = rule['search_value']
+            if head not in productivity:
                 continue
 
-            carousel_productivity = productivity.get(rule['search_value'], 0)
-            weightage = rule['weightage']
-            score = 0
+            val = float(productivity[head])
+            weightage = float(rule['weightage'])
+            subrules = rule['rules']
+            score = 0.0
 
-            for percentage_rule in rule['rules']:
-                method = percentage_rule.get('method', 'waterfall')
+            for r in subrules:
+                min_val = float(r['min'])
+                max_val = float(r['max'])
 
-                if method == 'excel_like':
-                    min_val = float(percentage_rule['min'])
-                    max_val = float(percentage_rule['max'])
-                    w = float(percentage_rule['weightage'])
-
-                    if carousel_productivity >= max_val:
-                        score = w
-                    elif carousel_productivity <= min_val:
-                        score = 0
-                    else:
-                        diff_range = max_val - min_val
-                        score = ((carousel_productivity - min_val) / diff_range) * w
-
-                    break  # stop once matched
-
-                elif method == 'waterfall':
-                    if float(percentage_rule['min']) <= carousel_productivity < float(percentage_rule['max']):
-                        diff_range = float(percentage_rule['max']) - float(percentage_rule['min'])
-                        # If full weightage, give it directly; else interpolate
-                        if percentage_rule['weightage'] in (0, 100):
-                            score = float(percentage_rule['weightage'])
-                        else:
-                            score = ((carousel_productivity - float(percentage_rule['min'])) / diff_range) * float(
-                                percentage_rule['weightage'])
-                        break
-
-            # If productivity is above the last max → full score
-            if carousel_productivity >= float(rule['rules'][-1]['max']):
-                score = weightage
+                # Interpolation
+                if val < min_val:
+                    score = 0
+                    msg = f"Productivity of {head} is {val} which is less than {min_val}"
+                    break
+                elif val > max_val:
+                    score = 100
+                    msg = f"Productivity of {head} is {val} which is more than {max_val}"
+                    continue
+                else:
+                    score = 100 - ((max_val - val) / (max_val - min_val) * 100)
+                    msg = f"Productivity of {head} is {val}. Calculation : ((max_value: {max_val} - productivity: {val}) / (max_value: {max_val} - min_value: {min_val}) * 100)"
+                    break
+            
+            # If scores goes more than 100
+            score = max(0, min(100, score))
 
             pi_score.append({
                 "name": rule['name'],
                 "score": round(score, 2),
                 "weightage": weightage,
-                'module': rules.get('name', 'Productivity')
+                "module": rules.get('name', 'Productivity'),
+                "msg": msg
             })
-
-        final_score = round(
-            (sum([s['score'] for s in pi_score]) / len(pi_score) * rules['weightage'] / 100),
-            2
-        ) if pi_score else 0
-
-        for rec in pi_score:
-            rec['score'] = round(rec['score'], 2)
+            
+        if pi_score:
+            total_weight = sum(s['weightage'] for s in pi_score)
+            weighted_sum = sum(s['score'] * s['weightage'] for s in pi_score)
+            avg_score = weighted_sum / total_weight
+            final_score = round(avg_score * (rules['weightage'] / 100), 2)
+        else:
+            final_score = 0
 
         return {
             "name": rules.get('name', 'Productivity'),
