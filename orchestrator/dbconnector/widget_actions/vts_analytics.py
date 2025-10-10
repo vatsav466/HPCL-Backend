@@ -8,7 +8,6 @@ from collections import defaultdict
 import orchestrator.dbconnector.credential_loader as credential_loader
 import asyncio
 import mysql.connector
-from datetime import datetime, timedelta
 
 
 class VTSAnalyticsActions:
@@ -77,6 +76,7 @@ class VTSAnalyticsActions:
         start = val.split(",")[0]
         end = (datetime.strptime(val.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
         return f"created_at BETWEEN '{start}' AND '{end}'"
+    
 
     @staticmethod
     def apply_conditions_to_query(query, conditions):
@@ -285,7 +285,7 @@ class VTSAnalyticsActions:
                 select_parts = []
                 for v_type in all_violations:
                     select_parts.append(
-                    f"SUM(CASE WHEN {v_type} != 0 THEN 1 ELSE 0 END) AS {v_type}"
+                    f"COUNT(CASE WHEN {v_type} != 0 THEN 1 ELSE 0 END) AS {v_type}"
                 )
                 select_clause = ",\n        ".join(select_parts)
                 view_query = f"""
@@ -450,7 +450,49 @@ class VTSAnalyticsActions:
                  agg_df['total_count'] = agg_df[violation_cols].sum(axis=1)
                  cleaned_records = agg_df.to_dict(orient='records')
                  return {"status": True, "message": "success", "data": cleaned_records}
-                     
+            
+            qlick_view = payload.get("qlick_view")
+            click_value = payload.get("click_value")
+            location_name = payload.get("location_name")
+            violation_cols = [v for v in all_violations if v in final_df.columns]
+
+            if qlick_view == "zone" and not click_value:
+                agg_df = final_df.groupby("zone")[violation_cols].sum().reset_index()
+                agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
+                return {"status": True, "message": "Zone-wise violations", "data": agg_df.to_dict(orient="records")}
+            
+            if qlick_view == "zone" and  click_value:
+                zone_df = final_df[final_df[qlick_view] == click_value]
+                if zone_df.empty:
+                    return {"status": True, "message": f"No Data found for zone {click_value}", "data": []}
+                
+                agg_df = zone_df.groupby("location_name")[violation_cols].sum().reset_index()
+                agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
+                cleaned_records = agg_df.to_dict(orient="records")
+                return { "status": True,  "message": f"Violations for all plants in zone {click_value}", "data": cleaned_records }
+                 
+            elif qlick_view == "location_name" and click_value:
+                location_df = final_df[final_df[qlick_view] == click_value]
+                if location_df.empty:
+                    return {"status": True, "message": f"No Data found for location {click_value}", "data" : []}
+            
+                agg_df = location_df.groupby("transporter_name")[violation_cols].sum().reset_index()
+                agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
+                cleaned_records = agg_df.to_dict(orient="records")
+                return {"status": True, "message": f"violations for all transporter in location {click_value}", "data": cleaned_records}
+
+            elif qlick_view == "transporter_name" and click_value and location_name:
+                df = final_df[final_df[qlick_view] == click_value]
+
+                df = df[df["location_name"] == location_name]
+                if df.empty:
+                    return {"status": True, "message": f"No Data found for transporters {click_value}", "data" : []}
+                
+                agg_df = df.groupby("tl_number")[violation_cols].sum().reset_index()
+                agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
+                agg_df = agg_df[agg_df["total_count"] > 0]
+                cleaned_records = agg_df.to_dict(orient="records")
+                return {"status": True, "message": f"Date-wise violations for transporter {click_value}", "data": cleaned_records}
 
             cleaned_records = []
             for _, row in final_df.iterrows():
@@ -462,15 +504,11 @@ class VTSAnalyticsActions:
                         return {"status": True, "message": "No non-zero violations found", "data": []}
                 
             return {"status": True, "message": "success", "data": cleaned_records}
-        
-       
-            
+             
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
-
-
-
+        
     @staticmethod
     async def location_level_voilation_breakup(filters, cross_filters, drill_state, payload):
         try:
@@ -891,231 +929,143 @@ class VTSAnalyticsActions:
         except mysql.connector.Error as e:
             print("Query execution failed:", e)
             return {"data": []}
-            
+        
+    
     @staticmethod
     async def integrate_shortage_trips(filters, cross_filters, drill_state, payload):
-        import pandas as pd
-        import pytz
-        from datetime import datetime, timedelta
-
-        # --- HELPER FUNCTION: Build SQL Conditions (Only for columns in sales_trips_till_date) ---
-        def build_sql_conditions_string(filter_list, table_alias='T'):
-            conditions = []
-            # Keys allowed for SQL pushdown in sales_trips_till_date
-            allowed_keys = ['zone_nm', 'plant_nm', 'vehicle_id'] 
-            
-            for f in filter_list:
-                key = getattr(f, "key", None)
-                val = getattr(f, "value", None)
-                cond = getattr(f, "cond", None)
-                
-                if key and val and key.lower() in allowed_keys:
-                    df_col = key.lower()
-                    if cond == "equals":
-                        conditions.append(f"{table_alias}.{df_col} = '{val}'")
-                    elif cond == "in":
-                        if isinstance(val, list):
-                            val_str = ', '.join(f"'{v}'" for v in val)
-                            conditions.append(f"{table_alias}.{df_col} IN ({val_str})")
-                        else:
-                            conditions.append(f"{table_alias}.{df_col} = '{val}'")
-            
-            return " AND " + " AND ".join(conditions) if conditions else ""
-
-
-        # ----- 1. Filter Separation and Date Condition Preparation -----
         
-        # Separate filters: 'bu' for alerts, others for trips
+        # ----- Separate filters per table -----
+        # Alerts table only has: location_name, bu, vehicle_number, transporter_code
         alerts_filters = [f for f in filters if getattr(f, "key", None) in ("bu",)]
+        # Trips table can have: zone_nm, plant_nm, vehicle_id, etc.
         trips_filters = [f for f in filters if getattr(f, "key", None) not in ("bu",)]
-        
-        # Extract Transporter Filter for later Pandas application (must be done post-merge)
-        transporter_filter = next((f for f in trips_filters if getattr(f, 'key') == 'transporter_name'), None)
-        
-        # SQL conditions for trips (zone_nm, plant_nm, vehicle_id)
-        sql_trips_conditions = build_sql_conditions_string(trips_filters, table_alias='T')
-        
-        # Date condition from cross_filters
-        date_condition_str = ""
-        today = datetime.now().date()
-        date_selection = next((getattr(f, "value", None) for f in cross_filters if getattr(f, "key", None) == "date"), None)
 
-        if date_selection:
-            if "," in date_selection:
-                start_date, end_date = date_selection.split(",")
-                date_condition_str = f"AND T.created_on::date BETWEEN '{start_date}' AND '{end_date}'"
-            else:
-                date_selection = date_selection.lower()
-                if date_selection == "today":
-                    date_condition_str = f"AND T.created_on::date = '{today}'"
-                elif date_selection == "yesterday":
-                    date_condition_str = f"AND T.created_on::date = '{today - timedelta(days=1)}'"
-
-        # ----- 2. Fetch Alerts (Original Logic Restored) -----
-        
+        # ----- Fetch alerts -----
         alerts_query = """
             SELECT location_name, bu, vehicle_number, transporter_code
             FROM alerts
             WHERE alert_section = 'VTS'
         """
         conditions = VTSAnalyticsActions.build_filter_conditions(alerts_filters, cross_filters, alerts_query)
-        final_query = VTSAnalyticsActions.apply_conditions_to_query(alerts_query, conditions) 
+        final_query = VTSAnalyticsActions.apply_conditions_to_query(alerts_query, conditions)
+        print("final_query", final_query)
         alerts_df = await VTSAnalyticsActions.execute_query(final_query)
+
+        if alerts_df.empty:
+            print("No alerts found, returning empty response")
+            return {"status": "success", "total_invoice_count": 0, "filtered_invoice_count": 0, "trips": []}
+
         alerts_df.columns = [c.lower() for c in alerts_df.columns]
 
-        if alerts_df.empty and alerts_filters:
-            return {"status": "success", "total_invoice_count": 0, "total_vehicle_count": 0,
-                    "filtered_invoice_count": 0, "filtered_vehicle_count": 0, "zones": []}
-        
-        # ----- 3. Fetch Trips (OPTIMIZED: SQL Filter Pushdown) -----
-        
-        trips_query = f"""
-            SELECT 
-                zone_nm, plant_nm, load_date, vehicle_id, qty_shortage, invoice_no, created_on 
-            FROM 
-                sales_trips_till_date T
-            WHERE 
-                qty_shortage > 0 
-                {sql_trips_conditions} 
-                {date_condition_str}
-        """
+        # ----- Fetch trips -----
+        trips_query = 'SELECT zone_nm, plant_nm,load_date, vehicle_id, qty_shortage, invoice_no, created_on FROM sales_trips_till_date'
+
+        # Extract date from cross_filters
+        today = datetime.now().date()
+        date_selection = next((getattr(f, "value", None) for f in cross_filters if getattr(f, "key", None) == "date"), None)
+
+        if date_selection:
+            if "," in date_selection:  # between two dates
+                start_date, end_date = date_selection.split(",")
+                trips_query += f" WHERE created_on::date BETWEEN '{start_date}' AND '{end_date}'"
+            else:
+                date_selection = date_selection.lower()
+                if date_selection == "today":
+                    trips_query += f" WHERE created_on::date = '{today}'"
+                elif date_selection == "yesterday":
+                    trips_query += f" WHERE created_on::date = '{today - timedelta(days=1)}'"
+
         trips_df = await VTSAnalyticsActions.execute_query(trips_query)
         if trips_df.empty:
-            return {"status": "success", "total_invoice_count": 0, "total_vehicle_count": 0,
-                    "filtered_invoice_count": 0, "filtered_vehicle_count": 0, "zones": []}
-            
+            print("No trips found, returning empty response")
+            return {"status": "success", "total_invoice_count": 0, "filtered_invoice_count": 0, "trips": []}
+
         trips_df.columns = [c.lower() for c in trips_df.columns]
-        
-       
 
-        # ----- 4. Merging (Original Logic Restored) -----
-
-        # 4a. Merge Alerts
+        # ----- Merge alerts -----
         if 'location_name' in alerts_df.columns and 'bu' in alerts_df.columns:
             plant_bu_mapping = alerts_df[['location_name', 'bu']].drop_duplicates()
-            trips_df = trips_df.merge(plant_bu_mapping, how='left', left_on='plant_nm', right_on='location_name') \
-                            .drop(columns=['location_name'], errors='ignore')
+            trips_df = trips_df.merge(
+                plant_bu_mapping,
+                how='left',
+                left_on='plant_nm',
+                right_on='location_name'
+            ).drop(columns=['location_name'], errors='ignore')
 
         if {'location_name', 'vehicle_number', 'transporter_code'}.issubset(alerts_df.columns):
             alerts_vehicle_mapping = alerts_df[['location_name', 'vehicle_number', 'transporter_code']].drop_duplicates()
-            trips_df = trips_df.merge(alerts_vehicle_mapping, how='left',
-                                    left_on=['plant_nm', 'vehicle_id'],
-                                    right_on=['location_name', 'vehicle_number']) \
-                            .drop(columns=['vehicle_number', 'location_name'], errors='ignore')
+            trips_df = trips_df.merge(
+                alerts_vehicle_mapping,
+                how='left',
+                left_on=['plant_nm', 'vehicle_id'],
+                right_on=['location_name', 'vehicle_number']
+            ).drop(columns=['vehicle_number', 'location_name'], errors='ignore')
 
-        # 4b. Merge email master
+        # ----- Merge email master -----
         email_query = "SELECT transporter_code, transporter_name FROM email_master"
         email_df = await VTSAnalyticsActions.execute_query(email_query)
         if not email_df.empty:
             email_df.columns = [c.lower() for c in email_df.columns]
-            trips_df = trips_df.merge(email_df, how='left', on='transporter_code')
-            
-        # ----- 5. Filter valid trips (Original Logic Restored) -----
-        
+            trips_df = trips_df.merge(email_df, how='left', left_on='transporter_code', right_on='transporter_code')
+
+        # ----- Filter valid trips -----
         trips_df['qty_shortage'] = pd.to_numeric(trips_df['qty_shortage'], errors='coerce')
-        filtered_trips_df = trips_df[
+        trips_df = trips_df[
             trips_df['transporter_name'].notnull() &
             trips_df['transporter_code'].notnull() &
             (trips_df['qty_shortage'] > 0)
-        ].copy()
+        ]
 
-        # ----- 6. Apply Transporter Filter (Pandas, Original Logic Restored) -----
-        
-        # Apply the transporter_name filter here, post-merge.
-        if transporter_filter:
-            key = getattr(transporter_filter, "key", None)
-            val = getattr(transporter_filter, "value", None)
-            cond = getattr(transporter_filter, "cond", None)
-            
-            if key and val and key.lower() == 'transporter_name':
+        # ----- Total invoice count BEFORE applying dynamic filters -----
+        total_invoice_count = trips_df['invoice_no'].nunique() if 'invoice_no' in trips_df.columns else 0
+
+        # ----- Apply trips filters dynamically (with "in" support) -----
+        filtered_trips_df = trips_df.copy()
+        for f in trips_filters:
+            key = getattr(f, "key", None)
+            val = getattr(f, "value", None)
+            cond = getattr(f, "cond", None)
+            if key and val:
                 df_col = key.lower()
-                if cond == "equals":
-                    filtered_trips_df = filtered_trips_df[filtered_trips_df[df_col] == val]
-                elif cond == "in":
-                    if not isinstance(val, list):
-                        val = [val]
-                    filtered_trips_df = filtered_trips_df[filtered_trips_df[df_col].isin(val)]
+                if df_col in filtered_trips_df.columns:
+                    if cond == "equals":
+                        filtered_trips_df = filtered_trips_df[filtered_trips_df[df_col] == val]
+                    elif cond == "in":
+                        if not isinstance(val, list):
+                            val = [val]
+                        filtered_trips_df = filtered_trips_df[filtered_trips_df[df_col].isin(val)]
+                    # Additional conditions can be added here (contains, gt, lt, etc.)
 
-        # ----- 7. Counts after filtering (Original Logic Restored) -----
-        
-        filtered_invoice_count = filtered_trips_df['invoice_no'].nunique()
-        filtered_vehicle_count = filtered_trips_df['vehicle_id'].nunique()
-        
-        if filtered_trips_df.empty:
-            return {"status": "success", "total_invoice_count": total_invoice_count, "total_vehicle_count": total_vehicle_count,
-                    "filtered_invoice_count": 0, "filtered_vehicle_count": 0, "zones": []}
-                    
-        # Drop exact duplicates
-        filtered_trips_df = filtered_trips_df.drop_duplicates()
+        # ----- Count after filtering -----
+        filtered_invoice_count = filtered_trips_df['invoice_no'].nunique() if 'invoice_no' in filtered_trips_df.columns else 0
+        import pytz
 
-        # ----- 8. Convert load_date to IST (CRITICAL FIX: Original Logic Restored) -----
-        
-        # This logic correctly checks if the column is already timezone-aware before localizing.
-        ist = pytz.timezone("Asia/Kolkata")
+        # ----- Prepare trips list for response -----
+        # Convert load_date to IST
         if 'load_date' in filtered_trips_df.columns:
-            filtered_trips_df['load_date'] = pd.to_datetime(filtered_trips_df['load_date'])
-            
-            if filtered_trips_df['load_date'].dt.tz is None:
-                # Localize to UTC if naive (no timezone), then convert
-                filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.tz_localize('UTC').dt.tz_convert(ist)
-            else:
-                # If already tz-aware, convert directly (avoids the "Already tz-aware" error)
-                filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.tz_convert(ist)
-                
-            # Format the result
+            ist = pytz.timezone("Asia/Kolkata")
+            filtered_trips_df['load_date'] = pd.to_datetime(filtered_trips_df['load_date']).dt.tz_convert(ist)
+            # Format nicely if desired
             filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.strftime("%Y-%m-%d %H:%M:%S%z")
 
-        # ----- 9. Dynamic hierarchical grouping (Original Logic Restored) -----
-        
-        # Re-using your original recursive function structure for consistency
-        def compute_group_summary(df, group_cols):
-            if not group_cols:
-                return None
-
-            result = []
-            current_col = group_cols[0]
-            next_cols = group_cols[1:]
-
-            for keys, group in df.groupby(current_col, dropna=False):
-                item = {current_col: keys}
-                item["shortage"] = group["qty_shortage"].sum()
-                item["invoice_count"] = group["invoice_no"].nunique()
-                item["vehicle_count"] = group["vehicle_id"].nunique()
-
-                # recursive drilldown
-                child = compute_group_summary(group, next_cols)
-                if child:
-                    if next_cols[0] == "plant_nm":
-                        item["plants"] = child
-                    elif next_cols[0] == "transporter_name":
-                        item["transporters"] = child
-                    elif next_cols[0] == "vehicle_id":
-                        item["vehicles"] = child
-                    elif next_cols[0] == "invoice_no":
-                        item["invoices"] = child
-
-                result.append(item)
-
-            return result
-
-        # Determine grouping columns based on applied filters
-        filter_keys = [getattr(f, "key", None) for f in filters] if filters else []
-        if "vehicle_id" in filter_keys:
-            group_cols = ["vehicle_id", "invoice_no"]
-        elif "transporter_name" in filter_keys:
-            group_cols = ["transporter_name", "vehicle_id"]
-        elif "plant_nm" in filter_keys:
-            group_cols = ["plant_nm", "transporter_name"]
-        elif "zone_nm" in filter_keys:
-            group_cols = ["zone_nm", "plant_nm"]
-        else:
-            group_cols = ["zone_nm"]
-
-        zones_list = compute_group_summary(filtered_trips_df, group_cols)
+        # ----- Prepare trips list for response -----
+        trips_list = filtered_trips_df[['load_date','zone_nm','plant_nm','transporter_name', 'vehicle_id', 'qty_shortage']].copy()
+        trips_list = trips_list.where(pd.notnull(trips_list), None)
+        trips_list = trips_list.rename(
+            columns={
+                "load_date":"load_date",
+                "zone_nm" :"zone_nm",
+                "plant_nm": "Plant Name",
+                "transporter_name": "Transporter Name",
+                "vehicle_id": "Vehicle No",
+                "qty_shortage": "Shortage"
+                
+            }
+        ).to_dict(orient="records")
 
         return {
             "status": "success",
+            "total_invoice_count": total_invoice_count,
             "filtered_invoice_count": filtered_invoice_count,
-            "filtered_vehicle_count": filtered_vehicle_count,
-            "zones": zones_list
+            "trips": trips_list
         }
