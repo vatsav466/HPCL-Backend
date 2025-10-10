@@ -3400,7 +3400,7 @@ Model ViolationHistoryVts {
     sap_id optional str
     bu optional str
     location_name optional str
-    tl_number index_field str
+    vehicle_number index_field str
     sop_id optional index_field str
     unique_id str
     report_duration optional str
