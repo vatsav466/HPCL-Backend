@@ -237,6 +237,102 @@ rca_reason = {
     ]
 }
 
+vts_alert_section = {
+    "TAS": {
+        "VTS": {
+            "alert_section": "VTS",
+            "close_alert_func": "vts_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
+                              "Planning Officer SOD", "Zonal Transport Officer SOD", "Location In-Charge SOD"]
+                },
+                "Accept Violation": {
+                    "name": "AcceptViolation",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
+                              "Planning Officer SOD", "Location In-Charge SOD", "Zonal Transport Officer SOD"]
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
+                },
+                "False Violation": {
+                    "name": "FalseViolation",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
+                              "Planning Officer SOD", "Location In-Charge SOD", "Zonal Transport Officer SOD"]
+                }
+            },
+            "rca_reason": [
+                "Health Issue",
+                "Person Issue",
+                "Equipment issue",
+                "Location/Outlet Near by",
+                "Other"
+            ]
+        }
+    },
+    "LPG": {
+        "VTS": {
+            "alert_section": "VTS",
+            "close_alert_func": "vts_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety Officer LPG","Location In-Charge LPG", "Zonal HSE LPG",
+                              "Zonal Operations Head LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                },
+                "Accept Violation": {
+                    "name": "AcceptViolation",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety Officer LPG","Location In-Charge LPG", "Zonal HSE LPG",
+                              "Zonal Operations Head LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-Charge LPG", "Zonal HSE LPG", "Zonal Operations Head LPG",
+                              "HQO HSE LPG", "HQO Operations LPG"]
+                },
+                "False Violation": {
+                    "name": "FalseViolation",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety Officer LPG","Location In-Charge LPG", "Zonal HSE LPG",
+                              "Zonal Operations Head LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-Charge LPG", "Zonal HSE LPG", "Zonal Operations Head LPG",
+                              "HQO HSE LPG", "HQO Operations LPG"]
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Pilferage": "Pilferage",
+                "Operations": "Operations"
+            },
+            "rca_reason": [
+                "Health Issue",
+                "Person Issue",
+                "Equipment issue",
+                "Location/Outlet Near by",
+                "Other"
+            ]
+        }
+    }
+}
+
 alert_action = {
     "TAS": {
         "TAS": {

@@ -6824,6 +6824,84 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "vtsviolationhistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VtsViolationHistory",
+            "attributes": {},
+            "uris": [
+                "/api/vtsviolationhistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "vts_alert_action"
+                },
+                {
+                    "name": "get_closed_alerts_details_vts"
+                }
+            ]
+        },
+        {
+            "name": "vtsviolationhistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VtsViolationHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vtsviolationhistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_closed_alerts_details_vts"
+                }
+            ]
+        },
+        {
+            "name": "vtsviolationhistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VtsViolationHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vtsviolationhistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "vts_alert_action"
+                },
+                {
+                    "name": "get_closed_alerts_details_vts"
+                }
+            ]
         }
     ],
     "policies": [
@@ -7461,6 +7539,14 @@
         {
             "name": "submit_service_request",
             "displayName": "submit_service_request"
+        },
+        {
+            "name": "vts_alert_action",
+            "displayName": "vts_alert_action"
+        },
+        {
+            "name": "get_closed_alerts_details_vts",
+            "displayName": "get_closed_alerts_details_vts"
         }
     ]
 }

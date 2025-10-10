@@ -196,8 +196,8 @@ async def vts_trip_not_closed(data: Vts_Trip_Not_ClosedParams):
         logger.info(f"Received VTS data ingestion from vendor {enriched_data}")
         print(f"Received VTS data ingestion from vendor {enriched_data}")
 
-        # redis_queue = urdhva_base.redispool.RedisQueue('vts_alerts_queue')
-        # await redis_queue.put(json.dumps(enriched_data))
+        redis_queue = urdhva_base.redispool.RedisQueue('vts_ongoing_trips_queue')
+        await redis_queue.put(json.dumps(enriched_data))
         return True, "Success"
 
     except Exception as e:
@@ -219,8 +219,8 @@ async def vts_trip_without_route(data: Vts_Trip_Without_RouteParams):
         logger.info(f"Received VTS data ingestion from vendor {enriched_data}")
         print(f"Received VTS data ingestion from vendor {enriched_data}")
 
-        # redis_queue = urdhva_base.redispool.RedisQueue('vts_alerts_queue')
-        # await redis_queue.put(json.dumps(enriched_data))
+        redis_queue = urdhva_base.redispool.RedisQueue('vts_ongoing_trips_queue')
+        await redis_queue.put(json.dumps(enriched_data))
         return True, "Success"
 
     except Exception as e:
@@ -242,8 +242,8 @@ async def vts_route_deviation_more_than_two_km(data: Vts_Route_Deviation_More_Th
         logger.info(f"Received VTS data ingestion from vendor {enriched_data}")
         print(f"Received VTS data ingestion from vendor {enriched_data}")
 
-        # redis_queue = urdhva_base.redispool.RedisQueue('vts_alerts_queue')
-        # await redis_queue.put(json.dumps(enriched_data))
+        redis_queue = urdhva_base.redispool.RedisQueue('vts_ongoing_trips_queue')
+        await redis_queue.put(json.dumps(enriched_data))
         return True, "Success"
 
     except Exception as e:
@@ -264,8 +264,8 @@ async def vts_trip_unauthorised_stoppage(data: Vts_Trip_Unauthorised_StoppagePar
         logger.info(f"Received VTS data ingestion from vendor {enriched_data}")
         print(f"Received VTS data ingestion from vendor {enriched_data}")
 
-        # redis_queue = urdhva_base.redispool.RedisQueue('vts_alerts_queue')
-        # await redis_queue.put(json.dumps(enriched_data))
+        redis_queue = urdhva_base.redispool.RedisQueue('vts_ongoing_trips_queue')
+        await redis_queue.put(json.dumps(enriched_data))
         return True, "Success"
 
     except Exception as e:

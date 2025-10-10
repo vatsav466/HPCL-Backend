@@ -795,7 +795,8 @@ async def lpg_top_bottom_score_plants():
                         bu = 'LPG'
                         AND zone != ''
                         AND region != ''
-                        AND timestamp::DATE BETWEEN date_trunc('month', CURRENT_DATE) AND CURRENT_DATE
+                        AND timestamp::DATE >= date_trunc('month', CURRENT_DATE)
+                        AND timestamp::DATE < CURRENT_DATE
                         AND sap_id IN ({sap_ids_str})
                         AND name NOT ILIKE '%RO%'
                         GROUP BY name, zone, region
@@ -820,7 +821,8 @@ async def lpg_top_bottom_score_plants():
                         bu = 'LPG'
                         AND zone != ''
                         AND region != ''
-                        AND timestamp::DATE BETWEEN date_trunc('month', CURRENT_DATE) AND CURRENT_DATE
+                        AND timestamp::DATE >= date_trunc('month', CURRENT_DATE)
+                        AND timestamp::DATE < CURRENT_DATE
                         AND sap_id IN ({sap_ids_str})
                         AND name NOT ILIKE '%RO%'
                         GROUP BY name, zone, region

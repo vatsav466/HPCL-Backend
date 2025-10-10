@@ -108,6 +108,8 @@ Enum AlertActionType str {
     TicketResolved='TicketResolved'
     TicketOnHold='TicketOnHold'
     SendItBack='SendItBack'
+    FalseViolation='FalseViolation'
+    AcceptViolation='AcceptViolation'
 }
 
 Enum IndentStatus str {
@@ -3368,8 +3370,8 @@ Model SalesTripsTillDate {
 
 Model VtsOngoingTrips {
     violation_type optional str
-    event_start_date optional datetime
-    event_end_date optional datetime
+    event_start_datetime optional datetime
+    event_end_datetime optional datetime
     sap_id optional str
     region optional str
     zone optional str
@@ -3377,6 +3379,7 @@ Model VtsOngoingTrips {
     location_type optional str
     tt_type optional str
     tt_number optional str
+    trip_id optional str
     transporter_id optional str
     transporter_name optional str
     invoice_no optional str
@@ -3390,4 +3393,80 @@ Model VtsOngoingTrips {
     vehicle_latitude optional float
     vehicle_longitude optional float
     vehicle_location optional str
+}
+
+Model VtsViolationHistory {
+    vendor_id optional str
+    sap_id optional str
+    bu optional str
+    location_name optional str
+    tl_number index_field str
+    sop_id optional index_field str
+    unique_id str
+    report_duration optional str
+    alert_section str
+    severity index_field Severity
+    scheduled_trip_start_datetime optional datetime
+    scheduled_trip_end_datetime optional datetime
+    vts_start_datetime optional datetime_no_zone
+    vts_end_datetime optional datetime_no_zone
+    total_trips optional int
+    violation_name optional str
+    violation_type optional str
+    violation_count optional int
+    alert_status optional AlertStatus
+    approved_status optional bool
+    alert_id optional str
+    invoice_number optional index_field str
+    tt_type optional str
+    workflow_instance_id optional str
+    workflow_datetime optional datetime
+    workflow_url optional str
+    workflow_port optional str
+
+    // Location Details
+    district optional str
+    zone optional str
+    region optional str
+    state optional str
+    city optional str
+    sales_area optional str
+
+    // Notification Details
+    alert_history optional list Alert_History
+    last_sms_to optional list str           // List of users to whom sms sent to
+    last_mailed_to optional list str        // List of users to whom email sent to
+    last_escalated_to optional list str     // List of users to whom alert escalated to
+    last_notified_to optional list str      // List of users to whom alert notified to
+    assigned_to optional str                // User email for whom alert is assigned to
+    assigned_to_role optional str           // User Role for whom alert is assigned to
+    assigned_users optional list str        // User email for whom alert is assigned to
+    assigned_user_roles optional index_field list str   // User Role for whom alert is assigned to
+
+    Action=> vts_alert_action {
+        bu optional str
+        alert_section optional str
+        action_type AlertActionType
+        alert_id int min=1 max=9999999
+        action_msg optional str
+        days optional int
+        justificationType optional str
+        category optional str
+        rca_reason optional str
+        action_description optional str
+        doc_link optional str
+        acknowledged_by optional str
+        load_number optional str
+        fan_number optional str
+        invoice_number optional str
+        trip_type optional str
+        event_tags optional tags
+    }
+
+    Action=> get_closed_alerts_details_vts {
+        bu str
+        alert_id int min=1 max=9999999
+        alert_section str
+        interlock_name str
+    }
 }

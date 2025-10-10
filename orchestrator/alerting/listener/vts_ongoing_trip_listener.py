@@ -3,14 +3,16 @@ import sys
 import json
 import time
 import asyncio
+import hpcl_ceg_model
 import traceback
 import urdhva_base.redispool
-import orchestrator.analytics.vts_analysis as vts_analysis
-
-logger = urdhva_base.Logger.getInstance("vts_alerts_listener.log")
+import cache_gateway.cache_api_actions as cache_api_actions
 
 
-class VTSAlertsListener:
+logger = urdhva_base.Logger.getInstance("vts_ongoing_trips_listener")
+
+
+class VTSOnGoingTripListener:
     def __init__(self, connector_name, queue_name):
         self.connector_name = connector_name
         self.queue_name = queue_name
@@ -77,8 +79,33 @@ class VTSAlertsListener:
                 base_time = int(time.time())
 
     async def process_task(self, task):
-        await vts_analysis.create_vts_alerts(task)
-        #await vts_analysis.create_vts_violation_alerts(task)
+        enriched_tasks = []
+
+        # Loop over each item in the task list
+        for data in task:
+            # Fetch location details asynchronously
+            _, location_data = await cache_api_actions.get_location_data( 
+                bu=data.get('location_type'),
+                location_id=data.get('location_code')
+            )
+            print("Location details fetched:", location_data)
+
+            # Add region from result to data
+            data_with_region = {
+                **data,
+                "event_start_datetime": data.get("event_date"),
+                "sap_id": data.get("location_code"),
+                "region": location_data.get('region')  # assuming result is a dict with 'region' key
+            }
+
+            enriched_tasks.append(data_with_region)
+
+        # Push all enriched tasks concurrently
+        await asyncio.gather(
+            *(hpcl_ceg_model.VtsOngoingTripsCreate(**data).create() for data in enriched_tasks)
+        )
+
+       
 
 def usage():
     print(f"Usage:- python {sys.argv[0]} <connector_name> <queue_name>{sys.argv[0]}")
@@ -89,4 +116,4 @@ if __name__ == "__main__":
         print("Invalid arguments")
         usage()
         sys.exit(-1)
-    asyncio.run(VTSAlertsListener(sys.argv[1], "vts_alerts_queue").listener())
+    asyncio.run(VTSOnGoingTripListener(sys.argv[1], "vts_ongoing_trips_queue").listener())
