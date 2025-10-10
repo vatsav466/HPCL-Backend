@@ -6846,6 +6846,12 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "vts_alert_action"
+                },
+                {
+                    "name": "get_closed_alerts_details_vts"
                 }
             ]
         },
@@ -6861,6 +6867,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_closed_alerts_details_vts"
                 }
             ]
         },
@@ -6885,6 +6894,12 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "vts_alert_action"
+                },
+                {
+                    "name": "get_closed_alerts_details_vts"
                 }
             ]
         }
@@ -7524,6 +7539,14 @@
         {
             "name": "submit_service_request",
             "displayName": "submit_service_request"
+        },
+        {
+            "name": "vts_alert_action",
+            "displayName": "vts_alert_action"
+        },
+        {
+            "name": "get_closed_alerts_details_vts",
+            "displayName": "get_closed_alerts_details_vts"
         }
     ]
 }

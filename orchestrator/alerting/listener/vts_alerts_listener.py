@@ -78,6 +78,7 @@ class VTSAlertsListener:
 
     async def process_task(self, task):
         await vts_analysis.create_vts_alerts(task)
+        #await vts_analysis.create_vts_violation_alerts(task)
 
 def usage():
     print(f"Usage:- python {sys.argv[0]} <connector_name> <queue_name>{sys.argv[0]}")

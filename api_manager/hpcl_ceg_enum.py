@@ -158,6 +158,8 @@ class AlertActionType(str, enum.Enum):
     TicketResolved = 'TicketResolved'
     TicketOnHold = 'TicketOnHold'
     SendItBack = 'SendItBack'
+    FalseViolation = 'FalseViolation'
+    AcceptViolation = 'AcceptViolation'
 
 
 

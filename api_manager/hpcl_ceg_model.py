@@ -9631,8 +9631,8 @@ class VtsViolationHistorySchema(UrdhvaPostgresBase):
     __tablename__ = 'vts_violation_history'
     
     vendor_id: Mapped[typing.Optional[str]] = mapped_column("vendor_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    location_id: Mapped[typing.Optional[str]] = mapped_column("location_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tl_number: Mapped[str] = mapped_column("tl_number", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
@@ -9678,8 +9678,8 @@ class VtsViolationHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'vts_violation_history'
     
     vendor_id: typing.Optional[str] = pydantic.Field("", **{})
-    location_id: typing.Optional[str] = pydantic.Field("", **{})
-    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     tl_number: str
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -9732,8 +9732,8 @@ class VtsViolationHistory(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'vts_violation_history'
     
     vendor_id: typing.Optional[str] = pydantic.Field("", **{})
-    location_id: typing.Optional[str] = pydantic.Field("", **{})
-    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     tl_number: typing.Optional[str] | None = None
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -9786,3 +9786,38 @@ class VtsViolationHistoryGetResp(pydantic.BaseModel):
     data: typing.List[VtsViolationHistory]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class Vtsviolationhistory_Vts_Alert_ActionParams(pydantic.BaseModel):
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    alert_section: typing.Optional[str] = pydantic.Field("", **{})
+    action_type: hpcl_ceg_enum.AlertActionType
+    alert_id: int = pydantic.Field(**{'ge': 1, 'le': 9999999})
+    action_msg: typing.Optional[str] = pydantic.Field("", **{})
+    days: typing.Optional[int] = pydantic.Field(0, **{})
+    justification_type: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    rca_reason: typing.Optional[str] = pydantic.Field("", **{})
+    action_description: typing.Optional[str] = pydantic.Field("", **{})
+    doc_link: typing.Optional[str] = pydantic.Field("", **{})
+    acknowledged_by: typing.Optional[str] = pydantic.Field("", **{})
+    load_number: typing.Optional[str] = pydantic.Field("", **{})
+    fan_number: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+    trip_type: typing.Optional[str] = pydantic.Field("", **{})
+    event_tags: typing.Optional[tagsCreate] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Vtsviolationhistory_Get_Closed_Alerts_Details_VtsParams(pydantic.BaseModel):
+    bu: str
+    alert_id: int = pydantic.Field(**{'ge': 1, 'le': 9999999})
+    alert_section: str
+    interlock_name: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
