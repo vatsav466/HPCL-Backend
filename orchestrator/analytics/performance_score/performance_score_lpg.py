@@ -233,10 +233,16 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                         if rule_['search_value'] in record['interlock_name']:
                             alert_data.setdefault(rule_['search_value'], 0)
                             alert_data[rule_['search_value']] += record['count']
-
+                for rule_ in rule['rules']:
+                    if rule_['search_value'] in alert_data:
+                        score = ((total_vehicles - alert_data[rule_['search_value']]) / total_vehicles)
+                        score = round(score * (rule_['weightage'] / 100), 2)
+                        alert_score.append(score)
+                    else:
+                        alert_score.append(rule_['weightage'])
                 total_alerts = sum(alert_data.values())
                 weightage = rule['weightage']
-                score = round(((total_vehicles - total_alerts) / total_vehicles) * (weightage / 100), 2)
+                # score = round(((total_vehicles - total_alerts) / total_vehicles) * (weightage / 100), 2)
                 msg = f"Total alerts: {total_alerts}. Calculation: ((({total_vehicles} - {total_alerts}) / {total_vehicles}) * {weightage}/100)* ({rule['weightage']}/100)"
                 alert_score.append(score)
             elif rule['model'] == 'vts_active_vehicles':
@@ -250,12 +256,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                         if rule_['search_value'] in record['interlock_name']:
                             alert_data.setdefault(rule_['search_value'], 0)
                             alert_data[rule_['search_value']] += record['count']
-
-                total_alerts = sum(alert_data.values())
-                weightage = rule['weightage']
-                score = round(((total_vehicles - total_alerts) / total_vehicles) * (weightage / 100), 2)
-                msg = f"Total alerts: {total_alerts}. Calculation: ((({total_vehicles} - {total_alerts}) / {total_vehicles}) * {weightage}/100)* ({rule['weightage']}/100)"
-                alert_score.append(score)
+                alert_score.append(100)
 
             elif rule['model'] == 'vts_alerts':
                 severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
@@ -276,12 +277,19 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                     f"and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
                 data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
                 close_alerts = {rec['severity']: rec['count'] for rec in data['data']}
+                for rule_ in rule['rules']:
+                    int_name = rule_['interlock_name']
+                    if int_name in open_alerts or int_name in close_alerts:
+                        close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
+                                                                 (close_alerts.get(int_name, 0) +
+                                                                  open_alerts.get(int_name, 0)))
+                        alert_score.append(close_percentage)
+                    else:
+                        alert_score.append(rule_['weightage'])
 
                 total_alerts = sum(open_alerts.values()) + sum(close_alerts.values())
                 weightage = rule['weightage']
-                score = round(((total_vehicles - total_alerts) / total_vehicles) * (weightage / 100), 2)
                 msg = f"Total alerts: {total_alerts}. Calculation: ((({total_vehicles} - {total_alerts}) / {total_vehicles}) * {weightage}/100)* ({rule['weightage']}/100)"
-                alert_score.append(score)
 
             # Final score for the rule
             final_rule_score = round((sum(alert_score) * rule['weightage']) / 100, 2)
