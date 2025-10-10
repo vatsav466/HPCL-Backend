@@ -2,20 +2,27 @@ import urdhva_base
 import pandas as pd
 import typing
 import json
+import httpx
 import aiohttp
 import asyncio
 import requests
 import datetime
 import hpcl_ceg_model
+import hpcl_ceg_enum
 from collections import Counter
 from geopy.distance import geodesic
+import utilities.helpers as helpers
 import utilities.vts_mapping as vts_mapping
+import utilities.interlock_mapping as interlock_mapping
+import orchestrator.alerting.alert_helper as alert_helper
 import utilities.vts_instance_mapping as vts_instance_mapping
+from orchestrator.workflow.workflow_process import Camunda
 import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.dbconnector.credential_loader as credential_loader
 import utilities.role_configuration as vts_role_mapping
+import cache_gateway.cache_api_actions as cache_api_actions
 
 logger = urdhva_base.logger.Logger.getInstance('vts_alert_log')
 
@@ -581,6 +588,144 @@ async def update_vts_instance(alert_data):
     await update_alert_id_to_vts_history(alert_id=str(alert_data['id']), vts_alert_id=vts_alert_history_ids)
 
     return True
+
+async def is_violation_exists(tl_number,invoice_number,violation):
+    query = (f"select * from vts_violation_history where tl_number = '{tl_number}' and invoice_number= '{invoice_number}' and violation_name='{violation}'")
+    vts_alert_data = await hpcl_ceg_model.VtsViolationHistory.get_aggr_data(query, limit=0)
+    if vts_alert_data.get("data", []):
+        return True
+    return False
+
+async def trigger_vts_alarm_alert(entry):
+    violation_fields = vts_instance_mapping.instance_mapping[entry['location_type']]["0"]
+    camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
+                                                alert_section="VTS")
+    location_data = entry.get("location_data", {})
+    if not location_data:
+        retries = 3
+        for attempt in range(retries):
+            if urdhva_base.ctx.exists(): 
+                _, location_data = await alert_helper.get_location_details(entry['location_type'], entry['location_id'])
+                break
+            else:
+                _, location_data = await cache_api_actions.get_location_data(bu=entry['location_type'], location_id=entry['location_id'])
+            
+            if location_data:
+                break
+            
+            print(f"Retrying to fetch location data for {entry['location_type']} {entry['location_id']}... Attempt {attempt + 1}/{retries}")
+            await asyncio.sleep(3)
+    # print("location_data --> ", location_data)
+    # if not status:
+    #     return False, location_data
+    base_data = {
+        key: location_data.get(key, '') for key in [
+            'state', 'city', 'zone', 'region', 'district', 'sales_area'
+        ]
+    }
+    base_data.update({"location_name": location_data.get('name', '')})
+
+    for v_field in violation_fields.keys():
+        violation_data_mapping = vts_instance_mapping.violation_mapping["VTS"][entry['location_type']][v_field]
+        violation_name = violation_data_mapping['violation_name']
+        sop_id = violation_data_mapping['sop_id']
+        severity = violation_data_mapping['severity']
+        if entry[v_field] <= 0:
+            continue
+        if not await is_violation_exists(entry['tl_number'],entry['invoice_number'],violation_name):
+            async with httpx.AsyncClient(verify=False) as client:
+                base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
+                resp = await client.get(f"{base_url}/api_cache/v1/get_unique_alert_id", params={"bu": "VTS",
+                                                                                                "sap_id": entry['location_id'],
+                                                                                                "sop_id": sop_id})
+                if resp.status_code // 100 == 2:
+                    unique_id = resp.text.strip('"')
+            alert_message = (
+                f"Vehicle Number: {entry['tl_number']} \n"
+                f"Violation Type: {violation_name} \n"
+                f"Reported at: {entry['vts_end_datetime']}"
+            )
+            allocated_time = datetime.datetime.now(datetime.timezone.utc)
+            processed_time = datetime.datetime.now(datetime.timezone.utc)
+            alert_history = [
+                {
+                    "action_msg": alert_message,
+                    "action_type": "Created",
+                    "alert_status": "Open",
+                    "allocated_time": allocated_time.isoformat(),
+                    "processed_time": processed_time.isoformat()
+                }
+            ]
+            #print("alert_history",alert_history)
+            violation_data = {
+                "vendor_id": entry['vendor_id'],
+                "sap_id": str(entry['location_id']),
+                "bu": entry['location_type'],
+                "tl_number": entry['tl_number'],
+                "unique_id": unique_id,
+                "sop_id": sop_id,
+                "alert_section": "VTS",
+                "severity": severity.capitalize() if severity else "Medium",
+                "report_duration": entry['report_duration'],
+                "scheduled_trip_start_datetime": entry['scheduled_trip_start_datetime'],
+                "scheduled_trip_end_datetime":entry['scheduled_trip_end_datetime'],
+                "vts_start_datetime": entry['vts_start_datetime'],
+                "vts_end_datetime": entry['vts_end_datetime'],
+                "total_trips": entry['total_trips'],
+                "violation_name": violation_name,
+                "violation_type": v_field,
+                "violation_count": entry[v_field],
+                "alert_status": hpcl_ceg_enum.AlertStatus.Open,
+                "approved_status": False,
+                "invoice_number": entry['invoice_number'],
+                "tt_type": entry['tt_type'],
+                "workflow_datetime": urdhva_base.utilities.get_present_time().replace(tzinfo=None).isoformat(),
+                "workflow_url": camunda_url,
+                "workflow_port": camunda_url.split(":")[2],
+                "alert_history": alert_history,
+                "last_sms_to": [], 
+                "last_mailed_to": [],
+                "last_escalated_to": [],
+                "last_notified_to": [], 
+                "assigned_to": '',
+                "assigned_to_role": '',
+                "assigned_users": [],
+                "assigned_user_roles": []
+            }
+            violation_data.update(base_data)
+            vts_history_resp = await hpcl_ceg_model.VtsViolationHistoryCreate(**violation_data).create()
+            alert_level = "level - 1"
+            payload = {"businessKey": unique_id,
+                        "variables": {"alert_id": {"value": vts_history_resp['id'], "type": "String"},
+                                      "interlock_name": {"value": violation_name, "type": "String"},
+                                      "bu": {"value": entry['location_type'], "type": "String"},
+                                      "sap_id": {"value": entry['location_id'], "type": "String"},
+                                      "sop_id": {"value": sop_id, "type": "String"},
+                                      "tt_type": {"value": entry['tt_type'], "type": "String"},
+                                      "vts_level": {"value": alert_level, "type": "String"},
+                                      "alert_section": {"value": "VTS", "type": "String"},
+                                      "violation_type": {"value": v_field, "type": "String"},
+                                      "invoice_number": {"value": entry['invoice_number'], "type": "String"},
+                                      "vehicle_number": {"value": entry['tl_number'], "type": "String"},
+                                      "transporter_code": {"value": entry['vendor_id'], "type": "String"},
+                                      "workflow_datetime": {"value": datetime.datetime.now(datetime.UTC)
+                                                            .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z", "type": "String"}
+                                    }}
+            interlock_name = interlock_mapping.get_interlock_name(bu=entry['location_type'], interlock_name=violation_name,sop_id=sop_id)
+            workflowid = interlock_name.get("workflow_name") or interlock_name.get("interlock_name") or None
+            workflow_id = interlock_mapping.fmt_il_name(workflowid)
+            await Camunda().start_workflow_vts(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
+
+async def create_vts_violation_alerts(enriched_data):
+    try:
+        #print("enriched_data",enriched_data)
+        for entry in enriched_data:
+            entry['auto_unblock'] = True
+            entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
+                lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
+            await trigger_vts_alarm_alert(entry)
+    except Exception as e:
+        logger.error(f"Error creating VTS Alert : {str(e)}")
     
 async def create_vts_alerts(enriched_data):
     try:

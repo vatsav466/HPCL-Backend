@@ -446,6 +446,141 @@ class AlertAction:
             #         await vts_alert_closer(alert_data, input_data)
             return meg_resp
         return False, "Alert action is not valid"
+    
+    @classmethod
+    async def update_alert_data_vts(cls, input_data):
+        """
+        Function to update alert data, Either reject or approve or justify or override
+        :param input_data:
+        :return:
+        """
+        print("input_data --> ", input_data)
+        function_map = {"Justification": "justify_alert", "Rejected": "reject_alert", "Approved": "approve_alert",
+                        "Override": "override_alert", "interLockOk": "interlock_ok_alert", 
+                        "excApprovalTimeExp": "exc_approval_time_exp_alert", "Message": "message_alert",
+                        "Raised": "raised_alert", "Cancelled": "cancel_alert", "Allocated": "allocate_alert",
+                        "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
+                        "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert",
+                        "AcceptClose": "accept_close", "InvalidAlert": "invalid_alert", "FalseAlert": "false_alert", "ValidAlert": "valid_alert",
+                        "Blocked": "block_alert", "UnBlocked": "unblock_alert", "Interrupt": "interrupt_alert", "Request": "request_alert", 
+                        "Maintenance": "maintenance_alert","SendItBack": "send_it_back", "FalseViolation": "false_violation", "AcceptViolation": "accept_violation"}
+        event_tag_map = {"Justification": "is_justify", "Approved": "is_approved", "AcceptClose": "accept", "InvalidAlert": "invalid"}
+        alert_id = input_data['alert_id']
+        if input_data['doc_link']:
+            input_data['doc_link'] = await helpers.get_doc_link(input_data['doc_link'])
+        # input_data.update({"event_tags": {event_tag_map.get(input_data['action_type'], "is_approved"): True}})
+        try:
+            alert_data = await hpcl_ceg_model.VtsViolationHistory.get(alert_id)
+        except Exception as e:
+            print("Exception in getting alert data:%s" % e)
+            return False, "Provided alert id is not valid"
+
+        # Validating whether user has access permissions for the provided action
+        # status, resp, email = await cls.verify_user_access_permissions(alert_data.bu, alert_data.sap_id,
+        #                                                                input_data['action_type'])
+        # if not status:
+        #     return status, resp
+
+        # This creates a regular expression pattern to match anything within < and >,
+        # which includes HTML tags like <div>, <span>, <br>, etc.
+        # The .*? ensures a non-greedy match, meaning it will stop at the first closing >
+        # rather than consuming everything until the last >
+        condition = re.compile('<.*?>')
+        input_data["action_msg"] = re.sub(condition, '', input_data["action_msg"])
+
+        # get the function name
+        function_name = function_map.get(input_data['action_type'], None)
+        if function_name:
+            await cls.update_alert_history_vts(input_data, alert_data)
+            # call the function
+            # return await getattr(cls, function_name)(input_data, alert_data)
+            # For testing added below 3 lines
+            if input_data['alert_section'] == 'VTS':
+                meg_resp = await getattr(cls, function_name)(input_data, alert_data)
+            else:
+                meg_resp = {"status": "True", "message": "Alert Closed", "data": []}
+            return meg_resp
+        return False, "Alert action is not valid"
+    
+    @classmethod
+    async def update_alert_history_vts(cls, input_data, alert_data):
+        """
+        Function to update alert data, Either reject or approve or justify or override
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        # Todo:- here we have to write all the generic functionality like updating the alert data,
+        #  history, fetching users, roles, ...
+        # print("input_data for alert--> ", input_data)
+        alert_history = alert_data.get('alert_history', []) if isinstance(alert_data, dict) else getattr(alert_data, 'alert_history', [])
+        if urdhva_base.context.context.exists():
+            rpt = urdhva_base.context.context.get('rpt', {})
+        else:
+            rpt = {}
+        # alert_history = alert_data.alert_history
+        # print("alert_history --> ", alert_history)
+        # allocated_time = alert_data.updated_at
+        if not isinstance(alert_data, dict):
+            alert_data = alert_data.__dict__
+        if isinstance(alert_data, dict):
+            allocated_time = alert_data.get('updated_at', datetime.datetime.now(datetime.timezone.utc))
+        else:
+            allocated_time = alert_data.updated_at if hasattr(alert_data, 'updated_at') else datetime.datetime.now(datetime.timezone.utc)
+        
+        if alert_history and alert_history[-1].get("processed_time"):
+            allocated_time = alert_history[-1]["processed_time"]
+        processed_time = datetime.datetime.now(datetime.timezone.utc)
+        event_tags = input_data.get("event_tags", {})
+        if not event_tags:
+            event_tags = {}
+        if alert_data['alert_section'] in ['VTS']:
+            input_data['action_msg'] = input_data.get("action_msg", "") + ((" " if input_data.get("action_msg") else "") + "Remarks initiated by " + ", ".join(alert_data.get("assigned_user_roles", [])) if alert_data.get("assigned_user_roles") else "")
+        # Append the updated alert history with the converted datetime strings
+        alert_history.append({"allocated_time": allocated_time.isoformat() if isinstance(allocated_time, datetime.datetime) else allocated_time,
+                            "processed_time": processed_time.isoformat(), "action_type": input_data["action_type"],
+                            "action_msg": input_data["action_msg"], "mail_sent_to": "",
+                            "action_by": rpt.get("email", "NOVEX_USER"),
+                            "remarks": input_data.get("remarks", ""),
+                            "ims_datetime": input_data.get("ims_datetime", ""),
+                            "prod_reqd_dt": input_data.get("prod_reqd_dt", ""),
+                            "doc_link": input_data.get("doc_link", ""),
+                            "atr_uploaded": event_tags.get("is_atr_uploaded", False),
+                            "maintenance_exception": event_tags.get("is_maintenance_exception", False), 
+                            "revocation": event_tags.get("is_revocation", False),
+                            "no_exception": event_tags.get("no_exception", False),
+                            "is_approved": event_tags.get("is_approved", False),
+                            "is_exc_approval_time_exp": event_tags.get("is_exc_approval_time_exp", False),
+                            "is_raised": event_tags.get("is_raised", False),
+                            "is_cancelled": event_tags.get("is_cancelled", False),
+                            "is_allocated": event_tags.get("is_allocated", False),
+                            "is_sent_to_sap": event_tags.get("is_sent_to_sap", False),
+                            "is_order_placed": event_tags.get("is_order_placed", False),
+                            "is_created": event_tags.get("is_created", False),
+                            "is_r1_swipe": event_tags.get("is_r1_swipe", False),
+                            "is_r2_swipe": event_tags.get("is_r2_swipe", False),
+                            "is_r3_swipe": event_tags.get("is_r3_swipe", False),
+                            "is_vts": event_tags.get("is_vts", False),
+                            "is_delivered": event_tags.get("is_delivered", False),
+                            "is_tripped": event_tags.get("is_tripped", False),
+                            "is_justify": event_tags.get("is_justify", False),
+                            "is_blocked": event_tags.get("is_blocked", False),
+                            "is_unblocked": event_tags.get("is_unblocked", False),
+                            "is_interrupt": event_tags.get("is_interrupt", False),
+                            "is_extra_days": event_tags.get("is_extra_days", False),
+                            "is_rejected": event_tags.get("is_rejected", False)
+                        })
+        # print("alert_history before update --> ", alert_history)
+        # Modify the alert with the updated alert_history
+        # Handle alert_data based on whether it is a dictionary or object
+        alert_id = alert_data.get('id') if isinstance(alert_data, dict) else getattr(alert_data, 'id', None)
+        
+        if not alert_id:
+            raise ValueError("Alert data does not have an 'id' field.")
+
+        # Modify the alert with the updated alert_history
+        await hpcl_ceg_model.VtsViolationHistory(**{"id": alert_id, "alert_history": alert_history}).modify()
+        # await hpcl_ceg_model.Alerts(**{"id": alert_data.id, "alert_history": alert_history}).modify()
 
     @classmethod
     async def update_alert_history(cls, input_data, alert_data):
@@ -918,3 +1053,23 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "SendItBack")
+    
+    @classmethod
+    async def false_violation(cls, input_data, alert_data):
+        """
+        Function to justify an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "FalseViolation")
+    
+    @classmethod
+    async def accept_violation(cls, input_data, alert_data):
+        """
+        Function to justify an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "AcceptViolation")

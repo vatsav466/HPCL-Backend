@@ -3,6 +3,14 @@ import urdhva_base.utilities
 
 # Interlock name and sop mapping for TAS Alerts
 tas_interlock_mapping = [
+                        {"sop_id": "SOP001V", "interlock_name": "VTS Device Tampering","model": "VTS", "workflow_name": "TAS VTS Violation"},
+                        {"sop_id": "SOP001V", "interlock_name": "VTS PowerDisconnect", "model": "VTS", "workflow_name": "TAS VTS Violation"},
+                        {"sop_id": "SOP001V", "interlock_name": "VTS RouteDeviation", "model": "VTS", "workflow_name": "TAS VTS Violation"},
+                        {"sop_id": "SOP001V", "interlock_name": "Unauthorized Stoppage", "model": "VTS", "workflow_name": "TAS VTS Violation"},
+                        {"sop_id": "SOP001V", "interlock_name": "Speed Violation", "model": "VTS", "workflow_name": "TAS VTS Violation"},
+                        {"sop_id": "SOP001V", "interlock_name": "Night Driving", "model": "VTS", "workflow_name": "TAS VTS Violation"},
+                        {"sop_id": "SOP001V", "interlock_name": "Continuous Driving", "model": "VTS", "workflow_name": "TAS VTS Violation"},
+
                         {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime","model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
                         {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation SecondTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
                         {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation ThirdTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
@@ -368,6 +376,15 @@ ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviati
 
 # Interlock name and sop mapping for LPG Alerts
 lpg_interlock_mapping = [
+
+    {"sop_id": "SOP001V", "interlock_name": "VTS Device Tampering","model": "VTS", "workflow_name": "LPG VTS Violation"},
+    {"sop_id": "SOP001V", "interlock_name": "VTS PowerDisconnect", "model": "VTS", "workflow_name": "LPG VTS Violation"},
+    {"sop_id": "SOP001V", "interlock_name": "VTS RouteDeviation", "model": "VTS", "workflow_name": "LPG VTS Violation"},
+    {"sop_id": "SOP001V", "interlock_name": "Unauthorized Stoppage", "model": "VTS", "workflow_name": "LPG VTS Violation"},
+    {"sop_id": "SOP001V", "interlock_name": "Speed Violation", "model": "VTS", "workflow_name": "LPG VTS Violation"},
+    {"sop_id": "SOP001V", "interlock_name": "Night Driving", "model": "VTS", "workflow_name": "LPG VTS Violation"},
+    {"sop_id": "SOP001V", "interlock_name": "Continuous Driving", "model": "VTS", "workflow_name": "LPG VTS Violation"},
+
     {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime","model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
     {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation SecondTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
     {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation ThirdTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
