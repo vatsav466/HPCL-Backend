@@ -87,7 +87,7 @@ class SendVTSNotification:
         """
         alert_id = self.params.get("alert_id")
         print("alert_id --> ", alert_id)
-        alert_data = await hpcl_ceg_model.VtsViolationHistory.get(alert_id)
+        alert_data = await hpcl_ceg_model.ViolationHistoryVts.get(alert_id)
 
         if alert_data:
             self.alert_data = alert_data.__dict__ if not isinstance(alert_data, dict) else alert_data
@@ -680,7 +680,7 @@ class SendVTSNotification:
         )
         
         # Fetch alert data from DB and ensure it's a dictionary
-        alert_data = await hpcl_ceg_model.VtsViolationHistory.get(alert_id)
+        alert_data = await hpcl_ceg_model.ViolationHistoryVts.get(alert_id)
         alert_data = alert_data.__dict__ if not isinstance(alert_data, dict) else alert_data
 
         allocated_time = alert_data.get('updated_at', datetime.datetime.now(datetime.timezone.utc))
@@ -719,7 +719,7 @@ class SendVTSNotification:
             del alert_data["_sa_instance_state"]
 
         # Update the database
-        await hpcl_ceg_model.VtsViolationHistory(**alert_data).modify()
+        await hpcl_ceg_model.ViolationHistoryVts(**alert_data).modify()
     
     async def _create_task_result(self):
         """
