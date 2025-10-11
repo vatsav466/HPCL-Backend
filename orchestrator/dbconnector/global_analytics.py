@@ -7894,3 +7894,90 @@ class GlobalAnalytics:
             "count": data_count.to_dict(orient='records'),
             "data": data.to_dict(orient='records')
         }
+    
+    @staticmethod
+    async def vts_violation_analytics(filters, cross_filters, drill_state):
+
+        analytics_query = lpg_plant_queries.lpg_plant_query.get("vts_violation_analytics")
+        analytics_query_ = analytics_query
+
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+            for filter_ in filters:
+                if filter_.key:
+                    # Update the key of the filter to include the alias 'a.'
+                    filter_.key = f"{filter_.key}"
+                
+            # After modifying the filters, send the updated filters to apply_filter_drilldown
+            analytics_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(analytics_query, filters, drill_state)
+        try:
+            # Execute the query
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(analytics_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print("Error: ", e)
+            # Retry with the base query in case of an error
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(analytics_query)
+
+        # Process the results
+        data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+
+        active_locations = set()
+        inactive_locations = set()
+        total_alerts = 0
+        alert_distribution = defaultdict(int)
+        top_alerts = defaultdict(int)
+        interlock_alerts = defaultdict(lambda: defaultdict(int))
+
+        # Process each alert
+        for alert in data:
+            sap_id = alert['sap_id']
+            alert_status = alert['alert_status']
+            severity = alert['severity']
+            severity_count = alert['severity_count']
+            interlock_name = alert['violation_name']
+
+            # Update active and inactive locations
+            if alert_status == "Close":
+                inactive_locations.add(sap_id)
+            # elif alert_status == "Open":
+            #     active_locations.add(sap_id)
+            else:
+                active_locations.add(sap_id)
+
+            # Update total alerts
+            total_alerts += severity_count
+
+            # Update alert distribution by severity
+            alert_distribution[severity] += severity_count
+
+            # Update top alerts by interlock name
+            top_alerts[interlock_name] += severity_count
+
+            interlock_alerts[interlock_name][severity] += severity_count
+
+
+        # Format the output
+        result = {
+            "activeLocations": len(active_locations),
+            "inactiveLocations": len(inactive_locations),
+            "totalAlerts": f"{total_alerts:,}",
+            "alertDistribution": [
+                {"name": severity, "value": severity_count}
+                for severity, severity_count in alert_distribution.items()
+            ],
+            "top10Alerts": [
+                {"name": name, "value": value}
+                for name, value in sorted(top_alerts.items(), key=lambda x: x[1], reverse=True)[:10]
+            ],
+            "interlock_alerts": [
+        {
+            "interlock_name": interlock_name,
+            **{key: value for key, value in details.items() if key != "interlock_name"}
+        }
+        for interlock_name, details in interlock_alerts.items()
+    ]
+
+        }
+
+        return {"status": True, "message": "Success", "data": result}
