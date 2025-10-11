@@ -9,9 +9,9 @@ router = fastapi.APIRouter(prefix='/violationhistoryvts')
 
 logger = urdhva_base.logger.Logger.getInstance("api_manager")
 
-# Action get_closed_alerts_details_vts
-@router.post('/get_closed_alerts_details_vts', tags=['ViolationHistoryVts'])
-async def violationhistoryvts_get_closed_alerts_details_vts(data: Violationhistoryvts_Get_Closed_Alerts_Details_VtsParams):
+# Action alert_action_vts
+@router.post('/alert_action_vts', tags=['ViolationHistoryVts'])
+async def violationhistoryvts_alert_action_vts(data: Violationhistoryvts_Alert_Action_VtsParams):
     try:
         logger.info(f"Alert data received to perform action: {data}")
         return await alert_manager.AlertAction().update_alert_data_vts(data.dict())
@@ -19,11 +19,10 @@ async def violationhistoryvts_get_closed_alerts_details_vts(data: Violationhisto
         print(traceback.format_exc())
         logger.error(f"Error in performing action on alert: {e}, InputData {data.dict()}, Traceback: {traceback.format_exc()}")
         return False, "Error in performing action on alert"
-
-
-# Action alert_action_vts
-@router.post('/alert_action_vts', tags=['ViolationHistoryVts'])
-async def violationhistoryvts_alert_action_vts(data: Violationhistoryvts_Alert_Action_VtsParams):
+    
+# Action get_closed_alerts_details_vts
+@router.post('/get_closed_alerts_details_vts', tags=['ViolationHistoryVts'])
+async def violationhistoryvts_get_closed_alerts_details_vts(data: Violationhistoryvts_Get_Closed_Alerts_Details_VtsParams):
     if urdhva_base.context.context.exists():
         rpt = urdhva_base.context.context.get('rpt', {})
     else:

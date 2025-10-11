@@ -9634,7 +9634,7 @@ class ViolationHistoryVtsSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    tl_number: Mapped[str] = mapped_column("tl_number", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    vehicle_number: Mapped[str] = mapped_column("vehicle_number", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     unique_id: Mapped[str] = mapped_column("unique_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     report_duration: Mapped[typing.Optional[str]] = mapped_column("report_duration", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -9681,7 +9681,7 @@ class ViolationHistoryVtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
-    tl_number: str
+    vehicle_number: str
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
     unique_id: str
     report_duration: typing.Optional[str] = pydantic.Field("", **{})
@@ -9735,7 +9735,7 @@ class ViolationHistoryVts(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
-    tl_number: typing.Optional[str] | None = None
+    vehicle_number: typing.Optional[str] | None = None
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
     unique_id: typing.Optional[str] | None = None
     report_duration: typing.Optional[str] = pydantic.Field("", **{})

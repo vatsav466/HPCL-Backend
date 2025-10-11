@@ -655,6 +655,16 @@ LIMIT 10000;''',
                     GROUP BY a.sap_id, a.interlock_name, a.severity, a.alert_status
                     ORDER BY severity_count DESC;
                     ''',
+    
+    "vts_violation_analytics": '''SELECT 
+                        a.sap_id, a.violation_name,
+                        COUNT(a.severity) as severity_count, 
+                        a.alert_status, 
+                        a.severity
+                    FROM violation_history_vts a 
+                    GROUP BY a.sap_id, a.violation_name, a.severity, a.alert_status
+                    ORDER BY severity_count DESC;
+                    ''',
 
     "no_of_locations": f'''SELECT COUNT(sap_id) FROM location_master''',
 
