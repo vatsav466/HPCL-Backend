@@ -478,7 +478,7 @@ class SendVTSNotification:
             "sap_id": self.alert_data['sap_id'],
             "alert_section": self.alert_data['alert_section'],
             "interlock_name": self.alert_data['violation_name'], 
-            "vehicle_number": self.alert_data.get("tl_number",""),
+            "vehicle_number": self.alert_data.get("vehicle_number",""),
             "officers_username": ",".join(str(username) for username in self.usernames),
             "notification_type": self.params.get("messagetype"), 
             "template_path": self.template_path, 

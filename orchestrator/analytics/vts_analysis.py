@@ -661,7 +661,7 @@ async def trigger_vts_alarm_alert(entry):
                 "vendor_id": entry['vendor_id'],
                 "sap_id": str(entry['location_id']),
                 "bu": entry['location_type'],
-                "tl_number": entry['tl_number'],
+                "vehicle_number": entry['tl_number'],
                 "unique_id": unique_id,
                 "sop_id": sop_id,
                 "alert_section": "VTS",
