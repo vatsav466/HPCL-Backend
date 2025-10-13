@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse
 import utilities.vts_mapping as vts_mapping
 from dateutil.relativedelta import relativedelta
 import utilities.connection_mapping as connection_mapping
+from utilities.helpers import generate_filter_query
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.actions.check_violation_count as check_violation_count
@@ -256,6 +257,7 @@ async def alerts_stored_document(file_name: str):
 @router.post('/vts_alert_manager', tags=['Alerts'])
 async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
     query = f"alert_section='VTS' AND alert_status='Open'"
+    query = await generate_filter_query(data.filters, query)
     conditions = []
     for rec in data.filters:
         if "DATE" in rec.key:
