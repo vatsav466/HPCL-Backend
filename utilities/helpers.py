@@ -173,12 +173,13 @@ async def generate_filter_query(filters, query, where_clause=False):
         _key = None
         if filters:
             for rec in filters:
-                if (rec.key).lower().replace('"', '') in ["rejection_type"]:
-                    _key = (rec.value).lower().replace('"', '')
-                    continue
                 values = rec.value.split(",")
                 if len(values) == 1:
                     conditions.append(f'{rec.key} = \'{values[0]}\'')
+                elif len(values) == 2 and rec.key in ["DATE", "created_at"]:
+                    from_date = values[0]
+                    to_date = values[-1]
+                    conditions.append(f"{rec.key} BETWEEN '{from_date} 00:00:00' AND '{to_date} 23:59:59' ")
                 else:
                     conditions.append(f"{rec.key} IN {tuple(values)}")
         if conditions:
