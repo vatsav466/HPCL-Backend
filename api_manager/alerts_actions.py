@@ -295,7 +295,7 @@ async def alerts_bulk_send_to_unblock(data: Alerts_Bulk_Send_To_UnblockParams):
 
         redis_queue = urdhva_base.redispool.RedisQueue('vts_unblocking_queue')
         await redis_queue.put(json.dumps(alert_data))
-        return True, "Success"
+        return True, "Request sent successfully, Processing the request. Please wait for sometime"
     except Exception as e:
         print(traceback.format_exc())
         logger.error(e)
@@ -312,7 +312,7 @@ async def alerts_bulk_send_to_approve(data: Alerts_Bulk_Send_To_ApproveParams):
 
         redis_queue = urdhva_base.redispool.RedisQueue('vts_unblocking_queue')
         await redis_queue.put(json.dumps(alert_data))
-        return True, "Success"
+        return True, "Approved successfully, Processing the approval. Please wait for sometime"
     except Exception as e:
         print(traceback.format_exc())
         logger.error(e)
