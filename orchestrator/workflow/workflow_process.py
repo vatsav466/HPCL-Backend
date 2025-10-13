@@ -109,7 +109,7 @@ class Camunda:
                 await asyncio.sleep(RETRY_DELAY)
     
     async def update_alerts_with_instance_id_vts(self, alert_id, instance_id):
-        violation_data = await hpcl_ceg_model.VtsViolationHistory.get(alert_id)
+        violation_data = await hpcl_ceg_model.ViolationHistoryVts.get(alert_id)
         if not isinstance(violation_data, dict):
             violation_data = violation_data.__dict__
         
@@ -117,4 +117,4 @@ class Camunda:
             del violation_data["_sa_instance_state"]
 
         violation_data['workflow_instance_id'] = instance_id
-        await hpcl_ceg_model.VtsViolationHistory(**violation_data).modify()
+        await hpcl_ceg_model.ViolationHistoryVts(**violation_data).modify()
