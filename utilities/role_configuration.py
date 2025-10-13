@@ -33,13 +33,13 @@ role_Mapping={
             },
             "VTS PowerDisconnect FirstTime": {
                 "rolemailto": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD",
-                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD,Creator SOD,Approver SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD"
                 },
                 "block_time": {
                     "0": "P30D",
@@ -48,13 +48,13 @@ role_Mapping={
             },
             "VTS Device Tampering FirstTime": {
                 "rolemailto": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD",
-                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD,Creator SOD,Approver SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD"
                 },
                 "block_time": {
                     "0": "P30D",
@@ -168,13 +168,13 @@ role_Mapping={
             },
             "VTS PowerDisconnect SecondTime": {
                 "rolemailto": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD",
-                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD,Creator SOD,Approver SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD"
                 },
                 "block_time": {
                     "0": "P30D",
@@ -183,13 +183,13 @@ role_Mapping={
             },
             "VTS Device Tampering SecondTime": {
                 "rolemailto": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD",
-                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD,Creator SOD,Approver SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD"
                 },
                 "block_time": {
                     "0": "P30D",
@@ -303,13 +303,13 @@ role_Mapping={
             },
             "VTS PowerDisconnect ThirdTime": {
                 "rolemailto": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD",
-                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD,Creator SOD,Approver SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD"
                 },
                 "block_time": {
                     "0": "P30D",
@@ -318,13 +318,13 @@ role_Mapping={
             },
             "VTS Device Tampering ThirdTime": {
                 "rolemailto": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD",
-                    "2": "Zonal Transport Officer SOD,Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD",
+                    "2": "Zonal Transport Officer SOD,Zonal Head SOD,Creator SOD,Approver SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Transport Officer SOD",
-                    "1": "Zonal Head SOD"
+                    "0": "Zonal Transport Officer SOD,Creator SOD",
+                    "1": "Zonal Head SOD,Approver SOD"
                 },
                 "block_time": {
                     "0": "P30D",
