@@ -371,6 +371,21 @@ vts_query = {
                           SELECT PLANT_CD, ZONE_CD, INVOICE_NO, VEHICLE_ID,QTY_SHORTAGE
                           FROM SALES_BASED_TRIPS_TILL_DATE
                         """,
+    
+    "violation_drill_down" : """
+                            SELECT 
+                                tl_number,
+                                invoice_number,
+                                DATE(created_at) as created_at,
+                                route_deviation_count,
+                                stoppage_violations_count,
+                                device_tamper_count,
+                                main_supply_removal_count,
+                                night_driving_count,
+                                speed_violation_count,
+                                continuous_driving_count
+                            FROM vts_alert_history
+                            """ ,
     "shoratage_vts_history" : """
                               SELECT 
                                     invoice_number,
@@ -422,6 +437,8 @@ vts_query = {
     "vts_insite_history": """
                             SELECT
                                 tl_number,
+                                invoice_number,
+                                DATE(created_at) AS created_at,
                                 COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END) AS stoppage_violations_count,
                                 COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END) AS route_deviation_count,
                                 COUNT(DISTINCT CASE WHEN device_tamper_count != 0 THEN invoice_number END) AS device_tamper_count,
@@ -430,13 +447,13 @@ vts_query = {
                                 COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END) AS speed_violation_count,
                                 COUNT(DISTINCT CASE WHEN continuous_driving_count != 0 THEN invoice_number END) AS continuous_driving_count
                             FROM (
-                                SELECT DISTINCT tl_number, invoice_number, 
+                                SELECT DISTINCT tl_number, invoice_number, created_at,
                                     stoppage_violations_count, route_deviation_count, device_tamper_count,
                                     main_supply_removal_count, night_driving_count, speed_violation_count, continuous_driving_count
                                 FROM vts_alert_history
                                 WHERE invoice_number IS NOT NULL
                             ) AS history_data
-                            GROUP BY tl_number
+                            GROUP BY tl_number, invoice_number, DATE(created_at)
                           """,
     "vts_insite_history_type": """
                                SELECT 
