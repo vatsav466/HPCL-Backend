@@ -167,7 +167,7 @@ def normalize_string(input_value):
     return input_value
 
 
-async def generate_filter_query(filters, query):
+async def generate_filter_query(filters, query, where_clause=False):
     try:
         conditions = []
         _key = None
@@ -182,7 +182,10 @@ async def generate_filter_query(filters, query):
                 else:
                     conditions.append(f"{rec.key} IN {tuple(values)}")
         if conditions:
-            query += " WHERE " + " AND ".join(conditions)
+            if where_clause:
+                query += " WHERE " + " AND ".join(conditions)
+            else:
+                query += " AND " + " AND " .join(conditions)
         if _key:
             return query, _key
         return query

@@ -7,7 +7,7 @@ import requests
 import datetime
 import traceback
 import urdhva_base.redispool
-from hpcl_model import (
+from hpcl_ceg_model import (
     Alerts,
     VtsTruckDetails
     )
@@ -85,7 +85,10 @@ class VTSUnblockListener:
                 base_time = int(time.time())
 
     async def process_task(self, task):
-        rpt = urdhva_base.context.context.get('rpt', {})
+        try:
+            rpt = urdhva_base.context.context.get('rpt', {})
+        except Exception:
+            rpt = {}
         employee_id = None
         if rpt:
             employee_id = rpt["username"]        
@@ -127,6 +130,7 @@ class VTSUnblockListener:
                         if not employee_id:
                             employee_id = "Approver SOD"
                         alert_data["action_msg"] = f"Approved unblock request by {employee_id}"
+                        alert_data["action_type"] = "Approved"
                         await alert_manager.AlertAction.update_alert_history(input_data=alert_data, alert_data=alert_data)
                         await Alerts(**{"id": alert_id,
                             "vehicle_unblocked_date": vehicle_unblocked_date,
@@ -150,22 +154,23 @@ class VTSUnblockListener:
             for alert_id in task["alert_ids"]:
                 alert = await Alerts.get(alert_id)
                 alert_data = alert.__dict__
-                alert_data["asigned_user_roles"].remove("Creator SOD") if "Creator SOD" in alert_data["asigned_user_roles"] else alert_data["asigned_user_roles"]
-                alert_data["asigned_user_roles"].append("Approver SOD")
+                alert_data["assigned_user_roles"].remove("Creator SOD") if "Creator SOD" in alert_data["assigned_user_roles"] else alert_data["assigned_user_roles"]
+                alert_data["assigned_user_roles"].append("Approver SOD")
                 print(
                     "Updating the alert data :", {
                         "id": alert_id,
-                        "asigned_user_roles": alert_data["asigned_user_roles"],
+                        "assigned_user_roles": alert_data["assigned_user_roles"],
                         "device_msg": "request_raised_for_unblock"
                         })
                 if not employee_id:
                     employee_id = "Creator SOD"
                 alert_data["action_msg"] = f"Requested for unblock by {employee_id}"
+                alert_data["action_type"] = "Request"
                 await alert_manager.AlertAction.update_alert_history(input_data=alert_data, alert_data=alert_data)
                 
                 await Alerts(**{
                     "id": alert_id,
-                    "asigned_user_roles": alert_data["asigned_user_roles"],
+                    "assigned_user_roles": alert_data["assigned_user_roles"],
                     "device_msg": "request_raised_for_unblock"
                     }).modify()
 
