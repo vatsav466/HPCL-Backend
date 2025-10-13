@@ -590,7 +590,7 @@ async def update_vts_instance(alert_data):
     return True
 
 async def is_violation_exists(tl_number,invoice_number,violation):
-    query = (f"select * from vts_violation_history where tl_number = '{tl_number}' and invoice_number= '{invoice_number}' and violation_name='{violation}'")
+    query = (f"select * from violation_history_vts where tl_number = '{tl_number}' and invoice_number= '{invoice_number}' and violation_name='{violation}'")
     vts_alert_data = await hpcl_ceg_model.ViolationHistoryVts.get_aggr_data(query, limit=0)
     if vts_alert_data.get("data", []):
         return True
@@ -693,7 +693,7 @@ async def trigger_vts_alarm_alert(entry):
                 "assigned_user_roles": []
             }
             violation_data.update(base_data)
-            vts_history_resp = await hpcl_ceg_model.VtsViolationHistoryCreate(**violation_data).create()
+            vts_history_resp = await hpcl_ceg_model.ViolationHistoryVtsCreate(**violation_data).create()
             alert_level = "level - 1"
             payload = {"businessKey": unique_id,
                         "variables": {"alert_id": {"value": vts_history_resp['id'], "type": "String"},

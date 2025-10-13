@@ -36,7 +36,7 @@ class CreateVTSBlockAlert:
         return False
     
     async def is_alert_exists(self,tl_number: str):
-        query = f"select id from alerts where vehicle_number = '{tl_number}' and alert_status != 'Close' and alert_section = 'VTS'"
+        query = f"select id from alerts where vehicle_number = '{tl_number}' and vehicle_unblocked_date is null and alert_section = 'VTS'"
         print("query: ", query)
         vts_alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
         print("vts_alert_data: ", vts_alert_data)
@@ -45,7 +45,7 @@ class CreateVTSBlockAlert:
         return False
     
     async def last_closed_at(self, tt_number: str):
-        query = f"vehicle_number = '{tt_number}' and alert_status = 'Close' and alert_section = 'VTS'"
+        query = f"vehicle_number = '{tt_number}' and alert_status = 'Close' and alert_section = 'VTS' and vehicle_unblocked_date is not null"
         print("query: ", query)
         vts_alert_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query,limit=5),resp_type='plain')
         if len(vts_alert_data['data']):
@@ -234,7 +234,7 @@ class CreateVTSBlockAlert:
         await alert_factory.AlertFactory().create_alert(vts_alert_data, camunda_url)
     
     async def last_opened_at(self, tt_number: str):
-        query = f"vehicle_number = '{tt_number}' and alert_status != 'Close' and alert_section = 'VTS'"
+        query = f"vehicle_number = '{tt_number}' and vehicle_unblocked_date is null and alert_section = 'VTS'"
         print("query: ", query)
         vts_alert_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query,limit=5),resp_type='plain')
         #print("vts_alert_data: ", vts_alert_data)
