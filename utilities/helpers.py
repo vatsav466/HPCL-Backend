@@ -167,6 +167,31 @@ def normalize_string(input_value):
     return input_value
 
 
+async def generate_filter_query(filters, query):
+    try:
+        conditions = []
+        _key = None
+        if filters:
+            for rec in filters:
+                if (rec.key).lower().replace('"', '') in ["rejection_type"]:
+                    _key = (rec.value).lower().replace('"', '')
+                    continue
+                values = rec.value.split(",")
+                if len(values) == 1:
+                    conditions.append(f'{rec.key} = \'{values[0]}\'')
+                else:
+                    conditions.append(f"{rec.key} IN {tuple(values)}")
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        if _key:
+            return query, _key
+        return query
+    except Exception as e:
+        print("--- Exception in drill down filters ---")
+        print("Exception :", str(e))
+        return query
+
+
 async def get_location_details(bu, sap_id):
     """
     Retrieves location details based on the provided business unit and SAP ID.
