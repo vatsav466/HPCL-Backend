@@ -258,27 +258,6 @@ async def alerts_stored_document(file_name: str):
 async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
     query = f"alert_section='VTS' AND alert_status='Open'"
     query = await generate_filter_query(data.filters, query)
-    conditions = []
-    for rec in data.filters:
-        if "DATE" in rec.key:
-            start = rec.value.split(",")[0]
-            end = (datetime.datetime.strptime(rec.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-            conditions.append(f"created_at BETWEEN '{start}' AND '{end}' ")
-            query = query.split("WHERE")[0].split("where")[0]
-            continue
-        rec.value = rec.value.split(",")
-        # Now handle other cases
-        if isinstance(rec.value, str):
-            condition = f"{rec.key} = '{rec.value}'"
-        else:
-            if len(rec.value) == 1:
-                condition = f"{rec.key} = '{rec.value[0]}'"
-            else:
-                condition = f"{rec.key} in {tuple(rec.value)}"
-        conditions.append(condition)
-    if conditions:
-        query += ' AND '
-        query  += ' AND '.join(conditions)
     alert_data = await Alerts.get_all(
         urdhva_base.queryparams.QueryParams(
             q=query, limit=0
