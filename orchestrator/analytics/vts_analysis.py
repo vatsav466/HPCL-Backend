@@ -284,6 +284,10 @@ async def update_alert_id_to_vts_history(alert_id: str, vts_alert_id: list[str])
             vts_alert_id = [vts_alert_id]
 
         vts_alert_id = "', '".join(vts_alert_id)
+        #query = (f"""update violation_history_vts set alert_id='{alert_id}' """
+        #         f"""where id in ('{vts_alert_id}')""")
+        #await hpcl_ceg_model.ViolationHistoryVts.update_by_query(query)
+        
         query = (f"""update vts_alert_history set alert_id='{alert_id}' """
                  f"""where id in ('{vts_alert_id}')""")
         await hpcl_ceg_model.VtsAlertHistory.update_by_query(query)
