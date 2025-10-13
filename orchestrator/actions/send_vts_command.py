@@ -92,23 +92,36 @@ class SendVtsCommand:
                          f"and auto_unblock!='false'")
                 data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                     resp_type='plain')
-                data = data['data'][0]
-                data['auto_unblock'] = False
-                await hpcl_ceg_model.VtsAlertHistory(**data).modify()
-                alert_data['mark_as_false'] = True
-                await hpcl_ceg_model.Alerts(**alert_data).modify()
+                if len(data['data']):
+                    for vts_alt_hist in data['data']:
+                        vts_alt_hist['auto_unblock'] = False
+                        await hpcl_ceg_model.VtsAlertHistory(**vts_alt_hist).modify()
+                alert_message = (
+                    f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Unblock, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to Unblock the Vehicle "
+                )
+                vehicle_unblocked_date = datetime.datetime.now(tz=datetime.timezone.utc)
+                alert_data["action_msg"] = alert_message
+                alert_data["action_type"] = "VTS"
+                await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED', blacklist='false' where truck_regno = '{alert_data['vehicle_number']}'"
+                await hpcl_ceg_model.VtsTruckDetails.update_by_query(unblock_query)
+                await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                                               "mark_as_false": True,
+                                               "vehicle_unblocked_date": vehicle_unblocked_date}).modify()
+                return True, {"sapcommandsent": True}
             
-            alert_message = (
-                f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Unblock, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to Unblock the Vehicle "
-            )
-            vehicle_unblocked_date = datetime.datetime.now(tz=datetime.timezone.utc)
-            alert_data["action_msg"] = alert_message
-            alert_data["action_type"] = "VTS"
-            await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
-            unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED', blacklist='false' where truck_regno = '{alert_data['vehicle_number']}'"
-            await hpcl_ceg_model.VtsTruckDetails.update_by_query(unblock_query)
-            await hpcl_ceg_model.Alerts(**{"id": alert_data["id"], 
-                                           "vehicle_unblocked_date": vehicle_unblocked_date}).modify()
-            return True, {"sapcommandsent": True}
-
+            if params['auto_unblock']:
+                alert_message = (
+                    f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Unblock, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to Unblock the Vehicle "
+                )
+                vehicle_unblocked_date = datetime.datetime.now(tz=datetime.timezone.utc)
+                alert_data["action_msg"] = alert_message
+                alert_data["action_type"] = "VTS"
+                await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED', blacklist='false' where truck_regno = '{alert_data['vehicle_number']}'"
+                await hpcl_ceg_model.VtsTruckDetails.update_by_query(unblock_query)
+                await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                                               "vehicle_unblocked_date": vehicle_unblocked_date}).modify()
+                return True, {"sapcommandsent": True}
+            
         return False, {"sapcommandsent": False}

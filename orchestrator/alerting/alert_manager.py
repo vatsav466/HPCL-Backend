@@ -657,6 +657,9 @@ class AlertAction:
         
         if not alert_id:
             raise ValueError("Alert data does not have an 'id' field.")
+        
+        if alert_data['alert_section'] in ['VTS'] and input_data["action_type"] in ['Justification']:
+            await hpcl_ceg_model.Alerts(**{"id": alert_id, "device_msg": "request_raised_for_unblock"}).modify()
 
         # Modify the alert with the updated alert_history
         await hpcl_ceg_model.Alerts(**{"id": alert_id, "alert_history": alert_history}).modify()
