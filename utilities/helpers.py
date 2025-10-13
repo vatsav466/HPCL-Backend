@@ -175,7 +175,10 @@ async def generate_filter_query(filters, query, where_clause=False):
             for rec in filters:
                 values = rec.value.split(",")
                 if len(values) == 1:
-                    conditions.append(f'{rec.key} = \'{values[0]}\'')
+                    if rec.cond == "not_equals":
+                        conditions.append(f'{rec.key} != \'{values[0]}\'')    
+                    else:
+                        conditions.append(f'{rec.key} = \'{values[0]}\'')
                 elif len(values) == 2 and rec.key in ["DATE", "created_at"]:
                     from_date = values[0]
                     to_date = values[-1]
