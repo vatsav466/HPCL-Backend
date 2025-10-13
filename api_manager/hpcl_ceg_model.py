@@ -1773,6 +1773,22 @@ class Alerts_Vts_Alert_ManagerParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Alerts_Bulk_Send_To_UnblockParams(pydantic.BaseModel):
+    alert_ids: typing.List[str]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Bulk_Send_To_ApproveParams(pydantic.BaseModel):
+    alert_ids: typing.List[str]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class CEMSLocationMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'cems_location_master'
     

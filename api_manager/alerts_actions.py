@@ -4,7 +4,9 @@ from hpcl_ceg_model import *
 import fastapi
 import os
 import pytz
+import json
 import datetime
+import requests
 import traceback
 import utilities
 import polars as pl
@@ -300,3 +302,37 @@ async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
         df = df.select(required_columns)
         alert_data = df.to_dicts()
     return {"status": True, "message": "success", "data": alert_data}
+
+
+# Action bulk_send_to_unblock
+@router.post('/bulk_send_to_unblock', tags=['Alerts'])
+async def alerts_bulk_send_to_unblock(data: Alerts_Bulk_Send_To_UnblockParams):
+    try:
+        alert_data = {}
+        alert_data["task_type"] = "unblock"
+        alert_data["alert_ids"] = data.alert_ids
+
+        redis_queue = urdhva_base.redispool.RedisQueue('vts_unblocking_queue')
+        await redis_queue.put(json.dumps(alert_data))
+        return True, "Success"
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return {"status": False, "message": "Error", "data": []}
+
+
+# Action bulk_send_to_approve
+@router.post('/bulk_send_to_approve', tags=['Alerts'])
+async def alerts_bulk_send_to_approve(data: Alerts_Bulk_Send_To_ApproveParams):
+    try:
+        alert_data = {}
+        alert_data["task_type"] = "approve"
+        alert_data["alert_ids"] = data.alert_ids
+
+        redis_queue = urdhva_base.redispool.RedisQueue('vts_unblocking_queue')
+        await redis_queue.put(json.dumps(alert_data))
+        return True, "Success"
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return {"status": False, "message": "Error", "data": []}

@@ -843,6 +843,14 @@ Model Alerts {
         filters optional list WidgetFilters
     }
 
+    Action=> bulk_send_to_unblock {
+        alert_ids list str
+    }
+
+    Action=> bulk_send_to_approve {
+        alert_ids list str
+    }
+
     Config=> {
         crud_operations='read'
         // Access Key Mapping for RBAC,

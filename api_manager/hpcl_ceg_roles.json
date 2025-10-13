@@ -1014,6 +1014,12 @@
                 },
                 {
                     "name": "vts_alert_manager"
+                },
+                {
+                    "name": "bulk_send_to_unblock"
+                },
+                {
+                    "name": "bulk_send_to_approve"
                 }
             ]
         },
@@ -1092,6 +1098,12 @@
                 },
                 {
                     "name": "vts_alert_manager"
+                },
+                {
+                    "name": "bulk_send_to_unblock"
+                },
+                {
+                    "name": "bulk_send_to_approve"
                 }
             ]
         },
@@ -7147,6 +7159,14 @@
         {
             "name": "vts_alert_manager",
             "displayName": "vts_alert_manager"
+        },
+        {
+            "name": "bulk_send_to_unblock",
+            "displayName": "bulk_send_to_unblock"
+        },
+        {
+            "name": "bulk_send_to_approve",
+            "displayName": "bulk_send_to_approve"
         },
         {
             "name": "upload_cems_location_master",
