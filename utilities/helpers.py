@@ -176,7 +176,9 @@ async def generate_filter_query(filters, query, where_clause=False):
                 values = rec.value.split(",")
                 if len(values) == 1:
                     if rec.cond == "not_equals":
-                        conditions.append(f'{rec.key} != \'{values[0]}\'')    
+                        conditions.append(f'{rec.key} != \'{values[0]}\'')
+                    elif rec.key in ["DATE", "created_at"]:
+                        conditions.append(f'DATE({rec.key}) = \'{values[0]}\'')
                     else:
                         conditions.append(f'{rec.key} = \'{values[0]}\'')
                 elif len(values) == 2 and rec.key in ["DATE", "created_at"]:
