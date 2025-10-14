@@ -167,6 +167,40 @@ def normalize_string(input_value):
     return input_value
 
 
+async def generate_filter_query(filters, query, where_clause=False):
+    try:
+        conditions = []
+        _key = None
+        if filters:
+            for rec in filters:
+                values = rec.value.split(",")
+                if len(values) == 1:
+                    if rec.cond == "not_equals":
+                        conditions.append(f'{rec.key} != \'{values[0]}\'')
+                    elif rec.key in ["DATE", "created_at"]:
+                        conditions.append(f'DATE({rec.key}) = \'{values[0]}\'')
+                    else:
+                        conditions.append(f'{rec.key} = \'{values[0]}\'')
+                elif len(values) == 2 and rec.key in ["DATE", "created_at"]:
+                    from_date = values[0]
+                    to_date = values[-1]
+                    conditions.append(f"{rec.key} BETWEEN '{from_date} 00:00:00' AND '{to_date} 23:59:59' ")
+                else:
+                    conditions.append(f"{rec.key} IN {tuple(values)}")
+        if conditions:
+            if where_clause:
+                query += " WHERE " + " AND ".join(conditions)
+            else:
+                query += " AND " + " AND " .join(conditions)
+        if _key:
+            return query, _key
+        return query
+    except Exception as e:
+        print("--- Exception in drill down filters ---")
+        print("Exception :", str(e))
+        return query
+
+
 async def get_location_details(bu, sap_id):
     """
     Retrieves location details based on the provided business unit and SAP ID.

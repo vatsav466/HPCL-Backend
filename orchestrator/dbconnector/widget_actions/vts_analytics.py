@@ -22,7 +22,7 @@ class VTSAnalyticsActions:
         return key
     
     @staticmethod
-    def build_filter_conditions(filters, cross_filters, query=None):
+    def build_filter_conditions(filters, cross_filters, query):
         """Build WHERE conditions from filters and cross_filters"""
         all_conditions = []
         
@@ -280,13 +280,14 @@ class VTSAnalyticsActions:
             all_violations = vts_query.vts_query.get("all_violations", [])
             violation_types = payload.get("violation_type", []) if payload else []
             truck_number = payload.get("view", "")
+            
             if truck_number:
                 all_violations = vts_query.vts_query.get("all_violations", [])
                 select_parts = []
                 for v_type in all_violations:
                     select_parts.append(
-                    f"COUNT(CASE WHEN {v_type} != 0 THEN 1 ELSE 0 END) AS {v_type}"
-                )
+                        f"COUNT(CASE WHEN {v_type} != 0 THEN 1 ELSE 0 END) AS {v_type}"
+                    )
                 select_clause = ",\n        ".join(select_parts)
                 view_query = f"""
                 SELECT 
@@ -307,10 +308,11 @@ class VTSAnalyticsActions:
                 df_view = await VTSAnalyticsActions.execute_query(view_query)
                 if df_view.empty:
                     return {"status": True, "message": "No violation history found for this vehicle", "data": []}
+                
                 alerts_query = f"""SELECT DISTINCT location_name, vehicle_number, transporter_code, zone 
-                              FROM alerts 
-                              WHERE vehicle_number = '{truck_number}' 
-                              AND transporter_code != '' AND location_name != ''"""
+                            FROM alerts 
+                            WHERE vehicle_number = '{truck_number}' 
+                            AND transporter_code != '' AND location_name != ''"""
                 print("Alerts Query:", alerts_query)
                 df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
                 if not df_alerts.empty:
@@ -341,10 +343,12 @@ class VTSAnalyticsActions:
                     if all(record.get(v_type, 0) == 0 for v_type in all_violations):
                         continue 
                     cleaned_records.append(record)
-                    if not cleaned_records:
-                        return {"status": True, "message": "No non-zero violations found", "data": []}
+                
+                if not cleaned_records:
+                    return {"status": True, "message": "No non-zero violations found", "data": []}
                 
                 return {"status": True, "message": "success", "data": cleaned_records}
+            
             if violation_types:
                 violation_type_query = vts_query.vts_query.get("vts_insite_history_type")
                 if not violation_type_query:
@@ -367,29 +371,26 @@ class VTSAnalyticsActions:
                 
                 df_history = await VTSAnalyticsActions.execute_query(final_query)
                 if df_history.empty:
-                     return {"status": True, "message": "No history data found", "data": []}
+                    return {"status": True, "message": "No history data found", "data": []}
                 
-               
                 tl_numbers_list = df_history['tl_number'].tolist()
                 tl_numbers_str = "', '".join(map(str, tl_numbers_list))
                 alerts_query = f"""SELECT DISTINCT  location_name, vehicle_number, transporter_code, zone 
-                                  FROM alerts 
-                                  WHERE vehicle_number IN ('{tl_numbers_str}') 
-                                  AND transporter_code != '' AND location_name != ''"""
+                                FROM alerts 
+                                WHERE vehicle_number IN ('{tl_numbers_str}') 
+                                AND transporter_code != '' AND location_name != ''"""
                 print(alerts_query)
                 df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
                 if not df_alerts.empty:
                     df_alerts['transporter_code'] = df_alerts['transporter_code'].astype(str).str.lstrip("0")
                 
-
                 # Check if alerts data exists
                 if df_alerts.empty:
-                      return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
+                    return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
                 
                 # Merge history with alerts data
                 merged_df = df_history.merge(df_alerts, left_on="tl_number", right_on="vehicle_number", how="left")
-                    
-                    
+                
                 email_query = """SELECT transporter_code, transporter_name FROM email_master"""
                 print(email_query)
                 df_email = await VTSAnalyticsActions.execute_query(email_query)
@@ -404,8 +405,9 @@ class VTSAnalyticsActions:
                     if all(record.get(v_type, 0) == 0 for v_type in all_violations):
                         continue 
                     cleaned_records.append(record)
-                    if not cleaned_records:
-                        return {"status": True, "message": "No non-zero violations found", "data": []}
+                
+                if not cleaned_records:
+                    return {"status": True, "message": "No non-zero violations found", "data": []}
                 
                 return {"status": True, "message": "success", "data": cleaned_records}
                 
@@ -414,18 +416,18 @@ class VTSAnalyticsActions:
             print(query)
             df_history = await VTSAnalyticsActions.execute_query(query)
             if df_history.empty:
-                 return {"status": True, "message": "No history data found", "data": []}
+                return {"status": True, "message": "No history data found", "data": []}
 
             # Get vehicle details from alerts table using tl_numbers from history data
             tl_numbers_list = df_history['tl_number'].tolist()
             tl_numbers_str = "', '".join(map(str, tl_numbers_list))
             alerts_query = f"""SELECT DISTINCT  location_name, vehicle_number, transporter_code, zone 
-                              FROM alerts 
-                              WHERE vehicle_number IN ('{tl_numbers_str}') 
-                              AND transporter_code != '' AND location_name != ''"""
+                            FROM alerts 
+                            WHERE vehicle_number IN ('{tl_numbers_str}') 
+                            AND transporter_code != '' AND location_name != ''"""
             df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
             if not df_alerts.empty:
-                    df_alerts['transporter_code'] = df_alerts['transporter_code'].astype(str).str.lstrip("0")
+                df_alerts['transporter_code'] = df_alerts['transporter_code'].astype(str).str.lstrip("0")
 
             # Check if alerts data exists
             if df_alerts.empty:
@@ -445,11 +447,11 @@ class VTSAnalyticsActions:
 
             group_by_col = payload.get("group_by")
             if group_by_col and group_by_col in final_df.columns:
-                 violation_cols = [v for v in all_violations if v in final_df.columns]
-                 agg_df = final_df.groupby(group_by_col)[violation_cols].sum().reset_index()
-                 agg_df['total_count'] = agg_df[violation_cols].sum(axis=1)
-                 cleaned_records = agg_df.to_dict(orient='records')
-                 return {"status": True, "message": "success", "data": cleaned_records}
+                violation_cols = [v for v in all_violations if v in final_df.columns]
+                agg_df = final_df.groupby(group_by_col)[violation_cols].sum().reset_index()
+                agg_df['total_count'] = agg_df[violation_cols].sum(axis=1)
+                cleaned_records = agg_df.to_dict(orient='records')
+                return {"status": True, "message": "success", "data": cleaned_records}
             
             qlick_view = payload.get("qlick_view")
             click_value = payload.get("click_value")
@@ -461,7 +463,7 @@ class VTSAnalyticsActions:
                 agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
                 return {"status": True, "message": "Zone-wise violations", "data": agg_df.to_dict(orient="records")}
             
-            if qlick_view == "zone" and  click_value:
+            if qlick_view == "zone" and click_value:
                 zone_df = final_df[final_df[qlick_view] == click_value]
                 if zone_df.empty:
                     return {"status": True, "message": f"No Data found for zone {click_value}", "data": []}
@@ -469,12 +471,12 @@ class VTSAnalyticsActions:
                 agg_df = zone_df.groupby("location_name")[violation_cols].sum().reset_index()
                 agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
                 cleaned_records = agg_df.to_dict(orient="records")
-                return { "status": True,  "message": f"Violations for all plants in zone {click_value}", "data": cleaned_records }
-                 
+                return {"status": True, "message": f"Violations for all plants in zone {click_value}", "data": cleaned_records}
+                    
             elif qlick_view == "location_name" and click_value:
                 location_df = final_df[final_df[qlick_view] == click_value]
                 if location_df.empty:
-                    return {"status": True, "message": f"No Data found for location {click_value}", "data" : []}
+                    return {"status": True, "message": f"No Data found for location {click_value}", "data": []}
             
                 agg_df = location_df.groupby("transporter_name")[violation_cols].sum().reset_index()
                 agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
@@ -483,31 +485,178 @@ class VTSAnalyticsActions:
 
             elif qlick_view == "transporter_name" and click_value and location_name:
                 df = final_df[final_df[qlick_view] == click_value]
-
                 df = df[df["location_name"] == location_name]
                 if df.empty:
-                    return {"status": True, "message": f"No Data found for transporters {click_value}", "data" : []}
+                    return {"status": True, "message": f"No Data found for transporters {click_value}", "data": []}
                 
                 agg_df = df.groupby("tl_number")[violation_cols].sum().reset_index()
                 agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
                 agg_df = agg_df[agg_df["total_count"] > 0]
                 cleaned_records = agg_df.to_dict(orient="records")
                 return {"status": True, "message": f"Date-wise violations for transporter {click_value}", "data": cleaned_records}
-
+            
+            elif qlick_view == "tl_number" and click_value:
+                df = final_df[final_df[qlick_view] == click_value]
+                if df.empty:
+                    return {"status": True, "message": f"No Data found for vehicle {click_value}", "data": []}
+                
+                agg_df = df.groupby(["invoice_number", "created_at"])[violation_cols].sum().reset_index()
+                agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
+                agg_df = agg_df[agg_df["total_count"] > 0]
+                cleaned_records = agg_df.to_dict(orient="records")
+                return {"status": True, "message": f"Date-wise violations for vehicle {click_value}", "data": cleaned_records}
+                
+            
+            # Default case: return all records with non-zero violations
             cleaned_records = []
             for _, row in final_df.iterrows():
-                    record = row.to_dict()
-                    if all(record.get(v_type, 0) == 0 for v_type in all_violations):
-                        continue 
-                    cleaned_records.append(record)
-                    if not cleaned_records:
-                        return {"status": True, "message": "No non-zero violations found", "data": []}
+                record = row.to_dict()
+                if all(record.get(v_type, 0) == 0 for v_type in all_violations):
+                    continue 
+                cleaned_records.append(record)
+            
+            if not cleaned_records:
+                return {"status": True, "message": "No non-zero violations found", "data": []}
                 
             return {"status": True, "message": "success", "data": cleaned_records}
-             
+            
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+        
+
+    @staticmethod
+    async def vts_drill_down_violation(filters, cross_filters, drill_state, payload):
+        try:
+            # Step 1: Get base query and apply filters
+            query = vts_query.vts_query.get(drill_state.split(",")[0])
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+            vts_drill_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+            print(vts_drill_query)
+
+            vts_df = await VTSAnalyticsActions.execute_query(vts_drill_query)
+            vts_df = vts_df.drop_duplicates(subset=['invoice_number'], keep='first')
+
+            if vts_df.empty:
+                return {"status": True, "message": "No data found", "data": []}
+
+            # Step 2: Get TLs and fetch alerts
+            tl_numbers_list = vts_df['tl_number'].tolist()
+            tl_numbers_str = "', '".join(map(str, tl_numbers_list))
+
+            alerts_query = f"""
+                SELECT DISTINCT location_name, vehicle_number, transporter_code, zone
+                FROM alerts
+                WHERE vehicle_number IN ('{tl_numbers_str}')
+                AND transporter_code != '' AND location_name != ''
+            """
+            df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
+            if df_alerts.empty:
+                return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
+
+            merged_df = vts_df.merge(df_alerts, left_on="tl_number", right_on="vehicle_number", how="left")
+
+            # Step 3: Remove missing or empty zones
+            merged_df = merged_df[merged_df["zone"].notna() & (merged_df["zone"].str.strip() != "")]
+            if merged_df.empty:
+                return {"status": False, "message": "No valid zone data found after merging with alerts", "data": []}
+
+            # Step 4: Merge transporter names
+            email_query = """SELECT transporter_code, transporter_name FROM email_master"""
+            df_email = await VTSAnalyticsActions.execute_query(email_query)
+            final_df = merged_df.merge(df_email, on="transporter_code", how="left")
+            final_df.drop(columns=["transporter_code"], inplace=True)
+
+            # Step 5: Filter violation type
+            violation_type = payload.get("violation_type")
+            if not violation_type or violation_type not in final_df.columns:
+                return {"status": False, "message": f"Invalid violation type: {violation_type}", "data": []}
+
+            violation_filtered_df = final_df[final_df[violation_type].fillna(0) != 0].copy()
+
+            # Step 6: Remove empty values for zone, location, transporter
+            for key in ["zone", "location_name", "transporter_name"]:
+                violation_filtered_df = violation_filtered_df[
+                    violation_filtered_df[key].notna() & (violation_filtered_df[key].str.strip() != "")
+                ]
+                if payload.get(key):
+                    violation_filtered_df = violation_filtered_df[violation_filtered_df[key] == payload[key]]
+
+            if violation_filtered_df.empty:
+                return {"status": True, "message": "No data found for the applied filters", "data": []}
+
+            # Step 7: TL-level drill-down for invoice details
+            selected_tl = payload.get("tl_number")
+            if selected_tl:
+                violation_filtered_df = violation_filtered_df[violation_filtered_df["tl_number"] == selected_tl]
+
+                if violation_filtered_df.empty:
+                    return {
+                        "status": True,
+                        "message": f"No invoices found for vehicle {selected_tl}",
+                        "data": []
+                    }
+
+                # Return invoice details sorted by created_at
+                invoice_df = violation_filtered_df.sort_values(by="created_at", ascending=True)
+                invoice_df = invoice_df[["invoice_number", "created_at", violation_type]]
+
+                # Rename columns for frontend
+                invoice_df.rename(columns={
+                    "invoice_number": "invoice_no",
+                    "created_at": "created_at",
+                    violation_type: violation_type  
+                }, inplace=True)
+
+                result = invoice_df.to_dict(orient="records")
+                return {
+                    "status": True,
+                    "message": f"{violation_type} details for vehicle {selected_tl}",
+                    "data": result
+                }
+
+            # Step 8: Determine grouping column for summaries
+            if payload.get("transporter_name"):
+                group_col = "tl_number"
+            elif payload.get("location_name"):
+                group_col = "transporter_name"
+            elif payload.get("zone"):
+                group_col = "location_name"
+            else:
+                group_col = "zone"
+
+            # Step 9: Summarize counts
+            summary_df = (
+                violation_filtered_df.groupby(group_col)
+                .agg({"invoice_number": pd.Series.nunique})
+                .reset_index()
+            )
+
+            summary_df[violation_type] = violation_filtered_df.groupby(group_col).size().values
+            if group_col != "tl_number":
+                 summary_df["vehicle_count"] = violation_filtered_df.groupby(group_col)["tl_number"].nunique().values
+                
+
+
+            rename_mapping = {
+                "invoice_number": "invoice_count",
+            }
+            summary_df.rename(columns=rename_mapping, inplace=True)
+
+            # Also rename the dynamic violation column for clarity
+            summary_df.rename(columns={violation_type: violation_type}, inplace=True)
+
+            result = summary_df.to_dict(orient="records")
+            return {
+                "status": True,
+                "message": f"{violation_type} drill-down data",
+                "data": result
+            }
+
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+
         
     @staticmethod
     async def location_level_voilation_breakup(filters, cross_filters, drill_state, payload):

@@ -1,5 +1,6 @@
 from hpcl_ceg_ticketing_enum import *
 from typing import Optional
+from fastapi.responses import FileResponse
 from fastapi import Form, File, UploadFile
 from hpcl_ceg_ticketing_model import (
     Ticketing,

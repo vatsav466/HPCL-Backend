@@ -4,7 +4,9 @@ from hpcl_ceg_model import *
 import fastapi
 import os
 import pytz
+import json
 import datetime
+import requests
 import traceback
 import utilities
 import polars as pl
@@ -14,6 +16,7 @@ from fastapi.responses import FileResponse
 import utilities.vts_mapping as vts_mapping
 from dateutil.relativedelta import relativedelta
 import utilities.connection_mapping as connection_mapping
+from utilities.helpers import generate_filter_query
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.actions.check_violation_count as check_violation_count
@@ -141,7 +144,7 @@ async def alerts_intitiate_vts_exception(data: Alerts_Intitiate_Vts_ExceptionPar
     interlock_details = utilities.interlock_mapping.get_interlock_name(
         alert_data['bu'], details['alerting_rules'][str(altcount)]['interlock_name'])
     if not interlock_details:
-        return false, "interlock name not found "
+        return False, "interlock name not found "
     vts_alert_data={"bu": alert_data["bu"],
                     "alert_section": "VTS", 
                     "alert_history": alert_history, 
@@ -254,27 +257,7 @@ async def alerts_stored_document(file_name: str):
 @router.post('/vts_alert_manager', tags=['Alerts'])
 async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
     query = f"alert_section='VTS' AND alert_status='Open'"
-    conditions = []
-    for rec in data.filters:
-        if "DATE" in rec.key:
-            start = rec.value.split(",")[0]
-            end = (datetime.datetime.strptime(rec.value.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-            conditions.append(f"created_at BETWEEN '{start}' AND '{end}' ")
-            query = query.split("WHERE")[0].split("where")[0]
-            continue
-        rec.value = rec.value.split(",")
-        # Now handle other cases
-        if isinstance(rec.value, str):
-            condition = f"{rec.key} = '{rec.value}'"
-        else:
-            if len(rec.value) == 1:
-                condition = f"{rec.key} = '{rec.value[0]}'"
-            else:
-                condition = f"{rec.key} in {tuple(rec.value)}"
-        conditions.append(condition)
-    if conditions:
-        query += ' AND '
-        query  += ' AND '.join(conditions)
+    query = await generate_filter_query(data.filters, query)
     alert_data = await Alerts.get_all(
         urdhva_base.queryparams.QueryParams(
             q=query, limit=0
@@ -300,3 +283,61 @@ async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
         df = df.select(required_columns)
         alert_data = df.to_dicts()
     return {"status": True, "message": "success", "data": alert_data}
+
+
+# Action bulk_send_to_unblock
+@router.post('/bulk_send_to_unblock', tags=['Alerts'])
+async def alerts_bulk_send_to_unblock(data: Alerts_Bulk_Send_To_UnblockParams):
+    try:
+        if urdhva_base.context.context.exists():
+            rpt = urdhva_base.context.context.get('rpt', {})
+        else:
+            rpt = {}
+
+        if rpt.get("novex_role", None):
+            if not any(role in rpt.get("novex_role") 
+                       for role in ["Creator SOD", "Creator LPG", "Creator RO"]):
+                return False, "Action not available for your Role"
+        elif not rpt.get("novex_role", None):
+            return False, "Session not found"
+        
+        alert_data = {}
+        alert_data["task_type"] = "unblock"
+        alert_data["alert_ids"] = data.alert_ids
+
+        redis_queue = urdhva_base.redispool.RedisQueue('vts_unblocking_queue')
+        await redis_queue.put(json.dumps(alert_data))
+        return True, "Request sent successfully, Processing the request. Please wait for sometime"
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return {"status": False, "message": "Error", "data": []}
+
+
+# Action bulk_send_to_approve
+@router.post('/bulk_send_to_approve', tags=['Alerts'])
+async def alerts_bulk_send_to_approve(data: Alerts_Bulk_Send_To_ApproveParams):
+    try:
+        if urdhva_base.context.context.exists():
+            rpt = urdhva_base.context.context.get('rpt', {})
+        else:
+            rpt = {}
+                        
+        if rpt.get("novex_role", None):
+            if not any(role in rpt.get("novex_role") 
+                       for role in ["Approver SOD", "Approver LPG", "Approver RO"]):
+                return False, "Action not available for your Role"
+        elif not rpt.get("novex_role", None):
+            return False, "Session not found"
+        
+        alert_data = {}
+        alert_data["task_type"] = "approve"
+        alert_data["alert_ids"] = data.alert_ids
+
+        redis_queue = urdhva_base.redispool.RedisQueue('vts_unblocking_queue')
+        await redis_queue.put(json.dumps(alert_data))
+        return True, "Approved successfully, Processing the approval. Please wait for sometime"
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return {"status": False, "message": "Error", "data": []}

@@ -7,7 +7,7 @@ import urdhva_base
 import sys
 import mysql.connector
 import pandas as pd
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from zoneinfo import ZoneInfo
 from psycopg2.extras import execute_values
 
@@ -40,7 +40,6 @@ def get_db_connection(params):
                 user=username,
                 passwd=password,
                 port=port,
-                # database=database
             )
     return connection
 
@@ -55,7 +54,7 @@ def insertToDB_polars(pg_conn, data, table_name):
 
     data = data.rename({col: col.lower() for col in data.columns})
 
-    # Add engine_id if missing (optional)
+    # Add engine_id if missing
     if "engine_id" not in data.columns:
         data = data.with_columns(
             pl.struct(data.columns).map_elements(
@@ -120,7 +119,25 @@ def check_table_exists(pg_conn, table_name):
     return exists
 
 
-if _name_ == "_main_":
+def check_table_empty(pg_conn, table_name):
+    """Check if table is empty"""
+    cur = pg_conn.cursor()
+    cur.execute(f'SELECT COUNT(*) FROM "{table_name}"')
+    count = cur.fetchone()[0]
+    cur.close()
+    return count == 0
+
+
+def get_max_syncdt(pg_conn, table_name):
+    """Get maximum SYNCDT from Postgres table"""
+    cur = pg_conn.cursor()
+    cur.execute(f'SELECT MAX(syncdt) FROM "{table_name}"')
+    max_syncdt = cur.fetchone()[0]
+    cur.close()
+    return max_syncdt
+
+
+if __name__ == "__main__":
     # Load source DB credentials
     creds = credential_loader.get_credentials('TIBCO')
     params = {
@@ -143,7 +160,8 @@ if _name_ == "_main_":
         port=pg_creds['port']
     )
 
-    table_exists = check_table_exists(pg_conn, params["table_name"])
+    table_name = params["table_name"]
+    table_exists = check_table_exists(pg_conn, table_name)
 
     # Source DB connection
     source_conn = get_db_connection(params)
@@ -152,22 +170,31 @@ if _name_ == "_main_":
     if not table_exists:
         print("Target table does not exist → creating and dumping all data")
         query = "SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE"
-        get_and_insert_data(source_cursor, query, pg_conn, params["table_name"])
+        get_and_insert_data(source_cursor, query, pg_conn, table_name)
     else:
-        print("Target table exists → updating today’s data only")
-        today_str = date.today().strftime('%Y-%m-%d')
+        is_empty = check_table_empty(pg_conn, table_name)
+        if is_empty:
+            print("Target table is empty → dumping all data")
+            query = "SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE"
+            get_and_insert_data(source_cursor, query, pg_conn, table_name)
+        else:
+            print("Target table has data → syncing incrementally based on SYNCDT")
 
-        # Delete today's records
-        del_cur = pg_conn.cursor()
-        del_cur.execute(f'DELETE FROM "{params["table_name"]}" WHERE created_on = %s', (today_str,))
-        pg_conn.commit()
-        del_cur.close()
-        print(f"Deleted existing records for today ({today_str}) in Postgres")
+            # Get max syncdt from Postgres
+            max_syncdt = get_max_syncdt(pg_conn, table_name)
+            if max_syncdt is None:
+                print("no maximum date in table")  # fallback if table empty
 
-        # Fetch today’s data from source
-        query = f"SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE WHERE created_on = '{today_str}'"
-        get_and_insert_data(source_cursor, query, pg_conn, params["table_name"])
+            print(f"Max SYNCDT in Postgres: {max_syncdt}")
+
+            # Fetch only new/updated rows from source
+            query = f"""
+                SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE 
+                WHERE syncdt > '{max_syncdt}'
+            """
+            get_and_insert_data(source_cursor, query, pg_conn, table_name)
 
     source_cursor.close()
     source_conn.close()
     pg_conn.close()
+

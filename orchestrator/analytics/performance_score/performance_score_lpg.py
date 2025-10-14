@@ -202,8 +202,13 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 msg = f"Total alerts: {total_alerts}. Calculation: ({sum(alert_score)}) * ({rule['weightage']}) / 100"
             else:
                 ...
-            pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
-                             'module': rules.get('name', name)})
+            pi_score.append({
+                "name": rule['name'], 
+                "score": score, 
+                "weightage": rule['weightage'],
+                'module': rules.get('name', name),
+                "msg": msg
+                })
         final_score = sum([score['score'] for score in pi_score])
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:

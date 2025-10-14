@@ -193,8 +193,8 @@ async def vts_trip_not_closed(data: Vts_Trip_Not_ClosedParams):
         else:
             logger.error(f"Invalid data structure: data.data is not a list or is empty")
             return {"status": False, "message": "Invalid data", "data": []}
-        logger.info(f"Received VTS data ingestion from vendor {enriched_data}")
-        print(f"Received VTS data ingestion from vendor {enriched_data}")
+        logger.info(f"Received VTS data for trip_not_closed ingestion from vendor {enriched_data}")
+        print(f"Received VTS data for trip_not_closed ingestion from vendor {enriched_data}")
 
         redis_queue = urdhva_base.redispool.RedisQueue('vts_ongoing_trips_queue')
         await redis_queue.put(json.dumps(enriched_data))
@@ -216,8 +216,8 @@ async def vts_trip_without_route(data: Vts_Trip_Without_RouteParams):
         else:
             logger.error(f"Invalid data structure: data.data is not a list or is empty")
             return {"status": False, "message": "Invalid data", "data": []}
-        logger.info(f"Received VTS data ingestion from vendor {enriched_data}")
-        print(f"Received VTS data ingestion from vendor {enriched_data}")
+        logger.info(f"Received VTS data for trip_without_route ingestion from vendor {enriched_data}")
+        print(f"Received VTS data for trip_without_route ingestion from vendor {enriched_data}")
 
         redis_queue = urdhva_base.redispool.RedisQueue('vts_ongoing_trips_queue')
         await redis_queue.put(json.dumps(enriched_data))
@@ -239,8 +239,8 @@ async def vts_route_deviation_more_than_two_km(data: Vts_Route_Deviation_More_Th
         else:
             logger.error(f"Invalid data structure: data.data is not a list or is empty")
             return {"status": False, "message": "Invalid data", "data": []}
-        logger.info(f"Received VTS data ingestion from vendor {enriched_data}")
-        print(f"Received VTS data ingestion from vendor {enriched_data}")
+        logger.info(f"Received VTS data for route_deviation_more_than_two_km ingestion from vendor {enriched_data}")
+        print(f"Received VTS data for route_deviation_more_than_two_km ingestion from vendor {enriched_data}")
 
         redis_queue = urdhva_base.redispool.RedisQueue('vts_ongoing_trips_queue')
         await redis_queue.put(json.dumps(enriched_data))
@@ -261,8 +261,8 @@ async def vts_trip_unauthorised_stoppage(data: Vts_Trip_Unauthorised_StoppagePar
         else:
             logger.error(f"Invalid data structure: data.data is not a list or is empty")
             return {"status": False, "message": "Invalid data", "data": []}
-        logger.info(f"Received VTS data ingestion from vendor {enriched_data}")
-        print(f"Received VTS data ingestion from vendor {enriched_data}")
+        logger.info(f"Received VTS data for trip_unauthorised_stoppage ingestion from vendor {enriched_data}")
+        print(f"Received VTS data for trip_unauthorised_stoppage ingestion from vendor {enriched_data}")
 
         redis_queue = urdhva_base.redispool.RedisQueue('vts_ongoing_trips_queue')
         await redis_queue.put(json.dumps(enriched_data))
