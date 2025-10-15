@@ -239,6 +239,24 @@ Model vtsBlockedTruck internal {
     alert_type optional str
 }
 
+Model OngoingTripsVts crud_disable {
+     Action=> trip_not_closed {
+        data list VtsTripNotClosed
+    }
+
+    Action=> trip_without_route {
+        data list VtsTripWithoutRoute
+    }
+
+    Action=> route_deviation_more_than_two_km {
+        data list VtsRouteTwoKm
+    }
+
+    Action=> trip_unauthorised_stoppage {
+        data list VtsUnauthStoppage
+    }
+}
+
 Model VTS crud_disable {
     Action=> ingest_data {
         data list vtsData
@@ -263,23 +281,7 @@ Model VTS crud_disable {
         location_type optional BusinessUnit
         data list vtsBlockedTruck
 
-    }
-
-    Action=> trip_not_closed {
-        data list VtsTripNotClosed
-    }
-
-    Action=> trip_without_route {
-        data list VtsTripWithoutRoute
-    }
-
-    Action=> route_deviation_more_than_two_km {
-        data list VtsRouteTwoKm
-    }
-
-    Action=> trip_unauthorised_stoppage {
-        data list VtsUnauthStoppage
-    }
+    }   
     
 }
 
