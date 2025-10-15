@@ -15,7 +15,7 @@ class VTSAnalyticsActions:
     @staticmethod
     def transform_key(key, query=None):
         """Transform keys based on query context"""
-        if query and "vts_alert_history" in query.lower() and key.lower() == "bu":
+        if query and any(x in query.lower() for x in ["vts_alert_history", "vts_ongoing_trips"]) and key.lower() == "bu":
             return "location_type"
         if query and "vts_alert_history" in query.lower() and key.lower() == "sap_id":
             return "location_id"
@@ -43,7 +43,7 @@ class VTSAnalyticsActions:
                 val = rec.value
                 
                 if "DATE" in key.upper():
-                    condition = VTSAnalyticsActions.create_date_condition(val)
+                    condition = VTSAnalyticsActions.create_date_condition(query,val)
                 else:
                     condition = VTSAnalyticsActions.create_condition(key, val)
                 
@@ -71,10 +71,12 @@ class VTSAnalyticsActions:
         return None
 
     @staticmethod
-    def create_date_condition(val):
+    def create_date_condition(query,val):
         """Create date range condition"""
         start = val.split(",")[0]
         end = (datetime.strptime(val.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
+        if "vts_alert_history" in query.lower():
+            return f"vts_end_datetime BETWEEN '{start}' AND '{end}'"
         return f"created_at BETWEEN '{start}' AND '{end}'"
     
 
@@ -293,11 +295,11 @@ class VTSAnalyticsActions:
                 SELECT 
                     tl_number,
                     invoice_number,
-                    DATE(created_at) as violation_date,
+                    DATE(vts_end_datetime) as violation_date,
                     {select_clause}
                 FROM vts_alert_history
                 WHERE tl_number = '{truck_number}'
-                GROUP BY tl_number, invoice_number, DATE(created_at)
+                GROUP BY tl_number, invoice_number, DATE(vts_end_datetime)
                 ORDER BY violation_date DESC, invoice_number
                 """
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, view_query)
@@ -523,7 +525,65 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
-        
+    
+    @staticmethod
+    async def violation_percentages(filters, cross_filters, drill_state, payload):
+        try:
+            # Step 1: Get base query and apply filters
+            query = vts_query.vts_query.get(drill_state.split(",")[0])
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+            print(query)
+            
+            df = await VTSAnalyticsActions.execute_query(query)
+            if df.empty:
+                return {"status": True, "message": "No data found", "data": []}
+
+            # Step 2: Select violation columns
+            violation_cols = [
+                "route_deviation_count",
+                "stoppage_violations_count",
+                "device_tamper_count",
+                "speed_violation_count",
+                "night_driving_count"
+            ]
+
+            df_viol = df[["invoice_number"] + violation_cols].copy()
+            df_viol.dropna(subset=["invoice_number"], inplace=True)
+
+            # Step 3: Mark each count >0 as 1
+            for col in violation_cols:
+                df_viol[col] = df_viol[col].apply(lambda x: 1 if x and x != 0 else 0)
+
+            # Step 4: Assign each invoice to its first violation type
+            def first_violation(row):
+                for col in violation_cols:
+                    if row[col] == 1:
+                        return col
+                return None
+            
+            df_viol["primary_violation"] = df_viol.apply(first_violation, axis=1)
+            df_viol = df_viol[df_viol["primary_violation"].notna()]
+
+            # Step 5: Count invoices per primary violation
+            counts = df_viol["primary_violation"].value_counts()
+            total = counts.sum()
+
+            # Step 6: Calculate percentages
+            violation_percentages = {
+                col: round(100 * counts.get(col, 0) / total, 2) for col in violation_cols
+            }
+
+            return {
+                "status": True,
+                "message": "Violation percentages calculated",
+                "data": violation_percentages
+            }
+
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+    
 
     @staticmethod
     async def vts_drill_down_violation(filters, cross_filters, drill_state, payload):
@@ -605,7 +665,7 @@ class VTSAnalyticsActions:
                 invoice_df.rename(columns={
                     "invoice_number": "invoice_no",
                     "created_at": "created_at",
-                    violation_type: violation_type  
+                    violation_type: f"actual_{violation_type}"  
                 }, inplace=True)
 
                 result = invoice_df.to_dict(orient="records")
@@ -656,8 +716,125 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+    
+    @staticmethod
+    async def vts_ongoing_trips(filters, cross_filters, drill_state, payload):
+        try:
+            # Step 1: Get base query and apply filters
+            query = vts_query.vts_query.get(drill_state.split(",")[0])
+            ongoing_trips_type = payload.get("ongoing_trips_type")
+            
+            if ongoing_trips_type:
+                ongoing_trips_query = query.format(ongoing_trips_type=ongoing_trips_type)
+                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, ongoing_trips_query)
+                query = VTSAnalyticsActions.apply_conditions_to_query(ongoing_trips_query, conditions)     
+                print(query)
+            else:
+                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+                query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
 
-        
+            df = await VTSAnalyticsActions.execute_query(query)
+            df.drop(columns=["zone"], inplace=True, errors="ignore")
+
+            
+            df = df.drop_duplicates(
+                        subset=["event_start_datetime", "event_end_datetime", "tt_number", "invoice_no"],
+                        keep="first"  
+                    )
+            
+            if df.empty:
+                return {"status": True, "message": "No data found", "data": []}
+            
+            # Step 2: Get TT numbers and fetch alerts
+            sap_id_list = df['sap_id'].tolist()
+            tt_numbers_str = "', '".join(map(str, sap_id_list))
+            
+            location_query = f"""
+                 select sap_id,name as location_name, zone from location_master where sap_id IN ('{tt_numbers_str}')       
+            """
+            
+            loc_df = await VTSAnalyticsActions.execute_query(location_query)
+            if loc_df.empty:
+                return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
+            
+            # Step 3: Merge dataframes
+            merged_df = df.merge(loc_df, on="sap_id",  how="left")
+            merged_df = merged_df.dropna(subset=["zone", "location_name"])
+       
+            # Step 4: Remove empty values for zone, location, transporter
+            for key in ["zone", "location_name", "transporter_name"]:
+                merged_df = merged_df[merged_df[key].notna() & (merged_df[key].str.strip() != "")]
+                if payload.get(key):
+                    merged_df = merged_df[merged_df[key] == payload[key]]
+
+            if merged_df.empty:
+                return {"status": True, "message": "No data found for the applied filters", "data": []}
+
+            # Step 5: TT-level drill-down for trip details
+            selected_tt = payload.get("tt_number")
+            if selected_tt:
+                merged_df = merged_df[merged_df["tt_number"] == selected_tt]
+
+                if merged_df.empty:
+                    return {
+                        "status": True,
+                        "message": f"No trips found for vehicle {selected_tt}",
+                        "data": []
+                    }
+                
+                merged_df["created_at"] = (
+                                pd.to_datetime(merged_df["event_start_datetime"].fillna(merged_df["event_end_datetime"]))
+                                .dt.date.astype(str)
+                            )
+
+                trip_df = merged_df.sort_values(by="created_at", ascending=True)
+                trip_df = trip_df[["invoice_no", "created_at"]]
+
+                result = trip_df.to_dict(orient="records")
+                return {
+                    "status": True,
+                    "message": f"Trip details for vehicle {selected_tt}",
+                    "data": result
+                }
+
+            # Step 6: Determine grouping column for summaries
+            if payload.get("transporter_name"):
+                group_col = "tt_number"
+            elif payload.get("location_name"):
+                group_col = "transporter_name"
+            elif payload.get("zone"):
+                group_col = "location_name"
+            else:
+                group_col = "zone"
+
+            # Step 7: Summarize counts
+            summary_df = (
+                merged_df.groupby(group_col)
+                .agg({"invoice_no": pd.Series.nunique})
+                .reset_index()
+            )
+
+            if group_col != "tt_number":
+                summary_df["vehicle_count"] = merged_df.groupby(group_col)["tt_number"].nunique().values
+
+            
+            rename_mapping = {
+                "invoice_no": "invoice_count",
+            }
+            summary_df.rename(columns=rename_mapping, inplace=True)
+
+            result = summary_df.to_dict(orient="records")
+            return {
+                "status": True,
+                "message": f"Ongoing trips drill-down data",
+                "data": result
+            }
+
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+                            
+                   
     @staticmethod
     async def location_level_voilation_breakup(filters, cross_filters, drill_state, payload):
         try:
@@ -1230,7 +1407,7 @@ class VTSAnalyticsActions:
         filtered_vehicle_count = filtered_trips_df['vehicle_id'].nunique()
         
         if filtered_trips_df.empty:
-            return {"status": "success", "total_invoice_count": total_invoice_count, "total_vehicle_count": total_vehicle_count,
+            return {"status": "success", "total_invoice_count": 0, "total_vehicle_count": 0,
                     "filtered_invoice_count": 0, "filtered_vehicle_count": 0, "zones": []}
                     
         # Drop exact duplicates
