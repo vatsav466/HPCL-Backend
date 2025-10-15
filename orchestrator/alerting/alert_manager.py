@@ -409,6 +409,13 @@ class AlertAction:
         # get the function name
         function_name = function_map.get(input_data['action_type'], None)
         if function_name:
+            if getattr(alert_data, "alert_section", None) == "VTS":
+                assigned_roles = getattr(alert_data, "assigned_user_roles", None)
+                existing_msg = input_data.get("action_msg", "")
+                if assigned_roles:
+                    prefix = " " if existing_msg else ""
+                    input_data["action_msg"] = f"{existing_msg}{prefix}initiated by {', '.join(assigned_roles)}"
+
             await cls.update_alert_history(input_data, alert_data)
             if input_data['action_type'] == 'Approved' and input_data['bu'] == 'RO':
                 interlock_disable_data = {
@@ -614,8 +621,6 @@ class AlertAction:
         event_tags = input_data.get("event_tags", {})
         if not event_tags:
             event_tags = {}
-        if alert_data['alert_section'] in ['VTS']:
-            input_data['action_msg'] = input_data.get("action_msg", "") + ((" " if input_data.get("action_msg") else "") + "initiated by " + ", ".join(alert_data.get("assigned_user_roles", [])) if alert_data.get("assigned_user_roles") else "")
         # Append the updated alert history with the converted datetime strings
         alert_history.append({"allocated_time": allocated_time.isoformat() if isinstance(allocated_time, datetime.datetime) else allocated_time,
                             "processed_time": processed_time.isoformat(), "action_type": input_data["action_type"],
