@@ -236,6 +236,38 @@ class vtsBlockedTruckCreate(pydantic.BaseModel):
     alert_type: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class Ongoingtripsvts_Trip_Not_ClosedParams(pydantic.BaseModel):
+    data: typing.List[VtsTripNotClosedCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Ongoingtripsvts_Trip_Without_RouteParams(pydantic.BaseModel):
+    data: typing.List[VtsTripWithoutRouteCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Ongoingtripsvts_Route_Deviation_More_Than_Two_KmParams(pydantic.BaseModel):
+    data: typing.List[VtsRouteTwoKmCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Ongoingtripsvts_Trip_Unauthorised_StoppageParams(pydantic.BaseModel):
+    data: typing.List[VtsUnauthStoppageCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Vts_Ingest_DataParams(pydantic.BaseModel):
     data: typing.List[vtsDataCreate]
 
@@ -276,38 +308,6 @@ class Vts_Ingest_Data_Un_Blocked_TrucksParams(pydantic.BaseModel):
     location_id: str
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.List[vtsBlockedTruckCreate]
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-
-
-class Vts_Trip_Not_ClosedParams(pydantic.BaseModel):
-    data: typing.List[VtsTripNotClosedCreate]
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-
-
-class Vts_Trip_Without_RouteParams(pydantic.BaseModel):
-    data: typing.List[VtsTripWithoutRouteCreate]
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-
-
-class Vts_Route_Deviation_More_Than_Two_KmParams(pydantic.BaseModel):
-    data: typing.List[VtsRouteTwoKmCreate]
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-
-
-class Vts_Trip_Unauthorised_StoppageParams(pydantic.BaseModel):
-    data: typing.List[VtsUnauthStoppageCreate]
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
