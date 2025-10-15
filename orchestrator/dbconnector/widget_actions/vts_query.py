@@ -85,95 +85,21 @@ vts_query = {
                FROM vts_alert_history
            """,
 
-    "route_violation_percentage": """
-               SELECT
-                    ROUND(
-                        100.0 *
-                        COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END) /
-                        NULLIF(
-                            COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END),
-                            0
-                        ),
-                        2
-                    ) AS "Route violation"
-                FROM vts_alert_history
-               """,
-    
-    "speed_violation_percentage": """ 
-                   SELECT
-                     ROUND(
-                        100.0 *
-                        COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END) /
-                        NULLIF(
-                            COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END),
-                            0
-                        ),
-                        2
-                    ) AS "Over speed"
-                FROM vts_alert_history
-               """,
 
-    "night_driving_percentage": """
-                  SELECT
-                     ROUND(
-                        100.0 *
-                        COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END) /
-                        NULLIF(
-                            COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END),
-                            0
-                        ),
-                        2
-                    ) AS "Night driving"
-                FROM vts_alert_history           
-               """,
+    "vts_ongoing_trips": """
+                         SELECT * from vts_ongoing_trips where violation_type = '{ongoing_trips_type}'
+                         """,
 
-    "unauthorized_stoppage_percentage": """
-                    SELECT
-                     ROUND(
-                        100.0 *
-                        COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END) /
-                        NULLIF(
-                            COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END),
-                            0
-                        ),
-                        2
-                    ) AS "Unauthorized stoppage"
-                FROM vts_alert_history
-               """,
-
-    "device_tampering_percentage": """
-                SELECT
-                     ROUND(
-                        100.0 *
-                        COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END) /
-                        NULLIF(
-                            COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END)
-                            + COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END),
-                            0
-                        ),
-                        2
-                    ) AS "Device tampering"
-                FROM vts_alert_history              
-               """,
+    "percentage_of_violations" : """
+                                  SELECT distinct invoice_number, 
+                                         route_deviation_count,
+                                         stoppage_violations_count,
+                                         device_tamper_count,
+                                         speed_violation_count,
+                                         night_driving_count
+                                         from vts_alert_history 
+                                    WHERE invoice_number IS NOT NULL        
+                                 """,
 
     "product_safety": """
             SELECT
@@ -376,7 +302,7 @@ vts_query = {
                             SELECT 
                                 tl_number,
                                 invoice_number,
-                                DATE(created_at) as created_at,
+                                DATE(vts_end_datetime) as created_at,
                                 route_deviation_count,
                                 stoppage_violations_count,
                                 device_tamper_count,
@@ -423,6 +349,7 @@ vts_query = {
                                         sap_id,
                                         location_name,
                                         vehicle_number,
+                                        invoice_number,
                                         transporter_code,
                                         zone,
                                         {select_clause}
@@ -430,7 +357,7 @@ vts_query = {
                                     WHERE transporter_code != '' 
                                     AND location_name != '' 
                                     AND alert_section = 'VTS'
-                                    GROUP BY sap_id, location_name, vehicle_number, transporter_code, zone
+                                    GROUP BY sap_id, location_name, vehicle_number, transporter_code, zone, invoice_number
                                     HAVING {having_clause}
                                   """,
     
@@ -438,7 +365,7 @@ vts_query = {
                             SELECT
                                 tl_number,
                                 invoice_number,
-                                DATE(created_at) AS created_at,
+                                DATE(vts_end_datetime) AS created_at,
                                 COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END) AS stoppage_violations_count,
                                 COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END) AS route_deviation_count,
                                 COUNT(DISTINCT CASE WHEN device_tamper_count != 0 THEN invoice_number END) AS device_tamper_count,
@@ -447,13 +374,13 @@ vts_query = {
                                 COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END) AS speed_violation_count,
                                 COUNT(DISTINCT CASE WHEN continuous_driving_count != 0 THEN invoice_number END) AS continuous_driving_count
                             FROM (
-                                SELECT DISTINCT tl_number, invoice_number, created_at,
+                                SELECT DISTINCT tl_number, invoice_number, vts_end_datetime,
                                     stoppage_violations_count, route_deviation_count, device_tamper_count,
                                     main_supply_removal_count, night_driving_count, speed_violation_count, continuous_driving_count
                                 FROM vts_alert_history
                                 WHERE invoice_number IS NOT NULL
                             ) AS history_data
-                            GROUP BY tl_number, invoice_number, DATE(created_at)
+                            GROUP BY tl_number, invoice_number, DATE(vts_end_datetime)
                           """,
     "vts_insite_history_type": """
                                SELECT 
