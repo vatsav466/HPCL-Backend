@@ -94,7 +94,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -122,7 +122,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -150,7 +150,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -178,7 +178,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -206,7 +206,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -234,7 +234,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -262,7 +262,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -290,7 +290,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -318,7 +318,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -346,7 +346,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -374,7 +374,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -402,7 +402,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -430,7 +430,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -458,7 +458,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -486,7 +486,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -514,7 +514,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -545,7 +545,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -573,7 +573,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -604,7 +604,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -635,7 +635,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     },
                     {
                         "title": "Governance",
@@ -683,7 +683,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -725,7 +725,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -756,7 +756,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -787,7 +787,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -818,7 +818,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -849,7 +849,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     }
                 ]
             }
@@ -1186,7 +1186,7 @@ async def sync_user_roles():
                 "menu_name": "VTS",
                 "allowed_sub_menus": [
                     {
-                        "title": "VTS Home"
+                        "title": "VTS ITDG Alert Home"
                     },
                     {
                         "title": "Governance",
