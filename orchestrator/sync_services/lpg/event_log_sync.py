@@ -399,7 +399,7 @@ def get_data_chunks(params):
             params=params,
             timeout=15,
             query_timeout=180,  # Shorter timeout per chunk
-            chunk_size=25000   # Smaller chunks
+            chunk_size=25000   # chunks size
         )
 
         if data is None or data.is_empty():
