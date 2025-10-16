@@ -136,7 +136,8 @@ def insertToDB(data, table_name, indexing_col=()):
 
 def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.DataFrame()):
     if not max_date:
-        max_date = f""" select max(event_date) as max_date from 'vts_{table_name.lower()}' """
+        max_date = f""" select max(event_date) as max_date from vts_{table_name.lower()} """
+        cursor = None
         data = fetch_data(cursor, max_date, getData=True, params=params)
         
         if not data.is_empty():
@@ -163,7 +164,7 @@ def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.Data
 
     print(data)
     print(data.columns)
-    # insertToDB(data, f"vts_{table_name.lower()}", indexing_col=["sap_id"])
+    insertToDB(data, f"vts_{table_name.lower()}", indexing_col=["sap_id"])
     print(f"-- vts_{table_name.lower()} synced successfully --")
 
 def main():
@@ -178,10 +179,8 @@ def main():
     query = f""" select * from location_master where bu in ('TAS', 'LPG') """
     master_data = fetch_data(None, query, getData=True, params=params)
     
-    for table_name in ["DEVICE_REMOVED", "HARSH_ACCELERATION", "HARSH_BREAKING", "PANIC"]:
-        max_date = (datetime.datetime.now() - relativedelta(days=10)).strftime("%Y-%m-%d")
-        get_ongoing_trip_data(table_name, params, max_date, master_data)
-        exit()
+    for table_name in ["DEVICE_REMOVED", "HARSH_ACCELERATION", "HARSH_BRAKING", "PANIC"]:
+        get_ongoing_trip_data(table_name=table_name, params=params, max_date=None, master_data=master_data)
 
 
 if __name__=="__main__":
