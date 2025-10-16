@@ -338,6 +338,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                         f"bu = 'LPG' and  created_at::DATE >= '2025-09-01' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
                     data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
                     close_alerts = {data['severity']: data['count'] for data in data['data']}
+                    cl = sum(close_alerts[key] for key in close_alerts.keys())
 
                     for rule_ in rule['rules']:
                         int_name = rule_['interlock_name']
@@ -348,7 +349,8 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                             msg = f"Calculation : weightage: {rule_['weightage']} * (closed_alert: {close_alerts.get(int_name, 0)} / (closed_alert: {close_alerts.get(int_name, 0)} + open_alerts: {open_alerts.get(int_name, 0)}))"
                             alert_score.append(close_percentage)
                         else:   
-                            msg = f"There are {ta} open alerts found and no closed alerts found"
+                            msg = f"Open alerts: {ta}  .closed_alerts :{cl}"
+                            
                             alert_score.append(0)
                     print(alert_score, rules['weightage'])
             score = round((sum(alert_score) * rule['weightage']) / 100, 2)            
