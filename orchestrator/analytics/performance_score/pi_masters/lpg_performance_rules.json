@@ -6,7 +6,7 @@
       {
         "name": "PQ Check Scale Rejection Alert",
         "model": "open_alerts",
-        "weightage": 15,
+        "weightage": 3.3,
         "search_key": "interlock_name",
         "search_value": "Check Scale Rejection",
         "interlock_name": "Check Scale Rejection"
@@ -14,7 +14,7 @@
       {
         "name": "PQ Valve Leak Rejection Alert",
         "model": "open_alerts",
-        "weightage": 17.5,
+        "weightage": 3.3,
         "search_key": "interlock_name",
         "search_value": "Valve Leak Rejection",
         "interlock_name": "Valve Leak Rejection"
@@ -22,7 +22,7 @@
       {
         "name": "PQ O-Ring Leak Rejection Alert",
         "model": "open_alerts",
-        "weightage": 17.5,
+        "weightage": 3.3,
         "search_key": "interlock_name",
         "search_value": "O-Ring Leak Rejection",
         "interlock_name": "O-Ring Leak Rejection"
@@ -30,19 +30,19 @@
       {
         "name": "PQ Check Scale Rejection",
         "model": "percentage_rejection",
-        "weightage": 15,
+        "weightage": 30,
         "search_key": "interlock_name",
         "search_value": "Check Scale Rejection",
         "interlock_name": "Check Scale Rejection",
         "rules": [
-          {"min":  3.0, "max": 8.0, "weightage": 100, "method": "waterfall"},
-          {"min":  8.0, "max": 10000.0, "weightage": 0, "method": "waterfall"}
+          {"min":  3.0, "max": 5.0, "weightage": 100, "method": "waterfall"},
+          {"min":  5.0, "max": 10000.0, "weightage": 0, "method": "waterfall"}
         ]
       },
       {
         "name": "PQ Valve Leak Rejection",
         "model": "percentage_rejection",
-        "weightage": 17.5,
+        "weightage": 30,
         "search_key": "interlock_name",
         "search_value": "Valve Leak Rejection",
         "interlock_name": "Valve Leak Rejection",
@@ -54,13 +54,13 @@
       {
         "name": "PQ O-Ring Leak Rejection",
         "model": "percentage_rejection",
-        "weightage": 17.5,
+        "weightage": 30,
         "search_key": "interlock_name",
         "search_value": "O-Ring Leak Rejection",
         "interlock_name": "O-Ring Leak Rejection",
         "rules": [
-          {"min":  6.1, "max": 12.0, "weightage": 100},
-          {"min":  12.1, "max": 10000.0, "weightage": 0}
+          {"min":  0, "max": 6.0, "weightage": 100},
+          {"min":  6, "max": 10000.0, "weightage": 0}
         ]
       }
     ]
@@ -110,7 +110,7 @@
       "search_value": "72H",
       "interlock_name": "productivity_normal_productivity",
       "rules": [
-        {"min": 3600, "max": 4200, "weightage": 100, "method": "waterfall"}
+        {"min": 3400, "max": 4200, "weightage": 100, "method": "waterfall"}
       ]
     }
   ]
@@ -137,12 +137,12 @@
       {
         "name": "VA Portal",
         "model": "va_portal",
-        "weightage": 50
+        "weightage": 90
       },
       {
         "name": "Alert Severity",
         "model": "va_alerts",
-        "weightage": 50,
+        "weightage": 10,
         "rules": [
           {
             "name": "VA Critical Severity Open Alerts",
@@ -187,14 +187,14 @@
       {
         "name": "VTS Vehicle Wise Alerts",
         "model": "vts_interlock",
-        "weightage": 40,
+        "weightage": 0,
         "rules": [
           {
             "name": "Speed Violation",
             "search_key": "interlock_name",
             "search_value": "Speed Violation",
             "interlock_name": "Speed Violation",
-            "weightage": 16.67,
+            "weightage": 15.00,
             "model": "interlock_type"
           },
           {
@@ -202,7 +202,7 @@
             "search_key": "interlock_name",
             "search_value": "Unauthorized Stoppage",
             "interlock_name": "Unauthorised Stoppage Violations",
-            "weightage": 16.67,
+            "weightage": 24.00,
             "model": "interlock_type"
           },
           {
@@ -210,7 +210,7 @@
             "search_key": "interlock_name",
             "search_value": "RouteDeviation",
             "interlock_name": "Route Deviation",
-            "weightage": 16.67,
+            "weightage": 24.00,
             "model": "interlock_type"
           },
           {
@@ -218,7 +218,7 @@
             "search_key": "interlock_name",
             "search_value": "Night Driving",
             "interlock_name": "Night Driving violations",
-            "weightage": 16.67,
+            "weightage": 15.00,
             "model": "interlock_type"
           },
           {
@@ -226,7 +226,7 @@
             "search_key": "interlock_name",
             "search_value": "Continuous Driving",
             "interlock_name": "Continuous driving",
-            "weightage": 16.67,
+            "weightage": 10.00,
             "model": "interlock_type"
           },
           {
@@ -234,7 +234,7 @@
             "search_key": "interlock_name",
             "search_value": "PowerDisconnect",
             "interlock_name": "Power Disconnections",
-            "weightage": 16.67,
+            "weightage": 12.00,
             "model": "interlock_type"
           }
         ]
@@ -242,12 +242,12 @@
       {
         "name": "Active Vehicles",
         "model": "vts_active_vehicles",
-        "weightage": 20
+        "weightage": 0
       },
       {
         "name": "VTS Closure Status ",
         "model": "vts_alerts",
-        "weightage": 40,
+        "weightage": 100,
         "rules": [
           {
             "name": "Critical",
