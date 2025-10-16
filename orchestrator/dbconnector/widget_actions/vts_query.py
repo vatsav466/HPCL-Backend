@@ -3,15 +3,15 @@ vts_query = {
 
     "unblocked_by_L1": """select count (*) from alerts where alert_section = 'VTS' 
                                                        and alert_status = 'Close' 
-                                                       and device_id = 'Instance - 1'""",
+                                                       and 'Location In-Charge SOD' = ANY(assigned_user_roles)""",
 
     "unblocked_by_L2": """select count (*) from alerts where alert_section = 'VTS' 
                                                        and alert_status = 'Close' 
-                                                       and device_id = 'Instance - 2'""",
+                                                       and  'Zonal Transport Officer SOD' = ANY(assigned_user_roles)""",
 
     "unblocked_by_L3": """select count (*) from alerts where  alert_section = 'VTS' 
                                                        and alert_status = 'Close' 
-                                                       and device_id = 'Instance - 3'""",
+                                                       and  'Zonal Head SOD' = ANY(assigned_user_roles)""",
 
     "unblocked_within_day": """select count (*) from alerts where alert_section = 'VTS' 
                                                             and alert_status = 'Close' 
@@ -385,6 +385,7 @@ vts_query = {
     "vts_insite_history_type": """
                                SELECT 
                                 tl_number,
+                                invoice_number,
                                 {select_clause}
                             FROM (
                                 SELECT DISTINCT tl_number, invoice_number,
@@ -393,7 +394,7 @@ vts_query = {
                                 FROM vts_alert_history
                                 WHERE invoice_number IS NOT NULL
                             ) AS history_data
-                            GROUP BY tl_number
+                            GROUP BY tl_number, invoice_number
                             HAVING {having_clause}
                                """,
     
