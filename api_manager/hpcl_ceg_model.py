@@ -6804,7 +6804,7 @@ class Performancescore_Get_Pi_ScoreParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
-class Performancescore_Get_Download_ScoreParams(pydantic.BaseModel):
+class Performancescore_Download_Performance_ScoreParams(pydantic.BaseModel):
     bu: str
     category: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})

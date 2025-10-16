@@ -2386,7 +2386,7 @@ Model PerformanceScore {
         filters optional list WidgetFilters
     }
 
-    Action=> get_download_score {
+    Action=> download_performance_score {
         bu str
         category optional str
         region optional str
