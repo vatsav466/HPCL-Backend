@@ -91,22 +91,22 @@ instance_mapping = {
                 "violation_count": 0
             },
             "main_supply_removal_count":{
-                "violation_count": 0
+                "violation_count": 1
             },
             "route_deviation_count":{
-                "violation_count": 5
+                "violation_count": 3
             },
             "stoppage_violations_count":{
-                "violation_count": 5
+                "violation_count": 3
             },
             "speed_violation_count":{
-                "violation_count": 3
+                "violation_count": 2
             },
             "night_driving_count":{
-                "violation_count": 3
+                "violation_count": 2
             },
             "continuous_driving_count":{
-                "violation_count": 3
+                "violation_count": 2
             }
         },
         "1":{
@@ -117,19 +117,19 @@ instance_mapping = {
                 "violation_count": 0
             },
             "route_deviation_count":{
-                "violation_count": 5
+                "violation_count": 0
             },
             "stoppage_violations_count":{
-                "violation_count": 5
+                "violation_count": 0
             },
             "speed_violation_count":{
-                "violation_count": 3
+                "violation_count": 0
             },
             "night_driving_count":{
-                "violation_count": 3
+                "violation_count": 0
             },
             "continuous_driving_count":{
-                "violation_count": 3
+                "violation_count": 0
             }
         },
         "2":{
@@ -140,19 +140,19 @@ instance_mapping = {
                 "violation_count": 0
             },
             "route_deviation_count":{
-                "violation_count": 5
+                "violation_count": 0
             },
             "stoppage_violations_count":{
-                "violation_count": 5
+                "violation_count": 0
             },
             "speed_violation_count":{
-                "violation_count": 3
+                "violation_count": 0
             },
             "night_driving_count":{
-                "violation_count": 3
+                "violation_count": 0
             },
             "continuous_driving_count":{
-                "violation_count": 3
+                "violation_count": 0
             }
         }
     }
