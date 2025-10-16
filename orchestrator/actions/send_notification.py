@@ -914,13 +914,13 @@ class SendNotification:
             "last_mailed_to": self.update_alert["last_mailed_to"]
         })
 
-        if alert_data.get('alert_section','') in ['VTS'] and self.params.get('messagetype','') in ['active','senditback'] and alert_data['bu'] in ['TAS']:
+        if alert_data.get('alert_section','') in ['VTS'] and self.params.get('messagetype','') in ['active','senditback'] and alert_data['bu'] in ['TAS','LPG']:
             alert_data['action_on'] = hpcl_ceg_enum.MakerChecker.MAKER.value
         
-        if alert_data.get('alert_section','') in ['VTS'] and self.params.get('messagetype','') in ['justified'] and alert_data['bu'] in ['TAS']:
+        if alert_data.get('alert_section','') in ['VTS'] and self.params.get('messagetype','') in ['justified'] and alert_data['bu'] in ['TAS','LPG']:
             alert_data['action_on'] = hpcl_ceg_enum.MakerChecker.CHECKER.value
         
-        if alert_data.get('alert_section','') in ['VTS'] and self.params.get('messagetype','') in ['notify'] and alert_data['bu'] in ['TAS']:
+        if alert_data.get('alert_section','') in ['VTS'] and self.params.get('messagetype','') in ['notify'] and alert_data['bu'] in ['TAS','LPG']:
             alert_data_history = alert_data['alert_history'][-2]
             if alert_data_history.get('action_type',"") in ['Justification']:
                 alert_data['action_on'] = hpcl_ceg_enum.MakerChecker.CHECKER.value
@@ -997,6 +997,8 @@ class SendNotification:
         interlock_name = self.alert_data.get("interlock_name","")
         alert_section = self.alert_data.get("alert_section","")
         if self.alert_data.get("alert_section","") in ["VTS"]:
+            if self.alert_data['bu'] in ['LPG']:
+                rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
             if self.alert_data['created_at']> datetime.datetime(2025, 10, 3, 13, 20, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if self.alert_data['sap_id'] in ['1652','1672','1693','1462','1649','1689']:
@@ -1029,6 +1031,8 @@ class SendNotification:
         if self.alert_data.get("alert_section","") in ["VTS"]:
             interlock_name = self.alert_data.get("interlock_name","")
             alert_section = self.alert_data.get("alert_section","")
+            if self.alert_data['bu'] in ['LPG']:
+                rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
             if self.alert_data['created_at']> datetime.datetime(2025, 10, 3, 13, 20, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if self.alert_data['sap_id'] in ['1652','1672','1693','1462','1649','1689']:
