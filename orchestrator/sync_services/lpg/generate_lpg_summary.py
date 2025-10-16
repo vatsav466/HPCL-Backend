@@ -155,7 +155,7 @@ class GenerateLPGSummary():
             summary["sap_id"] = self.params["sap_id"]
 
             print(f"Inserting the {self.params["from_date"]} summary for the plant {self.params["sap_id"]}")
-            for data in summary.to_dict(orient="records"):                
+            for data in summary.to_dict(orient="records"):
                 await LpgPlantOperationsCreate(**data).create()
 
             return True
@@ -236,6 +236,12 @@ async def process_plant_concurrent(plant, semaphore):
 
 async def main_concurrent():
     """Main function using concurrent processing"""
+
+    reset_id_query = """ SELECT setval(
+                        pg_get_serial_sequence('lpg_plant_operations', 'id'),
+                        (SELECT MAX(id) FROM lpg_plant_operations) + 1); """
+    await urdhva_base.BasePostgresModel.execute_query(reset_id_query)
+
     plants = pd.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
     print(f"Processing {len(plants)} plants concurrently...")
     
