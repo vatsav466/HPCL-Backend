@@ -32,7 +32,7 @@ async def performancescore_get_pi_score(data: Performancescore_Get_Pi_ScoreParam
 
 # Action download_performance_score
 @router.post('/download_performance_score', tags=['PerformanceScore'])
-async def performancescore_download_performance_score(data: Performancescore_Download_Performance_ScoreParams):
+async def performancescore_download_performance_score(data: Performancescore_Download_Performance_ScoreParams,background_tasks: fastapi.BackgroundTasks):
     try:
         def safe_float(x):
             try:
