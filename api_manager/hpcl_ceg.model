@@ -2386,6 +2386,17 @@ Model PerformanceScore {
         filters optional list WidgetFilters
     }
 
+    Action=> get_download_score {
+        bu str
+        category optional str
+        region optional str
+        zone optional str
+        sap_id optional str
+        strategy str
+        filters optional list WidgetFilters
+        is_plant optional bool
+    }
+
     Config=> {
         crud_operations='read'
     }

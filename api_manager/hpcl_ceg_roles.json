@@ -4740,6 +4740,9 @@
                 },
                 {
                     "name": "get_pi_score"
+                },
+                {
+                    "name": "get_download_score"
                 }
             ]
         },
@@ -4758,6 +4761,9 @@
                 },
                 {
                     "name": "get_pi_score"
+                },
+                {
+                    "name": "get_download_score"
                 }
             ]
         },
@@ -4785,6 +4791,9 @@
                 },
                 {
                     "name": "get_pi_score"
+                },
+                {
+                    "name": "get_download_score"
                 }
             ]
         },
@@ -7347,6 +7356,10 @@
         {
             "name": "get_pi_score",
             "displayName": "get_pi_score"
+        },
+        {
+            "name": "get_download_score",
+            "displayName": "get_download_score"
         },
         {
             "name": "update_ro_master_data",

@@ -6804,6 +6804,21 @@ class Performancescore_Get_Pi_ScoreParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Performancescore_Get_Download_ScoreParams(pydantic.BaseModel):
+    bu: str
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    strategy: str
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    is_plant: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class PerformanceScoreHistorySchema(UrdhvaPostgresBase):
     __tablename__ = 'performance_score_history'
     
