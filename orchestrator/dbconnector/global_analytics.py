@@ -7707,11 +7707,11 @@ class GlobalAnalytics:
 
     @staticmethod
     async def permanent_dry_out_trends(filters, cross_filters, drill_state):
-        query = (f"SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS month, sap_id, product_code, "
+        query = (f"SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS month, zone, sap_id, product_code, "
                  f"COUNT(*) AS total_count FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' "
                  f"AND alert_status = 'Open' AND created_at <= NOW() - INTERVAL '5 days' AND "
                  f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
-                 f"GROUP BY month, sap_id, product_code ORDER BY month, sap_id, product_code")
+                 f"GROUP BY month, zone, sap_id, product_code ORDER BY month, zone, sap_id, product_code")
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
         if data.empty:
@@ -7744,6 +7744,7 @@ class GlobalAnalytics:
                         sap_id,
                         product_code,
                         location_name,
+                        zone,
                         DATE(indent_raised_date) AS dryout_day,
                         TO_CHAR(created_at, 'YYYY-Mon') AS month
                       FROM alerts
@@ -7753,14 +7754,15 @@ class GlobalAnalytics:
                     
                     SELECT
                       month,
+                      zone,
                       sap_id,
                       product_code,
                       location_name,
                       COUNT(*) AS dryout_count
                     FROM product_level_dryouts
-                    GROUP BY month, sap_id, product_code, location_name
+                    GROUP BY month, zone, sap_id, product_code, location_name
                     HAVING COUNT(*) > 3
-                    ORDER BY month, sap_id, product_code, dryout_count DESC"""
+                    ORDER BY month, zone, sap_id, product_code, dryout_count DESC"""
 
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
