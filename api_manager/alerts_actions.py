@@ -144,7 +144,7 @@ async def alerts_intitiate_vts_exception(data: Alerts_Intitiate_Vts_ExceptionPar
     interlock_details = utilities.interlock_mapping.get_interlock_name(
         alert_data['bu'], details['alerting_rules'][str(altcount)]['interlock_name'])
     if not interlock_details:
-        return false, "interlock name not found "
+        return False, "interlock name not found "
     vts_alert_data={"bu": alert_data["bu"],
                     "alert_section": "VTS", 
                     "alert_history": alert_history, 
@@ -289,6 +289,18 @@ async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
 @router.post('/bulk_send_to_unblock', tags=['Alerts'])
 async def alerts_bulk_send_to_unblock(data: Alerts_Bulk_Send_To_UnblockParams):
     try:
+        if urdhva_base.context.context.exists():
+            rpt = urdhva_base.context.context.get('rpt', {})
+        else:
+            rpt = {}
+
+        if rpt.get("novex_role", None):
+            if not any(role in rpt.get("novex_role") 
+                       for role in ["Creator SOD", "Creator LPG", "Creator RO"]):
+                return False, "Action not available for your Role"
+        elif not rpt.get("novex_role", None):
+            return False, "Session not found"
+        
         alert_data = {}
         alert_data["task_type"] = "unblock"
         alert_data["alert_ids"] = data.alert_ids
@@ -306,6 +318,18 @@ async def alerts_bulk_send_to_unblock(data: Alerts_Bulk_Send_To_UnblockParams):
 @router.post('/bulk_send_to_approve', tags=['Alerts'])
 async def alerts_bulk_send_to_approve(data: Alerts_Bulk_Send_To_ApproveParams):
     try:
+        if urdhva_base.context.context.exists():
+            rpt = urdhva_base.context.context.get('rpt', {})
+        else:
+            rpt = {}
+                        
+        if rpt.get("novex_role", None):
+            if not any(role in rpt.get("novex_role") 
+                       for role in ["Approver SOD", "Approver LPG", "Approver RO"]):
+                return False, "Action not available for your Role"
+        elif not rpt.get("novex_role", None):
+            return False, "Session not found"
+        
         alert_data = {}
         alert_data["task_type"] = "approve"
         alert_data["alert_ids"] = data.alert_ids

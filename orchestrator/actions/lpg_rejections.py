@@ -39,7 +39,7 @@ class LpgRejections:
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
         rejections = rejections.with_columns(pl.lit("cs_rejections").alias("rejection_type"))
-        rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
+        rejections = rejections.sort("rejection").with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).round(2).alias("rejection"))
         rejections = rejections.filter(pl.col("rejection") > 8)
         check_alerts = f""" SELECT 
                                 sap_id, device_name, created_at
@@ -86,7 +86,7 @@ class LpgRejections:
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
         rejections = rejections.with_columns(pl.lit("gd_rejections").alias("rejection_type"))
-        rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
+        rejections = rejections.sort("rejection").with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).round(2).alias("rejection"))
         rejections = rejections.filter((pl.col("rejection") > 6) | (pl.col("rejection") < 1))
         check_alerts = f""" SELECT 
                                 sap_id, device_name, created_at
@@ -136,7 +136,7 @@ class LpgRejections:
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
         rejections = rejections.with_columns(pl.lit("pt_rejections").alias("rejection_type"))
-        rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
+        rejections = rejections.sort("rejection").with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).round(2).alias("rejection"))
         rejections = rejections.filter((pl.col("rejection") > 12) | (pl.col("rejection") < 1))
         check_alerts = f""" SELECT
                                 sap_id, device_name, created_at

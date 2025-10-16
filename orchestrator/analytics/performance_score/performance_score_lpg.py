@@ -50,6 +50,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             f"AND alert_status != 'Close' "
             f"AND alert_section = 'LPG' "
             f"AND bu = 'LPG' "
+            f"AND created_at::DATE >= '2025-09-01' "
             f"GROUP BY interlock_name, device_name"
         )
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
@@ -100,7 +101,21 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
 
                 if value_rejection is None:
                     value_rejection = 0
-
+                if rule["interlock_name"] == "O-Ring Leak Rejection":
+                    if value_rejection == 0:
+                        extra_score = 0
+                        msg_extra = f"{rule['interlock_name']} rejection is 0. Score = 0"
+                    elif value_rejection >= 6:
+                        extra_score = rule_weightage
+                        msg_extra = f"{rule['interlock_name']} rejection >= 6. Full score = {extra_score}"
+                    else:
+                        min_val = 0
+                        max_val = 6
+                        extra_score = float(rule_weightage) if value_rejection > 5.99 else (float(value_rejection) / 6) * float(rule_weightage)
+                        msg_extra = f"{rule['interlock_name']} is {value_rejection}; Formula: ({value_rejection} / 6) * {rule_weightage} = {extra_score}"
+                else:
+                    extra_score = 0
+                    msg_extra = ""
                 # Apply thresholds
                 score = 0
                 for percentage_rule in rule.get("rules", []):
@@ -120,6 +135,10 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                         score = ((float(max_val) - float(value_rejection)) / (float(max_val) - float(min_val))) * float(base)
                         msg = f"Current rejection rate is {float(value_rejection)}, Calculation : (({float(max_val)} - {float(value_rejection)}) / ({float(max_val)} - {float(min_val)})) * {float(base)}"
                         break
+                if rule["interlock_name"] == "O-Ring Leak Rejection":
+                    score = extra_score
+                    if msg_extra:
+                        msg = msg_extra 
 
                 # Convert to percentage of rule weightage
                 score = (score / base) * 100 if base > 0 else 0
@@ -138,7 +157,21 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             )
 
         # Final PI Score
-        final_score = sum([s["score"] for s in pi_score])
+        # final_score = sum([s["score"] for s in pi_score])
+        alert_score = sum(
+            s["score"] for s in pi_score
+            if "alert" in s["name"].lower()  
+        )
+
+        rej_score = sum(
+            s["score"] for s in pi_score
+            if "alert" not in s["name"].lower()  
+        )
+
+        alert_score = round((alert_score * 10) / 100, 2)
+        rej_score = round((rej_score * 90) / 100, 2)
+
+        final_score = alert_score + rej_score
         final_score = round((final_score * rules["weightage"]) / 100, 2)
 
         return {
@@ -167,7 +200,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 query_open = (
                     f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
                     f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'VA' and "
-                    f"bu = 'LPG' and created_at >= NOW() - INTERVAL '30 days ' group by severity")
+                    f"bu = 'LPG' and created_at::DATE >= '2025-09-01' and created_at >= NOW() - INTERVAL '30 days ' group by severity")
                 data = await hpcl_ceg_model.Alerts.get_aggr_data(query_open)
                 open_alerts = {data['severity']: data['count'] for data in data['data']}
 
@@ -175,7 +208,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 query_close = (
                     f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
                     f"sap_id = '{location_id}' and alert_status = 'Close' and alert_section = 'VA' and "
-                    f"bu = 'LPG' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
+                    f"bu = 'LPG'and created_at::DATE >= '2025-09-01' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
                 data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
                 close_alerts = {data['severity']: data['count'] for data in data['data']}
                 alert_score = []
@@ -209,7 +242,21 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 'module': rules.get('name', name),
                 "msg": msg
                 })
-        final_score = sum([score['score'] for score in pi_score])
+        # final_score = sum([score['score'] for score in pi_score])
+        alert_score = sum(
+            s["score"] for s in pi_score
+            if "alert" in s["name"].lower()  
+        )
+
+        rej_score = sum(
+            s["score"] for s in pi_score
+            if "alert" not in s["name"].lower()  
+        )
+
+        alert_score = round((alert_score * 10) / 100, 2)
+        rej_score = round((rej_score * 90) / 100, 2)
+
+        final_score = alert_score + rej_score
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
@@ -222,11 +269,12 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
         for rule in rules['rules']:
             alert_score = []
             if rule['model'] == 'vts_interlock':
+                continue
                 search_values = [rec['search_value'] for rec in rule['rules']]
                 query_clause = " or ".join([f"interlock_name like '%{value}%'" for value in search_values])
                 query = (f"select interlock_name, count(vehicle_number) as count from alerts where "
                          f"sap_id = '{location_id}' and ({query_clause}) and bu='LPG' and alert_section='VTS' and "
-                         f"alert_status != 'Close' group by interlock_name")
+                         f"alert_status != 'Close'and  created_at::DATE >= '2025-09-01' group by interlock_name")
                 data = await hpcl_ceg_model.VTS.get_aggr_data(query)
                 alert_data = {}
                 for record in data['data']:
@@ -248,9 +296,10 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                         alert_score.append(rule_['weightage'])
             # Generating score by comparing number of active vehicles with no of open alerts
             elif rule['model'] == 'vts_active_vehicles':
+                continue
                 query = (f"select DISTINCT(vehicle_number), count(vehicle_number) as count from alerts "
                          f"where sap_id = '{location_id}' and alert_status != 'Close' and "
-                         f"bu='LPG' and alert_section='VTS' group by vehicle_number")
+                         f"bu='LPG' and alert_section='VTS' and  created_at::DATE >= '2025-09-01' group by vehicle_number")
                 data = await hpcl_ceg_model.VTS.get_aggr_data(query)
                 alert_data = {}
                 for record in data['data']:
@@ -259,6 +308,11 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                             if rule_['search_value'] not in alert_data:
                                 alert_data[rule_['search_value']] = 0
                             alert_data[rule_['search_value']] += record['count']
+                if rule['weightage'] == 0:
+                    msg = "Not applicable for Bulk"
+                else:
+                    msg = f"Total active vehicles found: {len(data['data'])}"
+
             # Generating PI score base don total open and total close alerts
             elif rule['model'] == 'vts_alerts':
                 severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
@@ -267,7 +321,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 query_open = (
                     f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
                     f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'VTS' and "
-                    f"bu = 'LPG' group by severity")
+                    f"bu = 'LPG' and  created_at::DATE >= '2025-09-01' group by severity")
                 data = await hpcl_ceg_model.Alerts.get_aggr_data(query_open)
                 open_alerts = {data['severity']: data['count'] for data in data['data']}
 
@@ -275,7 +329,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 query_close = (
                     f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
                     f"sap_id = '{location_id}' and alert_status = 'Close' and alert_section = 'VTS' and "
-                    f"bu = 'LPG' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
+                    f"bu = 'LPG' and  created_at::DATE >= '2025-09-01' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
                 data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
                 close_alerts = {data['severity']: data['count'] for data in data['data']}
 
@@ -331,10 +385,13 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             score = (((production_yesterday / production_avg) * 100) * rules['weightage']) / 100
         else:
             score = rules['weightage']
+        if production_yesterday < production_avg:
+            msg = f"Yesterday's Production ({production_yesterday}) is less than Last Week Avg Production ({production_avg})"
+        else:
+            msg = f"Yesterday's Production ({production_yesterday}) is greater than or equal to Last Week Avg Production ({production_avg})"
         return {"name": rules.get('name', name), "score": round(score, 2), "weightage": rules['weightage'],
                 "results": [{"name": rules['name'], "score": round(score, 2), "weightage": rules['weightage'],
-                             'module': rules['name'], "msg": f"Last Week Production({production_avg})   is less than "
-                                                             f"Yesterdays Production({production_yesterday})"}]}
+                             'module': rules['name'], "msg": msg}]}
 
     async def _compute_productivity_pi_score(self, name, rules, location_id):
         query = f"""

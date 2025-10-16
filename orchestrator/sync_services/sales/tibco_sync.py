@@ -44,10 +44,42 @@ def get_db_connection(params):
     return connection
 
 
+def create_table_from_source(pg_conn, data, table_name):
+    """Create Postgres table dynamically based on Polars dataframe schema"""
+    if data.is_empty():
+        print(" No data available to infer table schema.")
+        return
+
+    cur = pg_conn.cursor()
+    cols = []
+    for name, dtype in data.schema.items():
+        if dtype == pl.Utf8:
+            sql_type = "TEXT"
+        elif dtype in [pl.Int64, pl.Int32]:
+            sql_type = "BIGINT"
+        elif dtype in [pl.Float64, pl.Float32]:
+            sql_type = "DOUBLE PRECISION"
+        elif dtype == pl.Boolean:
+            sql_type = "BOOLEAN"
+        elif dtype in [pl.Datetime, pl.Date]:
+            sql_type = "TIMESTAMP"
+        else:
+            sql_type = "TEXT"
+        cols.append(f'"{name.lower()}" {sql_type}')
+
+    # Always add engine_id column if missing
+    if "engine_id" not in [c.lower() for c in data.columns]:
+        cols.append('"engine_id" TEXT')
+
+    create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({", ".join(cols)});'
+    cur.execute(create_sql)
+    pg_conn.commit()
+    cur.close()
+    print(f" Created table {table_name} with {len(cols)} columns")
+
+
 def insertToDB_polars(pg_conn, data, table_name):
-    """
-    Fast Polars → Postgres INSERT
-    """
+    """Fast Polars → Postgres INSERT"""
     if data.is_empty():
         print("-- No new rows to insert --")
         return
@@ -97,6 +129,10 @@ def get_and_insert_data(cursor, query, pg_conn, table_name, batch_size=50000):
             break
         columns = [col[0] for col in cursor.description]
         data = pl.from_pandas(pd.DataFrame.from_records(rows, columns=columns))
+
+        # Ensure table exists before inserting
+        create_table_from_source(pg_conn, data, table_name)
+
         insertToDB_polars(pg_conn, data, table_name)
         total_rows += len(data)
 
@@ -169,6 +205,17 @@ if __name__ == "__main__":
 
     if not table_exists:
         print("Target table does not exist → creating and dumping all data")
+
+        # Fetch small sample to infer schema
+        source_cursor.execute("SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE LIMIT 100")
+        sample_rows = source_cursor.fetchall()
+        columns = [col[0] for col in source_cursor.description]
+        sample_data = pl.from_pandas(pd.DataFrame.from_records(sample_rows, columns=columns))
+
+        # Create table dynamically
+        create_table_from_source(pg_conn, sample_data, table_name)
+
+        # Insert all data
         query = "SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE"
         get_and_insert_data(source_cursor, query, pg_conn, table_name)
     else:
@@ -183,7 +230,7 @@ if __name__ == "__main__":
             # Get max syncdt from Postgres
             max_syncdt = get_max_syncdt(pg_conn, table_name)
             if max_syncdt is None:
-                print("no maximum date in table")  # fallback if table empty
+                max_syncdt = '1900-01-01 00:00:00'  # fallback if table empty
 
             print(f"Max SYNCDT in Postgres: {max_syncdt}")
 
@@ -197,4 +244,3 @@ if __name__ == "__main__":
     source_cursor.close()
     source_conn.close()
     pg_conn.close()
-
