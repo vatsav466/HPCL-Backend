@@ -397,6 +397,23 @@ vts_query = {
                             GROUP BY tl_number, invoice_number
                             HAVING {having_clause}
                                """,
+    "closed_alerts": """ SELECT 
+                            sap_id, location_name, zone, vehicle_number as tt_number, transporter_code, 
+                            violation_type, zone, vehicle_blocked_start_date, 
+                            vehicle_blocked_end_date, vehicle_unblocked_date
+                        FROM 
+                            alerts 
+                        WHERE 
+                            alert_status='Close' AND alert_section='VTS' AND bu='TAS' """,
+    
+    "unblocked_tt_shortage": """
+                            SELECT 
+                                SUM(CAST(qty_shortage AS FLOAT)) AS shortage, vehicle_id as vehicle_number
+                            FROM 
+                                sales_trips_till_date
+                            WHERE 
+                                qty_shortage != 'NaN' AND qty_shortage != '0.0'
+                            """,
     
     "all_violations" : [   
                             "route_deviation_count",

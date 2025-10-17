@@ -1,14 +1,78 @@
 import urdhva_base
+import asyncio
 import traceback
 import pandas as pd
-from datetime import datetime
-import orchestrator.dbconnector.widget_actions.vts_query as vts_query
-from dateutil.relativedelta import relativedelta
-from collections import defaultdict
-import orchestrator.dbconnector.credential_loader as credential_loader
-import asyncio
+import hpcl_ceg_model
 import mysql.connector
+import dashboard_studio_model
+from datetime import datetime
+from collections import defaultdict
+from dateutil.relativedelta import relativedelta
+from orchestrator.dbconnector.widget_actions import widget_actions
+import orchestrator.dbconnector.widget_actions.vts_query as vts_query
+import orchestrator.dbconnector.credential_loader as credential_loader
 
+async def generate_cross_filter(cross_filters):
+    _filters, daterange = [], None
+    try:
+        if cross_filters:
+            for f in cross_filters:
+                if "DATE" in f.key:
+                    start = f.value.split(",")[0]
+                    end = f.value.split(",")[-1]
+                    daterange = f"'{start} 00:00:00' AND '{end} 23:59:59'"
+                else:
+                    _filters.append({f.key: f.value})
+        return _filters, daterange
+    except Exception as e:
+        print("--- Exception in cross filters ---")
+        print("Exception :", str(e))
+        return _filters, daterange
+
+
+async def get_drill_down_filter(filters, query):
+    try:
+        conditions = []
+        _key = None
+        if filters:
+            for rec in filters:
+                if (rec.key).lower().replace('"', '') in ["rejection_type"]:
+                    _key = (rec.value).lower().replace('"', '')
+                    continue
+                values = rec.value.split(",")
+                if len(values) == 1:
+                    conditions.append(f'{rec.key} = \'{values[0]}\'')
+                else:
+                    conditions.append(f"{rec.key} IN {tuple(values)}")
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        if _key:
+            return query, _key
+        return query
+    except Exception as e:
+        print("--- Exception in drill down filters ---")
+        print("Exception :", str(e))
+        return query
+
+async def filter_data(df, _filters):
+    try:        
+        if _filters:
+            print("-"*30)
+            print("_filters :", _filters)
+            print("data columns :", df.columns)
+            print("length of data :", len(df))
+            mask = pd.Series(True, index=df.index)
+            for _filter in _filters:
+                for key, value in _filter.items():
+                    key = key.replace('"','')
+                    mask = mask & (df[key].fillna('') == value)
+            df = df[mask]
+            print("length of filtered data :", len(df))
+            print("-"*30)
+        return df
+    except Exception as e:
+        print("Exception in filtering data :", str(e))
+    return df
 
 class VTSAnalyticsActions:
     
@@ -1610,3 +1674,84 @@ class VTSAnalyticsActions:
             "filtered_vehicle_count": filtered_vehicle_count,
             "zones": zones_list
         }
+    
+    async def get_unblock_ageing(filters, cross_filters, drill_state, payload):
+        try:
+            # Cross filters
+            _filters, daterange = await generate_cross_filter(cross_filters)
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            closed_query = vts_query.vts_query.get("closed_alerts")
+            
+            shortage = vts_query.vts_query.get("unblocked_tt_shortage")
+
+            # Drill Down filters
+            closed_query = await get_drill_down_filter(filters, closed_query)
+
+            access_filters = [
+                dashboard_studio_model.WidgetFiltersCreate(**rec)
+                for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)
+                ]
+            closed_query = await widget_actions.WidgetActions.apply_filter_drilldown(closed_query, access_filters, drill_state)
+
+            clause = "WHERE" if "where" not in closed_query.lower() else "AND"
+            if daterange:
+                closed_query += f" {clause} created_at BETWEEN {daterange}"
+                shortage += f" {clause} load_date BETWEEN {daterange}"
+            else:
+                closed_query += f" {clause} CAST(created_at AS DATE) = '{current_date}'"
+                shortage += f" {clause} CAST(load_date AS DATE) = '{current_date}'"
+
+            shortage += " GROUP BY vehicle_id"
+
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=closed_query, limit=0)
+            shortage = await urdhva_base.BasePostgresModel.get_aggr_data(query=shortage, limit=0)
+            
+            df = pd.DataFrame(resp.get("data", []))
+            shortage = pd.DataFrame(shortage.get("data", []))
+
+            shortage.rename(columns={"vehicle_number": "tt_number"}, inplace=True)
+
+            df["vehicle_unblocked_date"] = pd.to_datetime(df["vehicle_unblocked_date"]).dt.tz_localize(None)
+            df["vehicle_blocked_start_date"] = pd.to_datetime(df["vehicle_blocked_start_date"]).dt.tz_localize(None)
+
+            df["ageing"] = (df["vehicle_unblocked_date"] - df["vehicle_blocked_start_date"]).dt.days + 1
+                        
+            violation_counts = (
+                df.pivot_table(
+                    index=["sap_id", "zone", "tt_number"],
+                    columns="violation_type",
+                    values="location_name",
+                    aggfunc="count",
+                    fill_value=0
+                )
+            )
+            avg_ageing = (
+                df.groupby(["sap_id", "zone", "tt_number"])["ageing"]
+                .mean()
+                .reset_index()
+            )
+            df = (
+                avg_ageing.merge(violation_counts, on=["sap_id", "tt_number"], how="left")
+            )
+            df.columns.name = None
+            df["ageing"] = df["ageing"].round(2)
+            df = pd.merge(df, shortage, on=["tt_number"], how="left")
+            df = df.fillna(0)
+
+            df.rename(
+                columns={"continuous_driving_count": "CD", "device_tamper_count": "DT",
+                        "main_supply_removal_count": "PD", "night_driving_count": "ND",
+                        "route_deviation_count": "RD", "speed_violation_count": "SV",
+                        "stoppage_violations_count": "US"}, inplace=True)
+
+            if drill_state:
+                df = df.groupby([drill_state], as_index=False).agg({
+                    "CD": "sum", "DT": "sum", "PD": "sum",
+                    "ND": "sum", "RD": "sum", "SV": "sum",
+                    "US": "sum", "ageing": "mean", "shortage": "sum"
+                })
+
+            return {"status": True, "message": "success", "data": df.to_dict(orient='records')}
+        except Exception as e:
+            print("-- Exception in zone wise productivity widget --")
+            print("traceback :", traceback.format_exc())
