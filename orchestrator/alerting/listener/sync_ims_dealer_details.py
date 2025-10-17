@@ -92,7 +92,9 @@ async def sync_ims_dealer_details():
                     'CAN_TAKE_POWER95': pl.String,
                     'CAN_TAKE_POWER99': pl.String,
                     'CAN_TAKE_POWER100': pl.String,
-                    'CAN_TAKE_E20': pl.String
+                    'CAN_TAKE_E20': pl.String,
+                    'CL_FLAG': pl.String,
+                    'CL_FLAG_DESC': pl.String
         }
         ro_data = pd.DataFrame(ro_data)
         ro_data = pl.DataFrame(ro_data, schema=ro_data_schema)
