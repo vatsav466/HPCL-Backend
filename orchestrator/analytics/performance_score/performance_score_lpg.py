@@ -227,12 +227,13 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                         alert_score.append(rule_['weightage'])
                 print(alert_score, rule['weightage'])
                 total_alerts = sum(open_alerts.values()) + sum(close_alerts.values())
+                closed_alerts = sum(close_alerts.values())
                 if all(s == 0 for s in alert_score):
                     # If perfect compliance is achieved, force the module score to 100.0
                     score = 100 # rules['weightage']
                 else:
                     score = round((sum(alert_score) * rule['weightage']) / 100, 2)
-                msg = f"Total alerts: {total_alerts}. Calculation: ({sum(alert_score)}) * ({rule['weightage']}) / 100"
+                msg = f"Total alerts: {total_alerts}. closed_alerts :{closed_alerts} .Calculation: ({round(sum(alert_score), 2)}) * ({rule['weightage']}) / 100"
             else:
                 ...
             pi_score.append({
@@ -323,30 +324,35 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                     f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'VTS' and "
                     f"bu = 'LPG' and  created_at::DATE >= '2025-09-01' group by severity")
                 data = await hpcl_ceg_model.Alerts.get_aggr_data(query_open)
-                open_alerts = {data['severity']: data['count'] for data in data['data']}
-
-                # For all closure alerts in last 24 hours
-                query_close = (
-                    f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
-                    f"sap_id = '{location_id}' and alert_status = 'Close' and alert_section = 'VTS' and "
-                    f"bu = 'LPG' and  created_at::DATE >= '2025-09-01' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
-                data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
-                close_alerts = {data['severity']: data['count'] for data in data['data']}
-
-                for rule_ in rule['rules']:
-                    int_name = rule_['interlock_name']
-                    if int_name in open_alerts or int_name in close_alerts:
-                        close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
-                                                                 (close_alerts.get(int_name, 0) +
-                                                                  open_alerts.get(int_name, 0)))
-                        msg = f"Calculation : weightage: {rule_['weightage']} * (closed_alert: {close_alerts.get(int_name, 0)} / (closed_alert: {close_alerts.get(int_name, 0)} + open_alerts: {open_alerts.get(int_name, 0)}))"
-                        alert_score.append(close_percentage)
-                    else:   
-                        msg = "No closed alerts found"
-                        alert_score.append(rule_['weightage'])
                 if not data.get("data", None):
                     msg = f"No Open alerts found"
-                print(alert_score, rules['weightage'])
+                    alert_score.append(rule['weightage'])
+                else:
+                    open_alerts = {data['severity']: data['count'] for data in data['data']}
+                    ta = sum(open_alerts[key] for key in open_alerts.keys())
+
+                    # For all closure alerts in last 24 hours
+                    query_close = (
+                        f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
+                        f"sap_id = '{location_id}' and alert_status = 'Close' and alert_section = 'VTS' and "
+                        f"bu = 'LPG' and  created_at::DATE >= '2025-09-01' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
+                    data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
+                    close_alerts = {data['severity']: data['count'] for data in data['data']}
+                    cl = sum(close_alerts[key] for key in close_alerts.keys())
+
+                    for rule_ in rule['rules']:
+                        int_name = rule_['interlock_name']
+                        if int_name in open_alerts or int_name in close_alerts:
+                            close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
+                                                                    (close_alerts.get(int_name, 0) +
+                                                                    open_alerts.get(int_name, 0)))
+                            msg = f"Calculation : weightage: {rule_['weightage']} * (closed_alert: {close_alerts.get(int_name, 0)} / (closed_alert: {close_alerts.get(int_name, 0)} + open_alerts: {open_alerts.get(int_name, 0)}))"
+                            alert_score.append(close_percentage)
+                        else:   
+                            msg = f"Open alerts: {ta}  .closed_alerts :{cl}"
+                            
+                            alert_score.append(0)
+                    print(alert_score, rules['weightage'])
             score = round((sum(alert_score) * rule['weightage']) / 100, 2)            
             pi_score.append({"name": rule['name'], 
                              "score": score, 
@@ -387,8 +393,10 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             score = rules['weightage']
         if production_yesterday < production_avg:
             msg = f"Yesterday's Production ({production_yesterday}) is less than Last Week Avg Production ({production_avg})"
+        elif production_yesterday > production_avg:
+            msg = f"Yesterday's Production ({production_yesterday}) is greater than Last Week Avg Production ({production_avg})"
         else:
-            msg = f"Yesterday's Production ({production_yesterday}) is greater than or equal to Last Week Avg Production ({production_avg})"
+            msg = f"Yesterday's Production ({production_yesterday}) is equal to Last Week Avg Production ({production_avg})"
         return {"name": rules.get('name', name), "score": round(score, 2), "weightage": rules['weightage'],
                 "results": [{"name": rules['name'], "score": round(score, 2), "weightage": rules['weightage'],
                              'module': rules['name'], "msg": msg}]}

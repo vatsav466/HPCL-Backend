@@ -94,9 +94,21 @@ async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
     ms_color = '#ff0000'
     hsd_color = '#00008B'
 
-    # Add small gap between side-by-side bars
-    ax.bar(x - width/2 - bar_gap/2, ms_vals, width, label='MS', color=ms_color)
-    ax.bar(x + width/2 + bar_gap/2, hsd_vals, width, label='HSD', color=hsd_color)
+    # Add bars
+    ms_bars = ax.bar(x - width/2 - bar_gap/2, ms_vals, width, label='MS', color=ms_color)
+    hsd_bars = ax.bar(x + width/2 + bar_gap/2, hsd_vals, width, label='HSD', color=hsd_color)
+
+    # Add value labels on top of bars for MS
+    for bar in ms_bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, height + 0.01, f'{height:.2f}', 
+                ha='center', va='bottom', fontsize=8)
+
+    # Add value labels on top of bars for HSD
+    for bar in hsd_bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, height + 0.01, f'{height:.2f}', 
+                ha='center', va='bottom', fontsize=8)
 
     ax.set_title('Monthly Loss of Sales Due to Partial Dryouts (KL)', fontsize=14, pad=10)
     ax.set_xticks(x)
