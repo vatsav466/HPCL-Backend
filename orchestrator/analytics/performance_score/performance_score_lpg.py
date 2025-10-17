@@ -393,8 +393,10 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             score = rules['weightage']
         if production_yesterday < production_avg:
             msg = f"Yesterday's Production ({production_yesterday}) is less than Last Week Avg Production ({production_avg})"
+        elif production_yesterday > production_avg:
+            msg = f"Yesterday's Production ({production_yesterday}) is greater than Last Week Avg Production ({production_avg})"
         else:
-            msg = f"Yesterday's Production ({production_yesterday}) is greater than or equal to Last Week Avg Production ({production_avg})"
+            msg = f"Yesterday's Production ({production_yesterday}) is equal to Last Week Avg Production ({production_avg})"
         return {"name": rules.get('name', name), "score": round(score, 2), "weightage": rules['weightage'],
                 "results": [{"name": rules['name'], "score": round(score, 2), "weightage": rules['weightage'],
                              'module': rules['name'], "msg": msg}]}
