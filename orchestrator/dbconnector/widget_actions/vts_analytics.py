@@ -823,7 +823,7 @@ class VTSAnalyticsActions:
             # Step 10: Return final response
             return {
                 "status": True,
-                "message": "Violation percentages calculated successfully",
+                "message": "Violation percentages calculated",
                 "data": percentages
             }
 
