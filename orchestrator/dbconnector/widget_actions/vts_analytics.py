@@ -1914,6 +1914,7 @@ class VTSAnalyticsActions:
             shortage = await urdhva_base.BasePostgresModel.get_aggr_data(query=shortage, limit=0)
             
             df = pd.DataFrame(resp.get("data", []))
+            df = await filter_data(df, _filters)
             shortage = pd.DataFrame(shortage.get("data", []))
 
             shortage.rename(columns={"vehicle_number": "tt_number"}, inplace=True)
@@ -1945,11 +1946,18 @@ class VTSAnalyticsActions:
             df = pd.merge(df, shortage, on=["tt_number"], how="left")
             df = df.fillna(0)
 
+            for col in [
+                "continuous_driving_count", "device_tamper_count", "main_supply_removal_count",
+                "night_driving_count", "route_deviation_count", "speed_violation_count",
+                "stoppage_violations_count"
+                ]:
+                if col not in df.columns:
+                    df[col] = 0
             df.rename(
                 columns={"continuous_driving_count": "CD", "device_tamper_count": "DT",
                         "main_supply_removal_count": "PD", "night_driving_count": "ND",
                         "route_deviation_count": "RD", "speed_violation_count": "SV",
-                        "stoppage_violations_count": "US"}, inplace=True)
+                        "stoppage_violations_count": "US"}, inplace=True)            
 
             if drill_state:
                 df = df.groupby([drill_state], as_index=False).agg({
