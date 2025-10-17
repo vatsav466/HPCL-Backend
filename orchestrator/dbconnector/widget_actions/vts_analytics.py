@@ -45,7 +45,10 @@ async def get_drill_down_filter(filters, query):
                 else:
                     conditions.append(f"{rec.key} IN {tuple(values)}")
         if conditions:
-            query += " WHERE " + " AND ".join(conditions)
+            if "where" in query.lower():
+                query += " AND " + " AND ".join(conditions)
+            else:
+                query += " WHERE " + " AND ".join(conditions)
         if _key:
             return query, _key
         return query
@@ -1934,7 +1937,7 @@ class VTSAnalyticsActions:
                 )
             )
             avg_ageing = (
-                df.groupby(["sap_id", "zone", "tt_number"])["ageing"]
+                df.groupby(["sap_id", "location_name", "zone", "tt_number"])["ageing"]
                 .mean()
                 .reset_index()
             )
@@ -1960,11 +1963,20 @@ class VTSAnalyticsActions:
                         "stoppage_violations_count": "US"}, inplace=True)            
 
             if drill_state:
-                df = df.groupby([drill_state], as_index=False).agg({
-                    "CD": "sum", "DT": "sum", "PD": "sum",
-                    "ND": "sum", "RD": "sum", "SV": "sum",
-                    "US": "sum", "ageing": "mean", "shortage": "sum"
-                })
+                group_by_keys = [drill_state]
+                if filters:
+                    filter_keys = [rec.key.strip('"') for rec in filters]
+                    if "zone" in filter_keys and "location_name" not in filter_keys:
+                        group_by_keys = ["zone", "location_name"]
+                    elif "zone" in filter_keys and "location_name" in filter_keys and "transporter_code" not in filter_keys:
+                        group_by_keys = ["zone", "location_name", "transporter_code"]
+                    elif "zone" in filter_keys and "location_name" in filter_keys and "transporter_code" in filter_keys and "tt_number" not in filter_keys:
+                        group_by_keys = ["zone", "location_name", "transporter_code", "tt_number"]
+
+                df = df.groupby(group_by_keys, as_index=False).agg({
+                                "CD": "sum", "DT": "sum", "PD": "sum",
+                                "ND": "sum", "RD": "sum", "SV": "sum",
+                                "US": "sum", "ageing": "mean", "shortage": "sum"})
 
             return {"status": True, "message": "success", "data": df.to_dict(orient='records')}
         except Exception as e:
