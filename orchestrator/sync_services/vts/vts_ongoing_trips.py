@@ -149,7 +149,12 @@ def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.Data
     cursor = connection.cursor()
     query = f""" SELECT * FROM {table_name} WHERE CAST(EVENT_DATE AS DATE) > '{max_date}';"""
     data = fetch_data(cursor, query, getData=True)
-    data = data.rename({"location": "sap_id"})
+    data = data.rename({col: col.lower()} for col in data.columns)
+    
+    for col in ["location", "terminalcode"]:
+        if col in data.columns:
+            data = data.rename({col: "sap_id"})
+        
     for col in ["name", "zone", "region"]:
         if col in data.columns:
             data = data.drop(col)
@@ -179,7 +184,7 @@ def main():
     query = f""" select * from location_master where bu in ('TAS', 'LPG') """
     master_data = fetch_data(None, query, getData=True, params=params)
     
-    for table_name in ["DEVICE_REMOVED", "HARSH_ACCELERATION", "HARSH_BRAKING", "PANIC"]:
+    for table_name in ["DEVICE_REMOVED", "HARSH_ACCELERATION", "HARSH_BRAKING", "PANIC", "TripAuditMaster"]:
         get_ongoing_trip_data(table_name=table_name, params=params, max_date=None, master_data=master_data)
 
 
