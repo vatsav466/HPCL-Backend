@@ -6920,6 +6920,78 @@
                     "name": "get_closed_alerts_details_vts"
                 }
             ]
+        },
+        {
+            "name": "lpgdatapostingaudit",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgDataPostingAudit",
+            "attributes": {},
+            "uris": [
+                "/api/lpgdatapostingaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_erp_status"
+                }
+            ]
+        },
+        {
+            "name": "lpgdatapostingaudit_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgDataPostingAudit_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgdatapostingaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_erp_status"
+                }
+            ]
+        },
+        {
+            "name": "lpgdatapostingaudit_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgDataPostingAudit_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgdatapostingaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_erp_status"
+                }
+            ]
         }
     ],
     "policies": [
@@ -7577,6 +7649,10 @@
         {
             "name": "get_closed_alerts_details_vts",
             "displayName": "get_closed_alerts_details_vts"
+        },
+        {
+            "name": "get_erp_status",
+            "displayName": "get_erp_status"
         }
     ]
 }

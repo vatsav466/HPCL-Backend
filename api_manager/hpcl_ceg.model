@@ -3489,3 +3489,15 @@ Model ViolationHistoryVts {
         interlock_name str
     }
 }
+
+Model LpgDataPostingAudit {
+    request_id optional str
+    status optional str
+    remark optional str
+    updated_date optional str
+    updated_time optional str
+
+    Action=> get_erp_status {
+        request_id optional str
+    }
+}
