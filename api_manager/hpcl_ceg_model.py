@@ -9852,3 +9852,61 @@ class Violationhistoryvts_Get_Closed_Alerts_Details_VtsParams(pydantic.BaseModel
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class LpgDataPostingAuditSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_data_posting_audit'
+    
+    request_id: Mapped[typing.Optional[str]] = mapped_column("request_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    remark: Mapped[typing.Optional[str]] = mapped_column("remark", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    updated_date: Mapped[typing.Optional[str]] = mapped_column("updated_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    updated_time: Mapped[typing.Optional[str]] = mapped_column("updated_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class LpgDataPostingAuditCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_data_posting_audit'
+    
+    request_id: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    remark: typing.Optional[str] = pydantic.Field("", **{})
+    updated_date: typing.Optional[str] = pydantic.Field("", **{})
+    updated_time: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = LpgDataPostingAuditSchema
+        upsert_keys = []
+
+
+class LpgDataPostingAudit(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_data_posting_audit'
+    
+    request_id: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    remark: typing.Optional[str] = pydantic.Field("", **{})
+    updated_date: typing.Optional[str] = pydantic.Field("", **{})
+    updated_time: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = LpgDataPostingAuditSchema
+        upsert_keys = []
+
+
+class LpgDataPostingAuditGetResp(pydantic.BaseModel):
+    data: typing.List[LpgDataPostingAudit]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Lpgdatapostingaudit_Get_Erp_StatusParams(pydantic.BaseModel):
+    request_id: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
