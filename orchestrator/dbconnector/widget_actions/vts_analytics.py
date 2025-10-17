@@ -1980,5 +1980,55 @@ class VTSAnalyticsActions:
 
             return {"status": True, "message": "success", "data": df.to_dict(orient='records')}
         except Exception as e:
+            print("-- Exception in get unblock ageing widget --")
+            print("traceback :", traceback.format_exc())
+    
+    async def get_emlock_open_data(filters, cross_filters, drill_state, payload):
+        try:
+            # Cross filters
+            _filters, daterange = await generate_cross_filter(cross_filters)
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            query = vts_query.vts_query.get("get_emlock_open_data")
+            
+            # Drill Down filters
+            query = await get_drill_down_filter(filters, query)
+
+            access_filters = [
+                dashboard_studio_model.WidgetFiltersCreate(**rec)
+                for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)
+                ]
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, access_filters, drill_state)
+
+            clause = "WHERE" if "where" not in query.lower() else "AND"
+            if daterange:
+                query += f" {clause} created_at BETWEEN {daterange}"
+            else:
+                query += f" {clause} CAST(created_at AS DATE) = '{current_date}'"
+
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+            df = pd.DataFrame(resp.get("data", []))
+            df = await filter_data(df, _filters)
+
+            swipe_out_l1_count = df[df['swipeoutl1'].fillna('') == 'false']
+            swipe_out_l2_count = df[df['swipeoutl2'].fillna('') == 'false']
+
+            group_by_keys = ["zone"]
+            if filters:
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "zone" in filter_keys and "location_name" not in filter_keys:
+                    group_by_keys = ["zone", "location_name"]
+
+            df = df.groupby(group_by_keys, as_index=False).agg({
+                "swipeoutl1": "count",
+                "swipeoutl2": "count",
+            })
+
+            return {
+                "status": True, "message": "success", 
+                "swipe_out_l1_count": swipe_out_l1_count, 
+                "swipe_out_l2_count": swipe_out_l2_count,
+                "data": df.to_dict(orient='records')
+                }
+        except Exception as e:
             print("-- Exception in zone wise productivity widget --")
             print("traceback :", traceback.format_exc())

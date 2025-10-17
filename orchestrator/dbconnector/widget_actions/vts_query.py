@@ -434,6 +434,16 @@ vts_query = {
                                 qty_shortage != 'NaN' AND qty_shortage != '0.0'
                             """,
     
+    "get_emlock_open_data": """
+                            SELECT
+                                sap_id, location_name, zone, region, trucknumber as tt_number, 
+                                invoicenumber as invoice_number, swipeoutl1, swipeoutl2
+                            FROM
+                                vts_tripauditmaster
+                            WHERE
+                                invoicenumber != 'null' and invoicenumber != ''
+                            """,
+    
     "all_violations" : [   
                             "route_deviation_count",
                             "stoppage_violations_count",
