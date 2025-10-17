@@ -147,9 +147,14 @@ def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.Data
 
     connection = get_db_connection()
     cursor = connection.cursor()
-    query = f""" SELECT * FROM {table_name} WHERE CAST(EVENT_DATE AS DATE) > '{max_date}';"""
+    
+    _datecol = "EVENT_DATE"
+    if table_name in ["TripAuditMaster"]:
+        _datecol = "createdAt"
+    
+    query = f""" SELECT * FROM {table_name} WHERE CAST({_datecol} AS DATE) > '{max_date}';"""
     data = fetch_data(cursor, query, getData=True)
-    data = data.rename({col: col.lower()} for col in data.columns)
+    data = data.rename({col: col.lower() for col in data.columns})
     
     for col in ["location", "terminalcode"]:
         if col in data.columns:
