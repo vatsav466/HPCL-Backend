@@ -1,6 +1,11 @@
 vts_query = {
     "total_trips": """select count(distinct invoice_number) from vts_alert_history""",
 
+    "tt_having_device_issue" : """SELECT count(*)
+                                            FROM vts_alert_history 
+                                            WHERE main_supply_removal_count >= 6 
+                                """,
+
     "unblocked_by_L1": """select count (*) from alerts where alert_section = 'VTS' 
                                                        and alert_status = 'Close' 
                                                        and 'Location In-Charge SOD' = ANY(assigned_user_roles)""",
@@ -115,7 +120,8 @@ vts_query = {
                                          stoppage_violations_count,
                                          device_tamper_count,
                                          speed_violation_count,
-                                         night_driving_count
+                                         night_driving_count,
+                                         main_supply_removal_count
                                          from vts_alert_history 
                                     WHERE invoice_number IS NOT NULL        
                                  """,

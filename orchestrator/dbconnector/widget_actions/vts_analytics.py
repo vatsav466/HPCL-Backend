@@ -753,75 +753,85 @@ class VTSAnalyticsActions:
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
             print(query)
-            
+
+            # Step 2: Execute query
             df = await VTSAnalyticsActions.execute_query(query)
-            
             if df.empty:
                 return {"status": True, "message": "No data found", "data": []}
-            
-            # Step 2: Select violation columns
+
+            # Step 3: Define violation columns
             violation_cols = [
                 "route_deviation_count",
                 "stoppage_violations_count",
                 "device_tamper_count",
                 "speed_violation_count",
-                "night_driving_count"
+                "night_driving_count",
+                "main_supply_removal_count"
             ]
-            
+
             df_viol = df[["invoice_number"] + violation_cols].copy()
             df_viol.dropna(subset=["invoice_number"], inplace=True)
-            
-            # Step 3: Mark each count >0 as 1
+
+            # Step 4: Mark each count >0 as 1, except main_supply_removal_count >= 6
             for col in violation_cols:
-                df_viol[col] = df_viol[col].apply(lambda x: 1 if x and x != 0 else 0)
-            
-            # Step 4: Assign each invoice to its first violation type
+                if col == "main_supply_removal_count":
+                    df_viol[col] = df_viol[col].apply(lambda x: 1 if x and x >= 6 else 0)
+                else:
+                    df_viol[col] = df_viol[col].apply(lambda x: 1 if x and x != 0 else 0)
+
+            # Step 5: Assign each invoice to its first violation type
             def first_violation(row):
                 for col in violation_cols:
                     if row[col] == 1:
                         return col
                 return None
-            
+
             df_viol["primary_violation"] = df_viol.apply(first_violation, axis=1)
             df_viol = df_viol[df_viol["primary_violation"].notna()]
-            
-            # Step 5: Count invoices per primary violation
+
+            # Step 6: Count invoices per primary violation
             violation_counts = df_viol["primary_violation"].value_counts()
-            
-            # Step 6: Get shortage count
+
+            # Step 7: Get shortage count
             shortage_result = await VTSAnalyticsActions.total_count_shortage(
                 filters, cross_filters, drill_state, payload
             )
-            
+
             shortage_count = 0
             if shortage_result.get("status"):
                 shortage_count = shortage_result.get("trip_count", 0)
-        
-            # Step 7: Calculate total and percentages
-            total_violations = violation_counts.sum()  # Use .sum() instead of sum(values())
+
+            # Step 8: Calculate totals and percentages
+            total_violations = violation_counts.sum()
             total_all = total_violations + shortage_count
-            
-            # Build final percentages
+
             percentages = {}
-            
-            # Add violation percentages
             for col in violation_cols:
                 count = violation_counts.get(col, 0)
                 percentages[col] = round(100 * count / total_all, 2) if total_all > 0 else 0
-            
+
             # Add shortage percentage
             percentages["shortage_count"] = round(100 * shortage_count / total_all, 2) if total_all > 0 else 0
-            
+
+            # Step 9: Fix rounding so total = 100
+            total = round(sum(percentages.values()), 2)
+            diff = round(100 - total, 2)
+            if diff != 0:
+                largest_key = max(percentages, key=percentages.get)
+                percentages[largest_key] = round(percentages[largest_key] + diff, 2)
+
+            # Step 10: Return final response
             return {
                 "status": True,
-                "message": "Violation percentages calculated",
+                "message": "Violation percentages calculated successfully",
                 "data": percentages
             }
-            
+
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
-    
+
+
     @staticmethod
     async def total_count_shortage(filters, cross_filters, drill_state, payload):
         try:
