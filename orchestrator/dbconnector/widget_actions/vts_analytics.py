@@ -75,8 +75,14 @@ class VTSAnalyticsActions:
         """Create date range condition"""
         start = val.split(",")[0]
         end = (datetime.strptime(val.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
+       
         if "vts_alert_history" in query.lower():
             return f"vts_end_datetime BETWEEN '{start}' AND '{end}'"
+                
+        queries = ["vts_device_removed", "vts_harsh_acceleration", "vts_harsh_braking", "vts_panic"]
+        if any(q in query.lower() for q in queries):
+            return f"event_date BETWEEN '{start}' AND '{end}'"
+        
         return f"created_at BETWEEN '{start}' AND '{end}'"
     
 
@@ -685,9 +691,10 @@ class VTSAnalyticsActions:
             print(query)
             
             df = await VTSAnalyticsActions.execute_query(query)
+            
             if df.empty:
                 return {"status": True, "message": "No data found", "data": []}
-
+            
             # Step 2: Select violation columns
             violation_cols = [
                 "route_deviation_count",
@@ -696,14 +703,14 @@ class VTSAnalyticsActions:
                 "speed_violation_count",
                 "night_driving_count"
             ]
-
+            
             df_viol = df[["invoice_number"] + violation_cols].copy()
             df_viol.dropna(subset=["invoice_number"], inplace=True)
-
+            
             # Step 3: Mark each count >0 as 1
             for col in violation_cols:
                 df_viol[col] = df_viol[col].apply(lambda x: 1 if x and x != 0 else 0)
-
+            
             # Step 4: Assign each invoice to its first violation type
             def first_violation(row):
                 for col in violation_cols:
@@ -713,22 +720,115 @@ class VTSAnalyticsActions:
             
             df_viol["primary_violation"] = df_viol.apply(first_violation, axis=1)
             df_viol = df_viol[df_viol["primary_violation"].notna()]
-
+            
             # Step 5: Count invoices per primary violation
-            counts = df_viol["primary_violation"].value_counts()
-            total = counts.sum()
-
-            # Step 6: Calculate percentages
-            violation_percentages = {
-                col: round(100 * counts.get(col, 0) / total, 2) for col in violation_cols
+            violation_counts = df_viol["primary_violation"].value_counts()
+            
+            # Step 6: Get shortage count
+            shortage_result = await VTSAnalyticsActions.total_count_shortage(
+                filters, cross_filters, drill_state, payload
+            )
+            
+            shortage_count = 0
+            if shortage_result.get("status"):
+                shortage_count = shortage_result.get("trip_count", 0)
+        
+            # Step 7: Calculate total and percentages
+            total_violations = violation_counts.sum()  # Use .sum() instead of sum(values())
+            total_all = total_violations + shortage_count
+            
+            # Build final percentages
+            percentages = {}
+            
+            # Add violation percentages
+            for col in violation_cols:
+                count = violation_counts.get(col, 0)
+                percentages[col] = round(100 * count / total_all, 2) if total_all > 0 else 0
+            
+            # Add shortage percentage
+            percentages["shortage_count"] = round(100 * shortage_count / total_all, 2) if total_all > 0 else 0
+            
+            return {
+                "status": True,
+                "message": "Violation percentages calculated",
+                "data": percentages
             }
-
-            return { "status": True, "message": "Violation percentages calculated",  "data": violation_percentages }
-
+            
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
     
+    @staticmethod
+    async def total_count_shortage(filters, cross_filters, drill_state, payload):
+        try:
+            # Step 1: Build the base query to get shortage data
+            shortage_query = """
+            SELECT 
+                plant_cd as sap_id, 
+                vehicle_id, 
+                invoice_no,
+                SUM(qty_shortage) as qty_shortage 
+            FROM sales_trips_till_date
+            WHERE qty_shortage != 0  
+            """
+            
+            conditions_list = []
+            if cross_filters:
+                for rec in cross_filters:
+                    key_upper = rec.key.upper()
+                    val = rec.value
+                    if "DATE" in key_upper:
+                        start = val.split(",")[0]
+                        end = (datetime.strptime(val.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
+                        conditions_list.append(f"load_date BETWEEN '{start}' AND '{end}'")
+
+            if conditions_list:
+                conditions_str = " AND ".join(conditions_list)
+                shortage_query += f" AND {conditions_str}"
+
+            shortage_query += " GROUP BY vehicle_id, invoice_no, plant_cd"
+            # REMOVED: shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions_str)
+            
+            # Step 2: Get location master data
+            location_query = """
+            SELECT 
+                sap_id,
+                bu
+            FROM location_master
+            """
+            
+            # Execute both queries
+            shortage_df = await VTSAnalyticsActions.execute_query(shortage_query)
+            location_df = await VTSAnalyticsActions.execute_query(location_query)
+            
+            # Check if dataframes are empty
+            if shortage_df.empty:
+                return {"status": True, "message": "No shortage data found", "data": []}
+            
+            if location_df.empty:
+                return {"status": False, "message": "Location master data not available", "data": []}
+            
+            # Step 3: Merge the dataframes on sap_id
+            merged_df = shortage_df.merge(location_df, on='sap_id', how='left')
+            
+            filtered_df = merged_df.copy()
+            
+            if filters:
+                for rec in filters:
+                    if rec.key.lower() == 'bu':
+                        filtered_df = filtered_df[filtered_df['bu'] == rec.value]
+            
+            total_count = len(filtered_df)
+                
+            return {
+                "status": True, 
+                "message": "Success", 
+                "trip_count": total_count
+            }
+            
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
 
     @staticmethod
     async def vts_drill_down_violation(filters, cross_filters, drill_state, payload):
@@ -850,6 +950,7 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
     
+   
     @staticmethod
     async def vts_ongoing_trips(filters, cross_filters, drill_state, payload):
         try:
@@ -954,8 +1055,114 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
-                            
-                   
+
+    @staticmethod
+    async def safety_compliance(filters, cross_filters, drill_state, payload):                       
+        try:
+            # Step 1: Get base query
+            query = vts_query.vts_query.get('safety_compliance')
+            drill_state_col = drill_state.split(",")[0]
+            query = query.format(drill_state=drill_state_col)
+
+            # Step 2: Apply filters
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+            print(query)
+
+            # Step 3: Execute query
+            df = await VTSAnalyticsActions.execute_query(query)
+            df = df.drop_duplicates(keep='first')
+
+            if df.empty:
+                return {"status": True, "message": "No data found", "data": []}
+
+            # Step 4: Apply payload filters for zone, location_name, transporter_name
+            for key in ["zone", "location_name", "transporter_name"]:
+                if payload.get(key):
+                    df = df[df[key] == payload[key]]
+
+            if df.empty:
+                return {"status": True, "message": "No data found for the applied filters", "data": []}
+
+            # Step 5: If tt_number in payload, return per-trip details with timestamp
+            selected_tt = payload.get("tt_number")
+            if selected_tt:
+                trip_df = df[df["tt_number"] == selected_tt].copy()
+                if trip_df.empty:
+                    return {"status": True, "message": f"No trips found for vehicle {selected_tt}", "data": []}
+
+                # Keep full event_date with timestamp
+                trip_df = trip_df.sort_values(by="event_date")
+                result = trip_df[["invoice_no", "event_date"]].rename(columns={"event_date": "created_at"}).to_dict(orient="records")
+
+                return {"status": True, "message": f"Trip details for vehicle {selected_tt}", "data": result}
+
+            # Step 6: Determine grouping column
+            if payload.get("transporter_name"):
+                group_col = "tt_number"
+            elif payload.get("location_name"):
+                group_col = "transporter_name"
+            elif payload.get("zone"):
+                group_col = "location_name"
+            else:
+                group_col = "zone"
+
+            # Step 7: Group by and summarize
+            summary_df = df.groupby(group_col).agg(
+                invoice_count=("invoice_no", "nunique"),
+                vehicle_count=("tt_number", "nunique"),
+                **{f"{drill_state_col}_count": ("event_date", "count")}
+            ).reset_index()
+
+            result = summary_df.to_dict(orient='records')
+            return {"status": True, "message": "success", "data": result}
+
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+    
+    @staticmethod
+    async def safety_compliance_percentage(filters, cross_filters, drill_state, payload):
+            try:
+                # Queries returning counts
+                query_keys = [
+                    "vts_panic",
+                    "vts_harsh_braking",
+                    "vts_harsh_acceleration",
+                    "vts_device_removed"
+                ]
+
+            
+                counts = {}
+                for key in query_keys:
+                    query = vts_query.vts_query.get(key)
+                    conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+                    query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+                
+                    df = await VTSAnalyticsActions.execute_query(query)
+                    counts[key] = int(df.iloc[0, 0]) if not df.empty else 0
+                  
+
+            
+                total = sum(counts.values())
+                if total == 0:
+                    return {"status": True, "message": "No data found", "data": []}
+
+                percentages = {k: round((v / total) * 100, 2) for k, v in counts.items()}
+
+            
+                diff = 100 - sum(percentages.values())
+                if abs(diff) > 0.01:
+                    max_key = max(percentages, key=percentages.get)
+                    percentages[max_key] = round(percentages[max_key] + diff, 2)
+
+                return {"status": True, "message": "Success", "data": percentages}
+
+            except Exception as e:
+                print("traceback:", traceback.format_exc())
+                return {"status": False, "message": str(e), "data": []}
+        
+            
     @staticmethod
     async def location_level_voilation_breakup(filters, cross_filters, drill_state, payload):
         try:

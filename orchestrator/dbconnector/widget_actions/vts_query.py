@@ -32,7 +32,7 @@ vts_query = {
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id""",
 
-    "blocked_in_ims" : """SELECT count (*) from alerts where and alert_section = 'VTS' and vehicle_unblocked_date is null""",
+    "blocked_in_ims" : """SELECT count (*) from alerts where alert_section = 'VTS' and vehicle_unblocked_date is null""",
 
     "total_alerts" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
@@ -60,10 +60,29 @@ vts_query = {
                                                               vehicle_unblocked_date is not null and
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id """,
+    
+    "safety_compliance" : """
+                            SELECT 
+                                event_date, 
+                                sap_id, 
+                                location_type,
+                                tt_number, 
+                                transporter_name, 
+                                invoice_no, 
+                                location_name, 
+                                zone from 
+                            {drill_state}
+                          """,
 
+
+    "vts_panic" : """SELECT count(event_date) as driver_panic from vts_panic""",
+
+    "vts_harsh_braking" : """SELECT count(event_date) as harsh_braking from vts_harsh_braking""",
+
+    "vts_harsh_acceleration" : """SELECT count(event_date) as harsh_acceleration from vts_harsh_acceleration""",
+
+    "vts_device_removed" : """SELECT count(event_date) as device_removed from vts_device_removed""",
    
-
-
     "total_violations_product": """
                 SELECT 
                 (
