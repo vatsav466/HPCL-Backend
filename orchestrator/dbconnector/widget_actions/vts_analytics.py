@@ -1970,3 +1970,124 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("-- Exception in zone wise productivity widget --")
             print("traceback :", traceback.format_exc())
+
+    @staticmethod
+    async def power_disconnection(filters, cross_filters, drill_state, payload):
+        try:
+            # Step 1: Get base query and apply filters
+            query = vts_query.vts_query.get(drill_state.split(",")[0])
+            if not query:
+                return {"status": False, "message": "Query not found", "data": []}
+            
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+            final_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+
+            
+            vts_df = await VTSAnalyticsActions.execute_query(final_query)
+            vts_df = vts_df.drop_duplicates(subset=['invoice_number'], keep='first')
+            
+            if vts_df.empty:
+                return {"status": True, "message": "No power disconnection alerts found", "data": []}
+
+            print(vts_df)
+            
+            # Step 2: Get TLs and fetch alerts
+            tl_numbers_list = vts_df['tl_number'].tolist()
+            tl_numbers_str = "', '".join(map(str, tl_numbers_list))
+            
+            alerts_query = f"""
+                SELECT DISTINCT location_name, vehicle_number, transporter_code, zone
+                FROM alerts
+                WHERE vehicle_number IN ('{tl_numbers_str}')
+                AND transporter_code != '' AND location_name != ''
+            """
+            df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
+            
+            if df_alerts.empty:
+                return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
+            
+            merged_df = vts_df.merge(df_alerts, left_on="tl_number", right_on="vehicle_number", how="left")
+            
+            # Step 3: Remove missing or empty zones
+            merged_df = merged_df[merged_df["zone"].notna() & (merged_df["zone"].str.strip() != "")]
+            if merged_df.empty:
+                return {"status": False, "message": "No valid zone data found after merging with alerts", "data": []}
+            
+            # Step 4: Merge transporter names
+            email_query = """SELECT transporter_code, transporter_name FROM email_master"""
+            df_email = await VTSAnalyticsActions.execute_query(email_query)
+            final_df = merged_df.merge(df_email, on="transporter_code", how="left")
+            final_df.drop(columns=["transporter_code"], inplace=True)
+            
+            # Step 5: Filter for power disconnection violations (>= 6)
+            violation_type = "main_supply_removal_count"
+            violation_filtered_df = final_df[final_df[violation_type].fillna(0) >= 6].copy()
+            
+            # Step 6: Remove empty values for zone, location, transporter
+            for key in ["zone", "location_name", "transporter_name"]:
+                violation_filtered_df = violation_filtered_df[
+                    violation_filtered_df[key].notna() & (violation_filtered_df[key].str.strip() != "")
+                ]
+                if payload.get(key):
+                    violation_filtered_df = violation_filtered_df[violation_filtered_df[key] == payload[key]]
+            
+            if violation_filtered_df.empty:
+                return {"status": True, "message": "No data found for the applied filters", "data": []}
+            
+            # Step 7: TL-level drill-down for invoice details
+            selected_tl = payload.get("tl_number")
+            if selected_tl:
+                violation_filtered_df = violation_filtered_df[violation_filtered_df["tl_number"] == selected_tl]
+                
+                if violation_filtered_df.empty:
+                    return {"status": True, "message": f"No invoices found for vehicle {selected_tl}", "data": []}
+                
+                # Return invoice details sorted by created_at
+                invoice_df = violation_filtered_df.sort_values(by="created_at", ascending=True)
+                invoice_df = invoice_df[["invoice_number", "created_at", violation_type]]
+                
+                # Rename columns for frontend
+                invoice_df.rename(columns={
+                    "invoice_number": "invoice_no",
+                    "created_at": "created_at",
+                    violation_type: f"actual_{violation_type}"
+                }, inplace=True)
+                
+                result = invoice_df.to_dict(orient="records")
+                return {"status": True, "message": f"{violation_type} details for vehicle {selected_tl}", "data": result}
+            
+            # Step 8: Determine grouping column for summaries
+            if payload.get("transporter_name"):
+                group_col = "tl_number"
+            elif payload.get("location_name"):
+                group_col = "transporter_name"
+            elif payload.get("zone"):
+                group_col = "location_name"
+            else:
+                group_col = "zone"
+            
+            # Step 9: Summarize counts
+            # violation_count_more_than_6: Count of invoices where main_supply_removal_count >= 6
+            # total_violations: Sum of actual main_supply_removal_count values
+            summary_df = (
+                violation_filtered_df.groupby(group_col)
+                .agg({
+                    "invoice_number": pd.Series.nunique,  # invoice_count
+                    violation_type: ['count', 'sum']  # count of records >= 6, and sum of actual values
+                })
+                .reset_index()
+            )
+            
+            # Flatten multi-level columns
+            summary_df.columns = [group_col, 'invoice_count', 'violation_count_more_than_6', 'total_violations']
+            
+            if group_col != "tl_number":
+                summary_df["vehicle_count"] = violation_filtered_df.groupby(group_col)["tl_number"].nunique().values
+            
+            result = summary_df.to_dict(orient="records")
+            return {"status": True, "message": f"{violation_type} drill-down data", "data": result}
+        
+        except Exception as e:
+            print("Exception in power_disconnection:", str(e))
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}

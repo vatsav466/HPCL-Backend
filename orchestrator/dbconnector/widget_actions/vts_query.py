@@ -442,6 +442,19 @@ vts_query = {
                             "night_driving_count",
                             "speed_violation_count",
                             "continuous_driving_count"
-                      ]
+                      ],
+
+     "power_disconnection": """
+                            SELECT * 
+                            FROM vts_alert_history 
+                            WHERE main_supply_removal_count >= 6  
+                           """,
+
+    "email_master_details": """
+                            SELECT sap_id, zone, transporter_name, transporter_code, location_name
+                            FROM email_master
+                            """
                               
     }
+
+
