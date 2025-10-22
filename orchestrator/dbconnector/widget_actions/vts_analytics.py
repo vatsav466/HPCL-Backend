@@ -2022,32 +2022,44 @@ class VTSAnalyticsActions:
 
             clause = "WHERE" if "where" not in query.lower() else "AND"
             if daterange:
-                query += f" {clause} created_at BETWEEN {daterange}"
+                query += f" {clause} createdat BETWEEN {daterange}"
             else:
-                query += f" {clause} CAST(created_at AS DATE) = '{current_date}'"
+                query += f" {clause} CAST(createdat AS DATE) = '{current_date}'"
 
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
             df = pd.DataFrame(resp.get("data", []))
             df = await filter_data(df, _filters)
-
-            swipe_out_l1_count = df[df['swipeoutl1'].fillna('') == 'false']
-            swipe_out_l2_count = df[df['swipeoutl2'].fillna('') == 'false']
-
+                        
+            swipe_out_l1 = df[df['swipeoutl1'].fillna('').str.lower() == 'false']
+            swipe_out_l2 = df[df['swipeoutl2'].fillna('').str.lower() == 'false']
+            
+            swipe_out_l1_count = len(swipe_out_l1)
+            swipe_out_l2_count = len(swipe_out_l2)
+            
             group_by_keys = ["zone"]
             if filters:
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "location_name" not in filter_keys:
                     group_by_keys = ["zone", "location_name"]
 
-            df = df.groupby(group_by_keys, as_index=False).agg({
-                "swipeoutl1": "count",
+            swipe_out_l1 = swipe_out_l1.groupby(group_by_keys, as_index=False).agg({
+                "swipeoutl1": "count"
+            })
+            swipe_out_l2 = swipe_out_l2.groupby(group_by_keys, as_index=False).agg({
                 "swipeoutl2": "count",
+            })
+            df = pd.concat([swipe_out_l1, swipe_out_l2])
+            df = df.fillna(0)
+
+            df = df.groupby(group_by_keys, as_index=False).agg({
+                "swipeoutl1": "sum",
+                "swipeoutl2": "sum"
             })
 
             return {
                 "status": True, 
                 "message": "success", 
-                "swipe_out_l1_count": swipe_out_l1_count, 
+                "swipe_out_l1_count": swipe_out_l1_count,
                 "swipe_out_l2_count": swipe_out_l2_count,
                 "data": df.to_dict(orient='records')
                 }
