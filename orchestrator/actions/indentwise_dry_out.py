@@ -642,6 +642,7 @@ class IndentDryOut:
                     elif dry_alert_data['dry_out_in_days'] == '2':
                         self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                     self.params['dry_out_in_days'] = dry_alert_data['dry_out_in_days']
+                    self.params['mark_as_false'] = True
                     await create_alert(self.params, camunda_url)
                     await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                         connection_mapping.item_name_mapping.get(prod_code, ""),
