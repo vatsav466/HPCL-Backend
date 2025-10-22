@@ -3505,7 +3505,7 @@ class GlobalAnalytics:
             for col in ["zone", "plant", "carousel_type"]:
                 if col in df.columns:
                     df[col] = df[col].fillna("").astype(str)
-
+            df = df.replace([np.inf, -np.inf], np.nan).fillna(0)
             return {"status": True, "message": "success", "data": df}
         except Exception as e:
             print("-- Exception in zone wise productivity widget --")
