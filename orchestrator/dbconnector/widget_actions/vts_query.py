@@ -115,14 +115,16 @@ vts_query = {
                          """,
 
     "percentage_of_violations" : """
-                                  SELECT distinct invoice_number, 
-                                         route_deviation_count,
-                                         stoppage_violations_count,
-                                         device_tamper_count,
-                                         speed_violation_count,
-                                         night_driving_count,
-                                         main_supply_removal_count
-                                         from vts_alert_history 
+                                  SELECT
+                                        distinct invoice_number, 
+                                        route_deviation_count,
+                                        stoppage_violations_count,
+                                        device_tamper_count,
+                                        speed_violation_count,
+                                        night_driving_count,
+                                        main_supply_removal_count
+                                    FROM 
+                                        vts_alert_history 
                                     WHERE invoice_number IS NOT NULL        
                                  """,
 
@@ -449,7 +451,12 @@ vts_query = {
                             WHERE
                                 invoicenumber != 'null' and invoicenumber != ''
                             """,
-    
+    "emlock_open": """ 
+                    SELECT 
+                        (COUNT(*) FILTER (WHERE swipeoutl1 != 'true') +
+                        COUNT(*) FILTER (WHERE swipeoutl2 != 'true')) as emlock_open
+                    FROM vts_tripauditmaster;
+                    """,                    
     "all_violations" : [   
                             "route_deviation_count",
                             "stoppage_violations_count",

@@ -753,12 +753,21 @@ class VTSAnalyticsActions:
         try:
             # Step 1: Get base query and apply filters
             query = vts_query.vts_query.get(drill_state.split(",")[0])
+            emlock_open = vts_query.vts_query.get("emlock_open")
+
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
-            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)            
             print(query)
 
             # Step 2: Execute query
             df = await VTSAnalyticsActions.execute_query(query)
+            emlock_open = await VTSAnalyticsActions.execute_query(emlock_open)
+
+            if not emlock_open.empty:
+                emlock_open = emlock_open["emlock_open"][0]
+            else:
+                emlock_open = 0
+
             if df.empty:
                 return {"status": True, "message": "No data found", "data": []}
 
@@ -794,6 +803,8 @@ class VTSAnalyticsActions:
 
             # Step 6: Count invoices per primary violation
             violation_counts = df_viol["primary_violation"].value_counts()
+            violation_counts["emlock_open"] = emlock_open
+            print("violation_counts :", violation_counts)
 
             # Step 7: Get shortage count
             shortage_result = await VTSAnalyticsActions.total_count_shortage(
@@ -809,7 +820,7 @@ class VTSAnalyticsActions:
             total_all = total_violations + shortage_count
 
             percentages = {}
-            for col in violation_cols:
+            for col in violation_cols + ["emlock_open"]:
                 count = violation_counts.get(col, 0)
                 percentages[col] = round(100 * count / total_all, 2) if total_all > 0 else 0
 
