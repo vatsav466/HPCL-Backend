@@ -1958,7 +1958,7 @@ class VTSAnalyticsActions:
                 )
             )
             avg_ageing = (
-                df.groupby(["sap_id", "location_name", "zone", "tt_number"])["ageing"]
+                df.groupby(["sap_id", "location_name", "transporter_code", "zone", "tt_number"])["ageing"]
                 .mean()
                 .reset_index()
             )
@@ -2045,7 +2045,8 @@ class VTSAnalyticsActions:
             })
 
             return {
-                "status": True, "message": "success", 
+                "status": True, 
+                "message": "success", 
                 "swipe_out_l1_count": swipe_out_l1_count, 
                 "swipe_out_l2_count": swipe_out_l2_count,
                 "data": df.to_dict(orient='records')

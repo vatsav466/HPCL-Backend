@@ -157,7 +157,9 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             )
 
         # Final PI Score
-        # final_score = sum([s["score"] for s in pi_score])
+        print("-"*20)
+        print("pi_score :", pi_score)
+        print("-"*20)
         alert_score = sum(
             s["score"] for s in pi_score
             if "alert" in s["name"].lower()  
@@ -244,20 +246,24 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 "msg": msg
                 })
         # final_score = sum([score['score'] for score in pi_score])
+        
+        print("-"*20)
+        print("pi_score :", pi_score)
+        print("-"*20)
         alert_score = sum(
             s["score"] for s in pi_score
-            if "alert" in s["name"].lower()  
+            if "alert" in s["name"].lower()
         )
 
-        rej_score = sum(
+        va_portal_score = sum(
             s["score"] for s in pi_score
             if "alert" not in s["name"].lower()  
         )
 
         alert_score = round((alert_score * 10) / 100, 2)
-        rej_score = round((rej_score * 90) / 100, 2)
+        va_portal_score = round((va_portal_score * 90) / 100, 2)
 
-        final_score = alert_score + rej_score
+        final_score = alert_score + va_portal_score
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
