@@ -383,7 +383,7 @@ class VTSAnalyticsActions:
                         invoice_no,
                         qty_shortage
                     FROM sales_trips_till_date
-                    WHERE qty_shortage != 0 
+                    WHERE qty_shortage::numeric != 0 
                     AND qty_shortage IS NOT NULL
                     AND vehicle_id IN ('{tl_numbers_str}')
                 """
@@ -557,7 +557,7 @@ class VTSAnalyticsActions:
                     shortage_vehicles_query = """
                         SELECT DISTINCT vehicle_id 
                         FROM sales_trips_till_date 
-                        WHERE qty_shortage != 0 AND qty_shortage IS NOT NULL
+                        WHERE qty_shortage::numeric != 0 AND qty_shortage IS NOT NULL
                     """
                     df_shortage_vehicles = await VTSAnalyticsActions.execute_query(shortage_vehicles_query)
                     tl_numbers_list = df_shortage_vehicles['vehicle_id'].tolist() if not df_shortage_vehicles.empty else []
@@ -855,9 +855,9 @@ class VTSAnalyticsActions:
                 plant_cd as sap_id, 
                 vehicle_id, 
                 invoice_no,
-                SUM(qty_shortage) as qty_shortage 
+                SUM(qty_shortage::numeric) as qty_shortage 
             FROM sales_trips_till_date
-            WHERE qty_shortage != 0  
+            WHERE qty_shortage::numeric != 0  
             """
             
             conditions_list = []
@@ -1756,7 +1756,7 @@ class VTSAnalyticsActions:
             FROM 
                 sales_trips_till_date T
             WHERE 
-                qty_shortage > 0 
+                qty_shortage::numeric > 0 
                 {sql_trips_conditions} 
                 {date_condition_str}
         """
