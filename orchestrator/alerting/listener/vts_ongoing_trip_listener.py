@@ -95,6 +95,7 @@ class VTSOnGoingTripListener:
                 **data,
                 "event_start_datetime": data.get("event_date"),
                 "sap_id": data.get("location_code"),
+                "bu": data.get("location_type"),
                 "region": location_data.get('region'),
                 "zone" : location_data.get('zone')
             }

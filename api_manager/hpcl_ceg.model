@@ -1442,6 +1442,10 @@ Model DeviceMaster {
 Model VtsAlertHistory {
     vendor_id optional str
     location_id optional str
+    bu optional str
+    sap_id optional str
+    zone optional str
+    region optional str
     location_type optional str
     tl_number index_field str
     report_duration optional str
@@ -3392,6 +3396,7 @@ Model VtsOngoingTrips {
     event_start_datetime optional datetime
     event_end_datetime optional datetime
     sap_id optional str
+    bu optional str
     region optional str
     zone optional str
     destination_code optional str
