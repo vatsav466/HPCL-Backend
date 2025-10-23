@@ -85,7 +85,7 @@ class VTSAnalyticsActions:
         if query and any(x in query.lower() for x in ["vts_alert_history", "vts_ongoing_trips"]) and key.lower() == "bu":
             return "location_type"
         if query and "vts_alert_history" in query.lower() and key.lower() == "sap_id":
-            return "location_id"
+            return "location_id"          
         return key
     
     @staticmethod
@@ -2120,7 +2120,7 @@ class VTSAnalyticsActions:
             tl_numbers_str = "', '".join(map(str, tl_numbers_list))
             
             alerts_query = f"""
-                SELECT DISTINCT location_name, vehicle_number, transporter_code, zone
+                SELECT DISTINCT location_name, vehicle_number, transporter_code
                 FROM alerts
                 WHERE vehicle_number IN ('{tl_numbers_str}')
                 AND transporter_code != '' AND location_name != ''
@@ -2136,6 +2136,8 @@ class VTSAnalyticsActions:
             merged_df = merged_df[merged_df["zone"].notna() & (merged_df["zone"].str.strip() != "")]
             if merged_df.empty:
                 return {"status": False, "message": "No valid zone data found after merging with alerts", "data": []}
+            
+            merged_df["transporter_code"] = merged_df["transporter_code"].astype(str).apply(lambda x: x[2:] if x.startswith("00") else x)
             
             # Step 4: Merge transporter names
             email_query = """SELECT transporter_code, transporter_name FROM email_master"""

@@ -738,6 +738,19 @@ async def create_vts_alerts(enriched_data):
             entry['violation_type'] = await get_vts_violation(entry)
             entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
                 lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
+            
+            entry["bu"] = entry["location_type"]
+            entry["sap_id"] = str(entry["location_id"])
+
+            _, location_data = await cache_api_actions.get_location_data(
+                bu=entry["location_type"],
+                location_id=entry["location_id"]  
+               )
+            
+            entry["region"] = location_data.get("region")
+            entry["zone"] = location_data.get("zone")
+
+
             await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
             # Skipping if the truck is already blacklisted
             if await is_vehicle_blacklisted(entry['tl_number']):
