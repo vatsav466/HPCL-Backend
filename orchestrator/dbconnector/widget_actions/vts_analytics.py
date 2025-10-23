@@ -1719,18 +1719,26 @@ class VTSAnalyticsActions:
         # Date condition from cross_filters
         date_condition_str = ""
         today = datetime.now().date()
-        date_selection = next((getattr(f, "value", None) for f in cross_filters if getattr(f, "key", None) == "date"), None)
+        # print("today",today)
+        date_selection = next(
+                    (getattr(f, "value", None) for f in cross_filters if getattr(f, "key", "").lower() == "date"), 
+                    None
+                )
+        # print("date_selection",date_selection)
 
         if date_selection:
             if "," in date_selection:
                 start_date, end_date = date_selection.split(",")
                 date_condition_str = f"AND T.created_on::date BETWEEN '{start_date}' AND '{end_date}'"
+                
             else:
                 date_selection = date_selection.lower()
                 if date_selection == "today":
                     date_condition_str = f"AND T.created_on::date = '{today}'"
+                    
                 elif date_selection == "yesterday":
                     date_condition_str = f"AND T.created_on::date = '{today - timedelta(days=1)}'"
+                    
 
         # ----- 2. Fetch Alerts (Original Logic Restored) -----
         
@@ -1786,19 +1794,33 @@ class VTSAnalyticsActions:
 
         # 4b. Merge email master
         email_query = "SELECT transporter_code, transporter_name FROM email_master"
+        # print("query",email_query)
         email_df = await VTSAnalyticsActions.execute_query(email_query)
         if not email_df.empty:
             email_df.columns = [c.lower() for c in email_df.columns]
+            trips_df['transporter_code'] = trips_df['transporter_code'].astype(str).str.strip()
+            email_df['transporter_code'] = email_df['transporter_code'].astype(str).str.strip()
+            trips_df['transporter_code'] = trips_df['transporter_code'].astype(str).str.replace(r'^00', '', regex=True)
+            email_df['transporter_code'] = email_df['transporter_code'].astype(str).str.replace(r'^00', '', regex=True)
+
+            # print("email_df",email_df['transporter_code'])
+
+            # Now merge
             trips_df = trips_df.merge(email_df, how='left', on='transporter_code')
+            # print("trips_df",trips_df)
+
+            
             
         # ----- 5. Filter valid trips (Original Logic Restored) -----
         
         trips_df['qty_shortage'] = pd.to_numeric(trips_df['qty_shortage'], errors='coerce')
+        # trips_df['transporter_name'] = trips_df['transporter_name'].fillna('')
         filtered_trips_df = trips_df[
             trips_df['transporter_name'].notnull() &
             trips_df['transporter_code'].notnull() &
             (trips_df['qty_shortage'] > 0)
         ].copy()
+        # print("filtered_trips",filtered_trips_df)
 
         # ----- 6. Apply Transporter Filter (Pandas, Original Logic Restored) -----
         
@@ -1836,15 +1858,19 @@ class VTSAnalyticsActions:
         if 'load_date' in filtered_trips_df.columns:
             filtered_trips_df['load_date'] = pd.to_datetime(filtered_trips_df['load_date'])
             
+            
             if filtered_trips_df['load_date'].dt.tz is None:
                 # Localize to UTC if naive (no timezone), then convert
                 filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.tz_localize('UTC').dt.tz_convert(ist)
+                
             else:
                 # If already tz-aware, convert directly (avoids the "Already tz-aware" error)
                 filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.tz_convert(ist)
                 
+                
             # Format the result
             filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.strftime("%Y-%m-%d %H:%M:%S%z")
+            
 
         # ----- 9. Dynamic hierarchical grouping (Original Logic Restored) -----
         
@@ -1905,6 +1931,8 @@ class VTSAnalyticsActions:
             "filtered_vehicle_count": filtered_vehicle_count,
             "zones": zones_list
         }
+    
+
     
     async def get_unblock_ageing(filters, cross_filters, drill_state, payload):
         try:

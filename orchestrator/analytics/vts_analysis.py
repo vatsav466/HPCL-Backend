@@ -461,7 +461,7 @@ async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
     instance_data = instance_mapping[bu].get(current_instance,{})
     for key, violation_data in instance_data.items():
         if key in violation_counts.keys() and violation_counts[key] > violation_data['violation_count']:
-            if key in ['device_tamper_count', 'main_supply_removal_count']:
+            if key in ['device_tamper_count', 'main_supply_removal_count'] and bu in ['TAS']:
                 await is_vehicle_blacklisted_in_alerts(tt_number,sap_id,bu)
             instance = vts_map[key]['alerting_rules'][current_instance]
             instance['severity'] = vts_map[key]["severity"]
@@ -505,7 +505,7 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
     instance_data = instance_mapping[bu].get(current_instance,{})
     for key, violation_data in instance_data.items():
         if key in violation_counts.keys() and violation_counts[key] > violation_data['violation_count']:
-            if key in ['device_tamper_count', 'main_supply_removal_count']:
+            if key in ['device_tamper_count', 'main_supply_removal_count'] and bu in ['TAS']:
                 await is_vehicle_blacklisted_in_alerts(tt_number,sap_id,bu)
             instance = vts_map[key]['alerting_rules'][current_instance]
             instance['severity'] = vts_map[key]["severity"]
