@@ -95,7 +95,8 @@ class VTSOnGoingTripListener:
                 **data,
                 "event_start_datetime": data.get("event_date"),
                 "sap_id": data.get("location_code"),
-                "region": location_data.get('region')  # assuming result is a dict with 'region' key
+                "region": location_data.get('region'),
+                "zone" : location_data.get('zone')
             }
 
             enriched_tasks.append(data_with_region)
