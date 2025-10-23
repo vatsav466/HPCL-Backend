@@ -212,7 +212,7 @@ class VTSAnalyticsActions:
             return conditions
             
         if alert_type.lower() == "blocked":
-            conditions.append("alert_status = 'Open'")
+            conditions.append("vehicle_unblocked_date is null")
         elif alert_type.lower() == "auto_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = false AND vehicle_unblocked_date is not null")
         elif alert_type.lower() == "manual_unblock":
