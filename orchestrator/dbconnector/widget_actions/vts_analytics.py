@@ -2120,7 +2120,7 @@ class VTSAnalyticsActions:
             tl_numbers_str = "', '".join(map(str, tl_numbers_list))
             
             alerts_query = f"""
-                SELECT DISTINCT location_name, vehicle_number, transporter_code, zone
+                SELECT DISTINCT location_name, vehicle_number, transporter_code
                 FROM alerts
                 WHERE vehicle_number IN ('{tl_numbers_str}')
                 AND transporter_code != '' AND location_name != ''
