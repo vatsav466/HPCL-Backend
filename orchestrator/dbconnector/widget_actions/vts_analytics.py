@@ -2067,8 +2067,12 @@ class VTSAnalyticsActions:
             group_by_keys = ["zone"]
             if filters:
                 filter_keys = [rec.key.strip('"') for rec in filters]
-                if "zone" in filter_keys and "location_name" not in filter_keys:
-                    group_by_keys = ["zone", "location_name"]
+                if "zone" in filter_keys and "region" not in filter_keys:
+                    group_by_keys = ["zone", "region"]
+                elif "zone" in filter_keys and "region" in filter_keys and "location_name" not in filter_keys:
+                    group_by_keys = ["zone", "region", "location_name"]
+                elif "zone" in filter_keys and "region" in filter_keys and "location_name" in filter_keys and "trucknumber" not in filter_keys:
+                    group_by_keys = ["zone", "region", "location_name", "trucknumber"]
 
             swipe_out_l1 = swipe_out_l1.groupby(group_by_keys, as_index=False).agg({
                 "swipeoutl1": "count"
