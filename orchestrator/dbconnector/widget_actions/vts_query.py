@@ -275,7 +275,7 @@ vts_query = {
                 SELECT
                     {period_expr} AS period,
                     COUNT(*) AS total_alerts,
-                    SUM(CASE WHEN alert_status = 'Open' THEN 1 ELSE 0 END) AS "Blocked",
+                    SUM(CASE WHEN vehicle_unblocked_date is null THEN 1 ELSE 0 END) AS "Blocked",
                     SUM(CASE WHEN alert_status = 'Close' AND mark_as_false = false and vehicle_unblocked_date is not null THEN 1 ELSE 0 END) AS "Auto Unblock",
                     SUM(CASE WHEN alert_status = 'Close' AND mark_as_false = true and vehicle_unblocked_date is not null THEN 1 ELSE 0 END) AS "Manual Unblock",
                     SUM(CASE WHEN device_id = 'Instance - 1' THEN 1 ELSE 0 END) AS instance_1,
