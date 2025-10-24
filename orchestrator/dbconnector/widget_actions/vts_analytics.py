@@ -82,10 +82,10 @@ class VTSAnalyticsActions:
     @staticmethod
     def transform_key(key, query=None):
         """Transform keys based on query context"""
-        if query and any(x in query.lower() for x in ["vts_alert_history", "vts_ongoing_trips"]) and key.lower() == "bu":
-            return "location_type"
-        if query and "vts_alert_history" in query.lower() and key.lower() == "sap_id":
-            return "location_id"
+        # if query and any(x in query.lower() for x in ["vts_alert_history", "vts_ongoing_trips"]) and key.lower() == "bu":
+        #     return "location_type"
+        # if query and "vts_alert_history" in query.lower() and key.lower() == "sap_id":
+        #     return "location_id"          
         return key
     
     @staticmethod
@@ -212,7 +212,7 @@ class VTSAnalyticsActions:
             return conditions
             
         if alert_type.lower() == "blocked":
-            conditions.append("alert_status = 'Open'")
+            conditions.append("vehicle_unblocked_date is null")
         elif alert_type.lower() == "auto_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = false AND vehicle_unblocked_date is not null")
         elif alert_type.lower() == "manual_unblock":
@@ -383,7 +383,7 @@ class VTSAnalyticsActions:
                         invoice_no,
                         qty_shortage
                     FROM sales_trips_till_date
-                    WHERE qty_shortage != 0 
+                    WHERE qty_shortage::numeric != 0 
                     AND qty_shortage IS NOT NULL
                     AND vehicle_id IN ('{tl_numbers_str}')
                 """
@@ -557,7 +557,7 @@ class VTSAnalyticsActions:
                     shortage_vehicles_query = """
                         SELECT DISTINCT vehicle_id 
                         FROM sales_trips_till_date 
-                        WHERE qty_shortage != 0 AND qty_shortage IS NOT NULL
+                        WHERE qty_shortage::numeric != 0 AND qty_shortage IS NOT NULL
                     """
                     df_shortage_vehicles = await VTSAnalyticsActions.execute_query(shortage_vehicles_query)
                     tl_numbers_list = df_shortage_vehicles['vehicle_id'].tolist() if not df_shortage_vehicles.empty else []
@@ -855,9 +855,9 @@ class VTSAnalyticsActions:
                 plant_cd as sap_id, 
                 vehicle_id, 
                 invoice_no,
-                SUM(qty_shortage) as qty_shortage 
+                SUM(qty_shortage::numeric) as qty_shortage 
             FROM sales_trips_till_date
-            WHERE qty_shortage != 0  
+            WHERE qty_shortage::numeric != 0  
             """
             
             conditions_list = []
@@ -1719,18 +1719,26 @@ class VTSAnalyticsActions:
         # Date condition from cross_filters
         date_condition_str = ""
         today = datetime.now().date()
-        date_selection = next((getattr(f, "value", None) for f in cross_filters if getattr(f, "key", None) == "date"), None)
+        # print("today",today)
+        date_selection = next(
+                    (getattr(f, "value", None) for f in cross_filters if getattr(f, "key", "").lower() == "date"), 
+                    None
+                )
+        # print("date_selection",date_selection)
 
         if date_selection:
             if "," in date_selection:
                 start_date, end_date = date_selection.split(",")
                 date_condition_str = f"AND T.created_on::date BETWEEN '{start_date}' AND '{end_date}'"
+                
             else:
                 date_selection = date_selection.lower()
                 if date_selection == "today":
                     date_condition_str = f"AND T.created_on::date = '{today}'"
+                    
                 elif date_selection == "yesterday":
                     date_condition_str = f"AND T.created_on::date = '{today - timedelta(days=1)}'"
+                    
 
         # ----- 2. Fetch Alerts (Original Logic Restored) -----
         
@@ -1756,7 +1764,7 @@ class VTSAnalyticsActions:
             FROM 
                 sales_trips_till_date T
             WHERE 
-                qty_shortage > 0 
+                qty_shortage::numeric > 0 
                 {sql_trips_conditions} 
                 {date_condition_str}
         """
@@ -1786,19 +1794,33 @@ class VTSAnalyticsActions:
 
         # 4b. Merge email master
         email_query = "SELECT transporter_code, transporter_name FROM email_master"
+        # print("query",email_query)
         email_df = await VTSAnalyticsActions.execute_query(email_query)
         if not email_df.empty:
             email_df.columns = [c.lower() for c in email_df.columns]
+            trips_df['transporter_code'] = trips_df['transporter_code'].astype(str).str.strip()
+            email_df['transporter_code'] = email_df['transporter_code'].astype(str).str.strip()
+            trips_df['transporter_code'] = trips_df['transporter_code'].astype(str).str.replace(r'^00', '', regex=True)
+            email_df['transporter_code'] = email_df['transporter_code'].astype(str).str.replace(r'^00', '', regex=True)
+
+            # print("email_df",email_df['transporter_code'])
+
+            # Now merge
             trips_df = trips_df.merge(email_df, how='left', on='transporter_code')
+            # print("trips_df",trips_df)
+
+            
             
         # ----- 5. Filter valid trips (Original Logic Restored) -----
         
         trips_df['qty_shortage'] = pd.to_numeric(trips_df['qty_shortage'], errors='coerce')
+        # trips_df['transporter_name'] = trips_df['transporter_name'].fillna('')
         filtered_trips_df = trips_df[
             trips_df['transporter_name'].notnull() &
             trips_df['transporter_code'].notnull() &
             (trips_df['qty_shortage'] > 0)
         ].copy()
+        # print("filtered_trips",filtered_trips_df)
 
         # ----- 6. Apply Transporter Filter (Pandas, Original Logic Restored) -----
         
@@ -1836,15 +1858,19 @@ class VTSAnalyticsActions:
         if 'load_date' in filtered_trips_df.columns:
             filtered_trips_df['load_date'] = pd.to_datetime(filtered_trips_df['load_date'])
             
+            
             if filtered_trips_df['load_date'].dt.tz is None:
                 # Localize to UTC if naive (no timezone), then convert
                 filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.tz_localize('UTC').dt.tz_convert(ist)
+                
             else:
                 # If already tz-aware, convert directly (avoids the "Already tz-aware" error)
                 filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.tz_convert(ist)
                 
+                
             # Format the result
             filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.strftime("%Y-%m-%d %H:%M:%S%z")
+            
 
         # ----- 9. Dynamic hierarchical grouping (Original Logic Restored) -----
         
@@ -1905,6 +1931,8 @@ class VTSAnalyticsActions:
             "filtered_vehicle_count": filtered_vehicle_count,
             "zones": zones_list
         }
+    
+
     
     async def get_unblock_ageing(filters, cross_filters, drill_state, payload):
         try:
@@ -2039,8 +2067,12 @@ class VTSAnalyticsActions:
             group_by_keys = ["zone"]
             if filters:
                 filter_keys = [rec.key.strip('"') for rec in filters]
-                if "zone" in filter_keys and "location_name" not in filter_keys:
-                    group_by_keys = ["zone", "location_name"]
+                if "zone" in filter_keys and "region" not in filter_keys:
+                    group_by_keys = ["zone", "region"]
+                elif "zone" in filter_keys and "region" in filter_keys and "location_name" not in filter_keys:
+                    group_by_keys = ["zone", "region", "location_name"]
+                elif "zone" in filter_keys and "region" in filter_keys and "location_name" in filter_keys and "trucknumber" not in filter_keys:
+                    group_by_keys = ["zone", "region", "location_name", "trucknumber"]
 
             swipe_out_l1 = swipe_out_l1.groupby(group_by_keys, as_index=False).agg({
                 "swipeoutl1": "count"
@@ -2092,7 +2124,7 @@ class VTSAnalyticsActions:
             tl_numbers_str = "', '".join(map(str, tl_numbers_list))
             
             alerts_query = f"""
-                SELECT DISTINCT location_name, vehicle_number, transporter_code, zone
+                SELECT DISTINCT location_name, vehicle_number, transporter_code
                 FROM alerts
                 WHERE vehicle_number IN ('{tl_numbers_str}')
                 AND transporter_code != '' AND location_name != ''
@@ -2108,6 +2140,8 @@ class VTSAnalyticsActions:
             merged_df = merged_df[merged_df["zone"].notna() & (merged_df["zone"].str.strip() != "")]
             if merged_df.empty:
                 return {"status": False, "message": "No valid zone data found after merging with alerts", "data": []}
+            
+            merged_df["transporter_code"] = merged_df["transporter_code"].astype(str).apply(lambda x: x[2:] if x.startswith("00") else x)
             
             # Step 4: Merge transporter names
             email_query = """SELECT transporter_code, transporter_name FROM email_master"""

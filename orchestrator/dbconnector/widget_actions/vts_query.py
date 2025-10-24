@@ -275,7 +275,7 @@ vts_query = {
                 SELECT
                     {period_expr} AS period,
                     COUNT(*) AS total_alerts,
-                    SUM(CASE WHEN alert_status = 'Open' THEN 1 ELSE 0 END) AS "Blocked",
+                    SUM(CASE WHEN vehicle_unblocked_date is null THEN 1 ELSE 0 END) AS "Blocked",
                     SUM(CASE WHEN alert_status = 'Close' AND mark_as_false = false and vehicle_unblocked_date is not null THEN 1 ELSE 0 END) AS "Auto Unblock",
                     SUM(CASE WHEN alert_status = 'Close' AND mark_as_false = true and vehicle_unblocked_date is not null THEN 1 ELSE 0 END) AS "Manual Unblock",
                     SUM(CASE WHEN device_id = 'Instance - 1' THEN 1 ELSE 0 END) AS instance_1,
@@ -293,7 +293,7 @@ vts_query = {
             SELECT
             {group_by_column},
             device_id as instance_level,
-            SUM(CASE WHEN alert_status = 'Open' 
+            SUM(CASE WHEN vehicle_unblocked_date is null
                     AND violation_type = '{violation_type}' 
                 THEN 1 ELSE 0 END) AS "Blocked",
 
@@ -444,7 +444,7 @@ vts_query = {
     
     "get_emlock_open_data": """
                             SELECT
-                                sap_id, location_name, zone, region, trucknumber as tt_number, 
+                                sap_id, location_name, zone, region, trucknumber,
                                 invoicenumber as invoice_number, swipeoutl1, swipeoutl2
                             FROM
                                 vts_tripauditmaster
