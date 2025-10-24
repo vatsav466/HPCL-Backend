@@ -293,7 +293,7 @@ vts_query = {
             SELECT
             {group_by_column},
             device_id as instance_level,
-            SUM(CASE WHEN alert_status = 'Open' 
+            SUM(CASE WHEN vehicle_unblocked_date is null
                     AND violation_type = '{violation_type}' 
                 THEN 1 ELSE 0 END) AS "Blocked",
 

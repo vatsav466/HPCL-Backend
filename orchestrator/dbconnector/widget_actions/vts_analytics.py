@@ -82,10 +82,10 @@ class VTSAnalyticsActions:
     @staticmethod
     def transform_key(key, query=None):
         """Transform keys based on query context"""
-        if query and any(x in query.lower() for x in ["vts_alert_history", "vts_ongoing_trips"]) and key.lower() == "bu":
-            return "location_type"
-        if query and "vts_alert_history" in query.lower() and key.lower() == "sap_id":
-            return "location_id"          
+        # if query and any(x in query.lower() for x in ["vts_alert_history", "vts_ongoing_trips"]) and key.lower() == "bu":
+        #     return "location_type"
+        # if query and "vts_alert_history" in query.lower() and key.lower() == "sap_id":
+        #     return "location_id"          
         return key
     
     @staticmethod
@@ -212,7 +212,7 @@ class VTSAnalyticsActions:
             return conditions
             
         if alert_type.lower() == "blocked":
-            conditions.append("alert_status = 'Open'")
+            conditions.append("vehicle_unblocked_date is null")
         elif alert_type.lower() == "auto_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = false AND vehicle_unblocked_date is not null")
         elif alert_type.lower() == "manual_unblock":
