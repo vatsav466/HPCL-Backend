@@ -116,6 +116,26 @@ class IndentDryOut:
             "vts": is_vts
         }
         return True, msg_block
+    
+    async def check_closed_indent(self, each_indent):
+        query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
+                 f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params["sap_id"]}' and "
+                 f"indent_no='{each_indent["INDENT_NO"]}' and alert_status='Close' and "
+                 f"product_code='{self.params["product_code"]}' and indent_status in ('Cancelled','Completed')")
+        alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+        if alerts_data.get("data", []):
+            return True
+        return False
+    
+    async def check_open_alert(self, each_indent):
+        query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
+                 f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params["sap_id"]}' and "
+                 f"alert_status != 'Close' and "
+                 f"product_code='{self.params["product_code"]}'")
+        alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+        if alerts_data['data']:
+            return True
+        return False
 
     async def check_raised_indent(self, params: dict):
         if not self.params:
@@ -160,6 +180,25 @@ class IndentDryOut:
         if total_indent:
             # if indent available in IMS
             for each_indent in total_indent:
+                if await self.check_closed_indent(each_indent):
+                    if await self.check_open_alert(each_indent):
+                        continue
+                    else:
+                        print("Create empty alert")
+                        self.params['indent_no'] = ''
+                        self.params['terminal_plant_id'] = ''
+                        self.params['servicing_plant_id'] = ''
+                        # self.params['indent_raised_date'] = ''
+                        if self.params['dry_out_in_days'] == '1':
+                            self.params['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
+                        elif self.params['dry_out_in_days'] == '2':
+                            self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
+                        await create_alert(self.params, camunda_url)
+                        await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
+                                                            connection_mapping.item_name_mapping.get(prod_code, ""),
+                                                            self.params.get('dry_out_in_days'))
+                        return True, {"msg": "Alert raised"}
+
                 query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                          f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params["sap_id"]}' and "
                          f"indent_no='' and alert_status in ('Open', 'InProgress') and "
@@ -573,7 +612,13 @@ class IndentDryOut:
                 return await self.send_alert_action(is_raised=False)
 
             count = 1
+            closed_indents = []
             for each_indent in resp:
+                if await self.check_closed_indent(each_indent):
+                    closed_indents.append(str(each_indent.get('INDENT_NO')))
+                    if len(closed_indents) == len(resp):
+                        return await self.send_alert_action(is_raised=False)
+                    continue
                 if count == 1:
                     self.params['indent_no'] = str(each_indent.get('INDENT_NO'))
                     self.params['terminal_plant_id'] = str(each_indent.get('LOCN_CODE'))
