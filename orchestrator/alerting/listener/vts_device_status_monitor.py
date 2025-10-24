@@ -24,7 +24,7 @@ class VtsDeviceStatusMonitor:
         Returns:
             pyodbc connection
         """
-        creds = credential_loader.get_credentials('VTS_TRUCK_DB')
+        creds = credential_loader.get_credentials('VTS_TRACK_DB')
         connection = pyodbc.connect(
                 'DRIVER={ODBC Driver 18 for SQL Server};'
                 f'Server={creds['host']},{creds['port']};'
@@ -36,7 +36,7 @@ class VtsDeviceStatusMonitor:
         return connection
     
 
-    def fetch_data(cursor, query, getData=False, params=None):
+    def fetch_data(self, cursor, query, getData=False, params=None):
         """
         Fetch data from database using a SQL query
         Args:
@@ -106,8 +106,8 @@ class VtsDeviceStatusMonitor:
         vts_data["alert_closure"] = False
         vts_data["alert_creation"] = False
 
-        vts_data.loc[(vts_data["_merge"].fillna("") == "both") & (vts_data["DEVICE_WORKING"].fillna("") == "Y"), "alert_closure"] = True
-        vts_data.loc[(vts_data["_merge"].fillna("") != "both") & (vts_data["DEVICE_WORKING"].fillna("") == "N"), "alert_creation"] = True
+        vts_data.loc[(vts_data["_merge"] == "both") & (vts_data["DEVICE_WORKING"].fillna("") == "Y"), "alert_closure"] = True
+        vts_data.loc[(vts_data["_merge"] != "both") & (vts_data["DEVICE_WORKING"].fillna("") == "N"), "alert_creation"] = True
         
         for data in vts_data.to_dict(orient="records"):
             if data.get("alert_closure"):
@@ -152,7 +152,7 @@ class VtsDeviceStatusMonitor:
                 alert_data["state"] = location_data.get("state", "")
                 alert_data["city"] = location_data.get("city", "")
                 alert_data["severity"] = "Medium"
-                                
+
                 alert_data["alert_history"] = [
                     {
                         "action_msg": "Device is not being connected. Creating the Alert",
