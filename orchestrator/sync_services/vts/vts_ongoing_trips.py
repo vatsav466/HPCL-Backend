@@ -167,7 +167,7 @@ def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.Data
     print("Before Location Master Mappings :",len(data))
     if not master_data.is_empty():
         data = data.join(
-            master_data.select(["sap_id", "name", "zone", "region"]), on="sap_id", how="left"
+            master_data.select(["bu", "sap_id", "name", "zone", "region"]), on="sap_id", how="left"
         )
     print("After Location Master Mappings :",len(data))
     data = data.rename({"name": "location_name"})
