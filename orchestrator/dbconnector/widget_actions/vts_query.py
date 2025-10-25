@@ -455,7 +455,8 @@ vts_query = {
                     SELECT 
                         (COUNT(*) FILTER (WHERE swipeoutl1 != 'true') +
                         COUNT(*) FILTER (WHERE swipeoutl2 != 'true')) as emlock_open
-                    FROM vts_tripauditmaster;
+                    FROM vts_tripauditmaster
+                    WHERE 1=1
                     """,                    
     "all_violations" : [   
                             "route_deviation_count",
