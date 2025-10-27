@@ -11,6 +11,9 @@ from dateutil.relativedelta import relativedelta
 from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.dbconnector.widget_actions.vts_query as vts_query
 import orchestrator.dbconnector.credential_loader as credential_loader
+import io
+from fastapi.responses import StreamingResponse
+from datetime import datetime
 
 async def generate_cross_filter(cross_filters):
     _filters, daterange = [], None
@@ -155,6 +158,9 @@ class VTSAnalyticsActions:
         
         if "violation_type = 'rd'" in query.lower():
             return f"event_end_datetime BETWEEN '{start}' AND '{end}'"
+        
+        if "sales_trips_till_date" in query.lower():
+            return f"load_date BETWEEN '{start}' AND '{end}'"
                 
         queries = ["vts_device_removed", "vts_harsh_acceleration", "vts_harsh_braking", "vts_panic"]
         if any(q in query.lower() for q in queries):
@@ -852,24 +858,13 @@ class VTSAnalyticsActions:
                 invoice_no,
                 SUM(qty_shortage::numeric) as qty_shortage 
             FROM sales_trips_till_date
-            WHERE qty_shortage::numeric != 0  
+            WHERE qty_shortage::numeric != 0 
+            GROUP BY vehicle_id, invoice_no, plant_cd 
             """
             
-            conditions_list = []
-            if cross_filters:
-                for rec in cross_filters:
-                    key_upper = rec.key.upper()
-                    val = rec.value
-                    if "DATE" in key_upper:
-                        start = val.split(",")[0]
-                        end = (datetime.strptime(val.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-                        conditions_list.append(f"load_date BETWEEN '{start}' AND '{end}'")
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
+            shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
 
-            if conditions_list:
-                conditions_str = " AND ".join(conditions_list)
-                shortage_query += f" AND {conditions_str}"
-
-            shortage_query += " GROUP BY vehicle_id, invoice_no, plant_cd"
             # REMOVED: shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions_str)
             
             # Step 2: Get location master data
@@ -1044,7 +1039,7 @@ class VTSAnalyticsActions:
             if ongoing_trips_type:
                 ongoing_trips_query = query.format(ongoing_trips_type=ongoing_trips_type)
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, ongoing_trips_query)
-                query = VTSAnalyticsActions.apply_conditions_to_query(ongoing_trips_query, conditions)     
+                query = VTSAnalyticsActions.apply_conditions_to_query(ongoing_trips_query, conditions)
                 print(query)
             else:
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
@@ -1053,60 +1048,61 @@ class VTSAnalyticsActions:
             df = await VTSAnalyticsActions.execute_query(query)
             df.drop(columns=["zone"], inplace=True, errors="ignore")
 
-            
+            # Remove duplicate records
             df = df.drop_duplicates(
-                        subset=["event_start_datetime", "event_end_datetime", "tt_number", "invoice_no"],
-                        keep="first"  
-                    )
-            
+                subset=["event_start_datetime", "event_end_datetime", "tt_number", "invoice_no"],
+                keep="first"
+            )
+
             if df.empty:
                 return {"status": True, "message": "No data found", "data": []}
-            
-            # Step 2: Get TT numbers and fetch alerts
+
+            # Step 2: Get location info
             sap_id_list = df['sap_id'].tolist()
             tt_numbers_str = "', '".join(map(str, sap_id_list))
-            
+
             location_query = f"""
-                 select sap_id,name as location_name, zone from location_master where sap_id IN ('{tt_numbers_str}')       
+                SELECT sap_id, name AS location_name, zone
+                FROM location_master
+                WHERE sap_id IN ('{tt_numbers_str}')
             """
-            
+
             loc_df = await VTSAnalyticsActions.execute_query(location_query)
             if loc_df.empty:
                 return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
-            
-            # Step 3: Merge dataframes
-            merged_df = df.merge(loc_df, on="sap_id",  how="left")
+
+            # Step 3: Merge data
+            merged_df = df.merge(loc_df, on="sap_id", how="left")
             merged_df = merged_df.dropna(subset=["zone", "location_name"])
-       
-            # Step 4: Remove empty values for zone, location, transporter
+
+            # Step 4: Remove empty rows based on filters
             for key in ["zone", "location_name", "transporter_name"]:
-                merged_df = merged_df[merged_df[key].notna() & (merged_df[key].str.strip() != "")]
+                merged_df = merged_df[merged_df[key].notna() & (merged_df[key].astype(str).str.strip() != "")]
                 if payload.get(key):
                     merged_df = merged_df[merged_df[key] == payload[key]]
 
             if merged_df.empty:
                 return {"status": True, "message": "No data found for the applied filters", "data": []}
 
-            # Step 5: TT-level drill-down for trip details
+            # Step 5: TT-level drill-down
             selected_tt = payload.get("tt_number")
             if selected_tt:
                 merged_df = merged_df[merged_df["tt_number"] == selected_tt]
-
                 if merged_df.empty:
-                    return {"status": True, "message": f"No trips found for vehicle {selected_tt}", "data": [] }
-                
+                    return {"status": True, "message": f"No trips found for vehicle {selected_tt}", "data": []}
+
                 merged_df["created_at"] = (
-                                pd.to_datetime(merged_df["event_start_datetime"].fillna(merged_df["event_end_datetime"]))
-                                .dt.date.astype(str)
-                            )
+                    pd.to_datetime(merged_df["event_start_datetime"].fillna(merged_df["event_end_datetime"]))
+                    .dt.date.astype(str)
+                )
 
                 trip_df = merged_df.sort_values(by="created_at", ascending=True)
                 trip_df = trip_df[["invoice_no", "created_at"]]
 
                 result = trip_df.to_dict(orient="records")
-                return {"status": True, "message": f"Trip details for vehicle {selected_tt}", "data": result }
+                return {"status": True, "message": f"Trip details for vehicle {selected_tt}", "data": result}
 
-            # Step 6: Determine grouping column for summaries
+            # Step 6: Determine grouping column
             if payload.get("transporter_name"):
                 group_col = "tt_number"
             elif payload.get("location_name"):
@@ -1126,18 +1122,53 @@ class VTSAnalyticsActions:
             if group_col != "tt_number":
                 summary_df["vehicle_count"] = merged_df.groupby(group_col)["tt_number"].nunique().values
 
-            
-            rename_mapping = {
-                "invoice_no": "invoice_count",
-            }
-            summary_df.rename(columns=rename_mapping, inplace=True)
-
+            summary_df.rename(columns={"invoice_no": "invoice_count"}, inplace=True)
             result = summary_df.to_dict(orient="records")
-            return { "status": True, "message": f"Ongoing trips drill-down data",  "data": result}
+
+            # Step 8: Handle Excel download
+            if payload.get("download") == "true":
+                # Remove timezone info
+                for col in merged_df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                    merged_df[col] = merged_df[col].dt.tz_localize(None)
+
+                # Drop completely empty columns
+                merged_df = merged_df.drop(columns=['created_at', 'updated_at'])
+                merged_df = merged_df.dropna(axis=1, how="all")
+                merged_df = merged_df.loc[:, (merged_df.astype(str).apply(lambda x: x.str.strip() != "").any())]
+
+                violation_mapping = {
+                    "HS": "Hotspot",
+                    "TC": "Trip not closed more than 2 hours",
+                    "RD": "Route Deviation > 2km",
+                    "WR": "Trip without route"
+                }
+
+                if "violation_type" in merged_df.columns:
+                    merged_df["violation_type"] = merged_df["violation_type"].replace(violation_mapping)
+
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"{ongoing_trips_type}_{timestamp}.xlsx"
+
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    merged_df.to_excel(writer, index=False, sheet_name='ongoing_trips')
+
+                output.seek(0)
+                headers = {
+                    "Content-Disposition": f'attachment; filename="{file_name}"'
+                }
+                return StreamingResponse(
+                    output,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers=headers
+                )
+
+            return {"status": True, "message": f"{ongoing_trips_type} drill-down data", "data": result}
 
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+
 
     @staticmethod
     async def safety_compliance(filters, cross_filters, drill_state, payload):                       
