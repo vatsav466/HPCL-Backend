@@ -1946,7 +1946,7 @@ async def remove_ro_not_available_in_cris(dry_out_in_days='1'):
 
 async def is_ro_temporary_closed():
     try:
-        query = """SELECT sap_id, tempclose FROM "HPCL_HOS".ms_site WHERE tempclose='true'"""
+        query = """SELECT sap_id, tempclose FROM "HPCL_HOS".ms_site_temp_closed WHERE tempclose='true'"""
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
