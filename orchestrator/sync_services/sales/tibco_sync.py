@@ -47,7 +47,7 @@ def get_db_connection(params):
 def create_table_from_source(pg_conn, data, table_name):
     """Create Postgres table dynamically based on Polars dataframe schema"""
     if data.is_empty():
-        print(" No data available to infer table schema.")
+        print("No data available to infer table schema.")
         return
 
     cur = pg_conn.cursor()
@@ -75,7 +75,7 @@ def create_table_from_source(pg_conn, data, table_name):
     cur.execute(create_sql)
     pg_conn.commit()
     cur.close()
-    print(f" Created table {table_name} with {len(cols)} columns")
+    print(f"Created table {table_name} with {len(cols)} columns")
 
 
 def insertToDB_polars(pg_conn, data, table_name):
@@ -116,8 +116,8 @@ def insertToDB_polars(pg_conn, data, table_name):
     print(f"-- Insert complete for {table_name} --")
 
 
-def get_and_insert_data(cursor, query, pg_conn, table_name, batch_size=50000):
-    """Fetch source data in batches and insert into Postgres"""
+def get_and_insert_data(cursor, query, pg_conn, table_name, df_location, batch_size=50000):
+    """Fetch source data in batches, merge with location_master, and insert into Postgres"""
     print("-" * 50)
     print("Running Query ...", query)
     cursor.execute(query)
@@ -127,17 +127,38 @@ def get_and_insert_data(cursor, query, pg_conn, table_name, batch_size=50000):
         rows = cursor.fetchmany(batch_size)
         if not rows:
             break
-        columns = [col[0] for col in cursor.description]
-        data = pl.from_pandas(pd.DataFrame.from_records(rows, columns=columns))
 
-        # Ensure table exists before inserting
+        columns = [col[0].lower() for col in cursor.description]
+        df_main = pd.DataFrame.from_records(rows, columns=columns)
+
+        # Debug print
+        print(f"Fetched batch of {len(df_main)} rows from source")
+
+        # Merge source batch with location_master on plant_cd == sap_id
+        merged_df = df_main.merge(df_location, left_on='plant_cd', right_on='sap_id', how='left')
+
+        # Ensure BU, SAP_ID, Zone, Region columns exist
+        for col in ["bu", "sap_id", "region", "zone"]:
+            if col not in merged_df.columns:
+                merged_df[col] = None
+
+        # Debug print first few rows
+        print("Merged batch preview:")
+        print(merged_df.head(5))
+
+        # Convert merged DataFrame to Polars
+        data = pl.from_pandas(merged_df)
+
+        # Ensure table exists
         create_table_from_source(pg_conn, data, table_name)
 
+        # Insert merged data
         insertToDB_polars(pg_conn, data, table_name)
         total_rows += len(data)
+        print(f"Merged and inserted {len(data)} rows in this batch")
 
-    print(f"Total rows processed: {total_rows}")
-    logger.info(f"Total rows processed: {total_rows}")
+    print(f"Total rows processed and merged: {total_rows}")
+    logger.info(f"Total rows processed and merged: {total_rows}")
 
 
 def check_table_exists(pg_conn, table_name):
@@ -199,6 +220,16 @@ if __name__ == "__main__":
     table_name = params["table_name"]
     table_exists = check_table_exists(pg_conn, table_name)
 
+    # Fetch location_master once and reuse
+    print("Fetching location_master from Postgres ...")
+    loc_cur = pg_conn.cursor()
+    loc_cur.execute("SELECT sap_id, bu, region, zone FROM location_master")
+    loc_rows = loc_cur.fetchall()
+    loc_columns = [col[0].lower() for col in loc_cur.description]
+    df_location = pd.DataFrame.from_records(loc_rows, columns=loc_columns)
+    loc_cur.close()
+    print(f"Location Master loaded with {len(df_location)} records")
+
     # Source DB connection
     source_conn = get_db_connection(params)
     source_cursor = source_conn.cursor()
@@ -209,21 +240,27 @@ if __name__ == "__main__":
         # Fetch small sample to infer schema
         source_cursor.execute("SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE LIMIT 100")
         sample_rows = source_cursor.fetchall()
-        columns = [col[0] for col in source_cursor.description]
+        columns = [col[0].lower() for col in source_cursor.description]
         sample_data = pl.from_pandas(pd.DataFrame.from_records(sample_rows, columns=columns))
 
+        # Merge sample with location_master for schema inference
+        merged_sample = pd.DataFrame(sample_data.to_pandas()).merge(
+            df_location, left_on='plant_cd', right_on='sap_id', how='left'
+        )
+        data_sample = pl.from_pandas(merged_sample)
+
         # Create table dynamically
-        create_table_from_source(pg_conn, sample_data, table_name)
+        create_table_from_source(pg_conn, data_sample, table_name)
 
         # Insert all data
         query = "SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE"
-        get_and_insert_data(source_cursor, query, pg_conn, table_name)
+        get_and_insert_data(source_cursor, query, pg_conn, table_name, df_location)
     else:
         is_empty = check_table_empty(pg_conn, table_name)
         if is_empty:
             print("Target table is empty → dumping all data")
             query = "SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE"
-            get_and_insert_data(source_cursor, query, pg_conn, table_name)
+            get_and_insert_data(source_cursor, query, pg_conn, table_name, df_location)
         else:
             print("Target table has data → syncing incrementally based on SYNCDT")
 
@@ -239,7 +276,7 @@ if __name__ == "__main__":
                 SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE 
                 WHERE syncdt > '{max_syncdt}'
             """
-            get_and_insert_data(source_cursor, query, pg_conn, table_name)
+            get_and_insert_data(source_cursor, query, pg_conn, table_name, df_location)
 
     source_cursor.close()
     source_conn.close()
