@@ -1460,6 +1460,9 @@ class AlertsSchema(UrdhvaPostgresBase):
     dry_out_end_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("dry_out_end_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     intra_day_dry_out_start_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("intra_day_dry_out_start_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     intra_day_dry_out_end_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("intra_day_dry_out_end_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    temporary_close: Mapped[typing.Optional[bool]] = mapped_column("temporary_close", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    permanent_close: Mapped[typing.Optional[bool]] = mapped_column("permanent_close", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    ro_offline: Mapped[typing.Optional[bool]] = mapped_column("ro_offline", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     transporter_name: Mapped[typing.Optional[str]] = mapped_column("transporter_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     transporter_code: Mapped[typing.Optional[str]] = mapped_column("transporter_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     vehicle_blocked_start_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vehicle_blocked_start_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
@@ -1551,6 +1554,9 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     dry_out_end_time: typing.Optional[datetime.datetime] | None = None
     intra_day_dry_out_start_time: typing.Optional[datetime.datetime] | None = None
     intra_day_dry_out_end_time: typing.Optional[datetime.datetime] | None = None
+    temporary_close: typing.Optional[bool] = pydantic.Field(False, )
+    permanent_close: typing.Optional[bool] = pydantic.Field(False, )
+    ro_offline: typing.Optional[bool] = pydantic.Field(False, )
     transporter_name: typing.Optional[str] = pydantic.Field("", **{})
     transporter_code: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_blocked_start_date: typing.Optional[datetime.datetime] | None = None
@@ -1651,6 +1657,9 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     dry_out_end_time: typing.Optional[datetime.datetime] | None = None
     intra_day_dry_out_start_time: typing.Optional[datetime.datetime] | None = None
     intra_day_dry_out_end_time: typing.Optional[datetime.datetime] | None = None
+    temporary_close: typing.Optional[bool] = pydantic.Field(False, )
+    permanent_close: typing.Optional[bool] = pydantic.Field(False, )
+    ro_offline: typing.Optional[bool] = pydantic.Field(False, )
     transporter_name: typing.Optional[str] = pydantic.Field("", **{})
     transporter_code: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_blocked_start_date: typing.Optional[datetime.datetime] | None = None

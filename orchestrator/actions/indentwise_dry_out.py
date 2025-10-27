@@ -146,6 +146,9 @@ class IndentDryOut:
         self.params['bu'] = 'RO'
         self.params['interlock_name'] = 'Dry Out Each Indent Wise MainFlow'
         self.params['mark_as_false'] = True
+        self.params['temporary_close'] = False
+        self.params['permanent_close'] = False
+        self.params['ro_offline'] = False
         camunda_host = connection_mapping.camunda_listener_mapping.get("camunda_dryout_01")
         camunda_url = f"http://{camunda_host['host']}:{camunda_host['port']}"
         if self.params['camunda_host']:
@@ -688,6 +691,9 @@ class IndentDryOut:
                         self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                     self.params['dry_out_in_days'] = dry_alert_data['dry_out_in_days']
                     self.params['mark_as_false'] = True
+                    self.params['temporary_close'] = False
+                    self.params['permanent_close'] = False
+                    self.params['ro_offline'] = False
                     await create_alert(self.params, camunda_url)
                     await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                         connection_mapping.item_name_mapping.get(prod_code, ""),

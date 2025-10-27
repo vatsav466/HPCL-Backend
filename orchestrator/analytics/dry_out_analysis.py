@@ -11,6 +11,7 @@ import mysql.connector
 import urdhva_base.redispool
 import dashboard_studio_model
 import utilities.helpers as helpers
+from hpcl_ceg_enum import IndentStatus as IndentStatus
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.analytics.ro_analysis as ro_analysis
 from orchestrator.workflow.workflow_process import Camunda
@@ -1942,3 +1943,68 @@ async def remove_ro_not_available_in_cris(dry_out_in_days='1'):
         update_query = f"""update alerts set mark_as_false=false where id = '{record["id"]}' """
         print("update_query: ", update_query)
         await hpcl_ceg_model.Alerts.update_by_query(update_query)
+
+async def is_ro_temporary_closed():
+    try:
+        query = """SELECT sap_id, tempclose FROM "HPCL_HOS".ms_site WHERE tempclose='true'"""
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+
+        function = await charts_actions.charts_connection_vault_routing(
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+        )
+
+        temporary_close_data = await function(query=query)
+        temporary_close_data = pd.DataFrame(temporary_close_data)
+
+        if temporary_close_data.empty:
+            print("No temporarily closed ROs found.")
+            return
+
+        for idx, record in temporary_close_data.iterrows():
+            try:
+                query = (
+                    f"sap_id='{record['sap_id']}' AND bu='RO' "
+                    f"AND interlock_name='Dry Out Each Indent Wise MainFlow' "
+                    f"AND mark_as_false='true' AND alert_status!='Close' "
+                    f"AND temporary_close!='true'"
+                )
+
+                temp_ro_close_data = await hpcl_ceg_model.Alerts.get_all(
+                    urdhva_base.queryparams.QueryParams(q=query),
+                    resp_type='plain'
+                )
+
+                if len(temp_ro_close_data.get('data', [])) == 0:
+                    continue
+
+                for data in temp_ro_close_data['data']:
+                    try:
+                        camunda_url = data['workflow_url']
+                        process_instance_id = data['workflow_instance_id']
+                        delete_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}"
+
+                        delete_response = requests.delete(delete_url)
+                        print(f"[{record['sap_id']}] Workflow deletion → {delete_response.status_code}: {delete_response.text}")
+
+                        await hpcl_ceg_model.Alerts(
+                            **{
+                                "id": data['id'],
+                                "temporary_close": True,
+                                "closed_at": datetime.datetime.now(tz=datetime.timezone.utc),
+                                "alert_status": "Close",
+                                "alert_state": "Resolved",
+                                "indent_status": IndentStatus.TempClosed,
+                            }
+                        ).modify()
+
+                        print(f"[{record['sap_id']}] Alert {data['id']} marked as temporarily closed.")
+
+                    except Exception as e_inner:
+                        print(f"Error closing alert for sap_id={record['sap_id']}: {str(e_inner)}")
+
+            except Exception as e_mid:
+                print(f"Error processing sap_id={record.get('sap_id')}: {str(e_mid)}")
+
+    except Exception as e_outer:
+        print(f"Fatal error in is_ro_temporary_closed(): {str(e_outer)}")

@@ -187,6 +187,7 @@ class IndentStatus(str, enum.Enum):
     R3Swipe = 'R3Swipe'
     VTS = 'VTS'
     Delivered = 'Delivered'
+    TempClosed = 'TempClosed'
 
 
 

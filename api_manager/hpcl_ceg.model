@@ -132,6 +132,7 @@ Enum IndentStatus str {
     R3Swipe='R3Swipe'
     VTS='VTS'
     Delivered='Delivered'
+    TempClosed='TempClosed'
 }
 
 Model RoleMapper internal {
@@ -775,6 +776,9 @@ Model Alerts {
     dry_out_end_time optional datetime
     intra_day_dry_out_start_time optional datetime
     intra_day_dry_out_end_time optional datetime
+    temporary_close optional bool
+    permanent_close optional bool
+    ro_offline optional bool
 
     // VTS
     transporter_name optional str
