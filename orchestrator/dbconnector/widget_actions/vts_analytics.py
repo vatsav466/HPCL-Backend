@@ -11,6 +11,9 @@ from dateutil.relativedelta import relativedelta
 from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.dbconnector.widget_actions.vts_query as vts_query
 import orchestrator.dbconnector.credential_loader as credential_loader
+import io
+from fastapi.responses import StreamingResponse
+from datetime import datetime
 
 async def generate_cross_filter(cross_filters):
     _filters, daterange = [], None
@@ -146,16 +149,23 @@ class VTSAnalyticsActions:
         if "vts_alert_history" in query.lower():
             return f"vts_end_datetime BETWEEN '{start}' AND '{end}'"
         
+        if "vts_tripauditmaster" in query.lower():
+            return f"createdat BETWEEN '{start}' AND '{end}'"
+        
         onging_trips = ["violation_type = 'wr'", "violation_type = 'tc'", "violation_type = 'hs'"]
         if any(ot in query.lower() for ot in onging_trips):
             return f"event_start_datetime BETWEEN '{start}' AND '{end}'"
         
         if "violation_type = 'rd'" in query.lower():
             return f"event_end_datetime BETWEEN '{start}' AND '{end}'"
+        
+        if "sales_trips_till_date" in query.lower():
+            return f"load_date BETWEEN '{start}' AND '{end}'"
                 
         queries = ["vts_device_removed", "vts_harsh_acceleration", "vts_harsh_braking", "vts_panic"]
         if any(q in query.lower() for q in queries):
             return f"event_date BETWEEN '{start}' AND '{end}'"
+        
         
         return f"created_at BETWEEN '{start}' AND '{end}'"
     
@@ -760,25 +770,21 @@ class VTSAnalyticsActions:
         try:
             # Step 1: Get base query and apply filters
             query = vts_query.vts_query.get(drill_state.split(",")[0])
-            emlock_open = vts_query.vts_query.get("emlock_open")
+            emlock_open_query = vts_query.vts_query.get("emlock_open")
 
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
-            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)            
-            print(query)
-
-            # Step 2: Execute query
+            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
             df = await VTSAnalyticsActions.execute_query(query)
-            emlock_open = await VTSAnalyticsActions.execute_query(emlock_open)
 
-            if not emlock_open.empty:
-                emlock_open = emlock_open["emlock_open"][0]
-            else:
-                emlock_open = 0
+            emlock_conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, emlock_open_query)
+            emlock_query = VTSAnalyticsActions.apply_conditions_to_query(emlock_open_query, emlock_conditions)
+            emlock_df = await VTSAnalyticsActions.execute_query(emlock_query)
+            emlock_open = emlock_df["emlock_open"][0] if not emlock_df.empty else 0
 
             if df.empty:
                 return {"status": True, "message": "No data found", "data": []}
 
-            # Step 3: Define violation columns
+            # Step 2: Define violation columns
             violation_cols = [
                 "route_deviation_count",
                 "stoppage_violations_count",
@@ -791,57 +797,43 @@ class VTSAnalyticsActions:
             df_viol = df[["invoice_number"] + violation_cols].copy()
             df_viol.dropna(subset=["invoice_number"], inplace=True)
 
-            # Step 4: Mark each count >0 as 1, except main_supply_removal_count >= 6
+            # Step 3: Convert to binary (mark violations)
             for col in violation_cols:
                 if col == "main_supply_removal_count":
                     df_viol[col] = df_viol[col].apply(lambda x: 1 if x and x >= 6 else 0)
                 else:
                     df_viol[col] = df_viol[col].apply(lambda x: 1 if x and x != 0 else 0)
 
-            # Step 5: Assign each invoice to its first violation type
-            def first_violation(row):
-                for col in violation_cols:
-                    if row[col] == 1:
-                        return col
-                return None
+            # Step 4: Count each violation across all invoices
+            violation_counts = {col: df_viol[col].sum() for col in violation_cols}
 
-            df_viol["primary_violation"] = df_viol.apply(first_violation, axis=1)
-            df_viol = df_viol[df_viol["primary_violation"].notna()]
-
-            # Step 6: Count invoices per primary violation
-            violation_counts = df_viol["primary_violation"].value_counts()
+            # Step 5: Add emlock_open
             violation_counts["emlock_open"] = emlock_open
-            print("violation_counts :", violation_counts)
 
-            # Step 7: Get shortage count
-            shortage_result = await VTSAnalyticsActions.total_count_shortage(
-                filters, cross_filters, drill_state, payload
-            )
+            # Step 6: Get shortage count
+            shortage_result = await VTSAnalyticsActions.total_count_shortage(filters, cross_filters, drill_state, payload)
+            shortage_count = shortage_result.get("trip_count", 0) if shortage_result.get("status") else 0
+            violation_counts["shortage_count"] = shortage_count
 
-            shortage_count = 0
-            if shortage_result.get("status"):
-                shortage_count = shortage_result.get("trip_count", 0)
+            # --- PRINT COUNTS ---
+            print("Violation counts (including emlock and shortage):")
+            for key, count in violation_counts.items():
+                print(f"{key}: {count}")
 
-            # Step 8: Calculate totals and percentages
-            total_violations = violation_counts.sum()
-            total_all = total_violations + shortage_count
-
+            # Step 7: Calculate total and percentages
+            total_all = sum(violation_counts.values())
             percentages = {}
-            for col in violation_cols + ["emlock_open"]:
-                count = violation_counts.get(col, 0)
-                percentages[col] = round(100 * count / total_all, 2) if total_all > 0 else 0
+            for key, count in violation_counts.items():
+                percentages[key] = round(100 * count / total_all, 2) if total_all > 0 else 0
 
-            # Add shortage percentage
-            percentages["shortage_count"] = round(100 * shortage_count / total_all, 2) if total_all > 0 else 0
-
-            # Step 9: Fix rounding so total = 100
-            total = round(sum(percentages.values()), 2)
-            diff = round(100 - total, 2)
+            # Step 8: Adjust rounding so total = 100
+            total_percent = round(sum(percentages.values()), 2)
+            diff = round(100 - total_percent, 2)
             if diff != 0:
                 largest_key = max(percentages, key=percentages.get)
                 percentages[largest_key] = round(percentages[largest_key] + diff, 2)
 
-            # Step 10: Return final response
+            # Step 9: Return final response
             return {
                 "status": True,
                 "message": "Violation percentages calculated",
@@ -849,8 +841,10 @@ class VTSAnalyticsActions:
             }
 
         except Exception as e:
+            import traceback
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+
 
 
     @staticmethod
@@ -864,24 +858,13 @@ class VTSAnalyticsActions:
                 invoice_no,
                 SUM(qty_shortage::numeric) as qty_shortage 
             FROM sales_trips_till_date
-            WHERE qty_shortage::numeric != 0  
+            WHERE qty_shortage::numeric != 0 
+            GROUP BY vehicle_id, invoice_no, plant_cd 
             """
             
-            conditions_list = []
-            if cross_filters:
-                for rec in cross_filters:
-                    key_upper = rec.key.upper()
-                    val = rec.value
-                    if "DATE" in key_upper:
-                        start = val.split(",")[0]
-                        end = (datetime.strptime(val.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-                        conditions_list.append(f"load_date BETWEEN '{start}' AND '{end}'")
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
+            shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
 
-            if conditions_list:
-                conditions_str = " AND ".join(conditions_list)
-                shortage_query += f" AND {conditions_str}"
-
-            shortage_query += " GROUP BY vehicle_id, invoice_no, plant_cd"
             # REMOVED: shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions_str)
             
             # Step 2: Get location master data
@@ -1056,7 +1039,7 @@ class VTSAnalyticsActions:
             if ongoing_trips_type:
                 ongoing_trips_query = query.format(ongoing_trips_type=ongoing_trips_type)
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, ongoing_trips_query)
-                query = VTSAnalyticsActions.apply_conditions_to_query(ongoing_trips_query, conditions)     
+                query = VTSAnalyticsActions.apply_conditions_to_query(ongoing_trips_query, conditions)
                 print(query)
             else:
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
@@ -1065,60 +1048,61 @@ class VTSAnalyticsActions:
             df = await VTSAnalyticsActions.execute_query(query)
             df.drop(columns=["zone"], inplace=True, errors="ignore")
 
-            
+            # Remove duplicate records
             df = df.drop_duplicates(
-                        subset=["event_start_datetime", "event_end_datetime", "tt_number", "invoice_no"],
-                        keep="first"  
-                    )
-            
+                subset=["event_start_datetime", "event_end_datetime", "tt_number", "invoice_no"],
+                keep="first"
+            )
+
             if df.empty:
                 return {"status": True, "message": "No data found", "data": []}
-            
-            # Step 2: Get TT numbers and fetch alerts
+
+            # Step 2: Get location info
             sap_id_list = df['sap_id'].tolist()
             tt_numbers_str = "', '".join(map(str, sap_id_list))
-            
+
             location_query = f"""
-                 select sap_id,name as location_name, zone from location_master where sap_id IN ('{tt_numbers_str}')       
+                SELECT sap_id, name AS location_name, zone
+                FROM location_master
+                WHERE sap_id IN ('{tt_numbers_str}')
             """
-            
+
             loc_df = await VTSAnalyticsActions.execute_query(location_query)
             if loc_df.empty:
                 return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
-            
-            # Step 3: Merge dataframes
-            merged_df = df.merge(loc_df, on="sap_id",  how="left")
+
+            # Step 3: Merge data
+            merged_df = df.merge(loc_df, on="sap_id", how="left")
             merged_df = merged_df.dropna(subset=["zone", "location_name"])
-       
-            # Step 4: Remove empty values for zone, location, transporter
+
+            # Step 4: Remove empty rows based on filters
             for key in ["zone", "location_name", "transporter_name"]:
-                merged_df = merged_df[merged_df[key].notna() & (merged_df[key].str.strip() != "")]
+                merged_df = merged_df[merged_df[key].notna() & (merged_df[key].astype(str).str.strip() != "")]
                 if payload.get(key):
                     merged_df = merged_df[merged_df[key] == payload[key]]
 
             if merged_df.empty:
                 return {"status": True, "message": "No data found for the applied filters", "data": []}
 
-            # Step 5: TT-level drill-down for trip details
+            # Step 5: TT-level drill-down
             selected_tt = payload.get("tt_number")
             if selected_tt:
                 merged_df = merged_df[merged_df["tt_number"] == selected_tt]
-
                 if merged_df.empty:
-                    return {"status": True, "message": f"No trips found for vehicle {selected_tt}", "data": [] }
-                
+                    return {"status": True, "message": f"No trips found for vehicle {selected_tt}", "data": []}
+
                 merged_df["created_at"] = (
-                                pd.to_datetime(merged_df["event_start_datetime"].fillna(merged_df["event_end_datetime"]))
-                                .dt.date.astype(str)
-                            )
+                    pd.to_datetime(merged_df["event_start_datetime"].fillna(merged_df["event_end_datetime"]))
+                    .dt.date.astype(str)
+                )
 
                 trip_df = merged_df.sort_values(by="created_at", ascending=True)
                 trip_df = trip_df[["invoice_no", "created_at"]]
 
                 result = trip_df.to_dict(orient="records")
-                return {"status": True, "message": f"Trip details for vehicle {selected_tt}", "data": result }
+                return {"status": True, "message": f"Trip details for vehicle {selected_tt}", "data": result}
 
-            # Step 6: Determine grouping column for summaries
+            # Step 6: Determine grouping column
             if payload.get("transporter_name"):
                 group_col = "tt_number"
             elif payload.get("location_name"):
@@ -1138,18 +1122,53 @@ class VTSAnalyticsActions:
             if group_col != "tt_number":
                 summary_df["vehicle_count"] = merged_df.groupby(group_col)["tt_number"].nunique().values
 
-            
-            rename_mapping = {
-                "invoice_no": "invoice_count",
-            }
-            summary_df.rename(columns=rename_mapping, inplace=True)
-
+            summary_df.rename(columns={"invoice_no": "invoice_count"}, inplace=True)
             result = summary_df.to_dict(orient="records")
-            return { "status": True, "message": f"Ongoing trips drill-down data",  "data": result}
+
+            # Step 8: Handle Excel download
+            if payload.get("download") == "true":
+                # Remove timezone info
+                for col in merged_df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                    merged_df[col] = merged_df[col].dt.tz_localize(None)
+
+                # Drop completely empty columns
+                merged_df = merged_df.drop(columns=['created_at', 'updated_at'])
+                merged_df = merged_df.dropna(axis=1, how="all")
+                merged_df = merged_df.loc[:, (merged_df.astype(str).apply(lambda x: x.str.strip() != "").any())]
+
+                violation_mapping = {
+                    "HS": "Hotspot",
+                    "TC": "Trip not closed more than 2 hours",
+                    "RD": "Route Deviation > 2km",
+                    "WR": "Trip without route"
+                }
+
+                if "violation_type" in merged_df.columns:
+                    merged_df["violation_type"] = merged_df["violation_type"].replace(violation_mapping)
+
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"{ongoing_trips_type}_{timestamp}.xlsx"
+
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    merged_df.to_excel(writer, index=False, sheet_name='ongoing_trips')
+
+                output.seek(0)
+                headers = {
+                    "Content-Disposition": f'attachment; filename="{file_name}"'
+                }
+                return StreamingResponse(
+                    output,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers=headers
+                )
+
+            return {"status": True, "message": f"{ongoing_trips_type} drill-down data", "data": result}
 
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+
 
     @staticmethod
     async def safety_compliance(filters, cross_filters, drill_state, payload):                       
@@ -1686,11 +1705,12 @@ class VTSAnalyticsActions:
         import pytz
         from datetime import datetime, timedelta
 
-        # --- HELPER FUNCTION: Build SQL Conditions (Only for columns in sales_trips_till_date) ---
+        # --- HELPER FUNCTION: Build SQL Conditions (Extended for bu, sap_id, zone) ---
         def build_sql_conditions_string(filter_list, table_alias='T'):
             conditions = []
-            # Keys allowed for SQL pushdown in sales_trips_till_date
-            allowed_keys = ['zone_nm', 'plant_nm', 'vehicle_id'] 
+            # Extended keys allowed for SQL pushdown in sales_trips_till_date
+            # Assuming these columns exist in the table. Adjust column names if different.
+            allowed_keys = ['zone_nm', 'plant_nm', 'vehicle_id', 'bu', 'sap_id', 'zone'] 
             
             for f in filter_list:
                 key = getattr(f, "key", None)
@@ -1713,61 +1733,52 @@ class VTSAnalyticsActions:
 
         # ----- 1. Filter Separation and Date Condition Preparation -----
         
-        # Separate filters: 'bu' for alerts, others for trips
-        alerts_filters = [f for f in filters if getattr(f, "key", None) in ("bu",)]
-        trips_filters = [f for f in filters if getattr(f, "key", None) not in ("bu",)]
+        # Separate filters: NO filters go to alerts for bu, sap_id, zone
+        # These filters (bu, sap_id, zone) go directly to trips_query only
+        alerts_filters = []  # Empty - we don't use bu filter for alerts anymore
+        trips_filters = filters  # All filters apply to trips
         
         # Extract Transporter Filter for later Pandas application (must be done post-merge)
         transporter_filter = next((f for f in trips_filters if getattr(f, 'key') == 'transporter_name'), None)
         
-        # SQL conditions for trips (zone_nm, plant_nm, vehicle_id)
+        # SQL conditions for trips (zone_nm, plant_nm, vehicle_id, bu, sap_id, zone)
         sql_trips_conditions = build_sql_conditions_string(trips_filters, table_alias='T')
         
         # Date condition from cross_filters
         date_condition_str = ""
         today = datetime.now().date()
-        # print("today",today)
         date_selection = next(
                     (getattr(f, "value", None) for f in cross_filters if getattr(f, "key", "").lower() == "date"), 
                     None
                 )
-        # print("date_selection",date_selection)
 
         if date_selection:
             if "," in date_selection:
                 start_date, end_date = date_selection.split(",")
                 date_condition_str = f"AND T.created_on::date BETWEEN '{start_date}' AND '{end_date}'"
-                
             else:
                 date_selection = date_selection.lower()
                 if date_selection == "today":
                     date_condition_str = f"AND T.created_on::date = '{today}'"
-                    
                 elif date_selection == "yesterday":
                     date_condition_str = f"AND T.created_on::date = '{today - timedelta(days=1)}'"
-                    
 
-        # ----- 2. Fetch Alerts (Original Logic Restored) -----
+        # ----- 2. Fetch Alerts (No filter conditions applied) -----
         
         alerts_query = """
-            SELECT location_name, bu, vehicle_number, transporter_code
+            SELECT location_name, vehicle_number, transporter_code
             FROM alerts
             WHERE alert_section = 'VTS'
         """
-        conditions = VTSAnalyticsActions.build_filter_conditions(alerts_filters, cross_filters, alerts_query)
-        final_query = VTSAnalyticsActions.apply_conditions_to_query(alerts_query, conditions) 
-        alerts_df = await VTSAnalyticsActions.execute_query(final_query)
+        alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
         alerts_df.columns = [c.lower() for c in alerts_df.columns]
-
-        if alerts_df.empty and alerts_filters:
-            return {"status": "success", "total_invoice_count": 0, "total_vehicle_count": 0,
-                    "filtered_invoice_count": 0, "filtered_vehicle_count": 0, "zones": []}
         
-        # ----- 3. Fetch Trips (OPTIMIZED: SQL Filter Pushdown) -----
+        # ----- 3. Fetch Trips (OPTIMIZED: SQL Filter Pushdown with bu, sap_id, zone) -----
         
         trips_query = f"""
             SELECT 
-                zone_nm, plant_nm, load_date, vehicle_id, qty_shortage, invoice_no, created_on 
+                zone_nm, plant_nm, load_date, vehicle_id, qty_shortage, invoice_no, created_on,
+                bu, sap_id, zone
             FROM 
                 sales_trips_till_date T
             WHERE 
@@ -1775,23 +1786,18 @@ class VTSAnalyticsActions:
                 {sql_trips_conditions} 
                 {date_condition_str}
         """
+
+        print("trips_query", trips_query)
         trips_df = await VTSAnalyticsActions.execute_query(trips_query)
         if trips_df.empty:
             return {"status": "success", "total_invoice_count": 0, "total_vehicle_count": 0,
                     "filtered_invoice_count": 0, "filtered_vehicle_count": 0, "zones": []}
             
         trips_df.columns = [c.lower() for c in trips_df.columns]
-        
-       
 
-        # ----- 4. Merging (Original Logic Restored) -----
+        # ----- 4. Merging (Alerts merge without BU) -----
 
-        # 4a. Merge Alerts
-        if 'location_name' in alerts_df.columns and 'bu' in alerts_df.columns:
-            plant_bu_mapping = alerts_df[['location_name', 'bu']].drop_duplicates()
-            trips_df = trips_df.merge(plant_bu_mapping, how='left', left_on='plant_nm', right_on='location_name') \
-                            .drop(columns=['location_name'], errors='ignore')
-
+        # 4a. Merge Alerts for vehicle and transporter mapping only (no BU from alerts)
         if {'location_name', 'vehicle_number', 'transporter_code'}.issubset(alerts_df.columns):
             alerts_vehicle_mapping = alerts_df[['location_name', 'vehicle_number', 'transporter_code']].drop_duplicates()
             trips_df = trips_df.merge(alerts_vehicle_mapping, how='left',
@@ -1801,7 +1807,6 @@ class VTSAnalyticsActions:
 
         # 4b. Merge email master
         email_query = "SELECT transporter_code, transporter_name FROM email_master"
-        # print("query",email_query)
         email_df = await VTSAnalyticsActions.execute_query(email_query)
         if not email_df.empty:
             email_df.columns = [c.lower() for c in email_df.columns]
@@ -1810,28 +1815,19 @@ class VTSAnalyticsActions:
             trips_df['transporter_code'] = trips_df['transporter_code'].astype(str).str.replace(r'^00', '', regex=True)
             email_df['transporter_code'] = email_df['transporter_code'].astype(str).str.replace(r'^00', '', regex=True)
 
-            # print("email_df",email_df['transporter_code'])
-
-            # Now merge
             trips_df = trips_df.merge(email_df, how='left', on='transporter_code')
-            # print("trips_df",trips_df)
-
             
-            
-        # ----- 5. Filter valid trips (Original Logic Restored) -----
+        # ----- 5. Filter valid trips (Original Logic) -----
         
         trips_df['qty_shortage'] = pd.to_numeric(trips_df['qty_shortage'], errors='coerce')
-        # trips_df['transporter_name'] = trips_df['transporter_name'].fillna('')
         filtered_trips_df = trips_df[
             trips_df['transporter_name'].notnull() &
             trips_df['transporter_code'].notnull() &
             (trips_df['qty_shortage'] > 0)
         ].copy()
-        # print("filtered_trips",filtered_trips_df)
 
-        # ----- 6. Apply Transporter Filter (Pandas, Original Logic Restored) -----
+        # ----- 6. Apply Transporter Filter (Pandas, Original Logic) -----
         
-        # Apply the transporter_name filter here, post-merge.
         if transporter_filter:
             key = getattr(transporter_filter, "key", None)
             val = getattr(transporter_filter, "value", None)
@@ -1846,7 +1842,7 @@ class VTSAnalyticsActions:
                         val = [val]
                     filtered_trips_df = filtered_trips_df[filtered_trips_df[df_col].isin(val)]
 
-        # ----- 7. Counts after filtering (Original Logic Restored) -----
+        # ----- 7. Counts after filtering (Original Logic) -----
         
         filtered_invoice_count = filtered_trips_df['invoice_no'].nunique()
         filtered_vehicle_count = filtered_trips_df['vehicle_id'].nunique()
@@ -1855,33 +1851,23 @@ class VTSAnalyticsActions:
             return {"status": "success", "total_invoice_count": 0, "total_vehicle_count": 0,
                     "filtered_invoice_count": 0, "filtered_vehicle_count": 0, "zones": []}
                     
-        # Drop exact duplicates
         filtered_trips_df = filtered_trips_df.drop_duplicates()
 
-        # ----- 8. Convert load_date to IST (CRITICAL FIX: Original Logic Restored) -----
+        # ----- 8. Convert load_date to IST (CRITICAL FIX: Original Logic) -----
         
-        # This logic correctly checks if the column is already timezone-aware before localizing.
         ist = pytz.timezone("Asia/Kolkata")
         if 'load_date' in filtered_trips_df.columns:
             filtered_trips_df['load_date'] = pd.to_datetime(filtered_trips_df['load_date'])
             
-            
             if filtered_trips_df['load_date'].dt.tz is None:
-                # Localize to UTC if naive (no timezone), then convert
                 filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.tz_localize('UTC').dt.tz_convert(ist)
-                
             else:
-                # If already tz-aware, convert directly (avoids the "Already tz-aware" error)
                 filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.tz_convert(ist)
                 
-                
-            # Format the result
             filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.strftime("%Y-%m-%d %H:%M:%S%z")
-            
 
-        # ----- 9. Dynamic hierarchical grouping (Original Logic Restored) -----
+        # ----- 9. Dynamic hierarchical grouping (Original Logic) -----
         
-        # Re-using your original recursive function structure for consistency
         def compute_group_summary(df, group_cols):
             if not group_cols:
                 return None
@@ -1896,7 +1882,6 @@ class VTSAnalyticsActions:
                 item["invoice_count"] = group["invoice_no"].nunique()
                 item["vehicle_count"] = group["vehicle_id"].nunique()
 
-                # recursive drilldown
                 child = compute_group_summary(group, next_cols)
                 if child:
                     if next_cols[0] == "plant_nm":
@@ -1908,16 +1893,13 @@ class VTSAnalyticsActions:
                     elif next_cols[0] == "invoice_no":
                         item["invoices"] = child
                 else:
-                    # Last level reached → current_col is invoice_no
                     if current_col == "invoice_no" and "load_date" in group.columns:
-                        # If multiple rows per invoice, take the first or min load_date
                         item["load_date"] = group["load_date"].iloc[0]
 
                 result.append(item)
 
             return result
 
-        # Determine grouping columns based on applied filters
         filter_keys = [getattr(f, "key", None) for f in filters] if filters else []
         if "vehicle_id" in filter_keys:
             group_cols = ["vehicle_id", "invoice_no"]
@@ -2060,9 +2042,15 @@ class VTSAnalyticsActions:
                 query += f" {clause} createdat BETWEEN {daterange}"
             else:
                 query += f" {clause} CAST(createdat AS DATE) = '{current_date}'"
+            
+            print("Final Query for emlock open data:", query)
 
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
             df = pd.DataFrame(resp.get("data", []))
+
+            if df.empty:
+                return {"status": True, "message": "No data found", "data": []}
+            
             df = await filter_data(df, _filters)
                         
             swipe_out_l1 = df[df['swipeoutl1'].fillna('').str.lower() == 'false']
