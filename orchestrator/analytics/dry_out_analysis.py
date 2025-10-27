@@ -1790,7 +1790,7 @@ async def get_previous_day_carry_fwd_indent(today=None, data='count'):
         data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
         return data.get('data', [])
 
-async def get_closed_outlet(dry_out_in_days='1'):
+async def get_closed_outlet(conditions=None, dry_out_in_days='1'):
     query = f"""select erp_code from "HPCL_HOS"."ms_site" where tempclose = true"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "cris", "1")
@@ -1802,8 +1802,8 @@ async def get_closed_outlet(dry_out_in_days='1'):
     )
     site_data = pd.DataFrame(site_data)
 
-    query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
-             f"mark_as_false = true and alert_status != 'Close' and interlock_name = 'Dry Out Each Indent Wise MainFlow'")
+    query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and {conditions} and alert_status!='Close'")
+
     alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
     alert_data = pd.DataFrame(alert_data.get("data", []))
 
@@ -1867,9 +1867,9 @@ async def trigger_camunda_workflow(alert_data):
     redis_ins = await urdhva_base.redispool.get_redis_connection()
     await redis_ins.hset("alert_camunda_url", str(alert_data['id']), camunda_url)
 
-async def get_nozzle_sales(dry_out_in_days='1'):
+async def get_nozzle_sales(conditions=None, dry_out_in_days='1'):
     query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
-             f"mark_as_false = true and alert_status != 'Close' and interlock_name = 'Dry Out Each Indent Wise MainFlow'")
+             f"alert_status != 'Close' and {conditions}")
     alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
     alert_data = pd.DataFrame(alert_data.get("data", []))
     # print(alert_data)

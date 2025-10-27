@@ -650,11 +650,11 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
 
     closed_outlet = 0
     if data.bu_type == 'ro':
-        closed_outlet = await dry_out_analysis.get_closed_outlet(dry_out_in_days=dry_out_in_days_query)
+        closed_outlet = await dry_out_analysis.get_closed_outlet(conditions=conditions, dry_out_in_days=dry_out_in_days_query)
 
     nozzle_sales = 0
     if data.bu_type == 'ro':
-        nozzle_sales = await dry_out_analysis.get_nozzle_sales(dry_out_in_days=dry_out_in_days_query)
+        nozzle_sales = await dry_out_analysis.get_nozzle_sales(conditions=conditions, dry_out_in_days=dry_out_in_days_query)
 
     stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
               "group": top_x_axis[key - 1]['group']}
