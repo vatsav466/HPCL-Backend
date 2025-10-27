@@ -145,6 +145,13 @@ class VTSAnalyticsActions:
        
         if "vts_alert_history" in query.lower():
             return f"vts_end_datetime BETWEEN '{start}' AND '{end}'"
+        
+        onging_trips = ["violation_type = 'wr'", "violation_type = 'tc'", "violation_type = 'hs'"]
+        if any(ot in query.lower() for ot in onging_trips):
+            return f"event_start_datetime BETWEEN '{start}' AND '{end}'"
+        
+        if "violation_type = 'rd'" in query.lower():
+            return f"event_end_datetime BETWEEN '{start}' AND '{end}'"
                 
         queries = ["vts_device_removed", "vts_harsh_acceleration", "vts_harsh_braking", "vts_panic"]
         if any(q in query.lower() for q in queries):
