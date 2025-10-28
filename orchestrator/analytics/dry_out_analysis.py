@@ -1803,7 +1803,11 @@ async def get_closed_outlet(conditions=None, dry_out_in_days='1'):
     )
     site_data = pd.DataFrame(site_data)
 
-    query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and {conditions} and alert_status!='Close'")
+    query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
+             f"mark_as_false = true and alert_status != 'Close' and interlock_name = 'Dry Out Each Indent Wise MainFlow'")
+    
+    if conditions:
+        query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and {conditions} and alert_status!='Close'")
 
     alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
     alert_data = pd.DataFrame(alert_data.get("data", []))
@@ -1870,7 +1874,12 @@ async def trigger_camunda_workflow(alert_data):
 
 async def get_nozzle_sales(conditions=None, dry_out_in_days='1'):
     query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
-             f"alert_status != 'Close' and {conditions}")
+             f"mark_as_false = true and alert_status != 'Close' and interlock_name = 'Dry Out Each Indent Wise MainFlow'")
+    
+    if conditions:
+        query = (f"select sap_id from alerts where dry_out_in_days = '{dry_out_in_days}' and "
+                 f"alert_status != 'Close' and {conditions}")
+        
     alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
     alert_data = pd.DataFrame(alert_data.get("data", []))
     # print(alert_data)
