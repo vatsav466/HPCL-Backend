@@ -13,7 +13,7 @@ import orchestrator.dbconnector.widget_actions.vts_query as vts_query
 import orchestrator.dbconnector.credential_loader as credential_loader
 import io
 from fastapi.responses import StreamingResponse
-from datetime import datetime
+
 
 async def generate_cross_filter(cross_filters):
     _filters, daterange = [], None
@@ -233,7 +233,7 @@ class VTSAnalyticsActions:
         elif alert_type.lower() == "auto_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = false AND vehicle_unblocked_date is not null")
         elif alert_type.lower() == "manual_unblock":
-            conditions.append("alert_status = 'Close' AND mark_as_false = true")
+            conditions.append("alert_status = 'Close' AND mark_as_false = true and vehicle_unblocked_date is not null")
         # 'all_alerts' -> no extra conditions
         
         return conditions
@@ -358,9 +358,34 @@ class VTSAnalyticsActions:
            merged_df.drop(columns=["transporter_code"], inplace=True)
            merged_df.dropna(inplace=True)
 
+           if payload.get("download") == "true":
+                # Remove timezone info
+                for col in merged_df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                    merged_df[col] = merged_df[col].dt.tz_localize(None)
+
+                # Drop completely empty columns
+                merged_df = merged_df.dropna(axis=1, how="all")
+                merged_df = merged_df.loc[:, (merged_df.astype(str).apply(lambda x: x.str.strip() != "").any())]
+
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"itdg_{timestamp}.xlsx"
+
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    merged_df.to_excel(writer, index=False, sheet_name='itdg_alerts')
+
+                output.seek(0)
+                headers = {
+                    "Content-Disposition": f'attachment; filename="{file_name}"'
+                }
+                return StreamingResponse(
+                    output,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers=headers
+                )
+
            return {"status": True, "message": "success", "data": merged_df.to_dict(orient="records")}
-        
-        
+         
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
@@ -755,6 +780,32 @@ class VTSAnalyticsActions:
 
             # ==================== DEFAULT CASE ====================
             cleaned_records = filter_non_zero_violations(final_df, all_violations_with_shortage)
+            
+            if payload.get("download") == "true":
+                merged_df = pd.DataFrame(cleaned_records)
+                for col in merged_df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                    merged_df[col] = merged_df[col].dt.tz_localize(None)
+
+                merged_df = merged_df.dropna(axis=1, how="all")
+                merged_df = merged_df.loc[:, (merged_df.astype(str).apply(lambda x: x.str.strip() != "").any())]
+
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"violations_{timestamp}.xlsx"
+
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    merged_df.to_excel(writer, index=False, sheet_name='violations')
+
+                output.seek(0)
+                headers = {
+                    "Content-Disposition": f'attachment; filename="{file_name}"'
+                }
+                return StreamingResponse(
+                    output,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers=headers
+                )
+
 
             if not cleaned_records:
                 return {"status": True, "message": "No non-zero violations found", "data": []}

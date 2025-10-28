@@ -376,7 +376,6 @@ vts_query = {
                                         sap_id,
                                         location_name,
                                         vehicle_number,
-                                        invoice_number,
                                         transporter_code,
                                         zone,
                                         {select_clause}
@@ -384,7 +383,7 @@ vts_query = {
                                     WHERE transporter_code != '' 
                                     AND location_name != '' 
                                     AND alert_section = 'VTS'
-                                    GROUP BY sap_id, location_name, vehicle_number, transporter_code, zone, invoice_number
+                                    GROUP BY sap_id, location_name, vehicle_number, transporter_code, zone
                                     HAVING {having_clause}
                                   """,
     
