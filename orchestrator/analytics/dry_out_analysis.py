@@ -1958,7 +1958,7 @@ async def remove_ro_not_available_in_cris(dry_out_in_days='1'):
 async def delete_with_retry(url, max_retries=3, backoff=3):
     for attempt in range(max_retries):
         try:
-            response = requests.delete(url, timeout=10)  # Adjust timeout as needed
+            response = requests.delete(url, timeout=20)  # Adjust timeout as needed
             if response.status_code in [200, 204, 404]:
                 return response
             else:
