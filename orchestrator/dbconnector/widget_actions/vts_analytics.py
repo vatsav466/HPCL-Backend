@@ -992,6 +992,7 @@ class VTSAnalyticsActions:
 
             # Step 3: Remove missing or empty zones
             merged_df = merged_df[merged_df["zone"].notna() & (merged_df["zone"].str.strip() != "")]
+            merged_df['transporter_code'] = merged_df['transporter_code'].astype(str).apply(lambda x: x[2:] if x.startswith("00") else x)
             if merged_df.empty:
                 return {"status": False, "message": "No valid zone data found after merging with alerts", "data": []}
 
@@ -1007,6 +1008,36 @@ class VTSAnalyticsActions:
                 return {"status": False, "message": f"Invalid violation type: {violation_type}", "data": []}
 
             violation_filtered_df = final_df[final_df[violation_type].fillna(0) != 0].copy()
+
+            #handle search
+            if payload.get("search") == "true":
+                # Select relevant columns for search
+                search_columns = [
+                    "tl_number", 
+                    "transporter_name", 
+                    "location_name", 
+                    "zone", 
+                    "invoice_number",
+                    "created_at",
+                    violation_type
+                ]
+                # Filter only columns that exist in the dataframe
+                available_columns = [col for col in search_columns if col in violation_filtered_df.columns]
+                search_df = violation_filtered_df[available_columns].copy()
+
+                search_df.rename(columns={
+                    "tl_number": "truck_number",
+                     violation_type: f"actual_{violation_type}"  
+                }, inplace=True)
+
+                if "created_at" in search_df.columns:
+                    search_df = search_df.sort_values(by="created_at", ascending=False)
+                
+                return {
+                    "status": True, 
+                    "message": f"All data for {violation_type} search", 
+                    "data": search_df.to_dict(orient="records")
+                }                
 
             # Step 6: Remove empty values for zone, location, transporter
             for key in ["zone", "location_name", "transporter_name"]:
