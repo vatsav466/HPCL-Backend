@@ -516,6 +516,7 @@ class VTSAnalyticsActions:
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, view_query)
                 view_query = VTSAnalyticsActions.apply_conditions_to_query(view_query, conditions)
                 df_view = await VTSAnalyticsActions.execute_query(view_query)
+                df_view = df_view.drop_duplicates(subset=["invoice_number"], keep="first")
                 
                 if df_view.empty:
                     return {"status": True, "message": "No violation history found for this vehicle", "data": []}
@@ -590,6 +591,7 @@ class VTSAnalyticsActions:
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, violation_query)
                 violation_query = VTSAnalyticsActions.apply_conditions_to_query(violation_query, conditions)
                 df_history = await VTSAnalyticsActions.execute_query(violation_query)
+                df_history = df_history.drop_duplicates(subset=["invoice_number"], keep="first")
 
                 # Get vehicle list
                 if not df_history.empty:
