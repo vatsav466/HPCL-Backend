@@ -2,7 +2,9 @@ import urdhva_base
 import os
 import json
 import datetime
+import time
 import requests
+import asyncio
 import pandas as pd
 import polars as pl
 import hpcl_ceg_model
@@ -1953,6 +1955,23 @@ async def remove_ro_not_available_in_cris(dry_out_in_days='1'):
         print("update_query: ", update_query)
         await hpcl_ceg_model.Alerts.update_by_query(update_query)
 
+async def delete_with_retry(url, max_retries=3, backoff=3):
+    for attempt in range(max_retries):
+        try:
+            response = requests.delete(url, timeout=20)  # Adjust timeout as needed
+            if response.status_code in [200, 204, 404]:
+                return response
+            else:
+                print(f"Attempt {attempt+1}: Unexpected response {response.status_code}: {response.text}")
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            print(f"Attempt {attempt+1}: Timeout or connection error: {str(e)}")
+        except Exception as e:
+            print(f"Attempt {attempt+1}: Unknown error: {str(e)}")
+        if attempt < max_retries - 1:
+            time.sleep(backoff * (attempt+1))  # Exponential backoff
+    print(f"Failed to delete after {max_retries} attempts: {url}")
+    return None
+
 async def is_ro_temporary_closed():
     try:
         query = """SELECT sap_id, tempclose FROM "HPCL_HOS".ms_site_temp_closed WHERE tempclose='true'"""
@@ -1962,7 +1981,6 @@ async def is_ro_temporary_closed():
         function = await charts_actions.charts_connection_vault_routing(
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams
         )
-
         temporary_close_data = await function(query=query)
         temporary_close_data = pd.DataFrame(temporary_close_data)
 
@@ -1970,32 +1988,50 @@ async def is_ro_temporary_closed():
             print("No temporarily closed ROs found.")
             return
 
-        for idx, record in temporary_close_data.iterrows():
+        async def handle_single_alert(record):
             try:
-                query = (
+                q = (
                     f"sap_id='{record['sap_id']}' AND bu='RO' "
                     f"AND interlock_name='Dry Out Each Indent Wise MainFlow' "
                     f"AND mark_as_false='true' AND alert_status!='Close' "
                     f"AND temporary_close!='true'"
                 )
-
                 temp_ro_close_data = await hpcl_ceg_model.Alerts.get_all(
-                    urdhva_base.queryparams.QueryParams(q=query),
+                    urdhva_base.queryparams.QueryParams(q=q),
                     resp_type='plain'
                 )
 
-                if len(temp_ro_close_data.get('data', [])) == 0:
-                    continue
-
-                for data in temp_ro_close_data['data']:
+                for data in temp_ro_close_data.get('data', []):
                     try:
                         camunda_url = data['workflow_url']
                         process_instance_id = data['workflow_instance_id']
-                        delete_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}"
+                        instance_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}"
 
-                        delete_response = requests.delete(delete_url)
-                        print(f"[{record['sap_id']}] Workflow deletion → {delete_response.status_code}: {delete_response.text}")
+                        # Check if the instance exists
+                        try:
+                            resp = requests.get(instance_url, timeout=10)
+                        except Exception as e_check:
+                            print(f"[{record['sap_id']}] Error checking instance: {str(e_check)}")
+                            continue
 
+                        instance_exists = resp.status_code == 200
+
+                        # If instance exists, try delete with retry
+                        if instance_exists:
+                            delete_response = await delete_with_retry(instance_url)
+                            if delete_response is None or delete_response.status_code not in [200, 204, 404]:
+                                print(f"[{record['sap_id']}] Camunda delete failed. Skipping alert update.")
+                                continue
+                            print(f"[{record['sap_id']}] Workflow deleted → {delete_response.status_code}: {delete_response.text}")
+
+                        elif resp.status_code == 404:
+                            print(f"[{record['sap_id']}] Instance already deleted.")
+
+                        else:
+                            print(f"[{record['sap_id']}] Camunda API error: {resp.status_code}")
+                            continue  # Do not update alert if unsure
+
+                        # Now update the alert
                         await hpcl_ceg_model.Alerts(
                             **{
                                 "id": data['id'],
@@ -2006,14 +2042,19 @@ async def is_ro_temporary_closed():
                                 "indent_status": IndentStatus.TempClosed,
                             }
                         ).modify()
-
                         print(f"[{record['sap_id']}] Alert {data['id']} marked as temporarily closed.")
 
                     except Exception as e_inner:
-                        print(f"Error closing alert for sap_id={record['sap_id']}: {str(e_inner)}")
-
+                        print(f"Error processing alert for sap_id={record['sap_id']}: {str(e_inner)}")
             except Exception as e_mid:
-                print(f"Error processing sap_id={record.get('sap_id')}: {str(e_mid)}")
+                print(f"Error querying alerts for sap_id={record.get('sap_id')}: {str(e_mid)}")
+
+        # Batch process alerts
+        batch_size = 50  # Control concurrency to avoid overload
+        to_handle = [record for _, record in temporary_close_data.iterrows()]
+        for i in range(0, len(to_handle), batch_size):
+            batch = [handle_single_alert(rec) for rec in to_handle[i:i+batch_size]]
+            await asyncio.gather(*batch)
 
     except Exception as e_outer:
         print(f"Fatal error in is_ro_temporary_closed(): {str(e_outer)}")

@@ -425,7 +425,7 @@ async def last_opened_at(tt_number: str):
     return None, None
 
 async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
-    vts_map = vts_mapping.vts_interlock_mapping
+    vts_map = vts_mapping.vts_interlock_mapping[bu]
     instance_mapping = vts_instance_mapping.instance_mapping
     start_date, end_date = await va_analysis.get_period_datetime(period='fortnight')
     start_date = start_date.strftime("%Y-%m-%d")
@@ -469,7 +469,7 @@ async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
     return instance, violation_name, violations_ids, alert_id
 
 async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
-    vts_map = vts_mapping.vts_interlock_mapping
+    vts_map = vts_mapping.vts_interlock_mapping[bu]
     instance_mapping = vts_instance_mapping.instance_mapping
     start_date, end_date = await va_analysis.get_period_datetime(period='fortnight')
     start_date = start_date.strftime("%Y-%m-%d")
