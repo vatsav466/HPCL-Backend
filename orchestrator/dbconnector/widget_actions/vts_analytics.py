@@ -1028,8 +1028,7 @@ class VTSAnalyticsActions:
                 search_df = violation_filtered_df[available_columns].copy()
 
                 search_df.rename(columns={
-                    "tl_number": "truck_number",
-                     violation_type: f"actual_{violation_type}"  
+                    "tl_number": "truck_number" 
                 }, inplace=True)
 
                 if "created_at" in search_df.columns:
@@ -1067,8 +1066,7 @@ class VTSAnalyticsActions:
                 # Rename columns for frontend
                 invoice_df.rename(columns={
                     "invoice_number": "invoice_no",
-                    "created_at": "created_at",
-                    violation_type: f"actual_{violation_type}"  
+                    "created_at": "created_at"
                 }, inplace=True)
 
                 result = invoice_df.to_dict(orient="records")
@@ -2258,8 +2256,7 @@ class VTSAnalyticsActions:
                 # Rename columns for frontend
                 invoice_df.rename(columns={
                     "invoice_number": "invoice_no",
-                    "created_at": "created_at",
-                    violation_type: f"actual_{violation_type}"
+                    "created_at": "created_at"
                 }, inplace=True)
                 
                 result = invoice_df.to_dict(orient="records")
