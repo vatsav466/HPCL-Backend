@@ -196,6 +196,8 @@ class IndentDryOut:
                             self.params['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                         elif self.params['dry_out_in_days'] == '2':
                             self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
+                        if await self._is_ro_temporarily_closed():
+                            True, {"msg": "RO temporarily Closed"}
                         await create_alert(self.params, camunda_url)
                         await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                             connection_mapping.item_name_mapping.get(prod_code, ""),
@@ -307,6 +309,8 @@ class IndentDryOut:
                             self.params['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                         elif self.params['dry_out_in_days'] == '2':
                             self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
+                        if await self._is_ro_temporarily_closed():
+                            True, {"msg": "RO temporarily Closed"}
                         await create_alert(self.params, camunda_url)
                         await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                             connection_mapping.item_name_mapping.get(prod_code, ""),
@@ -345,6 +349,8 @@ class IndentDryOut:
                     self.params['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                 elif self.params['dry_out_in_days'] == '2':
                     self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
+                if await self._is_ro_temporarily_closed():
+                    True, {"msg": "RO temporarily Closed"}
                 await create_alert(self.params, camunda_url)
                 await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                     connection_mapping.item_name_mapping.get(prod_code, ""),
@@ -600,6 +606,18 @@ class IndentDryOut:
                             indent_status=IndentStatus.Completed
                         )
                     return await self.send_alert_action(is_raised=False)
+                elif await self._is_ro_temporarily_closed():
+                    if dry_alert_data.get("alert_status") == 'Close' and dry_alert_data.get('indent_status') == 'TempClosed':
+                        await self._close_camunda_workflow()
+                    if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') != 'TempClosed':
+                        print("Ro has been temporarily Closed still alert is in Intial stage")
+                        await self.close_supply_chain_alert(
+                            alert_id=self.params.get("alert_id"),
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            indent_status=IndentStatus.TempClosed
+                        )
+                    return await self.send_alert_action(is_raised=False)
 
             query = f"""SELECT a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE", a."PROD_REQD_DT" AS "PROD_REQD_DT" """ \
                     f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
@@ -694,6 +712,8 @@ class IndentDryOut:
                     self.params['temporary_close'] = False
                     self.params['permanent_close'] = False
                     self.params['ro_offline'] = False
+                    if await self._is_ro_temporarily_closed():
+                        True, {"msg": "RO temporarily Closed"}
                     await create_alert(self.params, camunda_url)
                     await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                         connection_mapping.item_name_mapping.get(prod_code, ""),
@@ -1937,7 +1957,19 @@ class IndentDryOut:
         if resp.get("count") > 0:
             return True
         return False
-
+    
+    async def _is_ro_temporarily_closed(self):
+        dealer_code = str(self.params.get("dealer_id"))
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        query = f"""SELECT * FROM "HPCL_HOS".ms_site_temp_closed WHERE sap_id='{dealer_code}'"""
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        ceg_resp = await function(query=query)
+        if not ceg_resp:
+            return False
+        else:
+            return True
+        
     async def _is_indent_delivered(self):
         dealer_code = str(self.params.get("dealer_id"))
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
