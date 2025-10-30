@@ -713,7 +713,7 @@ class IndentDryOut:
                     self.params['permanent_close'] = False
                     self.params['ro_offline'] = False
                     if await self._is_ro_temporarily_closed():
-                        True, {"msg": "RO temporarily Closed"}
+                        return await self.send_alert_action(is_raised=True)
                     await create_alert(self.params, camunda_url)
                     await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                         connection_mapping.item_name_mapping.get(prod_code, ""),
