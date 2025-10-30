@@ -141,15 +141,11 @@ def sync_data(table_name):
             }
 
     # Safe truncate for HPCL_HOS schema
-    query = f"""
-                DO $$
-                BEGIN
-                    IF to_regclass('"{'HPCL_HOS'}.{ 'ms_site_temp_closed' }"') IS NOT NULL THEN
-                        EXECUTE 'TRUNCATE TABLE "HPCL_HOS"."ms_site_temp_closed" RESTART IDENTITY';
-                    END IF;
-                END $$;
-            """
-    fetch_data(cursor=None, query=query, params=params, getData=False)
+    try:
+        query = f"""TRUNCATE "HPCL_HOS".ms_site_temp_closed"""
+        fetch_data(cursor=None, query=query, params=params, getData=False)
+    except Exception:
+        print("-- Could not truncate --")
 
     insertToDB(data, table_name="ms_site_temp_closed", indexing_col=["sap_id"], schema_name="HPCL_HOS")
     print(f"-- {table_name.lower()} synced successfully --")
