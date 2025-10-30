@@ -611,6 +611,12 @@ class IndentDryOut:
                         await self._close_camunda_workflow()
                     if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') != 'TempClosed':
                         print("Ro has been temporarily Closed still alert is in Intial stage")
+                        await self.update_alert_status(
+                            indent_status=IndentStatus.TempClosed,
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            progress_rate=dry_alert_data.get("progress_rate")
+                        )
                         await self.close_supply_chain_alert(
                             alert_id=self.params.get("alert_id"),
                             alert_status=AlertStatus.Close,
@@ -1709,7 +1715,7 @@ class IndentDryOut:
         # input_data = {
         #     "action_type": "RO"
         # }
-        if alert_data.indent_status != indent_status:  # type: ignore
+        if alert_data.indent_status != indent_status and indent_status not in ['TempClosed']:  # type: ignore
             alert_history = alert_data
             if not isinstance(alert_data, dict):
                 alert_history = alert_data.__dict__
@@ -1726,6 +1732,8 @@ class IndentDryOut:
                 del alert_data["_sa_instance_state"]
 
         if alert_data['indent_status'] != indent_status:  # type: ignore
+            if indent_status == 'TempClosed':
+                alert_data['temporary_close'] = True
             alert_data['indent_status'] = indent_status
             alert_data['alert_status'] = alert_status
             alert_data['alert_state'] = alert_state
@@ -1796,7 +1804,7 @@ class IndentDryOut:
         alert_data = await Alerts.get(alert_id)
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
-
+         
         alert_data['alert_type'] = 'RO'
         alert_data['alert_id'] = alert_id
         alert_data['indent_status'] = indent_status
