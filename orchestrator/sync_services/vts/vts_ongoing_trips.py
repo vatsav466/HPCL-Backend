@@ -135,8 +135,12 @@ def insertToDB(data, table_name, indexing_col=()):
         raise Exception(e)
 
 def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.DataFrame()):
+    _datecol = "EVENT_DATE"
+    if table_name in ["TripAuditMaster"]:
+        _datecol = "createdAt"
+
     if not max_date:
-        max_date = f""" select max(event_date) as max_date from vts_{table_name.lower()} """
+        max_date = f""" select max({_datecol}) as max_date from vts_{table_name.lower()} """
         cursor = None
         data = fetch_data(cursor, max_date, getData=True, params=params)
         
@@ -146,11 +150,7 @@ def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.Data
             max_date = (datetime.datetime.now() - relativedelta(days=10)).strftime("%Y-%m-%d")
 
     connection = get_db_connection()
-    cursor = connection.cursor()
-    
-    _datecol = "EVENT_DATE"
-    if table_name in ["TripAuditMaster"]:
-        _datecol = "createdAt"
+    cursor = connection.cursor()        
     
     query = f""" SELECT * FROM {table_name} WHERE CAST({_datecol} AS DATE) > '{max_date}';"""
     data = fetch_data(cursor, query, getData=True)
@@ -189,7 +189,9 @@ def main():
     query = f""" select * from location_master where bu in ('TAS', 'LPG') """
     master_data = fetch_data(None, query, getData=True, params=params)
     
-    for table_name in ["DEVICE_REMOVED", "HARSH_ACCELERATION", "HARSH_BRAKING", "PANIC", "TripAuditMaster"]:
+    for table_name in ["DEVICE_REMOVED", "HARSH_ACCELERATION", 
+                       "HARSH_BRAKING", "PANIC", "TripAuditMaster", 
+                       "ROUTE_DEVIATION", "STOPAGE_VIOLATION", "DEVICE_REMOVED", "POWER_DISCONNECT"]:
         get_ongoing_trip_data(table_name=table_name, params=params, max_date=None, master_data=master_data)
 
 
