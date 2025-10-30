@@ -304,6 +304,52 @@ class VTSAnalyticsActions:
            alert_type = payload.get("alert_type") if payload else None
            all_violations = vts_query.vts_query.get("all_violations", [])
            violation_types = payload.get("violation_type", [])
+           truck_number = payload.get("view", "")
+
+           if truck_number:
+               select_parts = []
+               for v_type in all_violations:
+                   select_parts.append(
+                    f"SUM(CASE WHEN violation_type = '{v_type}' THEN 1 ELSE 0 END) AS {v_type}"
+                   )
+               select_clause = ",\n                    ".join(select_parts)
+
+               view_query = f"""
+                                SELECT 
+                                    sap_id,
+                                    location_name,
+                                    vehicle_number,
+                                    transporter_code,
+                                    zone,
+                                    created_at,
+                                    {select_clause}
+                                FROM alerts
+                                WHERE vehicle_number = '{truck_number}'
+                                AND transporter_code != '' 
+                                AND location_name != '' 
+                                AND alert_section = 'VTS'
+                                GROUP BY sap_id, location_name, vehicle_number, transporter_code, zone,created_at
+                            """
+               conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, view_query)
+               conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
+               view_query = VTSAnalyticsActions.apply_conditions_to_query(view_query, conditions)
+               print(view_query)
+
+               df_view = await VTSAnalyticsActions.execute_query(view_query)
+
+               if df_view.empty:
+                   return {"status": True, "message": "No data found for this truck", "data": []}
+               
+               df_view['transporter_code'] = df_view['transporter_code'].astype(str).str.lstrip("0")
+               email_query = """SELECT transporter_code, transporter_name FROM email_master"""
+               df_email = await VTSAnalyticsActions.execute_query(email_query)
+
+               merged_df = df_view.merge(df_email, on="transporter_code", how="left")
+               merged_df.drop(columns=["transporter_code"], inplace=True)
+               merged_df.dropna(inplace=True)
+
+               return {"status": True, "message": "success", "data": merged_df.to_dict(orient="records")}
+           
            if violation_types:
                 violation_type_query = vts_query.vts_query.get("vts_insite_violation_type")
                 if not violation_type_query:
@@ -346,7 +392,6 @@ class VTSAnalyticsActions:
            conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
            
            vts_insite_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
-           print(vts_insite_query)
            df1 = await VTSAnalyticsActions.execute_query(vts_insite_query)
            if not df1.empty:
                df1['transporter_code'] = df1['transporter_code'].astype(str).str.lstrip("0")
@@ -496,7 +541,7 @@ class VTSAnalyticsActions:
             if truck_number:
                 # Build query for specific vehicle with all violation counts
                 select_parts = [
-                    f"COUNT(CASE WHEN {v_type} != 0 THEN 1 END) AS {v_type}"
+                    f"COUNT(DISTINCT CASE WHEN {v_type} != 0 THEN 1 END) AS {v_type}"
                     for v_type in all_violations
                 ]
                 select_clause = ",\n           ".join(select_parts)
@@ -1814,10 +1859,7 @@ class VTSAnalyticsActions:
 
 
         # ----- 1. Filter Separation and Date Condition Preparation -----
-        
-        # Separate filters: NO filters go to alerts for bu, sap_id, zone
-        # These filters (bu, sap_id, zone) go directly to trips_query only
-        alerts_filters = []  # Empty - we don't use bu filter for alerts anymore
+       
         trips_filters = filters  # All filters apply to trips
         
         # Extract Transporter Filter for later Pandas application (must be done post-merge)
@@ -1845,28 +1887,21 @@ class VTSAnalyticsActions:
                 elif date_selection == "yesterday":
                     date_condition_str = f"AND T.created_on::date = '{today - timedelta(days=1)}'"
 
-        # ----- 2. Fetch Alerts (No filter conditions applied) -----
-        
-        alerts_query = """
-            SELECT location_name, vehicle_number, transporter_code
-            FROM alerts
-            WHERE alert_section = 'VTS'
-        """
-        alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
-        alerts_df.columns = [c.lower() for c in alerts_df.columns]
-        
-        # ----- 3. Fetch Trips (OPTIMIZED: SQL Filter Pushdown with bu, sap_id, zone) -----
+       
         
         trips_query = f"""
-            SELECT 
-                zone_nm, plant_nm, load_date, vehicle_id, qty_shortage, invoice_no, created_on,
-                bu, sap_id, zone
+            SELECT *     
             FROM 
                 sales_trips_till_date T
             WHERE 
-                qty_shortage::numeric > 0 
-                {sql_trips_conditions} 
-                {date_condition_str}
+                sbu_cd = '7000'
+                AND division = '11'
+                AND load_status = '6'
+                AND (qty_shortage::numeric < 100)
+                AND (qty_shortage::numeric > 0 OR qty_shortage IS NULL)
+                {sql_trips_conditions}
+                {date_condition_str};
+
         """
 
         print("trips_query", trips_query)
@@ -1877,28 +1912,33 @@ class VTSAnalyticsActions:
             
         trips_df.columns = [c.lower() for c in trips_df.columns]
 
-        # ----- 4. Merging (Alerts merge without BU) -----
-
-        # 4a. Merge Alerts for vehicle and transporter mapping only (no BU from alerts)
-        if {'location_name', 'vehicle_number', 'transporter_code'}.issubset(alerts_df.columns):
-            alerts_vehicle_mapping = alerts_df[['location_name', 'vehicle_number', 'transporter_code']].drop_duplicates()
-            trips_df = trips_df.merge(alerts_vehicle_mapping, how='left',
-                                    left_on=['plant_nm', 'vehicle_id'],
-                                    right_on=['location_name', 'vehicle_number']) \
-                            .drop(columns=['vehicle_number', 'location_name'], errors='ignore')
 
         # 4b. Merge email master
         email_query = "SELECT transporter_code, transporter_name FROM email_master"
         email_df = await VTSAnalyticsActions.execute_query(email_query)
+
         if not email_df.empty:
             email_df.columns = [c.lower() for c in email_df.columns]
-            trips_df['transporter_code'] = trips_df['transporter_code'].astype(str).str.strip()
-            email_df['transporter_code'] = email_df['transporter_code'].astype(str).str.strip()
-            trips_df['transporter_code'] = trips_df['transporter_code'].astype(str).str.replace(r'^00', '', regex=True)
-            email_df['transporter_code'] = email_df['transporter_code'].astype(str).str.replace(r'^00', '', regex=True)
 
-            trips_df = trips_df.merge(email_df, how='left', on='transporter_code')
-            
+            # --- Normalize both columns for merge ---
+            trips_df['carrier_no'] = trips_df['carrier_no'].astype(str).str.strip()
+            email_df['transporter_code'] = email_df['transporter_code'].astype(str).str.strip()
+
+            # Remove leading 00 from both for matching
+            trips_df['carrier_no'] = trips_df['carrier_no'].str.replace(r'^00', '', regex=True)
+            email_df['transporter_code'] = email_df['transporter_code'].str.replace(r'^00', '', regex=True)
+
+            # --- Merge on carrier_no <-> transporter_code ---
+            trips_df = trips_df.merge(
+                email_df,
+                how='left',
+                left_on='carrier_no',
+                right_on='transporter_code'
+            )
+
+            # --- Debug export for missing transporter_name ---
+            # trips_df.to_csv('/Users/algofusion/Downloads/missing_transporters.csv', index=False)
+
         # ----- 5. Filter valid trips (Original Logic) -----
         
         trips_df['qty_shortage'] = pd.to_numeric(trips_df['qty_shortage'], errors='coerce')
@@ -1926,14 +1966,16 @@ class VTSAnalyticsActions:
 
         # ----- 7. Counts after filtering (Original Logic) -----
         
-        filtered_invoice_count = filtered_trips_df['invoice_no'].nunique()
+        # filtered_invoice_count = filtered_trips_df['invoice_no'].nunique()
         filtered_vehicle_count = filtered_trips_df['vehicle_id'].nunique()
+        filtered_invoice_count = len(filtered_trips_df['invoice_no'])
+        # filtered_vehicle_count = len(filtered_trips_df['vehicle_id'])
         
         if filtered_trips_df.empty:
             return {"status": "success", "total_invoice_count": 0, "total_vehicle_count": 0,
                     "filtered_invoice_count": 0, "filtered_vehicle_count": 0, "zones": []}
                     
-        filtered_trips_df = filtered_trips_df.drop_duplicates()
+        # filtered_trips_df = filtered_trips_df.drop_duplicates()
 
         # ----- 8. Convert load_date to IST (CRITICAL FIX: Original Logic) -----
         
@@ -1961,8 +2003,12 @@ class VTSAnalyticsActions:
             for keys, group in df.groupby(current_col, dropna=False):
                 item = {current_col: keys}
                 item["shortage"] = group["qty_shortage"].sum()
-                item["invoice_count"] = group["invoice_no"].nunique()
-                item["vehicle_count"] = group["vehicle_id"].nunique()
+                # item["invoice_count"] = group["invoice_no"].nunique()
+                # item["vehicle_count"] = group["vehicle_id"].nunique()
+                item["invoice_count"] = len(group["invoice_no"])
+                # print('item["invoice_count"]', item["invoice_count"])
+                item["vehicle_count"] = len(group["vehicle_id"])
+                # print('item["vehicle_count"]', item["vehicle_count"])
 
                 child = compute_group_summary(group, next_cols)
                 if child:

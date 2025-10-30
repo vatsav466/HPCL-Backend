@@ -7,20 +7,22 @@ import tas_listener
 
 logger = urdhva_base.logger.Logger.getInstance("rabbitmq_processing_log")
 
+semaphore = asyncio.Semaphore(1)
 async def on_message(message: aio_pika.abc.AbstractIncomingMessage) -> None:
     """
     Callback for processing received messages.
     """
     async with message.process(ignore_processed=True):
-        try:
-            # Process the message
-            payload = json.loads(message.body.decode())
-            print(f"Received message: {payload}")
-            await tas_listener.tas_listener(payload)
-        except Exception as e:
-            print(traceback.format_exc())
-            print(f"Error processing message: {e}")
-        # Manual acknowledgment is not needed if auto_ack=True.
+        async with semaphore:
+            try:
+                # Process the message
+                payload = json.loads(message.body.decode())
+                print(f"Received message: {payload}")
+                await tas_listener.tas_listener(payload)
+            except Exception as e:
+                print(traceback.format_exc())
+                print(f"Error processing message: {e}")
+            # Manual acknowledgment is not needed if auto_ack=True.
 
 async def consume_from_queue(queue_name: str, channel) -> None:
     """

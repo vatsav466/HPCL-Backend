@@ -841,6 +841,7 @@ Model Alerts {
         alert_id int min=1 max=9999999
         alert_section str
         interlock_name str
+        category optional str
     }
 
     Action=> vts_alert_manager {
