@@ -496,7 +496,7 @@ class VTSAnalyticsActions:
             if truck_number:
                 # Build query for specific vehicle with all violation counts
                 select_parts = [
-                    f"COUNT(CASE WHEN {v_type} != 0 THEN 1 END) AS {v_type}"
+                    f"COUNT(DISTINCT CASE WHEN {v_type} != 0 THEN 1 END) AS {v_type}"
                     for v_type in all_violations
                 ]
                 select_clause = ",\n           ".join(select_parts)

@@ -225,7 +225,7 @@ vts_query = {
         
 
         "violation_analytics" : """
-              SELECT DISTINCT vehicle_number, zone, location_name, violation_type
+              SELECT  vehicle_number, zone, location_name, violation_type, device_id
                 FROM alerts
                 WHERE alert_section = 'VTS'
                 AND violation_type IN (
@@ -237,6 +237,8 @@ vts_query = {
                         'speed_violation_count',
                         'continuous_driving_count'
                 )
+                AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
+                AND zone != ''
           """,
 
         "vts_history_query" : """   
@@ -253,10 +255,11 @@ vts_query = {
            """,
         
         "violation_trend_alerts" : """
-                    SELECT DISTINCT
+                    SELECT 
                         {period_expr} AS period,
                          vehicle_number,
-                         violation_type
+                         violation_type,
+                         device_id
                     FROM alerts
                     WHERE alert_section = 'VTS'
                     AND violation_type IN (
@@ -268,6 +271,7 @@ vts_query = {
                         'speed_violation_count',
                         'continuous_driving_count')
                     AND zone != ''
+                    AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
                     ORDER BY period, vehicle_number
              """,
             
@@ -285,6 +289,7 @@ vts_query = {
                 WHERE alert_section = 'VTS'
                 AND violation_type = '{violation_type}'
                 AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
+                AND zone != ''
             GROUP BY period
             ORDER BY period
           """,
@@ -316,6 +321,7 @@ vts_query = {
             alert_section = 'VTS'
             AND violation_type = '{violation_type}'
             AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
+            AND zone != ''
         GROUP BY {group_by_column}, device_id
         ORDER BY {group_by_column}, device_id;
              """ ,
