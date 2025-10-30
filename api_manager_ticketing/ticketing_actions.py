@@ -334,7 +334,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             "processed_time": processed_time.isoformat()
         }
         updated_history = existing_history + [ticket_update_entry]
-        if ticket_state == "Resolved":
+        if ticket_state in ["Resolved", "Cancelled"]:
             data_dict["ticket_status"] = "Close"
         else:
             data_dict["ticket_status"] = "Open"

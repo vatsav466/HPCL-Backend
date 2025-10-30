@@ -7,6 +7,7 @@ import urdhva_base
 import sys
 import mysql.connector
 import pandas as pd
+import time
 from datetime import datetime, date, timedelta
 from zoneinfo import ZoneInfo
 from psycopg2.extras import execute_values
@@ -17,6 +18,24 @@ import orchestrator.dbconnector.credential_loader as credential_loader
 logger = urdhva_base.logger.Logger.getInstance('tibco_sync_log')
 
 
+# ---------------- SAFE EXECUTION WITH RETRY ----------------
+def safe_execute(cursor, query, max_retries=5, wait_time=15):
+    """Execute query with retry if MySQL is overloaded"""
+    for attempt in range(max_retries):
+        try:
+            cursor.execute(query)
+            return
+        except mysql.connector.Error as e:
+            # Error 2435 → Too many queries queued
+            if e.errno == 2435:
+                print(f"[Warning] DB overloaded. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+            else:
+                raise  # re-raise other errors immediately
+    raise Exception("Failed after multiple retries — DB queue still full.")
+
+
+# ---------------- DATABASE CONNECTION ----------------
 def get_db_connection(params):
     """Establish a database connection"""
     server = params['host']
@@ -40,10 +59,12 @@ def get_db_connection(params):
                 user=username,
                 passwd=password,
                 port=port,
+                database=database
             )
     return connection
 
 
+# ---------------- CREATE TABLE ----------------
 def create_table_from_source(pg_conn, data, table_name):
     """Create Postgres table dynamically based on Polars dataframe schema"""
     if data.is_empty():
@@ -78,6 +99,7 @@ def create_table_from_source(pg_conn, data, table_name):
     print(f"Created table {table_name} with {len(cols)} columns")
 
 
+# ---------------- INSERT DATA ----------------
 def insertToDB_polars(pg_conn, data, table_name):
     """Fast Polars → Postgres INSERT"""
     if data.is_empty():
@@ -116,11 +138,14 @@ def insertToDB_polars(pg_conn, data, table_name):
     print(f"-- Insert complete for {table_name} --")
 
 
+# ---------------- FETCH AND INSERT ----------------
 def get_and_insert_data(cursor, query, pg_conn, table_name, df_location, batch_size=50000):
     """Fetch source data in batches, merge with location_master, and insert into Postgres"""
     print("-" * 50)
     print("Running Query ...", query)
-    cursor.execute(query)
+
+    # ✅ Use safe_execute here
+    safe_execute(cursor, query)
 
     total_rows = 0
     while True:
@@ -131,7 +156,6 @@ def get_and_insert_data(cursor, query, pg_conn, table_name, df_location, batch_s
         columns = [col[0].lower() for col in cursor.description]
         df_main = pd.DataFrame.from_records(rows, columns=columns)
 
-        # Debug print
         print(f"Fetched batch of {len(df_main)} rows from source")
 
         # Merge source batch with location_master on plant_cd == sap_id
@@ -142,7 +166,6 @@ def get_and_insert_data(cursor, query, pg_conn, table_name, df_location, batch_s
             if col not in merged_df.columns:
                 merged_df[col] = None
 
-        # Debug print first few rows
         print("Merged batch preview:")
         print(merged_df.head(5))
 
@@ -161,8 +184,8 @@ def get_and_insert_data(cursor, query, pg_conn, table_name, df_location, batch_s
     logger.info(f"Total rows processed and merged: {total_rows}")
 
 
+# ---------------- TABLE UTILITIES ----------------
 def check_table_exists(pg_conn, table_name):
-    """Check if a table exists in Postgres"""
     cur = pg_conn.cursor()
     cur.execute("""
         SELECT EXISTS (
@@ -177,7 +200,6 @@ def check_table_exists(pg_conn, table_name):
 
 
 def check_table_empty(pg_conn, table_name):
-    """Check if table is empty"""
     cur = pg_conn.cursor()
     cur.execute(f'SELECT COUNT(*) FROM "{table_name}"')
     count = cur.fetchone()[0]
@@ -186,7 +208,6 @@ def check_table_empty(pg_conn, table_name):
 
 
 def get_max_syncdt(pg_conn, table_name):
-    """Get maximum SYNCDT from Postgres table"""
     cur = pg_conn.cursor()
     cur.execute(f'SELECT MAX(syncdt) FROM "{table_name}"')
     max_syncdt = cur.fetchone()[0]
@@ -194,6 +215,7 @@ def get_max_syncdt(pg_conn, table_name):
     return max_syncdt
 
 
+# ---------------- MAIN EXECUTION ----------------
 if __name__ == "__main__":
     # Load source DB credentials
     creds = credential_loader.get_credentials('TIBCO')
@@ -236,23 +258,15 @@ if __name__ == "__main__":
 
     if not table_exists:
         print("Target table does not exist → creating and dumping all data")
-
-        # Fetch small sample to infer schema
         source_cursor.execute("SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE LIMIT 100")
         sample_rows = source_cursor.fetchall()
         columns = [col[0].lower() for col in source_cursor.description]
         sample_data = pl.from_pandas(pd.DataFrame.from_records(sample_rows, columns=columns))
-
-        # Merge sample with location_master for schema inference
         merged_sample = pd.DataFrame(sample_data.to_pandas()).merge(
             df_location, left_on='plant_cd', right_on='sap_id', how='left'
         )
         data_sample = pl.from_pandas(merged_sample)
-
-        # Create table dynamically
         create_table_from_source(pg_conn, data_sample, table_name)
-
-        # Insert all data
         query = "SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE"
         get_and_insert_data(source_cursor, query, pg_conn, table_name, df_location)
     else:
@@ -263,15 +277,10 @@ if __name__ == "__main__":
             get_and_insert_data(source_cursor, query, pg_conn, table_name, df_location)
         else:
             print("Target table has data → syncing incrementally based on SYNCDT")
-
-            # Get max syncdt from Postgres
             max_syncdt = get_max_syncdt(pg_conn, table_name)
             if max_syncdt is None:
-                max_syncdt = '1900-01-01 00:00:00'  # fallback if table empty
-
+                max_syncdt = '1900-01-01 00:00:00'
             print(f"Max SYNCDT in Postgres: {max_syncdt}")
-
-            # Fetch only new/updated rows from source
             query = f"""
                 SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE 
                 WHERE syncdt > '{max_syncdt}'
