@@ -196,23 +196,28 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
 
     close_alert_details = {
         "actions": {},
-        "category": {},
+        "category": [],
         "rca_reason": []
     }
     action_data = connection_mapping.alert_action.get(data.bu)[data.alert_section]
-    close_alert_details['category'] = action_data.get("category", {"Others": "Others"})
-    close_alert_details['rca_reason'] = action_data.get("rca_reason", ["Other"])
-    # close_alert_details['actions'] = {
-    #     key: value['name'] for key, value in action_data.get("actions", {}).items()
-    #     if alert_role in value.get("roles", [])
-    # }
+
+    # close_alert_details['category'] = action_data.get("category", {"Others": "Others"})
+    close_alert_details['category'] = list(action_data.get("category", {"Others": "Others"}).keys())
+
+    # close_alert_details['rca_reason'] = action_data.get("rca_reason", ["Other"])
+    if not data.category:
+        for key in close_alert_details['category']:
+            close_alert_details['rca_reason'].extend(action_data.get('category')[key])
+    else:
+        close_alert_details['rca_reason'].extend(action_data.get('category')[data.category])
+
     all_actions = {
         key: value['name'] for key, value in action_data.get("actions", {}).items()
         if any(role in value.get("roles", []) for role in alert_role)
     }
     if data.alert_section in ["VTS"] and data.bu in ['TAS']:
         if alert_data.get("action_on","") in ['maker']:
-            allowed = {"UnBlock", "Accept & Close"}
+            allowed = {"UnBlock", "Accept & Block"}
             close_alert_details['actions'] = {k: v for k, v in all_actions.items() if k in allowed}
         elif alert_data.get("action_on","") in ['checker']:
             allowed = {"Approve", "Reject", "Send It Back"}
@@ -222,25 +227,6 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
     else:
         close_alert_details['actions'] = all_actions
     return close_alert_details
-    # close_alert_details = {
-    #     "actions": {
-    #         "Justify": "Justification",
-    #         "Accept & Close": "AcceptClose",
-    #         "Approve": "Approved",
-    #         "Reject": "Rejected"
-    #     },
-    #     "category": {
-    #     },
-    #     "rca_reason": {
-    #     }
-    # }
-    # if data.alert_section in ['VA', 'VTS']:
-    #     if data.alert_section in ["VA", "VTS"]:
-    #         close_alert_details['actions'].update({"FalseAlert": "FalseAlert", "InvalidAlert": "InvalidAlert"})
-    #     del close_alert_details['actions']['Reject']
-    # close_alert_details["category"] = connection_mapping.alert_action_category.get(data.alert_section, {"Others": "Others"})
-    # close_alert_details["rca_reason"] = connection_mapping.alert_action_rca_reason.get(data.alert_section, ["Others"])
-    # return close_alert_details
 
 
 # Action stored_document

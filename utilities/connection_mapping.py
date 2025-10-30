@@ -437,7 +437,7 @@ alert_action = {
                     "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
                               "Planning Officer SOD", "Zonal Transport Officer SOD", "Location In-Charge SOD"]
                 },
-                "Accept & Close": {
+                "Accept & Block": {
                     "name": "AcceptClose",
                     "close_alert": False,
                     "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Plant In-Charge SOD", 
@@ -458,6 +458,21 @@ alert_action = {
                     "close_alert": False,
                     "roles": ["Admin", "Location In-Charge SOD", "Zonal Transport Officer SOD", "Zonal Head SOD"]
                 }
+            },
+            "category": {
+                "Attributable to Transporter": [
+                    "Reason RCA", 
+                    "Route Deviation without Stoppage",
+                    "TT crew issue",
+                    "Location/Outlet Nearby"
+                    ],
+                "Non-Attributable to Transporter": [
+                    "Network Issue", "Equipment Issue", 
+                    "Route deviation - Administrative orders",
+                    "Route Deviation without Stoppage",
+                    "TT crew issue",
+                    "Location/Outlet Nearby"
+                    ]
             },
             "rca_reason": [
                 "Health Issue",
@@ -500,7 +515,7 @@ alert_action = {
                     "close_alert": False,
                     "roles": ["Admin"]
                 },
-                "Accept & Close": {
+                "Accept & Block": {
                     "name": "AcceptClose",
                     "close_alert": False,
                     "roles": ["Admin", "Maintenance Officer LPG", "Location In-Charge LPG", "Zonal Operations Head LPG", "HQO LPG"]
