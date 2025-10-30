@@ -572,18 +572,18 @@ async def fetch_dryout_data():
 
     # Summary row values (example values, modify if needed) Day wise No. of Dryout ROs
     default_ro_values_base = {
-        'CZ': 2423,
-        'ECZ': 1814,
-        'EZ': 1129,
-        'NCZ': 2881,
-        'NFZ': 1502,
-        'NWFZ': 1832,
-        'NWZ': 1337,
-        'NZ': 1402,
-        'SCZ': 2777,
-        'SWZ': 2443,
-        'SZ': 1875,
-        'WZ': 2596
+        'CZ': 2441,
+        'ECZ': 1837,
+        'EZ': 1147,
+        'NCZ': 2906,
+        'NFZ': 1518,
+        'NWFZ': 1852,
+        'NWZ': 1350,
+        'NZ': 1417,
+        'SCZ': 2794,
+        'SWZ': 2476,
+        'SZ': 1895,
+        'WZ': 2619
     }
 
     default_ro_values = {
@@ -798,56 +798,85 @@ async def lpg_top_bottom_score_plants():
     sap_ids_str = ", ".join([f"'{sid}'" for sid in sap_ids])
     top_query = f"""WITH plant_avg_scores AS (
                         SELECT
-                        name AS "Plant Name",
-                        zone AS "Zone",
-                        region AS "Region",
-                        AVG(score) AS avg_score
+                            sap_id,
+                            name AS "Plant Name",
+                            zone AS "Zone",
+                            region AS "Region",
+                            AVG(score) AS avg_score
                         FROM public.performance_score_history
                         WHERE
-                        bu = 'LPG'
-                        AND zone != ''
-                        AND region != ''
-                        AND timestamp::DATE >= date_trunc('month', CURRENT_DATE)
-                        AND timestamp::DATE < CURRENT_DATE
-                        AND sap_id IN ({sap_ids_str})
-                        AND name NOT ILIKE '%RO%'
-                        GROUP BY name, zone, region
-                        ORDER BY avg_score DESC
-                        LIMIT 3
+                            bu = 'LPG'
+                            AND zone != ''
+                            AND region != ''
+                            AND timestamp::DATE >= date_trunc('month', CURRENT_DATE)
+                            AND timestamp::DATE < CURRENT_DATE
+                            AND sap_id IN ({sap_ids_str})
+                            AND name NOT ILIKE '%RO%'
+                        GROUP BY sap_id, name, zone, region
+                    ),
+                    previous_day_scores AS (
+                        SELECT
+                            sap_id,
+                            ROUND(AVG(score)::numeric, 2) AS prev_day_score
+                        FROM public.performance_score_history
+                        WHERE
+                            bu = 'LPG'
+                            AND timestamp::DATE = CURRENT_DATE - INTERVAL '1 day'
+                        GROUP BY sap_id
                     )
                     SELECT
-                        ROW_NUMBER() OVER (ORDER BY avg_score DESC) AS "Sl No",
-                        "Plant Name",
-                        "Zone",
-                        "Region",
-                        ROUND(avg_score::numeric, 2) AS "Score"
-                        FROM plant_avg_scores"""
+                        ROW_NUMBER() OVER (ORDER BY p.avg_score DESC) AS "Sl No",
+                        p."Plant Name",
+                        p."Zone",
+                        p."Region",
+                        ROUND(p.avg_score::numeric, 2) AS "Average Score from Month start",
+                        COALESCE(pd.prev_day_score, 0) AS "Previous days score"
+                    FROM plant_avg_scores p
+                    LEFT JOIN previous_day_scores pd
+                        ON p.sap_id = pd.sap_id
+                    ORDER BY p.avg_score DESC
+                    LIMIT 3"""
+    
     bottom_query = f"""WITH plant_avg_scores AS (
                         SELECT
-                        name AS "Plant Name",
-                        zone AS "Zone",
-                        region AS "Region",
-                        AVG(score) AS avg_score
+                            sap_id,
+                            name AS "Plant Name",
+                            zone AS "Zone",
+                            region AS "Region",
+                            AVG(score) AS avg_score
                         FROM public.performance_score_history
                         WHERE
-                        bu = 'LPG'
-                        AND zone != ''
-                        AND region != ''
-                        AND timestamp::DATE >= date_trunc('month', CURRENT_DATE)
-                        AND timestamp::DATE < CURRENT_DATE
-                        AND sap_id IN ({sap_ids_str})
-                        AND name NOT ILIKE '%RO%'
-                        GROUP BY name, zone, region
-                        ORDER BY avg_score ASC
-                        LIMIT 3
+                            bu = 'LPG'
+                            AND zone != ''
+                            AND region != ''
+                            AND timestamp::DATE >= date_trunc('month', CURRENT_DATE)
+                            AND timestamp::DATE < CURRENT_DATE
+                            AND sap_id IN ({sap_ids_str})
+                            AND name NOT ILIKE '%RO%'
+                        GROUP BY sap_id, name, zone, region
+                    ),
+                    previous_day_scores AS (
+                        SELECT
+                            sap_id,
+                            ROUND(AVG(score)::numeric, 2) AS prev_day_score
+                        FROM public.performance_score_history
+                        WHERE
+                            bu = 'LPG'
+                            AND timestamp::DATE = CURRENT_DATE - INTERVAL '1 day'
+                        GROUP BY sap_id
                     )
                     SELECT
-                        ROW_NUMBER() OVER (ORDER BY avg_score ASC) AS "Sl No",
-                        "Plant Name",
-                        "Zone",
-                        "Region",
-                        ROUND(avg_score::numeric, 2) AS "Score"
-                        FROM plant_avg_scores"""
+                        ROW_NUMBER() OVER (ORDER BY p.avg_score ASC) AS "Sl No",
+                        p."Plant Name",
+                        p."Zone",
+                        p."Region",
+                        ROUND(p.avg_score::numeric, 2) AS "Average Score from Month start",
+                        COALESCE(pd.prev_day_score, 0) AS "Previous days score"
+                    FROM plant_avg_scores p
+                    LEFT JOIN previous_day_scores pd
+                        ON p.sap_id = pd.sap_id
+                    ORDER BY p.avg_score ASC
+                    LIMIT 3"""
     top_resp = await function(query=top_query)
     bottom_resp = await function(query=bottom_query)
     top_resp = pd.DataFrame(top_resp)
@@ -953,7 +982,7 @@ async def publish_daily_novex_status_email():
     )
     await send_notification(
         template_name="seg3.html",
-        to_recipients=["adsul@hpcl.in"],
+        to_recipients=["adsul@hpcl.in","gbala@hpcl.in"],
         cc_recipients=["kapild@hpcl.in"],
         bcc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
         notification_data=status_data
