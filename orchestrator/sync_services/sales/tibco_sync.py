@@ -31,7 +31,7 @@ def safe_execute(cursor, query, max_retries=5, wait_time=15):
                 print(f"[Warning] DB overloaded. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_retries})")
                 time.sleep(wait_time)
             else:
-                raise  # re-raise other errors immediately
+                raise
     raise Exception("Failed after multiple retries — DB queue still full.")
 
 
@@ -144,10 +144,9 @@ def get_and_insert_data(cursor, query, pg_conn, table_name, df_location, batch_s
     print("-" * 50)
     print("Running Query ...", query)
 
-    # ✅ Use safe_execute here
     safe_execute(cursor, query)
-
     total_rows = 0
+
     while True:
         rows = cursor.fetchmany(batch_size)
         if not rows:
@@ -158,10 +157,10 @@ def get_and_insert_data(cursor, query, pg_conn, table_name, df_location, batch_s
 
         print(f"Fetched batch of {len(df_main)} rows from source")
 
-        # Merge source batch with location_master on plant_cd == sap_id
+        # Merge with location master
         merged_df = df_main.merge(df_location, left_on='plant_cd', right_on='sap_id', how='left')
 
-        # Ensure BU, SAP_ID, Zone, Region columns exist
+        # Ensure BU, SAP_ID, Region, Zone columns exist
         for col in ["bu", "sap_id", "region", "zone"]:
             if col not in merged_df.columns:
                 merged_df[col] = None
@@ -169,50 +168,15 @@ def get_and_insert_data(cursor, query, pg_conn, table_name, df_location, batch_s
         print("Merged batch preview:")
         print(merged_df.head(5))
 
-        # Convert merged DataFrame to Polars
+        # Convert to Polars and insert
         data = pl.from_pandas(merged_df)
-
-        # Ensure table exists
         create_table_from_source(pg_conn, data, table_name)
-
-        # Insert merged data
         insertToDB_polars(pg_conn, data, table_name)
         total_rows += len(data)
         print(f"Merged and inserted {len(data)} rows in this batch")
 
     print(f"Total rows processed and merged: {total_rows}")
     logger.info(f"Total rows processed and merged: {total_rows}")
-
-
-# ---------------- TABLE UTILITIES ----------------
-def check_table_exists(pg_conn, table_name):
-    cur = pg_conn.cursor()
-    cur.execute("""
-        SELECT EXISTS (
-            SELECT 1
-            FROM information_schema.tables 
-            WHERE table_name=%s
-        );
-    """, (table_name,))
-    exists = cur.fetchone()[0]
-    cur.close()
-    return exists
-
-
-def check_table_empty(pg_conn, table_name):
-    cur = pg_conn.cursor()
-    cur.execute(f'SELECT COUNT(*) FROM "{table_name}"')
-    count = cur.fetchone()[0]
-    cur.close()
-    return count == 0
-
-
-def get_max_syncdt(pg_conn, table_name):
-    cur = pg_conn.cursor()
-    cur.execute(f'SELECT MAX(syncdt) FROM "{table_name}"')
-    max_syncdt = cur.fetchone()[0]
-    cur.close()
-    return max_syncdt
 
 
 # ---------------- MAIN EXECUTION ----------------
@@ -240,7 +204,6 @@ if __name__ == "__main__":
     )
 
     table_name = params["table_name"]
-    table_exists = check_table_exists(pg_conn, table_name)
 
     # Fetch location_master once and reuse
     print("Fetching location_master from Postgres ...")
@@ -256,37 +219,32 @@ if __name__ == "__main__":
     source_conn = get_db_connection(params)
     source_cursor = source_conn.cursor()
 
-    if not table_exists:
-        print("Target table does not exist → creating and dumping all data")
-        source_cursor.execute("SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE LIMIT 100")
-        sample_rows = source_cursor.fetchall()
-        columns = [col[0].lower() for col in source_cursor.description]
-        sample_data = pl.from_pandas(pd.DataFrame.from_records(sample_rows, columns=columns))
-        merged_sample = pd.DataFrame(sample_data.to_pandas()).merge(
-            df_location, left_on='plant_cd', right_on='sap_id', how='left'
-        )
-        data_sample = pl.from_pandas(merged_sample)
-        create_table_from_source(pg_conn, data_sample, table_name)
-        query = "SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE"
-        get_and_insert_data(source_cursor, query, pg_conn, table_name, df_location)
-    else:
-        is_empty = check_table_empty(pg_conn, table_name)
-        if is_empty:
-            print("Target table is empty → dumping all data")
-            query = "SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE"
-            get_and_insert_data(source_cursor, query, pg_conn, table_name, df_location)
-        else:
-            print("Target table has data → syncing incrementally based on SYNCDT")
-            max_syncdt = get_max_syncdt(pg_conn, table_name)
-            if max_syncdt is None:
-                max_syncdt = '1900-01-01 00:00:00'
-            print(f"Max SYNCDT in Postgres: {max_syncdt}")
-            query = f"""
-                SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE 
-                WHERE syncdt > '{max_syncdt}'
-            """
-            get_and_insert_data(source_cursor, query, pg_conn, table_name, df_location)
+    # Drop and recreate the target table
+    print(f"Dropping and recreating table '{table_name}' ...")
+    cur = pg_conn.cursor()
+    cur.execute(f'DROP TABLE IF EXISTS "{table_name}" CASCADE;')
+    pg_conn.commit()
+    cur.close()
 
+    # Create new table based on source schema sample
+    source_cursor.execute("SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE LIMIT 100")
+    sample_rows = source_cursor.fetchall()
+    columns = [col[0].lower() for col in source_cursor.description]
+    sample_data = pl.from_pandas(pd.DataFrame.from_records(sample_rows, columns=columns))
+    merged_sample = pd.DataFrame(sample_data.to_pandas()).merge(
+        df_location, left_on='plant_cd', right_on='sap_id', how='left'
+    )
+    data_sample = pl.from_pandas(merged_sample)
+    create_table_from_source(pg_conn, data_sample, table_name)
+
+    # Fetch full source data and insert
+    query = "SELECT * FROM CONN_ENT.SALES_BASED_TRIPS_TILL_DATE"
+    get_and_insert_data(source_cursor, query, pg_conn, table_name, df_location)
+
+    # Close all connections
     source_cursor.close()
     source_conn.close()
     pg_conn.close()
+
+    
+
