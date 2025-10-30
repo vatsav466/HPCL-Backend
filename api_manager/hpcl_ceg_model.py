@@ -1768,6 +1768,7 @@ class Alerts_Get_Closed_Alerts_DetailsParams(pydantic.BaseModel):
     alert_id: int = pydantic.Field(**{'ge': 1, 'le': 9999999})
     alert_section: str
     interlock_name: str
+    category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
