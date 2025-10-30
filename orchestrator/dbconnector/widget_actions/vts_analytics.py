@@ -304,6 +304,52 @@ class VTSAnalyticsActions:
            alert_type = payload.get("alert_type") if payload else None
            all_violations = vts_query.vts_query.get("all_violations", [])
            violation_types = payload.get("violation_type", [])
+           truck_number = payload.get("view", "")
+
+           if truck_number:
+               select_parts = []
+               for v_type in all_violations:
+                   select_parts.append(
+                    f"SUM(CASE WHEN violation_type = '{v_type}' THEN 1 ELSE 0 END) AS {v_type}"
+                   )
+               select_clause = ",\n                    ".join(select_parts)
+
+               view_query = f"""
+                                SELECT 
+                                    sap_id,
+                                    location_name,
+                                    vehicle_number,
+                                    transporter_code,
+                                    zone,
+                                    created_at,
+                                    {select_clause}
+                                FROM alerts
+                                WHERE vehicle_number = '{truck_number}'
+                                AND transporter_code != '' 
+                                AND location_name != '' 
+                                AND alert_section = 'VTS'
+                                GROUP BY sap_id, location_name, vehicle_number, transporter_code, zone,created_at
+                            """
+               conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, view_query)
+               conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
+               view_query = VTSAnalyticsActions.apply_conditions_to_query(view_query, conditions)
+               print(view_query)
+
+               df_view = await VTSAnalyticsActions.execute_query(view_query)
+
+               if df_view.empty:
+                   return {"status": True, "message": "No data found for this truck", "data": []}
+               
+               df_view['transporter_code'] = df_view['transporter_code'].astype(str).str.lstrip("0")
+               email_query = """SELECT transporter_code, transporter_name FROM email_master"""
+               df_email = await VTSAnalyticsActions.execute_query(email_query)
+
+               merged_df = df_view.merge(df_email, on="transporter_code", how="left")
+               merged_df.drop(columns=["transporter_code"], inplace=True)
+               merged_df.dropna(inplace=True)
+
+               return {"status": True, "message": "success", "data": merged_df.to_dict(orient="records")}
+           
            if violation_types:
                 violation_type_query = vts_query.vts_query.get("vts_insite_violation_type")
                 if not violation_type_query:
@@ -346,7 +392,6 @@ class VTSAnalyticsActions:
            conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
            
            vts_insite_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
-           print(vts_insite_query)
            df1 = await VTSAnalyticsActions.execute_query(vts_insite_query)
            if not df1.empty:
                df1['transporter_code'] = df1['transporter_code'].astype(str).str.lstrip("0")
