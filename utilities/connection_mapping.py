@@ -473,14 +473,7 @@ alert_action = {
                     "TT crew issue",
                     "Location/Outlet Nearby"
                     ]
-            },
-            "rca_reason": [
-                "Health Issue",
-                "Person Issue",
-                "Equipment issue",
-                "Location/Outlet Near by",
-                "Other"
-            ]
+            }
         },
         "EMLock": {
             "alert_section": "EMLock",
@@ -643,17 +636,20 @@ alert_action = {
                 }
             },
             "category": {
-                "Safety": "Safety",
-                "Pilferage": "Pilferage",
-                "Operations": "Operations"
-            },
-            "rca_reason": [
-                "Health Issue",
-                "Person Issue",
-                "Equipment issue",
-                "Location/Outlet Near by",
-                "Other"
-            ]
+                "Attributable to Transporter": [
+                    "Reason RCA", 
+                    "Route Deviation without Stoppage",
+                    "TT crew issue",
+                    "Location/Outlet Nearby"
+                    ],
+                "Non-Attributable to Transporter": [
+                    "Network Issue", "Equipment Issue", 
+                    "Route deviation - Administrative orders",
+                    "Route Deviation without Stoppage",
+                    "TT crew issue",
+                    "Location/Outlet Nearby"
+                    ]
+            }
         },
         "EMLock": {
             "alert_section": "EMLock",

@@ -201,15 +201,16 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
     }
     action_data = connection_mapping.alert_action.get(data.bu)[data.alert_section]
 
-    # close_alert_details['category'] = action_data.get("category", {"Others": "Others"})
     close_alert_details['category'] = list(action_data.get("category", {"Others": "Others"}).keys())
-
-    # close_alert_details['rca_reason'] = action_data.get("rca_reason", ["Other"])
-    if not data.category:
-        for key in close_alert_details['category']:
-            close_alert_details['rca_reason'].extend(action_data.get('category')[key])
+    if data.alert_section in ["VTS"]:
+        if not data.category:
+            for key in close_alert_details['category']:
+                close_alert_details['rca_reason'].extend(action_data.get('category')[key])
+        else:
+            close_alert_details['rca_reason'].extend(action_data.get('category')[data.category])
     else:
-        close_alert_details['rca_reason'].extend(action_data.get('category')[data.category])
+        close_alert_details['rca_reason'] = action_data.get("rca_reason", ["Other"])
+
 
     all_actions = {
         key: value['name'] for key, value in action_data.get("actions", {}).items()
