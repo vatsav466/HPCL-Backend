@@ -174,6 +174,10 @@ def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.Data
     for col in ["name", "zone", "region"]:
         if col in data.columns:
             data = data.drop(col)
+    
+    for col in ["route_id", "sec_route_id"]:
+        if col in data.columns:
+            data = data.with_columns(pl.col(col).fill_null(0).cast(pl.Float64).cast(pl.Int64).alias(col))
 
     print("Before Location Master Mappings :",len(data))
     if not master_data.is_empty():
@@ -202,7 +206,7 @@ def main():
     
     for table_name in ["DEVICE_REMOVED", "HARSH_ACCELERATION", 
                        "HARSH_BRAKING", "PANIC", "TripAuditMaster", "COMPLETED_TRIP"
-                       "ROUTE_DEVIATION", "STOPAGE_VIOLATION", "DEVICE_REMOVED", "POWER_DISCONNECT"]:
+                       "ROUTE_DEVIATION", "STOPPAGE_VIOLATION", "DEVICE_REMOVED", "POWER_DISCONNECT"]:
         get_ongoing_trip_data(table_name=table_name, params=params, max_date=None, master_data=master_data)
 
 
