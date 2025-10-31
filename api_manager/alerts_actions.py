@@ -216,7 +216,7 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
         key: value['name'] for key, value in action_data.get("actions", {}).items()
         if any(role in value.get("roles", []) for role in alert_role)
     }
-    if data.alert_section in ["VTS"] and data.bu in ['TAS']:
+    if data.alert_section in ["VTS"] and data.bu in ['TAS','LPG']:
         if alert_data.get("action_on","") in ['maker']:
             allowed = {"UnBlock", "Accept & Block"}
             close_alert_details['actions'] = {k: v for k, v in all_actions.items() if k in allowed}
