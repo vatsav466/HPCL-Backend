@@ -614,35 +614,32 @@ alert_action = {
             "alert_section": "VTS",
             "close_alert_func": "vts_alert_closer",
             "actions": {
-                "Justify": {
+                "UnBlock": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer LPG","Location In-Charge LPG", "Zonal HSE LPG",
-                              "Zonal Operations Head LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": ["Admin", "Safety Officer LPG", "Maintenance Officer LPG", "Planning Officer LPG",
+                              "Location In-Charge LPG", "Zonal Distributions Head LPG"]
                 },
-                "Accept & Close": {
+                "Accept & Block": {
                     "name": "AcceptClose",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer LPG","Location In-Charge LPG", "Zonal HSE LPG",
-                              "Zonal Operations Head LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": ["Admin", "Safety Officer LPG", "Maintenance Officer LPG", "Planning Officer LPG",
+                              "Location In-Charge LPG", "Zonal Distributions Head LPG"]
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal HSE LPG", "Zonal Operations Head LPG",
-                              "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG"]
                 },
-                "FalseAlert": {
-                    "name": "FalseAlert",
+                "Send It Back": {
+                    "name": "SendItBack",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer LPG","Location In-Charge LPG", "Zonal HSE LPG",
-                              "Zonal Operations Head LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal HSE LPG", "Zonal Operations Head LPG",
-                              "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG"]
                 }
             },
             "category": {
