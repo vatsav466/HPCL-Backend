@@ -880,13 +880,17 @@ async def lpg_top_bottom_score_plants():
                         FROM public.performance_score_history
                         WHERE sap_id IN ({sap_ids_str})
                         AND timestamp::DATE = CURRENT_DATE - INTERVAL '1 day'"""
-    lpg_avg_score_resp = function(query=lpg_avg_score_query)
+    lpg_avg_score_resp = await function(query=lpg_avg_score_query)
     top_resp = await function(query=top_query)
     bottom_resp = await function(query=bottom_query)
     lpg_avg_score_resp = pd.DataFrame(lpg_avg_score_resp)
+    if not lpg_avg_score_resp.empty:
+        lpg_avg_score_value = lpg_avg_score_resp['lpg_average_score'].iloc[0]
+    else:
+        lpg_avg_score_value = None  # or 0 or 'N/A'
     top_resp = pd.DataFrame(top_resp)
     bottom_resp = pd.DataFrame(bottom_resp)
-    return {"lpg_top_data": top_resp, "lpg_bottom_data": bottom_resp, "lpg_avg_score_resp": lpg_avg_score_resp}
+    return {"lpg_top_data": top_resp, "lpg_bottom_data": bottom_resp, "lpg_avg_score_resp": lpg_avg_score_value}
 
 async def get_alert_data(alert_section):
     # Making sure alerts considering only after May 31st in prod
