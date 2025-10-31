@@ -138,6 +138,9 @@ def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.Data
     _datecol = "EVENT_DATE"
     if table_name in ["TripAuditMaster"]:
         _datecol = "createdAt"
+    
+    if table_name in ["COMPLETED_TRIP"]:
+        _datecol = "insert_datetime"
 
     if not max_date:
         max_date = f""" select max({_datecol}) as max_date from vts_{table_name.lower()} """
@@ -159,6 +162,14 @@ def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.Data
     for col in ["location", "terminalcode"]:
         if col in data.columns:
             data = data.rename({col: "sap_id"})
+    
+    rename_mapper = {
+        "vehicle_rto_no": "tt_number",
+        "challan_no": "invoice_no",
+        "depot_erp_code": "sap_id",
+        "erp_transporter_code": "transporter_code"
+     }
+    data = data.rename({key: value} for key, value in rename_mapper.items() if key in data.columns)
         
     for col in ["name", "zone", "region"]:
         if col in data.columns:
