@@ -2,6 +2,7 @@ import urdhva_base
 import asyncio
 import traceback
 import pandas as pd
+import numpy as np
 import hpcl_ceg_model
 import mysql.connector
 import dashboard_studio_model
@@ -1065,12 +1066,12 @@ class VTSAnalyticsActions:
                     "location_name", 
                     "zone", 
                     "invoice_number",
-                    "created_at",
-                    violation_type
+                    "created_at"
                 ]
                 # Filter only columns that exist in the dataframe
                 available_columns = [col for col in search_columns if col in violation_filtered_df.columns]
                 search_df = violation_filtered_df[available_columns].copy()
+                search_df = search_df.drop_duplicates(subset=['invoice_number'], keep= 'first')
 
                 search_df.rename(columns={
                     "tl_number": "truck_number" 
@@ -1079,6 +1080,7 @@ class VTSAnalyticsActions:
                 if "created_at" in search_df.columns:
                     search_df = search_df.sort_values(by="created_at", ascending=False)
                 
+                search_df = search_df.replace({np.nan: None})
                 return {
                     "status": True, 
                     "message": f"All data for {violation_type} search", 
@@ -1201,6 +1203,12 @@ class VTSAnalyticsActions:
             # Step 3: Merge data
             merged_df = df.merge(loc_df, on="sap_id", how="left")
             merged_df = merged_df.dropna(subset=["zone", "location_name"])
+
+            if payload.get("search") == "true":
+                merged_df = merged_df.dropna(axis=1, how="all")  
+                merged_df = merged_df.loc[:, merged_df.astype(str).ne("").any()] 
+                merged_df = merged_df.drop(["created_at","updated_at"], axis=1, errors='ignore')               
+                return {"status": True, "message": "Data found", "data": merged_df.to_dict(orient="records")}
 
             # Step 4: Remove empty rows based on filters
             for key in ["zone", "location_name", "transporter_name"]:
@@ -2180,6 +2188,9 @@ class VTSAnalyticsActions:
                 return {"status": True, "message": "No data found", "data": []}
             
             df = await filter_data(df, _filters)
+
+            if payload.get("search") == "true":
+                return {'status': True, 'message': 'success', 'data': df.to_dict(orient='records')}
                         
             swipe_out_l1 = df[df['swipeoutl1'].fillna('').str.lower() == 'false']
             swipe_out_l2 = df[df['swipeoutl2'].fillna('').str.lower() == 'false']
