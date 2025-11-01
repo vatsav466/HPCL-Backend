@@ -806,7 +806,11 @@ async def lpg_top_bottom_score_plants():
                             bu = 'LPG'
                             AND zone != ''
                             AND region != ''
-                            AND timestamp::DATE >= date_trunc('month', CURRENT_DATE)
+                            AND timestamp::DATE >= CASE
+                                WHEN date_trunc('day', CURRENT_DATE) = date_trunc('month', CURRENT_DATE)
+                                    THEN date_trunc('month', CURRENT_DATE - INTERVAL '1 month')
+                                ELSE date_trunc('month', CURRENT_DATE)
+                            END
                             AND timestamp::DATE < CURRENT_DATE
                             AND sap_id IN ({sap_ids_str})
                             AND name NOT ILIKE '%RO%'
@@ -833,7 +837,8 @@ async def lpg_top_bottom_score_plants():
                     LEFT JOIN previous_day_scores pd
                         ON p.sap_id = pd.sap_id
                     ORDER BY p.avg_score DESC
-                    LIMIT 3"""
+                    LIMIT 3
+                    """
     
     bottom_query = f"""WITH plant_avg_scores AS (
                         SELECT
@@ -847,7 +852,11 @@ async def lpg_top_bottom_score_plants():
                             bu = 'LPG'
                             AND zone != ''
                             AND region != ''
-                            AND timestamp::DATE >= date_trunc('month', CURRENT_DATE)
+                            AND timestamp::DATE >= CASE
+                                WHEN date_trunc('day', CURRENT_DATE) = date_trunc('month', CURRENT_DATE)
+                                    THEN date_trunc('month', CURRENT_DATE - INTERVAL '1 month')
+                                ELSE date_trunc('month', CURRENT_DATE)
+                            END
                             AND timestamp::DATE < CURRENT_DATE
                             AND sap_id IN ({sap_ids_str})
                             AND name NOT ILIKE '%RO%'
