@@ -606,25 +606,64 @@ class IndentDryOut:
                             indent_status=IndentStatus.Completed
                         )
                     return await self.send_alert_action(is_raised=False)
-                elif await self._is_ro_temporarily_closed():
-                    if dry_alert_data.get("alert_status") == 'Close' and dry_alert_data.get('indent_status') == 'TempClosed':
-                        await self._close_camunda_workflow()
-                    if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') != 'TempClosed':
-                        print("Ro has been temporarily Closed still alert is in Intial stage")
-                        await self.update_alert_status(
-                            indent_status=IndentStatus.TempClosed,
-                            alert_status=AlertStatus.Close,
-                            alert_state=AlertState.Resolved,
-                            progress_rate=dry_alert_data.get("progress_rate")
-                        )
-                        await self.close_supply_chain_alert(
-                            alert_id=self.params.get("alert_id"),
-                            alert_status=AlertStatus.Close,
-                            alert_state=AlertState.Resolved,
-                            indent_status=IndentStatus.TempClosed
-                        )
-                    return await self.send_alert_action(is_raised=False)
-
+                elif await self._check_dry_out_history():
+                    if not await self._check_ro_in_cris():
+                        if self._check_product_low_level():
+                            if dry_alert_data.get("alert_status") == 'Close' and dry_alert_data.get('indent_status') == 'ProductLowLevel':
+                                print("Product Low Level .......")
+                                await self._close_camunda_workflow()
+                            if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') != 'ProductLowLevel':
+                                print("Product Low Level .......")
+                                await self.update_alert_status(
+                                    indent_status=IndentStatus.ProductLowLevel,
+                                    alert_status=AlertStatus.Close,
+                                    alert_state=AlertState.Resolved,
+                                    progress_rate=dry_alert_data.get("progress_rate")
+                                )
+                                await self.close_supply_chain_alert(
+                                    alert_id=self.params.get("alert_id"),
+                                    alert_status=AlertStatus.Close,
+                                    alert_state=AlertState.Resolved,
+                                    indent_status=IndentStatus.ProductLowLevel
+                                )
+                            return await self.send_alert_action(is_raised=False)
+                        elif self._is_ro_temporarily_closed():
+                            if dry_alert_data.get("alert_status") == 'Close' and dry_alert_data.get('indent_status') == 'TempClosed':
+                                await self._close_camunda_workflow()
+                            if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') != 'TempClosed':
+                                print("Ro has been temporarily Closed still alert is in Intial stage")
+                                await self.update_alert_status(
+                                    indent_status=IndentStatus.TempClosed,
+                                    alert_status=AlertStatus.Close,
+                                    alert_state=AlertState.Resolved,
+                                    progress_rate=dry_alert_data.get("progress_rate")
+                                )
+                                await self.close_supply_chain_alert(
+                                    alert_id=self.params.get("alert_id"),
+                                    alert_status=AlertStatus.Close,
+                                    alert_state=AlertState.Resolved,
+                                    indent_status=IndentStatus.TempClosed
+                                )
+                            return await self.send_alert_action(is_raised=False)
+                        else:
+                            if dry_alert_data.get("alert_status") == 'Close' and dry_alert_data.get('indent_status') == 'OfflineOrFalseAlarm':
+                                await self._close_camunda_workflow()
+                            if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') != 'OfflineOrFalseAlarm':
+                                print("Ro is in Offline")
+                                await self.update_alert_status(
+                                    indent_status=IndentStatus.OfflineOrFalseAlarm,
+                                    alert_status=AlertStatus.Close,
+                                    alert_state=AlertState.Resolved,
+                                    progress_rate=dry_alert_data.get("progress_rate")
+                                )
+                                await self.close_supply_chain_alert(
+                                    alert_id=self.params.get("alert_id"),
+                                    alert_status=AlertStatus.Close,
+                                    alert_state=AlertState.Resolved,
+                                    indent_status=IndentStatus.OfflineOrFalseAlarm
+                                )
+                            return await self.send_alert_action(is_raised=False)
+                        
             query = f"""SELECT a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE", a."PROD_REQD_DT" AS "PROD_REQD_DT" """ \
                     f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
                     f"""AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
@@ -1715,7 +1754,7 @@ class IndentDryOut:
         # input_data = {
         #     "action_type": "RO"
         # }
-        if alert_data.indent_status != indent_status and indent_status not in ['TempClosed']:  # type: ignore
+        if alert_data.indent_status != indent_status and indent_status not in ['TempClosed','ProductLowLevel','OfflineOrFalseAlarm']:  # type: ignore
             alert_history = alert_data
             if not isinstance(alert_data, dict):
                 alert_history = alert_data.__dict__
@@ -1734,6 +1773,8 @@ class IndentDryOut:
         if alert_data['indent_status'] != indent_status:  # type: ignore
             if indent_status == 'TempClosed':
                 alert_data['temporary_close'] = True
+            if indent_status == 'OfflineOrFalseAlarm':
+                alert_data['ro_offline'] = True
             alert_data['indent_status'] = indent_status
             alert_data['alert_status'] = alert_status
             alert_data['alert_state'] = alert_state
@@ -1977,6 +2018,100 @@ class IndentDryOut:
             return False
         else:
             return True
+    
+    async def _check_dry_out_history(self):
+        dealer_code = str(self.params.get("dealer_id"))
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        alert_id = self.params.get("alert_id")
+        alert_data = await Alerts.get(int(alert_id))
+        if not isinstance(alert_data, dict):
+            alert_data = alert_data.__dict__
+        query = f"""SELECT *
+                        FROM dry_out_history
+                        WHERE sap_id = '{dealer_code}'
+                        AND product_no = '{alert_data['product_code']}'
+                        AND status != 'Close'"""
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        ceg_resp = await function(query=query)
+        if not ceg_resp:
+            return True
+        else:
+            return False
+    
+    async def _check_ro_in_cris(self):
+        dealer_code = str(self.params.get("dealer_id"))
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        product_code=self.params["product_code"]
+        _prod = await self.prod_code_mapping()
+        reverse_mapping = {v: k for k, v in _prod.items()}
+        query = f"""SELECT
+                        site_id,
+                        fcc_code,
+                        rosapcode,
+                        item_name,
+                        product_grp AS product_grp,
+                        product_no,
+                        COUNT(DISTINCT tank_no) AS tank_cnt,
+                        STRING_AGG(CAST(tank_no AS TEXT), ',') AS tank_no,
+                        CASE
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 1
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 2
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) >= (SUM(sch.avgsales_7days) / 7)
+                                 AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 3 THEN 3
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) > (SUM(sch.avgsales_7days) / 7) * 3
+                                 AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
+                            ELSE 6
+                        END AS status
+                    FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
+                    WHERE sch.volume > 0 and rosapcode = '{dealer_code}' and item_name = '{reverse_mapping.get(product_code)}'
+                    GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
+                    ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
+        print("_check_ro_in_cris",query)
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        cris_resp = await function(query=query)
+        if not cris_resp:
+            return False
+        else:
+            return True
+    
+    async def _check_product_low_level(self):
+        dealer_code = str(self.params.get("dealer_id"))
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        product_code=self.params["product_code"]
+        _prod = await self.prod_code_mapping()
+        reverse_mapping = {v: k for k, v in _prod.items()}
+        query = f"""SELECT
+                        site_id,
+                        fcc_code,
+                        rosapcode,
+                        item_name,
+                        product_grp AS product_grp,
+                        product_no,
+                        COUNT(DISTINCT tank_no) AS tank_cnt,
+                        STRING_AGG(CAST(tank_no AS TEXT), ',') AS tank_no,
+                        CASE
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 1
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 2
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) >= (SUM(sch.avgsales_7days) / 7)
+                                 AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 3 THEN 3
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) > (SUM(sch.avgsales_7days) / 7) * 3
+                                 AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
+                            ELSE 6
+                        END AS status
+                    FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
+                    WHERE rosapcode = '{dealer_code}' and item_name = '{reverse_mapping.get(product_code)}'
+                    GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
+                    ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
+        print("reverse_mapping_query",query)
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        cris_resp = await function(query=query)
+        if not cris_resp:
+            return False
+        else:
+            return True
         
     async def _is_indent_delivered(self):
         dealer_code = str(self.params.get("dealer_id"))
@@ -2134,6 +2269,8 @@ class IndentDryOut:
         return False
 
     async def _is_indent_delivered_ims(self):
+        if not self.params.get("indent_no", ""):
+            return False
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("ims")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
