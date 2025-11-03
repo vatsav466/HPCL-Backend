@@ -9883,6 +9883,7 @@ class LpgDataPostingAuditSchema(UrdhvaPostgresBase):
     __tablename__ = 'lpg_data_posting_audit'
     
     request_id: Mapped[typing.Optional[str]] = mapped_column("request_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    vehicle_number: Mapped[typing.Optional[str]] = mapped_column("vehicle_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     remark: Mapped[typing.Optional[str]] = mapped_column("remark", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     updated_date: Mapped[typing.Optional[str]] = mapped_column("updated_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -9893,6 +9894,7 @@ class LpgDataPostingAuditCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'lpg_data_posting_audit'
     
     request_id: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     status: typing.Optional[str] = pydantic.Field("", **{})
     remark: typing.Optional[str] = pydantic.Field("", **{})
     updated_date: typing.Optional[str] = pydantic.Field("", **{})
@@ -9910,6 +9912,7 @@ class LpgDataPostingAudit(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'lpg_data_posting_audit'
     
     request_id: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     status: typing.Optional[str] = pydantic.Field("", **{})
     remark: typing.Optional[str] = pydantic.Field("", **{})
     updated_date: typing.Optional[str] = pydantic.Field("", **{})
