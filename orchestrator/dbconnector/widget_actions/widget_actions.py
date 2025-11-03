@@ -261,6 +261,16 @@ class WidgetActions:
                 module = vts_analytics.VTSAnalyticsActions
                 vts = True
                 print(f"Function {func_name} found in VTSAnalyticsActions.")
+            
+            elif func_name in ["get_tt_risk_score", "get_transporter_risk_score", "get_completed_trips_risk_score", "Cluster_master", "get_location_risk_score"]:
+                # Special routing for risk score functions
+                if not isinstance(payload, dict):
+                    payload = {}
+                payload['action'] = func_name  # Pass original function name in payload
+                module = vts_analytics.VTSAnalyticsActions
+                func_name = "risk_score"  # Route to the generic risk_score method
+                vts = True
+
             elif hasattr(global_analytics.GlobalAnalytics, func_name):
                 module = global_analytics.GlobalAnalytics
                 print(f"Function {func_name} found in GlobalAnalytics.")
