@@ -205,7 +205,7 @@ def main():
     master_data = fetch_data(None, query, getData=True, params=params)
     
     for table_name in ["DEVICE_REMOVED", "HARSH_ACCELERATION", 
-                       "HARSH_BRAKING", "PANIC", "TripAuditMaster", "COMPLETED_TRIP"
+                       "HARSH_BRAKING", "PANIC", "TripAuditMaster", "COMPLETED_TRIP",
                        "ROUTE_DEVIATION", "STOPPAGE_VIOLATION",  "POWER_DISCONNECT"]:
         get_ongoing_trip_data(table_name=table_name, params=params, max_date=None, master_data=master_data)
 
