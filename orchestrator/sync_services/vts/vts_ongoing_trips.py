@@ -169,7 +169,7 @@ def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.Data
         "depot_erp_code": "sap_id",
         "erp_transporter_code": "transporter_code"
      }
-    data = data.rename({key: value} for key, value in rename_mapper.items() if key in data.columns)
+    data = data.rename({key: value for key, value in rename_mapper.items() if key in data.columns})
         
     for col in ["name", "zone", "region"]:
         if col in data.columns:
@@ -206,7 +206,7 @@ def main():
     
     for table_name in ["DEVICE_REMOVED", "HARSH_ACCELERATION", 
                        "HARSH_BRAKING", "PANIC", "TripAuditMaster", "COMPLETED_TRIP"
-                       "ROUTE_DEVIATION", "STOPPAGE_VIOLATION", "DEVICE_REMOVED", "POWER_DISCONNECT"]:
+                       "ROUTE_DEVIATION", "STOPPAGE_VIOLATION",  "POWER_DISCONNECT"]:
         get_ongoing_trip_data(table_name=table_name, params=params, max_date=None, master_data=master_data)
 
 
