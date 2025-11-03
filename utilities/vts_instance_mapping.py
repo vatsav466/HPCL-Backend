@@ -88,10 +88,10 @@ instance_mapping = {
     "LPG":{
         "0":{
             "device_tamper_count":{
-                "violation_count": 0
+                "violation_count": 3
             },
             "main_supply_removal_count":{
-                "violation_count": 1
+                "violation_count": 3
             },
             "route_deviation_count":{
                 "violation_count": 3
@@ -111,10 +111,10 @@ instance_mapping = {
         },
         "1":{
             "device_tamper_count":{
-                "violation_count": 0
+                "violation_count": 2
             },
             "main_supply_removal_count":{
-                "violation_count": 0
+                "violation_count": 2
             },
             "route_deviation_count":{
                 "violation_count": 0
@@ -134,10 +134,10 @@ instance_mapping = {
         },
         "2":{
             "device_tamper_count":{
-                "violation_count": 0
+                "violation_count": 2
             },
             "main_supply_removal_count":{
-                "violation_count": 0
+                "violation_count": 2
             },
             "route_deviation_count":{
                 "violation_count": 0
