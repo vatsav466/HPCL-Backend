@@ -2354,3 +2354,66 @@ class VTSAnalyticsActions:
             print("Exception in power_disconnection:", str(e))
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+    
+    @staticmethod
+    async def risk_score(filters, cross_filters, drill_state, payload, limit=0, offset=0):
+        try:
+            payload_dict = {}
+            if isinstance(payload, dict):
+                payload_dict = payload.copy()
+            elif hasattr(payload, '_dict_'):
+                payload_dict = payload._dict_.copy()
+
+            action = payload_dict.get("action")
+            columns = payload_dict.get("columns") # New: Get columns from payload
+            print(f"Action received: {action}")
+
+            # Map actions to table names
+            action_to_table_mapping = {
+                "get_tt_risk_score": "tt_risk_score",
+                "get_transporter_risk_score": "transporter_risk_score",
+                "get_completed_trips_risk_score": "completed_trips_risk_score",
+                "Cluster_master": "cluster_master"
+            }
+
+            table_name = action_to_table_mapping.get(action)
+
+            if not table_name:
+                return {
+                    "status": False,
+                    "message": f"Invalid action: '{action}'. Expected one of: {list(action_to_table_mapping.keys())}",
+                    "data": []
+                }
+
+            print(f"Fetching data for table: {table_name}")
+
+            # Optimize query by selecting specific columns if provided in the payload
+            if columns and isinstance(columns, list) and len(columns) > 0:
+                # Safely quote column names
+                select_columns = ", ".join([f'"{col}"' for col in columns])
+                base_query = f'SELECT {select_columns} FROM public."{table_name}"'
+            else:
+                base_query = f'SELECT * FROM public."{table_name}"'
+
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
+            final_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
+
+            # Add a default limit to prevent fetching huge datasets, which can be overridden.
+            query_limit = limit if limit > 0 else 1000
+            final_query += f" LIMIT {query_limit}"
+
+            if offset > 0:
+                final_query += f" OFFSET {offset}"
+            print(f"Executing optimized query: {final_query}")
+
+            df = await VTSAnalyticsActions.execute_query(final_query)
+
+            # Replace NaN with None for JSON compatibility
+            df = df.replace({np.nan: None})
+
+            return {"status": True, "message": "success", "data": df.to_dict(orient="records")}
+
+        except Exception as e:
+            print(f"Exception in risk_score: {str(e)}")
+            print(traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}

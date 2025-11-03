@@ -262,11 +262,22 @@ class AuthenticationManager:
             unique = []
             for d in dict_list:
                 # Convert dict to a tuple of sorted items so it's hashable
-                items_tuple = tuple(sorted(d.items()))
+                # items_tuple = tuple(sorted(d.items()))
+                items_tuple = make_hashable(d)
                 if items_tuple not in seen:
                     seen.add(items_tuple)
                     unique.append(d)
             return unique
+
+        def make_hashable(value):
+            """Recursively convert lists/dicts/sets into tuples so they become hashable."""
+            if isinstance(value, dict):
+                return tuple(sorted((k, make_hashable(v)) for k, v in value.items()))
+            elif isinstance(value, (list, set, tuple)):
+                return tuple(make_hashable(v) for v in value)
+            else:
+                return value
+
 
         if role["data"]:
             allowed_roles = {}
