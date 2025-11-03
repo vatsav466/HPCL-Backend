@@ -211,7 +211,6 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
     else:
         close_alert_details['rca_reason'] = action_data.get("rca_reason", ["Other"])
 
-
     all_actions = {
         key: value['name'] for key, value in action_data.get("actions", {}).items()
         if any(role in value.get("roles", []) for role in alert_role)

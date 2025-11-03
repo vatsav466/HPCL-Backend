@@ -133,6 +133,8 @@ Enum IndentStatus str {
     VTS='VTS'
     Delivered='Delivered'
     TempClosed='TempClosed'
+    ProductLowLevel='ProductLowLevel'
+    OfflineOrFalseAlarm='OfflineOrFalseAlarm'
 }
 
 Model RoleMapper internal {
@@ -3502,6 +3504,7 @@ Model ViolationHistoryVts {
 
 Model LpgDataPostingAudit {
     request_id optional str
+    vehicle_number optional str
     status optional str
     remark optional str
     updated_date optional str
