@@ -4,6 +4,7 @@ from hpcl_ceg_model import *
 import fastapi
 import os
 import pytz
+import time
 import json
 import datetime
 import requests
@@ -16,6 +17,7 @@ from fastapi.responses import FileResponse
 import utilities.vts_mapping as vts_mapping
 from dateutil.relativedelta import relativedelta
 import utilities.connection_mapping as connection_mapping
+import orchestrator.analytics.vts_analysis as vts_analysis
 from utilities.helpers import generate_filter_query
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
@@ -327,3 +329,59 @@ async def alerts_bulk_send_to_approve(data: Alerts_Bulk_Send_To_ApproveParams):
         print(traceback.format_exc())
         logger.error(e)
         return {"status": False, "message": "Error", "data": []}
+
+
+# Action block_vts_truck
+@router.post('/block_vts_truck', tags=['Alerts'])
+async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
+    query = f""" 
+            select 
+                vehicle_number 
+            from 
+                alerts 
+            where 
+                alert_status='Open' and 
+                alert_section='VTS' and 
+                bu='{data.bu}' and 
+                vehicle_number='{data.truck_number}' 
+            """
+    
+    alert_data = await Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query),resp_type='plain')
+    if alert_data['data']:
+        return {"status": False, "message": "Truck has already been blocked"}
+    
+    
+    headers = {
+        "Content-Type": "application/json"
+        }
+    payload = {
+        "VehicleRtoNo": data.truck_number
+        }
+    response = requests.post(
+        urdhva_base.settings.vts_truck_status_url, 
+        json=payload, 
+        headers=headers, 
+        timeout=30
+        )
+    print("-"*20)
+    print("response :", response)
+    print("-"*20)
+    if isinstance(response, dict) and response.get("TripStatus", "").lower() == "loaded":
+        return {"status": False, "message": "Cannot block as truck already been in a trip"}
+
+    start_date = datetime.datetime.now()
+    end_date = start_date + relativedelta(days=data.blocking_days)
+
+    payload = [
+        {
+            "transactNo": str(int(time.time() * 1000))[-7:] + "1",
+            "truckRegNo": data.truck_number,
+            "blockingFlag": "Y",
+            "blockingFrom": start_date.strftime("%Y%m%d"),
+            "blockingTo": end_date.strftime("%Y%m%d")
+        }
+    ]
+    print("-"*20)
+    print("payload :", payload)
+    print("-"*20)
+    # await vts_analysis.post_blocked_tt_ims(payload)

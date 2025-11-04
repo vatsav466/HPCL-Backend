@@ -100,6 +100,9 @@ class Settings(pydantic_settings.BaseSettings):
     # VTS IMS blocking    
     post_to_ims_url: str = ""
 
+    # VTS Truck Status
+    vts_truck_status_url: str = ""
+
     # LPG VTS blocking and unblocking
     lpg_vts_auth_url:str = ""
     lpg_publish_url: str = ""

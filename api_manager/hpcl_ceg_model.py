@@ -1799,6 +1799,16 @@ class Alerts_Bulk_Send_To_ApproveParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Alerts_Block_Vts_TruckParams(pydantic.BaseModel):
+    bu: hpcl_ceg_enum.BusinessUnit
+    truck_number: str
+    blocking_days: int
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class CEMSLocationMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'cems_location_master'
     

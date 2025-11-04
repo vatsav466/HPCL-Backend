@@ -1020,6 +1020,9 @@
                 },
                 {
                     "name": "bulk_send_to_approve"
+                },
+                {
+                    "name": "block_vts_truck"
                 }
             ]
         },
@@ -1104,6 +1107,9 @@
                 },
                 {
                     "name": "bulk_send_to_approve"
+                },
+                {
+                    "name": "block_vts_truck"
                 }
             ]
         },
@@ -7245,6 +7251,10 @@
         {
             "name": "bulk_send_to_approve",
             "displayName": "bulk_send_to_approve"
+        },
+        {
+            "name": "block_vts_truck",
+            "displayName": "block_vts_truck"
         },
         {
             "name": "upload_cems_location_master",
