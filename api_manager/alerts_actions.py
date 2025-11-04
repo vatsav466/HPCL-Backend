@@ -334,18 +334,11 @@ async def alerts_bulk_send_to_approve(data: Alerts_Bulk_Send_To_ApproveParams):
 # Action block_vts_truck
 @router.post('/block_vts_truck', tags=['Alerts'])
 async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
-    query = f"""
-            select 
-                vehicle_number 
-            from 
-                alerts 
-            where 
-                alert_status='Open' and 
-                alert_section='VTS' and 
-                bu='{data.bu}' and 
-                vehicle_number='{data.truck_number}' 
-            """
-    
+    query = (f"""alert_status='Open' and alert_section='VTS' and bu='{data.bu}' and vehicle_number='{data.truck_number}' """)
+    print("-"*10)
+    print("query :", query)
+    print("-"*10)
+
     alert_data = await Alerts.get_all(
         urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
         )
@@ -415,7 +408,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
             }
         )
 
-    await VtsManualBlockedCreate(**{truck_details}).create()
+    await VtsManualBlockedCreate(**truck_details).create()
     return {"status": True, "message": "Truck has been blocked successfully"}
 
 
@@ -456,7 +449,7 @@ async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
 # Action get_vts_blocked_trucks
 @router.post('/get_vts_blocked_trucks', tags=['Alerts'])
 async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParams):
-    query = "select * from vts_manual_blocked where blocked_status='blocked'"
+    query = "blocked_status='blocked'"
 
     query = await generate_filter_query(data.cross_filters, query)
 
