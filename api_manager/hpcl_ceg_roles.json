@@ -967,6 +967,69 @@
             ]
         },
         {
+            "name": "vtsmanualblocked",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VtsManualBlocked",
+            "attributes": {},
+            "uris": [
+                "/api/vtsmanualblocked/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "vtsmanualblocked_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VtsManualBlocked_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vtsmanualblocked/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vtsmanualblocked_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VtsManualBlocked_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vtsmanualblocked/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "alerts",
             "type": "all",
             "ownerManagedAccess": false,
@@ -1023,6 +1086,12 @@
                 },
                 {
                     "name": "block_vts_truck"
+                },
+                {
+                    "name": "unblock_vts_truck"
+                },
+                {
+                    "name": "get_vts_blocked_trucks"
                 }
             ]
         },
@@ -1050,6 +1119,9 @@
                 },
                 {
                     "name": "get_closed_alerts_details"
+                },
+                {
+                    "name": "get_vts_blocked_trucks"
                 }
             ]
         },
@@ -1110,6 +1182,12 @@
                 },
                 {
                     "name": "block_vts_truck"
+                },
+                {
+                    "name": "unblock_vts_truck"
+                },
+                {
+                    "name": "get_vts_blocked_trucks"
                 }
             ]
         },
@@ -7255,6 +7333,14 @@
         {
             "name": "block_vts_truck",
             "displayName": "block_vts_truck"
+        },
+        {
+            "name": "unblock_vts_truck",
+            "displayName": "unblock_vts_truck"
+        },
+        {
+            "name": "get_vts_blocked_trucks",
+            "displayName": "get_vts_blocked_trucks"
         },
         {
             "name": "upload_cems_location_master",
