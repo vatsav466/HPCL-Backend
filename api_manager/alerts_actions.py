@@ -449,7 +449,7 @@ async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
 # Action get_vts_blocked_trucks
 @router.post('/get_vts_blocked_trucks', tags=['Alerts'])
 async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParams):
-    query = "blocked_status='blocked'"
+    query = "blocking_status='blocked'"
 
     query = await generate_filter_query(data.cross_filters, query)
 
