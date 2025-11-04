@@ -81,7 +81,7 @@ def insert_to_db(pg_conn, data, table_name, chunk_size=50000):
     insert_sql = f'INSERT INTO "{table_name}" ({col_names}) VALUES %s;'
     for i in range(0, len(data), chunk_size):
         chunk = data[i:i + chunk_size].to_pandas()
-        # ✅ Fix NaT values for timestamps
+        #  Fix NaT values for timestamps
         chunk = chunk.replace({pd.NaT: None})
         values = [tuple(row) for row in chunk.to_numpy()]
         execute_values(cur, insert_sql, values)
@@ -140,7 +140,7 @@ def sync_table(source_table, target_table):
     if "transporter_code" in df_transp.columns:
         df_transp = df_transp.with_columns(pl.col("transporter_code").cast(pl.Utf8).str.replace_all(r"^00+", ""))
 
-    # ✅ Remove exact duplicates (same transporter_code + transporter_name)
+    # Remove exact duplicates (same transporter_code + transporter_name)
     df_transp = df_transp.unique(subset=["transporter_code", "transporter_name"])
 
     # ---------- STEP 3: Merge on transporter_code ----------
@@ -195,7 +195,7 @@ def sync_table(source_table, target_table):
     create_table_from_source(pg_conn, merged_df, target_table)
     insert_to_db(pg_conn, merged_df, target_table)
 
-    print(f"\n✅ Sync complete! Final table: {target_table}, total rows: {len(merged_df)}")
+    print(f"\n Sync complete! Final table: {target_table}, total rows: {len(merged_df)}")
 
     # ---------- STEP 8: Close Connections ----------
     source_cursor.close()
