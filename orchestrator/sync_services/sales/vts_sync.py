@@ -186,7 +186,7 @@ def sync_table(source_table, target_table):
     print(f"Final merged records: {len(merged_df)}")
 
     # ---------- STEP 7: Drop + Recreate Target Table ----------
-    target_table = "zsdcv_truck_stg_final"
+    target_table = "vts_truck_master"
     cur = pg_conn.cursor()
     cur.execute(f'DROP TABLE IF EXISTS "{target_table}" CASCADE;')
     pg_conn.commit()
