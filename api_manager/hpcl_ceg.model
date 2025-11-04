@@ -858,6 +858,12 @@ Model Alerts {
         alert_ids list str
     }
 
+    Action=> block_vts_truck {
+        bu BusinessUnit
+        truck_number str
+        blocking_days int
+    }
+
     Config=> {
         crud_operations='read'
         // Access Key Mapping for RBAC,

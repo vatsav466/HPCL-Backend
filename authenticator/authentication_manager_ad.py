@@ -270,7 +270,6 @@ class AuthenticationManager:
             return unique
 
         def make_hashable(value):
-            """Recursively convert lists/dicts/sets into tuples so they become hashable."""
             if isinstance(value, dict):
                 return tuple(sorted((k, make_hashable(v)) for k, v in value.items()))
             elif isinstance(value, (list, set, tuple)):
