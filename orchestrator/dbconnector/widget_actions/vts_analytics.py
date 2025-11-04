@@ -1951,8 +1951,8 @@ class VTSAnalyticsActions:
         
         trips_df['qty_shortage'] = pd.to_numeric(trips_df['qty_shortage'], errors='coerce')
         filtered_trips_df = trips_df[
-            trips_df['transporter_name'].notnull() &
-            trips_df['transporter_code'].notnull() &
+            # trips_df['transporter_name'].notnull() &
+            # trips_df['transporter_code'].notnull() &
             (trips_df['qty_shortage'] > 0)
         ].copy()
 
@@ -2015,7 +2015,8 @@ class VTSAnalyticsActions:
                 # item["vehicle_count"] = group["vehicle_id"].nunique()
                 item["invoice_count"] = len(group["invoice_no"])
                 # print('item["invoice_count"]', item["invoice_count"])
-                item["vehicle_count"] = len(group["vehicle_id"])
+                item["vehicle_count"] = group["vehicle_id"].nunique()         # unique vehicles
+
                 # print('item["vehicle_count"]', item["vehicle_count"])
 
                 child = compute_group_summary(group, next_cols)
