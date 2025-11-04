@@ -1481,6 +1481,7 @@ Model VtsAlertHistory {
     bu optional str
     sap_id optional str
     zone optional str
+    location_name optional str
     region optional str
     location_type optional str
     tl_number index_field str

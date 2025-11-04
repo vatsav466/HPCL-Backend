@@ -3605,6 +3605,7 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tl_number: Mapped[str] = mapped_column("tl_number", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
@@ -3639,6 +3640,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     location_type: typing.Optional[str] = pydantic.Field("", **{})
     tl_number: str
@@ -3681,6 +3683,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     location_type: typing.Optional[str] = pydantic.Field("", **{})
     tl_number: typing.Optional[str] | None = None
