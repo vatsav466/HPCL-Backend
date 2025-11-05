@@ -40,6 +40,25 @@ async def maintenance_alert_check(alert_data):
             tas_device_name_for_query = tas_device_name[:-2]  # remove last 2 characters
         else:
             tas_device_name_for_query = tas_device_name
+
+        if alert_data[interlock_name] in ['MOV_Close Status', 'ROSOV_Close Status', 'MOV_Close Status_Fail','ROSOV_Close Status_Fail']:
+            vft_radar_maintenance_query = (
+                f"""bu = 'TAS' and """
+                f"""sap_id = '{alert_data.get('sap_id', '')}' and """
+                f"""alert_section = 'TAS' and """
+                f"""regexp_replace(tas_device_name, '_M$', '') = '{tas_device_name if not tas_device_name.endswith('_M') else tas_device_name[:-2]}' and """
+                f"""equipment_name in ('VFT', 'RADAR') and """
+                f"""interlock_name LIKE '%Maintenance%' and """
+                f"""alert_status != 'Close'"""
+            )
+            logger.info(f"VFT/RADAR maintenance check for MOV/ROSOV suppression: {vft_radar_maintenance_query}")
+            vft_radar_params = urdhva_base.queryparams.QueryParams(q=vft_radar_maintenance_query)
+            vft_radar_resp = await hpcl_ceg_model.Alerts.get_all(vft_radar_params, resp_type='plain')
+            if vft_radar_resp.get('data'):
+                logger.info("Active VFT/RADAR maintenance found – skipping MOV/ROSOV close status alert creation")
+                return True
+            
+
         # Only perform this check if the current alert's interlock name does NOT end with "Maintenance"
         if not interlock_name.endswith("Maintenance"):
             logger.info(f"Checking for maintenance alerts for equipment: {current_equipment_name}")
