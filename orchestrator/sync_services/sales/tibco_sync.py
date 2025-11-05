@@ -154,6 +154,10 @@ def get_and_insert_data(cursor, query, pg_conn, table_name, df_location, batch_s
 
         columns = [col[0].lower() for col in cursor.description]
         df_main = pd.DataFrame.from_records(rows, columns=columns)
+        if "carrier_no" in df_main.columns:
+            df_main["carrier_no"] = df_main["carrier_no"].astype(str).apply(
+                lambda x: x[2:] if x.startswith("00") else x
+            )
 
         print(f"Fetched batch of {len(df_main)} rows from source")
 
