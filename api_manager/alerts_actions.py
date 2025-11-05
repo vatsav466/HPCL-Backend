@@ -342,8 +342,13 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
     alert_data = await Alerts.get_all(
         urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
         )
-    if alert_data['data']:
-        return {"status": False, "message": "Truck has already been blocked"}    
+    
+    query = f"blocking_status='blocked' and truck_number='{data.truck_number}'"
+    manual_blocked = await VtsManualBlocked.get_all(
+        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
+        )
+    if alert_data["data"] or manual_blocked["data"]:
+        return {"status": False, "message": "Truck has already been blocked"}
     
     headers = {
         "Content-Type": "application/json"
@@ -352,9 +357,9 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
         "VehicleRtoNo": data.truck_number
         }
     response = requests.post(
-        urdhva_base.settings.vts_truck_status_url, 
-        json=payload, 
-        headers=headers, 
+        urdhva_base.settings.vts_truck_status_url,
+        json=payload,
+        headers=headers,
         timeout=30
         )
     response = json.dumps(response.json(), indent=4)
@@ -423,7 +428,7 @@ async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
         payload = [
             {
                 "transactNo": alert_data["transaction_number"],
-                "truckRegNo": data.truck_number,
+                "truckRegNo": alert_data["truck_number"],
                 "blockingFlag": "N",
                 "blockingFrom": alert_data["blocking_from"],
                 "blockingTo": alert_data["blocking_to"]
