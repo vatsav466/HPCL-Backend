@@ -145,7 +145,7 @@ class VTSAnalyticsActions:
     def create_date_condition(query,val):
         """Create date range condition"""
         start = val.split(",")[0]
-        end = (datetime.strptime(val.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
+        end = val.split(",")[1]
        
         if "vts_alert_history" in query.lower():
             return f"vts_end_datetime BETWEEN '{start}' AND '{end}'"
@@ -1014,112 +1014,94 @@ class VTSAnalyticsActions:
             query = vts_query.vts_query.get(drill_state.split(",")[0])
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             vts_drill_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
-            print(vts_drill_query)
+            # print("Base Query:\n", vts_drill_query)
 
             vts_df = await VTSAnalyticsActions.execute_query(vts_drill_query)
+            # --- Add this block here ---
+            # Step 1: Filter route_deviation_count != 0 first
+            vts_df = vts_df[vts_df['route_deviation_count'].fillna(0) != 0].copy()
+            # print("Rows after route_deviation_count != 0:", len(vts_df))
+
+            # Step 2: Deduplicate by invoice_number (keep latest created_at)
+            vts_df = vts_df.sort_values(by="created_at", ascending=False)
             vts_df = vts_df.drop_duplicates(subset=['invoice_number'], keep='first')
+            # print("Rows after deduplication by invoice_number:", len(vts_df))
+            # --- End block ---
+            # print("Rows fetched from vts_alert_history:", len(vts_df))
 
-            if vts_df.empty:
-                return {"status": True, "message": "No data found", "data": []}
+            # Deduplicate invoices (keep first)
+            vts_df = vts_df.drop_duplicates(subset=['invoice_number'], keep='first')
+            # print("Rows after deduplication by invoice_number:", len(vts_df))
 
-            # Step 2: Get TLs and fetch alerts
-            tl_numbers_list = vts_df['tl_number'].tolist()
-            tl_numbers_str = "', '".join(map(str, tl_numbers_list))
-
-            alerts_query = f"""
-                SELECT DISTINCT location_name, vehicle_number, transporter_code, zone
-                FROM alerts
-                WHERE vehicle_number IN ('{tl_numbers_str}')
-                AND transporter_code != '' AND location_name != ''
+            # Step 2: Get TLs and fetch details from vts_truck_master
+            vts_truck_query = """
+                SELECT DISTINCT 
+                    truck_no, 
+                    location_name, 
+                    transporter_code, 
+                    transporter_name, 
+                    zone
+                FROM vts_truck_master
             """
-            df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
-            if df_alerts.empty:
-                return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
+            df_truck = await VTSAnalyticsActions.execute_query(vts_truck_query)
+            # print("Rows fetched from vts_truck_master:", len(df_truck))
+            if df_truck.empty:
+                return {"status": False, "message": "No matching truck details found in vts_truck_master", "data": []}
 
-            merged_df = vts_df.merge(df_alerts, left_on="tl_number", right_on="vehicle_number", how="left")
+            # Step 3: Merge vts_df with truck master
+            merged_df = vts_df.merge(df_truck, left_on="tl_number", right_on="truck_no", how="left")
+            merged_df["zone"] = merged_df["zone"].fillna("UNKNOWN").replace("", "UNKNOWN")
+            merged_df['transporter_code'] = merged_df['transporter_code'].astype(str).apply(
+                lambda x: x[2:] if x.startswith("00") else x
+            )
+            # print("Rows after merge:", len(merged_df))
+            # print("Zone distribution:\n", merged_df["zone"].value_counts(dropna=False))
 
-            # Step 3: Remove missing or empty zones
-            merged_df = merged_df[merged_df["zone"].notna() & (merged_df["zone"].str.strip() != "")]
-            merged_df['transporter_code'] = merged_df['transporter_code'].astype(str).apply(lambda x: x[2:] if x.startswith("00") else x)
-            if merged_df.empty:
-                return {"status": False, "message": "No valid zone data found after merging with alerts", "data": []}
+            final_df = merged_df.copy()
 
-            # Step 4: Merge transporter names
-            email_query = """SELECT transporter_code, transporter_name FROM email_master"""
-            df_email = await VTSAnalyticsActions.execute_query(email_query)
-            final_df = merged_df.merge(df_email, on="transporter_code", how="left")
-            final_df.drop(columns=["transporter_code"], inplace=True)
-
-            # Step 5: Filter violation type
+            # Step 4: Filter by violation type != 0 if provided
             violation_type = payload.get("violation_type")
-            if not violation_type or violation_type not in final_df.columns:
+            if violation_type and violation_type not in final_df.columns:
                 return {"status": False, "message": f"Invalid violation type: {violation_type}", "data": []}
 
-            violation_filtered_df = final_df[final_df[violation_type].fillna(0) != 0].copy()
+            if violation_type:
+                violation_filtered_df = final_df[final_df[violation_type].fillna(0) != 0].copy()
+                # print(f"Rows after filtering {violation_type} != 0:", len(violation_filtered_df))
+            else:
+                violation_filtered_df = final_df.copy()
+                # print("No violation_type filter applied")
 
-            #handle search
+            # Step 5: Handle search
             if payload.get("search") == "true":
-                # Select relevant columns for search
                 search_columns = [
-                    "tl_number", 
-                    "transporter_name", 
-                    "location_name", 
-                    "zone", 
+                    "tl_number",
+                    "transporter_name",
+                    "location_name",
+                    "zone",
                     "invoice_number",
                     "created_at"
                 ]
-                # Filter only columns that exist in the dataframe
                 available_columns = [col for col in search_columns if col in violation_filtered_df.columns]
                 search_df = violation_filtered_df[available_columns].copy()
-                search_df = search_df.drop_duplicates(subset=['invoice_number'], keep= 'first')
-
-                search_df.rename(columns={
-                    "tl_number": "truck_number" 
-                }, inplace=True)
-
+                search_df.rename(columns={"tl_number": "truck_number"}, inplace=True)
                 if "created_at" in search_df.columns:
                     search_df = search_df.sort_values(by="created_at", ascending=False)
-                
                 search_df = search_df.replace({np.nan: None})
+                
                 return {
-                    "status": True, 
-                    "message": f"All data for {violation_type} search", 
+                    "status": True,
+                    "message": f"All data for {violation_type} search",
                     "data": search_df.to_dict(orient="records")
-                }                
+                }
 
-            # Step 6: Remove empty values for zone, location, transporter
-            for key in ["zone", "location_name", "transporter_name"]:
-                violation_filtered_df = violation_filtered_df[
-                    violation_filtered_df[key].notna() & (violation_filtered_df[key].str.strip() != "")
-                ]
+            # Step 6: Apply payload filters (zone, location, transporter, TL)
+            for key in ["zone", "location_name", "transporter_name", "tl_number"]:
                 if payload.get(key):
+                    before_count = len(violation_filtered_df)
                     violation_filtered_df = violation_filtered_df[violation_filtered_df[key] == payload[key]]
+                    
 
-            if violation_filtered_df.empty:
-                return {"status": True, "message": "No data found for the applied filters", "data": []}
-
-            # Step 7: TL-level drill-down for invoice details
-            selected_tl = payload.get("tl_number")
-            if selected_tl:
-                violation_filtered_df = violation_filtered_df[violation_filtered_df["tl_number"] == selected_tl]
-
-                if violation_filtered_df.empty:
-                    return {"status": True,  "message": f"No invoices found for vehicle {selected_tl}", "data": []  }
-
-                # Return invoice details sorted by created_at
-                invoice_df = violation_filtered_df.sort_values(by="created_at", ascending=True)
-                invoice_df = invoice_df[["invoice_number", "created_at", violation_type]]
-
-                # Rename columns for frontend
-                invoice_df.rename(columns={
-                    "invoice_number": "invoice_no",
-                    "created_at": "created_at"
-                }, inplace=True)
-
-                result = invoice_df.to_dict(orient="records")
-                return { "status": True,  "message": f"{violation_type} details for vehicle {selected_tl}",  "data": result }
-
-            # Step 8: Determine grouping column for summaries
+            # Step 7: Determine grouping column
             if payload.get("transporter_name"):
                 group_col = "tl_number"
             elif payload.get("location_name"):
@@ -1128,34 +1110,33 @@ class VTSAnalyticsActions:
                 group_col = "location_name"
             else:
                 group_col = "zone"
+            # print("Grouping by:", group_col)
 
-            # Step 9: Summarize counts
-            summary_df = (
-                violation_filtered_df.groupby(group_col)
-                .agg({"invoice_number": pd.Series.nunique})
-                .reset_index()
-            )
-
-            summary_df[violation_type] = violation_filtered_df.groupby(group_col).size().values
-            if group_col != "tl_number":
-                 summary_df["vehicle_count"] = violation_filtered_df.groupby(group_col)["tl_number"].nunique().values
-                
-
-
-            rename_mapping = {
+            # Step 8: Summarize counts
+            summary_df = violation_filtered_df.groupby(group_col).agg({
+                "invoice_number": pd.Series.nunique,
+                "tl_number": pd.Series.nunique
+            }).reset_index()
+            summary_df.rename(columns={
                 "invoice_number": "invoice_count",
-            }
-            summary_df.rename(columns=rename_mapping, inplace=True)
+                "tl_number": "vehicle_count"
+            }, inplace=True)
 
-            # Also rename the dynamic violation column for clarity
-            summary_df.rename(columns={violation_type: violation_type}, inplace=True)
+            # Include violation_type values (sum, fill NaN with 0)
+            if violation_type:
+                # Count rows where violation_type is not 0
+                violation_count = violation_filtered_df.groupby(group_col)[violation_type].apply(lambda x: (x != 0).sum()).reset_index()
+                summary_df[violation_type] = violation_count[violation_type]
 
+            
             result = summary_df.to_dict(orient="records")
-            return {"status": True,  "message": f"{violation_type} drill-down data", "data": result }
+
+            return {"status": True, "message": f"{violation_type} drill-down data", "data": result}
 
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+
     
    
     @staticmethod
