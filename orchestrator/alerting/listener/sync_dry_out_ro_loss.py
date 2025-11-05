@@ -76,6 +76,13 @@ async def sync_dry_out_ro_loss():
     products_map = {'2811000': 'MS', '1322000': 'MS', '2812000': 'HSD', '1683000': 'HSD', '3912000': 'TURBO',
                     '1683100': 'TURBO', '2816000': 'POWER 99', '2682000': 'POWER 99', '3672000': 'POWER 95',
                     '3672000': 'POWER 95', '3373000': 'POWER 100', '3373000': 'POWER 100'}
+    data['zone'] = data['zone'].fillna("")
+    data['region'] = data['region'].fillna("")
+    data['sales_area'] = data['sales_area'].fillna("")
+    data['location_name'] = data['location_name'].fillna("")
+    data.loc[data['region'] == '0', 'region'] = ''
+    data.loc[data['sales_area'] == '0', 'sales_area'] = ''
+    data.loc[data['location_name'] == '0', 'location_name'] = ''
     data = data.fillna(0)
     data['product_name'] = data['product_no'].astype(str).map(products_map)
     data['start_date'] = pd.to_datetime(data['start_date']).dt.tz_localize(None)
@@ -102,10 +109,13 @@ async def sync_dry_out_ro_loss():
     data['dryout_days'] = data['dryout_days'].apply(
         lambda td: f"{td.days} days {td.components.hours} hours"
     )
+    data = data.drop_duplicates(subset=["loss_month", "sap_id", "zone", "product_name", "tank_no", "location_name"])
     print(data)
     print(data.columns)
     print(data.dtypes)
-    await hpcl_ceg_model.DryOutRoLoss.bulk_update(data.to_dict(orient='records'), upsert=True)
+    data.to_csv("/tmp/dry_out_loss.csv", index=False)
+    for split_df in np.array_split(data, 500):
+        await hpcl_ceg_model.DryOutRoLoss.bulk_update(split_df.to_dict(orient='records'), upsert=True)
 
 if __name__ == "__main__":
     asyncio.run(sync_dry_out_ro_loss())

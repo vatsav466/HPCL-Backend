@@ -753,6 +753,7 @@ class IndentDryOut:
                     self.params['temporary_close'] = False
                     self.params['permanent_close'] = False
                     self.params['ro_offline'] = False
+                    await create_alert(self.params, camunda_url)
                     await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                         connection_mapping.item_name_mapping.get(prod_code, ""),
                                                         dry_alert_data['dry_out_in_days'])
