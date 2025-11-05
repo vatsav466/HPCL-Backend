@@ -216,7 +216,7 @@ class IndentDryOut:
                             continue
                         if record['dry_out_in_days'] != self.params["dry_out_in_days"]:
                             if self.params['dry_out_in_days'] == '1':
-                                query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
+                                query = (f"""update alerts set indent_no='{str(each_indent.get('INDENT_NO'))}', """
                                     f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
                                     f"""servicing_plant_id='{each_indent["LOCN_CODE"]}', """
                                     f"""dry_out_in_days='{self.params["dry_out_in_days"]}', """
@@ -224,7 +224,7 @@ class IndentDryOut:
                                     f"""intra_day_dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' """
                                     f"""where id='{record["id"]}'""")
                             elif self.params['dry_out_in_days'] == '2':
-                                query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
+                                query = (f"""update alerts set indent_no='{str(each_indent.get('INDENT_NO'))}', """
                                     f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
                                     f"""servicing_plant_id='{each_indent["LOCN_CODE"]}', """
                                     f"""dry_out_in_days='{self.params["dry_out_in_days"]}', """
@@ -232,7 +232,7 @@ class IndentDryOut:
                                     f"""intra_day_dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' """
                                     f"""where id='{record["id"]}'""")
                         else:
-                            query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
+                            query = (f"""update alerts set indent_no='{str(each_indent.get('INDENT_NO'))}', """
                                     f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
                                     f"""servicing_plant_id='{each_indent["LOCN_CODE"]}', """
                                     f"""dry_out_in_days='{self.params["dry_out_in_days"]}' """
