@@ -335,6 +335,8 @@ vts_query = {
                             SELECT 
                                 tl_number,
                                 invoice_number,
+                                location_name,
+                                zone,
                                 DATE(vts_end_datetime) as created_at,
                                 route_deviation_count,
                                 stoppage_violations_count,
@@ -363,7 +365,6 @@ vts_query = {
                     sap_id,
                     location_name,
                     vehicle_number,
-                    transporter_code,
                     zone,
                     SUM(CASE WHEN violation_type = 'route_deviation_count' THEN 1 ELSE 0 END) AS route_deviation_count,
                     SUM(CASE WHEN violation_type = 'stoppage_violations_count' THEN 1 ELSE 0 END) AS stoppage_violations_count,
@@ -372,9 +373,9 @@ vts_query = {
                     SUM(CASE WHEN violation_type = 'night_driving_count' THEN 1 ELSE 0 END) AS night_driving_count,
                     SUM(CASE WHEN violation_type = 'speed_violation_count' THEN 1 ELSE 0 END) AS speed_violation_count,
                     SUM(CASE WHEN violation_type = 'continuous_driving_count' THEN 1 ELSE 0 END) AS continuous_driving_count
-                FROM alerts 
-                WHERE transporter_code != '' and location_name != '' and alert_section = 'VTS'
-                GROUP BY sap_id, location_name, vehicle_number, transporter_code,zone
+                FROM alerts  
+                WHERE alert_section = 'VTS'
+                GROUP BY sap_id, location_name, vehicle_number, zone
                   """,
 
     "vts_insite_violation_type" : """
@@ -382,14 +383,11 @@ vts_query = {
                                         sap_id,
                                         location_name,
                                         vehicle_number,
-                                        transporter_code,
                                         zone,
                                         {select_clause}
                                     FROM alerts 
-                                    WHERE transporter_code != '' 
-                                    AND location_name != '' 
-                                    AND alert_section = 'VTS'
-                                    GROUP BY sap_id, location_name, vehicle_number, transporter_code, zone
+                                    WHERE alert_section = 'VTS'
+                                    GROUP BY sap_id, location_name, vehicle_number, zone
                                     HAVING {having_clause}
                                   """,
     
@@ -397,6 +395,8 @@ vts_query = {
                             SELECT
                                 tl_number,
                                 invoice_number,
+                                location_name,
+                                zone,
                                 DATE(vts_end_datetime) AS created_at,
                                 COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END) AS stoppage_violations_count,
                                 COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END) AS route_deviation_count,
@@ -406,27 +406,29 @@ vts_query = {
                                 COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END) AS speed_violation_count,
                                 COUNT(DISTINCT CASE WHEN continuous_driving_count != 0 THEN invoice_number END) AS continuous_driving_count
                             FROM (
-                                SELECT DISTINCT tl_number, invoice_number, vts_end_datetime,
+                                SELECT DISTINCT invoice_number, tl_number, vts_end_datetime, location_name,zone,
                                     stoppage_violations_count, route_deviation_count, device_tamper_count,
                                     main_supply_removal_count, night_driving_count, speed_violation_count, continuous_driving_count
                                 FROM vts_alert_history
                                 WHERE invoice_number IS NOT NULL
                             ) AS history_data
-                            GROUP BY tl_number, invoice_number, DATE(vts_end_datetime)
+                            GROUP BY tl_number, invoice_number, DATE(vts_end_datetime), location_name, zone
                           """,
     "vts_insite_history_type": """
                                SELECT 
                                 tl_number,
+                                location_name,
+                                zone,
                                 invoice_number,
                                 {select_clause}
                             FROM (
-                                SELECT DISTINCT tl_number, invoice_number,
+                                SELECT DISTINCT invoice_number, tl_number, location_name, zone,
                                        stoppage_violations_count, route_deviation_count, device_tamper_count,
                                        main_supply_removal_count, night_driving_count, speed_violation_count, continuous_driving_count
                                 FROM vts_alert_history
                                 WHERE invoice_number IS NOT NULL
                             ) AS history_data
-                            GROUP BY tl_number, invoice_number
+                            GROUP BY tl_number, invoice_number,zone,location_name
                             HAVING {having_clause}
                                """,
     "closed_alerts": """ SELECT 
