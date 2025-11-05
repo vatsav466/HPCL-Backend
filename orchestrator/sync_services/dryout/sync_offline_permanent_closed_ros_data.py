@@ -9,7 +9,7 @@ import pandas as pd
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
 
-logger = urdhva_base.logger.Logger.getInstance("temp_closed_data")
+logger = urdhva_base.logger.Logger.getInstance("offline_permanent_closed")
 
 
 def fetch_data(cursor, query, getData=False, params=None):
@@ -115,7 +115,7 @@ def insertToDB(data, table_name, indexing_col=(), schema_name="HPCL_HOS"):
 
 
 def sync_data(table_name):
-    query = f"""SELECT erp_code AS sap_id, tempclose FROM "HPCL_HOS".ms_site WHERE tempclose='true' and enable='true'"""
+    query = f"""SELECT erp_code AS sap_id, enable FROM "HPCL_HOS".ms_site WHERE enable='false'"""
     creds = credential_loader.get_credentials('CRIS')
     params = {
             "host": creds["host"],
@@ -127,7 +127,7 @@ def sync_data(table_name):
     data = fetch_data(cursor=None, query=query, params=params, getData=True)
     data["synced_datetime"] = datetime.datetime.now()
     data = data.fillna("")
-    data["sap_id"] = data["sap_id"].fillna(0).astype(np.float64).astype(int).astype(str)
+    data["sap_id"] = data["sap_id"].fillna(0).str.strip().replace('', 0).astype(np.float64).astype(int).astype(str)
     print(data)
     print(data.dtypes)
 
@@ -142,12 +142,12 @@ def sync_data(table_name):
 
     # Safe truncate for HPCL_HOS schema
     try:
-        query = f"""TRUNCATE "HPCL_HOS".ms_site_temp_closed"""
+        query = f"""TRUNCATE "HPCL_HOS".ms_site_offline_permanent_closed"""
         fetch_data(cursor=None, query=query, params=params, getData=False)
     except Exception:
         print("-- Could not truncate --")
 
-    insertToDB(data, table_name="ms_site_temp_closed", indexing_col=["sap_id"], schema_name="HPCL_HOS")
+    insertToDB(data, table_name="ms_site_offline_permanent_closed", indexing_col=["sap_id"], schema_name="HPCL_HOS")
     print(f"-- {table_name.lower()} synced successfully --")
 
 

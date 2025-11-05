@@ -196,8 +196,6 @@ class IndentDryOut:
                             self.params['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                         elif self.params['dry_out_in_days'] == '2':
                             self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
-                        if await self._is_ro_temporarily_closed():
-                            True, {"msg": "RO temporarily Closed"}
                         await create_alert(self.params, camunda_url)
                         await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                             connection_mapping.item_name_mapping.get(prod_code, ""),
@@ -309,8 +307,6 @@ class IndentDryOut:
                             self.params['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                         elif self.params['dry_out_in_days'] == '2':
                             self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
-                        if await self._is_ro_temporarily_closed():
-                            True, {"msg": "RO temporarily Closed"}
                         await create_alert(self.params, camunda_url)
                         await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                             connection_mapping.item_name_mapping.get(prod_code, ""),
@@ -757,8 +753,6 @@ class IndentDryOut:
                     self.params['temporary_close'] = False
                     self.params['permanent_close'] = False
                     self.params['ro_offline'] = False
-                    if await self._is_ro_temporarily_closed():
-                        return await self.send_alert_action(is_raised=True)
                     await create_alert(self.params, camunda_url)
                     await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                         connection_mapping.item_name_mapping.get(prod_code, ""),
@@ -2021,14 +2015,14 @@ class IndentDryOut:
     
     async def _check_dry_out_history(self):
         dealer_code = str(self.params.get("dealer_id"))
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         alert_id = self.params.get("alert_id")
         alert_data = await Alerts.get(int(alert_id))
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
         query = f"""SELECT *
-                        FROM dry_out_history
+                        FROM public.dry_out_history
                         WHERE sap_id = '{dealer_code}'
                         AND product_no = '{alert_data['product_code']}'
                         AND status != 'Close'"""
@@ -2068,7 +2062,7 @@ class IndentDryOut:
                     WHERE sch.volume > 0 and rosapcode = '{dealer_code}' and item_name = '{reverse_mapping.get(product_code)}'
                     GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
                     ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
-        print("_check_ro_in_cris",query)
+        #print("_check_ro_in_cris",query)
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         cris_resp = await function(query=query)
         if not cris_resp:
@@ -2105,7 +2099,7 @@ class IndentDryOut:
                     WHERE rosapcode = '{dealer_code}' and item_name = '{reverse_mapping.get(product_code)}'
                     GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
                     ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
-        print("reverse_mapping_query",query)
+        #print("reverse_mapping_query",query)
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         cris_resp = await function(query=query)
         if not cris_resp:
