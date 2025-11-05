@@ -157,6 +157,31 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await VTS.get_all(params, skip_secrets=True)
 
 
+@router.post('/vtsmanualblocked', response_model=VtsManualBlocked, tags=['VtsManualBlocked'])
+async def create(inputObj: VtsManualBlockedCreate):
+    return await inputObj.create()
+
+
+@router.put('/vtsmanualblocked', response_model=VtsManualBlocked, tags=['VtsManualBlocked'])
+async def update(inputObj: VtsManualBlocked):
+    return await inputObj.modify()
+
+
+@router.get('/vtsmanualblocked/{id}', response_model=VtsManualBlocked, tags=['VtsManualBlocked'])
+async def get(id: str):
+    return await VtsManualBlocked.get(id, skip_secrets=True)
+
+
+@router.get('/vtsmanualblocked', response_model=VtsManualBlockedGetResp, tags=['VtsManualBlocked'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await VtsManualBlocked.get_all(params, skip_secrets=True)
+
+
+@router.delete('/vtsmanualblocked/{id}', tags=['VtsManualBlocked'])
+async def delete(id: str):
+    return await VtsManualBlocked.delete(id)
+
+
 @router.get('/alerts/{id}', response_model=Alerts, tags=['Alerts'])
 async def get(id: str):
     return await Alerts.get(id, skip_secrets=True)
