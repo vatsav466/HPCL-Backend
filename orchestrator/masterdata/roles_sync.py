@@ -642,6 +642,12 @@ async def sync_user_roles():
                         "allowed_sub_menus": [
                             {
                             "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            },
+                            {
+                            "title": "Compliance"
                             }
                         ]
                     },
@@ -1187,6 +1193,12 @@ async def sync_user_roles():
                         "allowed_sub_menus": [
                             {
                             "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            },
+                            {
+                            "title": "Compliance"
                             }
                         ]
                     },

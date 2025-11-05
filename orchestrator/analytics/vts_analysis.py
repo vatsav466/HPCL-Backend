@@ -894,7 +894,7 @@ async def post_lpg_tt(payload):
 
 async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_section:str):
     vts_mapping = vts_role_mapping.vts_unblocking_matrix[alert_section]
-    if sap_id in ['1652','1672','1693','1462','1649','1689','1676']:
+    if sap_id in ['1652','1672','1693','1462','1649','1689','1676','1700','1691']:
         vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
     if bu in vts_mapping.keys():
         query = (f"""select count(*) as "count" from alerts """
@@ -915,7 +915,7 @@ async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_
 
 async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_section:str):
     vts_mapping = vts_role_mapping.vts_unblocking_matrix[alert_section]
-    if sap_id in ['1652','1672','1693','1462','1649','1689','1676']:
+    if sap_id in ['1652','1672','1693','1462','1649','1689','1676','1700','1691']:
         vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
     if bu in vts_mapping.keys():
         vts_level_data = vts_mapping[bu]
