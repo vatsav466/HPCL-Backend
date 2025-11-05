@@ -4,6 +4,7 @@ from hpcl_ceg_model import *
 import fastapi
 import os
 import pytz
+import time
 import json
 import datetime
 import requests
@@ -16,7 +17,8 @@ from fastapi.responses import FileResponse
 import utilities.vts_mapping as vts_mapping
 from dateutil.relativedelta import relativedelta
 import utilities.connection_mapping as connection_mapping
-from utilities.helpers import generate_filter_query
+import orchestrator.analytics.vts_analysis as vts_analysis
+from utilities.helpers import generate_filter_query, get_location_details
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.actions.check_violation_count as check_violation_count
@@ -327,3 +329,142 @@ async def alerts_bulk_send_to_approve(data: Alerts_Bulk_Send_To_ApproveParams):
         print(traceback.format_exc())
         logger.error(e)
         return {"status": False, "message": "Error", "data": []}
+
+
+# Action block_vts_truck
+@router.post('/block_vts_truck', tags=['Alerts'])
+async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
+    query = (f"""alert_status='Open' and alert_section='VTS' and bu='{data.bu}' and vehicle_number='{data.truck_number}' """)
+    print("-"*10)
+    print("query :", query)
+    print("-"*10)
+
+    alert_data = await Alerts.get_all(
+        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
+        )
+    if alert_data['data']:
+        return {"status": False, "message": "Truck has already been blocked"}    
+    
+    headers = {
+        "Content-Type": "application/json"
+        }
+    payload = {
+        "VehicleRtoNo": data.truck_number
+        }
+    response = requests.post(
+        urdhva_base.settings.vts_truck_status_url, 
+        json=payload, 
+        headers=headers, 
+        timeout=30
+        )
+    response = json.dumps(response.json(), indent=4)
+    response = eval(response)
+
+    print("-"*20)
+    print("vts_truck_status :", response)
+    print("-"*20)
+
+    if isinstance(response, dict) and response.get("TripStatus", "").lower() == "loaded":
+        return {"status": False, "message": "Cannot block as the truck is in a trip"}
+
+    start_date = datetime.datetime.now()
+    end_date = start_date + relativedelta(days=data.blocking_days)
+
+    transaction_number = str(int(time.time() * 1000))[-7:] + "1"
+    payload = [
+        {
+            "transactNo": transaction_number,
+            "truckRegNo": data.truck_number,
+            "blockingFlag": "Y",
+            "blockingFrom": start_date.strftime("%Y%m%d"),
+            "blockingTo": end_date.strftime("%Y%m%d")
+        }
+    ]
+    print("-"*20)
+    print("payload :", payload)
+    print("-"*20)
+    # await vts_analysis.post_blocked_tt_ims(payload)
+
+    truck_details = {
+        "bu": data.bu,
+        "truck_number": data.truck_number,
+        "transaction_number": transaction_number,
+        "blocking_status": "blocked",
+        "blocking_flag": "Y",
+        "blocking_days": data.blocking_days,
+        "blocking_from": start_date,
+        "blocking_to": end_date
+    }
+    query = f"select sap_id from vts_truck_master where truck_no='{data.truck_number}'"
+    location_data = await urdhva_base.BasePostgresModel.get_aggr_data(query)
+    if location_data["data"]:
+        location_data = location_data["data"][0]
+        status, location_data = await get_location_details(data.bu, location_data.get("sap_id"))
+        truck_details.update(
+            {   
+                "location_name": location_data.get("name", ""),
+                "zone": location_data.get("zone", ""),
+                "region": location_data.get("region", "")
+            }
+        )
+
+    await VtsManualBlockedCreate(**truck_details).create()
+    return {"status": True, "message": "Truck has been blocked successfully"}
+
+
+# Action unblock_vts_truck
+@router.post('/unblock_vts_truck', tags=['Alerts'])
+async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
+    try:
+        alert_data = await VtsManualBlocked.get(int(data.unblock_id))
+        if not isinstance(alert_data, dict):
+            alert_data = alert_data.__dict__
+        
+        payload = [
+            {
+                "transactNo": alert_data["transaction_number"],
+                "truckRegNo": data.truck_number,
+                "blockingFlag": "N",
+                "blockingFrom": alert_data["blocking_from"],
+                "blockingTo": alert_data["blocking_to"]
+            }
+        ]
+        print("-"*20)
+        print("payload :", payload)
+        print("-"*20)
+        # await vts_analysis.post_blocked_tt_ims(payload)
+
+        await VtsManualBlocked(**{
+            "id": int(data.unblock_id),
+            "blocking_status": "unblocked",
+            "blocking_flag": "N",
+            "unblocked_date": datetime.datetime.now()
+        }).modify()
+
+        return {"status": True, "message": "Truck has been unblocked successfully"}
+    except Exception:
+        return {"status": False, "message": "Failed to unblock the truck"}
+
+
+# Action get_vts_blocked_trucks
+@router.post('/get_vts_blocked_trucks', tags=['Alerts'])
+async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParams):
+    query = "blocking_status='blocked'"
+
+    query = await generate_filter_query(data.cross_filters, query)
+
+    alert_data = await VtsManualBlocked.get_all(
+        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
+        )
+    if alert_data["data"]:
+        return {
+            "status": True, 
+            "message": "success", 
+            "data": alert_data["data"]
+            }
+    
+    return {
+        "status": False, 
+        "message": "No data found",
+        "data": []
+        }

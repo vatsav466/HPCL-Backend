@@ -685,6 +685,21 @@ Model VTS {
     }
 }
 
+Model VtsManualBlocked {
+    bu index_field str
+    truck_number index_field str
+    transaction_number unique_field str
+    blocking_status index_field optional str
+    blocking_flag optional str
+    blocking_days optional int
+    blocking_from datetime
+    blocking_to datetime
+    sap_id optional str
+    zone optional str
+    region optional str
+    location_name optional str    
+}
+
 Model Alerts {
     bu optional index_field BusinessUnit
     sap_id index_field str
@@ -856,6 +871,20 @@ Model Alerts {
 
     Action=> bulk_send_to_approve {
         alert_ids list str
+    }
+
+    Action=> block_vts_truck {
+        bu BusinessUnit
+        truck_number str
+        blocking_days int
+    }
+
+    Action=> unblock_vts_truck {
+        unblock_id str
+    }
+
+    Action=> get_vts_blocked_trucks {
+        cross_filters optional list WidgetFilters
     }
 
     Config=> {
@@ -1452,6 +1481,7 @@ Model VtsAlertHistory {
     bu optional str
     sap_id optional str
     zone optional str
+    location_name optional str
     region optional str
     location_type optional str
     tl_number index_field str

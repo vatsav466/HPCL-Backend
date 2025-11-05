@@ -1379,6 +1379,79 @@ class VTSGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class VtsManualBlockedSchema(UrdhvaPostgresBase):
+    __tablename__ = 'vts_manual_blocked'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    truck_number: Mapped[str] = mapped_column("truck_number", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    transaction_number: Mapped[str] = mapped_column("transaction_number", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    blocking_status: Mapped[typing.Optional[str]] = mapped_column("blocking_status", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    blocking_flag: Mapped[typing.Optional[str]] = mapped_column("blocking_flag", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    blocking_days: Mapped[typing.Optional[int]] = mapped_column("blocking_days", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    blocking_from: Mapped[datetime.datetime] = mapped_column("blocking_from", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    blocking_to: Mapped[datetime.datetime] = mapped_column("blocking_to", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(transaction_number, name="vts_manual_blocked_transaction_number"),)
+
+
+class VtsManualBlockedCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'vts_manual_blocked'
+    
+    bu: str
+    truck_number: str
+    transaction_number: str
+    blocking_status: typing.Optional[str] = pydantic.Field("", **{})
+    blocking_flag: typing.Optional[str] = pydantic.Field("", **{})
+    blocking_days: typing.Optional[int] = pydantic.Field(0, **{})
+    blocking_from: datetime.datetime
+    blocking_to: datetime.datetime
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = VtsManualBlockedSchema
+        upsert_keys = ['transaction_number']
+
+
+class VtsManualBlocked(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'vts_manual_blocked'
+    
+    bu: typing.Optional[str] | None = None
+    truck_number: typing.Optional[str] | None = None
+    transaction_number: typing.Optional[str] | None = None
+    blocking_status: typing.Optional[str] = pydantic.Field("", **{})
+    blocking_flag: typing.Optional[str] = pydantic.Field("", **{})
+    blocking_days: typing.Optional[int] = pydantic.Field(0, **{})
+    blocking_from: typing.Optional[datetime.datetime] | None = None
+    blocking_to: typing.Optional[datetime.datetime] | None = None
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = VtsManualBlockedSchema
+        upsert_keys = ['transaction_number']
+
+
+class VtsManualBlockedGetResp(pydantic.BaseModel):
+    data: typing.List[VtsManualBlocked]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class AlertsSchema(UrdhvaPostgresBase):
     __tablename__ = 'alerts'
     
@@ -1793,6 +1866,32 @@ class Alerts_Bulk_Send_To_UnblockParams(pydantic.BaseModel):
 
 class Alerts_Bulk_Send_To_ApproveParams(pydantic.BaseModel):
     alert_ids: typing.List[str]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Block_Vts_TruckParams(pydantic.BaseModel):
+    bu: hpcl_ceg_enum.BusinessUnit
+    truck_number: str
+    blocking_days: int
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Unblock_Vts_TruckParams(pydantic.BaseModel):
+    unblock_id: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Get_Vts_Blocked_TrucksParams(pydantic.BaseModel):
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -3506,6 +3605,7 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tl_number: Mapped[str] = mapped_column("tl_number", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
@@ -3540,6 +3640,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     location_type: typing.Optional[str] = pydantic.Field("", **{})
     tl_number: str
@@ -3582,6 +3683,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     location_type: typing.Optional[str] = pydantic.Field("", **{})
     tl_number: typing.Optional[str] | None = None
