@@ -711,7 +711,7 @@ class VTSAnalyticsActions:
         
             if violation_types:
                 select_parts = [
-                    f"COUNT(CASE WHEN {v_type} != 0 THEN 1 END) AS {v_type}"
+                    f"COUNT(CASE WHEN {v_type} != 0 THEN invoice_number END) AS {v_type}"
                     for v_type in all_violations
                 ]
                 select_clause = ",\n           ".join(select_parts)
@@ -725,19 +725,8 @@ class VTSAnalyticsActions:
                 else:
                     having_clause = "1=1"
                 
-                violation_query = f"""
-                    SELECT 
-                        tl_number,
-                        invoice_number,
-                        location_name,
-                        zone,
-                        {select_clause}
-                    FROM vts_alert_history
-                    WHERE invoice_number IS NOT NULL
-                    GROUP BY tl_number, invoice_number, location_name, zone
-                    HAVING {having_clause}
-                """
-                
+                violation_query = vts_query.vts_query.get("vts_insite_history_type")
+                violation_query = violation_query.format(select_clause=select_clause, having_clause=having_clause)
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, violation_query)
                 violation_query = VTSAnalyticsActions.apply_conditions_to_query(violation_query, conditions)
                 df_history = await VTSAnalyticsActions.execute_query(violation_query)
@@ -802,7 +791,7 @@ class VTSAnalyticsActions:
             if group_by_col and group_by_col in final_df.columns:
                 violation_cols = [v for v in all_violations if v in final_df.columns]
                 violation_cols.append('qty_shortage')
-                
+            
                 agg_df = final_df.groupby(group_by_col)[violation_cols].sum().reset_index()
                 agg_df['total_count'] = agg_df[violation_cols].sum(axis=1)
                 
@@ -817,6 +806,7 @@ class VTSAnalyticsActions:
 
             # ZONE VIEW (no click - show all zones)
             if qlick_view == "zone" and not click_value:
+                final_df["zone"] = final_df["zone"].fillna("Unknown")
                 agg_df = final_df.groupby("zone")[violation_cols].sum().reset_index()
                 agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
                 return {"status": True, "message": "Zone-wise violations", "data": agg_df.to_dict(orient="records")}
@@ -910,6 +900,7 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("ERROR:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+        
     @staticmethod
     async def violation_percentages(filters, cross_filters, drill_state, payload):
         try:
