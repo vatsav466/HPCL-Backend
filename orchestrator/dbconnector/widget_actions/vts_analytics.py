@@ -1063,7 +1063,12 @@ class VTSAnalyticsActions:
             print(vts_drill_query)
 
             vts_df = await VTSAnalyticsActions.execute_query(vts_drill_query)
-            vts_df = vts_df.drop_duplicates(subset=['invoice_number'], keep='first')
+            # vts_df = vts_df.drop_duplicates(subset=['invoice_number'], keep='first')
+            vts_df.rename(columns={"vts_end_datetime": "created_at"}, inplace=True)
+            vts_df["created_at"] = pd.to_datetime(vts_df["created_at"]).dt.date
+            vts_df = vts_df.sort_values(by='created_at', ascending=True)
+            # vts_df = vts_df.drop_duplicates(subset=['invoice_number', 'zone'], keep='first')
+
 
             if vts_df.empty:
                 return {"status": True, "message": "No data found", "data": []}
@@ -1078,6 +1083,9 @@ class VTSAnalyticsActions:
                 return {"status": False, "message": f"Invalid violation type: {violation_type}", "data": []}
 
             violation_filtered_df = merged_df[merged_df[violation_type].fillna(0) != 0].copy()
+            violation_filtered_df = violation_filtered_df.sort_values(by='created_at', ascending=True)
+            violation_filtered_df = violation_filtered_df.drop_duplicates(subset=['invoice_number'], keep='first')
+
             # Step 6: Remove empty values for zone, location, transporter
             for key in ["zone", "location_name", "transporter_name"]:
                 if payload.get(key):
@@ -1117,6 +1125,8 @@ class VTSAnalyticsActions:
                 group_col = "location_name"
             else:
                 group_col = "zone"
+            if "zone" in violation_filtered_df.columns:
+                violation_filtered_df["zone"] = violation_filtered_df["zone"].fillna("UNKNOWN")
 
             # Step 9: Summarize counts
             summary_df = (
@@ -1233,6 +1243,7 @@ class VTSAnalyticsActions:
                 group_col = "location_name"
             else:
                 group_col = "zone"
+            
 
             # Step 7: Summarize counts
             summary_df = (
