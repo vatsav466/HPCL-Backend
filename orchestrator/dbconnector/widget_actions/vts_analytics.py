@@ -450,7 +450,7 @@ class VTSAnalyticsActions:
                 Fetch shortage data from sales_trips_till_date
                 Returns DataFrame with vehicle_id, invoice_no, qty_shortage, material_group_nm
                 """
-                where_conditions = ["qty_shortage IS NOT NULL"]
+                where_conditions = []
                 
                 if tl_numbers_list:
                     tl_numbers_str = "', '".join(map(str, tl_numbers_list))
@@ -477,7 +477,13 @@ class VTSAnalyticsActions:
                         END as qty_shortage,
                         material_group_nm
                     FROM sales_trips_till_date
-                    WHERE {where_clause}
+                    WHERE 
+                        sbu_cd = '7000'
+                        AND division = '11'
+                        AND load_status = '6'
+                        AND (qty_shortage::numeric < 100)
+                        AND (qty_shortage::numeric > 0 OR qty_shortage IS NULL)
+                        AND {where_clause}
                 """
                 df_shortage = await VTSAnalyticsActions.execute_query(shortage_query)
                 
@@ -636,37 +642,41 @@ class VTSAnalyticsActions:
             if has_qty_shortage_filter and not vts_violation_types:
                 shortage_query = """
                     SELECT 
-                        vehicle_id, 
-                        invoice_no,
+                        vehicle_id AS tl_number, 
+                        invoice_no AS invoice_number,
+                        plant_nm AS location_name,
                         CASE 
                             WHEN qty_shortage = 'NaN' THEN '0.0'
                             WHEN qty_shortage IS NULL THEN '0.0'
                             ELSE qty_shortage 
-                        END as qty_shortage,
+                        END AS qty_shortage,
                         material_group_nm,
                         zone,
-                        load_date as created_at
+                        load_date AS created_at
                     FROM sales_trips_till_date
-                    WHERE qty_shortage IS NOT NULL
+                    WHERE 
+                        sbu_cd = '7000'
+                        AND division = '11'
+                        AND load_status = '6'
+                        AND (qty_shortage::numeric < 100)
+                        AND (qty_shortage::numeric > 0 OR qty_shortage IS NULL)
                 """
 
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
                 shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
-
                 df_shortage_all = await VTSAnalyticsActions.execute_query(shortage_query)
 
                 if df_shortage_all.empty:
                     return {"status": True, "message": "No shortage data found", "data": []}
 
-                df_shortage_all['qty_shortage'] = pd.to_numeric(df_shortage_all['qty_shortage'], errors='coerce').fillna(0.0)
-                df_shortage_all = df_shortage_all[df_shortage_all['qty_shortage'] != 0]
+                df_shortage_all["qty_shortage"] = pd.to_numeric(df_shortage_all["qty_shortage"], errors="coerce").fillna(0.0)
+                df_shortage_all = df_shortage_all[df_shortage_all["qty_shortage"] != 0]
 
                 if df_shortage_all.empty:
                     return {"status": True, "message": "No non-zero shortage data found", "data": []}
 
-                df_shortage_all["invoice_match_key"] = df_shortage_all["invoice_no"].apply(extract_invoice_number)
-
-                tl_numbers_list = df_shortage_all["vehicle_id"].unique().tolist()
+                # Build violation filters
+                tl_numbers_list = df_shortage_all["tl_number"].unique().tolist()
                 tl_numbers_str = "', '".join(map(str, tl_numbers_list))
 
                 violation_columns = [
@@ -686,28 +696,61 @@ class VTSAnalyticsActions:
                     WHERE tl_number IN ('{tl_numbers_str}')
                     AND invoice_number IS NOT NULL
                 """
+
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, history_query)
                 history_query = VTSAnalyticsActions.apply_conditions_to_query(history_query, conditions)
                 df_history = await VTSAnalyticsActions.execute_query(history_query)
 
                 df_history = df_history.drop_duplicates(subset=["invoice_number"], keep="first")
 
-                truck_query = f"""
+                # Truck master
+                truck_query = """
                     SELECT DISTINCT truck_no, transporter_name
                     FROM vts_truck_master
                 """
                 df_truck = await VTSAnalyticsActions.execute_query(truck_query)
-                final_df = df_history.merge(df_truck, left_on="tl_number", right_on="truck_no", how="left")
+
+                # Merge shortage + history
+                merged_history = df_shortage_all.merge(
+                    df_history,
+                    on=["tl_number", "invoice_number"],
+                    how="left"
+                )
+
+                # Merge truck info
+                final_df = merged_history.merge(
+                    df_truck,
+                    left_on="tl_number",
+                    right_on="truck_no",
+                    how="left"
+                )
                 final_df.drop(columns=["truck_no"], inplace=True, errors="ignore")
 
-                final_df = merge_shortage_data(final_df, df_shortage_all, aggregate=True)
-
+                # Only positive shortages
                 final_df = final_df[final_df["qty_shortage"] > 0]
 
-                if final_df.empty:
-                    return {"status": True, "message": "No shortage violations found", "data": []}
+                # Handle possible duplicates
+                for base_col in ["zone", "location_name"]:
+                    if f"{base_col}_x" in final_df.columns:
+                        final_df[base_col] = final_df[f"{base_col}_x"]
+                    elif f"{base_col}_y" in final_df.columns:
+                        final_df[base_col] = final_df[f"{base_col}_y"]
 
-                return {"status": True, "message": "success", "data": await safe_json(final_df)}
+                # Aggregate by invoice
+                agg_df = (
+                    final_df.groupby("invoice_number", as_index=False)
+                    .agg({
+                        "qty_shortage": "sum",
+                        "zone": "first",
+                        "location_name": "first",
+                        "tl_number": "first",
+                        "transporter_name": "first"
+                    })
+                )
+
+                agg_df = agg_df[["invoice_number", "zone", "location_name", "tl_number", "qty_shortage","transporter_name"]]
+
+                return {"status": True, "message": "success", "data": await safe_json(agg_df)}
         
             if violation_types:
                 select_parts = [
@@ -994,7 +1037,11 @@ class VTSAnalyticsActions:
                 invoice_no,
                 SUM(qty_shortage::numeric) as qty_shortage 
             FROM sales_trips_till_date
-            WHERE qty_shortage::numeric != 0 
+            WHERE sbu_cd = '7000'
+                AND division = '11'
+                AND load_status = '6'
+                AND (qty_shortage::numeric < 100)
+                AND (qty_shortage::numeric > 0 OR qty_shortage IS NULL)
             GROUP BY vehicle_id, invoice_no, plant_cd 
             """
             
@@ -2345,65 +2392,82 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
     
+
     @staticmethod
-    async def risk_score(filters, cross_filters, drill_state, payload, limit=0, offset=0):
+    async def risk_score(filters, cross_filters, drill_state, payload, limit=0, offset=0, batch_size=10000):
+        """
+        Fetch data from the specified risk score table.
+        limit=0 means fetch all records
+        """
         try:
-            payload_dict = {}
-            if isinstance(payload, dict):
-                payload_dict = payload.copy()
-            elif hasattr(payload, '_dict_'):
-                payload_dict = payload._dict_.copy()
-
-            action = payload_dict.get("action")
-            columns = payload_dict.get("columns") # New: Get columns from payload
-            print(f"Action received: {action}")
-
-            # Map actions to table names
-            action_to_table_mapping = {
-                "get_tt_risk_score": "tt_risk_score",
-                "get_transporter_risk_score": "transporter_risk_score",
-                "get_completed_trips_risk_score": "completed_trips_risk_score",
-                "Cluster_master": "cluster_master"
-            }
-
-            table_name = action_to_table_mapping.get(action)
+            table_name = payload.get("table_name")
+            columns = payload.get("columns")
 
             if not table_name:
-                return {
-                    "status": False,
-                    "message": f"Invalid action: '{action}'. Expected one of: {list(action_to_table_mapping.keys())}",
-                    "data": []
-                }
+                return {"status": False, "message": "table_name not provided in payload", "data": []}
 
-            print(f"Fetching data for table: {table_name}")
+            print(f"Fetching data from table: {table_name}")
 
-            # Optimize query by selecting specific columns if provided in the payload
-            if columns and isinstance(columns, list) and len(columns) > 0:
-                # Safely quote column names
+            if columns and isinstance(columns, list) and columns:
                 select_columns = ", ".join([f'"{col}"' for col in columns])
                 base_query = f'SELECT {select_columns} FROM public."{table_name}"'
             else:
                 base_query = f'SELECT * FROM public."{table_name}"'
 
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
-            final_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
+            filtered_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
 
-            # Add a default limit to prevent fetching huge datasets, which can be overridden.
-            query_limit = limit if limit > 0 else 1000
-            final_query += f" LIMIT {query_limit}"
+            # First, get the total count
+            count_query = f"SELECT COUNT(*) as total FROM ({filtered_query}) as subquery"
+            count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=count_query, limit=1)
+            total_records = count_resp.get("data", [{}])[0].get("total", 0) if count_resp.get("data") else 0
+            
 
-            if offset > 0:
-                final_query += f" OFFSET {offset}"
-            print(f"Executing optimized query: {final_query}")
+            all_data = []
+            current_offset = 0
+            total_fetched = 0
+            fetch_all = (limit == 0)
+            target_limit = total_records if fetch_all else limit
+            
+            while total_fetched < target_limit:
+                # Calculate batch size for this iteration
+                remaining = target_limit - total_fetched
+                this_limit = min(batch_size, remaining)
 
-            df = await VTSAnalyticsActions.execute_query(final_query)
+                # Construct query with LIMIT and OFFSET
+                batch_query = f"{filtered_query} LIMIT {this_limit} OFFSET {current_offset}"
+                
+                # Execute batch query
+                batch_resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+                    query=batch_query, 
+                    limit=0  # Set to 0 to avoid double limiting
+                )
+                batch_data = batch_resp.get("data", [])
+                
+                if not batch_data:
+                    print(f"No more data at offset {current_offset}")
+                    break
 
-            # Replace NaN with None for JSON compatibility
-            df = df.replace({np.nan: None})
+                batch_rows = len(batch_data)
+                all_data.extend(batch_data)
+                total_fetched += batch_rows
+                current_offset += batch_rows
 
-            return {"status": True, "message": "success", "data": df.to_dict(orient="records")}
+                # If we got fewer records than requested, we've reached the end
+                if batch_rows < this_limit:
+                    break
 
+            if not all_data:
+                return {"status": True, "message": "No data found", "data": [], "count": 0}
+
+            return {
+                "status": True,
+                "message": f"Successfully fetched {len(all_data)} records from {table_name}",
+                "data": all_data,  # Include data if needed
+                "count": len(all_data),
+                "total_in_table": total_records
+            }
         except Exception as e:
-            print(f"Exception in risk_score: {str(e)}")
-            print(traceback.format_exc())
+            print("Exception in risk_score:", str(e))
+            print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
