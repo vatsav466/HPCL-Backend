@@ -217,12 +217,12 @@ class AuthenticationManager:
                                                              f"lower(username)='{username.lower()}'", skip_total=True)
         if not user_data["data"]:
             await cls.update_login_failure_attempts(username)
-            return False, "Invalid Login Credentials"
+            return False, "Invalid Login Credentials", {}
         user_info = user_data['data'][0]
         # If lock enabled, then sending user locked out status. This one moved here as per VAPT
         if await cls.verify_locked_check(f'{username.lower()}'):
             print(f"User {username} locked out")
-            return False, "User locked out"
+            return False, "User locked out", {}
 
         # If ldap authentication enabled allow user to validate with LDAP, else check local login
         if user_info.get('is_ad_user'): #urdhva_base.settings.ldap_auth_enabled:
@@ -235,7 +235,7 @@ class AuthenticationManager:
                     status = False
                 if not status:
                     await cls.update_login_failure_attempts(username)
-                    return False, "Invalid Login Credentials"
+                    return False, "Invalid Login Credentials", {}
             else:
                 # Validating user in with LDAP.
                 try:
@@ -245,17 +245,17 @@ class AuthenticationManager:
                     status = False
                 if not status:
                     await cls.update_login_failure_attempts(username)
-                    return False, "Invalid Login Credentials"
+                    return False, "Invalid Login Credentials", {}
         else:
             # If provided password not equals to db password, skip authentication
             if urdhva_base.types.Secret(user_info["password"]).get_secret() != password:
                 await cls.update_login_failure_attempts(username)
-                return False, "Invalid Login Credentials"
+                return False, "Invalid Login Credentials", {}
         role_names = ", ".join(f"'{val}'" for val in user_info['novex_role'])
         role = await hpcl_ceg_model.Roles.get_aggr_data(f"select * from roles where name in ({role_names})")
         if not role['data']:
             print("-- Roles not found in database --")
-            return False, "Access Restricted"
+            return False, "Access Restricted", {}
 
         def unique_dicts(dict_list):
             seen = set()
@@ -292,7 +292,7 @@ class AuthenticationManager:
             user_info["allowed_roles"] = list(allowed_roles.values())
         # Adding session data
         if jwt_auth:
-            return True, await cls.create_internal_jwt(user_data=user_info)
+            return True, await cls.create_internal_jwt(user_data=user_info), {}
         return True, await cls.generate_cookie(user_info), user_info
 
     @classmethod
