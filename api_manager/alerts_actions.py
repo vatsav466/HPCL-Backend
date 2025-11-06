@@ -469,7 +469,7 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
             }
     
     return {
-        "status": False, 
+        "status": True, 
         "message": "No data found",
         "data": []
         }
