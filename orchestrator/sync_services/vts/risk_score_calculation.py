@@ -1,6 +1,3 @@
-import math
-import swifter
-import psycopg2
 import numpy as np
 import pandas as pd
 import h3.api.basic_str as h3
@@ -16,10 +13,10 @@ pd.set_option("styler.render.max_elements", 800000)
 import warnings
 warnings.filterwarnings('ignore')
 
+# ===============================
+# LOAD EVENTS DATA
+# ===============================
 
-# ===============================
-# DATABASE CONNECTION
-# ===============================
 DB_CONFIG = {
     'host': '10.90.38.213',
     'port': 5432,
@@ -27,17 +24,11 @@ DB_CONFIG = {
     'user': 'ceg_user',
     'password': 'TTNqetkiJLPM50jC'
 }
-
 engine = create_engine(
     f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@"
     f"{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
 )
 print("Database connection established successfully!")
-
-
-# ===============================
-# LOAD EVENTS DATA
-# ===============================
 
 EVENTS_RENAME_MAP = {
     "event_date": "EVENT_DATETIME",
@@ -76,32 +67,35 @@ EVENTS_RENAME_MAP = {
     "stoppage_longitude": "LON",
 }
 
+RD_FILE = pd.read_sql_query("SELECT * FROM public.vts_route_deviation WHERE event_date >= CURRENT_DATE - INTERVAL '90 days';", engine)
+print(f"Loaded {len(RD_FILE)} route deviation records")
+ST_FILE = pd.read_sql_query("SELECT * FROM public.vts_stoppage_violation  WHERE event_date >= CURRENT_DATE - INTERVAL '90 days';", engine)
+print(f"Loaded {len(ST_FILE)} stoppage violation records")
+DR_FILE = pd.read_sql_query("SELECT * FROM public.vts_device_removed WHERE event_date >= CURRENT_DATE - INTERVAL '90 days';", engine)
+print(f"Loaded {len(DR_FILE)} device removed records")
+PD_FILE = pd.read_sql_query("SELECT * FROM public.vts_power_disconnect WHERE event_date >= CURRENT_DATE - INTERVAL '90 days';", engine)
+print(f"Loaded {len(PD_FILE)} power disconnect records")
+
+
+RENAMES_alerts = {
+    
+    "EVENT_DATE": "EVENT_DATETIME",
+    "START_LATITUDE": "LAT",
+    "START_LONGITUDE": "LON",
+    "STOPPAGE_LATITUDE":"LAT",
+    "STOPPAGE_LONGITUDE": "LON"
+}
+
+
 def load_alerts_data():
-    """Load alert data from PostgreSQL database tables"""
-    
-    # Load Route Deviation
-    rd = pd.read_sql_query('SELECT * FROM public.vts_route_deviation', engine)
-    print(f"Loaded {len(rd)} route_deviation records")
-    print(rd.columns)
-    
-    # Load Stoppage Violation
-    stp = pd.read_sql_query('SELECT * FROM public.vts_stoppage_violation', engine)
-    print(f"Loaded {len(stp)} stoppage_violation records")
-    print(stp.columns)
-
-    # Load Device Removed
-    dr = pd.read_sql_query('SELECT * FROM public."vts_device_removed"', engine)
-    print(f"Loaded {len(dr)} device_removed records")
-    print(dr.columns)
-
-    # Load Power Disconnect
-    pdw = pd.read_sql_query('SELECT * FROM public.vts_power_disconnect', engine)
-    print(f"Loaded {len(pdw)} power_disconnect records")
-    print(pdw.columns)
-
+    rd = RD_FILE
+    stp = ST_FILE
+    dr = DR_FILE
+    pdw = PD_FILE
     # Apply renames + timestamp conversion
     for df in [rd, stp, dr, pdw]:
         df.rename(columns=EVENTS_RENAME_MAP, inplace=True)
+        df.rename(columns=RENAMES_alerts, inplace=True)
         if "EVENT_DATETIME" in df.columns:
             df["EVENT_DATETIME"] = pd.to_datetime(df["EVENT_DATETIME"])
 
@@ -117,13 +111,16 @@ def load_alerts_data():
     alerts = pd.concat([rd, stp, dr, pdw], ignore_index=True)
     alerts.sort_values("EVENT_DATETIME", inplace=True)
 
-    if "location_type" in alerts.columns:
-        alerts = alerts[alerts["location_type"] == "TAS"]
+
+    if "LOCATION_TYPE" in alerts.columns and "TRIP_STATUS" in alerts.columns:
+        alerts = alerts[(alerts["LOCATION_TYPE"] == "TAS") & (alerts["TRIP_STATUS"].isin(["LOADED", "UN LOADED"]))]
 
     return alerts
 
+
 alerts = load_alerts_data()
 print(f"Total loaded alerts: {len(alerts)}")
+
 
 
 # ============================
@@ -188,7 +185,8 @@ TRIP_RENAME_MAP = {
     "insert_datetime": "INSERT_DATETIME",
 }
 
-trip_data = pd.read_sql_query('SELECT * FROM public.vts_completed_trip', engine)
+
+trip_data=pd.read_sql_query('SELECT * FROM public.vts_completed_trip', engine)
 trip_data.rename(columns=TRIP_RENAME_MAP, inplace=True)
 print(f"Loaded {len(trip_data)} completed trip records")
 
@@ -215,18 +213,21 @@ completed_Trips_df.rename(columns={'CHALLAN_NO': 'INVOICE_NO', "ERP_TRANSPORTER_
 # ===============================
 
 VEHICLE_MASTER_RENAME_MAP = {
-    "tt_number": "TT_NUMBER",
+    "tt_number": "TT No",
     "tank_compartment": "Tank Compartment",
     "vol_capacity": "VOL Capacity",
-    "transporter_name": "TRANSPORTER_NAME",
-    "transporter_code": "TRANSPORTER_CODE",
-    "location_name": "LOCATION_NAME",
-    "sap_id": "LOCATION_CODE",   # extra in DB → kept as uppercase
+    "transporter_name": "Transporter Name",
+    "transporter_code": "Transporter Code",
+    "location_name": "Location Name",
+    "sap_id": "Location Code",   # extra in DB → kept as uppercase
+    
 }
+
 master_df = pd.read_sql_query('SELECT * FROM public.vehicle_master', engine)
-master_df.columns
 print(f"Loaded {len(master_df)} vehicle master records")
 master_df.rename(columns=VEHICLE_MASTER_RENAME_MAP, inplace=True)
+master_df.rename(columns={"Transporter Code":"TRANSPORTER_CODE","Transporter Name":"TRANSPORTER_NAME", 
+                          "TT No":"TT_NUMBER", "Location Code":"LOCATION_CODE", "Location Name":"LOCATION_NAME"}, inplace=True)
 
 # Keep only the columns we need for mapping
 required_cols = ["TT_NUMBER", "TRANSPORTER_CODE", "TRANSPORTER_NAME", "LOCATION_NAME", "LOCATION_CODE"]
@@ -246,7 +247,7 @@ GEOFENCE_RENAME_MAP = {
     "geofence_type": "GEOFENCE_TYPE",
 }
 
-geofence_data = pd.read_sql_query('SELECT * FROM public.geofence_master', engine)
+geofence_data = pd.read_excel("GeofenceMaster.xlsx")
 geofence_data.rename(columns=GEOFENCE_RENAME_MAP, inplace=True)
 print(f"Loaded {len(geofence_data)} geofence records")
 geofence_data.rename(columns={c: c.lower() for c in geofence_data.columns}, inplace=True)
@@ -256,31 +257,34 @@ geofence_data.rename(columns={'geofence_type': 'GEOFENCE_TYPE', 'latitude': 'LAT
 # =====================================================
 # DATE RANGE & TRAIN DATA AND TEST/REALTIME DATA SPLIT
 # =====================================================
-max_dt = alerts["EVENT_DATETIME"].max()
-min_dt = alerts["EVENT_DATETIME"].min()
+min_dt_alerts = alerts["EVENT_DATETIME"].min()
+max_dt_alerts = alerts["EVENT_DATETIME"].max()
 
-realtime_datetime = max_dt - timedelta(days=15)
-train_end_datetime = max_dt - timedelta(days=6)
-print(f"Realtime start: {realtime_datetime}")
-print(f"Train end: {train_end_datetime}")
+
+min_dt_ct = completed_Trips_df["SCHEDULED_TRIP_START_DATETIME"].min()
+max_dt_ct = completed_Trips_df["SCHEDULED_TRIP_END_DATETIME"].max()
+
+
+print(f"alerts date range:{min_dt_alerts} to {max_dt_alerts}")
+print(f"completed trips date range: {min_dt_ct} to {max_dt_ct}")
 
 # Split alerts data
-realtime_data = alerts[alerts['EVENT_DATETIME'] >= realtime_datetime].copy()
+realtime_data = alerts
 realtime_data.rename(columns={'TRANSPORTER_ID': 'TRANSPORTER_CODE'}, inplace=True)
 
-train_data = alerts[alerts["EVENT_DATETIME"] <= train_end_datetime].copy()
+train_data = alerts
 train_data.rename(columns={'TRANSPORTER_ID': 'TRANSPORTER_CODE'}, inplace=True)
 
 # Split trip data
-trip_train_df = completed_Trips_df[completed_Trips_df["SCHEDULED_TRIP_END_DATETIME"] <= train_end_datetime].copy()
-trip_Realtime_df = completed_Trips_df[completed_Trips_df["SCHEDULED_TRIP_END_DATETIME"] >= realtime_datetime].copy()
+trip_train_df = completed_Trips_df
+trip_Realtime_df = completed_Trips_df
 
 # ======================================
 # COMBO DETECTION & COMBO RISK MAPPING
 # ======================================
 
 COMBO_RULES = {
-    "device_removed_then_power_disconnect": {
+    "route_deviation_then_device_removed_then_power_disconnect": {
         "sequence": ("ROUTE_DEVIATION", "DEVICE_REMOVED", "POWER_DISCONNECT"),
         "within_minutes": 30,
         "combo_delta": 50,
@@ -408,10 +412,16 @@ transporter_name_map = (
     .to_dict()
 )
 
-# PERCENTILE-BASED CUMULATIVE SCORE (0–100)
+# ✅ Normalize 0–100
+min_val = entity_risk_summary["entity_risk"].min()
+max_val = entity_risk_summary["entity_risk"].max()
+
+entity_risk_summary["RISK_SCORE"] = ((entity_risk_summary["entity_risk"] - min_val) / (max_val - min_val)) * 100
+
+# This ensures fair comparison across all TTs
 entity_risk_summary["RISK_SCORE"] = (
-    entity_risk_summary["entity_risk"].rank(pct=True) * 100
-)
+    entity_risk_summary["RISK_SCORE"]
+).round(2)
 
 entity_risk_summary["TRANSPORTER_NAME"] = entity_risk_summary["TRANSPORTER_CODE"].map(transporter_name_map)
 Transporter_risk_summary = entity_risk_summary[['TRANSPORTER_CODE', 'TRANSPORTER_NAME', "total_trips", 'RISK_SCORE']].copy()
@@ -457,7 +467,7 @@ alert_summary_pivot_tt.columns.name = None
 final_alert_summary_tt = trip_counts_tt.merge(
     alert_summary_pivot_tt, 
     on="TT_NUMBER", 
-    how="outer"  # Use outer join to keep TTs with only trips OR only alerts
+    how="inner"  # Use outer join to keep TTs with only trips OR only alerts
 )
 
 # Fill NaN values
@@ -489,9 +499,16 @@ for alert_type, weight in ALERT_WEIGHTS.items():
 final_alert_summary_tt["entity_risk"] = final_alert_summary_tt["entity_risk"].round(3)
 
 # STEP 7: NORMALIZE TO 0-100 RISK SCORE (PERCENTILE-BASED)
+
+# ✅ Normalize 0–100
+min_val = final_alert_summary_tt["entity_risk"].min()
+max_val = final_alert_summary_tt["entity_risk"].max()
+
+final_alert_summary_tt["RISK_SCORE"] = ((final_alert_summary_tt["entity_risk"] - min_val) / (max_val - min_val)) * 100
+
 # This ensures fair comparison across all TTs
 final_alert_summary_tt["RISK_SCORE"] = (
-    final_alert_summary_tt["entity_risk"].rank(pct=True) * 100
+    final_alert_summary_tt["RISK_SCORE"]
 ).round(2)
 
 # STEP 8: ADD TRANSPORTER INFORMATION
@@ -772,9 +789,9 @@ CLUSTER_MASTER, FINAL_CLUSTER_MASTER = run_cluster_scoring_from_train(train_data
 cluster_weights_per_alert = build_cluster_weights(FINAL_CLUSTER_MASTER)
 
 FINAL_CLUSTER_MASTER_df = FINAL_CLUSTER_MASTER[[
-    'cluster_id', 'alert_type', 'centroid_lat', 'centroid_lon', 'first_seen', 'last_seen', 
+    'cluster_id', 'alert_type', 'risk_score', 'risk_band','centroid_lat', 'centroid_lon', 'first_seen', 'last_seen', 
     'events_25d', 'events_10d', 'events_5d', 'unique_trucks_30d', 'status', 
-    'days_since_last', 'risk_score', 'risk_band'
+    'days_since_last' 
 ]].copy()
 
 
@@ -876,9 +893,30 @@ if not combo_df.empty:
 else:
     realtime_data["combo_risk"] = 0
 
-combo_Risk = realtime_data.groupby('INVOICE_NO')['combo_risk'].mean()
+combo_Risk_df = (
+    realtime_data.groupby('INVOICE_NO', as_index=False)['combo_risk'].mean()
+)
 
+
+# COMBO TYPE COUNTS PER TRIP
+if not combo_df.empty:
+    combo_type_counts = (
+        combo_df.groupby(['INVOICE_NO', 'Last_Combo_Rule'])
+        .size()
+        .unstack(fill_value=0)
+        .reset_index()
+    )
+
+    # ✅ Add total combo count
+    combo_type_counts["Total_Combo_Count"] = combo_type_counts.drop(columns=["INVOICE_NO"]).sum(axis=1)
+
+    # ✅ Merge combo counts into realtime_data
+    combo_Risk = combo_Risk_df.merge(combo_type_counts, on="INVOICE_NO", how="left")
+    combo_Risk.fillna(0, inplace=True)
+
+print("combo_Risk :", combo_Risk.columns)
 print("✅ Combo Risk computed successfully.")
+
 
 
 # ==============================================
@@ -963,27 +1001,68 @@ final_merged_df["cumulative_risk"] = (
 
 # PERCENTILE-BASED CUMULATIVE SCORE (0–100)
 final_merged_df["Risk_Score"] = (
-    final_merged_df["cumulative_risk"].rank(pct=True) * 100
+    final_merged_df["cumulative_risk"] * 100
+).round(2)
+
+Location_name_map = (
+    master_df.drop_duplicates(subset=["TRANSPORTER_CODE"])
+    .set_index("TRANSPORTER_CODE")["LOCATION_NAME"]
+    .to_dict()
 )
+
+final_merged_df["LOCATION_NAME"] = final_merged_df["TRANSPORTER_CODE"].map(Location_name_map)
+
 
 # Final output
 final_merged = final_merged_df[[
     'TRIP_NAME', 'TRIP_ID', 'SCHEDULED_TRIP_START_DATETIME', 'SCHEDULED_TRIP_END_DATETIME', 
-    'INVOICE_NO', 'TT_NUMBER', 'TRANSPORTER_CODE', 'ROUTE_NO', 'ZONE', 'LOCATION', 'Risk_Score'
+    'INVOICE_NO', 'TT_NUMBER', 'TRANSPORTER_CODE', 'ROUTE_NO', 'ZONE', 'LOCATION_NAME', 'Risk_Score'
 ]].copy()
 
-print("\n" + "="*60)
-print("FINAL RISK SCORES")
-print("="*60)
-print(final_merged.head(20))
-print(f"\nTotal trips processed: {len(final_merged)}")
-print(f"Average Risk Score: {final_merged['Risk_Score'].mean():.2f}")
-print(f"High Risk Trips (>70): {len(final_merged[final_merged['Risk_Score'] > 70])}")
+print(final_merged_df.columns)
+# ----------------------------------------------------------------------
+# 1. Save Cluster master 
+# ----------------------------------------------------------------------
 
 
-# =====================================================
-# DATABASE INTEGRATION: SAVE OUTPUTS
-# =====================================================
+# FINAL_CLUSTER_MASTER_df.to_csv("/Users/algofusion/hpcl_api/risk_sync/cluster_master.csv", index=False)
+# print("len(FINAL_CLUSTER_MASTER_df) :", len(FINAL_CLUSTER_MASTER_df))
+# print(f"✅ Cluster master data saved to cluster_master.csv")
+
+
+# # ----------------------------------------------------------------------
+# # 2. Save Combo Alerts 
+# # ----------------------------------------------------------------------
+
+# combo_df.to_csv("/Users/algofusion/hpcl_api/risk_sync/combo_alerts.csv", index=False)
+# print("len(combo_df) :", len(combo_df))
+# print(f"✅ Combo alerts data saved to combo_alerts.csv")
+
+
+# # ----------------------------------------------------------------------
+# # 3. Save Transporter Risk Score 
+# # ----------------------------------------------------------------------
+# Transporter_risk_summary.to_csv("/Users/algofusion/hpcl_api/risk_sync/transporter_risk_score.csv", index=False)
+# print("len(Transporter_risk_summary) :", len(Transporter_risk_summary))
+# print(f"✅ Transporter risk data saved to transporter_risk_score.csv")
+
+
+# # ----------------------------------------------------------------------
+# # 4. Save TT Risk Score 
+# # ----------------------------------------------------------------------
+
+# TT_risk_summary.to_csv("/Users/algofusion/hpcl_api/risk_sync/tt_risk_score.csv", index=False)
+# print("len(TT_risk_summary) :", len(TT_risk_summary))
+# print(f"✅ TT risk data saved to tt_risk_score.csv")
+
+
+# # ----------------------------------------------------------------------
+# # 5. Save Completed Trips Risk Score 
+# # ----------------------------------------------------------------------
+# final_merged.to_csv("/Users/algofusion/hpcl_api/risk_sync/completed_trips_risk_score.csv", index=False)
+# print("len(final_merged) :", len(final_merged))
+# print(f"✅ Completed trips risk score data saved to completed_trips_risk_score.csv")
+
 
 def pandas_to_pg_dtypes(df: pd.DataFrame) -> dict:
     """Return a dict {column: sqlalchemy type} that matches the pandas df."""
@@ -1054,8 +1133,6 @@ cluster_df.to_sql(
 upsert_df(engine, cluster_df, CLUSTER_TABLE, cluster_pk)
 print(f"\n✅ Cluster master data saved to public.{CLUSTER_TABLE} ({len(cluster_df)} rows)")
 
-cluster_df.to_csv("cluster_master.csv", index=False)
-print(f"✅ Cluster master data saved to cluster_master.csv")
 
 
 # ----------------------------------------------------------------------
@@ -1072,8 +1149,6 @@ if not combo_df.empty:
     )
     print(f"✅ Combo alerts data saved to public.{COMBO_TABLE} ({len(combo_df)} rows)")
 
-    combo_df.to_csv("combo_alerts.csv", index=False)
-    print(f"✅ Combo alerts data saved to combo_alerts.csv")
 else:
     print(f"⚠️  No combo alerts detected, skipping {COMBO_TABLE} table creation")
 
@@ -1091,8 +1166,6 @@ Transporter_risk_summary.to_sql(
 )
 print(f"✅ Transporter risk data saved to public.{TRANSPORTER_TABLE} ({len(Transporter_risk_summary)} rows)")
 
-Transporter_risk_summary.to_csv("transporter_risk_score.csv", index=False)
-print(f"✅ Transporter risk data saved to transporter_risk_score.csv")
 
 
 # ----------------------------------------------------------------------
@@ -1108,8 +1181,6 @@ TT_risk_summary.to_sql(
 )
 print(f"✅ TT risk data saved to public.{TT_TABLE} ({len(TT_risk_summary)} rows)")
 
-TT_risk_summary.to_csv("tt_risk_score.csv", index=False)
-print(f"✅ TT risk data saved to tt_risk_score.csv")
 
 
 # ----------------------------------------------------------------------
@@ -1126,8 +1197,6 @@ final_merged.to_sql(
 
 print(f"✅ Completed trips risk score data saved to public.{TABLE_NAME} ({len(final_merged)} rows)")
 
-final_merged.to_csv("completed_trips_risk_score.csv", index=False)
-print(f"✅ Completed trips risk score data saved to completed_trips_risk_score.csv")
 
 engine.dispose()
 print("\n" + "="*60)
