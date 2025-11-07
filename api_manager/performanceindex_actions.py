@@ -148,7 +148,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                 for idx, rec in enumerate(temp_result):
                     cur_score = rec['overall_oi_score']
                     if prev_score is not None and cur_score < prev_score:
-                        rank = idx + 1
+                        rank += 1
                     rec['rank'] = rank
                     prev_score = cur_score
 

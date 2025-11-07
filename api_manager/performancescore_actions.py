@@ -113,42 +113,70 @@ async def performancescore_download_performance_score(data: Performancescore_Dow
             details['overall'] = round(sum(total_scores) / len(total_scores), 2) if total_scores else 0
 
         # ----- 2. Prepare Excel rows (YOUR ORIGINAL LOGIC) -----
-        fixed_columns = [
-            "Sr No", "SAP ID", "Name", "Zone", "Region", "Score", "Rank",
-            "Cyl. Rejections (Check Scale, Valve Leak & O Ring Leak)",
-            "Productivity (Cyl/hr)",
-            "Production (MT)",
-            "LPG Production interruption (Hrs)",
-            "Video Analytics",
-            "VTS"
-        ]
+        bu_columns = []
+        if data.bu == "TAS":
+            bu_columns = ['Safety Interlocks', 'Gantry Interlocks', 'Process Interlocks',
+                          'Water Quantity', 'Foam Quantity', 'Fire Engines In Auto Mode',
+                          'Hydrant Line', 'Dryouts and Carry forward', 'EMLOCK']
+        elif data.bu == "LPG":
+            bu_columns = ["Cyl. Rejections (Check Scale, Valve Leak & O Ring Leak)",
+                "Productivity (Cyl/hr)",
+                "Production (MT)",
+                "LPG Production interruption (Hrs)"]
+        common_columns = ["Video Analytics", "VTS"]
+        base_columns = ["Sr No", "SAP ID", "Name", "Zone", "Region", "Score", "Rank"]
+        fixed_columns = base_columns + bu_columns + common_columns
 
         temp_result = sorted(sap_scores.values(), key=lambda x: -x['overall'])
         df_rows = []
         rank = 1
         prev_score = None
         # print("temp_result: ",temp_result)
+
+        # Fetching Score record key
+        def get_score(rec, key):
+            data = rec.get('category_scores', {}).get(key)
+            if not data:
+                return 0
+            if isinstance(data, list):
+                return data[0].get('oi_score', 0)
+            return data.get('oi_score', 0)
+
         for i, rec in enumerate(temp_result):
             current_score = rec['overall'] 
             if prev_score is not None and current_score < prev_score:
-                rank = i + 1
+                rank = rank + 1
             prev_score = current_score
+            def get_bu_data(bu, rec):
+                data = {
+                    "Sr No": i + 1,
+                    "SAP ID": rec['sap_id'],
+                    "Name": rec['name'],
+                    "Zone": rec['zone'],
+                    "Region": rec['region'],
+                    "Score": rec['overall'],
+                    "Rank": rank,
+                    "Video Analytics": get_score(rec, "VA"),
+                    "VTS": get_score(rec, "VTS")
+                }
+                if bu == 'LPG':
+                    data.update({"Cyl. Rejections (Check Scale, Valve Leak & O Ring Leak)": get_score(rec, "PQ Rejection"),
+                    "Productivity (Cyl/hr)": get_score(rec, "Productivity"),
+                    "Production (MT)": get_score(rec, "Production"),
+                    "LPG Production interruption (Hrs)": get_score(rec, "LPG Breakdown")})
+                elif bu == 'TAS':
+                    for key, name in {'Safety_Interlocks': 'Safety Interlocks',
+                                      'Gantry_Interlocks': 'Gantry Interlocks',
+                                      'Process_Interlocks': 'Process Interlocks',
+                                      'Water_Quantity': 'Water Quantity',
+                                      'Foam_Quantity': 'Foam Quantity',
+                                      'Fire_Engines_In_Auto_Mode': 'Fire Engines In Auto Mode',
+                                      'Hydrant_Line': 'Hydrant Line', 'EMLOCK': 'EMLOCK',
+                                      'Dryouts and Carry forward': 'Dryouts and Carry forward'}.items():
+                        data.update({name: get_score(rec, key)})
+                return data
 
-            df_rows.append({
-                "Sr No": i + 1,
-                "SAP ID": rec['sap_id'],
-                "Name": rec['name'],
-                "Zone": rec['zone'],
-                "Region": rec['region'],
-                "Score": rec['overall'],
-                "Rank": rank,
-                "Cyl. Rejections (Check Scale, Valve Leak & O Ring Leak)": rec['category_scores'].get("PQ Rejection", {}).get('oi_score', 0),
-                "Productivity (Cyl/hr)": rec['category_scores'].get("Productivity", {}).get('oi_score', 0),
-                "Production (MT)": rec['category_scores'].get("Production", {}).get('oi_score', 0),
-                "LPG Production interruption (Hrs)": rec['category_scores'].get("LPG Breakdown", {}).get('oi_score', 0),
-                "Video Analytics": rec['category_scores'].get("VA", {}).get('oi_score', 0),
-                "VTS": rec['category_scores'].get("VTS", {}).get('oi_score', 0),
-            })
+            df_rows.append(get_bu_data(data.bu , rec))
 
         # --- 3. Save Excel with 3-Row Header (Manual Writing - IMPLEMENTING FORMATTING) ---
         # output_dir = "/Users/algofusion/Downloads"
@@ -181,16 +209,31 @@ async def performancescore_download_performance_score(data: Performancescore_Dow
         })
         
         data_format = workbook.add_format({'align': 'center', 'valign': 'vcenter'})
-        
+
+        param_cols = {}
         # --- Column Mappings (Used to determine where to write scores and weightages) ---
-        param_cols = {
-            "Cyl. Rejections (Check Scale, Valve Leak & O Ring Leak)": {"col_idx": 7, "cat_key": "PQ Rejection"},
-            "Productivity (Cyl/hr)": {"col_idx": 8, "cat_key": "Productivity"},
-            "Production (MT)": {"col_idx": 9, "cat_key": "Production"},
-            "LPG Production interruption (Hrs)": {"col_idx": 10, "cat_key": "LPG Breakdown"},
-            "Video Analytics": {"col_idx": 11, "cat_key": "VA"},
-            "VTS": {"col_idx": 12, "cat_key": "VTS"},
-        }
+        if data.bu == 'TAS':
+            start_num = 7
+            for key, name in {'Safety_Interlocks': 'Safety Interlocks',
+             'Gantry_Interlocks': 'Gantry Interlocks',
+             'Process_Interlocks': 'Process Interlocks',
+             'Water_Quantity': 'Water Quantity',
+             'Foam_Quantity': 'Foam Quantity',
+             'Fire_Engines_In_Auto_Mode': 'Fire Engines In Auto Mode',
+             'Hydrant_Line': 'Hydrant Line', 'EMLOCK': 'EMLOCK',
+             'Dryouts and Carry forward': 'Dryouts and Carry forward',
+                              "VA": "Video Analytics", "VTS": "VTS" }.items():
+                param_cols.update({name: {"col_idx": start_num, "cat_key": key}})
+                start_num += 1
+        elif data.bu == 'LPG':
+            param_cols = {
+                "Cyl. Rejections (Check Scale, Valve Leak & O Ring Leak)": {"col_idx": 7, "cat_key": "PQ Rejection"},
+                "Productivity (Cyl/hr)": {"col_idx": 8, "cat_key": "Productivity"},
+                "Production (MT)": {"col_idx": 9, "cat_key": "Production"},
+                "LPG Production interruption (Hrs)": {"col_idx": 10, "cat_key": "LPG Breakdown"},
+                "Video Analytics": {"col_idx": 11, "cat_key": "VA"},
+                "VTS": {"col_idx": 12, "cat_key": "VTS"},
+            }
         last_col_index = len(fixed_columns) - 1 
         
         # --- Row 1 (index 0): Merged Header ---
