@@ -687,7 +687,12 @@ Model VTS {
 
 Model VtsManualBlocked {
     bu index_field str
+    blocked_by optional str
+    unblocked_by optional str
+    blocked_date optional datetime
+    unblocked_date optional datetime
     truck_number index_field str
+    remarks optional str
     transaction_number unique_field str
     blocking_status index_field optional str
     blocking_flag optional str
@@ -877,6 +882,7 @@ Model Alerts {
         bu BusinessUnit
         truck_number str
         blocking_days int
+        remarks optional str
     }
 
     Action=> unblock_vts_truck {
