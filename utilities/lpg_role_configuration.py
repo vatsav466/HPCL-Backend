@@ -22,8 +22,8 @@ lpg_role_mapping={
                 "level - 3": {
                     "condition": ">",
                     "value": 2,
-                    "assign_role": "Zonal Operations Head LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "assign_role": "Zonal Operations LPG",
+                    "escalation_role": "Zonal Operations LPG",
                     "escalation_time": "PT24H"
                 },
                 "level - 4": {
@@ -57,8 +57,8 @@ lpg_role_mapping={
                 "level - 3": {
                     "condition": ">",
                     "value": 2,
-                    "assign_role": "Zonal Operations Head LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "assign_role": "Zonal Operations LPG",
+                    "escalation_role": "Zonal Operations LPG",
                     "escalation_time": "PT24H"
                 },
                 "level - 4": {
@@ -92,8 +92,8 @@ lpg_role_mapping={
                 "level - 3": {
                     "condition": ">",
                     "value": 2,
-                    "assign_role": "Zonal Operations Head LPG",
-                    "escalation_role": "Zonal Operations Head LPG",
+                    "assign_role": "Zonal Operations LPG",
+                    "escalation_role": "Zonal Operations LPG",
                     "escalation_time": "PT24H"
                 },
                 "level - 4": {
