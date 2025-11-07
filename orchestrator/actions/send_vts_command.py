@@ -54,7 +54,7 @@ class SendVtsCommand:
                         "IP_Address": urdhva_base.settings.server_ip
                     }
                 }
-                #await vts_analysis.post_lpg_tt(payload)
+                await vts_analysis.post_lpg_tt(payload)
             alert_message = (
                 f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Block, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to block the Vehicle "
             )
@@ -85,7 +85,7 @@ class SendVtsCommand:
                     "IP_Address": urdhva_base.settings.server_ip
                     }
                 }
-                #await vts_analysis.post_lpg_tt(payload)            
+                await vts_analysis.post_lpg_tt(payload)            
             if not params['auto_unblock']:
                 query = (f"location_id='{alert_data['sap_id']}' and tl_number='{alert_data['vehicle_number']}' "
                          f"and {alert_data['violation_type']}>=1 and created_at<'{alert_data['created_at']}' and location_type='{alert_data['bu']}' "
