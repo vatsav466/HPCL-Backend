@@ -1383,7 +1383,12 @@ class VtsManualBlockedSchema(UrdhvaPostgresBase):
     __tablename__ = 'vts_manual_blocked'
     
     bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    blocked_by: Mapped[typing.Optional[str]] = mapped_column("blocked_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    unblocked_by: Mapped[typing.Optional[str]] = mapped_column("unblocked_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    blocked_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("blocked_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    unblocked_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("unblocked_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     truck_number: Mapped[str] = mapped_column("truck_number", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     transaction_number: Mapped[str] = mapped_column("transaction_number", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     blocking_status: Mapped[typing.Optional[str]] = mapped_column("blocking_status", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     blocking_flag: Mapped[typing.Optional[str]] = mapped_column("blocking_flag", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -1402,7 +1407,12 @@ class VtsManualBlockedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'vts_manual_blocked'
     
     bu: str
+    blocked_by: typing.Optional[str] = pydantic.Field("", **{})
+    unblocked_by: typing.Optional[str] = pydantic.Field("", **{})
+    blocked_date: typing.Optional[datetime.datetime] | None = None
+    unblocked_date: typing.Optional[datetime.datetime] | None = None
     truck_number: str
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
     transaction_number: str
     blocking_status: typing.Optional[str] = pydantic.Field("", **{})
     blocking_flag: typing.Optional[str] = pydantic.Field("", **{})
@@ -1426,7 +1436,12 @@ class VtsManualBlocked(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'vts_manual_blocked'
     
     bu: typing.Optional[str] | None = None
+    blocked_by: typing.Optional[str] = pydantic.Field("", **{})
+    unblocked_by: typing.Optional[str] = pydantic.Field("", **{})
+    blocked_date: typing.Optional[datetime.datetime] | None = None
+    unblocked_date: typing.Optional[datetime.datetime] | None = None
     truck_number: typing.Optional[str] | None = None
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
     transaction_number: typing.Optional[str] | None = None
     blocking_status: typing.Optional[str] = pydantic.Field("", **{})
     blocking_flag: typing.Optional[str] = pydantic.Field("", **{})
@@ -1876,6 +1891,7 @@ class Alerts_Block_Vts_TruckParams(pydantic.BaseModel):
     bu: hpcl_ceg_enum.BusinessUnit
     truck_number: str
     blocking_days: int
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

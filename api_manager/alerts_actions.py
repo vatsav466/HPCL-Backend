@@ -334,10 +334,13 @@ async def alerts_bulk_send_to_approve(data: Alerts_Bulk_Send_To_ApproveParams):
 # Action block_vts_truck
 @router.post('/block_vts_truck', tags=['Alerts'])
 async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
+    rpt = urdhva_base.context.context.get('rpt', {})
+    if not rpt:
+        return {"status": False, "message": "Session got expired, Please Re-Login"}
     query = (f"""alert_status='Open' and alert_section='VTS' and bu='{data.bu}' and vehicle_number='{data.truck_number}' """)
     print("-"*10)
     print("query :", query)
-    print("-"*10)
+    print("-"*10)    
 
     alert_data = await Alerts.get_all(
         urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
@@ -371,8 +374,8 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
 
     if isinstance(response, dict) and response.get("TripStatus", "").lower() == "loaded":
         return {"status": False, "message": "Cannot block as the truck is in a trip"}
-
-    start_date = datetime.datetime.now()
+    
+    start_date = urdhva_base.utilities.get_present_time()
     end_date = start_date + relativedelta(days=data.blocking_days)
 
     transaction_number = str(int(time.time() * 1000))[-7:] + "1"
@@ -392,19 +395,21 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
 
     truck_details = {
         "bu": data.bu,
+        "blocked_by": rpt["username"],
+        "blocked_date": start_date,
         "truck_number": data.truck_number,
         "transaction_number": transaction_number,
         "blocking_status": "blocked",
         "blocking_flag": "Y",
         "blocking_days": data.blocking_days,
         "blocking_from": start_date,
-        "blocking_to": end_date
+        "blocking_to": end_date,
+        "remarks": data.remarks
     }
     query = f"select sap_id from vts_truck_master where truck_no='{data.truck_number}'"
     location_data = await urdhva_base.BasePostgresModel.get_aggr_data(query)
     if location_data["data"]:
         location_data = location_data["data"][0]
-        status, location_data = await get_location_details(data.bu, location_data.get("sap_id"))
         truck_details.update(
             {   
                 "location_name": location_data.get("name", ""),
@@ -421,9 +426,14 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
 @router.post('/unblock_vts_truck', tags=['Alerts'])
 async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
     try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+
         alert_data = await VtsManualBlocked.get(int(data.unblock_id))
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
+        _date = urdhva_base.utilities.get_present_time()
         
         payload = [
             {
@@ -441,9 +451,10 @@ async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
 
         await VtsManualBlocked(**{
             "id": int(data.unblock_id),
+            "unblocked_by": rpt["username"],
             "blocking_status": "unblocked",
             "blocking_flag": "N",
-            "unblocked_date": datetime.datetime.now()
+            "unblocked_date": _date
         }).modify()
 
         return {"status": True, "message": "Truck has been unblocked successfully"}
