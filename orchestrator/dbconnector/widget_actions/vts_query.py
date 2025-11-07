@@ -6,17 +6,48 @@ vts_query = {
                                             WHERE main_supply_removal_count >= 6 
                                 """,
 
-    "unblocked_by_L1": """select count (*) from alerts where alert_section = 'VTS' 
-                                                       and alert_status = 'Close' 
-                                                       and 'Location In-Charge SOD' = ANY(assigned_user_roles)""",
+    "unblocked_by_L1": """SELECT COUNT(*) AS location_incharge_sod_count
+                            FROM alerts a
+                            WHERE alert_section = 'VTS'
+                            AND vehicle_unblocked_date IS NOT NULL
+                            AND mark_as_false = TRUE
+                            AND (device_msg IS NULL OR TRIM(device_msg) = '')
+                            AND EXISTS (
+                                SELECT 1
+                                FROM jsonb_array_elements(a.alert_history) AS elem
+                                WHERE elem->>'action_msg' ILIKE '%Location In-Charge SOD%'
+                            );""",
 
-    "unblocked_by_L2": """select count (*) from alerts where alert_section = 'VTS' 
-                                                       and alert_status = 'Close' 
-                                                       and  'Zonal Transport Officer SOD' = ANY(assigned_user_roles)""",
+    "unblocked_by_L2": """SELECT COUNT(*) AS zonal_transport_officer_sod_count
+                            FROM alerts a
+                            WHERE alert_section = 'VTS'
+                            AND vehicle_unblocked_date IS NOT NULL
+                            AND mark_as_false = TRUE
+                            AND (device_msg IS NULL OR TRIM(device_msg) = '')
+                            AND EXISTS (
+                                SELECT 1
+                                FROM jsonb_array_elements(a.alert_history) AS elem
+                                WHERE elem->>'action_msg' ILIKE '%Zonal Transport Officer SOD%'
+                            );""",
 
-    "unblocked_by_L3": """select count (*) from alerts where  alert_section = 'VTS' 
-                                                       and alert_status = 'Close' 
-                                                       and  'Zonal Head SOD' = ANY(assigned_user_roles)""",
+    "unblocked_by_L3": """SELECT COUNT(*) AS zonal_head_sod_count
+                            FROM alerts a
+                            WHERE alert_section = 'VTS'
+                            AND vehicle_unblocked_date IS NOT NULL
+                            AND mark_as_false = TRUE
+                            AND (device_msg IS NULL OR TRIM(device_msg) = '')
+                            AND EXISTS (
+                                SELECT 1
+                                FROM jsonb_array_elements(a.alert_history) AS elem
+                                WHERE elem->>'action_msg' ILIKE '%Zonal Head SOD%'
+                            );""",
+    "unblocked_by_L4":"""SELECT COUNT(*) AS alert_manager_count
+                            FROM alerts
+                            WHERE alert_section = 'VTS'
+                            AND vehicle_unblocked_date IS NOT NULL
+                            AND mark_as_false = TRUE
+                            AND device_msg IS NOT NULL
+                            AND TRIM(device_msg) <> '';""",
 
     "unblocked_within_day": """select count (*) from alerts where alert_section = 'VTS' 
                                                             and alert_status = 'Close' 
