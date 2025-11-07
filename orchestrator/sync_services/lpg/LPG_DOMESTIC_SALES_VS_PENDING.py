@@ -753,8 +753,7 @@ def get_pending_vs_delivered_data():
     data = data.unique("System_Idx")
     data = data.drop("System_Idx")
     print("Length of data After Drop :", len(data))
-    print("-"*25)
-    # insertToDB(data, "LPG_SALES_SUMMARY_DATA", indexing_col=("JDEDistributorCode", "ConsumerType", "IsPrepaid", "CylType"))
+    print("-"*25)   
     
     data = data.with_columns(
         pl.when(
@@ -809,6 +808,12 @@ def get_pending_vs_delivered_data():
     for col in data.columns:
         data = data.rename({col: col.replace("-","_")})
     data = data.rename({"Execution_Month": "Month"})
+
+    try:
+        data = data.with_columns(pl.col("ROName").str.replace("REGIONAL OFFICE", "RO").alias("ROName"))
+    except Exception:
+        print("- Could not replace REGIONAL OFFICE to RO -")
+
     insertToDB(data, "lpg_cdcms_sales_summary", indexing_col=["ZOName", "Financial_Year", "Month", "Execution_Date"])
     
     # Inserting fresh data to today's table
@@ -1183,6 +1188,11 @@ def get_subsidy_central_stats():
         if col.endswith("_y"):
             data = data.drop(col)
     
+    try:
+        data = data.with_columns(pl.col("ROName").str.replace("REGIONAL OFFICE", "RO").alias("ROName"))
+    except Exception:
+        print("- Could not replace REGIONAL OFFICE to RO -")
+    
     trunc_query = """ TRUNCATE lpg_cdcms_subsidy_central; """
     fetch_data(cursor, trunc_query, getData=False, params=params)
     insertToDB(data, "lpg_cdcms_subsidy_central", indexing_col=("ZOName", "Financial_Year", "Month"))
@@ -1353,6 +1363,12 @@ def get_subsidy_state_stats():
     for col in data.columns:
         if col.endswith("_y"):
             data = data.drop(col)
+    
+    try:
+        data = data.with_columns(pl.col("ROName").str.replace("REGIONAL OFFICE", "RO").alias("ROName"))
+    except Exception:
+        print("- Could not replace REGIONAL OFFICE to RO -")
+
     trunc_query = """ TRUNCATE lpg_cdcms_subsidy_state; """
     fetch_data(cursor, trunc_query, getData=False, params=params)
 
@@ -1491,6 +1507,11 @@ def process_subsidy_data(data, cursor, table_name, code="payment"):
             "LPG - EAST ZONE": "EZ"
             }
     data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))    
+    
+    try:
+        data = data.with_columns(pl.col("ROName").str.replace("REGIONAL OFFICE", "RO").alias("ROName"))
+    except Exception:
+        print("- Could not replace REGIONAL OFFICE to RO -")
     
     trunc_query = f""" TRUNCATE "{table_name}"; """
     fetch_data(cursor, trunc_query, getData=False, params=params)
@@ -1639,6 +1660,11 @@ def get_new_connection_data():
     data = data.with_columns(pl.col("MonthYear").str.split("-").list.get(0).alias("Month"))
     data = data.with_columns(pl.col("MonthYear").str.split("-").list.get(1).alias("Year"))
     data = data.with_columns(pl.col("Month").replace(month_order).alias("month_number"))
+    
+    try:
+        data = data.with_columns(pl.col("ROName").str.replace("REGIONAL OFFICE", "RO").alias("ROName"))
+    except Exception:
+        print("- Could not replace REGIONAL OFFICE to RO -")
 
     data = calculate_financial_year(data)
 
@@ -1922,6 +1948,10 @@ def get_consumer_statistics():
             }
     data = data.with_columns(pl.col("ZOName").alias("ZoneNames"))
     data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))
+    try:
+        data = data.with_columns(pl.col("ROName").str.replace("REGIONAL OFFICE", "RO").alias("ROName"))
+    except Exception:
+        print("- Could not replace REGIONAL OFFICE to RO -")
     
     trunc_query = ''' TRUNCATE TABLE "LPG_CONSUMERS_SUMMARY";  '''
     pg_conn = psycopg2.connect(
@@ -1936,7 +1966,7 @@ def get_consumer_statistics():
     pg_conn.commit()
     cur.close()
     pg_conn.close()
-    
+
     print("-"*25)
     print("Length of data Before Drop :", len(data))
     data = data.unique("System_Idx")
