@@ -877,12 +877,12 @@ async def post_lpg_tt(payload):
         response = requests.post(urdhva_base.settings.lpg_publish_url, headers=headers, data=json.dumps(payload),
                                  timeout=15, verify=False)
         post_sap_response = {
-            "request_id": response.json().get("Response", {}).get("Request_ID"),
+            "request_id": str(response.json().get("Response", {}).get("Request_ID")),
             "vehicle_number": response.json().get("Response", {}).get("Vehicle_ID"),
             "status": response.json().get("Response", {}).get("Status"),
             "remark": response.json().get("Response", {}).get("Remark"),
-            "updated_date": response.json().get("Response", {}).get("Updated_Date"),
-            "updated_time": response.json().get("Response", {}).get("Updated_Time")
+            "updated_date": str(response.json().get("Response", {}).get("Updated_Date")),
+            "updated_time": str(response.json().get("Response", {}).get("Updated_Time"))
         }
         await hpcl_ceg_model.LpgDataPostingAuditCreate(**post_sap_response).create()
         response.raise_for_status()
