@@ -165,6 +165,9 @@ class VTSAnalyticsActions:
         
         if "sales_trips_till_date" in query.lower():
             return f"created_on BETWEEN '{start}' AND '{end}'"
+        
+        if "completed_trips_risk_score" in query.lower():
+            return f"scheduled_trip_start_datetime BETWEEN '{start}' AND '{end}'"
                 
         queries = ["vts_device_removed", "vts_harsh_acceleration", "vts_harsh_braking", "vts_panic"]
         if any(q in query.lower() for q in queries):
