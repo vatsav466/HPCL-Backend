@@ -1937,12 +1937,10 @@ class VTSAnalyticsActions:
             SELECT *     
             FROM 
                 sales_trips_till_date T
-            WHERE 
-                sbu_cd = '7000'
-                AND division = '11'
+            WHERE division = '11'
                 AND load_status = '6'
-                AND (qty_shortage::numeric < 100)
-                AND (qty_shortage::numeric > 0 OR qty_shortage IS NULL)
+                AND (qty_shortage > '0' OR qty_shortage <> '')
+                AND sales_org = '7000'
                 {sql_trips_conditions}
                 {date_condition_str};
 
@@ -2085,14 +2083,39 @@ class VTSAnalyticsActions:
         else:
             group_cols = ["zone_nm"]
 
+        filtered_trips_df = filtered_trips_df.replace([float('inf'), float('-inf')], None)
+        filtered_trips_df = filtered_trips_df.where(pd.notnull(filtered_trips_df), None)
+
         zones_list = compute_group_summary(filtered_trips_df, group_cols)
 
-        return {
+        # 🩵 ADD THIS NEW FUNCTION HERE -------------------------
+        def clean_for_json(obj):
+            import math
+            if isinstance(obj, dict):
+                return {k: clean_for_json(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_for_json(v) for v in obj]
+            elif obj is None:
+                return ""        # convert None -> empty string
+            elif isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+                return ""        # convert NaN or inf -> empty string
+            return obj
+
+        # Clean nested structure (zones_list)
+        zones_list = clean_for_json(zones_list)
+        # -------------------------------------------------------
+
+        from fastapi.encoders import jsonable_encoder
+        from fastapi.responses import JSONResponse
+
+        response_data = {
             "status": "success",
             "filtered_invoice_count": filtered_invoice_count,
             "filtered_vehicle_count": filtered_vehicle_count,
             "zones": zones_list
         }
+
+        return JSONResponse(content=jsonable_encoder(response_data))
     
 
     
