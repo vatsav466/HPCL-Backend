@@ -1693,11 +1693,12 @@ async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp
 
 async def get_dryout_aging_data():
     query = f"""WITH distinct_alerts AS (
-                    SELECT DISTINCT ON (sap_id) sap_id, location_name, zone,
-                    indent_status, created_at, product_code, terminal_plant_id,
+                    SELECT DISTINCT ON (sap_id) sap_id, location_name, zone, region,
+                    indent_status, created_at, product_code, terminal_plant_id, terminal_plant_name,
                     dry_out_in_days
                     FROM alerts
                     WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND mark_as_false = true AND progress_rate = '1'
+                    AND indent_status NOT IN ('TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')
                     ORDER BY sap_id, created_at ASC
                 )
                 SELECT *,
@@ -1708,21 +1709,14 @@ async def get_dryout_aging_data():
                         WHEN created_at < NOW() - INTERVAL '15 days' THEN 'More than 15 days'
                     END AS age_category
                 FROM distinct_alerts;"""
-    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-    #     "hpcl_ceg", "1")
-    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    # function = await charts_actions.charts_connection_vault_routing(
-    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    # resp = await function(
-    #     query=query
-    # )
     resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
     resp = resp.get("data", [])
     resp = pd.DataFrame(resp)
     resp.rename(columns={
-        "sap_id": "DEALER_CODE", "location_name": "LOCATION_NAME", "zone": "ZONE",
+        "sap_id": "DEALER_CODE", "location_name": "LOCATION_NAME", "zone": "ZONE", "region": "REGION",
         "indent_status": "INDENT_STATUS", "product_code": "PRODUCT_CODE", "age_category": "AGE_CATEGORY",
-        "terminal_plant_id": "TERMINAL_PLANT_ID", "dry_out_in_days": "DRY_OUT_IN_DAYS"
+        "terminal_plant_id": "SUPPLY_PLANT_ID", "terminal_plant_name": "SUPPLY_PLANT_NAME",
+        "dry_out_in_days": "DRY_OUT_IN_DAYS"
     }, inplace=True)
     del resp['created_at']
     return resp.to_dict(orient='records')
