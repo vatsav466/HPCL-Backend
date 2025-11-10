@@ -401,7 +401,7 @@ async def fetch_dryout_data():
                     AND a.mark_as_false = true
                     AND a.product_code IN ('2811000','2812000','2822000')
                     AND a.dry_out_in_days = '1'
-                    AND a.indent_status NOT IN ('Cancelled','Completed')
+                    AND a.indent_status NOT IN ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')
                 ORDER BY a.sap_id, a.progress_rate ASC, a.id
                 ),
                 normalized AS (

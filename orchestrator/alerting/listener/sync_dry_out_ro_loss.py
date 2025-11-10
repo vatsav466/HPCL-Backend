@@ -9,7 +9,7 @@ async def sync_dry_out_ro_loss():
     where_clauses = [
         f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'",
         "a.dry_out_in_days = '1'",
-        "a.indent_status != 'Cancelled'"
+        "a.indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')"
     ]
     where_clause = " AND ".join(where_clauses)
     query = f"""WITH product_mapping AS (
