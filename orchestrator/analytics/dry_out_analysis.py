@@ -1371,7 +1371,7 @@ async def get_dryout_aging(conditions):
     query = f"""WITH distinct_alerts AS (
                 SELECT DISTINCT ON (sap_id) sap_id, created_at
                 FROM alerts
-                WHERE {conditions} AND progress_rate = '1'
+                WHERE {conditions} AND progress_rate = '1' AND indent_status NOT IN ('TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')
                 ORDER BY sap_id, created_at ASC
             )
             SELECT 
@@ -1479,7 +1479,9 @@ async def get_tar_analysis(condition):
     cust_resp = pd.DataFrame(cust_resp)
     cust_resp['rosapcode'] = cust_resp['rosapcode'].astype(str)
 
-    query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    query = f"""select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' 
+                and indent_status not in ('TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm') 
+                order by sap_id, created_at asc"""
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
     #     "hpcl_ceg", "1")
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'

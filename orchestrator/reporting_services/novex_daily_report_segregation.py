@@ -912,6 +912,9 @@ async def get_alert_data(alert_section):
     date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'" # As per HPCL request changed the date to be in the present month
     query = f"""SELECT count(alert_section), bu, alert_section, severity FROM alerts where alert_status='Open' and 
     alert_section='{alert_section}' and {date_filter} GROUP BY bu, alert_section, severity"""
+    if alert_section in ["VTS"]:
+        query = f"""SELECT count(alert_section), bu, alert_section, severity FROM alerts where vehicle_unblocked_date is null and 
+                    alert_section='{alert_section}' and {date_filter} GROUP BY bu, alert_section, severity"""
     alerts = await hpcl_ceg_model.Alerts.get_aggr_data(query)
     data = {}
     for alert in alerts['data']:
@@ -1012,6 +1015,16 @@ async def publish_daily_novex_status_email():
         cc_recipients=["subodh@hpcl.in"],
         bcc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
         notification_data=status_data
+    )
+    await send_notification(
+        template_name="seg5.html",
+        to_recipients=["sreedhar.maddipati@algofusiontech.com"],
+        cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com"],
+        notification_data=status_data,
+        inline_images={
+            "dry_out_lost": f"{chart_path}"
+        }
     )
 
 
