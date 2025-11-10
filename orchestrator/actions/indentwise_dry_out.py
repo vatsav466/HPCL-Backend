@@ -121,7 +121,7 @@ class IndentDryOut:
         query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                  f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params["sap_id"]}' and "
                  f"indent_no='{each_indent["INDENT_NO"]}' and alert_status='Close' and "
-                 f"product_code='{self.params["product_code"]}' and indent_status in ('Cancelled','Completed')")
+                 f"product_code='{self.params["product_code"]}' and indent_status in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')")
         alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         if alerts_data.get("data", []):
             return True
