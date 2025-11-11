@@ -733,7 +733,15 @@ async def create_vts_violation_alerts(enriched_data):
     
 async def create_vts_alerts(enriched_data):
     try:
-        for entry in enriched_data:            
+        for entry in enriched_data:
+            vts_duplicate_check_query = f"""select invoice_number,location_id from vts_alert_history where tl_number = '{entry['tl_number']}'
+                                                and invoice_number = '{entry['invoice_number']}' and location_id = '{entry['location_id']}'"""
+            vts_duplicate_check_data = await hpcl_ceg_model.VtsAlertHistory.get_aggr_data(vts_duplicate_check_query, limit=0)
+            vts_duplicate_data = vts_duplicate_check_data.get('data',[])
+            if vts_duplicate_data:
+                #print(f"Received duplicate Event {entry} with existing data {vts_duplicate_check_data}")
+                logger.info(f"Received duplicate Event {entry} with existing data {vts_duplicate_check_data}")
+                continue
             entry['auto_unblock'] = True
             entry['violation_type'] = await get_vts_violation(entry)
             entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
