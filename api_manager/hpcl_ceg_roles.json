@@ -1092,6 +1092,9 @@
                 },
                 {
                     "name": "get_vts_blocked_trucks"
+                },
+                {
+                    "name": "get_vts_unblocked_trucks"
                 }
             ]
         },
@@ -1122,6 +1125,9 @@
                 },
                 {
                     "name": "get_vts_blocked_trucks"
+                },
+                {
+                    "name": "get_vts_unblocked_trucks"
                 }
             ]
         },
@@ -1188,6 +1194,9 @@
                 },
                 {
                     "name": "get_vts_blocked_trucks"
+                },
+                {
+                    "name": "get_vts_unblocked_trucks"
                 }
             ]
         },
@@ -7341,6 +7350,10 @@
         {
             "name": "get_vts_blocked_trucks",
             "displayName": "get_vts_blocked_trucks"
+        },
+        {
+            "name": "get_vts_unblocked_trucks",
+            "displayName": "get_vts_unblocked_trucks"
         },
         {
             "name": "upload_cems_location_master",

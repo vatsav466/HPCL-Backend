@@ -96,7 +96,9 @@ class VTSAnalyticsActions:
         # if query and any(x in query.lower() for x in ["vts_alert_history", "vts_ongoing_trips"]) and key.lower() == "bu":
         #     return "location_type"
         # if query and "vts_alert_history" in query.lower() and key.lower() == "sap_id":
-        #     return "location_id"          
+        #     return "location_id" 
+        if query and 'sales_trips_till_date' in query.lower() and key.lower() == 'bu':
+            return 'sbu_nm'
         return key
     
     @staticmethod
@@ -152,7 +154,7 @@ class VTSAnalyticsActions:
     def create_date_condition(query,val):
         """Create date range condition"""
         start = val.split(",")[0]
-        end = val.split(",")[1]
+        end = (datetime.strptime(val.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
        
         if "vts_alert_history" in query.lower():
             return f"vts_end_datetime BETWEEN '{start}' AND '{end}'"
@@ -169,6 +171,9 @@ class VTSAnalyticsActions:
         
         if "sales_trips_till_date" in query.lower():
             return f"created_on BETWEEN '{start}' AND '{end}'"
+        
+        if "completed_trips_risk_score" in query.lower():
+            return f"scheduled_trip_start_datetime BETWEEN '{start}' AND '{end}'"
                 
         queries = ["vts_device_removed", "vts_harsh_acceleration", "vts_harsh_braking", "vts_panic"]
         if any(q in query.lower() for q in queries):
@@ -482,11 +487,10 @@ class VTSAnalyticsActions:
                         material_group_nm
                     FROM sales_trips_till_date
                     WHERE 
-                        sbu_cd = '7000'
-                        AND division = '11'
+                        division = '11'
                         AND load_status = '6'
-                        AND (qty_shortage::numeric < 100)
-                        AND (qty_shortage::numeric > 0 OR qty_shortage IS NULL)
+                        AND (qty_shortage > '0' OR qty_shortage <> '')
+                        AND sales_org = '7000'
                         AND {where_clause}
                 """
                 df_shortage = await VTSAnalyticsActions.execute_query(shortage_query)
@@ -659,11 +663,10 @@ class VTSAnalyticsActions:
                         load_date AS created_at
                     FROM sales_trips_till_date
                     WHERE 
-                        sbu_cd = '7000'
-                        AND division = '11'
+                        division = '11'
                         AND load_status = '6'
-                        AND (qty_shortage::numeric < 100)
-                        AND (qty_shortage::numeric > 0 OR qty_shortage IS NULL)
+                        AND (qty_shortage > '0' OR qty_shortage <> '')
+                        AND sales_org = '7000'
                 """
 
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
@@ -832,7 +835,21 @@ class VTSAnalyticsActions:
             final_df.drop(columns=['truck_no'], inplace=True, errors='ignore')
             
             final_df = merge_shortage_data(final_df, df_shortage, aggregate=True)
+
+            violation_cols = [v for v in all_violations if v in final_df.columns]
+            if 'qty_shortage' not in final_df.columns:
+                final_df['qty_shortage'] = 0
+            else:
+                final_df['qty_shortage'] = pd.to_numeric(final_df['qty_shortage'], errors='coerce').fillna(0)
             
+            violation_cols.append('qty_shortage')
+            final_df['total_violations'] = final_df[violation_cols].sum(axis=1)
+            final_df = final_df[final_df['total_violations'] > 0]
+            final_df.drop(columns=['total_violations'], inplace=True, errors='ignore')
+
+            if final_df.empty:
+                return {"status": True, "message": "No non-zero violations found", "data": []}
+    
             # ==================== HANDLE GROUP_BY ====================
             group_by_col = payload.get("group_by") if payload else None
             if group_by_col and group_by_col in final_df.columns:
@@ -1036,21 +1053,22 @@ class VTSAnalyticsActions:
             # Step 1: Build the base query to get shortage data
             shortage_query = """
             SELECT 
-                plant_cd as sap_id, 
+                sap_id, 
                 vehicle_id, 
                 invoice_no,
                 SUM(qty_shortage::numeric) as qty_shortage 
             FROM sales_trips_till_date
-            WHERE sbu_cd = '7000'
-                AND division = '11'
+            WHERE
+                division = '11'
                 AND load_status = '6'
-                AND (qty_shortage::numeric < 100)
-                AND (qty_shortage::numeric > 0 OR qty_shortage IS NULL)
-            GROUP BY vehicle_id, invoice_no, plant_cd 
+                AND (qty_shortage > '0' OR qty_shortage <> '')
+                AND sales_org = '7000'
+            GROUP BY vehicle_id, invoice_no, sap_id
             """
             
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
             shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
+            print("Shortage Query:", shortage_query)
 
             # REMOVED: shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions_str)
             
@@ -1203,16 +1221,16 @@ class VTSAnalyticsActions:
             # Step 1: Get base query and apply filters
             query = vts_query.vts_query.get(drill_state.split(",")[0])
             ongoing_trips_type = payload.get("ongoing_trips_type")
-            
+
             if ongoing_trips_type:
                 ongoing_trips_query = query.format(ongoing_trips_type=ongoing_trips_type)
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, ongoing_trips_query)
                 query = VTSAnalyticsActions.apply_conditions_to_query(ongoing_trips_query, conditions)
-                print(query)
             else:
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
                 query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
 
+            # Step 2: Execute base ongoing trips query
             df = await VTSAnalyticsActions.execute_query(query)
             df.drop(columns=["zone"], inplace=True, errors="ignore")
 
@@ -1225,40 +1243,55 @@ class VTSAnalyticsActions:
             if df.empty:
                 return {"status": True, "message": "No data found", "data": []}
 
-            # Step 2: Get location info
-            sap_id_list = df['sap_id'].tolist()
-            tt_numbers_str = "', '".join(map(str, sap_id_list))
+            # Step 3: Get location info
+            sap_id_list = df['sap_id'].dropna().astype(str).tolist()
+            if not sap_id_list:
+                df["location_name"] = "Unknown"
+                df["zone"] = "Unknown"
+                merged_df = df.copy()
+            else:
+                sap_id_str = "', '".join(map(str, sap_id_list))
+                location_query = f"""
+                    SELECT sap_id, name AS location_name, zone 
+                    FROM location_master 
+                    WHERE sap_id IN ('{sap_id_str}')
+                """
+                loc_df = await VTSAnalyticsActions.execute_query(location_query)
 
-            location_query = f"""
-                SELECT sap_id, name AS location_name, zone
-                FROM location_master
-                WHERE sap_id IN ('{tt_numbers_str}')
+                # Step 4: Merge location info (keep all trips)
+                df["sap_id"] = df["sap_id"].astype(str).str.strip()
+                loc_df["sap_id"] = loc_df["sap_id"].astype(str).str.strip()
+                merged_df = df.merge(loc_df, on="sap_id", how="left")
+
+                # Fill missing values — don't drop any record
+                merged_df["location_name"] = merged_df["location_name"].fillna("Unknown")
+                merged_df["zone"] = merged_df["zone"].fillna("Unknown")
+
+            # Step 5: Fetch alert history only for ongoing trips' invoices
+            invoice_list = merged_df["invoice_no"].dropna().astype(str).unique().tolist()
+            if not invoice_list:
+                return {"status": True, "message": "No invoices found in trips", "data": []}
+
+            invoices_str = "', '".join(invoice_list)
+            completed_trips_query = f"""
+                SELECT DISTINCT invoice_no
+                FROM vts_completed_trip
+                WHERE invoice_no IN ('{invoices_str}')
             """
+            alert_df = await VTSAnalyticsActions.execute_query(completed_trips_query)
+            alert_invoice_list = alert_df["invoice_number"].astype(str).tolist() if not alert_df.empty else []
 
-            loc_df = await VTSAnalyticsActions.execute_query(location_query)
-            if loc_df.empty:
-                return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
-
-            # Step 3: Merge data
-            merged_df = df.merge(loc_df, on="sap_id", how="left")
-            merged_df = merged_df.dropna(subset=["zone", "location_name"])
-
-            if payload.get("search") == "true":
-                merged_df = merged_df.dropna(axis=1, how="all")  
-                merged_df = merged_df.loc[:, merged_df.astype(str).ne("").any()] 
-                merged_df = merged_df.drop(["created_at","updated_at"], axis=1, errors='ignore')               
-                return {"status": True, "message": "Data found", "data": merged_df.to_dict(orient="records")}
-
-            # Step 4: Remove empty rows based on filters
-            for key in ["zone", "location_name", "transporter_name"]:
-                merged_df = merged_df[merged_df[key].notna() & (merged_df[key].astype(str).str.strip() != "")]
-                if payload.get(key):
-                    merged_df = merged_df[merged_df[key] == payload[key]]
+            # Step 6: Filter based on live / closed status
+            status_filter = payload.get("status")
+            if status_filter == "live":
+                merged_df = merged_df[~merged_df["invoice_no"].astype(str).isin(alert_invoice_list)]
+            elif status_filter == "closed":
+                merged_df = merged_df[merged_df["invoice_no"].astype(str).isin(alert_invoice_list)]
 
             if merged_df.empty:
-                return {"status": True, "message": "No data found for the applied filters", "data": []}
+                return {"status": True, "message": f"No {status_filter} trips found", "data": []}
 
-            # Step 5: TT-level drill-down
+            # Step 7: TT-level drill-down
             selected_tt = payload.get("tt_number")
             if selected_tt:
                 merged_df = merged_df[merged_df["tt_number"] == selected_tt]
@@ -1269,14 +1302,16 @@ class VTSAnalyticsActions:
                     pd.to_datetime(merged_df["event_start_datetime"].fillna(merged_df["event_end_datetime"]))
                     .dt.date.astype(str)
                 )
-
                 trip_df = merged_df.sort_values(by="created_at", ascending=True)
                 trip_df = trip_df[["invoice_no", "created_at"]]
-
                 result = trip_df.to_dict(orient="records")
                 return {"status": True, "message": f"Trip details for vehicle {selected_tt}", "data": result}
 
-            # Step 6: Determine grouping column
+            # Step 8: Grouping logic (zone / location / transporter)
+            merged_df["zone"] = merged_df["zone"].fillna("Unknown")
+            merged_df["location_name"] = merged_df["location_name"].fillna("Unknown")
+            merged_df["transporter_name"] = merged_df["transporter_name"].fillna("Unknown")
+
             if payload.get("transporter_name"):
                 group_col = "tt_number"
             elif payload.get("location_name"):
@@ -1285,31 +1320,23 @@ class VTSAnalyticsActions:
                 group_col = "location_name"
             else:
                 group_col = "zone"
-            
 
-            # Step 7: Summarize counts
             summary_df = (
-                merged_df.groupby(group_col)
+                merged_df.groupby(group_col, dropna=False)
                 .agg({"invoice_no": pd.Series.nunique})
                 .reset_index()
             )
 
             if group_col != "tt_number":
-                summary_df["vehicle_count"] = merged_df.groupby(group_col)["tt_number"].nunique().values
+                summary_df["vehicle_count"] = merged_df.groupby(group_col, dropna=False)["tt_number"].nunique().values
 
             summary_df.rename(columns={"invoice_no": "invoice_count"}, inplace=True)
             result = summary_df.to_dict(orient="records")
 
-            # Step 8: Handle Excel download
+            # Step 9: Handle Excel download
             if payload.get("download") == "true":
-                # Remove timezone info
                 for col in merged_df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
                     merged_df[col] = merged_df[col].dt.tz_localize(None)
-
-                # Drop completely empty columns
-                merged_df = merged_df.drop(columns=['created_at', 'updated_at'])
-                merged_df = merged_df.dropna(axis=1, how="all")
-                merged_df = merged_df.loc[:, (merged_df.astype(str).apply(lambda x: x.str.strip() != "").any())]
 
                 violation_mapping = {
                     "HS": "Hotspot",
@@ -1317,28 +1344,23 @@ class VTSAnalyticsActions:
                     "RD": "Route Deviation > 2km",
                     "WR": "Trip without route"
                 }
-
                 if "violation_type" in merged_df.columns:
                     merged_df["violation_type"] = merged_df["violation_type"].replace(violation_mapping)
 
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                file_name = f"{ongoing_trips_type}_{timestamp}.xlsx"
-
+                file_name = f"{ongoing_trips_type}{status_filter}{timestamp}.xlsx"
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                     merged_df.to_excel(writer, index=False, sheet_name='ongoing_trips')
-
                 output.seek(0)
-                headers = {
-                    "Content-Disposition": f'attachment; filename="{file_name}"'
-                }
+                headers = {"Content-Disposition": f'attachment; filename="{file_name}"'}
                 return StreamingResponse(
                     output,
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers=headers
                 )
 
-            return {"status": True, "message": f"{ongoing_trips_type} drill-down data", "data": result}
+            return {"status": True, "message": f"{status_filter} data found", "data": result}
 
         except Exception as e:
             print("traceback:", traceback.format_exc())
