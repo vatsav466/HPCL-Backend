@@ -189,6 +189,25 @@
     <div class="logo">
         <img src="cid:dry_out_lost" alt="HP Pay Logo" width="800" height="auto">
     </div>
+    <h5>2.7 Location/Depo wise dry out details</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in supply_terminal_query_ro_count_df.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in supply_terminal_query_ro_count_df.to_dict(orient='records') %}
+            <tr>
+                {% for col in supply_terminal_query_ro_count_df.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     <h4>3. LPG Operations Summary</h4>
     <h5>Average score for all LPG Plants – {{lpg_avg_score_resp}}</h5>
     <h5>3.1. Open Alert Summary ({{present_month}})</h5>
