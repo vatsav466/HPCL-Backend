@@ -484,3 +484,25 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
         "message": "No data found",
         "data": []
         }
+
+
+# Action get_vts_unblocked_trucks
+@router.post('/get_vts_unblocked_trucks', tags=['Alerts'])
+async def alerts_get_vts_unblocked_trucks(data: Alerts_Get_Vts_Unblocked_TrucksParams):
+    query = "blocking_status='unblocked'"
+    query = await generate_filter_query(data.cross_filters, query)
+    alert_data = await VtsManualBlocked.get_all(
+        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
+        )
+    if alert_data["data"]:
+        return {
+            "status": True, 
+            "message": "success", 
+            "data": alert_data["data"]
+            }
+    
+    return {
+        "status": True, 
+        "message": "No data found",
+        "data": []
+        }

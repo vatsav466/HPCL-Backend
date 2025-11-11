@@ -892,7 +892,11 @@ Model Alerts {
     Action=> get_vts_blocked_trucks {
         cross_filters optional list WidgetFilters
     }
-
+    
+    Action=> get_vts_unblocked_trucks {
+        cross_filters optional list WidgetFilters
+    }
+    
     Config=> {
         crud_operations='read'
         // Access Key Mapping for RBAC,
