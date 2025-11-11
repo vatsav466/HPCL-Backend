@@ -14,6 +14,10 @@ import orchestrator.dbconnector.widget_actions.vts_query as vts_query
 import orchestrator.dbconnector.credential_loader as credential_loader
 import io
 from fastapi.responses import StreamingResponse
+from fastapi import Request
+from fastapi.responses import JSONResponse, FileResponse
+
+
 
 
 async def generate_cross_filter(cross_filters):
@@ -2007,10 +2011,9 @@ class VTSAnalyticsActions:
                     filtered_trips_df = filtered_trips_df[filtered_trips_df[df_col].isin(val)]
 
         # ----- 7. Counts after filtering (Original Logic) -----
-        
-        # filtered_invoice_count = filtered_trips_df['invoice_no'].nunique()
         filtered_vehicle_count = filtered_trips_df['vehicle_id'].nunique()
-        filtered_invoice_count = len(filtered_trips_df['invoice_no'])
+        filtered_invoice_count = filtered_trips_df['invoice_no'].nunique()
+
         # filtered_vehicle_count = len(filtered_trips_df['vehicle_id'])
         
         if filtered_trips_df.empty:
@@ -2045,13 +2048,36 @@ class VTSAnalyticsActions:
             for keys, group in df.groupby(current_col, dropna=False):
                 item = {current_col: keys}
                 item["shortage"] = group["qty_shortage"].sum()
-                # item["invoice_count"] = group["invoice_no"].nunique()
+                item["invoice_count"] = group["invoice_no"].nunique()
                 # item["vehicle_count"] = group["vehicle_id"].nunique()
-                item["invoice_count"] = len(group["invoice_no"])
+                # item["invoice_count"] = len(group["invoice_no"])
                 # print('item["invoice_count"]', item["invoice_count"])
-                item["vehicle_count"] = group["vehicle_id"].nunique()         # unique vehicles
+                item["vehicle_count"] = group["vehicle_id"].nunique()  
+                
 
-                # print('item["vehicle_count"]', item["vehicle_count"])
+                # --- Material Group Bifurcation Logic ---
+                if "material_group_nm" in group.columns and "qty_shortage" in group.columns:
+                    all_rows = []
+                    for _, row in group.iterrows():
+                        mats = str(row["material_group_nm"]).split(",")
+                        for m in mats:
+                            m = m.strip()
+                            if m:
+                                all_rows.append({
+                                    "material_group_nm": m,
+                                    "shortage": float(row["qty_shortage"]) / len(mats)
+                                })
+
+                    # Merge shortages by material group
+                    from collections import defaultdict
+                    merged = defaultdict(float)
+                    for r in all_rows:
+                        merged[r["material_group_nm"]] += r["shortage"]
+
+                    item["item_bifurcation"] = [
+                        {"material_group_nm": k, "shortage": round(v, 2)} for k, v in merged.items()
+                    ]
+
 
                 child = compute_group_summary(group, next_cols)
                 if child:
@@ -2066,6 +2092,7 @@ class VTSAnalyticsActions:
                 else:
                     if current_col == "invoice_no" and "load_date" in group.columns:
                         item["load_date"] = group["load_date"].iloc[0]
+                    
 
                 result.append(item)
 
@@ -2082,13 +2109,30 @@ class VTSAnalyticsActions:
             group_cols = ["zone_nm", "plant_nm"]
         else:
             group_cols = ["zone_nm"]
+        if "material_group_nm" not in filtered_trips_df.columns and "item_no" in filtered_trips_df.columns:
+            filtered_trips_df.rename(columns={"item_no": "material_group_nm"}, inplace=True)
+        if 'vehicle_id' in filtered_trips_df.columns and 'invoice_no' in filtered_trips_df.columns:
+            # Step 1: Group by vehicle_id and invoice_no and aggregate shortage and item details
+            combined_df = (
+                filtered_trips_df
+                .groupby(['vehicle_id', 'invoice_no'], as_index=False)
+                .agg({
+                    'qty_shortage': 'sum',  # sum shortages for same vehicle+invoice
+                    'material_group_nm': lambda x: ', '.join(x.astype(str).unique()),
+                    'plant_nm': 'first',
+                    'zone_nm': 'first',
+                    'transporter_name': 'first',
+                    'load_date': 'first'
+                })
+            )
+            filtered_trips_df = combined_df
 
         filtered_trips_df = filtered_trips_df.replace([float('inf'), float('-inf')], None)
         filtered_trips_df = filtered_trips_df.where(pd.notnull(filtered_trips_df), None)
 
         zones_list = compute_group_summary(filtered_trips_df, group_cols)
 
-        # 🩵 ADD THIS NEW FUNCTION HERE -------------------------
+        
         def clean_for_json(obj):
             import math
             if isinstance(obj, dict):
