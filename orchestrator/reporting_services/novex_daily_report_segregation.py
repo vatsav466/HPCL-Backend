@@ -659,6 +659,46 @@ async def fetch_dryout_data():
     zone_fuel_df = pd.DataFrame(zone_data)
     chart_path = await generate_chart(zone_fuel_df)
 
+    supply_terminal_query = f"""WITH dryout_data AS (
+                                    SELECT
+                                        CASE 
+                                            WHEN zone = 'CEN' THEN 'CZ'
+                                            WHEN zone = 'NWF' THEN 'NWFZ'
+                                            ELSE zone
+                                        END AS zone,
+                                        terminal_plant_name AS supply_location,
+                                        region,
+                                        COUNT(DISTINCT sap_id) AS count_of_dryout_ros
+                                    FROM alerts
+                                    WHERE
+                                        COALESCE(zone, '') <> ''  -- exclude empty or null zones
+                                        AND mark_as_false = 'true'
+                                        AND alert_status != 'Close'
+                                        AND dry_out_in_days = '1'
+                                        AND product_code IN ('2811000', '2812000')
+                                    GROUP BY 
+                                        CASE 
+                                            WHEN zone = 'CEN' THEN 'CZ'
+                                            WHEN zone = 'NWF' THEN 'NWFZ'
+                                            ELSE zone
+                                        END,
+                                        terminal_plant_name,
+                                        region
+                                )
+                                SELECT 
+                                    ROW_NUMBER() OVER (ORDER BY count_of_dryout_ros DESC) AS "Sl No",
+                                    zone AS "Zone",
+                                    supply_location AS "Supply Location (Terminal)",
+                                    region AS "Region",
+                                    count_of_dryout_ros AS "Count of Dryout ROs"
+                                FROM dryout_data
+                                ORDER BY count_of_dryout_ros DESC, zone, supply_location, region;"""
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    supply_terminal_query_ro_count = await function(query=supply_terminal_query)
+    supply_terminal_query_ro_count_df = pd.DataFrame(supply_terminal_query_ro_count)
+
     dry_out_cf = {
         'cat_a': cat_a,
         'dry_out': carry_fwd_dry_out,
@@ -675,7 +715,7 @@ async def fetch_dryout_data():
     print("dry_out :", dry_out)
     return {"dry_out_cf": dry_out_cf, "dry_out": dry_out, 'dry_out_details': dry_out_details, 
             'dry_out_trends': summary_df.to_dict(orient='records'),
-            'zone_wise_summary': pivot, 'zone_fuel_df':zone_fuel_df}
+            'zone_wise_summary': pivot, 'zone_fuel_df':zone_fuel_df, 'supply_terminal_query_ro_count_df': supply_terminal_query_ro_count_df}
 
 
 async def get_lpg_rejection():

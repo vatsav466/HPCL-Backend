@@ -161,6 +161,25 @@
     <div class="logo">
         <img src="cid:dry_out_lost" alt="HP Pay Logo" width="800" height="auto">
     </div>
+    <h5>1.7 Location/Depo wise dry out details</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in supply_terminal_query_ro_count_df.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in supply_terminal_query_ro_count_df.to_dict(orient='records') %}
+            <tr>
+                {% for col in supply_terminal_query_ro_count_df.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 <script>
     window.onload = function () {
         document.querySelectorAll(".growth").forEach(td => {
