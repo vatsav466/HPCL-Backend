@@ -6,8 +6,7 @@ import datetime
 import hpcl_ceg_model
 import dateutil.parser as dateutil_parser
 
-#url = "https://webtest.hpcl.co.in/VTSBlocking/webresources/vtsBlocking/blockTT"
-url = "https://vtsblocking.hpcl.co.in/VTSBlocking/webresources/vtsBlocking/blockTT"
+url = urdhva_base.settings.post_to_ims_url
 headers = {
     "Content-Type": "application/json",
 }

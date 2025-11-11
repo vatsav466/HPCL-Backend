@@ -9,12 +9,12 @@ import datetime
 # ----------------------------
 # Config
 # ----------------------------
-OAUTH_URL = "https://10.90.144.208:9443/oauth2/token"
+OAUTH_URL = urdhva_base.settings.lpg_vts_auth_url
 #OAUTH_URL = "https://apim.hpcl.co.in/oauth2/token"
-CLIENT_ID = "JQHUdUYOc1HtAUOJJ_ekXss5zxAa"
-CLIENT_SECRET = "P4VP3pUp_IV4GPR8QsMYmwh38M8a"
+CLIENT_ID = urdhva_base.settings.lpg_vts_client_id
+CLIENT_SECRET = urdhva_base.settings.lpg_vts_client_secret_key
 
-PUBLISH_URL = "https://apim.hpcl.co.in/hpapi/vehicle-blocking/v1/1.0"
+PUBLISH_URL = urdhva_base.settings.lpg_publish_url
 
 async def fetch_access_token():
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
