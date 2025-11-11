@@ -401,7 +401,7 @@ async def fetch_dryout_data():
                     AND a.mark_as_false = true
                     AND a.product_code IN ('2811000','2812000','2822000')
                     AND a.dry_out_in_days = '1'
-                    AND a.indent_status NOT IN ('Cancelled','Completed')
+                    AND a.indent_status NOT IN ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')
                 ORDER BY a.sap_id, a.progress_rate ASC, a.id
                 ),
                 normalized AS (
@@ -911,6 +911,9 @@ async def get_alert_data(alert_section):
     date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'" # As per HPCL request changed the date to be in the present month
     query = f"""SELECT count(alert_section), bu, alert_section, severity FROM alerts where alert_status='Open' and 
     alert_section='{alert_section}' and {date_filter} GROUP BY bu, alert_section, severity"""
+    if alert_section in ["VTS"]:
+        query = f"""SELECT count(alert_section), bu, alert_section, severity FROM alerts where vehicle_unblocked_date is null and 
+                    alert_section='{alert_section}' and {date_filter} GROUP BY bu, alert_section, severity"""
     alerts = await hpcl_ceg_model.Alerts.get_aggr_data(query)
     data = {}
     for alert in alerts['data']:
@@ -998,7 +1001,7 @@ async def send_notification(notification_data):
     ins = await notification_factory.get_notification_module("email")
     for recipient in [
         ["purushm@hpcl.in", "sachinkwarghane@hpcl.in", "adityapandey@hpcl.in"],
-        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"]
+        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"]
         ]:
         await ins.publish_message(
             subject="Novex Daily Report",

@@ -91,7 +91,7 @@ class Workflows_Deletion:
                             SET 
                                 alert_status = 'Close',
                                 alert_state = 'Resolved',
-                                indent_status = 'Cancelled',
+                                indent_status in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm'),
                                 progress_rate = 3
                             WHERE
                                 id in ({business_keys}) 

@@ -121,7 +121,7 @@ class IndentDryOut:
         query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                  f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params["sap_id"]}' and "
                  f"indent_no='{each_indent["INDENT_NO"]}' and alert_status='Close' and "
-                 f"product_code='{self.params["product_code"]}' and indent_status in ('Cancelled','Completed')")
+                 f"product_code='{self.params["product_code"]}' and indent_status in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')")
         alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         if alerts_data.get("data", []):
             return True
@@ -345,8 +345,6 @@ class IndentDryOut:
                     self.params['dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
                 elif self.params['dry_out_in_days'] == '2':
                     self.params['intra_day_dry_out_start_time'] = datetime.datetime.now(tz=datetime.timezone.utc)
-                if await self._is_ro_temporarily_closed():
-                    True, {"msg": "RO temporarily Closed"}
                 await create_alert(self.params, camunda_url)
                 await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                     connection_mapping.item_name_mapping.get(prod_code, ""),
@@ -416,6 +414,15 @@ class IndentDryOut:
         #now = dateutil.parser.parse(self.params.get("workflow_datetime")).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
+        
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
 
         query = f"""SELECT a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE", a."PROD_REQD_DT" AS "PROD_REQD_DT" """ \
                 f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
@@ -435,6 +442,16 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+            
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -602,64 +619,7 @@ class IndentDryOut:
                             indent_status=IndentStatus.Completed
                         )
                     return await self.send_alert_action(is_raised=False)
-                elif await self._check_dry_out_history():
-                    if not await self._check_ro_in_cris():
-                        if self._check_product_low_level():
-                            if dry_alert_data.get("alert_status") == 'Close' and dry_alert_data.get('indent_status') == 'ProductLowLevel':
-                                print("Product Low Level .......")
-                                await self._close_camunda_workflow()
-                            if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') != 'ProductLowLevel':
-                                print("Product Low Level .......")
-                                await self.update_alert_status(
-                                    indent_status=IndentStatus.ProductLowLevel,
-                                    alert_status=AlertStatus.Close,
-                                    alert_state=AlertState.Resolved,
-                                    progress_rate=dry_alert_data.get("progress_rate")
-                                )
-                                await self.close_supply_chain_alert(
-                                    alert_id=self.params.get("alert_id"),
-                                    alert_status=AlertStatus.Close,
-                                    alert_state=AlertState.Resolved,
-                                    indent_status=IndentStatus.ProductLowLevel
-                                )
-                            return await self.send_alert_action(is_raised=False)
-                        elif self._is_ro_temporarily_closed():
-                            if dry_alert_data.get("alert_status") == 'Close' and dry_alert_data.get('indent_status') == 'TempClosed':
-                                await self._close_camunda_workflow()
-                            if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') != 'TempClosed':
-                                print("Ro has been temporarily Closed still alert is in Intial stage")
-                                await self.update_alert_status(
-                                    indent_status=IndentStatus.TempClosed,
-                                    alert_status=AlertStatus.Close,
-                                    alert_state=AlertState.Resolved,
-                                    progress_rate=dry_alert_data.get("progress_rate")
-                                )
-                                await self.close_supply_chain_alert(
-                                    alert_id=self.params.get("alert_id"),
-                                    alert_status=AlertStatus.Close,
-                                    alert_state=AlertState.Resolved,
-                                    indent_status=IndentStatus.TempClosed
-                                )
-                            return await self.send_alert_action(is_raised=False)
-                        else:
-                            if dry_alert_data.get("alert_status") == 'Close' and dry_alert_data.get('indent_status') == 'OfflineOrFalseAlarm':
-                                await self._close_camunda_workflow()
-                            if dry_alert_data.get("alert_status") != 'Close' or dry_alert_data.get('indent_status') != 'OfflineOrFalseAlarm':
-                                print("Ro is in Offline")
-                                await self.update_alert_status(
-                                    indent_status=IndentStatus.OfflineOrFalseAlarm,
-                                    alert_status=AlertStatus.Close,
-                                    alert_state=AlertState.Resolved,
-                                    progress_rate=dry_alert_data.get("progress_rate")
-                                )
-                                await self.close_supply_chain_alert(
-                                    alert_id=self.params.get("alert_id"),
-                                    alert_status=AlertStatus.Close,
-                                    alert_state=AlertState.Resolved,
-                                    indent_status=IndentStatus.OfflineOrFalseAlarm
-                                )
-                            return await self.send_alert_action(is_raised=False)
-                        
+                
             query = f"""SELECT a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE", a."PROD_REQD_DT" AS "PROD_REQD_DT" """ \
                     f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
                     f"""AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
@@ -763,8 +723,16 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
-        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = "','".join(self.params.get("indent_no").split(","))
         # now = (
@@ -789,6 +757,8 @@ class IndentDryOut:
         # query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR("DEALER_CODE",1,10) = '{dealer_code}' """ \
         #         f"""AND "INDENT_NO" IN ('{indent_no}') AND "PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
         #         f"""AND "CANCEL_INDENT" IS NULL AND "TRUCK_REGNO" IS NOT NULL"""
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         query = f"""SELECT COUNT(*) AS "count", b."PROD_ALLOT_TIME" """ \
                 f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b """ \
                 f"""WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
@@ -827,6 +797,16 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+            
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -955,6 +935,16 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -1039,6 +1029,16 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -1135,6 +1135,16 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -1243,6 +1253,16 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -1332,6 +1352,16 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -1448,6 +1478,16 @@ class IndentDryOut:
             sap_id=self.params.get("dealer_id", ""),
             product_code=reverse_mapping.get(self.params.get("product_code", ""), "")
         )
+
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id"))
@@ -1619,6 +1659,16 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -1678,6 +1728,16 @@ class IndentDryOut:
                 "is_vts": False
             }
         }
+
+        if not await self._check_ro_in_cris():
+            checking_cris_query = (f"update alerts set mark_as_false='false' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        else:
+            checking_cris_query = (f"update alerts set mark_as_false='true' "
+                     f"where id='{self.params['alert_id']}'")
+            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+
         input_data["action_msg"] = "VTS Enabled"
         input_data["action_type"] = "VTS"
         input_data["event_tags"]["is_vts"] = True
@@ -2015,8 +2075,6 @@ class IndentDryOut:
     
     async def _check_dry_out_history(self):
         dealer_code = str(self.params.get("dealer_id"))
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         alert_id = self.params.get("alert_id")
         alert_data = await Alerts.get(int(alert_id))
         if not isinstance(alert_data, dict):
@@ -2026,8 +2084,8 @@ class IndentDryOut:
                         WHERE sap_id = '{dealer_code}'
                         AND product_no = '{alert_data['product_code']}'
                         AND status != 'Close'"""
-        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        ceg_resp = await function(query=query)
+        ceg_resp = await hpcl_ceg_model.DryOutHistory.get_aggr_data(query, limit=0)
+        ceg_resp = ceg_resp.get("data")
         if not ceg_resp:
             return True
         else:
