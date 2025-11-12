@@ -68,7 +68,7 @@ class LpgRejections:
             self.params["alert_history"] = [{"action_msg": self.params["message"],  "action_type": "Created"}]
             camunda_url = await helpers.get_camunda_url(bu=self.params["alert_type"], sap_id=self.params["sap_id"],
                                                         alert_section=self.params["alert_section"])
-            await create_alert(self.params,camunda_url)
+            await create_alert(self.params, camunda_url)
 
 
     async def get_current_gd_rejections(self):
