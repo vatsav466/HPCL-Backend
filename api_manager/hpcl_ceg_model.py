@@ -1914,6 +1914,14 @@ class Alerts_Get_Vts_Blocked_TrucksParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Alerts_Get_Vts_Unblocked_TrucksParams(pydantic.BaseModel):
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class CEMSLocationMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'cems_location_master'
     
