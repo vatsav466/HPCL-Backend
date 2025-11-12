@@ -189,6 +189,11 @@ def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.Data
 
     print(data)
     print(data.columns)
+    
+    for col in data.columns:
+        if data[col].dtype in [pl.Float64, pl.Float32]:
+            data = data.with_columns(pl.col(col).round(0).cast(pl.Int64).alias(col))
+
     insertToDB(data, f"vts_{table_name.lower()}", indexing_col=["sap_id"])
     print(f"-- vts_{table_name.lower()} synced successfully --")
 

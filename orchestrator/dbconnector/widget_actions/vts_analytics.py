@@ -13,11 +13,13 @@ from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.dbconnector.widget_actions.vts_query as vts_query
 import orchestrator.dbconnector.credential_loader as credential_loader
 import io
+import os
+import polars as pl
 from fastapi.responses import StreamingResponse
 from fastapi import Request
 from fastapi.responses import JSONResponse, FileResponse
-
-
+from openpyxl import load_workbook, Workbook  
+from openpyxl.utils import get_column_letter
 
 
 async def generate_cross_filter(cross_filters):
@@ -156,7 +158,8 @@ class VTSAnalyticsActions:
     def create_date_condition(query,val):
         """Create date range condition"""
         start = val.split(",")[0]
-        end = (datetime.strptime(val.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
+        end_date = val.split(",")[-1]
+        end = f"{end_date} 23:59:59"
        
         if "vts_alert_history" in query.lower():
             return f"vts_end_datetime BETWEEN '{start}' AND '{end}'"
@@ -172,7 +175,7 @@ class VTSAnalyticsActions:
             return f"event_end_datetime BETWEEN '{start}' AND '{end}'"
         
         if "sales_trips_till_date" in query.lower():
-            return f"created_on::DATE BETWEEN '{start}' AND '{end}'"
+            return f"invoice_date::DATE BETWEEN '{start}' AND '{end}'"
         
         if "completed_trips_risk_score" in query.lower():
             return f"scheduled_trip_start_datetime BETWEEN '{start}' AND '{end}'"
@@ -491,7 +494,7 @@ class VTSAnalyticsActions:
                     WHERE 
                         division = '11'
                         AND load_status = '6'
-                        AND (qty_shortage > '0' OR qty_shortage <> '')
+                        AND (qty_shortage > '0')
                         AND sales_org = '7000'
                         AND {where_clause}
                 """
@@ -667,7 +670,7 @@ class VTSAnalyticsActions:
                     WHERE 
                         division = '11'
                         AND load_status = '6'
-                        AND (qty_shortage > '0' OR qty_shortage <> '')
+                        AND (qty_shortage > '0')
                         AND sales_org = '7000'
                 """
 
@@ -1064,7 +1067,7 @@ class VTSAnalyticsActions:
             WHERE
                 division = '11'
                 AND load_status = '6'
-                AND (qty_shortage > '0' OR qty_shortage <> '')
+                AND (qty_shortage > '0')
                 AND sales_org = '7000'
             GROUP BY vehicle_id, invoice_no, sap_id
             """
@@ -1373,6 +1376,71 @@ class VTSAnalyticsActions:
     @staticmethod
     async def safety_compliance(filters, cross_filters, drill_state, payload):                       
         try:
+            if payload.get("download"):
+                print(" Download requested — generating Excel with multiple sheets (Polars only)")
+
+                # Step 1: Parse table names
+                table_names = [tbl.strip() for tbl in drill_state.split(",") if tbl.strip()]
+                if not table_names:
+                    return JSONResponse({"error": "Missing drill_state (table names)"}, status_code=400)
+
+                # Step 3: Setup file paths
+                # download_dir = "/Users/algofusion/downloads"
+                download_dir = "/opt/downloads"
+                os.makedirs(download_dir, exist_ok=True)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"{payload.get('action', 'safety_compliance')}_{timestamp}.xlsx"
+                file_path = os.path.join(download_dir, filename)
+
+                # Step 4: Create main workbook
+                wb = Workbook()
+                wb.remove(wb.active)
+
+                # Step 5: Loop tables
+                for table_name in table_names:
+                    query = vts_query.vts_query.get('safety_compliance')
+                    query = query.format(drill_state=table_name)
+
+                    conditions = VTSAnalyticsActions.build_filter_conditions(filters,cross_filters,query)
+                    final_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+
+                    print(f" Running query for table '{table_name}': {final_query}")
+
+                    df = await VTSAnalyticsActions.execute_query(final_query)
+                    df = df.drop_duplicates(keep='first')
+                    if df is None or len(df) == 0:
+                        print(f"No data found for {table_name}, skipping...")
+                        continue
+
+                    if not isinstance(df, pl.DataFrame):
+                        df = pl.DataFrame(df)
+
+                    # Write temp file
+                    temp_file = os.path.join(download_dir, f"{table_name}.xlsx")
+                    df.write_excel(temp_file)
+
+                    # Copy contents to main workbook
+                    temp_wb = load_workbook(temp_file)
+                    temp_sheet = temp_wb.active
+                    new_sheet = wb.create_sheet(title=table_name[:31])
+
+                    for i, row in enumerate(temp_sheet.iter_rows(values_only=True), start=1):
+                        for j, cell_value in enumerate(row, start=1):
+                            new_sheet.cell(row=i, column=j, value=cell_value)
+
+                    temp_wb.close()
+                    os.remove(temp_file)
+
+                # Step 6: Save final Excel
+                wb.save(file_path)
+                print(f"Final Excel file created: {file_path}")
+
+                # Step 7: Return file response
+                return FileResponse(
+                    path=file_path,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    filename=os.path.basename(file_path)
+                )
             # Step 1: Get base query
             query = vts_query.vts_query.get('safety_compliance')
             drill_state_col = drill_state.split(",")[0]
@@ -1422,6 +1490,7 @@ class VTSAnalyticsActions:
                 group_col = "zone"
 
             # Step 7: Group by and summarize
+            df[group_col] = df[group_col].fillna("Unknown")
             summary_df = df.groupby(group_col).agg(
                 invoice_count=("invoice_no", "nunique"),
                 vehicle_count=("tt_number", "nunique"),
@@ -1952,14 +2021,14 @@ class VTSAnalyticsActions:
         if date_selection:
             if "," in date_selection:
                 start_date = date_selection.split(",")[0]
-                end_date = (datetime.strptime(date_selection.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-                date_condition_str = f"AND T.created_on::date BETWEEN '{start_date}' AND '{end_date}'"
+                end_date = f"{date_selection.split(',')[1]} 23:59:59"
+                date_condition_str = f"AND T.invoice_date::date BETWEEN '{start_date}' AND '{end_date}'"
             else:
                 date_selection = date_selection.lower()
                 if date_selection == "today":
-                    date_condition_str = f"AND T.created_on::date = '{today}'"
+                    date_condition_str = f"AND T.invoice_date::date = '{today}'"
                 elif date_selection == "yesterday":
-                    date_condition_str = f"AND T.created_on::date = '{today - timedelta(days=1)}'"
+                    date_condition_str = f"AND T.invoice_date::date = '{today - timedelta(days=1)}'"
 
        
         
@@ -1969,7 +2038,7 @@ class VTSAnalyticsActions:
                 sales_trips_till_date T
             WHERE division = '11'
                 AND load_status = '6'
-                AND (qty_shortage > '0' OR qty_shortage <> '')
+                AND (qty_shortage > '0')
                 AND sales_org = '7000'
                 {sql_trips_conditions}
                 {date_condition_str};
@@ -2210,10 +2279,10 @@ class VTSAnalyticsActions:
             clause = "WHERE" if "where" not in closed_query.lower() else "AND"
             if daterange:
                 closed_query += f" {clause} created_at BETWEEN {daterange}"
-                shortage += f" {clause} load_date BETWEEN {daterange}"
+                shortage += f" {clause} invoice_date::DATE BETWEEN {daterange}"
             else:
                 closed_query += f" {clause} CAST(created_at AS DATE) = '{current_date}'"
-                shortage += f" {clause} CAST(load_date AS DATE) = '{current_date}'"
+                shortage += f" {clause} CAST(invoice_date::DATE AS DATE) = '{current_date}'"
 
             shortage += " GROUP BY vehicle_id"
 
@@ -2224,12 +2293,10 @@ class VTSAnalyticsActions:
             df = await filter_data(df, _filters)
             shortage = pd.DataFrame(shortage.get("data", []))
 
-            shortage.rename(columns={"vehicle_number": "tt_number"}, inplace=True)
-
-            df["vehicle_unblocked_date"] = pd.to_datetime(df["vehicle_unblocked_date"]).dt.tz_localize(None)
+            df["vehicle_blocked_end_date"] = pd.to_datetime(df["vehicle_blocked_end_date"]).dt.tz_localize(None)
             df["vehicle_blocked_start_date"] = pd.to_datetime(df["vehicle_blocked_start_date"]).dt.tz_localize(None)
 
-            df["ageing"] = (df["vehicle_unblocked_date"] - df["vehicle_blocked_start_date"]).dt.days + 1
+            df["ageing"] = (df["vehicle_blocked_end_date"] - df["vehicle_blocked_start_date"]).dt.days + 1
                         
             violation_counts = (
                 df.pivot_table(
@@ -2250,7 +2317,7 @@ class VTSAnalyticsActions:
             )
             df.columns.name = None
             df["ageing"] = df["ageing"].round(2)
-            df = pd.merge(df, shortage, on=["tt_number"], how="left")
+            df = pd.merge(df, shortage, on="tt_number", how="left")
             df = df.fillna(0)
 
             for col in [
