@@ -18,8 +18,6 @@ from fastapi import Request
 from fastapi.responses import JSONResponse, FileResponse
 
 
-
-
 async def generate_cross_filter(cross_filters):
     _filters, daterange = [], None
     try:
@@ -156,7 +154,8 @@ class VTSAnalyticsActions:
     def create_date_condition(query,val):
         """Create date range condition"""
         start = val.split(",")[0]
-        end = (datetime.strptime(val.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
+        end_date = val.split(",")[-1]
+        end = f"{end_date} 23:59:59"
        
         if "vts_alert_history" in query.lower():
             return f"vts_end_datetime BETWEEN '{start}' AND '{end}'"
@@ -172,7 +171,7 @@ class VTSAnalyticsActions:
             return f"event_end_datetime BETWEEN '{start}' AND '{end}'"
         
         if "sales_trips_till_date" in query.lower():
-            return f"created_on::DATE BETWEEN '{start}' AND '{end}'"
+            return f"invoice_date::DATE BETWEEN '{start}' AND '{end}'"
         
         if "completed_trips_risk_score" in query.lower():
             return f"scheduled_trip_start_datetime BETWEEN '{start}' AND '{end}'"
@@ -491,7 +490,7 @@ class VTSAnalyticsActions:
                     WHERE 
                         division = '11'
                         AND load_status = '6'
-                        AND (qty_shortage > '0' OR qty_shortage <> '')
+                        AND (qty_shortage > '0')
                         AND sales_org = '7000'
                         AND {where_clause}
                 """
@@ -667,7 +666,7 @@ class VTSAnalyticsActions:
                     WHERE 
                         division = '11'
                         AND load_status = '6'
-                        AND (qty_shortage > '0' OR qty_shortage <> '')
+                        AND (qty_shortage > '0')
                         AND sales_org = '7000'
                 """
 
@@ -1064,7 +1063,7 @@ class VTSAnalyticsActions:
             WHERE
                 division = '11'
                 AND load_status = '6'
-                AND (qty_shortage > '0' OR qty_shortage <> '')
+                AND (qty_shortage > '0')
                 AND sales_org = '7000'
             GROUP BY vehicle_id, invoice_no, sap_id
             """
@@ -1952,14 +1951,14 @@ class VTSAnalyticsActions:
         if date_selection:
             if "," in date_selection:
                 start_date = date_selection.split(",")[0]
-                end_date = (datetime.strptime(date_selection.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
-                date_condition_str = f"AND T.created_on::date BETWEEN '{start_date}' AND '{end_date}'"
+                end_date = f"{date_selection.split(',')[1]} 23:59:59"
+                date_condition_str = f"AND T.invoice_date::date BETWEEN '{start_date}' AND '{end_date}'"
             else:
                 date_selection = date_selection.lower()
                 if date_selection == "today":
-                    date_condition_str = f"AND T.created_on::date = '{today}'"
+                    date_condition_str = f"AND T.invoice_date::date = '{today}'"
                 elif date_selection == "yesterday":
-                    date_condition_str = f"AND T.created_on::date = '{today - timedelta(days=1)}'"
+                    date_condition_str = f"AND T.invoice_date::date = '{today - timedelta(days=1)}'"
 
        
         
@@ -1969,7 +1968,7 @@ class VTSAnalyticsActions:
                 sales_trips_till_date T
             WHERE division = '11'
                 AND load_status = '6'
-                AND (qty_shortage > '0' OR qty_shortage <> '')
+                AND (qty_shortage > '0')
                 AND sales_org = '7000'
                 {sql_trips_conditions}
                 {date_condition_str};
@@ -2210,10 +2209,10 @@ class VTSAnalyticsActions:
             clause = "WHERE" if "where" not in closed_query.lower() else "AND"
             if daterange:
                 closed_query += f" {clause} created_at BETWEEN {daterange}"
-                shortage += f" {clause} load_date BETWEEN {daterange}"
+                shortage += f" {clause} invoice_date::DATE BETWEEN {daterange}"
             else:
                 closed_query += f" {clause} CAST(created_at AS DATE) = '{current_date}'"
-                shortage += f" {clause} CAST(load_date AS DATE) = '{current_date}'"
+                shortage += f" {clause} CAST(invoice_date::DATE AS DATE) = '{current_date}'"
 
             shortage += " GROUP BY vehicle_id"
 
@@ -2223,8 +2222,6 @@ class VTSAnalyticsActions:
             df = pd.DataFrame(resp.get("data", []))
             df = await filter_data(df, _filters)
             shortage = pd.DataFrame(shortage.get("data", []))
-
-            shortage.rename(columns={"vehicle_number": "tt_number"}, inplace=True)
 
             df["vehicle_unblocked_date"] = pd.to_datetime(df["vehicle_unblocked_date"]).dt.tz_localize(None)
             df["vehicle_blocked_start_date"] = pd.to_datetime(df["vehicle_blocked_start_date"]).dt.tz_localize(None)
@@ -2250,7 +2247,7 @@ class VTSAnalyticsActions:
             )
             df.columns.name = None
             df["ageing"] = df["ageing"].round(2)
-            df = pd.merge(df, shortage, on=["tt_number"], how="left")
+            df = pd.merge(df, shortage, on="tt_number", how="left")
             df = df.fillna(0)
 
             for col in [
