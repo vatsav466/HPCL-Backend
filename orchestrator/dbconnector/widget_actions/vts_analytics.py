@@ -2210,10 +2210,10 @@ class VTSAnalyticsActions:
             clause = "WHERE" if "where" not in closed_query.lower() else "AND"
             if daterange:
                 closed_query += f" {clause} created_at BETWEEN {daterange}"
-                shortage += f" {clause} load_date BETWEEN {daterange}"
+                shortage += f" {clause} created_on::DATE BETWEEN {daterange}"
             else:
                 closed_query += f" {clause} CAST(created_at AS DATE) = '{current_date}'"
-                shortage += f" {clause} CAST(load_date AS DATE) = '{current_date}'"
+                shortage += f" {clause} CAST(created_on::DATE AS DATE) = '{current_date}'"
 
             shortage += " GROUP BY vehicle_id"
 
@@ -2224,12 +2224,10 @@ class VTSAnalyticsActions:
             df = await filter_data(df, _filters)
             shortage = pd.DataFrame(shortage.get("data", []))
 
-            shortage.rename(columns={"vehicle_number": "tt_number"}, inplace=True)
-
-            df["vehicle_unblocked_date"] = pd.to_datetime(df["vehicle_unblocked_date"]).dt.tz_localize(None)
+            df["vehicle_blocked_end_date"] = pd.to_datetime(df["vehicle_blocked_end_date"]).dt.tz_localize(None)
             df["vehicle_blocked_start_date"] = pd.to_datetime(df["vehicle_blocked_start_date"]).dt.tz_localize(None)
 
-            df["ageing"] = (df["vehicle_unblocked_date"] - df["vehicle_blocked_start_date"]).dt.days + 1
+            df["ageing"] = (df["vehicle_blocked_end_date"] - df["vehicle_blocked_start_date"]).dt.days + 1
                         
             violation_counts = (
                 df.pivot_table(
@@ -2250,7 +2248,7 @@ class VTSAnalyticsActions:
             )
             df.columns.name = None
             df["ageing"] = df["ageing"].round(2)
-            df = pd.merge(df, shortage, on=["tt_number"], how="left")
+            df = pd.merge(df, shortage, on="tt_number", how="left")
             df = df.fillna(0)
 
             for col in [
