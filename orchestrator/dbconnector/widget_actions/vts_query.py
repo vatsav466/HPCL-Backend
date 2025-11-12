@@ -473,7 +473,7 @@ vts_query = {
     
     "unblocked_tt_shortage": """
                             SELECT 
-                                SUM(CAST(qty_shortage AS FLOAT)) AS shortage, vehicle_id as tt_number
+                                SUM(CAST(qty_shortage AS FLOAT)) AS shortage, vehicle_id as vehicle_number
                             FROM 
                                 sales_trips_till_date
                             WHERE 
