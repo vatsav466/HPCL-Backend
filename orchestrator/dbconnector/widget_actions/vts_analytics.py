@@ -98,7 +98,7 @@ class VTSAnalyticsActions:
         # if query and "vts_alert_history" in query.lower() and key.lower() == "sap_id":
         #     return "location_id" 
         if query and 'sales_trips_till_date' in query.lower() and key.lower() == 'bu':
-            return 'sbu_nm'
+            return None
         return key
     
     @staticmethod
@@ -110,6 +110,8 @@ class VTSAnalyticsActions:
         if filters:
             for rec in filters:
                 key = VTSAnalyticsActions.transform_key(rec.key, query)
+                if key is None:
+                    continue
                 val = rec.value
                 
                 condition = VTSAnalyticsActions.create_condition(key, val)
@@ -659,7 +661,7 @@ class VTSAnalyticsActions:
                             ELSE qty_shortage 
                         END AS qty_shortage,
                         material_group_nm,
-                        zone,
+                        zone_nm AS zone,
                         load_date AS created_at
                     FROM sales_trips_till_date
                     WHERE 
@@ -854,12 +856,13 @@ class VTSAnalyticsActions:
             group_by_col = payload.get("group_by") if payload else None
             if group_by_col and group_by_col in final_df.columns:
                 violation_cols = [v for v in all_violations if v in final_df.columns]
-                violation_cols.append('qty_shortage')
+                # violation_cols.append('qty_shortage')
             
                 agg_df = final_df.groupby(group_by_col)[violation_cols].sum().reset_index()
                 agg_df['total_count'] = agg_df[violation_cols].sum(axis=1)
                 
                 return {"status": True, "message": "success", "data": agg_df.to_dict(orient='records')}
+
 
             qlick_view = payload.get("qlick_view") if payload else None
             click_value = payload.get("click_value") if payload else None
@@ -1279,7 +1282,7 @@ class VTSAnalyticsActions:
                 WHERE invoice_no IN ('{invoices_str}')
             """
             alert_df = await VTSAnalyticsActions.execute_query(completed_trips_query)
-            alert_invoice_list = alert_df["invoice_number"].astype(str).tolist() if not alert_df.empty else []
+            alert_invoice_list = alert_df["invoice_no"].astype(str).tolist() if not alert_df.empty else []
 
             # Step 6: Filter based on live / closed status
             status_filter = payload.get("status")
@@ -1948,7 +1951,8 @@ class VTSAnalyticsActions:
 
         if date_selection:
             if "," in date_selection:
-                start_date, end_date = date_selection.split(",")
+                start_date = date_selection.split(",")[0]
+                end_date = (datetime.strptime(date_selection.split(",")[-1], "%Y-%m-%d") + relativedelta(days=1)).strftime("%Y-%m-%d")
                 date_condition_str = f"AND T.created_on::date BETWEEN '{start_date}' AND '{end_date}'"
             else:
                 date_selection = date_selection.lower()
