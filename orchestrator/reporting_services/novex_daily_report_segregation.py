@@ -1320,7 +1320,7 @@ async def publish_daily_novex_status_email():
     await send_notification(
         template_name="seg1.html",
         to_recipients=["debeshp@hpcl.in","sanjayk@hpcl.in"],
-        subject="Novex Daily Report: LPG/SOD/Retail"
+        subject="Novex Daily Report: LPG/SOD/Retail",
         cc_recipients=["gargam@hpcl.in","vikas.kaushal@hpcl.in","amitra@hpcl.in","arvindsingh@hpcl.in"],
         bcc_recipients=["cvmallinath@hpcl.in"],
         notification_data=status_data,
@@ -1332,7 +1332,7 @@ async def publish_daily_novex_status_email():
     await send_notification(
         template_name="seg2.html",
         to_recipients=["abalaji@hpcl.in"],
-        subject="Novex Daily Report: Retail"
+        subject="Novex Daily Report: Retail",
         cc_recipients=["anujjain@hpcl.in","shubhra.Narayan@hpcl.in"],
         bcc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
         notification_data=status_data,
@@ -1344,7 +1344,7 @@ async def publish_daily_novex_status_email():
     await send_notification(
         template_name="seg3.html",
         to_recipients=["adsul@hpcl.in","gbala@hpcl.in"],
-        subject="Novex Daily Report: LPG"
+        subject="Novex Daily Report: LPG",
         cc_recipients=["kapild@hpcl.in","sanjayk@hpcl.in","gargam@hpcl.in"],
         bcc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
         notification_data=status_data
