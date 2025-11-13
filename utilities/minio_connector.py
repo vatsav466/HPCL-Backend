@@ -113,20 +113,12 @@ def download_from_minio(object_path):
 
     # --- Download file ---
     try:
-        # Retrieve object as a stream
-        response = minio_client.get_object(urdhva_base.settings.minio_bucket, object_path)
 
         # Define output path in temporary directory
         output_file = os.path.join("/tmp", os.path.basename(object_path))
 
-        # Stream file in chunks (efficient for large files)
-        with open(output_file, "wb") as f:
-            for chunk in response.stream(32 * 1024):
-                f.write(chunk)
-
-        # Properly close the connection
-        response.close()
-        response.release_conn()
+        # Retrieve object to local file path
+        minio_client.fget_object(urdhva_base.settings.minio_bucket, object_path, output_file)
 
         return True, output_file
 
