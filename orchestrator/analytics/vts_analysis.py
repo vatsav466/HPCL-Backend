@@ -453,7 +453,7 @@ async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
     vts_alert_data = vts_alert_data.get("data", [])
     print("vts_alert_data: ", vts_alert_data)
     all_violations = [violation for d in vts_alert_data for violation in d["violation_type"]]
-    violations_ids = [str(d["id"]) for d in vts_alert_data]
+    #violations_ids = [str(d["id"]) for d in vts_alert_data]
     violation_counts = dict(Counter(all_violations))
     instance = {}
     violation_name = ""
@@ -463,6 +463,11 @@ async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
         if key in violation_counts.keys() and violation_counts[key] > violation_data['violation_count']:
             if key in ['device_tamper_count', 'main_supply_removal_count'] and bu in ['TAS']:
                 await is_vehicle_blacklisted_in_alerts(tt_number,sap_id,bu)
+            violations_ids = [
+                str(d["id"])
+                for d in vts_alert_data
+                if key in d["violation_type"]
+            ]
             instance = vts_map[key]['alerting_rules'][current_instance]
             instance['severity'] = vts_map[key]["severity"]
             violation_name = key
@@ -497,7 +502,7 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
     vts_alert_data = vts_alert_data.get("data", [])
     print("vts_alert_data: ", vts_alert_data)
     all_violations = [violation for d in vts_alert_data for violation in d["violation_type"]]
-    violations_ids = [str(d["id"]) for d in vts_alert_data]
+    #violations_ids = [str(d["id"]) for d in vts_alert_data]
     violation_counts = dict(Counter(all_violations))
     instance = {}
     violation_name = ""
@@ -507,6 +512,11 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
         if key in violation_counts.keys() and violation_counts[key] > violation_data['violation_count']:
             if key in ['device_tamper_count', 'main_supply_removal_count'] and bu in ['TAS']:
                 await is_vehicle_blacklisted_in_alerts(tt_number,sap_id,bu)
+            violations_ids = [
+                str(d["id"])
+                for d in vts_alert_data
+                if key in d["violation_type"]
+            ]
             instance = vts_map[key]['alerting_rules'][current_instance]
             instance['severity'] = vts_map[key]["severity"]
             violation_name = key
