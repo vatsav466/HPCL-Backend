@@ -15,6 +15,7 @@ import orchestrator.dbconnector.credential_loader as credential_loader
 import io
 import os
 import polars as pl
+import json
 from fastapi.responses import StreamingResponse
 from fastapi import Request
 from fastapi.responses import JSONResponse, FileResponse
@@ -1383,69 +1384,61 @@ class VTSAnalyticsActions:
     async def safety_compliance(filters, cross_filters, drill_state, payload):                       
         try:
             if payload.get("download"):
-                print(" Download requested — generating Excel with multiple sheets (Polars only)")
+                print("Download requested — generating Excel with multiple sheets (Polars only)")
 
                 # Step 1: Parse table names
                 table_names = [tbl.strip() for tbl in drill_state.split(",") if tbl.strip()]
                 if not table_names:
                     return JSONResponse({"error": "Missing drill_state (table names)"}, status_code=400)
 
-                # Step 3: Setup file paths
-                # download_dir = "/Users/algofusion/downloads"
-                download_dir = "/opt/downloads"
-                os.makedirs(download_dir, exist_ok=True)
+                # Create an in-memory Excel file
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+
+                    # Step 2: Loop tables and add sheets dynamically
+                    for table_name in table_names:
+
+                        query = vts_query.vts_query.get("safety_compliance")
+                        query = query.format(drill_state=table_name)
+
+                        conditions = VTSAnalyticsActions.build_filter_conditions(
+                            filters, cross_filters, query
+                        )
+                        final_query = VTSAnalyticsActions.apply_conditions_to_query(
+                            query, conditions
+                        )
+
+                        print(f" Running query for table '{table_name}': {final_query}")
+
+                        df = await VTSAnalyticsActions.execute_query(final_query)
+                        df = df.drop_duplicates(keep="first")
+
+                        if df is None or len(df) == 0:
+                            print(f"No data found for {table_name}, skipping...")
+                            continue
+
+                        # if not isinstance(df, pl.DataFrame):
+                        #     df = pl.DataFrame(df)
+
+                        # # Convert Polars → Pandas for Excel writer
+                        # pdf = df.to_pandas()
+
+                        # Write to Excel sheet (sheet name from table_name)
+                        sheet_name = table_name[:31]  # Excel max 31 chars
+                        df.to_excel(writer, index=False, sheet_name=sheet_name)
+
+                # Finalize BytesIO
+                output.seek(0)
+
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"{payload.get('action', 'safety_compliance')}_{timestamp}.xlsx"
-                file_path = os.path.join(download_dir, filename)
+                file_name = f"safety_complaince_{timestamp}.xlsx"
 
-                # Step 4: Create main workbook
-                wb = Workbook()
-                wb.remove(wb.active)
+                headers = {"Content-Disposition": f'attachment; filename="{file_name}"'}
 
-                # Step 5: Loop tables
-                for table_name in table_names:
-                    query = vts_query.vts_query.get('safety_compliance')
-                    query = query.format(drill_state=table_name)
-
-                    conditions = VTSAnalyticsActions.build_filter_conditions(filters,cross_filters,query)
-                    final_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
-
-                    print(f" Running query for table '{table_name}': {final_query}")
-
-                    df = await VTSAnalyticsActions.execute_query(final_query)
-                    df = df.drop_duplicates(keep='first')
-                    if df is None or len(df) == 0:
-                        print(f"No data found for {table_name}, skipping...")
-                        continue
-
-                    if not isinstance(df, pl.DataFrame):
-                        df = pl.DataFrame(df)
-
-                    # Write temp file
-                    temp_file = os.path.join(download_dir, f"{table_name}.xlsx")
-                    df.write_excel(temp_file)
-
-                    # Copy contents to main workbook
-                    temp_wb = load_workbook(temp_file)
-                    temp_sheet = temp_wb.active
-                    new_sheet = wb.create_sheet(title=table_name[:31])
-
-                    for i, row in enumerate(temp_sheet.iter_rows(values_only=True), start=1):
-                        for j, cell_value in enumerate(row, start=1):
-                            new_sheet.cell(row=i, column=j, value=cell_value)
-
-                    temp_wb.close()
-                    os.remove(temp_file)
-
-                # Step 6: Save final Excel
-                wb.save(file_path)
-                print(f"Final Excel file created: {file_path}")
-
-                # Step 7: Return file response
-                return FileResponse(
-                    path=file_path,
+                return StreamingResponse(
+                    output,
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    filename=os.path.basename(file_path)
+                    headers=headers
                 )
             # Step 1: Get base query
             query = vts_query.vts_query.get('safety_compliance')
@@ -2162,11 +2155,11 @@ class VTSAnalyticsActions:
                     for _, row in group.iterrows():
                         mats = str(row["material_group_nm"]).split(",")
                         for m in mats:
-                            m = m.strip()
+                            m = str(row["material_group_nm"]).strip()
                             if m:
                                 all_rows.append({
                                     "material_group_nm": m,
-                                    "shortage": float(row["qty_shortage"]) / len(mats)
+                                    "shortage": float(row["qty_shortage"])
                                 })
 
                     # Merge shortages by material group
@@ -2235,13 +2228,12 @@ class VTSAnalyticsActions:
             return {"status": "success","message": "Table Data fetched successfully", "data": await safe_json(table_df)}
         
         if 'vehicle_id' in filtered_trips_df.columns and 'invoice_no' in filtered_trips_df.columns:
-            # Step 1: Group by vehicle_id and invoice_no and aggregate shortage and item details
+            # Keep material_group_nm as separate rows to preserve shortages correctly
             combined_df = (
                 filtered_trips_df
-                .groupby(['vehicle_id', 'invoice_no'], as_index=False)
+                .groupby(['vehicle_id', 'invoice_no', 'material_group_nm'], as_index=False)
                 .agg({
-                    'qty_shortage': 'sum',  # sum shortages for same vehicle+invoice
-                    'material_group_nm': lambda x: ', '.join(x.astype(str).unique()),
+                    'qty_shortage': 'sum',  
                     'plant_nm': 'first',
                     'zone_nm': 'first',
                     'transporter_name': 'first',
