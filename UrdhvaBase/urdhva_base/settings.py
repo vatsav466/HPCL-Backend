@@ -220,6 +220,13 @@ class Settings(pydantic_settings.BaseSettings):
     novex_user: str = ''
     novex_password: str = ''
 
+    # Minio Settings
+    minio_endpoint: str = ""
+    minio_access_key: str = ""
+    minio_secret_key: str = ""
+    minio_bucket: str = ""
+    minio_secure: bool = False
+
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \
                 self.db_multi_tenancy_model == MultiTenancyMode.SingleServerMultiDb:
