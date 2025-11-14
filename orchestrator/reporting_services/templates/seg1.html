@@ -87,22 +87,7 @@
         </tr>
     </tbody></table>
     <h3>Catch up on Dryout Report</h3>
-    <h4>2. Retail Outlet Partial Dryout (MS/HSD):</h4>
-    <table>
-        <tbody><tr>
-            <th>Date</th>
-            <th>Dryout</th>
-            <th>Indent not raised</th>
-            <th>Indent raised</th>
-        </tr>
-        <tr>
-            <td style="color: darkgreen;">{{today}} {{report_generated_time}}</td>
-            <td>{{dry_out['dry_out']}}</td>
-            <td>{{dry_out['indent_not_raised']}}</td>
-            <td>{{dry_out['indent_raised']}}</td>
-        </tr>
-    </tbody></table>
-    <h5>2.1. Retail Sales Performance (MS/HSD)</h5>
+    <h5>2. Retail Sales Performance (MS/HSD)</h5>
     <table>
         <thead>
             <tr>
@@ -139,6 +124,21 @@
             {% endfor %}
         </tbody>
     </table>
+    <h4>2.1. Retail Outlet Partial Dryout (MS/HSD):</h4>
+    <table>
+        <tbody><tr>
+            <th>Date</th>
+            <th>Dryout</th>
+            <th>Indent not raised</th>
+            <th>Indent raised</th>
+        </tr>
+        <tr>
+            <td style="color: darkgreen;">{{today}} {{report_generated_time}}</td>
+            <td>{{dry_out['dry_out']}}</td>
+            <td>{{dry_out['indent_not_raised']}}</td>
+            <td>{{dry_out['indent_raised']}}</td>
+        </tr>
+    </tbody></table>
     <h5>2.2. Indent Not Raised - Breakup By Sales (MS/HSD):</h5>
     <table>
         <tbody><tr>

@@ -345,14 +345,7 @@ async def generate_sales_queries(product_name):
         start=month_total_historical_start,
         end=month_total_historical_end
         ),
-        "year_historical": query_template.format(condition=base_condition.format(product=product_name), start=year_historical_start, end=year_historical_end),
-        "projected_sales": f"""
-            SELECT ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,2)
-            FROM "M60_LEVEL_METADATA"
-            WHERE "SBU_Name" != '0'
-            AND "SBU_Name" IN ('Retail')
-            AND "ProductName" = '{product_name}'
-            AND "year_monthname"::DATE BETWEEN '{month_start_date}' AND '{yesterday.strftime("%Y-%m-%d")}';"""
+        "year_historical": query_template.format(condition=base_condition.format(product=product_name), start=year_historical_start, end=year_historical_end)
     }
     print("queries",queries)
     return queries
@@ -396,6 +389,10 @@ async def generate_report(product_name):
     report["day_growth"] = await calculate_growth(report.get("day_current", 0), report.get("day_historical", 0))
     report["month_growth"] = await calculate_growth(report.get("month_current", 0), report.get("month_historical", 0))
     report["year_growth"] = await calculate_growth(report.get("year_current", 0), report.get("year_historical", 0))
+    month_growth = report["month_growth"]
+    month_total_historical = report["month_total_historical"]
+    projected_sales = month_total_historical + (month_total_historical * month_growth) / 100
+    report["projected_sales"] = round(projected_sales, 2)
     report["month_target_growth"] = await calculate_growth(report.get("projected_sales", 0), report.get("month_total_historical", 0))
 
     # Structure the data for the final DataFrame row
@@ -553,6 +550,7 @@ async def supply_terminal_wise_counts():
                     AND mark_as_false = 'true'
                     AND alert_status != 'Close'
                     AND dry_out_in_days = '1'
+                    AND terminal_plant_name NOT ILIKE '%retail%'
                     AND product_code IN ('2811000', '2812000');"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -913,7 +911,7 @@ async def fetch_dryout_data():
 
     bottom_3_per_zone = (
         supply_terminal_query_ro_count_df.groupby("Zone", group_keys=False)
-        .apply(lambda x: x.nsmallest(3, "Count of Dryout ROs"))
+        .apply(lambda x: x.nlargest(3, "Count of Dryout ROs"))
         .reset_index(drop=True)
     )
     # Step 2: Sort the 36 records in descending order based on Count of Dryout ROs
@@ -1403,12 +1401,12 @@ async def publish_daily_novex_status_email():
 
 async def send_notification(notification_data):
     template_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..', 'orchestrator', 'reporting_services',
-                                 'templates', 'seg5.html')
+                                 'templates', 'seg1.html')
     with open(template_path, 'r') as f:
         template_data = jinja2.Template(f.read())
     final_data = template_data.render(**notification_data)
 
-    with open(f'/tmp/seg5.html', 'w') as f:
+    with open(f'/tmp/seg1.html', 'w') as f:
         f.write(final_data)
     
     inline_images={
