@@ -1,6 +1,7 @@
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
+import mimetypes
 from pathlib import Path
 import utilities.minio_connector as minio_connector
 from fastapi import APIRouter, HTTPException
@@ -16,9 +17,15 @@ async def noticesvts_download_notice(data: Noticesvts_Download_NoticeParams):
     file_path = data.file_path
     status, actual_file_path = minio_connector.download_from_minio(file_path)
     file_name = os.path.basename(actual_file_path)
+
+    # Detect mime type automatically
+    mime_type, _ = mimetypes.guess_type(actual_file_path)
+    if mime_type is None:
+        mime_type = "application/octet-stream"
+
     if not os.path.exists(actual_file_path):
         raise HTTPException(status_code=404, detail="PDF not found for given alert_id")
-    return FileResponse(path=actual_file_path, filename=f"{file_name}", media_type="application/pdf")
+    return FileResponse(path=actual_file_path, filename=f"{file_name}", media_type=mime_type)
 
 # Action upload_notice
 @router.post('/upload_notice', tags=['NoticesVTS'])
