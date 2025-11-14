@@ -38,7 +38,7 @@ async def noticesvts_upload_notice(alert_id: str, upload_file: fastapi.UploadFil
         
         # Validate the uploaded file type
         file_extension = Path(upload_file.filename).suffix.lower()
-        allowed_extensions = [".pdf"]
+        allowed_extensions = [".png", ".jpg", ".jpeg", ".gif", ".csv", ".xlsx", ".xls", ".pdf", ".doc", ".docx"]
         if file_extension not in allowed_extensions:
             return fastapi.responses.JSONResponse(
                 status_code=400, content={"message": "Unsupported file type"}
