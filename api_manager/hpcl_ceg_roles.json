@@ -7085,6 +7085,81 @@
                     "name": "get_erp_status"
                 }
             ]
+        },
+        {
+            "name": "noticesvts",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "NoticesVTS",
+            "attributes": {},
+            "uris": [
+                "/api/noticesvts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "download_notice"
+                },
+                {
+                    "name": "upload_notice"
+                }
+            ]
+        },
+        {
+            "name": "noticesvts_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "NoticesVTS_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/noticesvts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "noticesvts_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "NoticesVTS_admin",
+            "attributes": {},
+            "uris": [
+                "/api/noticesvts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "download_notice"
+                },
+                {
+                    "name": "upload_notice"
+                }
+            ]
         }
     ],
     "policies": [
@@ -7762,6 +7837,14 @@
         {
             "name": "get_erp_status",
             "displayName": "get_erp_status"
+        },
+        {
+            "name": "download_notice",
+            "displayName": "download_notice"
+        },
+        {
+            "name": "upload_notice",
+            "displayName": "upload_notice"
         }
     ]
 }
