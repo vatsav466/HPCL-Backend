@@ -3575,4 +3575,8 @@ Model NoticesVTS {
 
     Action=> upload_notice {
     }
+    
+    Config=> {
+        crud_operations='read'
+    }
 }

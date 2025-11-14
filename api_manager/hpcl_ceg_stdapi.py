@@ -2067,16 +2067,6 @@ async def delete(id: str):
     return await LpgDataPostingAudit.delete(id)
 
 
-@router.post('/noticesvts', response_model=NoticesVTS, tags=['NoticesVTS'])
-async def create(inputObj: NoticesVTSCreate):
-    return await inputObj.create()
-
-
-@router.put('/noticesvts', response_model=NoticesVTS, tags=['NoticesVTS'])
-async def update(inputObj: NoticesVTS):
-    return await inputObj.modify()
-
-
 @router.get('/noticesvts/{id}', response_model=NoticesVTS, tags=['NoticesVTS'])
 async def get(id: str):
     return await NoticesVTS.get(id, skip_secrets=True)
@@ -2086,7 +2076,3 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await NoticesVTS.get_all(params, skip_secrets=True)
 
-
-@router.delete('/noticesvts/{id}', tags=['NoticesVTS'])
-async def delete(id: str):
-    return await NoticesVTS.delete(id)
