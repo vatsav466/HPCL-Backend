@@ -454,6 +454,7 @@ async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
     print("vts_alert_data: ", vts_alert_data)
     all_violations = [violation for d in vts_alert_data for violation in d["violation_type"]]
     #violations_ids = [str(d["id"]) for d in vts_alert_data]
+    violations_ids = []
     violation_counts = dict(Counter(all_violations))
     instance = {}
     violation_name = ""
@@ -503,6 +504,7 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
     print("vts_alert_data: ", vts_alert_data)
     all_violations = [violation for d in vts_alert_data for violation in d["violation_type"]]
     #violations_ids = [str(d["id"]) for d in vts_alert_data]
+    violations_ids = []
     violation_counts = dict(Counter(all_violations))
     instance = {}
     violation_name = ""
