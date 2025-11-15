@@ -651,7 +651,6 @@ class VTSAnalyticsActions:
                     return {"status": True, "message": "No non-zero violations found", "data": []}
 
                 return {"status": True, "message": "success", "data": await safe_json(final_df)}
-
             
             if has_qty_shortage_filter and not vts_violation_types:
                 shortage_query = """
@@ -688,7 +687,15 @@ class VTSAnalyticsActions:
                 if df_shortage_all.empty:
                     return {"status": True, "message": "No non-zero shortage data found", "data": []}
 
-                tl_numbers_list = df_shortage_all["tl_number"].unique().tolist()
+                shortage_agg = df_shortage_all.groupby("invoice_number", as_index=False).agg({
+                    "qty_shortage": "sum",
+                    "zone": "first",
+                    "location_name": "first",
+                    "tl_number": "first",
+                    "material_group_nm": "first"
+                })
+
+                tl_numbers_list = shortage_agg["tl_number"].unique().tolist()
                 tl_numbers_str = "', '".join(map(str, tl_numbers_list))
 
                 violation_columns = [
@@ -700,8 +707,7 @@ class VTSAnalyticsActions:
                 history_query = f"""
                     SELECT DISTINCT
                         tl_number,
-                        zone,
-                        location_name,
+                        invoice_number,
                         {select_clause}
                     FROM vts_alert_history
                     WHERE tl_number IN ('{tl_numbers_str}')
@@ -712,7 +718,13 @@ class VTSAnalyticsActions:
                 df_history = await VTSAnalyticsActions.execute_query(history_query)
 
                 if df_history.empty:
-                    df_history = pd.DataFrame(columns=["tl_number"] + all_violations)
+                    df_history = pd.DataFrame(columns=["tl_number", "invoice_number"] + all_violations)
+
+                # Strip invoice numbers to match format
+                df_history["invoice_number"] = df_history["invoice_number"].astype(str).str.split("-").str[0]
+                
+                # Drop duplicate invoice_numbers from vts_alert_history, keep first
+                df_history = df_history.drop_duplicates(subset=["invoice_number"], keep="first")
 
                 truck_query = """
                     SELECT DISTINCT truck_no, transporter_name
@@ -720,25 +732,27 @@ class VTSAnalyticsActions:
                 """
                 df_truck = await VTSAnalyticsActions.execute_query(truck_query)
 
-                merged_df = df_shortage_all.merge(df_history, on="tl_number", how="left")
+                # Merge with history (only violations, no zone/location_name to avoid conflicts)
+                merged_df = shortage_agg.merge(
+                    df_history, 
+                    on=["tl_number", "invoice_number"], 
+                    how="left"
+                )
 
+                # Merge with truck master
                 merged_df = merged_df.merge(df_truck, left_on="tl_number", right_on="truck_no", how="left")
                 merged_df.drop(columns=["truck_no"], inplace=True, errors="ignore")
 
+                # Process violation columns
                 for col in all_violations:
                     if col in merged_df.columns:
                         merged_df[col] = (merged_df[col] > 0).astype(int)
                     else:
                         merged_df[col] = 0
 
-                for base_col in ["zone", "location_name"]:
-                    if f"{base_col}_x" in merged_df.columns:
-                        merged_df[base_col] = merged_df[f"{base_col}_x"]
-                    elif f"{base_col}_y" in merged_df.columns:
-                        merged_df[base_col] = merged_df[f"{base_col}_y"]
-
+                # Since we already aggregated shortage by invoice, just take first values
                 agg_dict = {
-                    "qty_shortage": "sum",
+                    "qty_shortage": "first",
                     "zone": "first",
                     "location_name": "first",
                     "tl_number": "first",
@@ -752,7 +766,7 @@ class VTSAnalyticsActions:
                 final_cols = ["invoice_number", "zone", "location_name", "tl_number", "qty_shortage", "transporter_name"] + all_violations
                 agg_df = agg_df[final_cols]
 
-                return {"status": True, "message": "success","data": await safe_json(agg_df)}
+                return {"status": True, "message": "success", "data": await safe_json(agg_df)}
 
             if violation_types:
                 select_parts = [
