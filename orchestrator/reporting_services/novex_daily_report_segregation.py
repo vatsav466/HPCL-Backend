@@ -537,26 +537,34 @@ def dict_to_object(d):
 async def supply_terminal_wise_counts():
     query = f"""SELECT DISTINCT
                     CASE 
-                        WHEN zone = 'CEN' THEN 'CZ'
-                        WHEN zone = 'NWF' THEN 'NWFZ'
-                        ELSE zone
+                        WHEN a.zone = 'CEN' THEN 'CZ'
+                        WHEN a.zone = 'NWF' THEN 'NWFZ'
+                        ELSE a.zone
                     END AS zone,
-                    terminal_plant_name AS supply_location,
-                    region,
-                    sap_id
-                FROM alerts
+                    a.terminal_plant_id AS plant_id,
+                    COALESCE(NULLIF(lm.name, ''), a.terminal_plant_name) AS supply_location,
+                    COALESCE(NULLIF(lm_ro.region, ''), a.region) AS region,
+                    COALESCE(NULLIF(lm_ro.sales_area, ''), a.sales_area) AS sales_area,
+                    COALESCE(NULLIF(lm_ro.zone, ''), a.zone) AS zones,
+                    a.sap_id
+                FROM alerts a
+                LEFT JOIN location_master lm
+                    ON a.terminal_plant_id = lm.sap_id
+                LEFT JOIN location_master lm_ro
+                    ON a.sap_id = lm_ro.sap_id
                 WHERE
-                    COALESCE(zone, '') <> ''  -- exclude empty or null zones
-                    AND mark_as_false = 'true'
-                    AND alert_status != 'Close'
-                    AND dry_out_in_days = '1'
-                    AND terminal_plant_name NOT ILIKE '%retail%'
-                    AND product_code IN ('2811000', '2812000');"""
+                    COALESCE(a.zone, '') <> ''        -- exclude empty or null zones
+                    AND a.mark_as_false = 'true'
+                    AND a.alert_status != 'Close'
+                    AND a.dry_out_in_days = '1'
+                    AND a.terminal_plant_name NOT ILIKE '%retail%'
+                    AND a.product_code IN ('2811000', '2812000');"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     resp = await function(query=query)
     data_resp = pd.DataFrame(resp)
+    data_resp = data_resp.drop(["sales_area", "zones"], axis=1)
     sap_ids = list(set(data_resp["sap_id"].tolist()))
     sap_ids = [str(sid).zfill(10) for sid in sap_ids]
     batch_size = 100
