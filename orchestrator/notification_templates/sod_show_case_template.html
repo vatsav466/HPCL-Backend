@@ -4,7 +4,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      font-size: 14px;
+      font-size: 11px;
       color: #333;
       line-height: 1.5;
     }
@@ -46,6 +46,9 @@
       font-style: italic;
     }
     table { table-layout: fixed; }
+    p {
+      margin-bottom: 1em;
+    }
   </style>
 </head>
 <body>
@@ -57,20 +60,83 @@
         <span style="float:right;"><b>Date:</b> {{date}}</span>
     </p>
     <p><b><br>To,</b><br>
-    {{transporter_code}}<br>
-    {{transporter_name}}<br>
-    {{transporter_address}}</p>
-    <br>
-    <p><b>Subject:</b> SHOW CAUSE NOTICE due to non-compliance of Bulk Petroleum Products Road Transportation Agreement dated : <> and with/without Addendum dated : <></p>
+
+      <!-- Transporter Code -->
+      {% if transporter_code %}
+          {{ transporter_code }}
+      {% else %}
+          <span style="display:inline-block; width:75px;">&nbsp;</span>
+      {% endif %}
+      <br>
+  
+      <!-- Transporter Name -->
+      {% if transporter_name %}
+          {{ transporter_name }}
+      {% else %}
+          <span style="display:inline-block; width:75px;">&nbsp;</span>
+      {% endif %}
+      <br>
+  
+      <!-- Transporter Address -->
+      {% if transporter_address %}
+          {{ transporter_address }}
+      {% else %}
+          <span style="display:inline-block; width:150px;">&nbsp;</span>
+      {% endif %}
+  
+  </p>
+  <br>  
+    <p>
+      <b>Subject:</b> SHOW CAUSE NOTICE due to non-compliance of Bulk Petroleum Products Road Transportation 
+      Agreement dated :
+      {% if start_date %}
+          {{ start_date }}
+      {% else %}
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      {% endif %}
+      and with/without Addendum dated :
+      {% if end_date %}
+          {{ end_date }}
+      {% else %}
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      {% endif %}
+    </p>    
 </div>
-  <p>Dear Sir/Madam,</p>
+  <p>Dear Sir,</p>
   <p>
-    This refers to Bulk Petroleum Products Road Transport Agreement (here in after referred to as the 
-    “Agreement”) dated : <>  with/without Addendum dated : <> entered into by and between 
-    Hindustan Petroleum Corporation Limited (here in after referred to as the “Corporation”) and yourself, 
-    running business as a carrier under the name {{transporter_name}} , where by, you have been appointed 
-    as a Transporter for transporting the petroleum products as per the terms and conditions of the said 
-    Agreement and applicable policies and guidelines of the Corporation. 
+    This refers to Bulk Petroleum Products Road Transport Agreement (hereinafter referred to as the 
+    “Agreement”) dated :
+
+    <!-- Start Date -->
+    {% if start_date %}
+        {{ start_date }}
+    {% else %}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    {% endif %}
+
+    with/without Addendum dated :
+
+    <!-- End Date -->
+    {% if end_date %}
+        {{ end_date }}
+    {% else %}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    {% endif %}
+
+    entered into by and between Hindustan Petroleum Corporation Limited (hereinafter referred to as 
+    the “Corporation”) and yourself , running business as a carrier under the name 
+
+    <!-- Transporter Name -->
+    {% if transporter_name %}
+        {{ transporter_name }}
+    {% else %}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    {% endif %}
+
+    , whereby you have been appointed as a Transporter for transporting the petroleum products as per 
+    the terms and conditions of the said Agreement and applicable policies and guidelines of the Corporation.
   </p>
 
   <p>
@@ -109,32 +175,28 @@
     <div class="quote-block">
       <p><br>
       Special Terms and Conditions, Clause 11 (Statutory Compliance), Sub-clause 8, states that;<br>
-      The Transporter carrying dangerous or hazardous product, shall follow the routes specified by the consigner.<br>
+      The Transporter carrying dangerous or hazardous product, shall follow the routes specified by the consigner.
       <b></b><br></p>
     </div>
 
-    <p>
-      Please note, that every case of blacklisting of a TT inducted with the Transporter shall be considered 
-      as a separate case of blacklisting against the Transporter. Accordingly, the penalties for 1st, 2nd and 
-      3rd case of blacklisting shall be computed collectively for the purpose of blacklisting the entire fleet 
-      of the Transporter.
+    {% if black_list_conditions %}
+    <p style="color:red;">
+        {{ black_list_conditions }}
     </p>
-
+    {% endif %}
     <p>
         However, in case complicity of the Contractor is established even in first instance of malpractice, 
-        irregularity or blacklisting, the entire fleet will be blacklisted, contract shall be terminated along with 
+        irregularity or blacklisting, the entire fleet will be blacklisted, contract shall be terminated along with
         forfeiture of SD. 
     </p>
-
     <p>
-        The above deviations/violations committed by you on the aforementioned dates amount to 
-        irregularities with respect to violations under ITDG of the TTs run by you and accordingly are liable for 
+        The above deviations/violations committed by you on the aforementioned dates amount to
+        irregularities with respect to violations under ITDG of the TTs run by you and accordingly are liable for
         action as per  ITDG which states as under:
     </p>
   </div>
-
   <!-- Common penalties table -->
-  <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse; font-family: Arial, sans-serif; font-size:15px;text-align:left; width:100%;">
+  <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse; font-family: Arial, sans-serif; font-size:11px;text-align:left; width:100%;">
     <thead>
         <tr style="text-align:center;">
           <th rowspan="2" style="text-align:center;">Clause No.</th>
@@ -219,18 +281,24 @@
   </table>
   <br>
   <p>
-    YOUR TRUCKS HAVE BEEN BLOCKED AS AN URGENT PREVENTIVE MEASURE IN VIEW OF THE SERIOUS RISK POSED TO PUBLIC SAFETY AND THE INTEGRITY OF THE PRODUCT. THE CONSIGNMENT INVOLVES
-    HIGHLY INFLAMMABLE AND  HAZARDOUS MATERIAL, ANY NEGLIGENCE OR VIOLATION MAY HAVE THE POTENTIAL TO ENDANGER HUMAN LIFE AND PROPERTY AND CAUSE SEVERE CONSEQUENCES. IN 
+    YOUR TRUCKS HAVE BEEN BLOCKED AS AN URGENT PREVENTIVE MEASURE IN VIEW OF THE SERIOUS
+    RISK POSED TO PUBLIC SAFETY AND THE INTEGRITY OF THE PRODUCT. THE CONSIGNMENT INVOLVES
+    HIGHLY INFLAMMABLE AND  HAZARDOUS MATERIAL, ANY NEGLIGENCE OR VIOLATION MAY HAVE
+    THE POTENTIAL TO ENDANGER HUMAN LIFE AND PROPERTY AND CAUSE SEVERE CONSEQUENCES. IN
     THESE CIRCUMSTANCES, IMMEDIATE ACTION WAS NECESSARY.
   </p>
+  <p>You are hereby given an opportunity to submit your explanation as early as possible and not later than
+    seven (07) days from the date of receipt of this notice, as to why action should not be initiated against
+    you under the provisions of the Transport Agreement and the ITDG (Industry Transport Discipline
+    Guidelines version 5.0).</p>  
   <p>
-    You under the provisions of the Transport Agreement and the ITDG (Industry Transport Discipline Guidelines version 5.0).
-  </p>  
-  <p>
-    In the event that no satisfactory explanation/reply is received within the stipulated period, it shall be presumed that you have no explanation to offer in the matter, and appropriate action shall be initiated.
+    In the event that no satisfactory explanation/reply is received within the stipulated period, it shall be
+    presumed that you have no explanation to offer in the matter, and appropriate action shall be
+    initiated.
   </p>
   <p>
-    This notice is issued without prejudice to the rights under the Transport Agreement, the Transport Discipline Guidelines, and the policy guidelines of the Corporation.
+    This notice is issued without prejudice to the rights under the Transport Agreement, the Transport
+    Discipline Guidelines, and the policy guidelines of the Corporation.
   </p>
   <br>
   <p>
