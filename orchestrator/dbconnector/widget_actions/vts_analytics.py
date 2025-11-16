@@ -15,6 +15,7 @@ import orchestrator.dbconnector.credential_loader as credential_loader
 import io
 import os
 import polars as pl
+import json
 from fastapi.responses import StreamingResponse
 from fastapi import Request
 from fastapi.responses import JSONResponse, FileResponse
@@ -650,7 +651,6 @@ class VTSAnalyticsActions:
                     return {"status": True, "message": "No non-zero violations found", "data": []}
 
                 return {"status": True, "message": "success", "data": await safe_json(final_df)}
-
             
             if has_qty_shortage_filter and not vts_violation_types:
                 shortage_query = """
@@ -682,13 +682,20 @@ class VTSAnalyticsActions:
                     return {"status": True, "message": "No shortage data found", "data": []}
 
                 df_shortage_all["qty_shortage"] = pd.to_numeric(df_shortage_all["qty_shortage"], errors="coerce").fillna(0.0)
-                df_shortage_all = df_shortage_all[df_shortage_all["qty_shortage"] != 0]
+                df_shortage_all = df_shortage_all[df_shortage_all["qty_shortage"] > 0]
 
                 if df_shortage_all.empty:
                     return {"status": True, "message": "No non-zero shortage data found", "data": []}
 
-                # Build violation filters
-                tl_numbers_list = df_shortage_all["tl_number"].unique().tolist()
+                shortage_agg = df_shortage_all.groupby("invoice_number", as_index=False).agg({
+                    "qty_shortage": "sum",
+                    "zone": "first",
+                    "location_name": "first",
+                    "tl_number": "first",
+                    "material_group_nm": "first"
+                })
+
+                tl_numbers_list = shortage_agg["tl_number"].unique().tolist()
                 tl_numbers_str = "', '".join(map(str, tl_numbers_list))
 
                 violation_columns = [
@@ -701,79 +708,76 @@ class VTSAnalyticsActions:
                     SELECT DISTINCT
                         tl_number,
                         invoice_number,
-                        location_name,
-                        zone,
                         {select_clause}
                     FROM vts_alert_history
                     WHERE tl_number IN ('{tl_numbers_str}')
-                    AND invoice_number IS NOT NULL
                 """
 
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, history_query)
                 history_query = VTSAnalyticsActions.apply_conditions_to_query(history_query, conditions)
                 df_history = await VTSAnalyticsActions.execute_query(history_query)
 
+                if df_history.empty:
+                    df_history = pd.DataFrame(columns=["tl_number", "invoice_number"] + all_violations)
+
+                # Strip invoice numbers to match format
+                df_history["invoice_number"] = df_history["invoice_number"].astype(str).str.split("-").str[0]
+                
+                # Drop duplicate invoice_numbers from vts_alert_history, keep first
                 df_history = df_history.drop_duplicates(subset=["invoice_number"], keep="first")
 
-                # Truck master
                 truck_query = """
                     SELECT DISTINCT truck_no, transporter_name
                     FROM vts_truck_master
                 """
                 df_truck = await VTSAnalyticsActions.execute_query(truck_query)
 
-                # Merge shortage + history
-                merged_history = df_shortage_all.merge(
-                    df_history,
-                    on=["tl_number", "invoice_number"],
+                # Merge with history (only violations, no zone/location_name to avoid conflicts)
+                merged_df = shortage_agg.merge(
+                    df_history, 
+                    on=["tl_number", "invoice_number"], 
                     how="left"
                 )
 
-                # Merge truck info
-                final_df = merged_history.merge(
-                    df_truck,
-                    left_on="tl_number",
-                    right_on="truck_no",
-                    how="left"
-                )
-                final_df.drop(columns=["truck_no"], inplace=True, errors="ignore")
+                # Merge with truck master
+                merged_df = merged_df.merge(df_truck, left_on="tl_number", right_on="truck_no", how="left")
+                merged_df.drop(columns=["truck_no"], inplace=True, errors="ignore")
 
-                # Only positive shortages
-                final_df = final_df[final_df["qty_shortage"] > 0]
+                # Process violation columns
+                for col in all_violations:
+                    if col in merged_df.columns:
+                        merged_df[col] = (merged_df[col] > 0).astype(int)
+                    else:
+                        merged_df[col] = 0
 
-                # Handle possible duplicates
-                for base_col in ["zone", "location_name"]:
-                    if f"{base_col}_x" in final_df.columns:
-                        final_df[base_col] = final_df[f"{base_col}_x"]
-                    elif f"{base_col}_y" in final_df.columns:
-                        final_df[base_col] = final_df[f"{base_col}_y"]
+                # Since we already aggregated shortage by invoice, just take first values
+                agg_dict = {
+                    "qty_shortage": "first",
+                    "zone": "first",
+                    "location_name": "first",
+                    "tl_number": "first",
+                    "transporter_name": "first",
+                }
+                for v_col in all_violations:
+                    agg_dict[v_col] = "max"  
 
-                # Aggregate by invoice
-                agg_df = (
-                    final_df.groupby("invoice_number", as_index=False)
-                    .agg({
-                        "qty_shortage": "sum",
-                        "zone": "first",
-                        "location_name": "first",
-                        "tl_number": "first",
-                        "transporter_name": "first"
-                    })
-                )
+                agg_df = merged_df.groupby("invoice_number", as_index=False).agg(agg_dict)
 
-                agg_df = agg_df[["invoice_number", "zone", "location_name", "tl_number", "qty_shortage","transporter_name"]]
+                final_cols = ["invoice_number", "zone", "location_name", "tl_number", "qty_shortage", "transporter_name"] + all_violations
+                agg_df = agg_df[final_cols]
 
                 return {"status": True, "message": "success", "data": await safe_json(agg_df)}
-        
+
             if violation_types:
                 select_parts = [
-                    f"COUNT(CASE WHEN {v_type} != 0 THEN invoice_number END) AS {v_type}"
+                    f"COUNT(DISTINCT CASE WHEN {v_type} != 0 THEN invoice_number END) AS {v_type}"
                     for v_type in all_violations
                 ]
                 select_clause = ",\n           ".join(select_parts)
                 
                 if vts_violation_types:
                     having_parts = [
-                        f"COUNT(CASE WHEN {v_type} != 0 THEN 1 END) > 0"
+                        f"COUNT(DISTINCT CASE WHEN {v_type} != 0 THEN invoice_number END) > 0"
                         for v_type in vts_violation_types
                     ]
                     having_clause = " AND ".join(having_parts)
@@ -784,19 +788,17 @@ class VTSAnalyticsActions:
                 violation_query = violation_query.format(select_clause=select_clause, having_clause=having_clause)
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, violation_query)
                 violation_query = VTSAnalyticsActions.apply_conditions_to_query(violation_query, conditions)
-                df_history = await VTSAnalyticsActions.execute_query(violation_query)
                 
+                df_history = await VTSAnalyticsActions.execute_query(violation_query)
                 df_history = df_history.drop_duplicates(subset=["invoice_number"], keep="first")
 
                 if df_history.empty:
                     return {"status": True, "message": "No violations found", "data": []}
 
                 tl_numbers_list = df_history['tl_number'].unique().tolist()
-                
                 df_shortage = await get_shortage_data(tl_numbers_list=tl_numbers_list)
                 
-                tl_numbers_str = "', '".join(map(str, tl_numbers_list))
-                truck_query = f"""
+                truck_query = """
                     SELECT DISTINCT truck_no, transporter_name
                     FROM vts_truck_master
                 """
@@ -804,7 +806,7 @@ class VTSAnalyticsActions:
 
                 final_df = df_history.merge(df_truck, left_on="tl_number", right_on="truck_no", how="left")
                 final_df.drop(columns=['truck_no'], inplace=True, errors='ignore')
-                
+
                 final_df = merge_shortage_data(final_df, df_shortage, aggregate=True)
 
                 if has_qty_shortage_filter:
@@ -813,6 +815,25 @@ class VTSAnalyticsActions:
                 if final_df.empty:
                     return {"status": True, "message": "No non-zero violations found", "data": []}
 
+                violation_cols = [col for col in all_violations if col in final_df.columns]
+
+                agg_dict = {
+                    "qty_shortage": "sum",
+                    "zone": "first",
+                    "location_name": "first",
+                    "tl_number": "first",
+                    "transporter_name": "first",
+                }
+
+                for col in violation_cols:
+                    agg_dict[col] = "max"  
+
+                final_df = final_df.groupby("invoice_number", as_index=False).agg(agg_dict)
+
+                
+                for col in violation_cols:
+                    final_df[col] = final_df[col].fillna(0).astype(int)
+  
                 return {"status": True, "message": "success", "data": await safe_json(final_df)}
 
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
@@ -1377,69 +1398,61 @@ class VTSAnalyticsActions:
     async def safety_compliance(filters, cross_filters, drill_state, payload):                       
         try:
             if payload.get("download"):
-                print(" Download requested — generating Excel with multiple sheets (Polars only)")
+                print("Download requested — generating Excel with multiple sheets (Polars only)")
 
                 # Step 1: Parse table names
                 table_names = [tbl.strip() for tbl in drill_state.split(",") if tbl.strip()]
                 if not table_names:
                     return JSONResponse({"error": "Missing drill_state (table names)"}, status_code=400)
 
-                # Step 3: Setup file paths
-                # download_dir = "/Users/algofusion/downloads"
-                download_dir = "/opt/downloads"
-                os.makedirs(download_dir, exist_ok=True)
+                # Create an in-memory Excel file
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+
+                    # Step 2: Loop tables and add sheets dynamically
+                    for table_name in table_names:
+
+                        query = vts_query.vts_query.get("safety_compliance")
+                        query = query.format(drill_state=table_name)
+
+                        conditions = VTSAnalyticsActions.build_filter_conditions(
+                            filters, cross_filters, query
+                        )
+                        final_query = VTSAnalyticsActions.apply_conditions_to_query(
+                            query, conditions
+                        )
+
+                        print(f" Running query for table '{table_name}': {final_query}")
+
+                        df = await VTSAnalyticsActions.execute_query(final_query)
+                        df = df.drop_duplicates(keep="first")
+
+                        if df is None or len(df) == 0:
+                            print(f"No data found for {table_name}, skipping...")
+                            continue
+
+                        # if not isinstance(df, pl.DataFrame):
+                        #     df = pl.DataFrame(df)
+
+                        # # Convert Polars → Pandas for Excel writer
+                        # pdf = df.to_pandas()
+
+                        # Write to Excel sheet (sheet name from table_name)
+                        sheet_name = table_name[:31]  # Excel max 31 chars
+                        df.to_excel(writer, index=False, sheet_name=sheet_name)
+
+                # Finalize BytesIO
+                output.seek(0)
+
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"{payload.get('action', 'safety_compliance')}_{timestamp}.xlsx"
-                file_path = os.path.join(download_dir, filename)
+                file_name = f"safety_complaince_{timestamp}.xlsx"
 
-                # Step 4: Create main workbook
-                wb = Workbook()
-                wb.remove(wb.active)
+                headers = {"Content-Disposition": f'attachment; filename="{file_name}"'}
 
-                # Step 5: Loop tables
-                for table_name in table_names:
-                    query = vts_query.vts_query.get('safety_compliance')
-                    query = query.format(drill_state=table_name)
-
-                    conditions = VTSAnalyticsActions.build_filter_conditions(filters,cross_filters,query)
-                    final_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
-
-                    print(f" Running query for table '{table_name}': {final_query}")
-
-                    df = await VTSAnalyticsActions.execute_query(final_query)
-                    df = df.drop_duplicates(keep='first')
-                    if df is None or len(df) == 0:
-                        print(f"No data found for {table_name}, skipping...")
-                        continue
-
-                    if not isinstance(df, pl.DataFrame):
-                        df = pl.DataFrame(df)
-
-                    # Write temp file
-                    temp_file = os.path.join(download_dir, f"{table_name}.xlsx")
-                    df.write_excel(temp_file)
-
-                    # Copy contents to main workbook
-                    temp_wb = load_workbook(temp_file)
-                    temp_sheet = temp_wb.active
-                    new_sheet = wb.create_sheet(title=table_name[:31])
-
-                    for i, row in enumerate(temp_sheet.iter_rows(values_only=True), start=1):
-                        for j, cell_value in enumerate(row, start=1):
-                            new_sheet.cell(row=i, column=j, value=cell_value)
-
-                    temp_wb.close()
-                    os.remove(temp_file)
-
-                # Step 6: Save final Excel
-                wb.save(file_path)
-                print(f"Final Excel file created: {file_path}")
-
-                # Step 7: Return file response
-                return FileResponse(
-                    path=file_path,
+                return StreamingResponse(
+                    output,
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    filename=os.path.basename(file_path)
+                    headers=headers
                 )
             # Step 1: Get base query
             query = vts_query.vts_query.get('safety_compliance')
@@ -2156,11 +2169,11 @@ class VTSAnalyticsActions:
                     for _, row in group.iterrows():
                         mats = str(row["material_group_nm"]).split(",")
                         for m in mats:
-                            m = m.strip()
+                            m = str(row["material_group_nm"]).strip()
                             if m:
                                 all_rows.append({
                                     "material_group_nm": m,
-                                    "shortage": float(row["qty_shortage"]) / len(mats)
+                                    "shortage": float(row["qty_shortage"])
                                 })
 
                     # Merge shortages by material group
@@ -2206,14 +2219,35 @@ class VTSAnalyticsActions:
             group_cols = ["zone_nm"]
         if "material_group_nm" not in filtered_trips_df.columns and "item_no" in filtered_trips_df.columns:
             filtered_trips_df.rename(columns={"item_no": "material_group_nm"}, inplace=True)
-        if 'vehicle_id' in filtered_trips_df.columns and 'invoice_no' in filtered_trips_df.columns:
-            # Step 1: Group by vehicle_id and invoice_no and aggregate shortage and item details
-            combined_df = (
-                filtered_trips_df
+        
+        
+        if payload.get('table') == "true":
+            filtered_trips_df = filtered_trips_df.rename(columns={'material_group_nm':'product_bifurcation', 'qty_shortage':'shortage'})
+            filtered_trips_df['product_bifurcation'] = (
+                    filtered_trips_df['product_bifurcation'].astype(str) + 
+                    ':' + filtered_trips_df['shortage'].astype(str)
+                )
+            table_df =( filtered_trips_df
                 .groupby(['vehicle_id', 'invoice_no'], as_index=False)
                 .agg({
-                    'qty_shortage': 'sum',  # sum shortages for same vehicle+invoice
-                    'material_group_nm': lambda x: ', '.join(x.astype(str).unique()),
+                    'shortage': 'sum',  # sum shortages for same vehicle+invoice
+                    'product_bifurcation': lambda x: ', '.join(x),
+                    'plant_nm': 'first',
+                    'zone_nm': 'first',
+                    'transporter_name': 'first',
+                    'load_date': 'first'
+                })
+            )
+            
+            return {"status": "success","message": "Table Data fetched successfully", "data": await safe_json(table_df)}
+        
+        if 'vehicle_id' in filtered_trips_df.columns and 'invoice_no' in filtered_trips_df.columns:
+            # Keep material_group_nm as separate rows to preserve shortages correctly
+            combined_df = (
+                filtered_trips_df
+                .groupby(['vehicle_id', 'invoice_no', 'material_group_nm'], as_index=False)
+                .agg({
+                    'qty_shortage': 'sum',  
                     'plant_nm': 'first',
                     'zone_nm': 'first',
                     'transporter_name': 'first',
@@ -2246,6 +2280,7 @@ class VTSAnalyticsActions:
 
         from fastapi.encoders import jsonable_encoder
         from fastapi.responses import JSONResponse
+
 
         response_data = {
             "status": "success",
