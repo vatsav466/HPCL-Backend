@@ -917,16 +917,13 @@ async def fetch_dryout_data():
 
     supply_terminal_query_ro_count_df = await supply_terminal_wise_counts()
 
-    bottom_3_per_zone = (
-        supply_terminal_query_ro_count_df.groupby("Zone", group_keys=False)
-        .apply(lambda x: x.nlargest(3, "Count of Dryout ROs"))
+    bottom_3_per_zone_sorted = (
+        supply_terminal_query_ro_count_df
+        .groupby("Zone", group_keys=True)
+        .apply(lambda x: x.nlargest(3, "Count of Dryout ROs")
+                        .sort_values("Count of Dryout ROs", ascending=False))
         .reset_index(drop=True)
     )
-    # Step 2: Sort the 36 records in descending order based on Count of Dryout ROs
-    bottom_3_per_zone_sorted = bottom_3_per_zone.sort_values(
-        by="Count of Dryout ROs", ascending=False
-    ).reset_index(drop=True)
-
     # Step 3: Reassign Sl No sequentially
     bottom_3_per_zone_sorted["Sl No"] = range(1, len(bottom_3_per_zone_sorted) + 1)
 
@@ -1350,6 +1347,126 @@ async def get_vts_violation():
         }
     return vts_violations_data
 
+async def get_vts_tas_blocked_counts():
+    # Making sure alerts considering only after May 31st in prod
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                               date_time_format="%Y-%m-%d")
+    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'" # As per HPCL request changed the date to be in the present month
+    tas_query = f"""SELECT
+                        COUNT(*) FILTER (WHERE alert_section='VTS'
+                                        AND bu='TAS'
+                                        AND {date_filter})
+                            AS "TTs_Blocked_by_Novex_TAS",
+
+                        COUNT(*) FILTER (WHERE alert_section='VTS'
+                                        AND bu='TAS'
+                                        AND {date_filter}
+                                        AND mark_as_false = 'true'
+                                        AND vehicle_unblocked_date IS NOT NULL)
+                            AS "TTs_Manually_Unblocked_TAS",
+
+                        COUNT(*) FILTER (WHERE alert_section='VTS'
+                                        AND bu='TAS'
+                                        AND {date_filter}
+                                        AND vehicle_unblocked_date IS NULL)
+                            AS "TTs_currently_under_Block_TAS",
+
+                        COUNT(*) FILTER (WHERE alert_section='VTS'
+                                        AND bu='TAS'
+                                        AND {date_filter}
+                                        AND mark_as_false = 'false'
+                                        AND vehicle_unblocked_date IS NOT NULL)
+                            AS "TTs_Auto_Unblocked_TAS"
+
+                    FROM alerts;"""
+    
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    tas_blocked_data_resp = await function(query=tas_query)
+    tas_blocked_data_resp = pd.DataFrame(tas_blocked_data_resp)
+    # Extract values from the first (and only) row safely
+    if not tas_blocked_data_resp.empty:
+        row = tas_blocked_data_resp.iloc[0]
+        tas_blocked_data = {
+            "TTs_Blocked_by_Novex_TAS": int(row.get("TTs_Blocked_by_Novex_TAS", 0)),
+            "TTs_Manually_Unblocked_TAS": int(row.get("TTs_Manually_Unblocked_TAS", 0)),
+            "TTs_currently_under_Block_TAS": int(row.get("TTs_currently_under_Block_TAS", 0)),
+            "TTs_Auto_Unblocked_TAS": int(row.get("TTs_Auto_Unblocked_TAS", 0))
+        }
+    else:
+        # Default if no data returned
+        tas_blocked_data = {
+            "TTs_Blocked_by_Novex_TAS": 0,
+            "TTs_Manually_Unblocked_TAS": 0,
+            "TTs_currently_under_Block_TAS": 0,
+            "TTs_Auto_Unblocked_TAS": 0
+        }
+    return tas_blocked_data
+
+async def get_vts_lpg_blocked_counts():
+    # Making sure alerts considering only after May 31st in prod
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                               date_time_format="%Y-%m-%d")
+    date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'" # As per HPCL request changed the date to be in the present month
+    lpg_query = f"""SELECT
+                        COUNT(*) FILTER (WHERE alert_section='VTS'
+                                        AND bu='LPG'
+                                        AND {date_filter})
+                            AS "TTs_Blocked_by_Novex_LPG",
+
+                        COUNT(*) FILTER (WHERE alert_section='VTS'
+                                        AND bu='LPG'
+                                        AND {date_filter}
+                                        AND mark_as_false = 'true'
+                                        AND vehicle_unblocked_date IS NOT NULL)
+                            AS "TTs_Manually_Unblocked_LPG",
+
+                        COUNT(*) FILTER (WHERE alert_section='VTS'
+                                        AND bu='LPG'
+                                        AND {date_filter}
+                                        AND vehicle_unblocked_date IS NULL)
+                            AS "TTs_currently_under_Block_LPG",
+
+                        COUNT(*) FILTER (WHERE alert_section='VTS'
+                                        AND bu='LPG'
+                                        AND {date_filter}
+                                        AND mark_as_false = 'false'
+                                        AND vehicle_unblocked_date IS NOT NULL)
+                            AS "TTs_Auto_Unblocked_LPG"
+
+                    FROM alerts;"""
+    
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    lpg_blocked_data_resp = await function(query=lpg_query)
+    lpg_blocked_data_resp = pd.DataFrame(lpg_blocked_data_resp)
+    # Extract values from the first (and only) row safely
+    if not lpg_blocked_data_resp.empty:
+        row = lpg_blocked_data_resp.iloc[0]
+        lpg_blocked_data = {
+            "TTs_Blocked_by_Novex_LPG": int(row.get("TTs_Blocked_by_Novex_LPG", 0)),
+            "TTs_Manually_Unblocked_LPG": int(row.get("TTs_Manually_Unblocked_LPG", 0)),
+            "TTs_currently_under_Block_LPG": int(row.get("TTs_currently_under_Block_LPG", 0)),
+            "TTs_Auto_Unblocked_LPG": int(row.get("TTs_Auto_Unblocked_LPG", 0))
+        }
+    else:
+        # Default if no data returned
+        lpg_blocked_data = {
+            "TTs_Blocked_by_Novex_LPG": 0,
+            "TTs_Manually_Unblocked_LPG": 0,
+            "TTs_currently_under_Block_LPG": 0,
+            "TTs_Auto_Unblocked_LPG": 0
+        }
+    return lpg_blocked_data
+
 async def publish_daily_novex_status_email():
     date = urdhva_base.utilities.get_present_time()
     date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
@@ -1396,6 +1513,8 @@ async def publish_daily_novex_status_email():
     status_data.update(await get_tas_alerts())
     #status_data.update(await get_vts_route_deviation())
     status_data.update(await lpg_top_bottom_score_plants())
+    status_data.update(await get_vts_lpg_blocked_counts())
+    status_data.update(await get_vts_tas_blocked_counts())
     #status_data.update(await get_vts_violation())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
