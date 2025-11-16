@@ -4,8 +4,12 @@ import json
 import httpx
 import datetime
 import importlib
+import aiofiles
 import hpcl_ceg_model
+import traceback
+import pandas as pd
 from jinja2 import Template
+from weasyprint import HTML
 import utilities.helpers as helpers
 # import orchestrator.alerting.ro_alert as ro_alert
 # import orchestrator.alerting.va_alert as va_alert
@@ -19,6 +23,11 @@ import orchestrator.analytics.vts_analysis as vts_analysis
 from orchestrator.notification_manager.notify_email import *
 import orchestrator.analytics.emlock_analysis as emlock_analysis
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
+from utilities.interlock_template_mapping import (
+    InterlockTemplateMapping,
+    TemplateMapping
+)
+import utilities.minio_connector as minio_connector
 
 
 async def create_alert(alert_data, camunda_url=urdhva_base.settings.camunda_url):
@@ -949,6 +958,164 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "R3Swipe")
+    
+    @classmethod
+    async def vts_read_template(cls, filename: str) -> str:
+        """
+        Reads a template file asynchronously and returns its content as a string.
+
+        Args:
+            filename (str): The name of the template file to read.
+
+        Returns:
+            str: The content of the template file.
+
+        Raises:
+            FileNotFoundError: If the template file is not found.
+        """
+        try:
+            print("filename---->",filename)
+            filepath = os.path.join(urdhva_base.settings.template_path, filename)
+            cls.template_path = filepath
+            async with aiofiles.open(filepath, 'r') as f:
+                return await f.read()
+        except FileNotFoundError:
+            return ""
+    
+    @classmethod
+    async def generate_show_cause_notice(cls, alert_data):
+        try:
+            if urdhva_base.context.context.exists():
+                rpt = urdhva_base.context.context.get('rpt', {})
+            else:
+                rpt = {}
+
+            vts_alert_history_query = f"""SELECT 
+                                            vah.tl_number AS "Tank Truck No.",
+                                            a.violation_type AS "Violation Type",
+                                            a.severity as "Category",
+                                            vah.{alert_data.violation_type} AS "Count",
+                                            vah.invoice_number || ' / ' || TO_CHAR(vah.vts_end_datetime, 'DD-Mon-YY') AS "Invoice No. / Date",
+                                            vah.report_duration AS "Trip Period"
+                                        FROM vts_alert_history vah
+                                        JOIN alerts a ON a.id = vah.alert_id::bigint
+                                        WHERE vah.alert_id = '{alert_data.id}'
+                                        ORDER BY vah.vts_end_datetime ASC""" 
+            vts_alert_history_query_resp = await urdhva_base.BasePostgresModel.get_aggr_data(vts_alert_history_query, limit=0)
+            vts_alert_history_query_resp = pd.DataFrame(vts_alert_history_query_resp.get('data',[]))
+            print(vts_alert_history_query_resp.columns)
+            # Insert empty Latitude & Longitude columns AFTER the "Count" column
+            count_col_index = vts_alert_history_query_resp.columns.get_loc("Count")
+            vts_alert_history_query_resp.insert(count_col_index + 1, "Latitude", "")
+            vts_alert_history_query_resp.insert(count_col_index + 2, "Longitude", "")
+
+            vts_alert_history_query_resp["Latitude"] = vts_alert_history_query_resp["Latitude"].fillna("")
+            vts_alert_history_query_resp["Longitude"] = vts_alert_history_query_resp["Longitude"].fillna("")
+
+            query = f"""
+                    SELECT 
+                        MIN(vts_end_datetime) AS violation_stat_date,
+                        MAX(vts_end_datetime) AS violation_end_date
+                    FROM vts_alert_history
+                    WHERE alert_id = '{alert_data.id}';
+                """
+            resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            resp = resp.get("data", [])
+            
+            transporter_code = str(int(alert_data.transporter_code))
+            query = f"select * from email_master where transporter_code='{transporter_code}'"
+            trasporter_details = await urdhva_base.BasePostgresModel.get_aggr_data(query)
+
+            if trasporter_details["data"]:
+                trasporter_details = trasporter_details["data"][0]
+            else:
+                trasporter_details = {}
+
+            template_data = {}
+            if resp:
+                template_data = {
+                    "violation_stat_date": resp[0]['violation_stat_date'].strftime("%d.%m.%Y"),
+                    "violation_end_date": resp[0]['violation_end_date'].strftime("%d.%m.%Y"),
+                    "transporter_code": transporter_code,
+                    "transporter_name": trasporter_details.get("transporter_name",""),
+                    "transporter_address": trasporter_details.get("transporter_address",""),
+                    "date": urdhva_base.utilities.get_present_time().replace(tzinfo=None).isoformat(),
+                    "count": len(vts_alert_history_query_resp),
+                    "vts_violations_table": vts_alert_history_query_resp,
+                    "officer_name": rpt.get("first_name",""),
+                    "officer_designation": rpt.get("novex_role",""),
+                    "location": alert_data.sap_id,
+                }
+                if alert_data.device_id in ['Instance - 2','Instance - 3']:
+                    template_data['black_list_conditions'] = f"""Please note, that every case of blacklisting of a TT inducted with the Transporter shall be considered 
+                        as a separate case of blacklisting against the Transporter. Accordingly, the penalties for 1st, 2nd and 
+                        3rd case of blacklisting shall be computed collectively for the purpose of blacklisting the entire fleet 
+                        of the Transporter."""
+            if alert_data.alert_section in ["VTS"] and alert_data.bu in ["TAS"]:
+                template_value = getattr(TemplateMapping, "SODSHOWCAUSENOTICE", None)
+            template = template_value.value if template_value else ""
+            interlock_value = getattr(InterlockTemplateMapping, template.upper(), None)
+            body = await cls.vts_read_template(interlock_value.value) if interlock_value else ""
+            body = Template(body).render(**template_data)
+            pdf_filename = f"{alert_data.id}_unsigned_scn.pdf"
+            pdf_path = await cls.generate_pdf_from_html(body, pdf_filename)
+            status, minio_path = minio_connector.upload_to_minio(alert_data.bu, alert_data.alert_section, alert_data.unique_id, pdf_path)
+            if status:
+                query = f"""select * from notices_vts where alert_id='{alert_data.id}'"""
+                notices_data = await hpcl_ceg_model.NoticesVTS.get_aggr_data(query, limit=0)
+                if notices_data.get("data", []):
+                    notices_data = notices_data['data'][0]
+                    notice_history = notices_data.get('notices',[])
+                    notices_respose = {
+                        "doc_type": "System Generated",
+                        "uploaded_date": urdhva_base.utilities.get_present_time().replace(tzinfo=None).isoformat(),
+                        "uploaded_by": rpt.get("employee_id",""),
+                        "file_path": minio_path,
+                        "uploaded_name": rpt.get("first_name",""),
+                        "report_type": "System Generated"
+                    }
+                    notice_history.append(notices_respose)
+                    await hpcl_ceg_model.NoticesVTS(**{"id": notices_data['id']}).modify()
+                else:
+                    notices_respose = {
+                        "doc_type": "System Generated",
+                        "uploaded_date": urdhva_base.utilities.get_present_time().replace(tzinfo=None).isoformat(),
+                        "uploaded_by": rpt.get("employee_id",""),
+                        "file_path": minio_path,
+                        "uploaded_name": rpt.get("first_name",""),
+                        "report_type": "System Generated"
+                    }
+                    notices_resp = {
+                        "alert_id": str(alert_data.id),
+                        "alert_type": alert_data.interlock_name,
+                        "notices": [notices_respose]
+                    }
+                    await hpcl_ceg_model.NoticesVTSCreate(**notices_resp).create()
+
+                return {
+                    "message": "File uploaded and encrypted successfully",
+                    "original_file_path": minio_path,
+                    "encrypted_file_key": minio_path
+                }
+            else:
+                return {
+                        "message": "File uploaded Failed Minio",
+                        "original_file_path": minio_path,
+                        "encrypted_file_key": minio_path
+                    }
+        except Exception as e:
+            traceback.print_exc()
+            return {
+                "message": "Error while generating show cause notice",
+                "error": str(e)
+            }
+
+    @classmethod
+    async def generate_pdf_from_html(cls, html_content: str, output_filename: str):
+        pdf_path = os.path.join("/tmp", output_filename)
+        HTML(string=html_content).write_pdf(pdf_path)
+        return pdf_path
+        
 
     @classmethod
     async def accept_close(cls, input_data, alert_data):
@@ -958,6 +1125,8 @@ class AlertAction:
                 :param alert_data:
                 :return:
                 """
+        if alert_data.alert_section in ['VTS'] and alert_data.bu in ['TAS']:
+            await cls.generate_show_cause_notice(alert_data)
         return await cls.publish_to_camunda(input_data, alert_data, "AcceptClose")
 
     @classmethod
