@@ -941,6 +941,7 @@ async def fetch_dryout_data():
         by=["Zone", "Count of Dryout ROs"],
         ascending=[True, False]
     )
+    supply_terminal_query_ro_count_df["Sl No"] = range(1, len(supply_terminal_query_ro_count_df) + 1)
     html_table = supply_terminal_query_ro_count_df.to_html(
         index=False,
         classes="styled-table",
