@@ -6,13 +6,13 @@ import jinja2
 import decimal
 import asyncio
 import psycopg2
-from weasyprint import HTML
-import charts_actions
-import dashboard_studio_model
 import datetime
 import pandas as pd
 import numpy as np
 import hpcl_ceg_model
+from weasyprint import HTML
+import charts_actions
+import dashboard_studio_model
 import indentdryout_actions
 import urdhva_base.utilities
 import matplotlib.pyplot as plt
@@ -62,6 +62,23 @@ def round_off(value, input_type='growth'):
             return round(float(value), 2) if round(float(value), 1) == 0 else round(float(value), 1)
         return round(float(value), 1)
     return value
+
+
+def get_growth_percentage(current, hist):
+    """
+    Function to calculate growth percentage
+    :param current:
+    :param hist:
+    :return:
+    """
+    if current and hist:
+        return round_off(((current - hist) / hist) * 100)
+    elif current and not hist:
+        return round_off(100)
+    elif not current and hist:
+        return round_off(-100)
+    else:
+        return round_off(0)
 
 async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
     global chart_path
@@ -122,23 +139,6 @@ async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
     fig.savefig(out_path, dpi=150, bbox_inches='tight')
     plt.close(fig)
     return out_path
-
-def get_growth_percentage(current, hist):
-    """
-    Function to calculate growth percentage
-    :param current:
-    :param hist:
-    :return:
-    """
-    if current and hist:
-        return round_off(((current - hist) / hist) * 100)
-    elif current and not hist:
-        return round_off(100)
-    elif not current and hist:
-        return round_off(-100)
-    else:
-        return round_off(0)
-
 
 def get_zones_by_performance(actual, target, by_sbu=False, req_key='Zone_Name'):
     # Getting top and least performing zones
@@ -424,9 +424,11 @@ async def fetch_retail_sales():
 async def fetch_sales_data():
     present_month = int(datetime.datetime.now(datetime.timezone.utc).strftime("%m"))
     sales_data = {}
+
     # Filter for yesterday's data
     yesterday_date = helpers.get_time_stamp_by_delta(datetime.datetime.now(datetime.timezone.utc), days=1,
                                                      with_month_start_day=False, date_time_format="%Y-%m-%d")
+
     final_data = {"sales_data": sales_data}
 
     sbu_mapping = {'': '', "Retail": 'retail', 'LPG': 'lpg', 'I&C': 'i_c', 'Lubes': 'lubes', 'Aviation': 'aviation',
@@ -522,8 +524,6 @@ async def fetch_sales_data():
         else:
             final_data["sales_data"].update(sbu_sales_data)
     return final_data
-
-
     
 
 def dict_to_object(d):
@@ -878,7 +878,12 @@ async def fetch_dryout_data():
 
     print("\n===== Summary (Date vs Dry out Count) =====")
     print(summary_df.to_string(index=False))
-    
+
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                               date_time_format="%Y-%m-%d")
     loss_query = f"""WITH financial_year_bounds AS (
                         SELECT
                             CASE
@@ -909,10 +914,7 @@ async def fetch_dryout_data():
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     zone_data = await function(query=loss_query)
-
-    # Create DataFrame
     zone_fuel_df = pd.DataFrame(zone_data)
-
     chart_path = await generate_chart(zone_fuel_df)
 
     supply_terminal_query_ro_count_df = await supply_terminal_wise_counts()
@@ -924,6 +926,7 @@ async def fetch_dryout_data():
                         .sort_values("Count of Dryout ROs", ascending=False))
         .reset_index(drop=True)
     )
+
     # Step 3: Reassign Sl No sequentially
     bottom_3_per_zone_sorted["Sl No"] = range(1, len(bottom_3_per_zone_sorted) + 1)
 
@@ -934,6 +937,10 @@ async def fetch_dryout_data():
     print(bottom_3_per_zone_sorted)
 
     # Convert DataFrame to styled HTML
+    supply_terminal_query_ro_count_df = supply_terminal_query_ro_count_df.sort_values(
+        by=["Zone", "Count of Dryout ROs"],
+        ascending=[True, False]
+    )
     html_table = supply_terminal_query_ro_count_df.to_html(
         index=False,
         classes="styled-table",
@@ -941,8 +948,7 @@ async def fetch_dryout_data():
         justify="center"
     )
 
-    retail_html_content = f"""
-                                <html>
+    retail_html_content = f"""  <html>
                                 <head>
                                 <style>
                                 @page {{
@@ -1176,8 +1182,7 @@ async def lpg_top_bottom_score_plants():
                     LEFT JOIN previous_day_scores pd
                         ON p.sap_id = pd.sap_id
                     ORDER BY p.avg_score DESC
-                    LIMIT 3
-                    """
+                    LIMIT 3"""
     
     bottom_query = f"""WITH plant_avg_scores AS (
                         SELECT
@@ -1265,87 +1270,6 @@ async def get_alert_data(alert_section):
             if f"{alert_section.lower()}_{severity}_{bu}" not in data.keys():
                 data.update({f"{alert_section.lower()}_{severity}_{bu}": 0})
     return data
-
-async def get_vts_violation():
-    date = urdhva_base.utilities.get_present_time()
-    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
-                                               date_time_format=None)
-    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
-                                               date_time_format="%Y-%m-%d")
-    date_filter = f"scheduled_trip_start_datetime::DATE >= '{month_start}' AND scheduled_trip_start_datetime::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
-    query = f"""SELECT 
-                    -- TAS: Critical Violations
-                    COUNT(DISTINCT CASE 
-                        WHEN location_type = 'TAS'
-                            AND (
-                                speed_violation_count >= 1 
-                                OR night_driving_count >= 1 
-                                OR route_deviation_count >= 1 
-                                OR stoppage_violations_count >= 1
-                            )
-                        THEN invoice_number 
-                    END) AS vts_critical_violation_tas,
-
-                    -- LPG: Critical Violations
-                    COUNT(DISTINCT CASE 
-                        WHEN location_type = 'LPG'
-                            AND (
-                                speed_violation_count >= 1 
-                                OR route_deviation_count >= 1 
-                                OR stoppage_violations_count >= 1 
-                                OR device_tamper_count >= 1 
-                                OR main_supply_removal_count >= 1
-                            )
-                        THEN invoice_number 
-                    END) AS vts_critical_violation_lpg,
-
-                    -- TAS: High Violations
-                    COUNT(DISTINCT CASE 
-                        WHEN location_type = 'TAS'
-                            AND (
-                                continuous_driving_count >= 1 
-                                OR main_supply_removal_count >= 1
-                            )
-                        THEN invoice_number 
-                    END) AS vts_high_violation_tas,
-
-                    -- LPG: High Violations
-                    COUNT(DISTINCT CASE 
-                        WHEN location_type = 'LPG'
-                            AND (
-                                night_driving_count >= 1 
-                                OR continuous_driving_count >= 1
-                            )
-                        THEN invoice_number 
-                    END) AS vts_high_violation_lpg
-
-                FROM vts_alert_history
-                WHERE 
-                    {date_filter}
-                    AND location_type IN ('TAS', 'LPG');"""
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    vts_violations_data_resp = await function(query=query)
-    vts_violations_data_resp = pd.DataFrame(vts_violations_data_resp)
-    # Extract values from the first (and only) row safely
-    if not vts_violations_data_resp.empty:
-        row = vts_violations_data_resp.iloc[0]
-        vts_violations_data = {
-            "vts_critical_violation_tas": int(row.get("vts_critical_violation_tas", 0)),
-            "vts_critical_violation_lpg": int(row.get("vts_critical_violation_lpg", 0)),
-            "vts_high_violation_tas": int(row.get("vts_high_violation_tas", 0)),
-            "vts_high_violation_lpg": int(row.get("vts_high_violation_lpg", 0)),
-        }
-    else:
-        # Default if no data returned
-        vts_violations_data = {
-            "vts_critical_violation_tas": 0,
-            "vts_critical_violation_lpg": 0,
-            "vts_high_violation_tas": 0,
-            "vts_high_violation_lpg": 0,
-        }
-    return vts_violations_data
 
 async def get_vts_tas_blocked_counts():
     # Making sure alerts considering only after May 31st in prod
@@ -1515,7 +1439,6 @@ async def publish_daily_novex_status_email():
     status_data.update(await lpg_top_bottom_score_plants())
     status_data.update(await get_vts_lpg_blocked_counts())
     status_data.update(await get_vts_tas_blocked_counts())
-    #status_data.update(await get_vts_violation())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data(alert_section))
@@ -1523,36 +1446,87 @@ async def publish_daily_novex_status_email():
     # print("status_data :", json.dumps(status_data))
     # print("-" * 50)
     # print("-------->status_data",status_data)
-    await send_notification(status_data)
+    await send_notification(
+        template_name="seg1.html",
+        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
+        subject="Novex Daily Report",
+        cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com"],
+        notification_data=status_data,
+        inline_images={
+            "dry_out_lost": f"{chart_path}"
+        },
+        attachments = [zone_wise_pdf_path]
+    )
+    await send_notification(
+        template_name="seg2.html",
+        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
+        subject="Novex Daily Report: Retail",
+        cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com"],
+        notification_data=status_data,
+        inline_images={
+            "dry_out_lost": f"{chart_path}"
+        },
+        attachments = [zone_wise_pdf_path]
+    )
+    await send_notification(
+        template_name="seg3.html",
+        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
+        subject="Novex Daily Report: LPG",
+        cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com"],
+        notification_data=status_data
+    )
+    await send_notification(
+        template_name="seg4.html",
+        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
+        subject="Novex Daily Report: SOD",
+        cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com"],
+        notification_data=status_data,
+        attachments = [zone_wise_pdf_path]
+    )
+    await send_notification(
+        template_name="seg5.html",
+        to_recipients=["sreedhar.maddipati@algofusiontech.com"],
+        subject="Novex Daily Report",
+        cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com"],
+        notification_data=status_data,
+        inline_images={
+            "dry_out_lost": f"{chart_path}"
+        },
+        attachments = [zone_wise_pdf_path]
+    )
 
 
-async def send_notification(notification_data):
-    template_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..', 'orchestrator', 'reporting_services',
-                                 'templates', 'seg1.html')
+async def send_notification(template_name, to_recipients, subject, cc_recipients=None, bcc_recipients=None, notification_data=None, inline_images=None, attachments=None):
+    template_path = os.path.join(
+        os.path.dirname(hpcl_ceg_model.__file__),
+        '..', 'orchestrator', 'reporting_services',
+        'templates', template_name
+        )
     with open(template_path, 'r') as f:
         template_data = jinja2.Template(f.read())
     final_data = template_data.render(**notification_data)
 
-    with open(f'/tmp/seg1.html', 'w') as f:
+    tmp_file = f"/tmp/{template_name}"
+    with open(tmp_file, 'w') as f:
         f.write(final_data)
-    
-    inline_images={
-        "dry_out_lost": f"{chart_path}"
-    }
     # Send email
     ins = await notification_factory.get_notification_module("email")
-    for recipient in [
-        ["purushm@hpcl.in", "sachinkwarghane@hpcl.in", "adityapandey@hpcl.in"],
-        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"]
-        ]:
-        await ins.publish_message(
-            subject="Novex Daily Report",
-            recipients=recipient,
-            html_content=True,
-            body=final_data,
-            force_send=True,
-            inline_images=inline_images or {},
-            attachments = [zone_wise_pdf_path]
-        )
+    await ins.publish_message(
+        subject=subject,
+        recipients=to_recipients,
+        cc_recipients=cc_recipients or [],
+        bcc_recipients=bcc_recipients or [],
+        html_content=True,
+        body=final_data,
+        force_send=True,
+        inline_images=inline_images or {},
+        attachments=attachments or []
+    )
+
 if __name__ == "__main__":
     asyncio.run(publish_daily_novex_status_email())
