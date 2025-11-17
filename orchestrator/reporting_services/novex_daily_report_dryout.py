@@ -5,6 +5,10 @@ import json
 import jinja2
 import decimal
 import asyncio
+import psycopg2
+from weasyprint import HTML
+import charts_actions
+import dashboard_studio_model
 import datetime
 import pandas as pd
 import numpy as np
@@ -21,6 +25,7 @@ from charts_actions import charts_connection_vault_routing
 import orchestrator.analytics.m60_performance as m60_performance
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.notification_manager.notification_factory as notification_factory
+import orchestrator.dbconnector.credential_loader as credential_loader
 # from datetime import datetime, timedelta
 
 actual = {"key": "\"A\"", "cond": "equals", "value": "true"}
@@ -31,6 +36,17 @@ ytpm = {"key": "\"YTDPM\"", "cond": "equals", "value": "true"}
 cumulative = {"key": "\"C\"", "cond": "equals", "value": "true"}
 
 chart_path = ""
+zone_wise_pdf_path = ""
+
+creds = credential_loader.get_credentials('APP_DB')
+
+DB_CONFIG = {
+    "host": creds["host"],
+    "port": creds["port"],
+    "database": creds["database"],
+    "user": creds["user"],
+    "password": creds["password"]
+}
 
 def round_off(value, input_type='growth'):
     """Round off functionality with rules"""
@@ -269,6 +285,141 @@ def process_performance_data(data, limit=3):
 
     return top_x, bottom_x
 
+async def generate_sales_queries(product_name):
+    """Generates the set of SQL queries needed for the sales report metrics."""
+    today = datetime.datetime.now() 
+    yesterday = today - datetime.timedelta(days=1)
+    # Day
+    day_current_start = day_current_end = yesterday.strftime('%Y%m%d')
+
+    day_historical_start = day_historical_end = (yesterday - datetime.timedelta(days=365)).strftime('%Y%m%d')
+
+    # Month
+    month_start = yesterday.replace(day=1)
+    month_current_start = month_start.strftime('%Y%m%d')
+    month_current_end = yesterday.strftime('%Y%m%d')
+
+    month_historical_start = (month_start - datetime.timedelta(days=365)).strftime('%Y%m%d')
+    month_historical_end = (yesterday - datetime.timedelta(days=365)).strftime('%Y%m%d')
+    
+    # Year (Financial Year = April 1)
+    fy_start_year = yesterday.year if yesterday.month >= 4 else yesterday.year - 1
+    year_current_start = datetime.datetime(fy_start_year, 4, 1).strftime('%Y%m%d')
+    year_current_end = yesterday.strftime('%Y%m%d')
+    month_start_date = month_start.strftime("%Y-%m-%d")
+
+    year_historical_start = datetime.datetime(fy_start_year - 1, 4, 1).strftime('%Y%m%d')
+    year_historical_end = (yesterday - datetime.timedelta(days=365)).strftime('%Y%m%d')
+
+    last_year_same_month_start = datetime.datetime(yesterday.year - 1, yesterday.month, 1)
+    if yesterday.month == 12:
+        last_year_same_month_end = datetime.datetime(yesterday.year, 1, 1) - datetime.timedelta(days=1)
+    else:
+        next_month = datetime.datetime(yesterday.year - 1, yesterday.month + 1, 1)
+        last_year_same_month_end = next_month - datetime.timedelta(days=1)
+
+    month_total_historical_start = last_year_same_month_start.strftime('%Y%m%d')
+    month_total_historical_end = last_year_same_month_end.strftime('%Y%m%d')
+    
+    base_condition = """
+        "SBU_Name" != '0' 
+        AND "SBU_Name" IN ('Retail') 
+        AND "ProductName" = '{product}'
+    """
+
+    query_template = """
+        SELECT ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2)
+        FROM "MOM_DAY_LEVEL_DATA"
+        WHERE {condition} 
+        AND "DAY_ID" BETWEEN '{start}' AND '{end}';
+    """
+
+    queries = {
+        "day_current": query_template.format(condition=base_condition.format(product=product_name), start=day_current_start, end=day_current_end),
+        "day_historical": query_template.format(condition=base_condition.format(product=product_name), start=day_historical_start, end=day_historical_end),
+        "month_current": query_template.format(condition=base_condition.format(product=product_name), start=month_current_start, end=month_current_end),
+        "month_historical": query_template.format(condition=base_condition.format(product=product_name), start=month_historical_start, end=month_historical_end),
+        "year_current": query_template.format(condition=base_condition.format(product=product_name), start=year_current_start, end=year_current_end),
+        "month_total_historical": query_template.format(
+        condition=base_condition.format(product=product_name),
+        start=month_total_historical_start,
+        end=month_total_historical_end
+        ),
+        "year_historical": query_template.format(condition=base_condition.format(product=product_name), start=year_historical_start, end=year_historical_end)
+    }
+    print("queries",queries)
+    return queries
+
+async def fetch_value(conn, query):
+    """Executes a single query and returns the float result, or 0.0 if None."""
+    try:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            result = cur.fetchone()
+            return float(result[0]) if result and result[0] is not None else 0.0
+    except Exception as e:
+        # print(f"Error fetching data: {e}") # Suppress verbose printing on failure
+        return 0.0
+
+async def calculate_growth(current, historical):
+    """Calculates percentage growth, returns 0.0 if historical is zero."""
+    if historical == 0 or historical is None:
+        return 0.0
+    # Returns percentage growth rounded to two decimal places
+    return round(((current - historical) / historical) * 100, 2)
+
+async def generate_report(product_name):
+    """Fetches all data and calculates growth metrics for a single product."""
+    queries = await generate_sales_queries(product_name)
+    report = {}
+
+    try:
+        with psycopg2.connect(**DB_CONFIG) as conn:
+            for key, query in queries.items():
+                report[key] = await fetch_value(conn, query)
+
+    except Exception as e:
+        print(f"Database connection error: {e}")
+        # Initialize report dictionary with zero/empty values on DB failure
+        keys = ["day_current", "month_current", "projected_sales", "year_current"]
+        for key in keys:
+            report[key] = 0.0
+    
+    # Calculate growths
+    report["day_growth"] = await calculate_growth(report.get("day_current", 0), report.get("day_historical", 0))
+    report["month_growth"] = await calculate_growth(report.get("month_current", 0), report.get("month_historical", 0))
+    report["year_growth"] = await calculate_growth(report.get("year_current", 0), report.get("year_historical", 0))
+    month_growth = report["month_growth"]
+    month_total_historical = report["month_total_historical"]
+    projected_sales = month_total_historical + (month_total_historical * month_growth) / 100
+    report["projected_sales"] = round(projected_sales, 2)
+    report["month_target_growth"] = await calculate_growth(report.get("projected_sales", 0), report.get("month_total_historical", 0))
+
+    # Structure the data for the final DataFrame row
+    excel_report_data = {
+        # FINAL FIX: Set SBU column to empty string in the data rows 
+        "Product Group": product_name, # 'MS' or 'HSD'
+        
+        "Day's Sales (Current)": report["day_current"],
+        "% Growth (Day)": report["day_growth"],
+        
+        "Month's Cumulative Sales Till Date (Current)": report["month_current"],
+        "% Growth (Month MTD)": report["month_growth"],
+        
+        "Projected Sales for The Month": report["projected_sales"],
+        "% Growth (Full Month)": report["month_target_growth"],
+        
+        "Year Cumulative Sales Till Date (Current)": report["year_current"],
+        "% Growth (Year YTD)": report["year_growth"],
+    }
+    return excel_report_data
+    
+async def fetch_retail_sales():
+    all_data = []
+    for product in ["MS", "HSD"]:
+        result = await generate_report(product)
+        all_data.append(result)
+    return all_data
 
 async def fetch_sales_data():
     present_month = int(datetime.datetime.now(datetime.timezone.utc).strftime("%m"))
@@ -383,8 +534,115 @@ def dict_to_object(d):
         return SimpleNamespace(**{k: dict_to_object(v) for k, v in d.items()})
     return d
 
+async def supply_terminal_wise_counts():
+    query = f"""SELECT DISTINCT
+                    CASE 
+                        WHEN a.zone = 'CEN' THEN 'CZ'
+                        WHEN a.zone = 'NWF' THEN 'NWFZ'
+                        ELSE a.zone
+                    END AS zone,
+                    a.terminal_plant_id AS plant_id,
+                    COALESCE(NULLIF(lm.name, ''), a.terminal_plant_name) AS supply_location,
+                    COALESCE(NULLIF(lm_ro.region, ''), a.region) AS region,
+                    COALESCE(NULLIF(lm_ro.sales_area, ''), a.sales_area) AS sales_area,
+                    COALESCE(NULLIF(lm_ro.zone, ''), a.zone) AS zones,
+                    a.sap_id
+                FROM alerts a
+                LEFT JOIN location_master lm
+                    ON a.terminal_plant_id = lm.sap_id
+                LEFT JOIN location_master lm_ro
+                    ON a.sap_id = lm_ro.sap_id
+                WHERE
+                    COALESCE(a.zone, '') <> ''        -- exclude empty or null zones
+                    AND a.mark_as_false = 'true'
+                    AND a.alert_status != 'Close'
+                    AND a.dry_out_in_days = '1'
+                    AND a.terminal_plant_name NOT ILIKE '%retail%'
+                    AND a.product_code IN ('2811000', '2812000');"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+    data_resp = pd.DataFrame(resp)
+    data_resp = data_resp.drop(["sales_area", "zones"], axis=1)
+    sap_ids = list(set(data_resp["sap_id"].tolist()))
+    sap_ids = [str(sid).zfill(10) for sid in sap_ids]
+    batch_size = 100
+    all_batches = []
+    for i in range(0, len(sap_ids), batch_size):
+        batch = sap_ids[i:i + batch_size]
+        print(f"Processing batch {i//batch_size + 1}: {len(batch)} items")
+        batch_str = ",".join([f"'{str(s)}'" for s in batch])
+        ims_query = f"""SELECT 
+                            SUBSTR(a."DEALER_CODE", 1, 10) AS "SAP_ID",
+                            COUNT(*) AS "VALID_COUNT"
+                        FROM "IMS_SAP"."INDENT_REQUEST" a
+                        WHERE a."BALANCE_AMOUNT" <= 0
+                        AND a."TRUCK_REGNO" IS NULL
+                        AND (a."CANCEL_INDENT" IS NULL OR a."CANCEL_INDENT" <> 'Y')
+                        AND SUBSTR(a."DEALER_CODE", 1, 10) IN ({batch_str})
+                        AND a."PROD_REQD_DT" <= TRUNC(SYSDATE)
+                        GROUP BY SUBSTR(a."DEALER_CODE", 1, 10)
+                        ORDER BY "SAP_ID" ASC
+                        """
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        resp = await function(query=ims_query)
+        batch_df = pd.DataFrame(resp)
+        all_batches.append(batch_df)
+    
+    # Combine all batches into one DataFrame
+    final_df = pd.concat(all_batches, ignore_index=True)
+    # Optionally remove duplicates if needed
+    final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
+    final_df["SAP_ID"] = final_df["SAP_ID"].astype(str).str.lstrip("0")
+    # print(final_df)
+    # print("Combined DataFrame created successfully with", len(final_df), "records.")
+    merged_df = data_resp.merge(
+        final_df,
+        how="left",
+        left_on="sap_id",
+        right_on="SAP_ID"
+    )
+    merged_df["VALID_COUNT"] = merged_df["VALID_COUNT"].fillna(0).astype(int)
+    # Drop the extra SAP_ID column (from IMS data)
+    merged_df.drop(columns=["SAP_ID"], inplace=True)
+    # Step 6: Final output
+    # print(merged_df.head())
+    # print(f"\n Combined DataFrame created successfully with {len(merged_df)} records.")
+    # print(" VALID_COUNT column added successfully based on SAP_ID.")
+    summary_df = (
+        merged_df.groupby(["zone", "supply_location", "region"], dropna=False)
+        .agg(
+            **{
+                "Count of Dryout ROs": ("sap_id", "nunique"),
+                "Count of DryOut Outlets with Valid indent": ("VALID_COUNT", "sum"),
+            }
+        )
+        .reset_index()
+    )
+    # Step 8: Rename columns
+    summary_df.rename(
+        columns={
+            "zone": "Zone",
+            "supply_location": "Supply Location (Terminal)",
+            "region": "Region",
+        },
+        inplace=True,
+    )
+    # Sort by Count of Dryout ROs in descending order
+    summary_df = summary_df.sort_values(
+        by="Count of Dryout ROs", ascending=False, ignore_index=True
+    )
+    summary_df.insert(0, "Sl No", range(1, len(summary_df) + 1))
+    # Step 8: Display results
+    print(summary_df.head())
+    #print(f"Summary DataFrame created successfully with {len(summary_df)} rows.")
+    return summary_df
 
 async def fetch_dryout_data():
+    global zone_wise_pdf_path
     query = """
                 WITH dates AS (
                 SELECT CURRENT_DATE::date AS report_date
@@ -657,45 +915,89 @@ async def fetch_dryout_data():
 
     chart_path = await generate_chart(zone_fuel_df)
 
-    supply_terminal_query = f"""WITH dryout_data AS (
-                                    SELECT
-                                        CASE 
-                                            WHEN zone = 'CEN' THEN 'CZ'
-                                            WHEN zone = 'NWF' THEN 'NWFZ'
-                                            ELSE zone
-                                        END AS zone,
-                                        terminal_plant_name AS supply_location,
-                                        region,
-                                        COUNT(DISTINCT sap_id) AS count_of_dryout_ros
-                                    FROM alerts
-                                    WHERE
-                                        COALESCE(zone, '') <> ''  -- exclude empty or null zones
-                                        AND mark_as_false = 'true'
-                                        AND alert_status != 'Close'
-                                        AND dry_out_in_days = '1'
-                                        AND product_code IN ('2811000', '2812000')
-                                    GROUP BY 
-                                        CASE 
-                                            WHEN zone = 'CEN' THEN 'CZ'
-                                            WHEN zone = 'NWF' THEN 'NWFZ'
-                                            ELSE zone
-                                        END,
-                                        terminal_plant_name,
-                                        region
-                                )
-                                SELECT 
-                                    ROW_NUMBER() OVER (ORDER BY count_of_dryout_ros DESC) AS "Sl No",
-                                    zone AS "Zone",
-                                    supply_location AS "Supply Location (Terminal)",
-                                    region AS "Region",
-                                    count_of_dryout_ros AS "Count of Dryout ROs"
-                                FROM dryout_data
-                                ORDER BY count_of_dryout_ros DESC, zone, supply_location, region;"""
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    supply_terminal_query_ro_count = await function(query=supply_terminal_query)
-    supply_terminal_query_ro_count_df = pd.DataFrame(supply_terminal_query_ro_count)
+    supply_terminal_query_ro_count_df = await supply_terminal_wise_counts()
+
+    bottom_3_per_zone = (
+        supply_terminal_query_ro_count_df.groupby("Zone", group_keys=False)
+        .apply(lambda x: x.nlargest(3, "Count of Dryout ROs"))
+        .reset_index(drop=True)
+    )
+    # Step 2: Sort the 36 records in descending order based on Count of Dryout ROs
+    bottom_3_per_zone_sorted = bottom_3_per_zone.sort_values(
+        by="Count of Dryout ROs", ascending=False
+    ).reset_index(drop=True)
+
+    # Step 3: Reassign Sl No sequentially
+    bottom_3_per_zone_sorted["Sl No"] = range(1, len(bottom_3_per_zone_sorted) + 1)
+
+    # Step 4: Reorder columns for readability
+    bottom_3_per_zone_sorted = bottom_3_per_zone_sorted[
+        ["Sl No", "Zone", "Supply Location (Terminal)", "Region", "Count of Dryout ROs", "Count of DryOut Outlets with Valid indent"]
+    ]
+    print(bottom_3_per_zone_sorted)
+
+    # Convert DataFrame to styled HTML
+    html_table = supply_terminal_query_ro_count_df.to_html(
+        index=False,
+        classes="styled-table",
+        border=0,
+        justify="center"
+    )
+
+    retail_html_content = f"""
+                                <html>
+                                <head>
+                                <style>
+                                @page {{
+                                    margin: 10px;  /* Reduce PDF margins */
+                                }}
+                                body {{
+                                    font-family: Arial, sans-serif;
+                                    margin: 5px;  /* Reduce white space around content */
+                                    padding: 0;
+                                }}
+                                h2 {{
+                                    text-align: center;
+                                    color: #003366;
+                                    margin-bottom: 10px;
+                                    margin-top: 5px;
+                                }}
+                                table.styled-table {{
+                                    border-collapse: collapse;
+                                    width: 100%;
+                                    margin: 5px auto;  /* Small margin around table */
+                                }}
+                                table.styled-table th {{
+                                    background-color: #003366;
+                                    color: white;
+                                    text-align: center;
+                                    padding: 8px;
+                                    border: 1px solid #ddd;
+                                }}
+                                table.styled-table td {{
+                                    text-align: center;
+                                    padding: 6px;
+                                    border: 1px solid #ddd;
+                                }}
+                                table.styled-table tr:nth-child(even) {{
+                                    background-color: #f2f2f2;
+                                }}
+                                </style>
+                                </head>
+                                <body>
+                                <h2>Location Wise RO Dryout Count</h2>
+                                {html_table}
+                                </body>
+                                </html>
+                                """
+
+    pdf_path = "/tmp/Location Wise RO Dryout Count.pdf"
+
+    zone_wise_pdf_path = pdf_path
+
+    HTML(string=retail_html_content).write_pdf(pdf_path)
+
+    retail_sales = await fetch_retail_sales()
 
     dry_out_cf = {
         'cat_a': cat_a,
@@ -713,7 +1015,7 @@ async def fetch_dryout_data():
     print("dry_out :", dry_out)
     return {"dry_out_cf": dry_out_cf, "dry_out": dry_out, 'dry_out_details': dry_out_details, 
             'dry_out_trends': summary_df.to_dict(orient='records'),
-            'zone_wise_summary': pivot, 'zone_fuel_df':zone_fuel_df, 'supply_terminal_query_ro_count_df': supply_terminal_query_ro_count_df}
+            'zone_wise_summary': pivot, 'zone_fuel_df':zone_fuel_df, 'supply_terminal_query_ro_count_df': bottom_3_per_zone_sorted, "retail_sales": retail_sales}
 
 
 async def get_lpg_rejection():
@@ -967,6 +1269,86 @@ async def get_alert_data(alert_section):
                 data.update({f"{alert_section.lower()}_{severity}_{bu}": 0})
     return data
 
+async def get_vts_violation():
+    date = urdhva_base.utilities.get_present_time()
+    date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False,
+                                               date_time_format=None)
+    month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True,
+                                               date_time_format="%Y-%m-%d")
+    date_filter = f"scheduled_trip_start_datetime::DATE >= '{month_start}' AND scheduled_trip_start_datetime::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    query = f"""SELECT 
+                    -- TAS: Critical Violations
+                    COUNT(DISTINCT CASE 
+                        WHEN location_type = 'TAS'
+                            AND (
+                                speed_violation_count >= 1 
+                                OR night_driving_count >= 1 
+                                OR route_deviation_count >= 1 
+                                OR stoppage_violations_count >= 1
+                            )
+                        THEN invoice_number 
+                    END) AS vts_critical_violation_tas,
+
+                    -- LPG: Critical Violations
+                    COUNT(DISTINCT CASE 
+                        WHEN location_type = 'LPG'
+                            AND (
+                                speed_violation_count >= 1 
+                                OR route_deviation_count >= 1 
+                                OR stoppage_violations_count >= 1 
+                                OR device_tamper_count >= 1 
+                                OR main_supply_removal_count >= 1
+                            )
+                        THEN invoice_number 
+                    END) AS vts_critical_violation_lpg,
+
+                    -- TAS: High Violations
+                    COUNT(DISTINCT CASE 
+                        WHEN location_type = 'TAS'
+                            AND (
+                                continuous_driving_count >= 1 
+                                OR main_supply_removal_count >= 1
+                            )
+                        THEN invoice_number 
+                    END) AS vts_high_violation_tas,
+
+                    -- LPG: High Violations
+                    COUNT(DISTINCT CASE 
+                        WHEN location_type = 'LPG'
+                            AND (
+                                night_driving_count >= 1 
+                                OR continuous_driving_count >= 1
+                            )
+                        THEN invoice_number 
+                    END) AS vts_high_violation_lpg
+
+                FROM vts_alert_history
+                WHERE 
+                    {date_filter}
+                    AND location_type IN ('TAS', 'LPG');"""
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    vts_violations_data_resp = await function(query=query)
+    vts_violations_data_resp = pd.DataFrame(vts_violations_data_resp)
+    # Extract values from the first (and only) row safely
+    if not vts_violations_data_resp.empty:
+        row = vts_violations_data_resp.iloc[0]
+        vts_violations_data = {
+            "vts_critical_violation_tas": int(row.get("vts_critical_violation_tas", 0)),
+            "vts_critical_violation_lpg": int(row.get("vts_critical_violation_lpg", 0)),
+            "vts_high_violation_tas": int(row.get("vts_high_violation_tas", 0)),
+            "vts_high_violation_lpg": int(row.get("vts_high_violation_lpg", 0)),
+        }
+    else:
+        # Default if no data returned
+        vts_violations_data = {
+            "vts_critical_violation_tas": 0,
+            "vts_critical_violation_lpg": 0,
+            "vts_high_violation_tas": 0,
+            "vts_high_violation_lpg": 0,
+        }
+    return vts_violations_data
 
 async def publish_daily_novex_status_email():
     date = urdhva_base.utilities.get_present_time()
@@ -1014,6 +1396,7 @@ async def publish_daily_novex_status_email():
     status_data.update(await get_tas_alerts())
     #status_data.update(await get_vts_route_deviation())
     status_data.update(await lpg_top_bottom_score_plants())
+    #status_data.update(await get_vts_violation())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data(alert_section))
@@ -1026,12 +1409,12 @@ async def publish_daily_novex_status_email():
 
 async def send_notification(notification_data):
     template_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..', 'orchestrator', 'reporting_services',
-                                 'templates', 'seg5.html')
+                                 'templates', 'seg1.html')
     with open(template_path, 'r') as f:
         template_data = jinja2.Template(f.read())
     final_data = template_data.render(**notification_data)
 
-    with open(f'/tmp/seg5.html', 'w') as f:
+    with open(f'/tmp/seg1.html', 'w') as f:
         f.write(final_data)
     
     inline_images={
@@ -1050,6 +1433,7 @@ async def send_notification(notification_data):
             body=final_data,
             force_send=True,
             inline_images=inline_images or {},
+            attachments = [zone_wise_pdf_path]
         )
 if __name__ == "__main__":
     asyncio.run(publish_daily_novex_status_email())

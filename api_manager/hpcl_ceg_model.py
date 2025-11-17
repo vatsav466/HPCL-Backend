@@ -10064,3 +10064,72 @@ class Lpgdatapostingaudit_Get_Erp_StatusParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class NoticesCreate(pydantic.BaseModel):
+    doc_type: typing.Optional[str] = pydantic.Field("", **{})
+    uploaded_date: typing.Optional[datetime.datetime] | None = None
+    uploaded_by: typing.Optional[str] = pydantic.Field("", **{})
+    uploaded_name: typing.Optional[str] = pydantic.Field("", **{})
+    file_path: typing.Optional[str] = pydantic.Field("", **{})
+    report_type: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class NoticesVTSSchema(UrdhvaPostgresBase):
+    __tablename__ = 'notices_vts'
+    
+    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_type: Mapped[typing.Optional[str]] = mapped_column("alert_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    notices: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("notices", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+
+class NoticesVTSCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'notices_vts'
+    
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    alert_type: typing.Optional[str] = pydantic.Field("", **{})
+    notices: typing.Optional[typing.List[NoticesCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = NoticesVTSSchema
+        upsert_keys = []
+
+
+class NoticesVTS(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'notices_vts'
+    
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    alert_type: typing.Optional[str] = pydantic.Field("", **{})
+    notices: typing.Optional[typing.List[NoticesCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = NoticesVTSSchema
+        upsert_keys = []
+
+
+class NoticesVTSGetResp(pydantic.BaseModel):
+    data: typing.List[NoticesVTS]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Noticesvts_Download_NoticeParams(pydantic.BaseModel):
+    file_path: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Noticesvts_Upload_NoticeParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

@@ -3554,3 +3554,29 @@ Model LpgDataPostingAudit {
         request_id optional str
     }
 }
+
+Model Notices internal {
+    doc_type optional str
+    uploaded_date optional datetime_no_zone
+    uploaded_by optional str
+    uploaded_name optional str
+    file_path optional str
+    report_type optional str
+}
+
+Model NoticesVTS {
+    alert_id optional str
+    alert_type optional str
+    notices optional list Notices
+
+    Action=> download_notice {
+        file_path optional str
+    }
+
+    Action=> upload_notice {
+    }
+    
+    Config=> {
+        crud_operations='read'
+    }
+}
