@@ -1039,12 +1039,15 @@ class AlertAction:
                     "transporter_code": transporter_code,
                     "transporter_name": trasporter_details.get("transporter_name",""),
                     "transporter_address": trasporter_details.get("transporter_address",""),
-                    "date": urdhva_base.utilities.get_present_time().replace(tzinfo=None).isoformat(),
+                    "date": urdhva_base.utilities.get_present_time().strftime("%d/%m/%Y"),
                     "count": len(vts_alert_history_query_resp),
                     "vts_violations_table": vts_alert_history_query_resp,
                     "officer_name": rpt.get("first_name",""),
                     "officer_designation": rpt.get("novex_role",""),
-                    "location": alert_data.sap_id,
+                    "location": alert_data.location_name,
+                    "start_date": "--/--/----",
+                    "end_date": "--/--/----",
+                    "violation": " ".join(alert_data.interlock_name.split()[:-1])
                 }
                 if alert_data.device_id in ['Instance - 2','Instance - 3']:
                     template_data['black_list_conditions'] = f"""Please note, that every case of blacklisting of a TT inducted with the Transporter shall be considered 
@@ -1067,12 +1070,12 @@ class AlertAction:
                     notices_data = notices_data['data'][0]
                     notice_history = notices_data.get('notices',[])
                     notices_respose = {
-                        "doc_type": "System Generated",
+                        "doc_type": "Show Cause Notice UnSigned",
                         "uploaded_date": urdhva_base.utilities.get_present_time().replace(tzinfo=None).isoformat(),
                         "uploaded_by": rpt.get("employee_id",""),
                         "file_path": minio_path,
                         "uploaded_name": rpt.get("first_name",""),
-                        "report_type": "System Generated"
+                        "report_type": "Show Cause Notice UnSigned"
                     }
                     notice_history.append(notices_respose)
                     await hpcl_ceg_model.NoticesVTS(**{"id": notices_data['id']}).modify()
