@@ -18,7 +18,8 @@ SOURCE_TABLE = "CONN_ENT.ZSDCV_AY_INV3_TILL_DATE"
 TARGET_TABLE = "sales_trips_till_date"
 INCREMENTAL_KEY = "syncdt"  # date
 USER_DEFINED_WHERE = (
-    "division = '11' AND load_status = '6' AND qty_shortage > '0' AND sales_org = '7000'"
+    "division IN ('11','12','20','21') AND load_status = '6' AND qty_shortage > '0' "
+    "AND sales_org IN ('7000','3000','2000')"
 )
 CONFLICT_COLUMNS = ["invoice_no", "vehicle_id", "sap_id", "item_no"]
 
