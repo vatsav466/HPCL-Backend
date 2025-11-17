@@ -949,3 +949,99 @@ vts_sod_top_unblocking_matrix = {
         }
     }
 }
+
+lpg_one_officer_unblocking_matrix = {
+    "VTS":{
+        "LPG": {
+            "level - 1": {
+                "rolemailto": {
+                    "0": "Location In-Charge LPG,Creator LPG",
+                    "1": "Zonal Distributions Head LPG,Approver LPG",
+                    "2": "Location In-Charge LPG,Zonal Distributions Head LPG,Creator LPG,Approver LPG"
+                },
+                "mqof": {
+                    "0": "Location In-Charge LPG,Creator LPG",
+                    "1": "Zonal Distributions Head LPG,Approver LPG"
+                },
+                "condition": "<",
+                "value": 1
+            },
+            "level - 2": {
+                "rolemailto": {
+                    "0": "Location In-Charge LPG,Creator LPG",
+                    "1": "Zonal Distributions Head LPG,Approver LPG",
+                    "2": "Location In-Charge LPG,Zonal Distributions Head LPG,Creator LPG,Approver LPG"
+                },
+                "mqof": {
+                    "0": "Location In-Charge LPG,Creator LPG",
+                    "1": "Zonal Distributions Head LPG,Approver LPG"
+                },
+                "condition": "<>",
+                "value": 2
+            },
+            "level - 3": {
+                "rolemailto": {
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Head LPG,Approver LPG",
+                    "2": "Zonal Distributions Head LPG,Zonal Head LPG,Creator LPG,Approver LPG"
+                },
+                "mqof": {
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Head LPG,Approver LPG"
+                },
+                "condition": ">",
+                "value": 2
+            }
+        }
+    }
+}
+
+lpg_no_officer_unblocking_matrix = {
+    "VTS":{
+        "LPG": {
+            "level - 1": {
+                "rolemailto": {
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG",
+                    "2": "Zonal Distributions Head LPG,Zonal Operations LPG,Creator LPG,Approver LPG"
+                },
+                "mqof": {
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG"
+                },
+                "condition": "<",
+                "value": 1
+            },
+            "level - 2": {
+                "rolemailto": {
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG",
+                    "2": "Zonal Distributions Head LPG,Zonal Operations LPG,Creator LPG,Approver LPG"
+                },
+                "mqof": {
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG"
+                },
+                "condition": "<>",
+                "value": 2
+            },
+            "level - 3": {
+                "rolemailto": {
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Head LPG,Approver LPG",
+                    "2": "Zonal Distributions Head LPG,Zonal Head LPG,Creator LPG,Approver LPG"
+                },
+                "mqof": {
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Head LPG,Approver LPG"
+                },
+                "condition": ">",
+                "value": 2
+            }
+        }
+    }
+}
+
+lpg_locations_with_one_officer = ['2215','2503','2540','2701','2792','2330','2324','2663','2504','2248','2262','2471','2829','2693','2662']
+
+lpg_locations_with_no_officer = ['2312','2449','2459','2461','2522','2525','2543','2544','2573','2938','2462','2848','2458','2664']

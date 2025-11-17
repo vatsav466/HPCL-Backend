@@ -914,8 +914,16 @@ async def post_lpg_tt(payload):
 
 async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_section:str):
     vts_mapping = vts_role_mapping.vts_unblocking_matrix[alert_section]
+    lpg_vts_with_one_officer = vts_role_mapping.lpg_locations_with_one_officer
+    lpg_vts_with_no_officer = vts_role_mapping.lpg_locations_with_no_officer
+
     if sap_id in ['1652','1672','1693','1462','1649','1689','1676','1700','1691']:
         vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
+    elif sap_id in lpg_vts_with_one_officer:
+        vts_mapping = vts_role_mapping.lpg_one_officer_unblocking_matrix[alert_section]
+    elif sap_id in lpg_vts_with_no_officer:
+        vts_mapping = vts_role_mapping.lpg_no_officer_unblocking_matrix[alert_section]
+        
     if bu in vts_mapping.keys():
         query = (f"""select count(*) as "count" from alerts """
                  f"where bu = '{bu}' and "
@@ -935,8 +943,16 @@ async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_
 
 async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_section:str):
     vts_mapping = vts_role_mapping.vts_unblocking_matrix[alert_section]
+    lpg_vts_with_one_officer = vts_role_mapping.lpg_locations_with_one_officer
+    lpg_vts_with_no_officer = vts_role_mapping.lpg_locations_with_no_officer
+
     if sap_id in ['1652','1672','1693','1462','1649','1689','1676','1700','1691']:
         vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
+    elif sap_id in lpg_vts_with_one_officer:
+        vts_mapping = vts_role_mapping.lpg_one_officer_unblocking_matrix[alert_section]
+    elif sap_id in lpg_vts_with_no_officer:
+        vts_mapping = vts_role_mapping.lpg_no_officer_unblocking_matrix[alert_section]
+
     if bu in vts_mapping.keys():
         vts_level_data = vts_mapping[bu]
         vts_alert_count = await get_vts_alerts_count(bu=bu, vehicle_number=vehicle_number, sap_id=sap_id, alert_section=alert_section)
