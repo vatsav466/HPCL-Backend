@@ -3391,6 +3391,7 @@ Model EmailMaster {
     zone optional str
     transporter_name optional str
     transporter_code optional str
+    transporter_address optional str
     transporter_email1 optional str
     transporter_email2 optional str
     location_officer optional str
