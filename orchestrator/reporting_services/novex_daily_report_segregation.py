@@ -937,6 +937,11 @@ async def fetch_dryout_data():
     print(bottom_3_per_zone_sorted)
 
     # Convert DataFrame to styled HTML
+    supply_terminal_query_ro_count_df = supply_terminal_query_ro_count_df.sort_values(
+        by=["Zone", "Count of Dryout ROs"],
+        ascending=[True, False]
+    )
+    supply_terminal_query_ro_count_df["Sl No"] = range(1, len(supply_terminal_query_ro_count_df) + 1)
     html_table = supply_terminal_query_ro_count_df.to_html(
         index=False,
         classes="styled-table",
