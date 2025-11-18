@@ -2237,8 +2237,6 @@ class VTSAnalyticsActions:
                     "filtered_invoice_count": 0, "filtered_vehicle_count": 0, "zones": []}
             
         trips_df.columns = [c.lower() for c in trips_df.columns]
-
-
         # 4b. Merge email master
         email_query = "SELECT transporter_code, transporter_name FROM email_master"
         email_df = await VTSAnalyticsActions.execute_query(email_query)
@@ -2246,28 +2244,42 @@ class VTSAnalyticsActions:
         if not email_df.empty:
             email_df.columns = [c.lower() for c in email_df.columns]
 
-            # --- Normalize both columns for merge ---
-            trips_df['carrier_no'] = trips_df['carrier_no'].astype(str).str.strip()
-            email_df['transporter_code'] = email_df['transporter_code'].astype(str).str.strip()
-
-            # Remove leading 00 from both for matching
-            trips_df['carrier_no'] = trips_df['carrier_no'].str.replace(r'^00', '', regex=True)
-            email_df['transporter_code'] = email_df['transporter_code'].str.replace(r'^00', '', regex=True)
-
-            # --- Merge on carrier_no <-> transporter_code ---
-            trips_df = trips_df.merge(
-                email_df,
-                how='left',
-                left_on='carrier_no',
-                right_on='transporter_code'
+            # Clean and normalize keys
+            email_df['transporter_code'] = (
+                email_df['transporter_code']
+                .astype(str)
+                .str.strip()
+                .str.replace(r'^00', '', regex=True)
             )
+            trips_df['carrier_no'] = (
+                trips_df['carrier_no']
+                .astype(str)
+                .str.strip()
+                .str.replace(r'^00', '', regex=True)
+            )
+
+            # Ensure transporter_code is unique
+            email_df = email_df.drop_duplicates(subset=['transporter_code'])
+
+            # SAFE mapping: no extra rows, just add transporter_name column
+            email_map = email_df.set_index('transporter_code')['transporter_name']
+            trips_df['transporter_name'] = trips_df['carrier_no'].map(email_map)
 
             # --- Debug export for missing transporter_name ---
             # trips_df.to_csv('/Users/algofusion/Downloads/missing_transporters.csv', index=False)
 
         # ----- 5. Filter valid trips (Original Logic) -----
         
-        trips_df['qty_shortage'] = pd.to_numeric(trips_df['qty_shortage'], errors='coerce')
+        # trips_df['qty_shortage'] = pd.to_numeric(trips_df['qty_shortage'], errors='coerce')
+        trips_df['qty_shortage'] = (
+            trips_df['qty_shortage']
+            .astype(str)
+            .str.replace(r"[^0-9.]", "", regex=True)  # keep only digits & decimal
+            .str.strip()
+        )
+
+        trips_df['qty_shortage'] = pd.to_numeric(trips_df['qty_shortage'], errors='coerce').fillna(0)
+
         filtered_trips_df = trips_df[
             # trips_df['transporter_name'].notnull() &
             # trips_df['transporter_code'].notnull() &
@@ -2327,7 +2339,9 @@ class VTSAnalyticsActions:
 
             for keys, group in df.groupby(current_col, dropna=False):
                 item = {current_col: keys}
-                item["shortage"] = group["qty_shortage"].sum()
+                # item["shortage"] = group["qty_shortage"].sum()
+                item["shortage"] = group["qty_shortage"].astype(float).sum()
+
                 item["invoice_count"] = group["invoice_no"].nunique()
                 # item["vehicle_count"] = group["vehicle_id"].nunique()
                 # item["invoice_count"] = len(group["invoice_no"])
@@ -2337,25 +2351,19 @@ class VTSAnalyticsActions:
 
                 # --- Material Group Bifurcation Logic ---
                 if "material_group_nm" in group.columns and "qty_shortage" in group.columns:
-                    all_rows = []
-                    for _, row in group.iterrows():
-                        mats = str(row["material_group_nm"]).split(",")
-                        for m in mats:
-                            m = str(row["material_group_nm"]).strip()
-                            if m:
-                                all_rows.append({
-                                    "material_group_nm": m,
-                                    "shortage": float(row["qty_shortage"])
-                                })
-
-                    # Merge shortages by material group
-                    from collections import defaultdict
-                    merged = defaultdict(float)
-                    for r in all_rows:
-                        merged[r["material_group_nm"]] += r["shortage"]
+                    bif_df = (
+                        group
+                        .groupby("material_group_nm", dropna=False)["qty_shortage"]
+                        .sum()
+                        .reset_index()
+                    )
 
                     item["item_bifurcation"] = [
-                        {"material_group_nm": k, "shortage": round(v, 2)} for k, v in merged.items()
+                        {
+                            "material_group_nm": row["material_group_nm"],
+                            "shortage": round(float(row["qty_shortage"]), 2),
+                        }
+                        for _, row in bif_df.iterrows()
                     ]
 
 
@@ -2413,23 +2421,11 @@ class VTSAnalyticsActions:
             
             return {"status": "success","message": "Table Data fetched successfully", "data": await safe_json(table_df)}
         
-        if 'vehicle_id' in filtered_trips_df.columns and 'invoice_no' in filtered_trips_df.columns:
-            # Keep material_group_nm as separate rows to preserve shortages correctly
-            combined_df = (
-                filtered_trips_df
-                .groupby(['vehicle_id', 'invoice_no', 'material_group_nm'], as_index=False)
-                .agg({
-                    'qty_shortage': 'sum',  
-                    'plant_nm': 'first',
-                    'zone_nm': 'first',
-                    'transporter_name': 'first',
-                    'load_date': 'first'
-                })
-            )
-            filtered_trips_df = combined_df
 
         filtered_trips_df = filtered_trips_df.replace([float('inf'), float('-inf')], None)
         filtered_trips_df = filtered_trips_df.where(pd.notnull(filtered_trips_df), None)
+        print("TOTAL SHORTAGE BEFORE GROUPING =", filtered_trips_df["qty_shortage"].astype(float).sum())
+
 
         zones_list = compute_group_summary(filtered_trips_df, group_cols)
 
