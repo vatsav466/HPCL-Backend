@@ -125,7 +125,8 @@ location_configs = [
     {
         "bu": "tas",
         "query": """
-                DISTINCT ZPS.PLANT, ZPS.ZLOC_TYPE, ZPS.PLANT_DESC,
+                    SELECT 
+                    DISTINCT ZPS.PLANT, ZPS.ZLOC_TYPE, ZPS.PLANT_DESC,
                     ZPS.ZZONE, ZPS.CITY1, ZPS.POST_CODE1, ZPS.STREET, ZPS.STR_SUPPL1,
                     ZPS.REPORTING_OFFICE FROM 
                     ZMMCV_PLANT_STG ZPS INNER JOIN ZSDCV_AY_INV3_STG ZCA ON ZCA.SUPPLY_LOC = ZPS.PLANT
