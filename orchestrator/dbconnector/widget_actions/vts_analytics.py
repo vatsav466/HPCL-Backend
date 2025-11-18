@@ -102,6 +102,10 @@ class VTSAnalyticsActions:
         #     return "location_id" 
         if query and 'sales_trips_till_date' in query.lower() and key.lower() == 'bu':
             return None
+         
+        if query and 'sales_trips_till_date' in query.lower() and key.lower() == 'zone':
+            return 'zone_nm'
+        
         return key
     
     @staticmethod
@@ -109,12 +113,54 @@ class VTSAnalyticsActions:
         """Build WHERE conditions from filters and cross_filters"""
         all_conditions = []
         
+        if 'sales_trips_till_date' in query.lower():
+            bu_filter = None
+            if filters:
+                for f in filters:
+                    if hasattr(f, 'key') and f.key.lower() == 'bu':
+                        bu_filter = f
+                        break
+            
+            bu_value = bu_filter.value if bu_filter else None
+
+            if bu_value:
+                bu = bu_value.upper()
+                if bu == 'TAS':
+                    all_conditions.append("division = '11'")
+                    all_conditions.append("sales_org = '7000'")
+                elif bu == 'LPG':
+                    all_conditions.append("division in ('20', '21')")
+                    all_conditions.append("sales_org = '2000'")
+                elif bu == 'I&C':
+                    all_conditions.append("distribution_channel = '12'")
+                    all_conditions.append("sales_org = '3000'")
+            
+            else:
+                all_conditions.append("division = '11'")
+                all_conditions.append("sales_org = '7000'")
+        
+        elif 'sales_trips_till_date' not in query.lower():
+            bu_filter = None
+            if filters:
+                for f in filters:
+                    if hasattr(f, 'key') and f.key.lower() == 'bu':
+                        bu_filter = f
+                        break
+            
+            if bu_filter and bu_filter.value.upper() == 'I&C':
+                all_conditions.append("bu = 'TAS'")
+               
         # Process regular filters
         if filters:
             for rec in filters:
                 key = VTSAnalyticsActions.transform_key(rec.key, query)
                 if key is None:
                     continue
+
+                if (key.lower() == 'bu' and 'sales_trips_till_date' not in query.lower() and
+                     rec.value.upper() == 'I&C'):
+                   continue
+
                 val = rec.value
                 
                 condition = VTSAnalyticsActions.create_condition(key, val)
@@ -126,7 +172,7 @@ class VTSAnalyticsActions:
             for rec in cross_filters:
                 key = rec.key
                 val = rec.value
-                
+
                 if "DATE" in key.upper():
                     condition = VTSAnalyticsActions.create_date_condition(query,val)
                 else:
@@ -446,6 +492,20 @@ class VTSAnalyticsActions:
         Main function to handle VTS violation queries with proper invoice-level shortage matching
         """
         try:
+            
+            
+            is_ic_bu = False
+            if filters:
+                for f in filters:
+                    if hasattr(f, 'key') and f.key.lower() == 'bu' and f.value.upper() == 'I&C':
+                        is_ic_bu = True
+                        break
+
+            if is_ic_bu:
+                if payload is None:
+                    payload = {}
+                payload["violation_type"] = ["qty_shortage"]
+
             query = vts_query.vts_query.get(drill_state.split(",")[0])
             all_violations = vts_query.vts_query.get("all_violations", [])
             violation_types = payload.get("violation_type", []) if payload else []
@@ -493,12 +553,12 @@ class VTSAnalyticsActions:
                         material_group_nm
                     FROM sales_trips_till_date
                     WHERE 
-                        division = '11'
-                        AND load_status = '6'
+                        load_status = '6'
                         AND (qty_shortage > '0')
-                        AND sales_org = '7000'
                         AND {where_clause}
                 """
+                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
+                shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
                 df_shortage = await VTSAnalyticsActions.execute_query(shortage_query)
                 
                 if df_shortage.empty:
@@ -668,10 +728,8 @@ class VTSAnalyticsActions:
                         load_date AS created_at
                     FROM sales_trips_till_date
                     WHERE 
-                        division = '11'
-                        AND load_status = '6'
+                        load_status = '6'
                         AND (qty_shortage > '0')
-                        AND sales_org = '7000'
                 """
 
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
@@ -874,7 +932,7 @@ class VTSAnalyticsActions:
             final_df.drop(columns=['total_violations'], inplace=True, errors='ignore')
 
             if final_df.empty:
-                return {"status": True, "message": "No non-zero violations found", "data": []}
+                return {"status": True, "message": "No violation history found for this vehicle", "data": []}
     
             # ==================== HANDLE GROUP_BY ====================
             group_by_col = payload.get("group_by") if payload else None
@@ -1059,6 +1117,176 @@ class VTSAnalyticsActions:
             if diff != 0:
                 largest_key = max(percentages, key=percentages.get)
                 percentages[largest_key] = round(percentages[largest_key] + diff, 2)
+            
+            download_flag = payload.get("download")
+            if (isinstance(download_flag, bool) and download_flag) or (
+                isinstance(download_flag, str) and download_flag.strip().lower() == "true"
+            ):
+                print("Download requested — generating Excel with multiple violation sheets")
+
+                output = io.BytesIO()
+                
+                with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                    combined_violation_rows = []
+                    for v_type in list(violation_counts.keys()):
+                        print(f"Generating sheet for: {v_type}")
+
+                        # ------------------------------------
+                        #  Case 1: Handle Emlock Open separately
+                        # ------------------------------------
+                        if v_type == "emlock_open":
+                            print("Fetching full emlock_open data from vts_tripauditmaster...")
+
+                            
+                            emlock_query = """
+                                SELECT *
+                                FROM vts_tripauditmaster
+                                WHERE 
+                                    (swipeoutl1 != 'true' OR swipeoutl2 != 'true')
+                            """
+
+                           
+                            emlock_conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, emlock_query)
+                            emlock_query = VTSAnalyticsActions.apply_conditions_to_query(emlock_query, emlock_conditions)
+
+                            
+                            emlock_df = await VTSAnalyticsActions.execute_query(emlock_query)
+
+                            
+                            print("emlock_df columns:", list(emlock_df.columns) if emlock_df is not None else "None")
+                            print("emlock_df row count:", len(emlock_df) if emlock_df is not None else 0)
+                            print("emlock_df sample:", emlock_df.head(5).to_dict(orient='records') if emlock_df is not None and not emlock_df.empty else "Empty")
+
+                            if emlock_df is None or emlock_df.empty:
+                                pd.DataFrame([{"message": "No data found for emlock_open"}]).to_excel(
+                                    writer, index=False, sheet_name="emlock_open"
+                                )
+                                continue
+
+                            
+                            emlock_df.to_excel(writer, index=False, sheet_name="emlock_open")
+                            print(f" Wrote sample ({len(emlock_df)} rows) to emlock_open sheet.")
+                            continue
+
+                        # ------------------------------------
+                        #  Case 2: Handle Shortage Count separately
+                        # ------------------------------------
+                        if v_type == "shortage_count":
+                            print("Fetching shortage data (independent SQL)…")
+
+                            # ------------------------------
+                            # 1. Build NEW shortage SQL (no BU filter)
+                            # ------------------------------
+                            
+
+                            shortage_query= f"""
+                                SELECT *
+                                FROM sales_trips_till_date T
+                                WHERE division = '11'
+                                    AND load_status = '6'
+                                    AND (qty_shortage > '0')
+                                    AND sales_org = '7000'
+                                    
+                            """
+                            shortage_conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
+                            shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, shortage_conditions)
+
+                            
+                            shortage_df = await VTSAnalyticsActions.execute_query(shortage_query)
+                            shortage_vehicle_count = shortage_df['vehicle_id'].nunique()
+                            shortage_invoice_count = shortage_df['invoice_no'].nunique()
+
+                            print("Shortage SQL:\n", shortage_query)
+
+                            # ------------------------------
+                            # 2. Execute the SQL to get FULL DATA
+                            # ------------------------------
+                            shortage_df = await VTSAnalyticsActions.execute_query(shortage_query)
+
+                            print("shortage_df columns:", list(shortage_df.columns) if shortage_df is not None else "None")
+                            print("shortage_df row count:", len(shortage_df) if shortage_df is not None else 0)
+                            # print("shortage_df sample:", shortage_df.head(5).to_dict(orient='records') if shortage_df is not None and not shortage_df.empty else "Empty")
+
+                            # ------------------------------
+                            # 3. Write to Excel (not count)
+                            # ------------------------------
+                            if shortage_df is None or shortage_df.empty:
+                                pd.DataFrame([{"message": "No data found for shortage_count"}]).to_excel(
+                                    writer, index=False, sheet_name="shortage_count"
+                                )
+                            else:
+                                shortage_df.to_excel(writer, index=False, sheet_name="shortage_count")
+
+                            continue
+                        # ------------------------------------
+                        # Case 3: All other violation types (default logic)
+                        # ------------------------------------
+                        if v_type in violation_cols:
+                            # DO NOTHING HERE
+                            # DON'T QUERY ALL VIOLATIONS HERE
+                            continue
+
+                    # -----------------------------------------------------
+                    # 🔵 AFTER LOOP (this runs ONLY ONCE)
+                    # -----------------------------------------------------
+                    violation_query = """
+                        SELECT
+                            tl_number,
+                            invoice_number,
+                            location_name,
+                            zone,
+                            DATE(vts_end_datetime) AS created_at,
+                            stoppage_violations_count,
+                            route_deviation_count,
+                            device_tamper_count,
+                            main_supply_removal_count,
+                            night_driving_count,
+                            speed_violation_count,
+                            continuous_driving_count
+                        FROM vts_alert_history
+                        WHERE 
+                            (
+                                stoppage_violations_count > 0 OR
+                                route_deviation_count > 0 OR
+                                device_tamper_count > 0 OR
+                                main_supply_removal_count > 0 OR
+                                night_driving_count > 0 OR
+                                speed_violation_count > 0 OR
+                                continuous_driving_count > 0
+                            )
+                    """
+
+                    violation_conditions = VTSAnalyticsActions.build_filter_conditions(
+                        filters, cross_filters, violation_query
+                    )
+                    violation_query = VTSAnalyticsActions.apply_conditions_to_query(
+                        violation_query, violation_conditions
+                    )
+
+                    print("FINAL ALL VIOLATIONS SQL:", violation_query)
+
+                    viol_df = await VTSAnalyticsActions.execute_query(violation_query)
+                    viol_df = viol_df.drop_duplicates(subset=['invoice_number'], keep='first')
+
+                    if viol_df is None or viol_df.empty:
+                        pd.DataFrame([{"message": "No violations found"}]).to_excel(
+                            writer, index=False, sheet_name="all_violations"
+                        )
+                    else:
+                        # viol_df.drop_duplicates(inplace=True)
+                        viol_df.to_excel(writer, index=False, sheet_name="all_violations")
+
+                # --- Finalize and stream Excel file ---
+                output.seek(0)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"violation_percentages_{timestamp}.xlsx"
+                headers = {"Content-Disposition": f'attachment; filename=\"{file_name}\"'}
+
+                return StreamingResponse(
+                    output,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers=headers
+                )
 
             # Step 9: Return final response
             return {
@@ -1408,6 +1636,8 @@ class VTSAnalyticsActions:
                 # Create an in-memory Excel file
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                    combined_violation_rows = []
+
 
                     # Step 2: Loop tables and add sheets dynamically
                     for table_name in table_names:
@@ -1983,81 +2213,23 @@ class VTSAnalyticsActions:
     
     @staticmethod
     async def integrate_shortage_trips(filters, cross_filters, drill_state, payload):
-        import pandas as pd
         import pytz
         from datetime import datetime, timedelta
-
-        # --- HELPER FUNCTION: Build SQL Conditions (Extended for bu, sap_id, zone) ---
-        def build_sql_conditions_string(filter_list, table_alias='T'):
-            conditions = []
-            # Extended keys allowed for SQL pushdown in sales_trips_till_date
-            # Assuming these columns exist in the table. Adjust column names if different.
-            allowed_keys = ['zone_nm', 'plant_nm', 'vehicle_id', 'bu', 'sap_id', 'zone'] 
-            
-            for f in filter_list:
-                key = getattr(f, "key", None)
-                val = getattr(f, "value", None)
-                cond = getattr(f, "cond", None)
-                
-                if key and val and key.lower() in allowed_keys:
-                    df_col = key.lower()
-                    if cond == "equals":
-                        conditions.append(f"{table_alias}.{df_col} = '{val}'")
-                    elif cond == "in":
-                        if isinstance(val, list):
-                            val_str = ', '.join(f"'{v}'" for v in val)
-                            conditions.append(f"{table_alias}.{df_col} IN ({val_str})")
-                        else:
-                            conditions.append(f"{table_alias}.{df_col} = '{val}'")
-            
-            return " AND " + " AND ".join(conditions) if conditions else ""
-
-
-        # ----- 1. Filter Separation and Date Condition Preparation -----
-       
+        
+        # ----- 1. Filter Separation and Date Condition Preparation ----- 
         trips_filters = filters  # All filters apply to trips
         
         # Extract Transporter Filter for later Pandas application (must be done post-merge)
         transporter_filter = next((f for f in trips_filters if getattr(f, 'key') == 'transporter_name'), None)
-        
-        # SQL conditions for trips (zone_nm, plant_nm, vehicle_id, bu, sap_id, zone)
-        sql_trips_conditions = build_sql_conditions_string(trips_filters, table_alias='T')
-        
-        # Date condition from cross_filters
-        date_condition_str = ""
-        today = datetime.now().date()
-        date_selection = next(
-                    (getattr(f, "value", None) for f in cross_filters if getattr(f, "key", "").lower() == "date"), 
-                    None
-                )
-
-        if date_selection:
-            if "," in date_selection:
-                start_date = date_selection.split(",")[0]
-                end_date = f"{date_selection.split(',')[1]} 23:59:59"
-                date_condition_str = f"AND T.invoice_date::date BETWEEN '{start_date}' AND '{end_date}'"
-            else:
-                date_selection = date_selection.lower()
-                if date_selection == "today":
-                    date_condition_str = f"AND T.invoice_date::date = '{today}'"
-                elif date_selection == "yesterday":
-                    date_condition_str = f"AND T.invoice_date::date = '{today - timedelta(days=1)}'"
-
-       
-        
         trips_query = f"""
             SELECT *     
             FROM 
                 sales_trips_till_date T
-            WHERE division = '11'
-                AND load_status = '6'
+            WHERE load_status = '6'
                 AND (qty_shortage > '0')
-                AND sales_org = '7000'
-                {sql_trips_conditions}
-                {date_condition_str};
-
-        """
-
+        """    
+        conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, trips_query)
+        trips_query = VTSAnalyticsActions.apply_conditions_to_query(trips_query, conditions)
         print("trips_query", trips_query)
         trips_df = await VTSAnalyticsActions.execute_query(trips_query)
         if trips_df.empty:
@@ -2291,8 +2463,7 @@ class VTSAnalyticsActions:
 
         return JSONResponse(content=jsonable_encoder(response_data))
     
-
-    
+    @staticmethod
     async def get_unblock_ageing(filters, cross_filters, drill_state, payload):
         try:
             # Cross filters
@@ -2300,33 +2471,37 @@ class VTSAnalyticsActions:
             current_date = datetime.now().strftime("%Y-%m-%d")
             closed_query = vts_query.vts_query.get("closed_alerts")
             
-            shortage = vts_query.vts_query.get("unblocked_tt_shortage")
+            # Updated shortage query - remove hardcoded conditions
+            shortage_query = vts_query.vts_query.get("unblocked_tt_shortage")
 
-            # Drill Down filters
+            # Drill Down filters for closed_query
             closed_query = await get_drill_down_filter(filters, closed_query)
 
             access_filters = [
                 dashboard_studio_model.WidgetFiltersCreate(**rec)
                 for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)
-                ]
+            ]
             closed_query = await widget_actions.WidgetActions.apply_filter_drilldown(closed_query, access_filters, drill_state)
 
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
+            shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
+            shortage_query += " GROUP BY vehicle_id"
+
+            # Apply date condition to closed_query only (since shortage_query date is handled by build_filter_conditions)
             clause = "WHERE" if "where" not in closed_query.lower() else "AND"
             if daterange:
                 closed_query += f" {clause} created_at BETWEEN {daterange}"
-                shortage += f" {clause} invoice_date::DATE BETWEEN {daterange}"
             else:
                 closed_query += f" {clause} CAST(created_at AS DATE) = '{current_date}'"
-                shortage += f" {clause} CAST(invoice_date::DATE AS DATE) = '{current_date}'"
 
-            shortage += " GROUP BY vehicle_id"
+            print("Final Shortage Query:", shortage_query)
 
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=closed_query, limit=0)
-            shortage = await urdhva_base.BasePostgresModel.get_aggr_data(query=shortage, limit=0)
+            shortage_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=shortage_query, limit=0)
             
             df = pd.DataFrame(resp.get("data", []))
             df = await filter_data(df, _filters)
-            shortage = pd.DataFrame(shortage.get("data", []))
+            shortage = pd.DataFrame(shortage_resp.get("data", []))
 
             df["vehicle_blocked_end_date"] = pd.to_datetime(df["vehicle_blocked_end_date"]).dt.tz_localize(None)
             df["vehicle_blocked_start_date"] = pd.to_datetime(df["vehicle_blocked_start_date"]).dt.tz_localize(None)
@@ -2388,6 +2563,7 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("-- Exception in get unblock ageing widget --")
             print("traceback :", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
     
     async def get_emlock_open_data(filters, cross_filters, drill_state, payload):
         try:

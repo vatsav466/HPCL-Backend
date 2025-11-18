@@ -17,6 +17,7 @@ from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
 from decimal import Decimal
+from datetime import datetime, timedelta
 from collections import defaultdict
 
 Finished_Lubes_Retail = ['Industrial Greases','Automotive Greases','Automotive Specialities','Compressed Bio Gas ','Compressed Bio Gas','Compressed Bio Gas (CBG)','Industrial Specialities']
@@ -2354,10 +2355,24 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 cur_year = fiscal_start
                 hist_year = str(int(fiscal_start) - 1)
 
+            # current_start = f"{cur_year}{mon_code}01"
+            # current_end = f"{cur_year}{mon_code}{end_day}"
+            # hist_start = f"{hist_year}{mon_code}01"
+            # hist_end = f"{hist_year}{mon_code}{end_day}"
             current_start = f"{cur_year}{mon_code}01"
-            current_end = f"{cur_year}{mon_code}{end_day}"
             hist_start = f"{hist_year}{mon_code}01"
-            hist_end = f"{hist_year}{mon_code}{end_day}"
+            today = datetime.today()
+            yesterday = today - timedelta(days=1)
+
+            # check if selected month is the CURRENT month
+            if today.strftime("%b").upper() == selected_month.upper():
+                # use yesterday for both current and historical
+                current_end = yesterday.strftime("%Y%m%d")
+                hist_end = yesterday.replace(year=int(hist_year)).strftime("%Y%m%d")
+            else:
+                # use month-end normally
+                current_end = f"{cur_year}{mon_code}{end_day}"
+                hist_end = f"{hist_year}{mon_code}{end_day}"
         else:
             from datetime import datetime, timedelta
             today = datetime.today()
@@ -2711,7 +2726,10 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             # print('ic', results['icSalesArea'].unique().tolist())
           
             results = results.merge(enriched_df[['icSalesArea','Name_x']], how='left', left_on='icSalesArea', right_on='icSalesArea')
+            results = results[results['Name_x'].notna()]
+
             print("results",results)
+
             # Your areas to remove
             areas_to_remove = [
                 'I&C HQO',

@@ -1,6 +1,7 @@
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
+import json
 import mimetypes
 from pathlib import Path
 import utilities.minio_connector as minio_connector
@@ -80,7 +81,13 @@ async def noticesvts_upload_notice(alert_id: str, upload_file: fastapi.UploadFil
                     "report_type": "User Created"
                 }
                 notice_history.append(notices_respose)
-                await NoticesVTS(**{"id": notices_data['id']}).modify()
+                updated_notices_json = json.dumps(notice_history)
+                notices_query = f"""
+                    UPDATE notices_vts
+                    SET notices = '{updated_notices_json}'::jsonb
+                    WHERE id = {notices_data['id']}
+                """
+                await NoticesVTS.update_by_query(notices_query)
             else:
                 notices_respose = {
                     "doc_type": "User Created",

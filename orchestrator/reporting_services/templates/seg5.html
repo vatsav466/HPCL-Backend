@@ -86,7 +86,7 @@
             <td class="growth">{{sales_data['ytpm_growth']}}{% if sales_data['ytpm_growth'] != 'NA' %}%{% endif %}</td>
         </tr>
     </tbody></table>
-    <h3>Catch up on Dryout Report</h3>
+    <h3>Catch up with SBUs</h3>
     <h5>2. Retail Sales Performance (MS/HSD)</h5>
     <table>
         <thead>
@@ -296,15 +296,10 @@
                     <th>High</th>
                 </tr>
                 <tr>
-                    <td rowspan="3">LPG</td>
-                    <td>VA</td>
+                    <td rowspan="2">LPG</td>
+                    <td>Video Analytics</td>
                     <td>{{va_critical_lpg}}</td>
                     <td>{{va_high_lpg}}</td>
-                </tr>
-                <tr>
-                    <td>TTs currently blocked under ITDG</td>
-                    <td>{{vts_critical_lpg}}</td>
-                    <td>{{vts_high_lpg}}</td>
                 </tr>
                 <tr>
                     <td>Production Quality</td>
@@ -314,6 +309,38 @@
                 </tbody>
             </table>
         </div>
+    <h5>3.4. LPG VTS Governance ({{present_month}})</h5>
+    <table>
+        <tr>
+            <th>
+                TTs Blocked by Novex
+            </th>
+            <th>
+                TTs Manually Unblocked
+            </th>
+            <th>
+                TTs currently under Block
+            </th>
+            <th>
+                TTs Auto Unblocked
+            </th>
+        </tr>
+    
+        <tr>
+            <td>
+                {{TTs_Blocked_by_Novex_LPG}}
+            </td>
+            <td>
+                {{TTs_Manually_Unblocked_LPG}}
+            </td>
+            <td>
+                {{TTs_currently_under_Block_LPG}}
+            </td>
+            <td>
+                {{TTs_Auto_Unblocked_LPG}}
+            </td>
+        </tr>
+    </table>
 <h4>4. SOD Operations Summary</h4>
 <h5>4.1. Open Alert Summary ({{present_month}})</h5>
     <div class="openAlert">
@@ -326,15 +353,10 @@
                 <th>High</th>
             </tr>
             <tr>
-                <td rowspan="4">SOD</td>
-                <td>VA</td>
+                <td rowspan="3">SOD</td>
+                <td>Video Analytics</td>
                 <td>{{va_critical_tas}}</td>
                 <td>{{va_high_tas}}</td>
-            </tr>
-            <tr>
-                <td>TTs currently blocked under ITDG</td>
-                <td>{{vts_critical_tas}}</td>
-                <td>{{vts_high_tas}}</td>
             </tr>
             <tr>
                 <td>EMLock</td>
@@ -349,6 +371,38 @@
             </tbody>
         </table>
     </div>
+<h5>4.2. SOD VTS Governance ({{present_month}})</h5>
+<table>
+    <tr>
+        <th>
+            TTs Blocked by Novex
+        </th>
+        <th>
+            TTs Manually Unblocked
+        </th>
+        <th>
+            TTs currently under Block
+        </th>
+        <th>
+            TTs Auto Unblocked
+        </th>
+    </tr>
+
+    <tr>
+        <td>
+            {{TTs_Blocked_by_Novex_TAS}}
+        </td>
+        <td>
+            {{TTs_Manually_Unblocked_TAS}}
+        </td>
+        <td>
+            {{TTs_currently_under_Block_TAS}}
+        </td>
+        <td>
+            {{TTs_Auto_Unblocked_TAS}}
+        </td>
+    </tr>
+</table>
 <script>
     window.onload = function () {
         document.querySelectorAll(".growth").forEach(td => {

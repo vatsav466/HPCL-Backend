@@ -477,10 +477,8 @@ vts_query = {
                             FROM 
                                 sales_trips_till_date
                             WHERE 
-                                division = '11'
-                                AND load_status = '6'
+                                load_status = '6'
                                 AND (qty_shortage > '0')
-                                AND sales_org = '7000'
                             """,
     
     "get_emlock_open_data": """

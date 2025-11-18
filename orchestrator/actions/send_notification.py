@@ -999,6 +999,12 @@ class SendNotification:
         if self.alert_data.get("alert_section","") in ["VTS"]:
             if self.alert_data['bu'] in ['LPG']:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer:
+                    rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer:
+                    rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                if mailto and mailto in ["0","1","2"]:
+                    return rolemapping["rolemailto"].get(mailto,"")
             if self.alert_data['created_at']> datetime.datetime(2025, 10, 3, 13, 20, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if self.alert_data['sap_id'] in ['1652','1672','1693','1462','1649','1689','1676','1700','1691']:
@@ -1033,6 +1039,12 @@ class SendNotification:
             alert_section = self.alert_data.get("alert_section","")
             if self.alert_data['bu'] in ['LPG']:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer:
+                    rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer:
+                    rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                if mqof and mqof in ["0","1","2"]:
+                    return rolemapping["mqof"].get(mqof,"")
             if self.alert_data['created_at']> datetime.datetime(2025, 10, 3, 13, 20, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if self.alert_data['sap_id'] in ['1652','1672','1693','1462','1649','1689','1676','1700','1691']:
