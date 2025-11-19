@@ -225,7 +225,7 @@ class AuthenticationManager:
             return False, "User locked out", {}
 
         # If ldap authentication enabled allow user to validate with LDAP, else check local login
-        if user_info.get('is_ad_user'): #urdhva_base.settings.ldap_auth_enabled:
+        if user_info.get('is_ad_user'):  # urdhva_base.settings.ldap_auth_enabled:
             if login_type == 'dealer':
                 # Validating user in with Open LDAP.
                 try:
@@ -251,6 +251,11 @@ class AuthenticationManager:
             if urdhva_base.types.Secret(user_info["password"]).get_secret() != password:
                 await cls.update_login_failure_attempts(username)
                 return False, "Invalid Login Credentials", {}
+
+
+    @classmethod
+    async def generate_auth_info(cls, user_info, jwt_auth=False):
+
         role_names = ", ".join(f"'{val}'" for val in user_info['novex_role'])
         role = await hpcl_ceg_model.Roles.get_aggr_data(f"select * from roles where name in ({role_names})")
         if not role['data']:
