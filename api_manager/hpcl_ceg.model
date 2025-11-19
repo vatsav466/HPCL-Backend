@@ -1501,6 +1501,7 @@ Model VtsAlertHistory {
     total_trips optional int
     stoppage_violations_count optional int
     route_deviation_count optional int
+    route_deviation_count_15m optional int
     scheduled_trip_start_datetime optional datetime
     scheduled_trip_end_datetime optional datetime
     speed_violation_count optional int
@@ -2537,6 +2538,7 @@ Model VtsTruckHistory internal {
     invoice_number optional str
     stoppage_violations_count optional int
     route_deviation_count optional int
+    route_deviation_count_15m optional int
     speed_violation_count optional int
     main_supply_removal_count optional int
     night_driving_count optional int
