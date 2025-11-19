@@ -9,13 +9,19 @@ import authenticator.authentication_manager_ad as authentication_manager_ad
 
 BaseUrl = "https://login.microsoftonline.com"
 SCOPE = ["User.Read"]
+PROXIES = {}
+if urdhva_base.settings.http_proxy:
+    PROXIES.update({"http": urdhva_base.settings.http_proxy})
+if urdhva_base.settings.https_proxy:
+    PROXIES.update({"https": urdhva_base.settings.https_proxy})
 
 
 # ----------------------------
 # MSAL Client
 # ----------------------------
-async def create_msal_app(client_id, client_secret, tenant_id):
+def create_msal_app(client_id, client_secret, tenant_id):
     return ConfidentialClientApplication(
+        proxies=PROXIES if PROXIES else None,
         client_id=client_id,
         client_credential=client_secret,
         authority=f"{BaseUrl}/{tenant_id}",
@@ -63,7 +69,7 @@ async def auth_callback(code: str, tenant_id: str, client_id: str, client_secret
 
     # Checking user exists in database or not
     query = f"username='{user_name.split('@')[0].strip()}'"
-    user_info = await hpcl_ceg_model.Users.get_all(urdhva_base.QueryParams(q=query, limit=1))
+    user_info = await hpcl_ceg_model.Users.get_all(urdhva_base.QueryParams(q=query, limit=1), resp_type='')
     if not user_info['data']:
         return False, "Not a valid User", {}
     return await authentication_manager_ad.AuthenticationManager.generate_auth_info(

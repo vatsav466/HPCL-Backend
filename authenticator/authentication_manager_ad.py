@@ -251,7 +251,7 @@ class AuthenticationManager:
             if urdhva_base.types.Secret(user_info["password"]).get_secret() != password:
                 await cls.update_login_failure_attempts(username)
                 return False, "Invalid Login Credentials", {}
-
+        return await cls.generate_auth_info(user_info, jwt_auth=jwt_auth)
 
     @classmethod
     async def generate_auth_info(cls, user_info, jwt_auth=False):

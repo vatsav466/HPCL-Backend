@@ -54,6 +54,10 @@ class Settings(pydantic_settings.BaseSettings):
     encryption_key: str = ""
     environment: str = ""
 
+    # Proxy Settings
+    http_proxy: str = ""
+    https_proxy: str = ""
+
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
 
