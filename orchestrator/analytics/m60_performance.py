@@ -17,7 +17,6 @@ from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
 from decimal import Decimal
-from datetime import datetime, timedelta
 from collections import defaultdict
 
 Finished_Lubes_Retail = ['Industrial Greases','Automotive Greases','Automotive Specialities','Compressed Bio Gas ','Compressed Bio Gas','Compressed Bio Gas (CBG)','Industrial Specialities']
@@ -329,7 +328,6 @@ def get_group_by_filter_key(cross_filters, Base_Filters, resp_format_org, cumula
     return group_by_filter
 
 import pandas as pd
-import datetime
 import numpy as np 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
     if resp_format == "file_download":
@@ -2344,7 +2342,6 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
 
     def get_day_id_ranges(fy: str, selected_month: str, filters):
         fiscal_start, fiscal_end = fy.split("-")
-
         if selected_month:
             mon_code, end_day = MONTH_DAY_RANGES.get(selected_month, ("04", "30"))
 
@@ -2361,8 +2358,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             # hist_end = f"{hist_year}{mon_code}{end_day}"
             current_start = f"{cur_year}{mon_code}01"
             hist_start = f"{hist_year}{mon_code}01"
-            today = datetime.today()
-            yesterday = today - timedelta(days=1)
+            today = datetime.datetime.today()
+            yesterday = today - datetime.timedelta(days=1)
 
             # check if selected month is the CURRENT month
             if today.strftime("%b").upper() == selected_month.upper():
@@ -2725,11 +2722,11 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
             # print("Filtered results length----->>>>:", len(results))
             # print('ic', results['icSalesArea'].unique().tolist())
           
+            
             results = results.merge(enriched_df[['icSalesArea','Name_x']], how='left', left_on='icSalesArea', right_on='icSalesArea')
             results = results[results['Name_x'].notna()]
 
             print("results",results)
-
             # Your areas to remove
             areas_to_remove = [
                 'I&C HQO',

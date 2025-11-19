@@ -104,17 +104,12 @@ location_configs = [
         "bu": "lpg",
         "query": """
                 SELECT
-                    DISTINCT PLT.PLANT, zca.SALES_ORG, zps.ZLOC_TYPE, PLT.PLANT_DESC,
-                    PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1, PLT.STREET,PLT.STR_SUPPL1,
-                    zps.REPORTING_OFFICE, PLT.STATE_NAME
-                FROM
-                    EDW_DC_PLANT PLT
-                    LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
-                    INNER JOIN ZMMCV_PLANT_STG zps  ON PLT.PLANT = zps.PLANT
-                    INNER JOIN ZSDCV_AY_INV3_STG zca  ON zca.SUPPLY_LOC = zps.PLANT
-                WHERE   
-                    zps.ZLOC_TYPE IN ('33')
-                    AND zca.INVOICE_DATE >= DATE_SUB(NOW(), INTERVAL 1 YEAR) AND zca.INVOICE_DATE <= NOW();
+                    DISTINCT ZPS.PLANT, ZPS.ZLOC_TYPE, ZPS.PLANT_DESC,
+                    ZPS.ZZONE, ZPS.CITY1, ZPS.POST_CODE1, ZPS.STREET, ZPS.STR_SUPPL1,
+                    ZPS.REPORTING_OFFICE FROM 
+                    ZMMCV_PLANT_STG ZPS INNER JOIN ZSDCV_AY_INV3_STG ZCA ON ZCA.SUPPLY_LOC = ZPS.PLANT
+                    WHERE ZPS.ZLOC_TYPE IN ('12','17','32','33','11','18','19') AND ZPS.SBU='LPG' AND
+                    ZCA.INVOICE_DATE >= DATE_SUB(NOW(), INTERVAL 1 YEAR) AND ZCA.INVOICE_DATE <= NOW();
                 """,
         # '12', '17', '25', '32', '33','68'
         "reporting_office_query":"""
@@ -130,18 +125,14 @@ location_configs = [
     {
         "bu": "tas",
         "query": """
-                SELECT
-                    DISTINCT PLT.PLANT, zca.SALES_ORG, zps.ZLOC_TYPE, PLT.PLANT_DESC,
-                    PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1, PLT.STREET,PLT.STR_SUPPL1,
-                    zps.REPORTING_OFFICE, PLT.STATE_NAME
-                FROM
-                    EDW_DC_PLANT PLT
-                    LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
-                    INNER JOIN ZMMCV_PLANT_STG zps  ON PLT.PLANT = zps.PLANT
-                    INNER JOIN ZSDCV_AY_INV3_STG zca  ON zca.SUPPLY_LOC = zps.PLANT
-                WHERE   
-                    zps.ZLOC_TYPE IN ('11','15','16','18','19','44','51','52','53','98')
-                    AND zca.INVOICE_DATE >= DATE_SUB(NOW(), INTERVAL 1 YEAR) AND zca.INVOICE_DATE <= NOW()
+                    SELECT 
+                    DISTINCT ZPS.PLANT, ZPS.ZLOC_TYPE, ZPS.PLANT_DESC,
+                    ZPS.ZZONE, ZPS.CITY1, ZPS.POST_CODE1, ZPS.STREET, ZPS.STR_SUPPL1,
+                    ZPS.REPORTING_OFFICE FROM 
+                    ZMMCV_PLANT_STG ZPS INNER JOIN ZSDCV_AY_INV3_STG ZCA ON ZCA.SUPPLY_LOC = ZPS.PLANT
+                    WHERE ZPS.ZLOC_TYPE IN ('11','15','16','18','19','44','51','52','53','98') 
+                    AND ZPS.SBU='RET' AND
+                    ZCA.INVOICE_DATE >= DATE_SUB(NOW(), INTERVAL 1 YEAR) AND ZCA.INVOICE_DATE <= NOW();
                 """,
         "reporting_office_query": """ 
                 SELECT
