@@ -128,12 +128,13 @@ class VTSAnalyticsActions:
                 if bu == 'TAS':
                     all_conditions.append("division = '11'")
                     all_conditions.append("sales_org = '7000'")
+                    all_conditions.append("(qty_shortage > '0')")
                 elif bu == 'LPG':
                     all_conditions.append("division in ('20', '21')")
                     all_conditions.append("sales_org = '2000'")
+                    all_conditions.append("(qty_shortage > '0')")
                 elif bu == 'I&C':
                     all_conditions.append("distribution_channel = '12'")
-                    all_conditions.append("sales_org = '3000'")
             
             else:
                 all_conditions.append("division = '11'")
@@ -492,20 +493,12 @@ class VTSAnalyticsActions:
         Main function to handle VTS violation queries with proper invoice-level shortage matching
         """
         try:
-            
-            
-            is_ic_bu = False
-            if filters:
-                for f in filters:
-                    if hasattr(f, 'key') and f.key.lower() == 'bu' and f.value.upper() == 'I&C':
-                        is_ic_bu = True
-                        break
 
-            if is_ic_bu:
-                if payload is None:
-                    payload = {}
-                payload["violation_type"] = ["qty_shortage"]
-
+            bu_ic = any(
+            getattr(f,'key') == 'bu' and getattr(f,'value') == 'I&C' 
+            for f in (filters )
+            )
+            
             query = vts_query.vts_query.get(drill_state.split(",")[0])
             all_violations = vts_query.vts_query.get("all_violations", [])
             violation_types = payload.get("violation_type", []) if payload else []
@@ -554,7 +547,6 @@ class VTSAnalyticsActions:
                     FROM sales_trips_till_date
                     WHERE 
                         load_status = '6'
-                        AND (qty_shortage > '0')
                         AND {where_clause}
                 """
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
@@ -568,11 +560,12 @@ class VTSAnalyticsActions:
                 df_shortage['qty_shortage'] = pd.to_numeric(df_shortage['qty_shortage'], errors='coerce').fillna(0.0)
                 
                 # Filter out rows where qty_shortage is 0
-                df_shortage = df_shortage[df_shortage['qty_shortage'] != 0]
+                if not bu_ic:
+                    df_shortage = df_shortage[df_shortage['qty_shortage'] != 0]
                 
-                if df_shortage.empty:
-                    return pd.DataFrame()
-                
+                    if df_shortage.empty:
+                       return pd.DataFrame()
+                    
                 df_shortage['invoice_match_key'] = df_shortage['invoice_no'].astype(str).str.strip()
                 
                 return df_shortage
@@ -580,6 +573,7 @@ class VTSAnalyticsActions:
             def merge_shortage_data(df, df_shortage, aggregate=True):
                 """
                 Merge shortage data with main dataframe
+                If BU is I&C: Get ALL shortage data (reverse merge from df_shortage)
                 If aggregate=True: sum qty_shortage by vehicle + invoice
                 If aggregate=False: keep material_group_nm detail with comma-separated values
                 """
@@ -587,7 +581,7 @@ class VTSAnalyticsActions:
                     if not aggregate:
                         df['qty_shortage_detail'] = ''
                     return df
-                
+
                 if df_shortage.empty:
                     if not aggregate:
                         df['qty_shortage_detail'] = ''
@@ -595,51 +589,102 @@ class VTSAnalyticsActions:
                     
                 df['invoice_match_key'] = df['invoice_number'].apply(extract_invoice_number)
                      
-                if aggregate:
-                    df_shortage_agg = df_shortage.groupby(
-                        ['vehicle_id', 'invoice_match_key'], 
-                        as_index=False
-                    )['qty_shortage'].sum()
-                    
-                    df_merged = df.merge(
-                        df_shortage_agg[['vehicle_id', 'invoice_match_key', 'qty_shortage']],
-                        left_on=['tl_number', 'invoice_match_key'],
-                        right_on=['vehicle_id', 'invoice_match_key'],
-                        how='left'
-                    )
+                # Check if BU is I&C - reverse the merge direction
+                if bu_ic:
+                    if aggregate:
+                        df_shortage_agg = df_shortage.groupby(
+                            ['vehicle_id', 'invoice_match_key'], 
+                            as_index=False
+                        )['qty_shortage'].sum()
+                        
+                        df_merged = df.merge(
+                            df_shortage_agg[['vehicle_id', 'invoice_match_key', 'qty_shortage']],
+                            left_on=['tl_number', 'invoice_match_key'],
+                            right_on=['vehicle_id', 'invoice_match_key'],
+                            how='inner'  
+                        )
+                        
+                        df_merged['qty_shortage'] = pd.to_numeric(df_merged['qty_shortage'], errors='coerce').fillna(0)
+                        
+                    else:
+                        def create_shortage_detail(group):
+                            """Create formatted shortage detail string including zero values for I&C"""
+                            details = []
+                            for _, row in group.iterrows():
+                                shortage = float(row['qty_shortage']) if pd.notna(row['qty_shortage']) else 0
+                                mat_group = str(row['material_group_nm']).strip() if pd.notna(row['material_group_nm']) else 'Unknown'
+                                details.append(f"{mat_group}:{shortage}")
+                            return ', '.join(details) if details else ''
+                        
+                        df_shortage_grouped = df_shortage.groupby(
+                            ['vehicle_id', 'invoice_match_key']
+                        ).apply(create_shortage_detail).reset_index(name='qty_shortage_detail')
+                        
+                        df_merged = df.merge(
+                            df_shortage_grouped[['vehicle_id', 'invoice_match_key', 'qty_shortage_detail']],
+                            left_on=['tl_number', 'invoice_match_key'],
+                            right_on=['vehicle_id', 'invoice_match_key'],
+                            how='inner'  
+                        )
+                        
+                        df_merged['qty_shortage_detail'] = df_merged['qty_shortage_detail'].fillna('')
                     
                     df_merged.drop(columns=['vehicle_id', 'invoice_match_key'], inplace=True, errors='ignore')
-                    df_merged['qty_shortage'] = pd.to_numeric(df_merged['qty_shortage'], errors='coerce').fillna(0)
+                    
+                    if df_merged.empty:
+                        if aggregate:
+                            df['qty_shortage'] = 0
+                        else:
+                            df['qty_shortage_detail'] = ''
+                        return df
                     
                 else:
-                    df_shortage_detailed = df_shortage.groupby(
-                        ['vehicle_id', 'invoice_match_key', 'material_group_nm'],
-                        as_index=False
-                    )['qty_shortage'].sum()
-                    
-                    def create_shortage_detail(group):
-                        """Create formatted shortage detail string with only non-zero values"""
-                        details = []
-                        for _, row in group.iterrows():
-                            shortage = float(row['qty_shortage'])
-                            if shortage != 0:  # Only include non-zero shortages
-                                mat_group = str(row['material_group_nm']).strip()
-                                details.append(f"{mat_group}:{shortage}")
-                        return ', '.join(details) if details else ''
-                    
-                    df_shortage_grouped = df_shortage_detailed.groupby(
-                        ['vehicle_id', 'invoice_match_key']
-                    ).apply(create_shortage_detail).reset_index(name='qty_shortage_detail')
-                    
-                    df_merged = df.merge(
-                        df_shortage_grouped[['vehicle_id', 'invoice_match_key', 'qty_shortage_detail']],
-                        left_on=['tl_number', 'invoice_match_key'],
-                        right_on=['vehicle_id', 'invoice_match_key'],
-                        how='left'
-                    )
-                    
-                    df_merged.drop(columns=['vehicle_id', 'invoice_match_key'], inplace=True, errors='ignore')
-                    df_merged['qty_shortage_detail'] = df_merged['qty_shortage_detail'].fillna('')
+                    # Original merge logic for non-I&C BU
+                    if aggregate:
+                        df_shortage_agg = df_shortage.groupby(
+                            ['vehicle_id', 'invoice_match_key'], 
+                            as_index=False
+                        )['qty_shortage'].sum()
+                        
+                        df_merged = df.merge(
+                            df_shortage_agg[['vehicle_id', 'invoice_match_key', 'qty_shortage']],
+                            left_on=['tl_number', 'invoice_match_key'],
+                            right_on=['vehicle_id', 'invoice_match_key'],
+                            how='left'
+                        )
+                        
+                        df_merged.drop(columns=['vehicle_id', 'invoice_match_key'], inplace=True, errors='ignore')
+                        df_merged['qty_shortage'] = pd.to_numeric(df_merged['qty_shortage'], errors='coerce').fillna(0)
+                        
+                    else:
+                        df_shortage_detailed = df_shortage.groupby(
+                            ['vehicle_id', 'invoice_match_key', 'material_group_nm'],
+                            as_index=False
+                        )['qty_shortage'].sum()
+                        
+                        def create_shortage_detail(group):
+                            """Create formatted shortage detail string with only non-zero values"""
+                            details = []
+                            for _, row in group.iterrows():
+                                shortage = float(row['qty_shortage'])
+                                if shortage != 0:  # Only include non-zero shortages
+                                    mat_group = str(row['material_group_nm']).strip()
+                                    details.append(f"{mat_group}:{shortage}")
+                            return ', '.join(details) if details else ''
+                        
+                        df_shortage_grouped = df_shortage_detailed.groupby(
+                            ['vehicle_id', 'invoice_match_key']
+                        ).apply(create_shortage_detail).reset_index(name='qty_shortage_detail')
+                        
+                        df_merged = df.merge(
+                            df_shortage_grouped[['vehicle_id', 'invoice_match_key', 'qty_shortage_detail']],
+                            left_on=['tl_number', 'invoice_match_key'],
+                            right_on=['vehicle_id', 'invoice_match_key'],
+                            how='left'
+                        )
+                        
+                        df_merged.drop(columns=['vehicle_id', 'invoice_match_key'], inplace=True, errors='ignore')
+                        df_merged['qty_shortage_detail'] = df_merged['qty_shortage_detail'].fillna('')
                 
                 return df_merged
 
@@ -729,7 +774,6 @@ class VTSAnalyticsActions:
                     FROM sales_trips_till_date
                     WHERE 
                         load_status = '6'
-                        AND (qty_shortage > '0')
                 """
 
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
@@ -1182,11 +1226,7 @@ class VTSAnalyticsActions:
                             shortage_query= f"""
                                 SELECT *
                                 FROM sales_trips_till_date T
-                                WHERE division = '11'
-                                    AND load_status = '6'
-                                    AND (qty_shortage > '0')
-                                    AND sales_org = '7000'
-                                    
+                                WHERE  load_status = '6'                
                             """
                             shortage_conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
                             shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, shortage_conditions)
@@ -1314,10 +1354,7 @@ class VTSAnalyticsActions:
                 SUM(qty_shortage::numeric) as qty_shortage 
             FROM sales_trips_till_date
             WHERE
-                division = '11'
-                AND load_status = '6'
-                AND (qty_shortage > '0')
-                AND sales_org = '7000'
+                load_status = '6'
             GROUP BY vehicle_id, invoice_no, sap_id
             """
             
@@ -2226,7 +2263,6 @@ class VTSAnalyticsActions:
             FROM 
                 sales_trips_till_date T
             WHERE load_status = '6'
-                AND (qty_shortage > '0')
         """    
         conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, trips_query)
         trips_query = VTSAnalyticsActions.apply_conditions_to_query(trips_query, conditions)

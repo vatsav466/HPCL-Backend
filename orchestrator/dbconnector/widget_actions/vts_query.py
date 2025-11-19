@@ -478,7 +478,6 @@ vts_query = {
                                 sales_trips_till_date
                             WHERE 
                                 load_status = '6'
-                                AND (qty_shortage > '0')
                             """,
     
     "get_emlock_open_data": """
