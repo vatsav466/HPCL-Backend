@@ -9,6 +9,8 @@ import requests
 import datetime
 import hpcl_ceg_model
 import hpcl_ceg_enum
+import charts_actions
+import dashboard_studio_model
 from collections import Counter
 from geopy.distance import geodesic
 import utilities.helpers as helpers
@@ -754,6 +756,24 @@ async def create_vts_alerts(enriched_data):
                 #print(f"Received duplicate Event {entry} with existing data {vts_duplicate_check_data}")
                 logger.info(f"Received duplicate Event {entry} with existing data {vts_duplicate_check_data}")
                 continue
+            # Moving counts got from VTS route deviation into _orig key, 
+            # Validating VTS Route Deviation DB to verify Invoices > 15 minutes
+            entry['route_deviation_count_orig'] = entry.get("route_deviation_count", 0)
+            if entry.get("route_deviation_count"):
+                # Fetching voilations from VTS DB
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+                function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+                query = f"""SELECT COUNT(*) FROM ROUTE_DEVIATION WHERE TT_NUMBER = '{entry['tl_number']}'
+                            AND INVOICE_NO = '{entry['invoice_number']}' AND DURATION > 15
+                            """
+                route_deviation_resp = await function(query=query)
+                count_value = list(route_deviation_resp.values())[0][0]
+                if int(count_value) > 0:
+                    entry['route_deviation_count'] = int(count_value)
+                else:
+                    entry['route_deviation_count'] = 0
+
             entry['auto_unblock'] = True
             entry['violation_type'] = await get_vts_violation(entry)
             entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
@@ -785,6 +805,7 @@ async def create_vts_alerts(enriched_data):
                     "invoice_number": entry["invoice_number"],
                     "stoppage_violations_count": entry["stoppage_violations_count"],
                     "route_deviation_count": entry["route_deviation_count"],
+                    "route_deviation_count_orig": entry["route_deviation_count_orig"],
                     "speed_violation_count": entry["speed_violation_count"],
                     "main_supply_removal_count": entry["main_supply_removal_count"],
                     "night_driving_count": entry["night_driving_count"],
