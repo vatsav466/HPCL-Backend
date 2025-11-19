@@ -677,14 +677,23 @@ class VTSAnalyticsActions:
                             )
                     
                     # Fill missing data from shortage for unmatched records
-                    if 'location_name' not in df_merged.columns or df_merged['location_name'].isna().any():
-                        df_merged['location_name'] = df_merged.get('location_name', '').fillna(
-                            df_merged.get('plant_nm', '')
-                        )
-                    if 'zone' not in df_merged.columns or df_merged['zone'].isna().any():
-                        df_merged['zone'] = df_merged.get('zone', '').fillna(
-                            df_merged.get('zone_nm', '')
-                        )
+                    if 'location_name' not in df_merged.columns:
+                        # Column missing → create using plant_nm or blank
+                        df_merged['location_name'] = df_merged['plant_nm'] if 'plant_nm' in df_merged.columns else ''
+                    else:
+                        # Column exists → fill NaN with plant_nm
+                        if 'plant_nm' in df_merged.columns:
+                            df_merged['location_name'] = df_merged['location_name'].fillna(df_merged['plant_nm'])
+                        else:
+                            df_merged['location_name'] = df_merged['location_name'].fillna('')
+
+                    if 'zone' not in df_merged.columns:
+                       df_merged['zone'] = df_merged['zone_nm'] if 'zone_nm' in df_merged.columns else ''
+                    else:
+                        if 'zone_nm' in df_merged.columns:
+                            df_merged['zone'] = df_merged['zone'].fillna(df_merged['zone_nm'])
+                        else:
+                            df_merged['zone'] = df_merged['zone'].fillna('')
                     
                     if 'invoice_number' not in df_merged.columns or df_merged['invoice_number'].isna().any():
                         df_merged['invoice_number'] = df_merged.get('invoice_number', '').fillna(
@@ -772,14 +781,24 @@ class VTSAnalyticsActions:
                             )
                     
                     # Fill missing data
-                    if 'location_name' not in df_merged.columns or df_merged['location_name'].isna().any():
-                        df_merged['location_name'] = df_merged.get('location_name', '').fillna(
-                            df_merged.get('plant_nm', '')
-                        )
-                    if 'zone' not in df_merged.columns or df_merged['zone'].isna().any():
-                        df_merged['zone'] = df_merged.get('zone', '').fillna(
-                            df_merged.get('zone_nm', '')
-                        )
+                    if 'location_name' not in df_merged.columns:
+                        # Column missing → create using plant_nm or blank
+                        df_merged['location_name'] = df_merged['plant_nm'] if 'plant_nm' in df_merged.columns else ''
+                    else:
+                        # Column exists → fill NaN with plant_nm
+                        if 'plant_nm' in df_merged.columns:
+                            df_merged['location_name'] = df_merged['location_name'].fillna(df_merged['plant_nm'])
+                        else:
+                            df_merged['location_name'] = df_merged['location_name'].fillna('')
+                  
+                    if 'zone' not in df_merged.columns:
+                       df_merged['zone'] = df_merged['zone_nm'] if 'zone_nm' in df_merged.columns else ''
+                    else:
+                        if 'zone_nm' in df_merged.columns:
+                            df_merged['zone'] = df_merged['zone'].fillna(df_merged['zone_nm'])
+                        else:
+                            df_merged['zone'] = df_merged['zone'].fillna('')
+
                     if 'invoice_number' not in df_merged.columns or df_merged['invoice_number'].isna().any():
                         df_merged['invoice_number'] = df_merged.get('invoice_number', '').fillna(
                             df_merged.get('invoice_match_key', '')
