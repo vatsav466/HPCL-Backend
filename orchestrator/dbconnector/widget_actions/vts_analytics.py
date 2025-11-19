@@ -538,7 +538,6 @@ class VTSAnalyticsActions:
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
                 shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
                 df_shortage = await VTSAnalyticsActions.execute_query(shortage_query)
-                df_shortage.to_csv("/Users/manohar/Downloads/debug_shortage_data.csv", index=False)  # Debugging line
                 
                 if df_shortage.empty:
                     return pd.DataFrame()
