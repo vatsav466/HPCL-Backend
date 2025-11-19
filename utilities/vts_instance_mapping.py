@@ -25,9 +25,6 @@ instance_mapping = {
             "route_deviation_count":{
                 "violation_count": 5
             },
-            "route_deviation_count_15m":{
-                "violation_count": 5
-            },
             "stoppage_violations_count":{
                 "violation_count": 5
             },
@@ -51,9 +48,6 @@ instance_mapping = {
             "route_deviation_count":{
                 "violation_count": 4
             },
-            "route_deviation_count_15m":{
-                "violation_count": 4
-            },
             "stoppage_violations_count":{
                 "violation_count": 4
             },
@@ -75,9 +69,6 @@ instance_mapping = {
                 "violation_count": 0
             },
             "route_deviation_count":{
-                "violation_count": 4
-            },
-            "route_deviation_count_15m":{
                 "violation_count": 4
             },
             "stoppage_violations_count":{
@@ -105,9 +96,6 @@ instance_mapping = {
             "route_deviation_count":{
                 "violation_count": 3
             },
-            "route_deviation_count_15m":{
-                "violation_count": 3
-            },
             "stoppage_violations_count":{
                 "violation_count": 3
             },
@@ -131,9 +119,6 @@ instance_mapping = {
             "route_deviation_count":{
                 "violation_count": 0
             },
-            "route_deviation_count_15m":{
-                "violation_count": 0
-            },
             "stoppage_violations_count":{
                 "violation_count": 0
             },
@@ -155,9 +140,6 @@ instance_mapping = {
                 "violation_count": 2
             },
             "route_deviation_count":{
-                "violation_count": 0
-            },
-            "route_deviation_count_15m":{
                 "violation_count": 0
             },
             "stoppage_violations_count":{

@@ -147,55 +147,6 @@ vts_interlock_mapping = {
             "description": "Route Deviation",
             "alert_threshold": 5
         },
-        "route_deviation_count_15m": {
-            "alerting_rules": {
-                "0": {
-                    "interlock_name": "VTS RouteDeviation FirstTime",
-                    "block_duration": 30,
-                    "block_msg": "90 days",
-                    "clear_count": True,
-                    "instance": "Instance - 1"
-                },
-                "1": {
-                    "interlock_name": "VTS RouteDeviation SecondTime",
-                    "block_duration": 90,
-                    "block_msg": "1 year",
-                    "clear_count": True,
-                    "instance": "Instance - 2"
-                },
-                "2": {
-                    "interlock_name": "VTS RouteDeviation ThirdTime",
-                    "block_duration": 90,
-                    "block_msg": "1 year",
-                    "clear_count": True,
-                    "instance": "Instance - 3"
-                },
-                "3": {
-                    "interlock_name": "VTS RouteDeviation FourthTime",
-                    "block_duration": 90,
-                    "block_msg": "1 year",
-                    "clear_count": True,
-                    "instance": "Instance - 4"
-                },
-                "4": {
-                    "interlock_name": "VTS RouteDeviation FifthTime",
-                    "block_duration": 90,
-                    "block_msg": "1 year",
-                    "clear_count": True,
-                    "instance": "Instance - 5"
-                },
-                "5": {
-                    "interlock_name": "VTS RouteDeviation SixthTime",
-                    "block_duration": 90,
-                    "block_msg": "1 year",
-                    "clear_count": True,
-                    "instance": "Instance - 6"
-                }
-            },
-            "severity": "Critical",
-            "description": "Route Deviation",
-            "alert_threshold": 5
-        },
         "stoppage_violations_count": {
             "alerting_rules": {
                 "0": {
@@ -631,55 +582,6 @@ vts_interlock_mapping = {
             "alert_threshold": 3
         },
         "route_deviation_count": {
-            "alerting_rules": {
-                "0": {
-                    "interlock_name": "VTS RouteDeviation FirstTime",
-                    "block_duration": 7,
-                    "block_msg": "90 days",
-                    "clear_count": True,
-                    "instance": "Instance - 1"
-                },
-                "1": {
-                    "interlock_name": "VTS RouteDeviation SecondTime",
-                    "block_duration": 15,
-                    "block_msg": "1 year",
-                    "clear_count": True,
-                    "instance": "Instance - 2"
-                },
-                "2": {
-                    "interlock_name": "VTS RouteDeviation ThirdTime",
-                    "block_duration": 30,
-                    "block_msg": "1 year",
-                    "clear_count": True,
-                    "instance": "Instance - 3"
-                },
-                "3": {
-                    "interlock_name": "VTS RouteDeviation FourthTime",
-                    "block_duration": 30,
-                    "block_msg": "1 year",
-                    "clear_count": True,
-                    "instance": "Instance - 4"
-                },
-                "4": {
-                    "interlock_name": "VTS RouteDeviation FifthTime",
-                    "block_duration": 30,
-                    "block_msg": "1 year",
-                    "clear_count": True,
-                    "instance": "Instance - 5"
-                },
-                "5": {
-                    "interlock_name": "VTS RouteDeviation SixthTime",
-                    "block_duration": 30,
-                    "block_msg": "1 year",
-                    "clear_count": True,
-                    "instance": "Instance - 6"
-                }
-            },
-            "severity": "Critical",
-            "description": "Route Deviation",
-            "alert_threshold": 5
-        },
-        "route_deviation_count_15m": {
             "alerting_rules": {
                 "0": {
                     "interlock_name": "VTS RouteDeviation FirstTime",
