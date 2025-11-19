@@ -4,7 +4,7 @@ import fastapi
 import urllib.parse
 import hpcl_ceg_model
 from msal import ConfidentialClientApplication
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 import authenticator.authentication_manager_ad as authentication_manager_ad
 
 BaseUrl = "https://login.microsoftonline.com"
@@ -43,7 +43,8 @@ async def get_redirect_url(
         state=str(uuid.uuid4()),
         redirect_uri=redirect_uri
     )
-    return RedirectResponse(auth_url)
+    return JSONResponse(content={"url": auth_url})
+    # return RedirectResponse(auth_url)
 
 
 async def auth_callback(code: str, tenant_id: str, client_id: str, client_secret: str,

@@ -74,8 +74,7 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
         cipher = Fernet(key)
         path = request.url.path
         if path in ['/api/session/me', '/api/session/encryption-status', '/api/ping', '/docs',
-                    '/openapi.json', '/api/logout', '/api/users/sso_auth_url',
-                    '/api/users/sso_auth_callback']:
+                    '/openapi.json', '/api/logout', '/api/users/sso_auth_url']:
             response = await call_next(request)
             return response
 

@@ -138,7 +138,7 @@ async def users_logout(request: fastapi.Request, data: Users_LogoutParams):
 
 
 # Action sso_auth_callback
-@router.post('/sso_auth_callback', tags=['Users'])
+@router.get('/sso_auth_callback', tags=['Users'])
 async def sso_auth_callback(request: fastapi.Request, code: typing.Optional[str] = None,
                 entity_id: typing.Optional[str] = ""):
     status, resp, user_info = await saml_validation.auth_callback(code, urdhva_base.settings.saml_tenant_id,
@@ -147,6 +147,7 @@ async def sso_auth_callback(request: fastapi.Request, code: typing.Optional[str]
                                                urdhva_base.settings.saml_redirect_uri)
     if not status:
         response = fastapi.responses.JSONResponse({"status": False, "msg": resp}, 401)
+        return response
     else:
         response = fastapi.responses.JSONResponse({"status": True, "msg": "Logged in Successfully"},
                                                   200)
@@ -178,8 +179,8 @@ async def sso_auth_callback(request: fastapi.Request, code: typing.Optional[str]
 
 
 # Action sso_auth_url
-@router.post('/sso_auth_url', tags=['Users'])
-async def sso_auth_callback(request: fastapi.Request):
+@router.get('/sso_auth_url', tags=['Users'])
+async def sso_auth_url(request: fastapi.Request):
     return await saml_validation.get_redirect_url(urdhva_base.settings.saml_tenant_id,
                                                   urdhva_base.settings.saml_client_id,
                                                   urdhva_base.settings.saml_client_secret,
