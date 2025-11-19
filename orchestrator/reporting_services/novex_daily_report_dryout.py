@@ -595,7 +595,7 @@ async def supply_terminal_wise_counts():
                                   --and TO_CHAR(sysdate-7,'dd/mm/yyyy')
                                   AND a."TRUCK_REGNO" IS NULL AND (a."CANCEL_INDENT" IS NULL OR a."CANCEL_INDENT" <> 'Y')
                                   GROUP BY b."ZONECD", a."LOCN_CODE",SUBSTR(a."DEALER_CODE", 1, 10)
-                                  ORDER BY b."ZONECD",a."LOCN_CODE";
+                                  ORDER BY b."ZONECD",a."LOCN_CODE"
                                   """
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
