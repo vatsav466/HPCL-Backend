@@ -117,13 +117,13 @@ async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
     # Add value labels on top of bars for MS
     for bar in ms_bars:
         height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, height + 0.01, f'{height:.2f}', 
+        ax.text(bar.get_x() + bar.get_width()/2, height + 0.01, f'{int(height)}', 
                 ha='center', va='bottom', fontsize=8)
 
     # Add value labels on top of bars for HSD
     for bar in hsd_bars:
         height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, height + 0.01, f'{height:.2f}', 
+        ax.text(bar.get_x() + bar.get_width()/2, height + 0.01, f'{int(height)}', 
                 ha='center', va='bottom', fontsize=8)
 
     ax.set_title('Monthly Loss of Sales Due to Partial Dryouts (KL)', fontsize=14, pad=10)
@@ -569,6 +569,7 @@ async def supply_terminal_wise_counts():
     sap_ids = [str(sid).zfill(10) for sid in sap_ids]
     batch_size = 100
     all_batches = []
+    carry_forward_bacthes = []
     for i in range(0, len(sap_ids), batch_size):
         batch = sap_ids[i:i + batch_size]
         print(f"Processing batch {i//batch_size + 1}: {len(batch)} items")
@@ -585,15 +586,32 @@ async def supply_terminal_wise_counts():
                         GROUP BY SUBSTR(a."DEALER_CODE", 1, 10)
                         ORDER BY "SAP_ID" ASC
                         """
+        carry_forward_query = f"""SELECT b."ZONECD",a."LOCN_CODE",SUBSTR(a."DEALER_CODE", 1, 10) AS "SAP_ID",
+                                  count(a."INDENT_NO") AS "INDCNT" 
+                                  FROM "IMS_SAP"."INDENT_REQUEST" a,"IMS_SAP"."LOCN_MASTER" b WHERE a."LOCN_CODE" = b."LOCN_CODE" AND
+                                  TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') <= TO_CHAR(SYSDATE,'yyyymmdd') AND
+                                  TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') > TO_CHAR(SYSDATE-3,'yyyymmdd')
+                                  AND SUBSTR(a."DEALER_CODE", 1, 10) IN ({batch_str})
+                                  --and TO_CHAR(sysdate-7,'dd/mm/yyyy')
+                                  AND a."TRUCK_REGNO" IS NULL AND (a."CANCEL_INDENT" IS NULL OR a."CANCEL_INDENT" <> 'Y')
+                                  GROUP BY b."ZONECD", a."LOCN_CODE",SUBSTR(a."DEALER_CODE", 1, 10)
+                                  ORDER BY b."ZONECD",a."LOCN_CODE";
+                                  """
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         resp = await function(query=ims_query)
         batch_df = pd.DataFrame(resp)
         all_batches.append(batch_df)
-    
+        carry_resp = await function(query=carry_forward_query)
+        carry_df = pd.DataFrame(carry_resp)
+        carry_forward_bacthes.append(carry_df)
+
     # Combine all batches into one DataFrame
     final_df = pd.concat(all_batches, ignore_index=True)
+    carry_forward_final_df = pd.concat(carry_forward_bacthes, ignore_index=True)
+    carry_forward_final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
+    carry_forward_final_df["SAP_ID"] = carry_forward_final_df["SAP_ID"].astype(str).str.lstrip("0")
     # Optionally remove duplicates if needed
     final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
     final_df["SAP_ID"] = final_df["SAP_ID"].astype(str).str.lstrip("0")
@@ -612,12 +630,22 @@ async def supply_terminal_wise_counts():
     # print(merged_df.head())
     # print(f"\n Combined DataFrame created successfully with {len(merged_df)} records.")
     # print(" VALID_COUNT column added successfully based on SAP_ID.")
+    carry_merge_df = merged_df.merge(
+        carry_forward_final_df,
+        how="left",
+        left_on="sap_id",
+        right_on="SAP_ID"
+    )
+    carry_merge_df["INDCNT"] = carry_merge_df["INDCNT"].fillna(0).astype(int)
+    carry_merge_df.drop(columns=["SAP_ID"], inplace=True)
+
     summary_df = (
-        merged_df.groupby(["zone", "supply_location", "region"], dropna=False)
+        carry_merge_df.groupby(["zone", "supply_location", "region"], dropna=False)
         .agg(
             **{
                 "Count of Dryout ROs": ("sap_id", "nunique"),
                 "Count of DryOut Outlets with Valid indent": ("VALID_COUNT", "sum"),
+                "Avg. Pending Indents for last 3 days": ("INDCNT", "sum")
             }
         )
         .reset_index()
@@ -932,7 +960,7 @@ async def fetch_dryout_data():
 
     # Step 4: Reorder columns for readability
     bottom_3_per_zone_sorted = bottom_3_per_zone_sorted[
-        ["Sl No", "Zone", "Supply Location (Terminal)", "Region", "Count of Dryout ROs", "Count of DryOut Outlets with Valid indent"]
+        ["Sl No", "Zone", "Supply Location (Terminal)", "Region", "Count of Dryout ROs", "Count of DryOut Outlets with Valid indent", "Avg. Pending Indents for last 3 days"]
     ]
     print(bottom_3_per_zone_sorted)
 
