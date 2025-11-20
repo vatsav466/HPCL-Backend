@@ -135,6 +135,7 @@ class VTSAnalyticsActions:
                     all_conditions.append("(qty_shortage > '0')")
                 elif bu == 'I&C':
                     all_conditions.append("distribution_channel = '12'")
+                    all_conditions.append("sales_org = '3000'")
             
             else:
                 all_conditions.append("division = '11'")
@@ -490,14 +491,16 @@ class VTSAnalyticsActions:
     @staticmethod
     async def vts_insite_violation(filters, cross_filters, drill_state, payload):
         """
-        Main function to handle VTS violation queries with proper invoice-level shortage matching
+        Main function to handle VTS violation queries with BU-specific merge logic:
+        - I&C: Default=Shortage LEFT Violations, Filtered=Shortage INNER Violations
+        - TAS/LPG: Default=Violations OUTER Shortage, Filtered=Violations LEFT Shortage
+        - Others: Violations LEFT Shortage (always)
         """
         try:
-
-            bu_ic = any(
-            getattr(f,'key') == 'bu' and getattr(f,'value') == 'I&C' 
-            for f in (filters )
-            )
+            # Identify Business Unit
+            bu_ic = any(getattr(f, 'key') == 'bu' and getattr(f, 'value') == 'I&C' for f in filters)
+            bu_lpg = any(getattr(f, 'key') == 'bu' and getattr(f, 'value') == 'LPG' for f in filters)
+            bu_tas = any(getattr(f, 'key') == 'bu' and getattr(f, 'value') == 'TAS' for f in filters)
             
             query = vts_query.vts_query.get(drill_state.split(",")[0])
             all_violations = vts_query.vts_query.get("all_violations", [])
@@ -513,31 +516,15 @@ class VTSAnalyticsActions:
                     return invoice_str.split('-')[0]
                 return invoice_str
 
-            async def get_shortage_data(tl_numbers_list=None, invoice_numbers_list=None):
-                """
-                Fetch shortage data from sales_trips_till_date
-                Returns DataFrame with vehicle_id, invoice_no, qty_shortage, material_group_nm
-                """
-                where_conditions = []
-                
-                if tl_numbers_list:
-                    tl_numbers_str = "', '".join(map(str, tl_numbers_list))
-                    where_conditions.append(f"vehicle_id IN ('{tl_numbers_str}')")
-                
-                if invoice_numbers_list:
-                    base_invoice_numbers = [extract_invoice_number(inv) for inv in invoice_numbers_list if extract_invoice_number(inv)]
-                    base_invoice_numbers = list(set(base_invoice_numbers))
-                    
-                    if base_invoice_numbers:
-                        invoice_numbers_str = "', '".join(map(str, base_invoice_numbers))
-                        where_conditions.append(f"invoice_no IN ('{invoice_numbers_str}')")
-                
-                where_clause = " AND ".join(where_conditions)
-                
-                shortage_query = f"""
+            async def get_shortage_data():
+                """Fetch ALL shortage data from sales_trips_till_date"""
+                shortage_query = """
                     SELECT 
                         vehicle_id, 
                         invoice_no,
+                        plant_nm,
+                        zone_nm,
+                        invoice_date,
                         CASE 
                             WHEN qty_shortage = 'NaN' THEN '0.0'
                             WHEN qty_shortage IS NULL THEN '0.0'
@@ -545,10 +532,9 @@ class VTSAnalyticsActions:
                         END as qty_shortage,
                         material_group_nm
                     FROM sales_trips_till_date
-                    WHERE 
-                        load_status = '6'
-                        AND {where_clause}
+                    WHERE load_status = '6'
                 """
+                
                 conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
                 shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
                 df_shortage = await VTSAnalyticsActions.execute_query(shortage_query)
@@ -556,142 +542,328 @@ class VTSAnalyticsActions:
                 if df_shortage.empty:
                     return pd.DataFrame()
                 
-                # Convert qty_shortage to numeric, replacing errors with 0
+                # Convert qty_shortage to numeric
                 df_shortage['qty_shortage'] = pd.to_numeric(df_shortage['qty_shortage'], errors='coerce').fillna(0.0)
                 
-                # Filter out rows where qty_shortage is 0
-                if not bu_ic:
+                # Filter out zero shortages for non-I&C BUs when not in default mode
+                if not bu_ic and violation_types:
                     df_shortage = df_shortage[df_shortage['qty_shortage'] != 0]
-                
                     if df_shortage.empty:
-                       return pd.DataFrame()
-                    
+                        return pd.DataFrame()
+                
+                # Create standardized column names for merging
                 df_shortage['invoice_match_key'] = df_shortage['invoice_no'].astype(str).str.strip()
+                df_shortage['tl_number'] = df_shortage['vehicle_id']
+                df_shortage['invoice_number'] = df_shortage['invoice_no']
                 
                 return df_shortage
 
-            def merge_shortage_data(df, df_shortage, aggregate=True):
+            async def get_truck_master():
+                """Get truck master data for all trucks"""
+                truck_query = """
+                    SELECT DISTINCT 
+                        truck_no, 
+                        transporter_name,
+                        location_name,
+                        zone
+                    FROM vts_truck_master
                 """
-                Merge shortage data with main dataframe
-                If BU is I&C: Get ALL shortage data (reverse merge from df_shortage)
-                If aggregate=True: sum qty_shortage by vehicle + invoice
-                If aggregate=False: keep material_group_nm detail with comma-separated values
-                """
-                if 'invoice_number' not in df.columns:
-                    if not aggregate:
-                        df['qty_shortage_detail'] = ''
-                    return df
+                return await VTSAnalyticsActions.execute_query(truck_query)
 
-                if df_shortage.empty:
-                    if not aggregate:
-                        df['qty_shortage_detail'] = ''
-                    return df
-                    
-                df['invoice_match_key'] = df['invoice_number'].apply(extract_invoice_number)
-                     
-                # Check if BU is I&C - reverse the merge direction
+            def determine_merge_strategy():
+                """
+                Determine merge strategy based on BU and violation_types:
+                Returns: (merge_how, base_is_shortage)
+                """
+                has_violation_filter = bool(violation_types)
+                
                 if bu_ic:
-                    if aggregate:
-                        df_shortage_agg = df_shortage.groupby(
-                            ['vehicle_id', 'invoice_match_key'], 
-                            as_index=False
-                        )['qty_shortage'].sum()
-                        
-                        df_merged = df.merge(
-                            df_shortage_agg[['vehicle_id', 'invoice_match_key', 'qty_shortage']],
-                            left_on=['tl_number', 'invoice_match_key'],
-                            right_on=['vehicle_id', 'invoice_match_key'],
-                            how='inner'  
-                        )
-                        
-                        df_merged['qty_shortage'] = pd.to_numeric(df_merged['qty_shortage'], errors='coerce').fillna(0)
-                        
+                    if has_violation_filter:
+                        return ('inner', True)  # Shortage INNER Violations
                     else:
-                        def create_shortage_detail(group):
-                            """Create formatted shortage detail string including zero values for I&C"""
-                            details = []
-                            for _, row in group.iterrows():
-                                shortage = float(row['qty_shortage']) if pd.notna(row['qty_shortage']) else 0
-                                mat_group = str(row['material_group_nm']).strip() if pd.notna(row['material_group_nm']) else 'Unknown'
-                                details.append(f"{mat_group}:{shortage}")
-                            return ', '.join(details) if details else ''
-                        
-                        df_shortage_grouped = df_shortage.groupby(
-                            ['vehicle_id', 'invoice_match_key']
-                        ).apply(create_shortage_detail).reset_index(name='qty_shortage_detail')
-                        
-                        df_merged = df.merge(
-                            df_shortage_grouped[['vehicle_id', 'invoice_match_key', 'qty_shortage_detail']],
-                            left_on=['tl_number', 'invoice_match_key'],
-                            right_on=['vehicle_id', 'invoice_match_key'],
-                            how='inner'  
-                        )
-                        
-                        df_merged['qty_shortage_detail'] = df_merged['qty_shortage_detail'].fillna('')
-                    
-                    df_merged.drop(columns=['vehicle_id', 'invoice_match_key'], inplace=True, errors='ignore')
-                    
-                    if df_merged.empty:
+                        return ('left', True)   # Shortage LEFT Violations
+                elif bu_tas or bu_lpg:
+                    if has_violation_filter:
+                        return ('left', False)  # Violations LEFT Shortage
+                    else:
+                        return ('outer', False) # Violations OUTER Shortage
+                else:
+                    # Default BU behavior
+                    return ('left', False)      # Violations LEFT Shortage
+
+            def merge_shortage_with_violations(df_violations, df_shortage, df_truck_master, aggregate=True):
+                """
+                Merge shortage and violations based on BU-specific logic
+                """
+                merge_how, base_is_shortage = determine_merge_strategy()
+                
+                if df_shortage.empty and df_violations.empty:
+                    return pd.DataFrame()
+                
+                if df_shortage.empty:
+                    if base_is_shortage:
+                        # If shortage is base and empty, return empty
+                        return pd.DataFrame()
+                    else:
+                        # If violations are base, add empty shortage column
                         if aggregate:
-                            df['qty_shortage'] = 0
+                            df_violations['qty_shortage'] = 0
                         else:
-                            df['qty_shortage_detail'] = ''
-                        return df
+                            df_violations['qty_shortage_detail'] = ''
+                        
+                        # Map with truck master
+                        if not df_truck_master.empty and not df_violations.empty:
+                            truck_lookup = df_truck_master.set_index('truck_no')
+                            
+                            if 'transporter_name' not in df_violations.columns or df_violations['transporter_name'].isna().any():
+                                df_violations['transporter_name'] = df_violations.get('transporter_name', pd.Series(index=df_violations.index)).fillna(
+                                    df_violations['tl_number'].map(truck_lookup['transporter_name'])
+                                )
+                        
+                        return df_violations
+                
+                if df_violations.empty:
+                    if not base_is_shortage:
+                        # Violations are base but empty
+                        return pd.DataFrame()
+                
+                # Prepare match keys
+                if not df_violations.empty and 'invoice_number' in df_violations.columns:
+                    df_violations['invoice_match_key'] = df_violations['invoice_number'].apply(extract_invoice_number)
+                
+                df_shortage['invoice_match_key'] = df_shortage['invoice_no'].astype(str).str.strip()
+                
+                if aggregate:
+                    # Aggregate shortage by vehicle + invoice
+                    df_shortage_agg = df_shortage.groupby(
+                        ['tl_number', 'invoice_match_key'], 
+                        as_index=False
+                    ).agg({
+                        'qty_shortage': 'sum',
+                        'plant_nm': 'first',
+                        'zone_nm': 'first',
+                        'invoice_number': 'first',
+                        'invoice_date': 'first'
+                    })
+                    
+                    # Perform merge based on strategy
+                    if base_is_shortage:
+                        # Shortage is base (I&C)
+                        if df_violations.empty or 'invoice_number' not in df_violations.columns:
+                            df_merged = df_shortage_agg.copy()
+                        else:
+                            df_merged = df_shortage_agg.merge(
+                                df_violations,
+                                left_on=['tl_number', 'invoice_match_key'],
+                                right_on=['tl_number', 'invoice_match_key'],
+                                how=merge_how,
+                                suffixes=('_shortage', '')
+                            )
+                            # Use shortage invoice_number when violations invoice_number is null
+                            df_merged['invoice_number'] = df_merged['invoice_number'].fillna(df_merged.get('invoice_number_shortage', ''))
+                            df_merged['invoice_date'] = df_merged.get('invoice_date_shortage', df_merged.get('invoice_date', ''))
+                    else:
+                        # Violations are base (TAS/LPG/Others)
+                        if df_violations.empty:
+                            df_merged = df_shortage_agg.copy()
+                        else:
+                            df_merged = df_violations.merge(
+                                df_shortage_agg,
+                                left_on=['tl_number', 'invoice_match_key'],
+                                right_on=['tl_number', 'invoice_match_key'],
+                                how=merge_how,
+                                suffixes=('', '_shortage')
+                            )
+                    
+                    # Fill missing data from shortage for unmatched records
+                    if 'location_name' not in df_merged.columns:
+                        # Column missing → create using plant_nm or blank
+                        df_merged['location_name'] = df_merged['plant_nm'] if 'plant_nm' in df_merged.columns else ''
+                    else:
+                        # Column exists → fill NaN with plant_nm
+                        if 'plant_nm' in df_merged.columns:
+                            df_merged['location_name'] = df_merged['location_name'].fillna(df_merged['plant_nm'])
+                        else:
+                            df_merged['location_name'] = df_merged['location_name'].fillna('')
+
+                    if 'zone' not in df_merged.columns:
+                       df_merged['zone'] = df_merged['zone_nm'] if 'zone_nm' in df_merged.columns else ''
+                    else:
+                        if 'zone_nm' in df_merged.columns:
+                            df_merged['zone'] = df_merged['zone'].fillna(df_merged['zone_nm'])
+                        else:
+                            df_merged['zone'] = df_merged['zone'].fillna('')
+                    
+                    if 'invoice_number' not in df_merged.columns or df_merged['invoice_number'].isna().any():
+                        df_merged['invoice_number'] = df_merged.get('invoice_number', '').fillna(
+                            df_merged.get('invoice_match_key', '')
+                        )
+                    
+                    # Handle created_at/violation_date with fallback to invoice_date
+                    if 'created_at' not in df_merged.columns:
+                        if 'violation_date' in df_merged.columns:
+                            df_merged['created_at'] = df_merged['violation_date'].fillna(
+                                df_merged.get('invoice_date', '')
+                            )
+                        else:
+                            df_merged['created_at'] = df_merged.get('invoice_date', '')
+                    elif df_merged['created_at'].isna().any():
+                        df_merged['created_at'] = df_merged['created_at'].fillna(
+                            df_merged.get('violation_date', df_merged.get('invoice_date', ''))
+                        )
+
+                    df_merged['created_at'] = pd.to_datetime(df_merged['created_at'], format='%Y%m%d', errors='coerce').dt.strftime('%Y-%m-%d')
+                    df_merged['qty_shortage'] = pd.to_numeric(df_merged['qty_shortage'], errors='coerce').fillna(0)
                     
                 else:
-                    # Original merge logic for non-I&C BU
-                    if aggregate:
-                        df_shortage_agg = df_shortage.groupby(
-                            ['vehicle_id', 'invoice_match_key'], 
-                            as_index=False
-                        )['qty_shortage'].sum()
-                        
-                        df_merged = df.merge(
-                            df_shortage_agg[['vehicle_id', 'invoice_match_key', 'qty_shortage']],
-                            left_on=['tl_number', 'invoice_match_key'],
-                            right_on=['vehicle_id', 'invoice_match_key'],
-                            how='left'
-                        )
-                        
-                        df_merged.drop(columns=['vehicle_id', 'invoice_match_key'], inplace=True, errors='ignore')
-                        df_merged['qty_shortage'] = pd.to_numeric(df_merged['qty_shortage'], errors='coerce').fillna(0)
-                        
+                    # Detailed shortage with material groups
+                    def create_shortage_detail(group):
+                        """Create formatted shortage detail string"""
+                        details = []
+                        for _, row in group.iterrows():
+                            shortage = float(row['qty_shortage']) if pd.notna(row['qty_shortage']) else 0
+                            # For I&C default include zeros, for others only non-zero
+                            if bu_ic and not violation_types:
+                                mat_group = str(row['material_group_nm']).strip() if pd.notna(row['material_group_nm']) else '0'
+                                details.append(f"{mat_group}:{shortage}")
+                            elif shortage != 0:
+                                mat_group = str(row['material_group_nm']).strip() if pd.notna(row['material_group_nm']) else '0'
+                                details.append(f"{mat_group}:{shortage}")
+                        return ', '.join(details) if details else ''
+                    
+                    df_shortage_grouped = df_shortage.groupby(
+                        ['tl_number', 'invoice_match_key']
+                    ).apply(create_shortage_detail).reset_index(name='qty_shortage_detail')
+                    
+                    # Get metadata
+                    df_shortage_meta = df_shortage.groupby(
+                        ['tl_number', 'invoice_match_key']
+                    ).agg({
+                        'plant_nm': 'first',
+                        'zone_nm': 'first',
+                        'invoice_number': 'first',
+                        'invoice_date': 'first'
+                    }).reset_index()
+                    
+                    df_shortage_grouped = df_shortage_grouped.merge(
+                        df_shortage_meta,
+                        on=['tl_number', 'invoice_match_key'],
+                        how='left'
+                    )
+                    
+                    # Perform merge based on strategy
+                    if base_is_shortage:
+                        # Shortage is base (I&C)
+                        if df_violations.empty or 'invoice_number' not in df_violations.columns:
+                            df_merged = df_shortage_grouped.copy()
+                        else:
+                            df_merged = df_shortage_grouped.merge(
+                                df_violations,
+                                left_on=['tl_number', 'invoice_match_key'],
+                                right_on=['tl_number', 'invoice_match_key'],
+                                how=merge_how,
+                                suffixes=('_shortage', '')
+                            )
+                            df_merged['invoice_number'] = df_merged['invoice_number'].fillna(df_merged.get('invoice_number_shortage', ''))
+                            df_merged['invoice_date'] = df_merged.get('invoice_date_shortage', df_merged.get('invoice_date', ''))
                     else:
-                        df_shortage_detailed = df_shortage.groupby(
-                            ['vehicle_id', 'invoice_match_key', 'material_group_nm'],
-                            as_index=False
-                        )['qty_shortage'].sum()
-                        
-                        def create_shortage_detail(group):
-                            """Create formatted shortage detail string with only non-zero values"""
-                            details = []
-                            for _, row in group.iterrows():
-                                shortage = float(row['qty_shortage'])
-                                if shortage != 0:  # Only include non-zero shortages
-                                    mat_group = str(row['material_group_nm']).strip()
-                                    details.append(f"{mat_group}:{shortage}")
-                            return ', '.join(details) if details else ''
-                        
-                        df_shortage_grouped = df_shortage_detailed.groupby(
-                            ['vehicle_id', 'invoice_match_key']
-                        ).apply(create_shortage_detail).reset_index(name='qty_shortage_detail')
-                        
-                        df_merged = df.merge(
-                            df_shortage_grouped[['vehicle_id', 'invoice_match_key', 'qty_shortage_detail']],
-                            left_on=['tl_number', 'invoice_match_key'],
-                            right_on=['vehicle_id', 'invoice_match_key'],
-                            how='left'
+                        # Violations are base (TAS/LPG/Others)
+                        if df_violations.empty:
+                            df_merged = df_shortage_grouped.copy()
+                        else:
+                            df_merged = df_violations.merge(
+                                df_shortage_grouped,
+                                left_on=['tl_number', 'invoice_match_key'],
+                                right_on=['tl_number', 'invoice_match_key'],
+                                how=merge_how,
+                                suffixes=('', '_shortage')
+                            )
+                    
+                    # Fill missing data
+                    if 'location_name' not in df_merged.columns:
+                        # Column missing → create using plant_nm or blank
+                        df_merged['location_name'] = df_merged['plant_nm'] if 'plant_nm' in df_merged.columns else ''
+                    else:
+                        # Column exists → fill NaN with plant_nm
+                        if 'plant_nm' in df_merged.columns:
+                            df_merged['location_name'] = df_merged['location_name'].fillna(df_merged['plant_nm'])
+                        else:
+                            df_merged['location_name'] = df_merged['location_name'].fillna('')
+                  
+                    if 'zone' not in df_merged.columns:
+                       df_merged['zone'] = df_merged['zone_nm'] if 'zone_nm' in df_merged.columns else ''
+                    else:
+                        if 'zone_nm' in df_merged.columns:
+                            df_merged['zone'] = df_merged['zone'].fillna(df_merged['zone_nm'])
+                        else:
+                            df_merged['zone'] = df_merged['zone'].fillna('')
+
+                    if 'invoice_number' not in df_merged.columns or df_merged['invoice_number'].isna().any():
+                        df_merged['invoice_number'] = df_merged.get('invoice_number', '').fillna(
+                            df_merged.get('invoice_match_key', '')
                         )
-                        
-                        df_merged.drop(columns=['vehicle_id', 'invoice_match_key'], inplace=True, errors='ignore')
-                        df_merged['qty_shortage_detail'] = df_merged['qty_shortage_detail'].fillna('')
+                    
+                    # Handle created_at/violation_date with fallback to invoice_date
+                    if 'created_at' not in df_merged.columns:
+                        if 'violation_date' in df_merged.columns:
+                            df_merged['created_at'] = df_merged['violation_date'].fillna(
+                                df_merged.get('invoice_date', '')
+                            )
+                        else:
+                            df_merged['created_at'] = df_merged.get('invoice_date', '')
+                    elif df_merged['created_at'].isna().any():
+                        df_merged['created_at'] = df_merged['created_at'].fillna(
+                            df_merged.get('violation_date', df_merged.get('invoice_date', ''))
+                        )
+                    
+
+                    df_merged['created_at'] = pd.to_datetime(df_merged['created_at'], format='%Y%m%d', errors='coerce').dt.strftime('%Y-%m-%d')
+                    df_merged['qty_shortage_detail'] = df_merged['qty_shortage_detail'].fillna('')
+                
+                # Map with truck master for missing transporter_name, location_name, zone
+                if not df_truck_master.empty and not df_merged.empty:
+                    # Create truck lookup
+                    truck_lookup = df_truck_master.set_index('truck_no')
+                    
+                    # Fill transporter_name
+                    if 'transporter_name' not in df_merged.columns:
+                        df_merged['transporter_name'] = df_merged['tl_number'].map(truck_lookup['transporter_name'])
+                    elif df_merged['transporter_name'].isna().any():
+                        df_merged['transporter_name'] = df_merged['transporter_name'].fillna(
+                            df_merged['tl_number'].map(truck_lookup['transporter_name'])
+                        )
+                    
+                    # Fill location_name from truck master if still missing
+                    if df_merged['location_name'].isna().any():
+                        df_merged['location_name'] = df_merged['location_name'].fillna(
+                            df_merged['tl_number'].map(truck_lookup['location_name'])
+                        )
+                    
+                    # Fill zone from truck master if still missing
+                    if df_merged['zone'].isna().any():
+                        df_merged['zone'] = df_merged['zone'].fillna(
+                            df_merged['tl_number'].map(truck_lookup['zone'])
+                        )
+                
+                # Clean up temporary columns
+                df_merged.drop(columns=['invoice_match_key', 'plant_nm', 'zone_nm', 'invoice_number_shortage', 
+                                    'invoice_date', 'invoice_date_shortage'], 
+                            inplace=True, errors='ignore')
+                
+                # Add null violation to 0
+                for v in all_violations:
+                    if v in df_merged.columns:
+                        df_merged[v] = df_merged[v].fillna(0)
                 
                 return df_merged
 
             has_qty_shortage_filter = 'qty_shortage' in violation_types if violation_types else False
             vts_violation_types = [v for v in violation_types if v != 'qty_shortage'] if violation_types else []
-            all_violations_with_shortage = all_violations + ['qty_shortage']
 
+            # Get truck master data (used across all flows)
+            df_truck_master = await get_truck_master()
+
+            # ==================== TRUCK NUMBER VIEW ====================
             if truck_number:
                 view_query = f"""
                     SELECT 
@@ -717,52 +889,52 @@ class VTSAnalyticsActions:
                 view_query = VTSAnalyticsActions.apply_conditions_to_query(view_query, conditions)
                 df_view = await VTSAnalyticsActions.execute_query(view_query)
                 
-                df_view = df_view.drop_duplicates(subset=["invoice_number"], keep="first")
+                if not df_view.empty:
+                    df_view = df_view.drop_duplicates(subset=["invoice_number"], keep="first")
                 
-                if df_view.empty:
-                    return {"status": True, "message": "No violation history found for this vehicle", "data": []}
-
-                invoice_list = df_view['invoice_number'].unique().tolist()
-                     
-                df_shortage = await get_shortage_data(
-                    tl_numbers_list=[truck_number],
-                    invoice_numbers_list=invoice_list
-                )
+                # Get shortage data and filter for this truck
+                df_shortage = await get_shortage_data()
+                if not df_shortage.empty:
+                    df_shortage = df_shortage[df_shortage['tl_number'] == truck_number]
                 
-                               
-                truck_query = f"""
-                    SELECT DISTINCT truck_no, transporter_name
-                    FROM vts_truck_master
-                    WHERE truck_no = '{truck_number}'
-                """
-                df_truck = await VTSAnalyticsActions.execute_query(truck_query)
+                # Check if we have any data
+                if df_view.empty and df_shortage.empty:
+                    return {"status": True, "message": "No data found for this vehicle", "data": []}
                 
-                if not df_truck.empty:
-                    final_df = df_view.merge(df_truck, left_on="tl_number", right_on="truck_no", how="left")
-                    final_df.drop(columns=['truck_no'], inplace=True, errors='ignore')
-                else:
-                    final_df = df_view.copy()
-                    final_df['transporter_name'] = None
+                # Merge
+                final_df = merge_shortage_with_violations(df_view, df_shortage, df_truck_master, aggregate=False)
                 
-                final_df = merge_shortage_data(final_df, df_shortage, aggregate=False)
-                
+                if final_df.empty:
+                    return {"status": True, "message": "No data found for this vehicle", "data": []}
                 
                 if 'qty_shortage_detail' not in final_df.columns:
                     final_df['qty_shortage_detail'] = ''
                 
-                final_df['qty_shortage_detail'] = final_df['qty_shortage_detail'].fillna('')
+                # Ensure created_at uses violation_date as fallback if needed
+                if 'violation_date' in final_df.columns:
+                    final_df['created_at'] = final_df.get('created_at', final_df['violation_date']).fillna(final_df['violation_date'])
                 
-                if final_df.empty:
-                    return {"status": True, "message": "No non-zero violations found", "data": []}
-
+                # Ensure transporter_name is filled
+                if 'transporter_name' not in final_df.columns or final_df['transporter_name'].isna().any():
+                    if not df_truck_master.empty:
+                        truck_lookup = df_truck_master.set_index('truck_no')
+                        final_df['transporter_name'] = final_df.get('transporter_name', pd.Series(index=final_df.index)).fillna(
+                            final_df['tl_number'].map(truck_lookup['transporter_name'])
+                        )
+                if 'violation_date' in final_df.columns:
+                    final_df['violation_date'] = final_df['violation_date'].fillna(
+                         pd.to_datetime(final_df['created_at'], errors='coerce').dt.strftime('%Y-%m-%d')
+                                    )
                 return {"status": True, "message": "success", "data": await safe_json(final_df)}
             
+            # ==================== QTY SHORTAGE ONLY FILTER ====================
             if has_qty_shortage_filter and not vts_violation_types:
                 shortage_query = """
                     SELECT 
                         vehicle_id AS tl_number, 
                         invoice_no AS invoice_number,
                         plant_nm AS location_name,
+                        invoice_date,
                         CASE 
                             WHEN qty_shortage = 'NaN' THEN '0.0'
                             WHEN qty_shortage IS NULL THEN '0.0'
@@ -870,6 +1042,7 @@ class VTSAnalyticsActions:
 
                 return {"status": True, "message": "success", "data": await safe_json(agg_df)}
 
+            # ==================== SPECIFIC VIOLATION TYPES ====================
             if violation_types:
                 select_parts = [
                     f"COUNT(DISTINCT CASE WHEN {v_type} != 0 THEN invoice_number END) AS {v_type}"
@@ -892,33 +1065,24 @@ class VTSAnalyticsActions:
                 violation_query = VTSAnalyticsActions.apply_conditions_to_query(violation_query, conditions)
                 
                 df_history = await VTSAnalyticsActions.execute_query(violation_query)
-                df_history = df_history.drop_duplicates(subset=["invoice_number"], keep="first")
+                if not df_history.empty:
+                    df_history = df_history.drop_duplicates(subset=["invoice_number"], keep="first")
 
-                if df_history.empty:
-                    return {"status": True, "message": "No violations found", "data": []}
-
-                tl_numbers_list = df_history['tl_number'].unique().tolist()
-                df_shortage = await get_shortage_data(tl_numbers_list=tl_numbers_list)
+                # Get shortage data
+                df_shortage = await get_shortage_data()
                 
-                truck_query = """
-                    SELECT DISTINCT truck_no, transporter_name
-                    FROM vts_truck_master
-                """
-                df_truck = await VTSAnalyticsActions.execute_query(truck_query)
+                # Merge
+                final_df = merge_shortage_with_violations(df_history, df_shortage, df_truck_master, aggregate=True)
 
-                final_df = df_history.merge(df_truck, left_on="tl_number", right_on="truck_no", how="left")
-                final_df.drop(columns=['truck_no'], inplace=True, errors='ignore')
-
-                final_df = merge_shortage_data(final_df, df_shortage, aggregate=True)
-
-                if has_qty_shortage_filter:
-                    final_df = final_df[final_df['qty_shortage'] > 0]
+                # Filter by qty_shortage if requested
+                if has_qty_shortage_filter and not final_df.empty:
+                    final_df = final_df[final_df.get('qty_shortage', 0) > 0]
 
                 if final_df.empty:
-                    return {"status": True, "message": "No non-zero violations found", "data": []}
+                    return {"status": True, "message": "No violations found", "data": []}
 
+                # Aggregate by invoice
                 violation_cols = [col for col in all_violations if col in final_df.columns]
-
                 agg_dict = {
                     "qty_shortage": "sum",
                     "zone": "first",
@@ -926,70 +1090,68 @@ class VTSAnalyticsActions:
                     "tl_number": "first",
                     "transporter_name": "first",
                 }
-
                 for col in violation_cols:
-                    agg_dict[col] = "max"  
+                    agg_dict[col] = "max"
 
                 final_df = final_df.groupby("invoice_number", as_index=False).agg(agg_dict)
 
-                
                 for col in violation_cols:
                     final_df[col] = final_df[col].fillna(0).astype(int)
-  
+
                 return {"status": True, "message": "success", "data": await safe_json(final_df)}
 
+            # ==================== DEFAULT CASE - ALL DATA ====================
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
             df_history = await VTSAnalyticsActions.execute_query(query)
             
-            if df_history.empty:
-                return {"status": True, "message": "No history data found", "data": []}
-
-            if 'invoice_number' in df_history.columns:
+            if not df_history.empty and 'invoice_number' in df_history.columns:
                 df_history = df_history.drop_duplicates(subset=["invoice_number"], keep="first")
 
-            tl_numbers_list = df_history['tl_number'].unique().tolist()
+            # Get shortage data
+            df_shortage = await get_shortage_data()
             
-            df_shortage = await get_shortage_data(tl_numbers_list=tl_numbers_list)
-            
-            tl_numbers_str = "', '".join(map(str, tl_numbers_list))
-            truck_query = f"""
-                SELECT DISTINCT truck_no, transporter_name
-                FROM vts_truck_master
-            """
-            df_truck = await VTSAnalyticsActions.execute_query(truck_query)
+            # Merge
+            final_df = merge_shortage_with_violations(df_history, df_shortage, df_truck_master, aggregate=True)
 
-            final_df = df_history.merge(df_truck, left_on="tl_number", right_on="truck_no", how="left")
-            final_df.drop(columns=['truck_no'], inplace=True, errors='ignore')
-            
-            final_df = merge_shortage_data(final_df, df_shortage, aggregate=True)
+            if final_df.empty:
+                return {"status": True, "message": "No data found", "data": []}
 
-            violation_cols = [v for v in all_violations if v in final_df.columns]
+            # Ensure qty_shortage column exists
             if 'qty_shortage' not in final_df.columns:
                 final_df['qty_shortage'] = 0
             else:
                 final_df['qty_shortage'] = pd.to_numeric(final_df['qty_shortage'], errors='coerce').fillna(0)
             
+            # Filter out rows with no violations at all
+            violation_cols = [v for v in all_violations if v in final_df.columns]
             violation_cols.append('qty_shortage')
+            
             final_df['total_violations'] = final_df[violation_cols].sum(axis=1)
-            final_df = final_df[final_df['total_violations'] > 0]
+
+            if bu_ic and not violation_types:
+                # For I&C default, include all rows (including zero violations)
+                pass
+            else:   
+                final_df = final_df[final_df['total_violations'] > 0]
+
             final_df.drop(columns=['total_violations'], inplace=True, errors='ignore')
 
             if final_df.empty:
-                return {"status": True, "message": "No violation history found for this vehicle", "data": []}
-    
+                return {"status": True, "message": "No violation data found", "data": []}
+
             # ==================== HANDLE GROUP_BY ====================
             group_by_col = payload.get("group_by") if payload else None
             if group_by_col and group_by_col in final_df.columns:
                 violation_cols = [v for v in all_violations if v in final_df.columns]
-                # violation_cols.append('qty_shortage')
+                violation_cols.append('qty_shortage')
             
                 agg_df = final_df.groupby(group_by_col)[violation_cols].sum().reset_index()
                 agg_df['total_count'] = agg_df[violation_cols].sum(axis=1)
                 
                 return {"status": True, "message": "success", "data": agg_df.to_dict(orient='records')}
 
-
+            # ==================== HANDLE DRILL-DOWN ====================
             qlick_view = payload.get("qlick_view") if payload else None
             click_value = payload.get("click_value") if payload else None
             location_name = payload.get("location_name") if payload else None
@@ -997,7 +1159,7 @@ class VTSAnalyticsActions:
             violation_cols = [v for v in all_violations if v in final_df.columns]
             violation_cols.append('qty_shortage')
 
-            # ZONE VIEW (no click - show all zones)
+            # ZONE VIEW
             if qlick_view == "zone" and not click_value:
                 final_df["zone"] = final_df["zone"].fillna("Unknown")
                 agg_df = final_df.groupby("zone")[violation_cols].sum().reset_index()
@@ -1053,13 +1215,13 @@ class VTSAnalyticsActions:
                     
                     agg_df = vehicle_df.groupby(group_cols)[violation_cols].sum().reset_index()
                     agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
-
                 else:
                     agg_df = vehicle_df.copy()
                     agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
                 
                 return {"status": True, "message": f"Invoice-wise violations for vehicle {click_value}", "data": agg_df.to_dict(orient="records")}
-    
+
+            # ==================== DOWNLOAD ====================
             if payload.get("download") == "true":
                 merged_df = pd.DataFrame(final_df)
                 for col in merged_df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
@@ -1084,9 +1246,6 @@ class VTSAnalyticsActions:
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers=headers
                 )
-
-            if final_df.empty:
-                return {"status": True, "message": "No non-zero violations found", "data": []}
 
             return {"status": True, "message": "success", "data": await safe_json(final_df)}
 
@@ -2263,8 +2422,9 @@ class VTSAnalyticsActions:
             FROM 
                 sales_trips_till_date T
             WHERE load_status = '6'
-        """    
-        conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, trips_query)
+        """ 
+        sql_filters = [f for f in filters if getattr(f, "key", None) != "transporter_name"]
+        conditions = VTSAnalyticsActions.build_filter_conditions(sql_filters, cross_filters, trips_query)
         trips_query = VTSAnalyticsActions.apply_conditions_to_query(trips_query, conditions)
         print("trips_query", trips_query)
         trips_df = await VTSAnalyticsActions.execute_query(trips_query)

@@ -1447,6 +1447,25 @@ async def sync_user_roles():
         "name": "Sales",
         "status": True
     },
+    "Sales Officer I&C": {
+        "allowed_pages": [
+            {
+                "menu_name": "Performance",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Sales Performance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "I&C Campaign"
+                            }
+          ]
+                    }
+                ]
+            }
+        ],
+        "name": "Sales",
+        "status": True
+    },
     "Admin": {
         "allowed_pages": [],
         "status": True

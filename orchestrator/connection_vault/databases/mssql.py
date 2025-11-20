@@ -8,6 +8,7 @@ import traceback
 import pandas as pd
 import polars as pl
 import hpcl_ceg_model
+import urdhva_base.types
 from sshtunnel import SSHTunnelForwarder
 
 
@@ -39,12 +40,13 @@ class Mssql(BaseAction):
             self.params = self.params.__dict__
         if 'credentials' in self.params.keys():
             self.params = self.params['credentials']
+            self.params["password"] = urdhva_base.types.Secret(self.params['password']).get_secret()
         if self.params.get('is_ssh_tunnel', False):
             tunnel = SSHTunnelForwarder(
                 (self.params['ssh_tunnel']['host'], self.params['ssh_tunnel']['port']),
                 ssh_username=self.params['ssh_tunnel']['user_name'],
-                ssh_pkey=self.params['ssh_tunnel']['private_key'] if 'private_key' in self.params['ssh_tunnel'].keys() else None,
-                ssh_password=self.params['ssh_tunnel']['password'] if 'password' in self.params['ssh_tunnel'].keys() else None,
+                ssh_pkey=urdhva_base.types.Secret(self.params['ssh_tunnel']['private_key'] if 'private_key' in self.params['ssh_tunnel'].keys() else None).get_secret(),
+                ssh_password=urdhva_base.types.Secret(self.params['ssh_tunnel']['password'] if 'password' in self.params['ssh_tunnel'].keys() else None).get_secret(),
                 remote_bind_address=(self.params['host'], self.params['port']),
             )
             tunnel.start()
