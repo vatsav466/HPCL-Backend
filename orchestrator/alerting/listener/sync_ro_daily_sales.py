@@ -3,6 +3,7 @@ import asyncio
 import traceback
 import datetime
 import polars as pl
+import pandas as pd
 import charts_actions
 import urdhva_base.redispool
 import dashboard_studio_model
@@ -74,6 +75,13 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
                 "last_transaction_date": pl.Datetime, 
                 "first_transaction_date": pl.Datetime 
             }
+            data = pd.DataFrame(data)
+            schema_cols = set(column_mapping.keys())
+            present_cols = set(data.columns)
+            # Find extra/unwanted columns
+            extra_cols = present_cols - schema_cols
+            # Drop them
+            data.drop(columns=list(extra_cols), inplace=True)
             tr_daily_sales = pl.DataFrame(data, schema=column_mapping)
 
             # ro master
