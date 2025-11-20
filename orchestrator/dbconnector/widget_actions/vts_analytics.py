@@ -136,6 +136,7 @@ class VTSAnalyticsActions:
                 elif bu == 'I&C':
                     all_conditions.append("distribution_channel = '12'")
                     all_conditions.append("sales_org = '3000'")
+                    all_conditions.append("route <> 'EXW001'")
             
             else:
                 all_conditions.append("division = '11'")
