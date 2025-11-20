@@ -114,6 +114,7 @@ async def tas_listener(rmsg):
             alertdata = rmsg['details']['additionalInfo']
             alertdata['severity'] = rmsg['severity']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
+            alertdata['alert_section'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
             
             if alertdata.get('interlock_name') in ["ROSOV_Close Status", "MOV_Close Status"]:
