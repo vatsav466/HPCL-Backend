@@ -131,7 +131,7 @@ location_configs = [
                     ZPS.REPORTING_OFFICE FROM 
                     ZMMCV_PLANT_STG ZPS INNER JOIN ZSDCV_AY_INV3_STG ZCA ON ZCA.SUPPLY_LOC = ZPS.PLANT
                     WHERE ZPS.ZLOC_TYPE IN ('11','15','16','18','19','44','51','52','53','98') 
-                    AND ZPS.SBU='RET' AND
+                    AND ZPS.SBU IN ('RET','DIR') AND
                     ZCA.INVOICE_DATE >= DATE_SUB(NOW(), INTERVAL 1 YEAR) AND ZCA.INVOICE_DATE <= NOW();
                 """,
         "reporting_office_query": """ 
