@@ -1,17 +1,17 @@
 {
     "va": {
         "name": "VA",
-        "weightage": 10,
+        "weightage": 20,
         "rules": [
             {
                 "name": "VA Portal",
                 "model": "va_portal",
-                "weightage": 100
+                "weightage": 90
             },
             {
                 "name": "Alert Severity",
                 "model": "va_alerts",
-                "weightage": 50,
+                "weightage": 10,
                 "rules": [
                     {
                         "name": "VA Critical Severity Open Alerts",
@@ -51,7 +51,7 @@
     },
     "vts": {
         "name": "VTS",
-        "weightage": 5,
+        "weightage": 30,
         "rules": [
             {
                 "name": "VTS Vehicle Wise Alerts",
@@ -154,60 +154,96 @@
             }
         ]
     },
-    "safety_interlocks": {
-        "name": "Safety_Interlocks",
+    "TAS": {
+        "name": "TAS",
         "weightage": 20,
         "rules": [
+        {
+            "name": "Safety_Interlocks",
+            "weightage": 30,
+            "rules": [
             {
                 "name": "Secondary Radar Guage",
                 "equipment_name": "Radar",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.14,
                 "search_key": "interlock_name",
-                "search_value": ["Secondary Radar_Under Maintenance", "Tank_Under Maintenance"],
-                "interlock_name": ["Secondary Radar_Under Maintenance", "Tank_Under Maintenance"]
+                "search_value": [
+                "Secondary Radar_Under Maintenance",
+                "Tank_Under Maintenance"
+                ],
+                "interlock_name": [
+                "Secondary Radar_Under Maintenance",
+                "Tank_Under Maintenance"
+                ]
             },
             {
                 "name": "VFT",
                 "equipment_name": "VFT",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.14,
                 "search_key": "interlock_name",
-                "search_value": ["VFT_Under Maintenance", "Tank_Under Maintenance"],
-                "interlock_name": ["VFT_Under Maintenance", "Tank_Under Maintenance"]
+                "search_value": [
+                "VFT_Under Maintenance",
+                "Tank_Under Maintenance"
+                ],
+                "interlock_name": [
+                "VFT_Under Maintenance",
+                "Tank_Under Maintenance"
+                ]
             },
             {
                 "name": "ROSOV",
                 "equipment_name": "ROSOV",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.14,
                 "search_key": "interlock_name",
-                "search_value": ["ROSOV_Under Maintenance", "Tank_Under Maintenance", "ROSOV_FailtoClose"],
-                "interlock_name": ["ROSOV_Under Maintenance", "Tank_Under Maintenance", "ROSOV_FailtoClose"]
+                "search_value": [
+                "ROSOV_Under Maintenance",
+                "Tank_Under Maintenance",
+                "ROSOV_FailtoClose"
+                ],
+                "interlock_name": [
+                "ROSOV_Under Maintenance",
+                "Tank_Under Maintenance",
+                "ROSOV_FailtoClose"
+                ]
             },
             {
                 "name": "HCD",
                 "equipment_name": "HCD",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.14,
                 "search_key": "interlock_name",
-                "search_value": ["HCD_Under Maintenance", "HCD_Fault activated"],
-                "interlock_name": ["HCD_Under Maintenance", "HCD_Fault activated"]
+                "search_value": [
+                "HCD_Under Maintenance",
+                "HCD_Fault activated"
+                ],
+                "interlock_name": [
+                "HCD_Under Maintenance",
+                "HCD_Fault activated"
+                ]
             },
             {
                 "name": "Rim Seal",
                 "equipment_name": "RIMSEAL",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.14,
                 "search_key": "interlock_name",
-                "search_value": ["Rim Seal system_Under Maintenance", "Rim Seal system_Fault activated"],
-                "interlock_name": ["Rim Seal system_Under Maintenance", "Rim Seal system_Fault activated"]
+                "search_value": [
+                "Rim Seal system_Under Maintenance",
+                "Rim Seal system_Fault activated"
+                ],
+                "interlock_name": [
+                "Rim Seal system_Under Maintenance",
+                "Rim Seal system_Fault activated"
+                ]
             },
             {
                 "name": "Dyke Valves",
                 "equipment_name": "Dyke",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.14,
                 "search_key": "interlock_name",
                 "search_value": "Dykevalve_Activated",
                 "interlock_name": "Dykevalve_Activated"
@@ -215,57 +251,75 @@
             {
                 "name": "Hooter",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.14,
                 "rules": [
-                  {
+                {
                     "equipment_name": "Dyke",
                     "model": "open_alerts",
                     "search_key": "interlock_name",
                     "search_value": "",
                     "interlock_name": "",
-                    "weightage": 2.38
-                  },
-                  {
+                    "weightage": 0.71
+                },
+                {
                     "equipment_name": "HCD",
                     "model": "open_alerts",
                     "search_key": "interlock_name",
                     "search_value": "",
                     "interlock_name": "",
-                    "weightage": 2.38
-                  },
-                  {
+                    "weightage": 0.71
+                },
+                {
                     "equipment_name": "ESD",
                     "model": "open_alerts",
                     "search_key": "interlock_name",
                     "search_value": "",
                     "interlock_name": "",
-                    "weightage": 2.38
-                  }
+                    "weightage": 0.72
+                }
                 ]
             },
             {
                 "name": "Fire Engine",
                 "equipment_name": "Fire Engine",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.14,
                 "search_key": "interlock_name",
-                "search_value": ["Fire engine_Under Maintenance", "Fire engine_ FailtoStart", "Fireengine_LLOP", "FireEngine_HWOT", "FireEngine_Tripped"],
-                "interlock_name": ["Fire engine_Under Maintenance", "Fire engine_ FailtoStart", "Fireengine_LLOP", "FireEngine_HWOT", "FireEngine_Tripped"]
+                "search_value": [
+                "Fire engine_Under Maintenance",
+                "Fire engine_ FailtoStart",
+                "Fireengine_LLOP",
+                "FireEngine_HWOT",
+                "FireEngine_Tripped"
+                ],
+                "interlock_name": [
+                "Fire engine_Under Maintenance",
+                "Fire engine_ FailtoStart",
+                "Fireengine_LLOP",
+                "FireEngine_HWOT",
+                "FireEngine_Tripped"
+                ]
             },
             {
                 "name": "Jockey Pump",
                 "equipment_name": "Jockey Pump",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.14,
                 "search_key": "interlock_name",
-                "search_value": ["JockeyPump_Under Maintenance", "Jockeypump_ FailtoStart"],
-                "interlock_name": ["JockeyPump_Under Maintenance", "Jockeypump_ FailtoStart"]
+                "search_value": [
+                "JockeyPump_Under Maintenance",
+                "Jockeypump_ FailtoStart"
+                ],
+                "interlock_name": [
+                "JockeyPump_Under Maintenance",
+                "Jockeypump_ FailtoStart"
+                ]
             },
             {
                 "name": "ESD",
                 "equipment_name": "ESD",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.14,
                 "search_key": "interlock_name",
                 "search_value": "ESD Push button_Under Maintenance",
                 "interlock_name": "ESD Push button_Under Maintenance"
@@ -274,7 +328,7 @@
                 "name": "Hydrant PTs",
                 "equipment_name": "PT",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.15,
                 "search_key": "interlock_name",
                 "search_value": "HydrantPT_Under Maintenance",
                 "interlock_name": "HydrantPT_Under Maintenance"
@@ -283,7 +337,7 @@
                 "name": "UPS Safety",
                 "equipment_name": "UPS",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.15,
                 "search_key": "interlock_name",
                 "search_value": "",
                 "interlock_name": ""
@@ -292,7 +346,7 @@
                 "name": "Safety PLC",
                 "equipment_name": "PLC",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.15,
                 "search_key": "interlock_name",
                 "search_value": "",
                 "interlock_name": ""
@@ -301,22 +355,23 @@
                 "name": "Air Compressor",
                 "equipment_name": "Air Compressor",
                 "model": "open_alerts",
-                "weightage": 7.14,
+                "weightage": 2.15,
                 "search_key": "interlock_name",
                 "search_value": "AirCompressor_Fault activated",
                 "interlock_name": "AirCompressor_Fault activated"
             }
-        ]
-    },
-    "gantry_interlocks": {
-        "name": "Gantry_Interlocks",
-        "weightage": 10,
-        "rules": [
+            ]
+        },
+
+        {
+            "name": "Gantry_Interlocks",
+            "weightage": 15,
+            "rules": [
             {
                 "name": "LRC Master",
                 "equipment_name": "LRC Switchover",
                 "model": "open_alerts",
-                "weightage": 11.11,
+                "weightage": 1.66,
                 "search_key": "interlock_name",
                 "search_value": "LRC Master Switchover required in 30 days",
                 "interlock_name": "LRC Master Switchover required in 30 days",
@@ -326,7 +381,7 @@
                 "name": "BCU Totalizer Mismatch with last day Totalizer",
                 "equipment_name": "Gantry BCU",
                 "model": "open_alerts",
-                "weightage": 11.11,
+                "weightage": 1.66,
                 "search_key": "interlock_name",
                 "search_value": "Day End totaliser Mismatch",
                 "interlock_name": "Day End totaliser Mismatch",
@@ -336,7 +391,7 @@
                 "name": "BCU Totalizer Mismatch with MFM Totalizer",
                 "equipment_name": "Gantry BCU",
                 "model": "open_alerts",
-                "weightage": 11.11,
+                "weightage": 1.67,
                 "search_key": "interlock_name",
                 "search_value": "BCU vs MFM totalizer mismatch alarm",
                 "interlock_name": "BCU vs MFM totalizer mismatch alarm",
@@ -346,7 +401,7 @@
                 "name": "K Factor Change in BCU",
                 "equipment_name": "Gantry BCU",
                 "model": "open_alerts",
-                "weightage": 11.11,
+                "weightage": 1.67,
                 "search_key": "interlock_name",
                 "search_value": "K Factor Change_BCU",
                 "interlock_name": "K Factor Change_BCU",
@@ -356,7 +411,7 @@
                 "name": "K Factor Change in MFM",
                 "equipment_name": "MFM",
                 "model": "open_alerts",
-                "weightage": 11.11,
+                "weightage": 1.67,
                 "search_key": "interlock_name",
                 "search_value": "K factor change_MFM",
                 "interlock_name": "K factor change_MFM",
@@ -366,7 +421,7 @@
                 "name": "BCU Local Loading Status",
                 "equipment_name": "Gantry BCU",
                 "model": "open_alerts",
-                "weightage": 11.11,
+                "weightage": 1.67,
                 "search_key": "interlock_name",
                 "search_value": "BCU Local Loading",
                 "interlock_name": "BCU Local Loading",
@@ -376,7 +431,7 @@
                 "name": "Manual FAN Printing > 5%",
                 "equipment_name": "FAN",
                 "model": "open_alerts",
-                "weightage": 11.11,
+                "weightage": 1.67,
                 "search_key": "interlock_name",
                 "search_value": "Manual FAN printed more than 5% of total TT loaded",
                 "interlock_name": "Manual FAN printed more than 5% of total TT loaded",
@@ -386,7 +441,7 @@
                 "name": "Manual Bay ReAssignment > 5%",
                 "equipment_name": "Gantry BCU",
                 "model": "open_alerts",
-                "weightage": 11.11,
+                "weightage": 1.66,
                 "search_key": "interlock_name",
                 "search_value": "Manual Bay assignment of more than 5% of total TT loaded",
                 "interlock_name": "Manual Bay assignment of more than 5% of total TT loaded",
@@ -396,119 +451,148 @@
                 "name": "BCU Parameters Analysis",
                 "equipment_name": "Gantry BCU",
                 "model": "open_alerts",
-                "weightage": 11.11,
+                "weightage": 1.67,
                 "search_key": "interlock_name",
-                "search_value": ["No Flow alarm_BCU", "Low Flow alarm_BCU", 
-                                "High Flow Alarm_BCU", "Unauthorized Flow Alarm_BCU", 
-                                "Meter overrun Alarm_BCU", "Blend overdose Alarm_BCU",
-                                "Blend Underdose Alarm_BCU", "Additive Overdose Alarm_BCU",
-                                "Additive Underdose Alarm_BCU"],
-                "interlock_name": ["No Flow alarm_BCU", "Low Flow alarm_BCU", 
-                                "High Flow Alarm_BCU", "Unauthorized Flow Alarm_BCU", 
-                                "Meter overrun Alarm_BCU", "Blend overdose Alarm_BCU",
-                                "Blend Underdose Alarm_BCU", "Additive Overdose Alarm_BCU",
-                                "Additive Underdose Alarm_BCU"],
+                "search_value": [
+                "No Flow alarm_BCU",
+                "Low Flow alarm_BCU",
+                "High Flow Alarm_BCU",
+                "Unauthorized Flow Alarm_BCU",
+                "Meter overrun Alarm_BCU",
+                "Blend overdose Alarm_BCU",
+                "Blend Underdose Alarm_BCU",
+                "Additive Overdose Alarm_BCU",
+                "Additive Underdose Alarm_BCU"
+                ],
+                "interlock_name": [
+                "No Flow alarm_BCU",
+                "Low Flow alarm_BCU",
+                "High Flow Alarm_BCU",
+                "Unauthorized Flow Alarm_BCU",
+                "Meter overrun Alarm_BCU",
+                "Blend overdose Alarm_BCU",
+                "Blend Underdose Alarm_BCU",
+                "Additive Overdose Alarm_BCU",
+                "Additive Underdose Alarm_BCU"
+                ],
                 "month_calendar": true
             }
-        ]
-    },
-    "process_interlocks": {
-        "name": "Process_Interlocks",
-        "weightage": 5,
-        "rules": [
+            ]
+        },
+
+        {
+            "name": "Process_Interlocks",
+            "weightage": 10,
+            "rules": [
             {
                 "name": "Tank Wise Primary Radar",
                 "equipment_name": "Primary Level",
                 "model": "open_alerts",
-                "weightage": 33.33,
+                "weightage": 3.33,
                 "search_key": "interlock_name",
-                "search_value": ["Tank_Under Maintenance"],
-                "interlock_name": ["Tank_Under Maintenance"]
+                "search_value": [
+                "Tank_Under Maintenance"
+                ],
+                "interlock_name": [
+                "Tank_Under Maintenance"
+                ]
             },
             {
                 "name": "Tank DBBVs",
                 "equipment_name": "MOV",
                 "model": "open_alerts",
-                "weightage": 33.33,
+                "weightage": 3.33,
                 "search_key": "interlock_name",
-                "search_value": ["Tank_Under Maintenance", "MOV_Under Maintenance"],
-                "interlock_name": ["Tank_Under Maintenance", "MOV_Under Maintenance"]
+                "search_value": [
+                "Tank_Under Maintenance",
+                "MOV_Under Maintenance"
+                ],
+                "interlock_name": [
+                "Tank_Under Maintenance",
+                "MOV_Under Maintenance"
+                ]
             },
             {
                 "name": "Process_PLC_Healthiness",
                 "equipment_name": "PLC",
                 "model": "open_alerts",
-                "weightage": 33.33,
+                "weightage": 3.34,
                 "search_key": "interlock_name",
                 "search_value": "",
                 "interlock_name": ""
             }
-        ]
-    },
-    "water_quantity": {
-        "name": "Water_Quantity",
-        "weightage": 10,
-        "rules": [
+            ]
+        },
+
+        {
+            "name": "Water_Quantity",
+            "weightage": 10,
+            "rules": [
             {
                 "name": "Water Quantity",
                 "weightage": 10,
                 "month_calendar": false
             }
-        ]
-    },
-    "foam_quantity": {
-        "name": "Foam_Quantity",
-        "weightage": 5,
-        "rules": [
+            ]
+        },
+
+        {
+            "name": "Foam_Quantity",
+            "weightage": 10,
+            "rules": [
             {
                 "name": "Foam Quantity",
-                "weightage": 5,
-                "month_calendar": false
-            }
-        ]
-    },
-    "fire_engines_in_auto_mode": {
-        "name": "Fire_Engines_In_Auto_Mode",
-        "weightage": 10,
-        "rules": [
-            {
-                "name": "Fire Engines in Auto Mode",
                 "weightage": 10,
                 "month_calendar": false
             }
-        ]
-    },
-    "hydrant_line": {
-        "name": "Hydrant_Line",
-        "weightage": 5,
-        "rules": [
+            ]
+        },
+
+        {
+            "name": "Fire_Engines_In_Auto_Mode",
+            "weightage": 15,
+            "rules": [
+            {
+                "name": "Fire Engines in Auto Mode",
+                "weightage": 15,
+                "month_calendar": false
+            }
+            ]
+        },
+
+        {
+            "name": "Hydrant_Line",
+            "weightage": 10,
+            "rules": [
             {
                 "name": "Pressurized Hydrant Line",
-                "weightage": 2.5,
+                "weightage": 5,
                 "month_calendar": false
             },
             {
                 "name": "Jockey Pump",
-                "weightage": 2.5,
+                "weightage": 5,
                 "month_calendar": false
             }
+            ]
+        }
         ]
-    },
+  },
     "EMLOCK": {
         "name": "EMLOCK",
-        "weightage": 5,
+        "weightage": 10,
         "model": "EMLock",
         "rules": [
             {
                 "name": "EMLock",
                 "model": "EMLock",
-                "weightage": 5
+                "weightage": 10
             }
         ]
     },
     "DRYOUT": {
         "name": "DRYOUT",
-        "weightage": 15,
+        "weightage": 20,
         "rules": [
             {
                 "name": "Carry Forward",

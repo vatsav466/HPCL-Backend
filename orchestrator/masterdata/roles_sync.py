@@ -1438,7 +1438,11 @@ async def sync_user_roles():
                         "allowed_sub_menus": [
                             {
                             "title": "I&C Insights"
+                            },
+                            {
+                            "title": "I&C Campaign"
                             }
+
           ]
                     }
                 ]
@@ -1447,23 +1451,26 @@ async def sync_user_roles():
         "name": "Sales",
         "status": True
     },
-    "Sales Officer I&C": {
+    "temp_role": {
+        
         "allowed_pages": [
             {
-                "menu_name": "Performance",
+                "menu_name": "SOD Terminal",
                 "allowed_sub_menus": [
                     {
-                        "title": "Sales Performance",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Campaign"
-                            }
-          ]
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Terminal Automation"
+                    },
+                    {
+                        "title": "Video Analytics"
                     }
                 ]
             }
+            
         ],
-        "name": "Sales",
+        "name": "SOD",
         "status": True
     },
     "Admin": {
