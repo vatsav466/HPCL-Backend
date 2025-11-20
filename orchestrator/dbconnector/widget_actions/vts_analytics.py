@@ -2423,8 +2423,8 @@ class VTSAnalyticsActions:
             FROM 
                 sales_trips_till_date T
             WHERE load_status = '6'
-        """ 
-        sql_filters = [f for f in filters if getattr(f, "key", None) != "transporter_name"]
+        """
+        sql_filters = [f for f in filters if getattr(f, "key", None) != "transporter_name"]    
         conditions = VTSAnalyticsActions.build_filter_conditions(sql_filters, cross_filters, trips_query)
         trips_query = VTSAnalyticsActions.apply_conditions_to_query(trips_query, conditions)
         print("trips_query", trips_query)
@@ -2615,10 +2615,45 @@ class VTSAnalyticsActions:
                     'load_date': 'first'
                 })
             )
-            
-            return {"status": "success","message": "Table Data fetched successfully", "data": await safe_json(table_df)}
-        
 
+            shortage_filter = payload.get("shortage_filter") # <=
+            if shortage_filter:
+                sf = str(shortage_filter).replace(" ", "")
+
+                if "<" in sf:
+                    limit = float(sf.split("<")[1])
+                    table_df = table_df[table_df["shortage"] < limit]
+                elif ">=" in sf or "≥" in sf:
+                    limit = float(sf.split(">=")[1]) if ">=" in sf else float(sf.replace("≥", ""))
+                    table_df = table_df[table_df["shortage"] >= limit]
+
+            total_records = len(table_df)
+            # print("total_records:", total_records)
+            total_shortage = table_df["shortage"].sum()
+
+            # 3) Pagination
+            page = int(payload.get("page", 1))
+            page_size = int(payload.get("page_size", 100))  # default 100
+
+            if page_size <= 0:
+                page_size = total_records
+
+            start = (page - 1) * page_size
+            end = page * page_size
+
+            paged_df = table_df.iloc[start:end]
+
+            return {
+                "status": "success",
+                "message": "Table Data fetched successfully",
+                "data": await safe_json(paged_df),
+                "page": page,
+                "page_size": page_size,
+                "total_records": total_records,"total_shortage":total_shortage
+            }
+            
+            #  return {"status": "success","message": "Table Data fetched successfully", "data": await safe_json(table_df)}
+    
         filtered_trips_df = filtered_trips_df.replace([float('inf'), float('-inf')], None)
         filtered_trips_df = filtered_trips_df.where(pd.notnull(filtered_trips_df), None)
         print("TOTAL SHORTAGE BEFORE GROUPING =", filtered_trips_df["qty_shortage"].astype(float).sum())
