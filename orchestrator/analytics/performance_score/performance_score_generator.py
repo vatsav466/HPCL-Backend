@@ -24,18 +24,33 @@ async def fetch_va_score(bu):
         return va_score
     return {}
 
-
 async def generate_performance_score(bu, location_id=None):
     """Generating Performance Score per location for the given BU"""
     locations = []
     required_keys = ['sap_id', 'zone', 'region', 'name']
-    if not location_id:
-        query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}'"""
+    # if not location_id:
+    #     query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}'"""
+    # else:
+    #     location_id = [location_id] if isinstance(location_id, str) else location_id
+    #     location_id = ", ".join(f"'{value}'" for value in location_id)
+    #     query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}' AND 
+    #     sap_id in ({location_id})"""
+    if location_id:
+        # Filter both LPG + TAS using the provided hardcoded list
+        ids = ", ".join(f"'{v.strip()}'" for v in location_id)
+        query = f"""
+SELECT {','.join(required_keys)}
+FROM location_master
+WHERE bu = '{bu}'
+  AND TRIM(sap_id) IN ({ids})
+"""
     else:
-        location_id = [location_id] if isinstance(location_id, str) else location_id
-        location_id = ", ".join(f"'{value}'" for value in location_id)
-        query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}' AND 
-        sap_id in ({location_id})"""
+        # Fallback — should never run for you
+        query = f"""
+SELECT {','.join(required_keys)}
+FROM location_master
+WHERE bu = '{bu}'
+"""
     limit = 1000
     skip = 0
     # Listing all locations for the given BU
@@ -86,6 +101,7 @@ async def generate_performance_score(bu, location_id=None):
 async def main():
     supported_bus = ['LPG', 'TAS']
     for bu in supported_bus:
+        
         if bu == 'LPG':
             location_id = ['2662','2693','2241','2935','2371','2121','2520','2401','2324','2811',
                            '2435','2891','2663','2314','2844','2402','2455','2203','2892','2504',
@@ -94,9 +110,21 @@ async def main():
                            '2949','2173','2707','2568','2659','2792','2660','2692','2471','2731',
                            '2630','2408','2316','2117','2732'
                         ]
-            await generate_performance_score(bu,location_id)
+        elif bu == 'TAS':            
+            location_id = ['1527', '1424', '1435', '1436', '1457', '1630', '1636', '1742', '1712',
+                            '1723', '1128', '1146', '1157', '1292', '1305', '1313', '1319', '1644', 
+                            '1650', '1656', '1677', '1164', '1180', '1183', '1187', '1254', '1256', 
+                            '1259', '1265', '3129', '1233', '1242', '1278', '1281', '1385', '1410', 
+                            '1412', '1546', '1583', '1155', '1308', '1216', '1221', '1334', '1341', 
+                            '1915', '1919', '1937', '1940', '1953', '1979', '1992', '3693', '3708', 
+                            '1775', '1777', '1797', '1800', '1895', '3833', '1845', '1892', '1856', 
+                            '1871', '1879', '1973', '1991', '1999', '1397', '1485', '1504', '1509', 
+                            '1551', '1554', '1584', '1585', '1588', '3562']
+        
         else:
-            await generate_performance_score(bu)
+            continue
+        print("DEBUG:", bu, location_id)
+        await generate_performance_score(bu, location_id)
 
 if __name__ == "__main__":
     asyncio.run(main())
