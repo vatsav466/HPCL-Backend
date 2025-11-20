@@ -72,6 +72,12 @@ async def sync_ims_indent_products():
                 "JDE_CARRIER_CODE": pl.String
             }
         ro_data = pd.DataFrame(ro_data)
+        schema_cols = set(ro_data_schema.keys())
+        present_cols = set(ro_data.columns)
+        # Find extra/unwanted columns
+        extra_cols = present_cols - schema_cols
+        # Drop them
+        ro_data.drop(columns=list(extra_cols), inplace=True)
         ro_data = pl.DataFrame(ro_data, schema=ro_data_schema)
         ist = pytz.timezone('Asia/Kolkata')
         sync_date = datetime.datetime.now(ist).strftime("%y%m%d-%H") + "00"
