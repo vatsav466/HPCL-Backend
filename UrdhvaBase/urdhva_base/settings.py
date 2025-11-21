@@ -54,6 +54,10 @@ class Settings(pydantic_settings.BaseSettings):
     encryption_key: str = ""
     environment: str = ""
 
+    # Proxy Settings
+    http_proxy: str = ""
+    https_proxy: str = ""
+
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
 
@@ -226,6 +230,12 @@ class Settings(pydantic_settings.BaseSettings):
     minio_secret_key: str = ""
     minio_bucket: str = ""
     minio_secure: bool = False
+
+    # SAML Details
+    saml_client_id: str = ""
+    saml_client_secret: str = ""
+    saml_tenant_id: str = ""
+    saml_redirect_uri: str = ""
 
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \

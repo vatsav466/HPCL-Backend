@@ -73,8 +73,8 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
             key = key.encode()
         cipher = Fernet(key)
         path = request.url.path
-        if path in ['/api/session/me', '/api/session/encryption-status', '/api/ping',
-                                '/docs', '/openapi.json', '/api/logout']:
+        if path in ['/api/session/me', '/api/session/encryption-status', '/api/ping', '/docs',
+                    '/openapi.json', '/api/logout', '/api/users/sso_auth_url']:
             response = await call_next(request)
             return response
 
@@ -326,7 +326,8 @@ async def authMiddleware(request: fastapi.Request, call_next):
     # return await call_next(request)
     response = fastapi.Response(None, 403)
     if (request.url.path in ['/docs', '/openapi.json', '/api/login', '/api/session/me', '/api/users/login',
-                             '/api/session/encryption-status', '/api/ping'] +
+                             '/api/session/encryption-status', '/api/ping',
+                             '/api/users/sso_auth_url', '/api/users/sso_auth_callback'] +
             urdhva_base.settings.noauth_urls or \
             re.match(r"/api/[\S\s\w]*login\b(?![a-zA-Z])", request.url.path) \
             or re.match(r"/api/[\S\s\w]*authorize", request.url.path)):

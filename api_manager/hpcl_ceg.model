@@ -257,6 +257,16 @@ Model Users {
         login_type optional default='employee' str
     }
 
+    // API for SAML/SSO Authentication
+    Action => sso_auth_callback {
+
+    }
+
+    // API for SAML/SSO Authentication
+    Action => sso_auth_url {
+
+    }
+
     Action=> applogin {
         username str regex="^[a-zA-Z0-9_.-]+$"
         password str
