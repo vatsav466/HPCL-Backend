@@ -1514,6 +1514,23 @@ async def sync_user_roles():
         "name": "RO",
         "status": True
     },
+    "Ro_role": {
+        "allowed_pages": [
+            {
+                "menu_name": "Retail Outlet",
+                "allowed_sub_menus": [
+                    {
+                        "title": "RO Home"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    }
+                ]
+            }
+        ],
+        "name": "RO",
+        "status": True
+    },
     "Regional Manager RO": {
         "allowed_pages": [
             {
