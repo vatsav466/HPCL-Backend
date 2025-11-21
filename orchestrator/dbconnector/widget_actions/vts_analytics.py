@@ -2599,12 +2599,16 @@ class VTSAnalyticsActions:
         
         
         if payload.get('table') == "true":
-            filtered_trips_df = filtered_trips_df.rename(columns={'material_group_nm':'product_bifurcation', 'qty_shortage':'shortage'})
+            filtered_trips_df = filtered_trips_df.rename(
+                columns={'material_group_nm': 'product_bifurcation', 'qty_shortage': 'shortage'}
+            )
             filtered_trips_df['product_bifurcation'] = (
-                    filtered_trips_df['product_bifurcation'].astype(str) + 
-                    ':' + filtered_trips_df['shortage'].astype(str)
-                )
-            table_df =( filtered_trips_df
+                filtered_trips_df['product_bifurcation'].astype(str)
+                + ':' + filtered_trips_df['shortage'].astype(str)
+            )
+
+            table_df = (
+                filtered_trips_df
                 .groupby(['vehicle_id', 'invoice_no'], as_index=False)
                 .agg({
                     'shortage': 'sum',  # sum shortages for same vehicle+invoice
@@ -2616,6 +2620,8 @@ class VTSAnalyticsActions:
                 })
             )
 
+            # ---------- SHORTAGE FILTER ----------
+            
             shortage_filter = payload.get("shortage_filter") # <=
             if shortage_filter:
                 sf = str(shortage_filter).replace(" ", "")
@@ -2628,10 +2634,32 @@ class VTSAnalyticsActions:
                     table_df = table_df[table_df["shortage"] >= limit]
 
             total_records = len(table_df)
-            # print("total_records:", total_records)
             total_shortage = table_df["shortage"].sum()
 
-            # 3) Pagination
+            # ---------- SEARCH FILTER ----------
+            search_text = payload.get("search_text") or payload.get("search")
+            print("RAW SEARCH TEXT FROM PAYLOAD:", repr(search_text))
+
+            if search_text:
+                search_text = str(search_text).strip()
+                print("SEARCH TEXT AFTER STRIP:", repr(search_text))
+
+                if search_text:
+                    # Optional: search only in specific columns
+                    search_cols = [
+                        "vehicle_id","invoice_no","plant_nm",
+                        "zone_nm","transporter_name","product_bifurcation","load_date","shortage"
+                    ]
+                    search_cols = [c for c in search_cols if c in table_df.columns]
+
+                    if search_cols:
+                        mask = table_df[search_cols].astype(str).apply(
+                            lambda col: col.str.contains(search_text, case=False, na=False),
+                            axis=0).any(axis=1)
+
+                        table_df = table_df[mask]
+
+      
             page = int(payload.get("page", 1))
             page_size = int(payload.get("page_size", 100))  # default 100
 
@@ -2647,13 +2675,11 @@ class VTSAnalyticsActions:
                 "status": "success",
                 "message": "Table Data fetched successfully",
                 "data": await safe_json(paged_df),
-                "page": page,
-                "page_size": page_size,
-                "total_records": total_records,"total_shortage":total_shortage
-            }
-            
-            #  return {"status": "success","message": "Table Data fetched successfully", "data": await safe_json(table_df)}
-    
+                "page": page,"page_size": page_size,
+                "total_records": total_records,"total_shortage": total_shortage,
+            } 
+        
+
         filtered_trips_df = filtered_trips_df.replace([float('inf'), float('-inf')], None)
         filtered_trips_df = filtered_trips_df.where(pd.notnull(filtered_trips_df), None)
         print("TOTAL SHORTAGE BEFORE GROUPING =", filtered_trips_df["qty_shortage"].astype(float).sum())
