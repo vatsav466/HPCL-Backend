@@ -1165,6 +1165,34 @@ Model IndentDryOut {
         bu_type optional str
     }
 
+    Action=> get_indent_raised_direct_sales {
+
+    }
+
+    Action=> get_indent_on_hold_direct_sales {
+
+    }
+
+    Action=> get_pending_indents_direct_sales {
+
+    }
+    
+    Action=> get_valid_indent_direct_sales {
+
+    }
+
+    Action=> get_truck_allocated_direct_sales {
+
+    }
+
+    Action=> get_send_to_sap_direct_sales {
+
+    }
+
+    Action=> get_sales_order_placed_direct_sales {
+
+    }
+    
     Action=> get_dried_out_ro_data {
         filters list IndentDryOutDataFilters
     }

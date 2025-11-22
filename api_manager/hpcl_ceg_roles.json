@@ -1607,6 +1607,27 @@
                     "name": "get_dried_out_ro"
                 },
                 {
+                    "name": "get_indent_raised_direct_sales"
+                },
+                {
+                    "name": "get_indent_on_hold_direct_sales"
+                },
+                {
+                    "name": "get_pending_indents_direct_sales"
+                },
+                {
+                    "name": "get_valid_indent_direct_sales"
+                },
+                {
+                    "name": "get_truck_allocated_direct_sales"
+                },
+                {
+                    "name": "get_send_to_sap_direct_sales"
+                },
+                {
+                    "name": "get_sales_order_placed_direct_sales"
+                },
+                {
                     "name": "get_dried_out_ro_data"
                 },
                 {
@@ -1665,6 +1686,27 @@
                 },
                 {
                     "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_indent_raised_direct_sales"
+                },
+                {
+                    "name": "get_indent_on_hold_direct_sales"
+                },
+                {
+                    "name": "get_pending_indents_direct_sales"
+                },
+                {
+                    "name": "get_valid_indent_direct_sales"
+                },
+                {
+                    "name": "get_truck_allocated_direct_sales"
+                },
+                {
+                    "name": "get_send_to_sap_direct_sales"
+                },
+                {
+                    "name": "get_sales_order_placed_direct_sales"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -1740,6 +1782,27 @@
                 },
                 {
                     "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_indent_raised_direct_sales"
+                },
+                {
+                    "name": "get_indent_on_hold_direct_sales"
+                },
+                {
+                    "name": "get_pending_indents_direct_sales"
+                },
+                {
+                    "name": "get_valid_indent_direct_sales"
+                },
+                {
+                    "name": "get_truck_allocated_direct_sales"
+                },
+                {
+                    "name": "get_send_to_sap_direct_sales"
+                },
+                {
+                    "name": "get_sales_order_placed_direct_sales"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -7501,6 +7564,34 @@
         {
             "name": "get_dried_out_ro",
             "displayName": "get_dried_out_ro"
+        },
+        {
+            "name": "get_indent_raised_direct_sales",
+            "displayName": "get_indent_raised_direct_sales"
+        },
+        {
+            "name": "get_indent_on_hold_direct_sales",
+            "displayName": "get_indent_on_hold_direct_sales"
+        },
+        {
+            "name": "get_pending_indents_direct_sales",
+            "displayName": "get_pending_indents_direct_sales"
+        },
+        {
+            "name": "get_valid_indent_direct_sales",
+            "displayName": "get_valid_indent_direct_sales"
+        },
+        {
+            "name": "get_truck_allocated_direct_sales",
+            "displayName": "get_truck_allocated_direct_sales"
+        },
+        {
+            "name": "get_send_to_sap_direct_sales",
+            "displayName": "get_send_to_sap_direct_sales"
+        },
+        {
+            "name": "get_sales_order_placed_direct_sales",
+            "displayName": "get_sales_order_placed_direct_sales"
         },
         {
             "name": "get_dried_out_ro_data",

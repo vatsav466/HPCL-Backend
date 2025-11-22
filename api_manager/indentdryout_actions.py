@@ -16,6 +16,7 @@ import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from orchestrator.alerting.alert_manager import create_alert
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
+import orchestrator.direct_sales.indentwise_direct_sales as indentwise_direct_sales
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from orchestrator.actions.indent_dry_out import IndentDryOut as indent_dry_out
 import orchestrator.alerting.listener.sync_ro_daily_sales as sync_ro_daily_sales
@@ -955,3 +956,44 @@ async def indentdryout_generate_dryout_group_data(data: Indentdryout_Generate_Dr
         return await dry_out_analysis.get_previous_day_carry_fwd_indent(data="data")
 
     return {}
+
+# Action get_indent_raised_direct_sales
+@router.post('/get_indent_raised_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_indent_raised_direct_sales(data: Indentdryout_Get_Indent_Raised_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_indent_raised_direct_sales()
+
+
+# Action get_indent_on_hold_direct_sales
+@router.post('/get_indent_on_hold_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_indent_on_hold_direct_sales(data: Indentdryout_Get_Indent_On_Hold_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_indent_on_hold_direct_sales()
+
+
+# Action get_pending_indents_direct_sales
+@router.post('/get_pending_indents_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_pending_indents_direct_sales(data: Indentdryout_Get_Pending_Indents_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_pending_indents_direct_sales()
+
+
+# Action get_valid_indent_direct_sales
+@router.post('/get_valid_indent_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_valid_indent_direct_sales(data: Indentdryout_Get_Valid_Indent_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_valid_indent_direct_sales()
+
+
+# Action get_truck_allocated_direct_sales
+@router.post('/get_truck_allocated_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_truck_allocated_direct_sales(data: Indentdryout_Get_Truck_Allocated_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_truck_allocated_direct_sales()
+
+
+# Action get_send_to_sap_direct_sales
+@router.post('/get_send_to_sap_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_send_to_sap_direct_sales(data: Indentdryout_Get_Send_To_Sap_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_send_to_sap_direct_sales()
+
+
+# Action get_sales_order_placed_direct_sales
+@router.post('/get_sales_order_placed_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_sales_order_placed_direct_sales(data: Indentdryout_Get_Sales_Order_Placed_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_sales_order_placed_direct_sales()
