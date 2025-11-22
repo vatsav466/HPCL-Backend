@@ -267,6 +267,11 @@ Model Users {
 
     }
 
+    // API for SAML/SSO Redirection Authentication
+    Action => sso_redirection_url {
+
+    }
+
     Action=> applogin {
         username str regex="^[a-zA-Z0-9_.-]+$"
         password str

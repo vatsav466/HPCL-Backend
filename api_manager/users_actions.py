@@ -185,3 +185,10 @@ async def sso_auth_url(request: fastapi.Request):
                                                   urdhva_base.settings.saml_client_id,
                                                   urdhva_base.settings.saml_client_secret,
                                                   urdhva_base.settings.saml_redirect_uri)
+
+# Action sso_redirection_url
+async def sso_redirection_url(request: fastapi.Request):
+    return await saml_validation.get_redirect_url(urdhva_base.settings.saml_tenant_id,
+                                                  urdhva_base.settings.saml_client_id,
+                                                  urdhva_base.settings.saml_client_secret,
+                                                  urdhva_base.settings.saml_redirect_uri, "redirection")

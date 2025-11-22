@@ -36,6 +36,7 @@ async def get_redirect_url(
         client_id: str,
         client_secret: str,
         redirect_uri: str,
+        resp_type: str = "json",
 ):
     msal_app = create_msal_app(client_id, client_secret, tenant_id)
     auth_url = msal_app.get_authorization_request_url(
@@ -43,8 +44,7 @@ async def get_redirect_url(
         state=str(uuid.uuid4()),
         redirect_uri=redirect_uri
     )
-    return JSONResponse(content={"url": auth_url})
-    # return RedirectResponse(auth_url)
+    return JSONResponse(content={"url": auth_url}) if resp_type == "json" else RedirectResponse(auth_url)
 
 
 async def auth_callback(code: str, tenant_id: str, client_id: str, client_secret: str,
