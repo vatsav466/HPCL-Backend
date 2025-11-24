@@ -97,7 +97,7 @@ class IndentDryOutDirectSales:
                         TO_CHAR("PROD_REQD_DT",'yyyymmdd') <=  TO_CHAR(SYSDATE,'yyyymmdd') AND
                         TO_CHAR("PROD_REQD_DT",'yyyymmdd') >=  TO_CHAR(SYSDATE-2,'yyyymmdd') AND
                         SUBSTR("DEALER_CODE",15,2)='12' AND "VALID_INDENT" IN ('Y','H') AND ("CANCEL_INDENT" IS NULL OR "CANCEL_INDENT" <> 'Y')
-                        AND "TRUCK_REGNO" IS NOT NULL
+                        AND "TRUCK_REGNO" IS NOT NULL AND "SEND_TO_JDE_TIME" IS NULL
                     """
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -119,7 +119,7 @@ class IndentDryOutDirectSales:
                         TO_CHAR("PROD_REQD_DT",'yyyymmdd') <=  TO_CHAR(SYSDATE,'yyyymmdd') AND
                         TO_CHAR("PROD_REQD_DT",'yyyymmdd') >=  TO_CHAR(SYSDATE-2,'yyyymmdd') AND
                         SUBSTR("DEALER_CODE",15,2)='12' AND "TRUCK_REGNO" IS NOT NULL AND ("CANCEL_INDENT" IS NULL OR "CANCEL_INDENT" <> 'Y')
-                        AND "VALID_INDENT" IN ('Y','H')
+                        AND "VALID_INDENT" IN ('Y','H') AND "SEND_TO_JDE_TIME" IS NOT NULL
                     """
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
