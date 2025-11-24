@@ -2371,9 +2371,8 @@ async def top_ic(filters, cross_filters, drill_state, time_grain, resp_formatt):
                 current_end = f"{cur_year}{mon_code}{end_day}"
                 hist_end = f"{hist_year}{mon_code}{end_day}"
         else:
-            from datetime import datetime, timedelta
-            today = datetime.today()
-            yesterday = today - timedelta(days=1)
+            today = datetime.datetime.today()
+            yesterday = today - datetime.timedelta(days=1)
             current_start_dt = today.replace(day=1)
             current_end_dt = yesterday
 
