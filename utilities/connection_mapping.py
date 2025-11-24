@@ -622,17 +622,17 @@ alert_action = {
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG"]
+                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG", "Zonal Operations LPG"]
                 },
                 "Send It Back": {
                     "name": "SendItBack",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG"]
+                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG", "Zonal Operations LPG"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG"]
+                    "roles": ["Admin", "Location In-Charge LPG", "Zonal Distributions Head LPG", "Zonal Head LPG", "Zonal Operations LPG"]
                 }
             },
             "category": {
