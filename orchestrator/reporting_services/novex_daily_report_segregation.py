@@ -902,7 +902,7 @@ async def fetch_dryout_data():
     summary_df = summary_df[summary_df["Date"] != "Zone wise ROs"]
     summary_df["Dry out Count"] = summary_df["Dry out Count"].astype(int)
     summary_df = summary_df[~summary_df["Date"].str.contains("Day wise", na=False)]
-    summary_df = summary_df.iloc[:-1]
+    #summary_df = summary_df.iloc[:-1]
 
     print("\n===== Summary (Date vs Dry out Count) =====")
     print(summary_df.to_string(index=False))
