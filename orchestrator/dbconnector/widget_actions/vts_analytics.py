@@ -1665,7 +1665,263 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+    @staticmethod
+    async def vts_drill(filters, cross_filters, drill_state, payload):
+        try:
+            #  A) DOWNLOAD: MULTIPLE SHEETS BY VIOLATION
+            if payload.get("download"):
 
+                violation_query = """
+                    SELECT
+                        tl_number,
+                        invoice_number,
+                        location_name,
+                        zone,
+                        DATE(vts_end_datetime) AS created_at,
+                        stoppage_violations_count,
+                        route_deviation_count,
+                        device_tamper_count,
+                        main_supply_removal_count,
+                        night_driving_count,
+                        speed_violation_count,
+                        continuous_driving_count
+                    FROM vts_alert_history
+                    WHERE 
+                        (
+                            stoppage_violations_count > 0 OR
+                            route_deviation_count > 0 OR
+                            device_tamper_count > 0 OR
+                            main_supply_removal_count > 0 OR
+                            night_driving_count > 0 OR
+                            speed_violation_count > 0 OR
+                            continuous_driving_count > 0
+                        )
+                """
+
+                # Apply filters
+                conditions = VTSAnalyticsActions.build_filter_conditions(
+                    filters, cross_filters, violation_query
+                )
+                final_query = VTSAnalyticsActions.apply_conditions_to_query(
+                    violation_query, conditions
+                )
+
+                print("Final violation query for download:", final_query)
+
+                df = await VTSAnalyticsActions.execute_query(final_query)
+                df = df.drop_duplicates(keep="first")
+
+                if df is None or df.empty:
+                    return {
+                        "status": True,
+                        "message": "No violation data found for download",
+                        "data": []
+                    }
+
+                # Violation columns
+                violation_cols = [
+                    "stoppage_violations_count",
+                    "route_deviation_count",
+                    "device_tamper_count",
+                    "main_supply_removal_count",
+                    "night_driving_count",
+                    "speed_violation_count",
+                    "continuous_driving_count",
+                ]
+
+                # Create Excel file
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+
+                    # -----------------------------------------------------
+                    #  1️⃣  E M L O C K   S H E E T
+                    # -----------------------------------------------------
+                    print("Generating Emlock Sheet (UI Logic)...")
+
+                    # 1) Fetch UI EMLOCK query
+                    emlock_query = vts_query.vts_query.get("get_emlock_open_data")
+
+                    # 2) Apply filters
+                    emlock_conditions = VTSAnalyticsActions.build_filter_conditions(
+                        filters, cross_filters, emlock_query
+                    )
+                    emlock_query = VTSAnalyticsActions.apply_conditions_to_query(
+                        emlock_query, emlock_conditions
+                    )
+
+                    # 3) Execute SQL
+                    resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+                        query=emlock_query, limit=0
+                    )
+                    df2 = pd.DataFrame(resp.get("data", []))
+
+                    print("Raw emlock_df count:", len(df2))
+
+                    # 4) Convert TRUE/FALSE to lowercase
+                    df2["swipeoutl1"] = df2["swipeoutl1"].fillna("").astype(str).str.lower()
+                    df2["swipeoutl2"] = df2["swipeoutl2"].fillna("").astype(str).str.lower()
+
+                    # 5) UI Logic (exact)
+                    swipe_out_l1 = df2[df2["swipeoutl1"] == "false"]
+                    swipe_out_l2 = df2[df2["swipeoutl2"] == "false"]
+
+                    # 6) Combine
+                    final_df_pending = pd.concat([swipe_out_l1, swipe_out_l2]).reset_index(drop=True)
+                    final_df_pending["violation_type"] = "open EM Lock"
+
+                    print("Final EMLOCK rows:", len(final_df_pending))
+
+                    # 7) Write to Excel
+                    if final_df_pending.empty:
+                        pd.DataFrame([{"message": "No data found for emlock_open"}]).to_excel(
+                            writer, index=False, sheet_name="emlock_open"
+                        )
+                    else:
+                        final_df_pending.to_excel(writer, index=False, sheet_name="emlock_open")
+
+                    print(f"Wrote {len(final_df_pending)} rows to emlock_open sheet.")
+                    
+
+                    # -----------------------------------------------------
+                    #  2️⃣  S H O R T A G E   S H E E T
+                    # -----------------------------------------------------
+                    print("Generating Shortage Sheet...")
+
+                    shortage_query = """
+                        SELECT *
+                        FROM sales_trips_till_date
+                        WHERE load_status = '6'
+                    """
+                    shortage_conditions = VTSAnalyticsActions.build_filter_conditions(
+                        filters, cross_filters, shortage_query
+                    )
+                    shortage_query = VTSAnalyticsActions.apply_conditions_to_query(
+                        shortage_query, shortage_conditions
+                    )
+
+                    shortage_df = await VTSAnalyticsActions.execute_query(shortage_query)
+
+                    if shortage_df is None or shortage_df.empty:
+                        pd.DataFrame([{"message": "No data found for shortage_count"}]).to_excel(
+                            writer, index=False, sheet_name="shortage_count"
+                        )
+                    else:
+                        shortage_df.to_excel(writer, index=False, sheet_name="shortage_count")
+
+                    # -----------------------------------------------------
+                    #  3️⃣  A L L   V I O L A T I O N S   S H E E T
+                    # -----------------------------------------------------
+                    melt_df = df.melt(
+                        id_vars=["tl_number", "invoice_number", "location_name", "zone", "created_at"],
+                        value_vars=violation_cols,
+                        var_name="violation_type",
+                        value_name="violation_value"
+                    )
+
+                    # Keep only rows with violations > 0
+                    melt_df = melt_df[melt_df["violation_value"] > 0]
+
+                    # Deduplicate: 1 row per invoice per violation TYPE
+                    melt_df = melt_df.drop_duplicates(
+                        subset=["invoice_number", "violation_type"],
+                        keep="first"
+                    )
+
+                    # Pivot back to wide format
+                    all_violations_df = melt_df.pivot_table(
+                        index=["tl_number", "invoice_number", "location_name", "zone", "created_at"],
+                        columns="violation_type",
+                        values="violation_value",
+                        fill_value=0
+                    ).reset_index()
+
+                    # Ensure all violation columns are present
+                    for v in violation_cols:
+                        if v not in all_violations_df.columns:
+                            all_violations_df[v] = 0
+
+                    # Sort columns in correct order
+                    all_violations_df = all_violations_df[
+                        ["tl_number", "invoice_number", "location_name", "zone", "created_at"] + violation_cols
+                    ]
+
+                    # Write to Excel
+                    all_violations_df.to_excel(writer, index=False, sheet_name="all_violations")
+
+                    # # -----------------------------------------------------
+                    # #  4️⃣  S E P A R A T E   V I O L A T I O N   S H E E T S
+                    # # -----------------------------------------------------
+                    # for col in violation_cols:
+                    #     if col not in df.columns:
+                    #         continue
+
+                    #     col_df = df[df[col].fillna(0) > 0].copy()
+                    #     if col_df.empty:
+                    #         continue
+
+                    #     col_df = col_df.sort_values(by="created_at")
+                    #     col_df = col_df.drop_duplicates(subset=["invoice_number"], keep="first")
+
+                    #     sheet_name = col[:31]
+                    #     col_df.to_excel(writer, index=False, sheet_name=sheet_name)
+
+                # Return file
+                output.seek(0)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"vts_violations_{timestamp}.xlsx"
+
+                headers = {"Content-Disposition": f'attachment; filename="{file_name}"'}
+                return StreamingResponse(
+                    output,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers=headers,
+                )
+
+            # ---------------------------------------
+            #  B) NORMAL JSON FLOW
+            # ---------------------------------------
+            query = vts_query.vts_query.get(drill_state.split(",")[0])
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+            vts_drill_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+            print("Drill-down query (non-download):", vts_drill_query)
+
+            vts_df = await VTSAnalyticsActions.execute_query(vts_drill_query)
+            vts_df.rename(columns={"vts_end_datetime": "created_at"}, inplace=True)
+            vts_df["created_at"] = pd.to_datetime(vts_df["created_at"]).dt.date
+            vts_df = vts_df.sort_values(by="created_at", ascending=True)
+
+            if vts_df.empty:
+                return {"status": True, "message": "No data found", "data": []}
+
+            transporter_query = """SELECT distinct truck_no, transporter_name FROM vts_truck_master"""
+            transporter_df = await VTSAnalyticsActions.execute_query(transporter_query)
+            merged_df = vts_df.merge(
+                transporter_df, left_on="tl_number", right_on="truck_no", how="left"
+            )
+
+            violation_type = payload.get("violation_type")
+            if violation_type and violation_type != "all":
+                if violation_type not in merged_df.columns:
+                    return {
+                        "status": False,
+                        "message": f"Invalid violation type: {violation_type}",
+                        "data": [],
+                    }
+
+                violation_filtered_df = merged_df[merged_df[violation_type].fillna(0) != 0].copy()
+                violation_filtered_df = violation_filtered_df.sort_values(by="created_at", ascending=True)
+                violation_filtered_df = violation_filtered_df.drop_duplicates(
+                    subset=["invoice_number"], keep="first"
+                )
+                data = violation_filtered_df.to_dict(orient="records")
+            else:
+                data = merged_df.to_dict(orient="records")
+
+            return {"status": True, "message": "success", "data": data}
+
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
    
     @staticmethod
     async def vts_ongoing_trips(filters, cross_filters, drill_state, payload):
