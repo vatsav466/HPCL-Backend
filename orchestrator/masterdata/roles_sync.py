@@ -1442,8 +1442,18 @@ async def sync_user_roles():
                             {
                             "title": "I&C Campaign"
                             }
-
-          ]
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Direct Sales",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Insights"
+                    },
+                    {
+                        "title": "Supply Chain"
                     }
                 ]
             }
