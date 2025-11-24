@@ -596,12 +596,12 @@
         "rules": [
             {
                 "name": "Carry Forward",
-                "weightage": 7.5,
+                "weightage": 10,
                 "month_calendar": false
             },
             {
                 "name": "Cat A Dryout",
-                "weightage": 7.5,
+                "weightage": 10,
                 "month_calendar": false
             }
         ]

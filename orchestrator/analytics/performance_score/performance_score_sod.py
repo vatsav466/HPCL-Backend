@@ -125,7 +125,9 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     print(f" ⚠️ No compute method for child: {child_name}")
 
             # Apply parent module weightage
-            parent_final = round((parent_score * module["weightage"]) / 100, 2)
+            # parent_final = round((parent_score * module["weightage"]) / 100, 2)
+            parent_final = module["weightage"]
+
 
             module_scores[module_name] = {
                 "name": module_name,
@@ -267,7 +269,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     WHERE device_type = '{rule['equipment_name']}' AND sap_id = '{location_id}'
                 """
                 arch_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(param_query)
-                parameter_count = int(arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)
+                parameter_count = int(arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)             
 
                 # Separate Tank_Under Maintenance and other alerts by device
                 tank_maintenance_devices = set()
@@ -300,6 +302,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             "weightage": rules['weightage'],
             "results": pi_score
         }
+        
 
 
     async def _compute_gantry_interlocks_pi_score(self, name, rules, location_id):
@@ -503,7 +506,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             "weightage": rules['weightage'], 
             "results": gantry_score
         }
-
+        
 
     async def _compute_process_interlocks_pi_score(self, name, rules, location_id):
         """
@@ -617,6 +620,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             "weightage": rules['weightage'],
             "results": process_score
         }
+       
 
     # async def _compute_va_pi_score(self, name, rules, location_id):
     #     pi_score = []
@@ -844,7 +848,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
                              'module': rules.get('name', name)})
         final_score = sum([score['score'] for score in pi_score])
-        final_score = round((final_score * rules['weightage']) / 100, 2)
+        # final_score = round((final_score * rules['weightage']) / 100, 2)
+        final_score = rules['weightage'] 
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
         return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
