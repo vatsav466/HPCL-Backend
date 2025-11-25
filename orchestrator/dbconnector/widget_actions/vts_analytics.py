@@ -3206,12 +3206,33 @@ class VTSAnalyticsActions:
             violation_filtered_df = final_df[final_df[violation_type].fillna(0) >= 6].copy()
             
             # Step 6: Remove empty values for zone, location, transporter
-            for key in ["zone", "location_name", "transporter_name"]:
-                violation_filtered_df = violation_filtered_df[
-                    violation_filtered_df[key].notna() & (violation_filtered_df[key].str.strip() != "")
-                ]
+            # for key in ["zone", "location_name", "transporter_name"]:
+            #     violation_filtered_df = violation_filtered_df[
+            #         print(violation_filtered_df.columns.tolist()),
+            #         violation_filtered_df[key].notna() & (violation_filtered_df[key].str.strip() != "")
+            #     ]
+            #     if payload.get(key):
+            #         violation_filtered_df = violation_filtered_df[violation_filtered_df[key] == payload[key]]
+            column_map = {
+                "zone": "zone",
+                "location_name": "location_name_x",   # choose _x or _y based on your logic
+                "transporter_name": "transporter_name"
+            }
+
+            for key, col in column_map.items():
+
+                # If column missing → skip
+                if col not in violation_filtered_df.columns:
+                    print(f"Column {col} not found in DataFrame")
+                    continue
+
+                # Apply valid filtering
+                mask = violation_filtered_df[col].notna() & (violation_filtered_df[col].astype(str).str.strip() != "")
+                violation_filtered_df = violation_filtered_df[mask]
+
+                # Apply payload filters
                 if payload.get(key):
-                    violation_filtered_df = violation_filtered_df[violation_filtered_df[key] == payload[key]]
+                    violation_filtered_df = violation_filtered_df[violation_filtered_df[col] == payload[key]]
             
             if violation_filtered_df.empty:
                 return {"status": True, "message": "No data found for the applied filters", "data": []}
