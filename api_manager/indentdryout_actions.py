@@ -997,3 +997,21 @@ async def indentdryout_get_send_to_sap_direct_sales(data: Indentdryout_Get_Send_
 @router.post('/get_sales_order_placed_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_sales_order_placed_direct_sales(data: Indentdryout_Get_Sales_Order_Placed_Direct_SalesParams):
     return await indentwise_direct_sales.IndentDryOutDirectSales().get_sales_order_placed_direct_sales()
+
+
+# Action get_r2_swipe_direct_sales
+@router.post('/get_r2_swipe_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_r2_swipe_direct_sales(data: Indentdryout_Get_R2_Swipe_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_r2_swipe_direct_sales()
+
+
+# Action get_is_invoice_created_direct_sales
+@router.post('/get_is_invoice_created_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_is_invoice_created_direct_sales(data: Indentdryout_Get_Is_Invoice_Created_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_is_invoice_created_direct_sales()
+
+
+# Action get_r3_swiped_direct_sales
+@router.post('/get_r3_swiped_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_r3_swiped_direct_sales(data: Indentdryout_Get_R3_Swiped_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_r3_swiped_direct_sales()

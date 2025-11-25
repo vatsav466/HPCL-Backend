@@ -1192,7 +1192,19 @@ Model IndentDryOut {
     Action=> get_sales_order_placed_direct_sales {
 
     }
-    
+
+    Action=> get_r2_swipe_direct_sales {
+
+    }
+
+    Action=> get_is_invoice_created_direct_sales {
+
+    }
+
+    Action=> get_r3_swiped_direct_sales {
+
+    }
+
     Action=> get_dried_out_ro_data {
         filters list IndentDryOutDataFilters
     }
