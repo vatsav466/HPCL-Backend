@@ -45,6 +45,51 @@ async def sync_user_roles():
         "name": "SOD",
         "status": True
     },
+    "SOD & LPG Operations":{
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Terminal Automation"
+                    }
+                ]
+            },
+            {
+                "menu_name": "LPG",
+                "allowed_sub_menus": [
+                    {
+                        "title": "LPG Operations"
+                    },
+                    {
+                        "title": "LPG Plant"
+                    },
+                    {
+                        "title": "Pro Dash"
+                    },
+                    {
+                        "title": "LPG Inventory"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "LPG Analytics"
+                    }
+                ]
+            }
+        ],
+        "status": True
+    },
     "Zonal Operations LPG": {
         "allowed_pages": [
             {
