@@ -1628,6 +1628,15 @@
                     "name": "get_sales_order_placed_direct_sales"
                 },
                 {
+                    "name": "get_r2_swipe_direct_sales"
+                },
+                {
+                    "name": "get_is_invoice_created_direct_sales"
+                },
+                {
+                    "name": "get_r3_swiped_direct_sales"
+                },
+                {
                     "name": "get_dried_out_ro_data"
                 },
                 {
@@ -1707,6 +1716,15 @@
                 },
                 {
                     "name": "get_sales_order_placed_direct_sales"
+                },
+                {
+                    "name": "get_r2_swipe_direct_sales"
+                },
+                {
+                    "name": "get_is_invoice_created_direct_sales"
+                },
+                {
+                    "name": "get_r3_swiped_direct_sales"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -1803,6 +1821,15 @@
                 },
                 {
                     "name": "get_sales_order_placed_direct_sales"
+                },
+                {
+                    "name": "get_r2_swipe_direct_sales"
+                },
+                {
+                    "name": "get_is_invoice_created_direct_sales"
+                },
+                {
+                    "name": "get_r3_swiped_direct_sales"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -7592,6 +7619,18 @@
         {
             "name": "get_sales_order_placed_direct_sales",
             "displayName": "get_sales_order_placed_direct_sales"
+        },
+        {
+            "name": "get_r2_swipe_direct_sales",
+            "displayName": "get_r2_swipe_direct_sales"
+        },
+        {
+            "name": "get_is_invoice_created_direct_sales",
+            "displayName": "get_is_invoice_created_direct_sales"
+        },
+        {
+            "name": "get_r3_swiped_direct_sales",
+            "displayName": "get_r3_swiped_direct_sales"
         },
         {
             "name": "get_dried_out_ro_data",

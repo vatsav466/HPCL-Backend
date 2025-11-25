@@ -2611,6 +2611,30 @@ class Indentdryout_Get_Sales_Order_Placed_Direct_SalesParams(pydantic.BaseModel)
             extra = "forbid"  # Disallow extra fields
 
 
+class Indentdryout_Get_R2_Swipe_Direct_SalesParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Get_Is_Invoice_Created_Direct_SalesParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Get_R3_Swiped_Direct_SalesParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Indentdryout_Get_Dried_Out_Ro_DataParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
 
