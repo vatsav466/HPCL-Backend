@@ -104,6 +104,27 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             # CASE 2 → Parent module (like TAS)
             # ------------------------------------------
             print(f"[Parent Module] Processing: {module_name}")
+            query = f"SELECT location_onboard FROM location_master WHERE sap_id = '{location_id}'"
+            data = await hpcl_ceg_model.LocationMaster.get_aggr_data(query)
+
+            raw_value = None
+            if data.get("data"):
+                raw_value = data["data"][0].get("location_onboard")
+
+            # Normalize value
+            # TRUE if: True, "True", "true", "TRUE"
+            is_onboard = str(raw_value).strip().lower() == "true"
+
+            
+            if not is_onboard:
+                module_scores[module_name] = {
+                    "name": module_name,
+                    "score": module["weightage"],   # full score
+                    "weightage": module["weightage"],
+                    "results": [],
+                    "reason": f"location_onboard = {raw_value} → full score assigned"
+                }
+                continue
 
             parent_results = []
             parent_score = 0
@@ -125,8 +146,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     print(f" ⚠️ No compute method for child: {child_name}")
 
             # Apply parent module weightage
-            # parent_final = round((parent_score * module["weightage"]) / 100, 2)
-            parent_final = module["weightage"]
+            parent_final = round((parent_score * module["weightage"]) / 100, 2)
+            # parent_final = module["weightage"]
 
 
             module_scores[module_name] = {

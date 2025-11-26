@@ -577,6 +577,7 @@ Model Alert_History internal {
     action_msg str
     rca_reason optional str
     category optional str
+    employee_id optional stremployee_id optional str
     remarks optional str
     doc_link optional str
     atr_uploaded optional bool
@@ -898,6 +899,11 @@ Model Alerts {
     }
     
     Action=> get_vts_unblocked_trucks {
+        cross_filters optional list WidgetFilters
+    }
+
+    Action=> alerts_get_vts_query {
+        vehicle_number optional str
         cross_filters optional list WidgetFilters
     }
     

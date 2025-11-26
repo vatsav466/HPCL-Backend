@@ -1175,7 +1175,7 @@ class VTSAnalyticsActions:
             group_by_col = payload.get("group_by") if payload else None
             if group_by_col and group_by_col in final_df.columns:
                 violation_cols = [v for v in all_violations if v in final_df.columns]
-                violation_cols.append('qty_shortage')
+                # violation_cols.append('qty_shortage')
             
                 agg_df = final_df.groupby(group_by_col)[violation_cols].sum().reset_index()
                 agg_df['total_count'] = agg_df[violation_cols].sum(axis=1)
@@ -3185,90 +3185,43 @@ class VTSAnalyticsActions:
     @staticmethod
     async def power_disconnection(filters, cross_filters, drill_state, payload):
         try:
-            # Step 1: Get base query and apply filters
+            #  Get base query and apply filters
             query = vts_query.vts_query.get(drill_state.split(",")[0])
             if not query:
                 return {"status": False, "message": "Query not found", "data": []}
             
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             final_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
-
-            
             vts_df = await VTSAnalyticsActions.execute_query(final_query)
             vts_df = vts_df.drop_duplicates(subset=['invoice_number'], keep='first')
             
             if vts_df.empty:
                 return {"status": True, "message": "No power disconnection alerts found", "data": []}
 
-            print(vts_df)
+            trans_query = """SELECT truck_no, transporter_name from vts_truck_master"""
+            df_transporter = await VTSAnalyticsActions.execute_query(trans_query)
             
-            # Step 2: Get TLs and fetch alerts
-            tl_numbers_list = vts_df['tl_number'].tolist()
-            tl_numbers_str = "', '".join(map(str, tl_numbers_list))
-            
-            alerts_query = f"""
-                SELECT DISTINCT location_name, vehicle_number, transporter_code
-                FROM alerts
-                WHERE vehicle_number IN ('{tl_numbers_str}')
-                AND transporter_code != '' AND location_name != ''
-            """
-            df_alerts = await VTSAnalyticsActions.execute_query(alerts_query)
-            
-            if df_alerts.empty:
+            if df_transporter.empty:
                 return {"status": False, "message": "No matching vehicle details found in alerts", "data": []}
             
-            merged_df = vts_df.merge(df_alerts, left_on="tl_number", right_on="vehicle_number", how="left")
+            merged_df = vts_df.merge(df_transporter, left_on="tl_number", right_on="truck_no", how="left")
             
-            # Step 3: Remove missing or empty zones
-            merged_df = merged_df[merged_df["zone"].notna() & (merged_df["zone"].str.strip() != "")]
             if merged_df.empty:
                 return {"status": False, "message": "No valid zone data found after merging with alerts", "data": []}
-            
-            merged_df["transporter_code"] = merged_df["transporter_code"].astype(str).apply(lambda x: x[2:] if x.startswith("00") else x)
-            
-            # Step 4: Merge transporter names
-            email_query = """SELECT transporter_code, transporter_name FROM email_master"""
-            df_email = await VTSAnalyticsActions.execute_query(email_query)
-            final_df = merged_df.merge(df_email, on="transporter_code", how="left")
-            final_df.drop(columns=["transporter_code"], inplace=True)
-            
-            # Step 5: Filter for power disconnection violations (>= 6)
+           
+            # Filter for power disconnection violations (>= 6)
             violation_type = "main_supply_removal_count"
-            violation_filtered_df = final_df[final_df[violation_type].fillna(0) >= 6].copy()
+            violation_filtered_df = merged_df[merged_df[violation_type].fillna(0) >= 6].copy()
             
-            # Step 6: Remove empty values for zone, location, transporter
-            # for key in ["zone", "location_name", "transporter_name"]:
-            #     violation_filtered_df = violation_filtered_df[
-            #         print(violation_filtered_df.columns.tolist()),
-            #         violation_filtered_df[key].notna() & (violation_filtered_df[key].str.strip() != "")
-            #     ]
-            #     if payload.get(key):
-            #         violation_filtered_df = violation_filtered_df[violation_filtered_df[key] == payload[key]]
-            column_map = {
-                "zone": "zone",
-                "location_name": "location_name_x",   # choose _x or _y based on your logic
-                "transporter_name": "transporter_name"
-            }
-
-            for key, col in column_map.items():
-
-                # If column missing → skip
-                if col not in violation_filtered_df.columns:
-                    print(f"Column {col} not found in DataFrame")
-                    continue
-
-                # Apply valid filtering
-                mask = violation_filtered_df[col].notna() & (violation_filtered_df[col].astype(str).str.strip() != "")
-                violation_filtered_df = violation_filtered_df[mask]
-
-                # Apply payload filters
+            # Remove empty values for zone, location, transporter
+            for key in ["zone", "location_name", "transporter_name"]:
                 if payload.get(key):
-                    violation_filtered_df = violation_filtered_df[violation_filtered_df[col] == payload[key]]
+                    violation_filtered_df = violation_filtered_df[violation_filtered_df[key] == payload[key]]
             
             if violation_filtered_df.empty:
                 return {"status": True, "message": "No data found for the applied filters", "data": []}
             
-            # Step 7: TL-level drill-down for invoice details
+            #  TL-level drill-down for invoice details
             selected_tl = payload.get("tl_number")
             if selected_tl:
                 violation_filtered_df = violation_filtered_df[violation_filtered_df["tl_number"] == selected_tl]
@@ -3289,7 +3242,7 @@ class VTSAnalyticsActions:
                 result = invoice_df.to_dict(orient="records")
                 return {"status": True, "message": f"{violation_type} details for vehicle {selected_tl}", "data": result}
             
-            # Step 8: Determine grouping column for summaries
+            # Determine grouping column for summaries
             if payload.get("transporter_name"):
                 group_col = "tl_number"
             elif payload.get("location_name"):
@@ -3299,7 +3252,7 @@ class VTSAnalyticsActions:
             else:
                 group_col = "zone"
             
-            # Step 9: Summarize counts
+            # Summarize counts
             # violation_count_more_than_6: Count of invoices where main_supply_removal_count >= 6
             # total_violations: Sum of actual main_supply_removal_count values
             summary_df = (
@@ -3327,14 +3280,17 @@ class VTSAnalyticsActions:
     
 
     @staticmethod
-    async def risk_score(filters, cross_filters, drill_state, payload, limit=0, offset=0, batch_size=10000):
+    async def risk_score(filters, cross_filters, drill_state, payload):
         """
-        Fetch data from the specified risk score table.
-        limit=0 means fetch all records
+        Fetch paginated data from the specified risk score table and also support downloading.
         """
         try:
             table_name = payload.get("table_name")
             columns = payload.get("columns")
+            limit = 0 if payload.get("download") == "true" else payload.get("page_size", 100)
+            conditions = []
+            # Pagination parameters from payload
+            page = int(payload.get("page", 0))
 
             if not table_name:
                 return {"status": False, "message": "table_name not provided in payload", "data": []}
@@ -3347,60 +3303,71 @@ class VTSAnalyticsActions:
             else:
                 base_query = f'SELECT * FROM public."{table_name}"'
 
+            # Build and apply conditions
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
-            filtered_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
 
-            # First, get the total count
-            count_query = f"SELECT COUNT(*) as total FROM ({filtered_query}) as subquery"
-            count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=count_query, limit=1)
-            total_records = count_resp.get("data", [{}])[0].get("total", 0) if count_resp.get("data") else 0
-            
+            # Add search filter condition if a search term is provided
+            search_term = payload.get("search")
+            if search_term and columns:
+                search_conditions = []
+                for col in columns:
+                    search_conditions.append(f'CAST("{col}" AS TEXT) ILIKE \'%{search_term}%\'')
+                if search_conditions:
+                    conditions.append(f"({' OR '.join(search_conditions)})")
 
-            all_data = []
-            current_offset = 0
-            total_fetched = 0
-            fetch_all = (limit == 0)
-            target_limit = total_records if fetch_all else limit
-            
-            while total_fetched < target_limit:
-                # Calculate batch size for this iteration
-                remaining = target_limit - total_fetched
-                this_limit = min(batch_size, remaining)
+            # Add column-specific search filters
+            column_filters = payload.get("column_filters")
+            if column_filters and isinstance(column_filters, dict):
+                for col, search_val in column_filters.items():
+                    if search_val:  # Ensure there is a value to search for
+                        # Add a case-insensitive search condition for the specific column
+                        conditions.append(f'CAST("{col}" AS TEXT) ILIKE \'%{search_val}%\'')
 
-                # Construct query with LIMIT and OFFSET
-                batch_query = f"{filtered_query} LIMIT {this_limit} OFFSET {current_offset}"
-                
-                # Execute batch query
-                batch_resp = await urdhva_base.BasePostgresModel.get_aggr_data(
-                    query=batch_query, 
-                    limit=0  # Set to 0 to avoid double limiting
+            # Build and execute count query first
+            count_query = f'SELECT COUNT(*) FROM public."{table_name}"'
+            filtered_count_query = VTSAnalyticsActions.apply_conditions_to_query(count_query, conditions)
+            count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_count_query)
+            total_records = count_resp['data'][0]['count'] if count_resp.get('data') else 0
+
+            # Build and execute data query with pagination
+            filtered_data_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_data_query, limit=limit, skip=page, skip_total=True)
+
+        
+            if not resp['data']:
+                return {"status": True, "message": "No data found", "data": [], "total_records": 0}
+
+            if payload.get("download") == "true":
+                df = pd.DataFrame(resp['data'])
+                for col in df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                    df[col] = df[col].dt.tz_localize(None)
+
+                df = df.dropna(axis=1, how="all")
+                df = df.loc[:, (df.astype(str).apply(lambda x: x.str.strip() != "").any())]
+
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"{table_name}_{timestamp}.xlsx"
+
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    df.to_excel(writer, index=False, sheet_name=table_name[:31])
+
+                output.seek(0)
+                headers = {"Content-Disposition": f'attachment; filename="{file_name}"'}
+                return StreamingResponse(
+                    output,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers=headers
                 )
-                batch_data = batch_resp.get("data", [])
-                
-                if not batch_data:
-                    print(f"No more data at offset {current_offset}")
-                    break
-
-                batch_rows = len(batch_data)
-                all_data.extend(batch_data)
-                total_fetched += batch_rows
-                current_offset += batch_rows
-
-                # If we got fewer records than requested, we've reached the end
-                if batch_rows < this_limit:
-                    break
-
-            if not all_data:
-                return {"status": True, "message": "No data found", "data": [], "count": 0}
-
             return {
                 "status": True,
-                "message": f"Successfully fetched {len(all_data)} records from {table_name}",
-                "data": all_data,  # Include data if needed
-                "count": len(all_data),
-                "total_in_table": total_records
+                "message": f"Successfully fetched {len(resp['data'])} records from {table_name}",
+                "data": resp['data'],
+                "page": page,
+                "page_size": limit,
+                "total_records": total_records
             }
         except Exception as e:
             print("Exception in risk_score:", str(e))
             print("traceback:", traceback.format_exc())
-            return {"status": False, "message": str(e), "data": []}
+            return {"status": False, "message": str(e), "data": [], "total_records": 0}

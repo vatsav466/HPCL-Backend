@@ -1114,6 +1114,7 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     action_msg: str
     rca_reason: typing.Optional[str] = pydantic.Field("", **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
+    employee_id: typing.Optional[str] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     doc_link: typing.Optional[str] = pydantic.Field("", **{})
     atr_uploaded: typing.Optional[bool] = pydantic.Field(False, )
@@ -1917,6 +1918,15 @@ class Alerts_Get_Vts_Blocked_TrucksParams(pydantic.BaseModel):
 
 
 class Alerts_Get_Vts_Unblocked_TrucksParams(pydantic.BaseModel):
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Alerts_Get_Vts_QueryParams(pydantic.BaseModel):
+    vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
 
     class Config:
