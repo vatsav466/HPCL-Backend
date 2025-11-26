@@ -3327,14 +3327,17 @@ class VTSAnalyticsActions:
     
 
     @staticmethod
-    async def risk_score(filters, cross_filters, drill_state, payload, limit=0, offset=0, batch_size=10000):
+    async def risk_score(filters, cross_filters, drill_state, payload):
         """
-        Fetch data from the specified risk score table.
-        limit=0 means fetch all records
+        Fetch paginated data from the specified risk score table and also support downloading.
         """
         try:
             table_name = payload.get("table_name")
             columns = payload.get("columns")
+            limit = 0 if payload.get("download") == "true" else payload.get("page_size", 100)
+            conditions = []
+            # Pagination parameters from payload
+            page = int(payload.get("page", 0))
 
             if not table_name:
                 return {"status": False, "message": "table_name not provided in payload", "data": []}
@@ -3349,58 +3352,45 @@ class VTSAnalyticsActions:
 
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
             filtered_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_query, limit=limit, skip=page, skip_total=False)
 
-            # First, get the total count
-            count_query = f"SELECT COUNT(*) as total FROM ({filtered_query}) as subquery"
-            count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=count_query, limit=1)
-            total_records = count_resp.get("data", [{}])[0].get("total", 0) if count_resp.get("data") else 0
-            
+        
+            if not resp['data']:
+                return {"status": True, "message": "No data found", "data": [], "count": 0, "total": 0}
 
-            all_data = []
-            current_offset = 0
-            total_fetched = 0
-            fetch_all = (limit == 0)
-            target_limit = total_records if fetch_all else limit
-            
-            while total_fetched < target_limit:
-                # Calculate batch size for this iteration
-                remaining = target_limit - total_fetched
-                this_limit = min(batch_size, remaining)
+            if payload.get("download") == "true":
+                df = pd.DataFrame(resp['data'])
+                # Convert datetime columns to timezone-unaware for Excel compatibility
+                for col in df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                    df[col] = df[col].dt.tz_localize(None)
 
-                # Construct query with LIMIT and OFFSET
-                batch_query = f"{filtered_query} LIMIT {this_limit} OFFSET {current_offset}"
-                
-                # Execute batch query
-                batch_resp = await urdhva_base.BasePostgresModel.get_aggr_data(
-                    query=batch_query, 
-                    limit=0  # Set to 0 to avoid double limiting
+                # Clean up DataFrame by removing empty rows/columns
+                df = df.dropna(axis=1, how="all")
+                df = df.loc[:, (df.astype(str).apply(lambda x: x.str.strip() != "").any())]
+
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"{table_name}_{timestamp}.xlsx"
+
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    df.to_excel(writer, index=False, sheet_name=table_name[:31])
+
+                output.seek(0)
+                headers = {"Content-Disposition": f'attachment; filename="{file_name}"'}
+                return StreamingResponse(
+                    output,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers=headers
                 )
-                batch_data = batch_resp.get("data", [])
-                
-                if not batch_data:
-                    print(f"No more data at offset {current_offset}")
-                    break
-
-                batch_rows = len(batch_data)
-                all_data.extend(batch_data)
-                total_fetched += batch_rows
-                current_offset += batch_rows
-
-                # If we got fewer records than requested, we've reached the end
-                if batch_rows < this_limit:
-                    break
-
-            if not all_data:
-                return {"status": True, "message": "No data found", "data": [], "count": 0}
-
             return {
                 "status": True,
-                "message": f"Successfully fetched {len(all_data)} records from {table_name}",
-                "data": all_data,  # Include data if needed
-                "count": len(all_data),
-                "total_in_table": total_records
+                "message": f"Successfully fetched {len(resp['data'])} records from {table_name}",
+                "data": resp['data'],
+                "page": page,
+                "page_size": limit,
+                "total_records": len(resp['data'])
             }
         except Exception as e:
             print("Exception in risk_score:", str(e))
             print("traceback:", traceback.format_exc())
-            return {"status": False, "message": str(e), "data": []}
+            return {"status": False, "message": str(e), "data": [], "count": 0, "total": 0}
