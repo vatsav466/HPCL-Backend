@@ -364,7 +364,33 @@ class VTSAnalyticsActions:
             print("Exception in BigNumber Chart:", str(e))
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
-    
+        
+    @staticmethod
+    async def pagination_df(df, payload):
+        total_count = len(df)
+
+        skip = int(payload.get("skip", 0))        # page number
+        limit = int(payload.get("limit", 20))     # page size
+        search_value = str(payload.get("search", "")).strip().lower()
+        
+        if search_value:
+            mask = df.astype(str).apply(
+                lambda col: col.str.lower().str.startswith(search_value, na=False)
+                ).any(axis=1)
+            df = df[mask]
+
+        start = skip * limit
+        end = start + limit
+
+        paginated_df = df.iloc[start:end]
+
+        return {
+            "status": True,
+            "message": "success",
+            "total_count": total_count,
+            "data": await safe_json(paginated_df)
+        }
+
     @staticmethod
     async def vts_insite(filters, cross_filters, drill_state, payload):
         try:
@@ -446,7 +472,8 @@ class VTSAnalyticsActions:
                 merged_df = df_data.merge(df_truck_master, left_on="vehicle_number", right_on="truck_no", how="left")
                 merged_df.drop(columns=["truck_no"], inplace=True)
 
-                return {"status": True, "message": "success", "data":await safe_json(merged_df)}
+                pagination_result = await VTSAnalyticsActions.pagination_df(merged_df, payload)
+                return pagination_result
 
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
@@ -482,7 +509,8 @@ class VTSAnalyticsActions:
                     headers=headers
                 )
 
-            return {"status": True, "message": "success", "data": await safe_json(merged_df)}
+            pagination_result = await VTSAnalyticsActions.pagination_df(merged_df, payload)
+            return pagination_result
 
         except Exception as e:
             print("traceback:", traceback.format_exc())
@@ -1041,7 +1069,8 @@ class VTSAnalyticsActions:
                 final_cols = ["invoice_number", "zone", "location_name", "tl_number", "qty_shortage", "transporter_name"] + all_violations
                 agg_df = agg_df[final_cols]
 
-                return {"status": True, "message": "success", "data": await safe_json(agg_df)}
+                pagination_result = await VTSAnalyticsActions.pagination_df(agg_df, payload)
+                return pagination_result
 
             # ==================== SPECIFIC VIOLATION TYPES ====================
             if violation_types:
@@ -1099,8 +1128,9 @@ class VTSAnalyticsActions:
                 for col in violation_cols:
                     final_df[col] = final_df[col].fillna(0).astype(int)
 
-                return {"status": True, "message": "success", "data": await safe_json(final_df)}
-
+                pagination_result = await VTSAnalyticsActions.pagination_df(final_df, payload)
+                return pagination_result
+            
             # ==================== DEFAULT CASE - ALL DATA ====================
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
@@ -1248,8 +1278,9 @@ class VTSAnalyticsActions:
                     headers=headers
                 )
 
-            return {"status": True, "message": "success", "data": await safe_json(final_df)}
-
+            pagination_result = await VTSAnalyticsActions.pagination_df(final_df, payload)
+            return pagination_result
+        
         except Exception as e:
             print("ERROR:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
