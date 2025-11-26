@@ -1112,6 +1112,8 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     action_type: hpcl_ceg_enum.AlertActionType
     alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
     action_msg: str
+    rca_reason: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     doc_link: typing.Optional[str] = pydantic.Field("", **{})
     atr_uploaded: typing.Optional[bool] = pydantic.Field(False, )
