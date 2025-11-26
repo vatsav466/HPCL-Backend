@@ -257,20 +257,7 @@ Model Users {
         login_type optional default='employee' str
     }
 
-    // API for SAML/SSO Authentication
-    Action => sso_auth_callback {
-
-    }
-
-    // API for SAML/SSO Authentication
-    Action => sso_auth_url {
-
-    }
-
-    // API for SAML/SSO Redirection Authentication
-    Action => sso_redirection_url {
-
-    }
+    
 
     Action=> applogin {
         username str regex="^[a-zA-Z0-9_.-]+$"
@@ -588,6 +575,8 @@ Model Alert_History internal {
     action_type AlertActionType
     alert_status optional AlertStatus
     action_msg str
+    rca_reason optional str
+    category optional str
     remarks optional str
     doc_link optional str
     atr_uploaded optional bool
