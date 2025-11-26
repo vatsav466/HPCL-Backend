@@ -152,6 +152,51 @@ async def sync_user_roles():
         ],
         "status": True
     },
+    "IS User":{
+        "allowed_pages": [
+            {
+                "menu_name": "LPG",
+                "allowed_sub_menus": [
+                    {
+                        "title": "LPG Operations"
+                    },
+                    {
+                        "title": "LPG Plant"
+                    },
+                    {
+                        "title": "Pro Dash"
+                    },
+                    {
+                        "title": "LPG Inventory"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "LPG Analytics"
+                    }
+                ]
+            },
+            {
+                "menu_name": "VA",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VA Home"
+                    },
+                    {
+                        "title": "SOD Video Analytics"
+                    },
+                    {
+                        "title": "LPG Video Analytics"
+                    },
+                    {
+                        "title": "RO Video Analytics"
+                    }
+                ]
+            }
+        ],
+        "status": True
+    },
     "Zonal Operations LPG": {
         "allowed_pages": [
             {
