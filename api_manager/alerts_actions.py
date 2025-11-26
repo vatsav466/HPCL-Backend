@@ -23,6 +23,7 @@ import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.actions.check_violation_count as check_violation_count
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
+from orchestrator.gen_ai.vts_nlp.core_functions import process_vts_query
 
 router = fastapi.APIRouter(prefix='/alerts')
 
@@ -505,4 +506,35 @@ async def alerts_get_vts_unblocked_trucks(data: Alerts_Get_Vts_Unblocked_TrucksP
         "status": True, 
         "message": "No data found",
         "data": []
+        }
+
+
+# Action alerts_get_vts_query
+@router.post('/alerts_get_vts_query', tags=['Alerts'])
+async def alerts_alerts_get_vts_query(data: Alerts_Alerts_Get_Vts_QueryParams):
+    """
+    API endpoint to process VTS queries using LLM.
+    Accepts vehicle_number with cross_filters.
+    Returns vehicle details, prompt, or SQL query results.
+    """
+    try:
+        logger.info(f"VTS Query request received: vehicle_number={data.vehicle_number}")
+        
+        # Log the cross_filters structure for debugging
+        if data.cross_filters:
+            logger.info(f"Cross filters received: {len(data.cross_filters)} items")
+            for i, filter_item in enumerate(data.cross_filters):
+                logger.info(f"Filter {i}: {filter_item.dict()}")
+        
+        result = await process_vts_query(vehicle_number=data.vehicle_number, cross_filters=data.cross_filters)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in get_vts_query: {e}")
+        logger.error(f"Input data: {data.dict() if hasattr(data, 'dict') else 'Unable to serialize'}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Internal error processing VTS query",
+            "generated_sql": None
         }
