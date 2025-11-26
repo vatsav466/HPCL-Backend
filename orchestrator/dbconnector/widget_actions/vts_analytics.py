@@ -3353,6 +3353,23 @@ class VTSAnalyticsActions:
             # Build and apply conditions
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
 
+            # Add search filter condition if a search term is provided
+            search_term = payload.get("search")
+            if search_term and columns:
+                search_conditions = []
+                for col in columns:
+                    search_conditions.append(f'CAST("{col}" AS TEXT) ILIKE \'%{search_term}%\'')
+                if search_conditions:
+                    conditions.append(f"({' OR '.join(search_conditions)})")
+
+            # Add column-specific search filters
+            column_filters = payload.get("column_filters")
+            if column_filters and isinstance(column_filters, dict):
+                for col, search_val in column_filters.items():
+                    if search_val:  # Ensure there is a value to search for
+                        # Add a case-insensitive search condition for the specific column
+                        conditions.append(f'CAST("{col}" AS TEXT) ILIKE \'%{search_val}%\'')
+
             # Build and execute count query first
             count_query = f'SELECT COUNT(*) FROM public."{table_name}"'
             filtered_count_query = VTSAnalyticsActions.apply_conditions_to_query(count_query, conditions)
