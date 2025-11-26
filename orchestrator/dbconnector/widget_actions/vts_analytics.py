@@ -3350,21 +3350,28 @@ class VTSAnalyticsActions:
             else:
                 base_query = f'SELECT * FROM public."{table_name}"'
 
+            # Build and apply conditions
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
-            filtered_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
-            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_query, limit=limit, skip=page, skip_total=False)
+
+            # Build and execute count query first
+            count_query = f'SELECT COUNT(*) FROM public."{table_name}"'
+            filtered_count_query = VTSAnalyticsActions.apply_conditions_to_query(count_query, conditions)
+            count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_count_query)
+            total_records = count_resp['data'][0]['count'] if count_resp.get('data') else 0
+
+            # Build and execute data query with pagination
+            filtered_data_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_data_query, limit=limit, skip=page, skip_total=True)
 
         
             if not resp['data']:
-                return {"status": True, "message": "No data found", "data": [], "count": 0, "total": 0}
+                return {"status": True, "message": "No data found", "data": [], "total_records": 0}
 
             if payload.get("download") == "true":
                 df = pd.DataFrame(resp['data'])
-                # Convert datetime columns to timezone-unaware for Excel compatibility
                 for col in df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
                     df[col] = df[col].dt.tz_localize(None)
 
-                # Clean up DataFrame by removing empty rows/columns
                 df = df.dropna(axis=1, how="all")
                 df = df.loc[:, (df.astype(str).apply(lambda x: x.str.strip() != "").any())]
 
@@ -3388,9 +3395,9 @@ class VTSAnalyticsActions:
                 "data": resp['data'],
                 "page": page,
                 "page_size": limit,
-                "total_records": len(resp['data'])
+                "total_records": total_records
             }
         except Exception as e:
             print("Exception in risk_score:", str(e))
             print("traceback:", traceback.format_exc())
-            return {"status": False, "message": str(e), "data": [], "count": 0, "total": 0}
+            return {"status": False, "message": str(e), "data": [], "total_records": 0}
