@@ -900,6 +900,11 @@ Model Alerts {
     Action=> get_vts_unblocked_trucks {
         cross_filters optional list WidgetFilters
     }
+
+    Action=> alerts_get_vts_query {
+        vehicle_number optional str
+        cross_filters optional list WidgetFilters
+    }
     
     Config=> {
         crud_operations='read'
