@@ -1175,7 +1175,7 @@ class VTSAnalyticsActions:
             group_by_col = payload.get("group_by") if payload else None
             if group_by_col and group_by_col in final_df.columns:
                 violation_cols = [v for v in all_violations if v in final_df.columns]
-                violation_cols.append('qty_shortage')
+                # violation_cols.append('qty_shortage')
             
                 agg_df = final_df.groupby(group_by_col)[violation_cols].sum().reset_index()
                 agg_df['total_count'] = agg_df[violation_cols].sum(axis=1)
