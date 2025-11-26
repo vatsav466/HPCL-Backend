@@ -637,6 +637,7 @@ class AlertAction:
                             "rca_reason": input_data.get("rca_reason", ""),
                             "category": input_data.get("category", ""),
                             "action_by": rpt.get("email", "NOVEX_USER"),
+                            "employee_id":rpt.get("employee_id",""),
                             "remarks": input_data.get("remarks", ""),
                             "ims_datetime": input_data.get("ims_datetime", ""),
                             "prod_reqd_dt": input_data.get("prod_reqd_dt", ""),
