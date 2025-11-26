@@ -33,7 +33,7 @@ def get_db_engine():
 
 def validate_sql_against_schema(sql: str) -> bool:
     """Validate if SQL references existing tables."""
-    valid_tables = ['vts_alert_history', 'cumulative_risk_data', 'vts_truck_master', 
+    valid_tables = ['vts_alert_history',  'vts_truck_master', 
                    'vts_ongoing_trips', 'alerts','vts_tripauditmaster']
     
     sql_lower = sql.lower()
@@ -154,8 +154,7 @@ def extract_vehicle_details_safe(vehicle_id: str, engine) -> dict:
             ('vts_truck_master', 'truck_no', 'zone', 'location_name', 'transporter_name'),
             ('vts_alert_history', 'tl_number', 'zone', 'location_name', None),
             ('alerts', 'vehicle_number', 'zone', 'location_name', 'transporter_name'),
-            ('vts_ongoing_trips', 'tt_number', 'zone', 'location_name', 'transporter_name'),
-            ('cumulative_risk_data', 'tt_number', 'zone', 'location_name', 'transporter_name')
+            ('vts_ongoing_trips', 'tt_number', 'zone', 'location_name', 'transporter_name')
         ]
         
         for table_config in tables_config:
@@ -237,13 +236,7 @@ async def generate_comprehensive_vehicle_query(vehicle_id: str, engine=None, cro
     trips_has_zone = column_exists('vts_ongoing_trips', 'zone')
     trips_has_location = column_exists('vts_ongoing_trips', 'location_name')
     trips_has_transporter = column_exists('vts_ongoing_trips', 'transporter_name')
-    
-    crd_has_zone = column_exists('cumulative_risk_data', 'zone')
-    crd_has_location = column_exists('cumulative_risk_data', 'location_name')
-    crd_has_transporter = column_exists('cumulative_risk_data', 'transporter_name')
-    crd_has_vts_end_datetime = column_exists('cumulative_risk_data', 'vts_end_datetime')
-    crd_has_event_datetime = column_exists('cumulative_risk_data', 'event_datetime')
-    
+        
     tam_has_zone = column_exists('vts_tripauditmaster', 'zone')
     tam_has_location = column_exists('vts_tripauditmaster', 'location_name')
     tam_has_transporter = column_exists('vts_tripauditmaster', 'transporter_name') 
@@ -272,10 +265,6 @@ async def generate_comprehensive_vehicle_query(vehicle_id: str, engine=None, cro
     trips_zone = build_column_with_source("vot", "zone", trips_has_zone, "master_zone", "vts_ongoing_trips")
     trips_location = build_column_with_source("vot", "location_name", trips_has_location, "master_location", "vts_ongoing_trips")
     trips_transporter = build_column_with_source("vot", "transporter_name", trips_has_transporter, "master_transporter", "vts_ongoing_trips")
-    
-    crd_zone = build_column_with_source("crd", "zone", crd_has_zone, "master_zone", "cumulative_risk_data")
-    crd_location = build_column_with_source("crd", "location_name", crd_has_location, "master_location", "cumulative_risk_data")
-    crd_transporter = build_column_with_source("crd", "transporter_name", crd_has_transporter, "master_transporter", "cumulative_risk_data")
     
     tam_zone = build_column_with_source("tam", "zone", tam_has_zone, "master_zone", "vts_tripauditmaster")
     tam_location = build_column_with_source("tam", "location_name", tam_has_location, "master_location", "vts_tripauditmaster")
@@ -308,23 +297,13 @@ async def generate_comprehensive_vehicle_query(vehicle_id: str, engine=None, cro
                         logging.warning("No date column found for vts_alert_history")
                     
                     alerts_date_condition = f" AND a.created_at::date BETWEEN '{start_date}' AND '{end_date}'"
-                    
-                    if crd_has_vts_end_datetime:
-                        crd_date_condition = f" AND crd.vts_end_datetime::date BETWEEN '{start_date}' AND '{end_date}'"
-                        logging.info(f"Using vts_end_datetime for cumulative_risk_data date filtering")
-                    elif crd_has_event_datetime:
-                        crd_date_condition = f" AND crd.event_datetime::date BETWEEN '{start_date}' AND '{end_date}'"
-                        logging.info(f"Using event_datetime for cumulative_risk_data date filtering")
-                    else:
-                        logging.warning("No date column found for cumulative_risk_data")
-                    
+                        
                     trips_date_condition = f" AND vot.created_at::date BETWEEN '{start_date}' AND '{end_date}'"
                     tam_date_condition = f" AND tam.createdat::date BETWEEN '{start_date}' AND '{end_date}'"
 
                     break
     
     vah_display_time = 'vah.vts_end_datetime' if vah_has_vts_end_datetime else 'vah.created_at'
-    crd_display_time = 'crd.vts_end_datetime' if crd_has_vts_end_datetime else 'crd.event_datetime'
     
     query = f"""
     WITH master_data AS (
@@ -384,36 +363,6 @@ async def generate_comprehensive_vehicle_query(vehicle_id: str, engine=None, cro
         AND a.alert_status = 'Open'
         AND a.violation_type IS NOT NULL  -- Filter for violations only
         {alerts_date_condition}
-
-        UNION ALL
-
-        -- cumulative_risk_data
-        SELECT
-            'cumulative_risk_data'::TEXT AS "Data Table",
-            'cumulative_risk_data'::TEXT AS "Source Table",  -- Add source table for internal reference
-            COALESCE(crd.alert_type, 'Risk Event') AS "Event Type",
-            {crd_display_time}::TIMESTAMP AS "Event Time",
-            CASE 
-                WHEN crd.lat IS NOT NULL AND crd.lon IS NOT NULL 
-                THEN 'Lat: ' || crd.lat::TEXT || ', Lon: ' || crd.lon::TEXT
-                ELSE {crd_location['expression']}
-            END AS "Location Info",
-            NULL AS "Invoice Number",
-            'zone: ' || COALESCE({crd_zone['expression']}::text, '') ||
-            ', location_name: ' || COALESCE({crd_location['expression']}::text, '') ||
-            ', transporter_name: ' || COALESCE({crd_transporter['expression']}::text, '') ||
-            ', Entity Risk: ' || COALESCE(crd.entity_risk::TEXT, 'N/A') ||
-            ', Location Sensitivity: ' || COALESCE(crd.location_sensitivity::TEXT, 'N/A') ||
-            ', Overall Risk: ' || COALESCE(crd.overall_risk::TEXT, 'N/A') ||
-            ', Cumulative Risk: ' || COALESCE(crd.cumulative_risk_score::TEXT, 'N/A')
-            AS "Additional Detail",
-            crd.tt_number::TEXT AS "Vehicle_Identifier"
-        FROM cumulative_risk_data crd
-        LEFT JOIN master_data md ON crd.tt_number = md.truck_no -- This was missing
-        WHERE crd.tt_number = '{vehicle_id}' 
-        AND crd.alert_type IS NOT NULL
-        AND (crd.entity_risk IS NOT NULL OR crd.location_sensitivity IS NOT NULL OR crd.overall_risk IS NOT NULL)  -- Filter for risk events only
-        {crd_date_condition}
 
         UNION ALL
 
