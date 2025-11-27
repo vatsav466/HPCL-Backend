@@ -10341,3 +10341,12 @@ class Deviceinstallation_Update_Device_InstallationParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class Deviceinstallation_Upload_CertificateParams(pydantic.BaseModel):
+    sap_tt_no: str
+    certificate: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

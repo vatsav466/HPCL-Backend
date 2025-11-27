@@ -7281,6 +7281,9 @@
                 },
                 {
                     "name": "update_device_installation"
+                },
+                {
+                    "name": "upload_certificate"
                 }
             ]
         },
@@ -7323,6 +7326,9 @@
                 },
                 {
                     "name": "update_device_installation"
+                },
+                {
+                    "name": "upload_certificate"
                 }
             ]
         }
@@ -8058,6 +8064,10 @@
         {
             "name": "update_device_installation",
             "displayName": "update_device_installation"
+        },
+        {
+            "name": "upload_certificate",
+            "displayName": "upload_certificate"
         }
     ]
 }

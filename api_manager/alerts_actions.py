@@ -245,22 +245,53 @@ async def alerts_stored_document(file_name: str):
 # Action vts_alert_manager
 @router.post('/vts_alert_manager', tags=['Alerts'])
 async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
-    query = f"alert_section='VTS' AND alert_status='Open'"
+    print("data",data)
+    print("data filters",dir(data.filters))
+    alert_status_value = next(
+    (f.value for f in data.filters if f.key == 'alert_status'),
+    None
+)
+    print("alert_status_value",alert_status_value)
+    query = f"alert_section='VTS' AND alert_status='{alert_status_value}'"
     query = await generate_filter_query(data.filters, query)
+    print("query",query)
     alert_data = await Alerts.get_all(
         urdhva_base.queryparams.QueryParams(
             q=query, limit=0
             ), resp_type='plain')
-    
+    # print("alert_data",alert_data)
     required_columns =  [
             "bu", "tt_number", "sap_id", "location_name", "severity","zone",
             "instance_level", "instance_status", "violation_type",
             "maker", "checker", "actual_trip_end_date", "novex_alert_created_date",
-            "vehicle_blocked_start_date", "vehicle_blocked_end_date", "alert_id", "id"
+            "vehicle_blocked_start_date", "vehicle_blocked_end_date", "alert_id", "id","action_type","action_by"
         ]
+    
     if alert_data["data"]:
         alert_data = alert_data["data"]
         df = pl.DataFrame(alert_data)
+        '''
+        df = df.with_columns(
+            pl.col("alert_history")
+            .str.json(pl.Struct)        # convert JSON string to struct
+            .struct.field("action_type")        # pick only the action_type
+            .alias("action_type")
+        )
+        '''
+        df = df.with_columns(
+    pl.col("alert_history")
+      .list.last()                     # get last struct in the list
+      .struct.field("action_type")     # extract action_type
+      .alias("action_type")
+)
+        df = df.with_columns(
+    pl.col("alert_history")
+      .list.last()                     # get last struct in the list
+      .struct.field("action_by")     # extract action_type
+      .alias("action_by")
+)
+        print(df['action_type'].unique())
+       
         df = df.rename(
             {
                 "unique_id": "alert_id", "interlock_name": "instance_level", 
@@ -270,8 +301,11 @@ async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
             }
         )
         df = df.select(required_columns)
+        print("columns",df.columns)
+
         alert_data = df.to_dicts()
     return {"status": True, "message": "success", "data": alert_data}
+
 
 
 # Action bulk_send_to_unblock

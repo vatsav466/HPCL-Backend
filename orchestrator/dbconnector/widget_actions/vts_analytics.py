@@ -3109,79 +3109,132 @@ class VTSAnalyticsActions:
     
     async def get_emlock_open_data(filters, cross_filters, drill_state, payload):
         try:
-            # Cross filters
+            # ---------------------------------------------------
+            # CROSS FILTERS
+            # ---------------------------------------------------
             _filters, daterange = await generate_cross_filter(cross_filters)
             current_date = datetime.now().strftime("%Y-%m-%d")
+
             query = vts_query.vts_query.get("get_emlock_open_data")
-            
+
             # Drill Down filters
             query = await get_drill_down_filter(filters, query)
 
             access_filters = [
                 dashboard_studio_model.WidgetFiltersCreate(**rec)
                 for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)
-                ]
-            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, access_filters, drill_state)
+            ]
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                query, access_filters, drill_state
+            )
 
             clause = "WHERE" if "where" not in query.lower() else "AND"
+
             if daterange:
                 query += f" {clause} createdat BETWEEN {daterange}"
             else:
                 query += f" {clause} CAST(createdat AS DATE) = '{current_date}'"
-            
+
             print("Final Query for emlock open data:", query)
 
+            # ---------------------------------------------------
+            # FETCH DATA
+            # ---------------------------------------------------
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
             df = pd.DataFrame(resp.get("data", []))
 
             if df.empty:
                 return {"status": True, "message": "No data found", "data": []}
-            
+
+            # Apply frontend filters
             df = await filter_data(df, _filters)
 
             if payload.get("search") == "true":
-                return {'status': True, 'message': 'success', 'data': df.to_dict(orient='records')}
-                        
-            swipe_out_l1 = df[df['swipeoutl1'].fillna('').str.lower() == 'false']
-            swipe_out_l2 = df[df['swipeoutl2'].fillna('').str.lower() == 'false']
-            
-            swipe_out_l1_count = len(swipe_out_l1)
-            swipe_out_l2_count = len(swipe_out_l2)
-            
+                return {"status": True, "message": "success", "data": df.to_dict(orient="records")}
+
+            # ---------------------------------------------------
+            # NORMALIZE L1 & L2
+            # ---------------------------------------------------
+            df["swipeoutl1"] = df["swipeoutl1"].fillna("").astype(str).str.lower()
+            df["swipeoutl2"] = df["swipeoutl2"].fillna("").astype(str).str.lower()
+
+            # Rows having either L1 or L2 false
+            df_false_any = df[(df["swipeoutl1"] == "false") | (df["swipeoutl2"] == "false")]
+            df_false_any['truck_no'] = df['trucknumber']
+            print("df_false_any",df_false_any.columns)
+            print("df_false_any tuck unkique",df_false_any['trucknumber'].unique())
+            # DISTINCT total summary
+            total_invoice = df_false_any["invoice_number"].nunique()
+            total_vehicle = df_false_any["trucknumber"].nunique()
+
+            total_swipe_l1 = (df["swipeoutl1"] == "false").sum()
+            total_swipe_l2 = (df["swipeoutl2"] == "false").sum()
+
+            # ---------------------------------------------------
+            # HIERARCHY LOGIC (same as old)
+            # ---------------------------------------------------
             group_by_keys = ["zone"]
+
             if filters:
-                filter_keys = [rec.key.strip('"') for rec in filters]
+                filter_keys = [str(rec.key).lower() for rec in filters]
+
                 if "zone" in filter_keys and "region" not in filter_keys:
                     group_by_keys = ["zone", "region"]
+
                 elif "zone" in filter_keys and "region" in filter_keys and "location_name" not in filter_keys:
-                    group_by_keys = ["zone", "region", "location_name"]
-                elif "zone" in filter_keys and "region" in filter_keys and "location_name" in filter_keys and "trucknumber" not in filter_keys:
-                    group_by_keys = ["zone", "region", "location_name", "trucknumber"]
+                    group_by_keys = ["zone", "region", "location_name",]
 
-            swipe_out_l1 = swipe_out_l1.groupby(group_by_keys, as_index=False).agg({
-                "swipeoutl1": "count"
-            })
-            swipe_out_l2 = swipe_out_l2.groupby(group_by_keys, as_index=False).agg({
-                "swipeoutl2": "count",
-            })
-            df = pd.concat([swipe_out_l1, swipe_out_l2])
-            df = df.fillna(0)
+                elif (
+                    "zone" in filter_keys
+                    and "region" in filter_keys
+                    and "location_name" in filter_keys
+                    and "trucknumber" not in filter_keys
+                ):
+                    group_by_keys = ["zone", "region", "location_name", "trucknumber",'truck_no']
 
-            df = df.groupby(group_by_keys, as_index=False).agg({
-                "swipeoutl1": "sum",
-                "swipeoutl2": "sum"
-            })
+            # ---------------------------------------------------
+            # FINAL GROUPING WITH ALL COUNTS
+            # ---------------------------------------------------
+            
+            grouped_df = (
+                df_false_any.groupby(group_by_keys, as_index=False)
+                .agg({
+                    "swipeoutl1": lambda x: (x == "false").sum(),
+                    "swipeoutl2": lambda x: (x == "false").sum(),
+                    "invoice_number": "nunique",
+                    "trucknumber": "nunique",
+                })
+            )
+            print("grouped_df cols",grouped_df.columns)
+            print("grouped_df uni",grouped_df['trucknumber'].unique())
+            grouped_df.rename(columns={
+                "invoice_number": "distinct_invoice_count",
+                "trucknumber": "distinct_vehicle_count",
+            }, inplace=True)
 
+            grouped_df = grouped_df.fillna(0)
+
+            # Convert numpy ints to normal ints
+            import numpy as np
+            grouped_df = grouped_df.astype(object).where(pd.notnull(grouped_df), None)
+            grouped_df = grouped_df.applymap(
+                lambda x: int(x) if isinstance(x, (np.integer,)) else x
+            )
+            print("grouped_df columns",grouped_df.columns)
             return {
-                "status": True, 
-                "message": "success", 
-                "swipe_out_l1_count": swipe_out_l1_count,
-                "swipe_out_l2_count": swipe_out_l2_count,
-                "data": df.to_dict(orient='records')
-                }
+                "status": True,
+                "message": "success",
+                "swipe_out_l1_count": int(total_swipe_l1),
+                "swipe_out_l2_count": int(total_swipe_l2),
+                "distinct_invoice_count": int(total_invoice),
+                "distinct_vehicle_count": int(total_vehicle),
+                "data": grouped_df.to_dict(orient="records"),
+            }
+
         except Exception as e:
             print("-- Exception in zone wise productivity widget --")
-            print("traceback :", traceback.format_exc())
+            print("traceback:", traceback.format_exc())
+
 
     @staticmethod
     async def power_disconnection(filters, cross_filters, drill_state, payload):
