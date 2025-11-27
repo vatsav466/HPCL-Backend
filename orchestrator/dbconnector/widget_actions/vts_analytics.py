@@ -1312,8 +1312,11 @@ class VTSAnalyticsActions:
                 "device_tamper_count",
                 "speed_violation_count",
                 "night_driving_count",
-                "main_supply_removal_count"
+                "main_supply_removal_count",
+                "continuous_driving_count"
+
             ]
+            print("dfcolumns",df.columns)
 
             df_viol = df[["invoice_number"] + violation_cols].copy()
             df_viol.dropna(subset=["invoice_number"], inplace=True)
@@ -1354,171 +1357,7 @@ class VTSAnalyticsActions:
                 largest_key = max(percentages, key=percentages.get)
                 percentages[largest_key] = round(percentages[largest_key] + diff, 2)
             
-            download_flag = payload.get("download")
-            if (isinstance(download_flag, bool) and download_flag) or (
-                isinstance(download_flag, str) and download_flag.strip().lower() == "true"
-            ):
-                print("Download requested — generating Excel with multiple violation sheets")
 
-                output = io.BytesIO()
-                
-                with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                    combined_violation_rows = []
-                    for v_type in list(violation_counts.keys()):
-                        print(f"Generating sheet for: {v_type}")
-
-                        # ------------------------------------
-                        #  Case 1: Handle Emlock Open separately
-                        # ------------------------------------
-                        if v_type == "emlock_open":
-                            print("Fetching full emlock_open data from vts_tripauditmaster...")
-
-                            
-                            emlock_query = """
-                                SELECT *
-                                FROM vts_tripauditmaster
-                                WHERE 
-                                    (swipeoutl1 != 'true' OR swipeoutl2 != 'true')
-                            """
-
-                           
-                            emlock_conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, emlock_query)
-                            emlock_query = VTSAnalyticsActions.apply_conditions_to_query(emlock_query, emlock_conditions)
-
-                            
-                            emlock_df = await VTSAnalyticsActions.execute_query(emlock_query)
-
-                            
-                            print("emlock_df columns:", list(emlock_df.columns) if emlock_df is not None else "None")
-                            print("emlock_df row count:", len(emlock_df) if emlock_df is not None else 0)
-                            print("emlock_df sample:", emlock_df.head(5).to_dict(orient='records') if emlock_df is not None and not emlock_df.empty else "Empty")
-
-                            if emlock_df is None or emlock_df.empty:
-                                pd.DataFrame([{"message": "No data found for emlock_open"}]).to_excel(
-                                    writer, index=False, sheet_name="emlock_open"
-                                )
-                                continue
-
-                            
-                            emlock_df.to_excel(writer, index=False, sheet_name="emlock_open")
-                            print(f" Wrote sample ({len(emlock_df)} rows) to emlock_open sheet.")
-                            continue
-
-                        # ------------------------------------
-                        #  Case 2: Handle Shortage Count separately
-                        # ------------------------------------
-                        if v_type == "shortage_count":
-                            print("Fetching shortage data (independent SQL)…")
-
-                            # ------------------------------
-                            # 1. Build NEW shortage SQL (no BU filter)
-                            # ------------------------------
-                            
-
-                            shortage_query= f"""
-                                SELECT *
-                                FROM sales_trips_till_date T
-                                WHERE  load_status = '6'                
-                            """
-                            shortage_conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
-                            shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, shortage_conditions)
-
-                            
-                            shortage_df = await VTSAnalyticsActions.execute_query(shortage_query)
-                            shortage_vehicle_count = shortage_df['vehicle_id'].nunique()
-                            shortage_invoice_count = shortage_df['invoice_no'].nunique()
-
-                            print("Shortage SQL:\n", shortage_query)
-
-                            # ------------------------------
-                            # 2. Execute the SQL to get FULL DATA
-                            # ------------------------------
-                            shortage_df = await VTSAnalyticsActions.execute_query(shortage_query)
-
-                            print("shortage_df columns:", list(shortage_df.columns) if shortage_df is not None else "None")
-                            print("shortage_df row count:", len(shortage_df) if shortage_df is not None else 0)
-                            # print("shortage_df sample:", shortage_df.head(5).to_dict(orient='records') if shortage_df is not None and not shortage_df.empty else "Empty")
-
-                            # ------------------------------
-                            # 3. Write to Excel (not count)
-                            # ------------------------------
-                            if shortage_df is None or shortage_df.empty:
-                                pd.DataFrame([{"message": "No data found for shortage_count"}]).to_excel(
-                                    writer, index=False, sheet_name="shortage_count"
-                                )
-                            else:
-                                shortage_df.to_excel(writer, index=False, sheet_name="shortage_count")
-
-                            continue
-                        # ------------------------------------
-                        # Case 3: All other violation types (default logic)
-                        # ------------------------------------
-                        if v_type in violation_cols:
-                            # DO NOTHING HERE
-                            # DON'T QUERY ALL VIOLATIONS HERE
-                            continue
-
-                    # -----------------------------------------------------
-                    # 🔵 AFTER LOOP (this runs ONLY ONCE)
-                    # -----------------------------------------------------
-                    violation_query = """
-                        SELECT
-                            tl_number,
-                            invoice_number,
-                            location_name,
-                            zone,
-                            DATE(vts_end_datetime) AS created_at,
-                            stoppage_violations_count,
-                            route_deviation_count,
-                            device_tamper_count,
-                            main_supply_removal_count,
-                            night_driving_count,
-                            speed_violation_count,
-                            continuous_driving_count
-                        FROM vts_alert_history
-                        WHERE 
-                            (
-                                stoppage_violations_count > 0 OR
-                                route_deviation_count > 0 OR
-                                device_tamper_count > 0 OR
-                                main_supply_removal_count > 0 OR
-                                night_driving_count > 0 OR
-                                speed_violation_count > 0 OR
-                                continuous_driving_count > 0
-                            )
-                    """
-
-                    violation_conditions = VTSAnalyticsActions.build_filter_conditions(
-                        filters, cross_filters, violation_query
-                    )
-                    violation_query = VTSAnalyticsActions.apply_conditions_to_query(
-                        violation_query, violation_conditions
-                    )
-
-                    print("FINAL ALL VIOLATIONS SQL:", violation_query)
-
-                    viol_df = await VTSAnalyticsActions.execute_query(violation_query)
-                    viol_df = viol_df.drop_duplicates(subset=['invoice_number'], keep='first')
-
-                    if viol_df is None or viol_df.empty:
-                        pd.DataFrame([{"message": "No violations found"}]).to_excel(
-                            writer, index=False, sheet_name="all_violations"
-                        )
-                    else:
-                        # viol_df.drop_duplicates(inplace=True)
-                        viol_df.to_excel(writer, index=False, sheet_name="all_violations")
-
-                # --- Finalize and stream Excel file ---
-                output.seek(0)
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                file_name = f"violation_percentages_{timestamp}.xlsx"
-                headers = {"Content-Disposition": f'attachment; filename=\"{file_name}\"'}
-
-                return StreamingResponse(
-                    output,
-                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    headers=headers
-                )
 
             # Step 9: Return final response
             return {
