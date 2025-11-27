@@ -800,6 +800,18 @@ async def sync_user_roles():
                             },
                             {
                             "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
                             }
                         ]
                     },
@@ -1207,6 +1219,123 @@ async def sync_user_roles():
         "name": "LPG",
         "status": True
     },
+    "DS HQO Officer": {
+        "allowed_pages": [
+            {
+                "menu_name": "Performance",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Industry",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "I&C Industry Performance"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Sales Performance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "I&C Insights"
+                            },
+                            {
+                            "title": "I&C Campaign"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Direct Sales",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Insights"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    }
+                ]
+            }
+        ],
+        "name": "Sales",
+        "status": True
+    },
+    "DS Regional Manager": {
+        "allowed_pages": [
+            {
+                "menu_name": "Performance",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Industry",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "I&C Industry Performance"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Sales Performance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "I&C Insights"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Direct Sales",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Insights"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    }
+                ]
+            }
+        ],
+        "name": "Sales",
+        "status": True
+    },
+    "DS Sales Officer": {
+        "allowed_pages": [
+            {
+                "menu_name": "Performance",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Industry",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "I&C Industry Performance"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Sales Performance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "I&C Insights"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Direct Sales",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Insights"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    }
+                ]
+            }
+        ],
+        "name": "Sales",
+        "status": True
+    },
     "Zonal Officer LPG": {
         "allowed_pages": [
             {
@@ -1351,6 +1480,18 @@ async def sync_user_roles():
                             },
                             {
                             "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
                             }
                         ]
                     },

@@ -616,7 +616,8 @@ class SendNotification:
             await self._send_standard_notification()
 
     async def get_vts_recipients(self):
-        query = (f"transporter_code='{self.alert_data['transporter_code']}'")
+        transporter_code = str(int(self.alert_data['transporter_code']))
+        query = (f"transporter_code='{transporter_code}'")
         transporter_details_data = await hpcl_ceg_model.EmailMaster.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                                     resp_type='plain')
         transporter_mail = []
