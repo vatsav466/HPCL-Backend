@@ -3330,6 +3330,14 @@ class VTSAnalyticsActions:
             count_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_count_query)
             total_records = count_resp['data'][0]['count'] if count_resp.get('data') else 0
 
+                        # Add sorting
+            sort_by = payload.get("sort_by")
+            sort_direction = payload.get("sort_direction", "asc").upper()
+            if sort_by and sort_direction in ["ASC", "DESC"]:
+                # Add ORDER BY to the base query before applying other conditions
+                # Note: apply_conditions_to_query handles placing this correctly
+                base_query += f' ORDER BY "{sort_by}" {sort_direction}'
+
             # Build and execute data query with pagination
             filtered_data_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=filtered_data_query, limit=limit, skip=page, skip_total=True)
