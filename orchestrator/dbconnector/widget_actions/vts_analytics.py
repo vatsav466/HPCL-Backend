@@ -370,6 +370,31 @@ class VTSAnalyticsActions:
     async def pagination_df(df, payload):
         total_count = len(df)
 
+        if str(payload.get("download", "")).lower() == "true":
+            merged_df = pd.DataFrame(df)
+            for col in merged_df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                merged_df[col] = merged_df[col].dt.tz_localize(None)
+
+            merged_df = merged_df.dropna(axis=1, how="all")
+            merged_df = merged_df.loc[:, (merged_df.astype(str).apply(lambda x: x.str.strip() != "").any())]
+
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_name = f"violations_{timestamp}.xlsx"
+
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                merged_df.to_excel(writer, index=False, sheet_name='violations')
+
+            output.seek(0)
+            headers = {
+                "Content-Disposition": f'attachment; filename="{file_name}"'
+            }
+            return StreamingResponse(
+                output,
+                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                headers=headers
+            )
+        
         skip = int(payload.get("skip", 0))        # page number
         limit = int(payload.get("limit", 20))     # page size
         search_value = str(payload.get("search", "")).strip().lower()
@@ -964,7 +989,7 @@ class VTSAnalyticsActions:
                         vehicle_id AS tl_number, 
                         invoice_no AS invoice_number,
                         plant_nm AS location_name,
-                        invoice_date,
+                        invoice_date as created_at,
                         CASE 
                             WHEN qty_shortage = 'NaN' THEN '0.0'
                             WHEN qty_shortage IS NULL THEN '0.0'
@@ -972,7 +997,7 @@ class VTSAnalyticsActions:
                         END AS qty_shortage,
                         material_group_nm,
                         zone_nm AS zone,
-                        load_date AS created_at
+                        load_date::DATE AS created_at
                     FROM sales_trips_till_date
                     WHERE 
                         load_status = '6'
@@ -996,14 +1021,15 @@ class VTSAnalyticsActions:
                     "zone": "first",
                     "location_name": "first",
                     "tl_number": "first",
-                    "material_group_nm": "first"
+                    "material_group_nm": "first",
+                    "created_at": "first",
                 })
 
                 tl_numbers_list = shortage_agg["tl_number"].unique().tolist()
                 tl_numbers_str = "', '".join(map(str, tl_numbers_list))
 
                 violation_columns = [
-                    f"CASE WHEN {v_type} != 0 THEN 1 ELSE 0 END AS {v_type}"
+                    f"COALESCE({v_type}, 0) AS {v_type}"
                     for v_type in all_violations
                 ]
                 select_clause = ",\n       ".join(violation_columns)
@@ -1050,7 +1076,7 @@ class VTSAnalyticsActions:
                 # Process violation columns
                 for col in all_violations:
                     if col in merged_df.columns:
-                        merged_df[col] = (merged_df[col] > 0).astype(int)
+                        merged_df[col] = merged_df[col].fillna(0).astype(int) 
                     else:
                         merged_df[col] = 0
 
@@ -1061,13 +1087,14 @@ class VTSAnalyticsActions:
                     "location_name": "first",
                     "tl_number": "first",
                     "transporter_name": "first",
+                    "created_at": "first",
                 }
                 for v_col in all_violations:
                     agg_dict[v_col] = "max"  
 
                 agg_df = merged_df.groupby("invoice_number", as_index=False).agg(agg_dict)
 
-                final_cols = ["invoice_number", "zone", "location_name", "tl_number", "qty_shortage", "transporter_name"] + all_violations
+                final_cols = ["invoice_number", "created_at","zone", "location_name", "tl_number", "qty_shortage", "transporter_name"] + all_violations
                 agg_df = agg_df[final_cols]
 
                 pagination_result = await VTSAnalyticsActions.pagination_df(agg_df, payload)
@@ -1076,14 +1103,14 @@ class VTSAnalyticsActions:
             # ==================== SPECIFIC VIOLATION TYPES ====================
             if violation_types:
                 select_parts = [
-                    f"COUNT(DISTINCT CASE WHEN {v_type} != 0 THEN invoice_number END) AS {v_type}"
+                    f"MAX({v_type}) AS {v_type}"
                     for v_type in all_violations
                 ]
                 select_clause = ",\n           ".join(select_parts)
                 
                 if vts_violation_types:
                     having_parts = [
-                        f"COUNT(DISTINCT CASE WHEN {v_type} != 0 THEN invoice_number END) > 0"
+                        f"MAX({v_type}) > 0"
                         for v_type in vts_violation_types
                     ]
                     having_clause = " AND ".join(having_parts)
@@ -1120,6 +1147,7 @@ class VTSAnalyticsActions:
                     "location_name": "first",
                     "tl_number": "first",
                     "transporter_name": "first",
+                    "created_at": "first",
                 }
                 for col in violation_cols:
                     agg_dict[col] = "max"
@@ -1148,7 +1176,6 @@ class VTSAnalyticsActions:
 
             if final_df.empty:
                 return {"status": True, "message": "No data found", "data": []}
-
             # Ensure qty_shortage column exists
             if 'qty_shortage' not in final_df.columns:
                 final_df['qty_shortage'] = 0
@@ -1176,8 +1203,7 @@ class VTSAnalyticsActions:
             group_by_col = payload.get("group_by") if payload else None
             if group_by_col and group_by_col in final_df.columns:
                 violation_cols = [v for v in all_violations if v in final_df.columns]
-                # violation_cols.append('qty_shortage')
-            
+                # violation_cols.append('qty_shortage') 
                 agg_df = final_df.groupby(group_by_col)[violation_cols].sum().reset_index()
                 agg_df['total_count'] = agg_df[violation_cols].sum(axis=1)
                 
@@ -1252,33 +1278,7 @@ class VTSAnalyticsActions:
                     agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
                 
                 return {"status": True, "message": f"Invoice-wise violations for vehicle {click_value}", "data": agg_df.to_dict(orient="records")}
-
-            # ==================== DOWNLOAD ====================
-            if payload.get("download") == "true":
-                merged_df = pd.DataFrame(final_df)
-                for col in merged_df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
-                    merged_df[col] = merged_df[col].dt.tz_localize(None)
-
-                merged_df = merged_df.dropna(axis=1, how="all")
-                merged_df = merged_df.loc[:, (merged_df.astype(str).apply(lambda x: x.str.strip() != "").any())]
-
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                file_name = f"violations_{timestamp}.xlsx"
-
-                output = io.BytesIO()
-                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                    merged_df.to_excel(writer, index=False, sheet_name='violations')
-
-                output.seek(0)
-                headers = {
-                    "Content-Disposition": f'attachment; filename="{file_name}"'
-                }
-                return StreamingResponse(
-                    output,
-                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    headers=headers
-                )
-
+            
             pagination_result = await VTSAnalyticsActions.pagination_df(final_df, payload)
             return pagination_result
         
@@ -1679,7 +1679,7 @@ class VTSAnalyticsActions:
                 .reset_index()
             )
 
-            summary_df[violation_type] = violation_filtered_df.groupby(group_col).size().values
+            summary_df[violation_type] = violation_filtered_df.groupby(group_col)[violation_type].sum().values
             if group_col != "tl_number":
                  summary_df["vehicle_count"] = violation_filtered_df.groupby(group_col)["tl_number"].nunique().values
                 

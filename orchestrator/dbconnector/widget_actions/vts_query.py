@@ -51,16 +51,16 @@ vts_query = {
 
     "unblocked_within_day": """select count (*) from alerts where alert_section = 'VTS' 
                                                             and alert_status = 'Close' 
-                                                            and (vehicle_blocked_end_date - vehicle_blocked_start_date) <= interval '1 day'""",
+                                                            and (vehicle_unblocked_date - vehicle_blocked_start_date) <= interval '1 day'""",
                                                             
     "unblocked_2_to_3_days": """select count (*) from alerts where  alert_section = 'VTS' 
                                                              and alert_status = 'Close' 
-                                                             and (vehicle_blocked_end_date - vehicle_blocked_start_date) > interval '1 day' 
-                                                             and (vehicle_blocked_end_date - vehicle_blocked_start_date) <= interval '3 days'""",
+                                                             and (vehicle_unblocked_date - vehicle_blocked_start_date) > interval '1 day' 
+                                                             and (vehicle_unblocked_date - vehicle_blocked_start_date) <= interval '3 days'""",
 
     "unblocked_greater_3_days": """select count (*) from alerts where alert_section = 'VTS' 
                                                                 and alert_status = 'Close' 
-                                                                and (vehicle_blocked_end_date - vehicle_blocked_start_date) > interval '3 days'""",
+                                                                and (vehicle_unblocked_date - vehicle_blocked_start_date) > interval '3 days'""",
     
     "itdg_actionable" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
@@ -423,45 +423,48 @@ vts_query = {
                                   """,
     
     "vts_insite_history": """
-                            SELECT
+                           SELECT
                                 tl_number,
                                 invoice_number,
                                 location_name,
                                 zone,
                                 DATE(vts_end_datetime) AS created_at,
-                                COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END) AS stoppage_violations_count,
-                                COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END) AS route_deviation_count,
-                                COUNT(DISTINCT CASE WHEN device_tamper_count != 0 THEN invoice_number END) AS device_tamper_count,
-                                COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END) AS main_supply_removal_count,
-                                COUNT(DISTINCT CASE WHEN night_driving_count != 0 THEN invoice_number END) AS night_driving_count,
-                                COUNT(DISTINCT CASE WHEN speed_violation_count != 0 THEN invoice_number END) AS speed_violation_count,
-                                COUNT(DISTINCT CASE WHEN continuous_driving_count != 0 THEN invoice_number END) AS continuous_driving_count
+                                MAX(stoppage_violations_count) AS stoppage_violations_count,
+                                MAX(route_deviation_count) AS route_deviation_count,
+                                MAX(device_tamper_count) AS device_tamper_count,
+                                MAX(main_supply_removal_count) AS main_supply_removal_count,
+                                MAX(night_driving_count) AS night_driving_count,
+                                MAX(speed_violation_count) AS speed_violation_count,
+                                MAX(continuous_driving_count) AS continuous_driving_count
                             FROM (
-                                SELECT DISTINCT invoice_number, tl_number, vts_end_datetime, location_name,zone,
-                                    stoppage_violations_count, route_deviation_count, device_tamper_count,
-                                    main_supply_removal_count, night_driving_count, speed_violation_count, continuous_driving_count
-                                FROM vts_alert_history
+                                SELECT DISTINCT invoice_number, tl_number, vts_end_datetime, location_name, zone,
+                                stoppage_violations_count, route_deviation_count, device_tamper_count,
+                                main_supply_removal_count, night_driving_count, speed_violation_count, 
+                                continuous_driving_count FROM vts_alert_history
                                 WHERE invoice_number IS NOT NULL
                             ) AS history_data
-                            GROUP BY tl_number, invoice_number, DATE(vts_end_datetime), location_name, zone
+                            GROUP BY invoice_number, tl_number, DATE(vts_end_datetime), location_name, zone;
                           """,
+
     "vts_insite_history_type": """
-                               SELECT 
-                                tl_number,
-                                location_name,
-                                zone,
-                                invoice_number,
-                                {select_clause}
-                            FROM (
-                                SELECT DISTINCT invoice_number, tl_number, location_name, zone,
-                                       stoppage_violations_count, route_deviation_count, device_tamper_count,
-                                       main_supply_removal_count, night_driving_count, speed_violation_count, continuous_driving_count
-                                FROM vts_alert_history
-                                WHERE invoice_number IS NOT NULL
-                            ) AS history_data
-                            GROUP BY tl_number, invoice_number,zone,location_name
-                            HAVING {having_clause}
-                               """,
+                                    SELECT 
+                                    tl_number,
+                                    location_name,
+                                    zone,
+                                    invoice_number,
+                                    DATE(vts_end_datetime) AS created_at,
+                                    {select_clause}
+                                FROM (
+                                    SELECT DISTINCT invoice_number, tl_number, vts_end_datetime, location_name, zone,stoppage_violations_count, 
+                                    route_deviation_count, device_tamper_count, main_supply_removal_count, night_driving_count, 
+                                    speed_violation_count, continuous_driving_count
+                                    FROM vts_alert_history
+                                    WHERE invoice_number IS NOT NULL
+                                ) AS history_data
+                                GROUP BY invoice_number, tl_number,DATE(vts_end_datetime), zone, location_name
+                                HAVING {having_clause}
+                            """,
+                            
     "closed_alerts": """ SELECT 
                             sap_id, location_name, zone, vehicle_number as tt_number, transporter_code, 
                             violation_type, zone, vehicle_blocked_start_date, 
