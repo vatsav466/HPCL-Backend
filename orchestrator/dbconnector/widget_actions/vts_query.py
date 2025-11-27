@@ -51,16 +51,16 @@ vts_query = {
 
     "unblocked_within_day": """select count (*) from alerts where alert_section = 'VTS' 
                                                             and alert_status = 'Close' 
-                                                            and (vehicle_blocked_end_date - vehicle_blocked_start_date) <= interval '1 day'""",
+                                                            and (vehicle_unblocked_date - vehicle_blocked_start_date) <= interval '1 day'""",
                                                             
     "unblocked_2_to_3_days": """select count (*) from alerts where  alert_section = 'VTS' 
                                                              and alert_status = 'Close' 
-                                                             and (vehicle_blocked_end_date - vehicle_blocked_start_date) > interval '1 day' 
-                                                             and (vehicle_blocked_end_date - vehicle_blocked_start_date) <= interval '3 days'""",
+                                                             and (vehicle_unblocked_date - vehicle_blocked_start_date) > interval '1 day' 
+                                                             and (vehicle_unblocked_date - vehicle_blocked_start_date) <= interval '3 days'""",
 
     "unblocked_greater_3_days": """select count (*) from alerts where alert_section = 'VTS' 
                                                                 and alert_status = 'Close' 
-                                                                and (vehicle_blocked_end_date - vehicle_blocked_start_date) > interval '3 days'""",
+                                                                and (vehicle_unblocked_date - vehicle_blocked_start_date) > interval '3 days'""",
     
     "itdg_actionable" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
