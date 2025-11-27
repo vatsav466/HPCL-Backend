@@ -988,7 +988,7 @@ class VTSAnalyticsActions:
                         vehicle_id AS tl_number, 
                         invoice_no AS invoice_number,
                         plant_nm AS location_name,
-                        invoice_date as created_at,
+                        invoice_date,
                         CASE 
                             WHEN qty_shortage = 'NaN' THEN '0.0'
                             WHEN qty_shortage IS NULL THEN '0.0'
@@ -996,7 +996,7 @@ class VTSAnalyticsActions:
                         END AS qty_shortage,
                         material_group_nm,
                         zone_nm AS zone,
-                        load_date::DATE AS created_at
+                        invoice_date::DATE AS created_at
                     FROM sales_trips_till_date
                     WHERE 
                         load_status = '6'

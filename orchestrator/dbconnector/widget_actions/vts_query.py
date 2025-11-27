@@ -428,7 +428,7 @@ vts_query = {
                                 invoice_number,
                                 location_name,
                                 zone,
-                                DATE(vts_end_datetime) AS created_at,
+                                DATE(scheduled_trip_start_datetime) AS created_at,
                                 MAX(stoppage_violations_count) AS stoppage_violations_count,
                                 MAX(route_deviation_count) AS route_deviation_count,
                                 MAX(device_tamper_count) AS device_tamper_count,
@@ -437,13 +437,13 @@ vts_query = {
                                 MAX(speed_violation_count) AS speed_violation_count,
                                 MAX(continuous_driving_count) AS continuous_driving_count
                             FROM (
-                                SELECT DISTINCT invoice_number, tl_number, vts_end_datetime, location_name, zone,
+                                SELECT DISTINCT invoice_number, tl_number, scheduled_trip_start_datetime, location_name, zone,
                                 stoppage_violations_count, route_deviation_count, device_tamper_count,
                                 main_supply_removal_count, night_driving_count, speed_violation_count, 
                                 continuous_driving_count FROM vts_alert_history
                                 WHERE invoice_number IS NOT NULL
                             ) AS history_data
-                            GROUP BY invoice_number, tl_number, DATE(vts_end_datetime), location_name, zone;
+                            GROUP BY invoice_number, tl_number, DATE(scheduled_trip_start_datetime), location_name, zone;
                           """,
 
     "vts_insite_history_type": """
@@ -452,19 +452,19 @@ vts_query = {
                                     location_name,
                                     zone,
                                     invoice_number,
-                                    DATE(vts_end_datetime) AS created_at,
+                                    DATE(scheduled_trip_start_datetime) AS created_at,
                                     {select_clause}
                                 FROM (
-                                    SELECT DISTINCT invoice_number, tl_number, vts_end_datetime, location_name, zone,stoppage_violations_count, 
+                                    SELECT DISTINCT invoice_number, tl_number, scheduled_trip_start_datetime, location_name, zone,stoppage_violations_count, 
                                     route_deviation_count, device_tamper_count, main_supply_removal_count, night_driving_count, 
                                     speed_violation_count, continuous_driving_count
                                     FROM vts_alert_history
                                     WHERE invoice_number IS NOT NULL
                                 ) AS history_data
-                                GROUP BY invoice_number, tl_number,DATE(vts_end_datetime), zone, location_name
+                                GROUP BY invoice_number, tl_number,DATE(scheduled_trip_start_datetime), zone, location_name
                                 HAVING {having_clause}
                             """,
-                            
+
     "closed_alerts": """ SELECT 
                             sap_id, location_name, zone, vehicle_number as tt_number, transporter_code, 
                             violation_type, zone, vehicle_blocked_start_date, 
