@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, text, Integer, Double, Boolean, DateTime, 
 import orchestrator.dbconnector.credential_loader as credential_loader
 import psycopg2
 from sklearn.neighbors import BallTree
-
+import json
 
 
 import warnings
@@ -45,6 +45,7 @@ def get_db_connection():
             'TrustServerCertificate=yes;MARS_Connection=yes;',
         )
     return connection
+
 vts_engine = get_db_connection()
 print("VTS_TRACK database connection for reading established successfully!")
 
@@ -55,6 +56,7 @@ app_db_engine = create_engine(
     f"postgresql://{creds_app['user']}:{creds_app['password']}@"
     f"{creds_app['host']}:{creds_app['port']}/{creds_app['database']}"
 )
+
 print("APP_DB database connection for writing established successfully!")
 
 
@@ -726,6 +728,7 @@ def classify_risk(score):
     elif score <= 70: return "Medium"
     elif score <= 95: return "High"
     else: return "Critical"
+
 # H3 ASSIGNMENT
 def assign_h3(df, resolution=H3_RESOLUTION):
     if df.empty:
@@ -759,6 +762,11 @@ def build_candidate_clusters(train_df, lookback_days=LOOKBACK_DAYS, resolution=H
 
         seq += 1
         cid = f"{atype[:2]}-{seq}"
+
+         # Most frequent plant in this cluster
+        most_common_plant = g['LOCATION'].mode()[0] if not g['LOCATION'].empty else None
+
+
         clusters[cid] = {
             "cluster_id": cid,
             "alert_type": atype,
@@ -767,11 +775,12 @@ def build_candidate_clusters(train_df, lookback_days=LOOKBACK_DAYS, resolution=H
             "centroid_lon": g["LON"].mean(),
             "first_seen": g["EVENT_DATETIME"].min(),
             "last_seen": g["EVENT_DATETIME"].max(),
-            "events_25d": len(g),
+            "events_30d": len(g[g["EVENT_DATETIME"] >= (latest_time - timedelta(days=30))]),
             "events_10d": len(g[g["EVENT_DATETIME"] >= (latest_time - timedelta(days=10))]),
             "events_5d": len(g[g["EVENT_DATETIME"] >= (latest_time - timedelta(days=5))]),
             "unique_trucks_30d": g["TT_NUMBER"].nunique(),
-            "unique_days_30d": g["EVENT_DATETIME"].dt.date.nunique()
+            "unique_days_30d": g["EVENT_DATETIME"].dt.date.nunique(),
+            "plant": most_common_plant
         }
     return clusters, latest_time
 
@@ -801,18 +810,22 @@ def merge_clusters(clusters, merge_distance_m=MERGE_DISTANCE_M):
             if dist <= merge_distance_m:
                 to_merge.append(cid2)
                 used.add(cid2)
-        parent = max(to_merge, key=lambda x: clusters[x]["events_25d"])
+        parent = max(to_merge, key=lambda x: clusters[x]["events_30d"])
         agg = clusters[parent].copy()
         if len(to_merge) > 1:
             agg["centroid_lat"] = np.mean([clusters[t]["centroid_lat"] for t in to_merge])
             agg["centroid_lon"] = np.mean([clusters[t]["centroid_lon"] for t in to_merge])
             agg["first_seen"] = min(clusters[t]["first_seen"] for t in to_merge)
             agg["last_seen"] = max(clusters[t]["last_seen"] for t in to_merge)
-            agg["events_25d"] = sum(clusters[t]["events_25d"] for t in to_merge)
+            agg["events_30d"] = sum(clusters[t]["events_30d"] for t in to_merge)
             agg["events_10d"] = sum(clusters[t]["events_10d"] for t in to_merge)
             agg["events_5d"] = sum(clusters[t]["events_5d"] for t in to_merge)
             agg["unique_trucks_30d"] = max(clusters[t]["unique_trucks_30d"] for t in to_merge)
             agg["unique_days_30d"] = max(clusters[t]["unique_days_30d"] for t in to_merge)
+
+            plants = [clusters[t]["plant"] for t in to_merge if clusters[t]["plant"] is not None]
+            agg["plant"] = max(set(plants), key=plants.count) if plants else None
+
         merged[parent] = agg
     return merged
 
@@ -823,22 +836,22 @@ def validate_and_score(merged_clusters, latest_time):
         atype = c.get("alert_type", "")
         thresholds = ALERT_THRESHOLDS[atype]
 
-        E = c.get("events_25d", 0)
+        E = c.get("events_30d", 0)
         Uveh = c.get("unique_trucks_30d", 0)
         Uday = c.get("unique_days_30d", 0)
-        recent_ok = c.get("events_10d", 0) >= 1
+        recent_ok = c.get("events_5d", 0) >= 1
 
         if (E >= thresholds["min_events"]) and (Uveh >= thresholds["min_unique_vehicles"]) and (Uday >= thresholds["min_unique_days"]) and recent_ok:
             status = "VALID"
-        elif c.get("events_10d", 0) >= 10 and Uveh >= 5:
+        elif c.get("events_10d", 0) >=10  and Uveh >= 2:
             status = "EMERGING"
-        elif E >= 3:
+        elif E >= 5:
             status = "PROVISIONAL"
         else:
             status = "NOISE"
 
         days_since_last = (latest_time - c["last_seen"]).days if c.get("last_seen") else None
-        f_sub = freq_score(c.get("events_10d", 0))
+        f_sub = freq_score(c.get("events_30d", 0))
         r_sub = recency_score(days_since_last if days_since_last is not None else 999)
         d_sub = diversity_score(Uveh)
         risk = f_sub * WEIGHTS["frequency"] + r_sub * WEIGHTS["recency"] + d_sub * WEIGHTS["diversity"]
@@ -850,7 +863,7 @@ def validate_and_score(merged_clusters, latest_time):
             "recency_subscore": r_sub,
             "diversity_subscore": d_sub,
             "risk_score": round(risk, 1),
-            "risk_band": classify_risk(risk)
+            #"risk_band": classify_risk(risk)
         }
     return master
 
@@ -859,11 +872,11 @@ def filter_clusters_geofence(CLUSTER_MASTER, geofence_data):
     geofences = geofence_data[geofence_data["GEOFENCE_TYPE"].str.lower().str.strip() == "authorised"]
     n_clusters = len(CLUSTER_MASTER)
     overlap_flags = np.zeros(n_clusters, dtype=bool)
-    
+
     cluster_lats = CLUSTER_MASTER["centroid_lat"].values
     cluster_lons = CLUSTER_MASTER["centroid_lon"].values
     cluster_buffer_deg = CLUSTER_RADIUS_M / 111000
-    
+
     for _, gf in geofences.iterrows():
         gf_point = Point(gf["LONGITUDE"], gf["LATITUDE"])
         gf_radius_deg = gf["RADIUS"] / 111000
@@ -876,16 +889,11 @@ def filter_clusters_geofence(CLUSTER_MASTER, geofence_data):
             fraction_overlap = cluster_buffer.intersection(gf_buffer).area / cluster_buffer.area
             if fraction_overlap >= OVERLAP_THRESHOLD:
                 overlap_flags[i] = True
-                
+
     filtered_master = CLUSTER_MASTER[~overlap_flags].copy()
     return filtered_master
 
-# BUILD CLUSTER WEIGHTS
-def build_cluster_weights(CLUSTER_MASTER):
-    cluster_weights_per_alert = {}
-    for alert_type, group in CLUSTER_MASTER.groupby("alert_type"):
-        cluster_weights_per_alert[alert_type] = group[["centroid_lat", "centroid_lon", "risk_score"]].to_dict(orient="records")
-    return cluster_weights_per_alert
+
 
 # FULL PIPELINE
 def run_cluster_scoring_from_train(train_data, geofence_data=None):
@@ -893,39 +901,90 @@ def run_cluster_scoring_from_train(train_data, geofence_data=None):
     merged_clusters = merge_clusters(clusters)
     CLUSTER_MASTER = validate_and_score(merged_clusters, latest_time)
     CLUSTER_MASTER_DF = pd.DataFrame(CLUSTER_MASTER.values())
-    print(CLUSTER_MASTER_DF[CLUSTER_MASTER_DF["status"]=="EMERGING"])
-
-    CLUSTER_MASTER_DISPLAY = CLUSTER_MASTER_DF[CLUSTER_MASTER_DF["status"].isin(["VALID", "EMERGING"])].copy()
-    CLUSTER_MASTER_VALID = CLUSTER_MASTER_DF[CLUSTER_MASTER_DF["status"] == "VALID"].copy()
-
+    
     if geofence_data is not None:
-        FINAL_CLUSTER_MASTER_DISPLAY = filter_clusters_geofence(CLUSTER_MASTER_DISPLAY, geofence_data)
+        FINAL_CLUSTER_MASTER = filter_clusters_geofence(CLUSTER_MASTER_DF, geofence_data)
     else:
-        FINAL_CLUSTER_MASTER_DISPLAY = CLUSTER_MASTER_DISPLAY.copy()
+        FINAL_CLUSTER_MASTER = CLUSTER_MASTER_DF.copy()
 
-    if geofence_data is not None:
-        FINAL_CLUSTER_MASTER = filter_clusters_geofence(CLUSTER_MASTER_VALID, geofence_data)
-    else:
-        FINAL_CLUSTER_MASTER = CLUSTER_MASTER_VALID.copy()
+    
+    return FINAL_CLUSTER_MASTER
 
-    return FINAL_CLUSTER_MASTER_DISPLAY, FINAL_CLUSTER_MASTER
+    
 
 # RUN PIPELINE
-FINAL_CLUSTER_MASTER_DISPLAY, FINAL_CLUSTER_MASTER = run_cluster_scoring_from_train(train_data, geofence_data)
-
-cluster_weights_per_alert = build_cluster_weights(FINAL_CLUSTER_MASTER)
+FINAL_CLUSTER_MASTER = run_cluster_scoring_from_train(train_data, geofence_data)
 
 FINAL_CLUSTER_MASTER_df = FINAL_CLUSTER_MASTER[[
-    'cluster_id', 'alert_type', 'risk_score', 'risk_band','centroid_lat', 'centroid_lon', 'first_seen', 'last_seen', 
-    'events_25d', 'events_10d', 'events_5d', 'unique_trucks_30d', 'status', 
-    'days_since_last' 
+    'cluster_id', 'alert_type', 'risk_score','centroid_lat', 'centroid_lon', 'first_seen', 'last_seen', 
+    'events_30d', 'events_10d', 'events_5d', 'unique_trucks_30d', 'status', 'days_since_last' ,'plant'
 ]].copy()
 
-FINAL_CLUSTER_MASTER_DISPLAY_df=FINAL_CLUSTER_MASTER_DISPLAY[[
-    'cluster_id', 'alert_type', 'risk_score', 'risk_band','centroid_lat', 'centroid_lon', 'first_seen', 'last_seen', 
-    'events_25d', 'events_10d', 'events_5d', 'unique_trucks_30d', 'status', 
-    'days_since_last'
+
+FINAL_CLUSTER_MASTER_VALID_EMRG = FINAL_CLUSTER_MASTER_df[FINAL_CLUSTER_MASTER_df["status"].isin(["VALID", "EMERGING"])].copy()
+
+def soft_robust_normalize(series, eps=5, clip_range=(-3, 3)):
+    
+    median = series.median()
+    q1 = series.quantile(0.25)
+    q3 = series.quantile(0.75)
+    iqr = q3 - q1
+
+    # Soft robust scaling
+    normalized = (series - median) / (iqr + eps)
+
+    # Optional clipping to avoid extreme values
+    if clip_range:
+        normalized = normalized.clip(clip_range[0], clip_range[1])
+
+    # Rescale from [clip_range[0], clip_range[1]] to [0,1] and multiply by 100
+    min_clip, max_clip = clip_range
+    normalized_0_100 = ((normalized - min_clip) / (max_clip - min_clip)) * 100
+
+    return normalized_0_100
+
+
+FINAL_CLUSTER_MASTER_VALID_EMRG['risk_score_normalized'] = soft_robust_normalize(FINAL_CLUSTER_MASTER_VALID_EMRG['risk_score'])
+FINAL_CLUSTER_MASTER_VALID_EMRG["risk_band"] = FINAL_CLUSTER_MASTER_VALID_EMRG["risk_score_normalized"].apply(classify_risk)
+FINAL_CLUSTER_MASTER_VALID_EMRG.rename(columns={'alert_type':'cluster_type', 'risk_score_normalized':'Risk_Score' }, inplace=True)
+
+Location_map = (
+    master_df.drop_duplicates(subset=["LOCATION_CODE"])
+    .set_index("LOCATION_CODE")["LOCATION_NAME"]
+    .to_dict()
+)
+
+FINAL_CLUSTER_MASTER_VALID_EMRG["plant_name"] = FINAL_CLUSTER_MASTER_VALID_EMRG["plant"].map(Location_map)
+
+FINAL_CLUSTER_MASTER_VALID_EMRG = FINAL_CLUSTER_MASTER_VALID_EMRG[[
+    'cluster_id', 'cluster_type', 'plant', 'plant_name','Risk_Score', 'risk_band','centroid_lat', 'centroid_lon', 'first_seen', 'last_seen',
+    'events_30d', 'events_10d', 'events_5d', 'unique_trucks_30d', 'status', 'days_since_last',
 ]].copy()
+
+FINAL_CLUSTER_MASTER_DISPLAY_df=FINAL_CLUSTER_MASTER_VALID_EMRG.copy()
+
+FINAL_CLUSTER_MASTER_VALID=FINAL_CLUSTER_MASTER_VALID_EMRG[FINAL_CLUSTER_MASTER_VALID_EMRG["status"] == "VALID"]
+
+print("Cluster_Master saved successfully")
+
+
+# BUILD CLUSTER WEIGHTS
+def build_cluster_weights(CLUSTER_MASTER):
+    cluster_weights_per_alert = {}
+    for alert_type, group in CLUSTER_MASTER.groupby("cluster_type"):
+        cluster_weights_per_alert[alert_type] = group[["centroid_lat", "centroid_lon", "Risk_Score"]].to_dict(orient="records")
+    return cluster_weights_per_alert
+
+
+cluster_weights_per_alert = build_cluster_weights(FINAL_CLUSTER_MASTER_VALID)
+# Save to JSON
+with open("cluster_weights.json", "w") as f:
+    json.dump(cluster_weights_per_alert, f, indent=4)
+
+print("cluster_weights_per_alert saved successfully")
+
+FINAL_CLUSTER_MASTER_df = FINAL_CLUSTER_MASTER_DISPLAY_df
+
 
 
 # ==================================================
@@ -955,7 +1014,7 @@ def compute_total_location_sensitivity_fast(
         cluster_coords = np.radians(
             np.array([[c["centroid_lat"], c["centroid_lon"]] for c in clusters], dtype=np.float32)
         )
-        cluster_risks = np.array([c["risk_score"] for c in clusters], dtype=np.float32)
+        cluster_risks = np.array([c["Risk_Score"] for c in clusters], dtype=np.float32)
 
         # Build BallTree for cluster centroids (Haversine metric)
         tree = BallTree(cluster_coords, metric="haversine")
@@ -1303,8 +1362,8 @@ if not combo_df.empty:
     print(f".Combo alerts data saved to public.{COMBO_TABLE} ({len(combo_df)} rows)")
 
 else:
-    print(f"⚠️  No combo alerts detected, skipping {COMBO_TABLE} table creation")
-x
+    print(f"  No combo alerts detected, skipping {COMBO_TABLE} table creation")
+
 
 # ----------------------------------------------------------------------
 # 3. Save Transporter Risk Score to database
