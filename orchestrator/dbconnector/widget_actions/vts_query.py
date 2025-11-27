@@ -153,7 +153,8 @@ vts_query = {
                                         device_tamper_count,
                                         speed_violation_count,
                                         night_driving_count,
-                                        main_supply_removal_count
+                                        main_supply_removal_count,
+                                        continuous_driving_count
                                     FROM 
                                         vts_alert_history 
                                     WHERE invoice_number IS NOT NULL        
