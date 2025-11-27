@@ -3670,6 +3670,10 @@ Model DeviceInstallation{
             reason_for_cancel optional str
             status_decommissioning optional str
         }
+    Action=> upload_certificate {
+        sap_tt_no str
+        certificate optional str
+    }
 
     Config=> {
         access_key_mapping='sap_tt_no'
