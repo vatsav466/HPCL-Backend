@@ -1375,3 +1375,22 @@ async def critical_parameters_excel(resp, output_file, report_type="daily", filt
 
     wb.save(output_file)
     print(f"Excel saved to {output_file}")
+
+def get_interlock_name_and_instance_name_vts(interlock_name, instance_count):
+    # special cases: 11, 12, 13 always end with "th"
+    if 10 <= instance_count % 100 <= 13:
+        suffix = "th"
+    else:
+        last_digit = instance_count % 10
+        if last_digit == 1:
+            suffix = "st"
+        elif last_digit == 2:
+            suffix = "nd"
+        elif last_digit == 3:
+            suffix = "rd"
+        else:
+            suffix = "th"
+    
+    interlock_name = f"{interlock_name.split()[0]} {interlock_name.split()[1]} {instance_count}{suffix}Time"
+    instance_name = f"Instance - {instance_count}"
+    return interlock_name, instance_name
