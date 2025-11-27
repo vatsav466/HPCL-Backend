@@ -7256,6 +7256,75 @@
                     "name": "upload_notice"
                 }
             ]
+        },
+        {
+            "name": "deviceinstallation",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceInstallation",
+            "attributes": {},
+            "uris": [
+                "/api/deviceinstallation/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "update_device_installation"
+                }
+            ]
+        },
+        {
+            "name": "deviceinstallation_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceInstallation_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/deviceinstallation/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "deviceinstallation_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceInstallation_admin",
+            "attributes": {},
+            "uris": [
+                "/api/deviceinstallation/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "update_device_installation"
+                }
+            ]
         }
     ],
     "policies": [
@@ -7985,6 +8054,10 @@
         {
             "name": "upload_notice",
             "displayName": "upload_notice"
+        },
+        {
+            "name": "update_device_installation",
+            "displayName": "update_device_installation"
         }
     ]
 }
