@@ -21,6 +21,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse, FileResponse
 from openpyxl import load_workbook, Workbook  
 from openpyxl.utils import get_column_letter
+from hpcl_ceg_model import DeviceInstallation
 
 
 async def generate_cross_filter(cross_filters):
@@ -3371,3 +3372,131 @@ class VTSAnalyticsActions:
             print("Exception in risk_score:", str(e))
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": [], "total_records": 0}
+
+    @staticmethod
+    async def adding_device(filters, cross_filters, drill_state, payload):
+            try:
+                sap_tt_val = payload.get("sap_tt_no")
+                print(sap_tt_val)
+
+                if sap_tt_val:
+                    safe_val = str(sap_tt_val).replace("'", "''")
+                    query = f"""
+                        SELECT  truck_no, location_name, transporter_code, transporter_name, bu
+                        FROM vts_truck_master
+                        WHERE truck_no = '{safe_val}'
+                        LIMIT 1
+                    """
+                    print("Query", query)
+                    df = await VTSAnalyticsActions.execute_query(query)
+
+                    if df.empty:
+                        return {"status": False, "message": f"No data found  SAP TT No. {sap_tt_val}", "data": []}
+    
+
+                # transporter_code 
+                if "transporter_code" in df.columns and "transporter_name" in df.columns:
+                    df["Transporter"] = (
+                            df["transporter_code"].astype(str).replace(["nan", "None", ""], "None")  + " : " +
+                            df["transporter_name"].astype(str).replace(["nan", "None", ""], "None")
+                        )
+                else:
+                    df["Transporter"] = ""
+
+                df = df.rename(columns={"truck_no": "SAP TT No.","bu": "Select Business","location_name": "Location"})
+
+                df.drop(columns=["transporter_code", "transporter_name"], inplace=True, errors="ignore")
+                df = df.replace([np.nan, np.inf, -np.inf], None)
+                print(df)
+
+                # return matched single row
+                return {
+                    "status": True,"message": f"Data found for SAP TT No. {sap_tt_val}","data": df.to_dict(orient="records")}
+
+            except Exception as e:
+                print("Exception in adding_device:", str(e))
+                print("traceback:", traceback.format_exc())
+                return {"status": False, "message": str(e), "data": []}
+    
+    @staticmethod
+    async def device_commissioning_table(filters, cross_filters, drill_state, payload):
+        try:
+            query = """select * from device_installation"""
+
+            if not query:
+                return {"status": False, "message": "Query not found", "data": []}
+
+            # Execute VTS history query
+            df = await VTSAnalyticsActions.execute_query(query)
+            # print(df)
+
+            return{"status" :True , "message":"success","data":df.to_dict(orient="records")}
+        except Exception as e:
+            return {"status": False, "message": str(e), "data": {}}
+
+    @staticmethod
+    async def action_device_vts(filters, cross_filters, drill_state, payload):
+        """
+
+        If only sap_tt_no given → return row from DB (no update)
+        If sap_tt_no + action/remarks given → update that row and return updated data
+
+        """
+        try:
+            sap_tt_no = payload.get("sap_tt_no")
+            
+            params = urdhva_base.queryparams.QueryParams()
+            params.q = f"sap_tt_no='{sap_tt_no}'"
+            print(params.q)
+            params.limit = 1
+            params.fields = []   # all fields
+            
+
+            existing = await DeviceInstallation.get_all(params, resp_type="plain") 
+            # in list the data_will be {'data': [{'tt_chassis_no': 'CHS1234567890',....},'count':1,'ss':1]
+            rows = existing.get("data")
+            if not rows:
+                return {"status": False,"message": f"No record found for SAP TT No {sap_tt_no}","data": []}
+
+            row = rows[0] 
+
+            action = payload.get("action")
+            remarks = payload.get("remarks")
+            reason_for_cancel = payload.get("reason_for_cancel") # remarks_2
+            if (not action) and (remarks is None or remarks == "") and (not reason_for_cancel ):
+                return {"status": True,"message": f"Data found for SAP TT No {sap_tt_no}","data": [row]}
+        
+            # 3) Get integer id from row (primary key) for update
+            device_id = row.get("id")
+
+            action = (action or "")
+            print("status",action)
+            status = "Approved" if action == "Accepted" else "Rejected"
+            print("Approved")
+            remarks = (remarks or "").strip()
+            reason_for_cancel = (reason_for_cancel or "").strip()
+            
+            
+            if reason_for_cancel:
+                status_decommissioning = "Request For Approval"
+                
+            # update dict from existing row
+            data_dict = dict(row)     
+            data_dict.pop("id", None)  
+            data_dict["status"] = status
+            data_dict["remarks"] = remarks
+            
+            data_dict["reason_for_cancel"] = reason_for_cancel
+            data_dict["status_decommissioning"]=status_decommissioning
+
+            await DeviceInstallation(id=device_id, **data_dict).modify()
+            updated = await DeviceInstallation.get_all(params, resp_type="plain")
+            updated_rows = updated.get("data")
+
+            return {
+                "status": True,"message": f"Status updated to '{status}' for SAP TT No {sap_tt_no}","data": updated_rows}
+
+        except Exception as e:
+            print("Exception in action_device_vtss:", str(e))
+            print("traceback:", traceback.format_exc())
+            return {"status": False,"message": str(e),"data": [] }

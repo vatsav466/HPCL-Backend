@@ -1115,6 +1115,7 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     rca_reason: typing.Optional[str] = pydantic.Field("", **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
     employee_id: typing.Optional[str] = pydantic.Field("", **{})
+    employee_id: typing.Optional[str] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     doc_link: typing.Optional[str] = pydantic.Field("", **{})
     atr_uploaded: typing.Optional[bool] = pydantic.Field(False, )
@@ -10228,6 +10229,114 @@ class Noticesvts_Download_NoticeParams(pydantic.BaseModel):
 
 class Noticesvts_Upload_NoticeParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class DeviceInstallationSchema(UrdhvaPostgresBase):
+    __tablename__ = 'device_installation'
+    
+    sap_tt_no: Mapped[str] = mapped_column("sap_tt_no", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    tt_chassis_no: Mapped[typing.Optional[str]] = mapped_column("tt_chassis_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tt_engine_no: Mapped[typing.Optional[str]] = mapped_column("tt_engine_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    select_business: Mapped[typing.Optional[str]] = mapped_column("select_business", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location: Mapped[typing.Optional[str]] = mapped_column("location", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    transporter: Mapped[typing.Optional[str]] = mapped_column("transporter", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device: Mapped[typing.Optional[str]] = mapped_column("device", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    vehicle_installed_by: Mapped[typing.Optional[str]] = mapped_column("vehicle_installed_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    vehicle_installation_date: Mapped[typing.Optional[str]] = mapped_column("vehicle_installation_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_installation_approved_by: Mapped[typing.Optional[str]] = mapped_column("device_installation_approved_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    contract_valid_upto: Mapped[typing.Optional[str]] = mapped_column("contract_valid_upto", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    certificate: Mapped[typing.Optional[str]] = mapped_column("certificate", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    reason_for_cancel: Mapped[typing.Optional[str]] = mapped_column("reason_for_cancel", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    status_decommissioning: Mapped[typing.Optional[str]] = mapped_column("status_decommissioning", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class DeviceInstallationCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'device_installation'
+    
+    sap_tt_no: str
+    tt_chassis_no: typing.Optional[str] = pydantic.Field("", **{})
+    tt_engine_no: typing.Optional[str] = pydantic.Field("", **{})
+    select_business: typing.Optional[str] = pydantic.Field("", **{})
+    location: typing.Optional[str] = pydantic.Field("", **{})
+    transporter: typing.Optional[str] = pydantic.Field("", **{})
+    device: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_installed_by: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_installation_date: typing.Optional[str] = pydantic.Field("", **{})
+    device_installation_approved_by: typing.Optional[str] = pydantic.Field("", **{})
+    contract_valid_upto: typing.Optional[str] = pydantic.Field("", **{})
+    certificate: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    reason_for_cancel: typing.Optional[str] = pydantic.Field("", **{})
+    status_decommissioning: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = DeviceInstallationSchema
+        upsert_keys = []
+        access_key_mapping = ['sap_tt_no']
+
+
+class DeviceInstallation(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'device_installation'
+    
+    sap_tt_no: typing.Optional[str] | None = None
+    tt_chassis_no: typing.Optional[str] = pydantic.Field("", **{})
+    tt_engine_no: typing.Optional[str] = pydantic.Field("", **{})
+    select_business: typing.Optional[str] = pydantic.Field("", **{})
+    location: typing.Optional[str] = pydantic.Field("", **{})
+    transporter: typing.Optional[str] = pydantic.Field("", **{})
+    device: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_installed_by: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_installation_date: typing.Optional[str] = pydantic.Field("", **{})
+    device_installation_approved_by: typing.Optional[str] = pydantic.Field("", **{})
+    contract_valid_upto: typing.Optional[str] = pydantic.Field("", **{})
+    certificate: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    reason_for_cancel: typing.Optional[str] = pydantic.Field("", **{})
+    status_decommissioning: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = DeviceInstallationSchema
+        upsert_keys = []
+        access_key_mapping = ['sap_tt_no']
+
+
+class DeviceInstallationGetResp(pydantic.BaseModel):
+    data: typing.List[DeviceInstallation]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Deviceinstallation_Update_Device_InstallationParams(pydantic.BaseModel):
+    sap_tt_no: str
+    tt_chassis_no: typing.Optional[str] = pydantic.Field("", **{})
+    tt_engine_no: typing.Optional[str] = pydantic.Field("", **{})
+    select_business: typing.Optional[str] = pydantic.Field("", **{})
+    location: typing.Optional[str] = pydantic.Field("", **{})
+    transporter: typing.Optional[str] = pydantic.Field("", **{})
+    device: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_installed_by: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_installation_date: typing.Optional[str] = pydantic.Field("", **{})
+    device_installation_approved_by: typing.Optional[str] = pydantic.Field("", **{})
+    contract_valid_upto: typing.Optional[str] = pydantic.Field("", **{})
+    certificate: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    reason_for_cancel: typing.Optional[str] = pydantic.Field("", **{})
+    status_decommissioning: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

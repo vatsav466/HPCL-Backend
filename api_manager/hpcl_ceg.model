@@ -3633,3 +3633,46 @@ Model NoticesVTS {
         crud_operations='read'
     }
 }
+
+Model DeviceInstallation{
+    sap_tt_no  str  
+    tt_chassis_no optional str  
+    tt_engine_no optional str  
+    select_business optional str  
+    location optional str  
+    transporter optional str  
+    device optional str  
+    vehicle_installed_by optional str  
+    vehicle_installation_date optional str  
+    device_installation_approved_by optional str  
+    contract_valid_upto optional str  
+    certificate optional str  
+    status optional str
+    remarks optional str
+    reason_for_cancel optional str
+    status_decommissioning optional str
+
+    Action=> update_device_installation {
+            sap_tt_no  str  
+            tt_chassis_no optional str  
+            tt_engine_no optional str  
+            select_business optional str  
+            location optional str  
+            transporter optional str  
+            device optional str  
+            vehicle_installed_by optional str  
+            vehicle_installation_date optional str  
+            device_installation_approved_by optional str  
+            contract_valid_upto optional str  
+            certificate optional str  
+            status optional  str
+            remarks optional  str
+            reason_for_cancel optional str
+            status_decommissioning optional str
+        }
+
+    Config=> {
+        access_key_mapping='sap_tt_no'
+    }
+}
+
