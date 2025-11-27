@@ -75,7 +75,17 @@ class VTSAlertManager(alert_factory.AlertFactory):
                 "processed_time": processed_time.isoformat()
             }
         ]
-
+        query = (f"""select count(*) as "count" from alerts """
+                 f"where bu = '{alert_data['location_type']}' and "
+                 f"alert_section = 'VTS' and "
+                 f"vehicle_number = '{alert_data['tl_number']}'")
+        resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+        resp = resp.get("data", [])
+        instance_count=0
+        if resp:
+            resp = resp[0]
+            instance_count = resp.get("count", 0)
+        interlock_name, instance = helpers.get_interlock_name_and_instance_name_vts(interlock_details.get("interlock_name"),instance_count+1)
         vts_alert_data.update(interlock_details)
         vts_alert_data['alert_section'] = 'VTS'
         vts_alert_data['alert_history'] = alert_history
@@ -85,7 +95,8 @@ class VTSAlertManager(alert_factory.AlertFactory):
         vts_alert_data['transporter_name'] = ''
         vts_alert_data['transporter_code'] = alert_data['vendor_id']
         vts_alert_data['device_id'] = instance_data['instance']
-        vts_alert_data['device_name'] = instance_data['instance']
+        vts_alert_data['device_name'] = instance
+        vts_alert_data['equipment_name'] = interlock_name
         vts_alert_data['vehicle_blocked_start_date'] = (
                 urdhva_base.utilities.get_present_time() +
                 datetime.timedelta(days=1)

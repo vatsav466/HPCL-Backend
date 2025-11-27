@@ -949,8 +949,8 @@ async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_
         query = (f"""select count(*) as "count" from alerts """
                  f"where bu = '{bu}' and "
                  f"alert_section = 'VTS' and "
-                 f"vehicle_number = '{vehicle_number}' and "
-                 f"sap_id = '{sap_id}'")
+                 f"vehicle_number = '{vehicle_number}'")
+        #           f"sap_id = '{sap_id}'")
         # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
         # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         # function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
