@@ -800,6 +800,18 @@ async def sync_user_roles():
                             },
                             {
                             "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
                             }
                         ]
                     },
@@ -1351,6 +1363,18 @@ async def sync_user_roles():
                             },
                             {
                             "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
                             }
                         ]
                     },
