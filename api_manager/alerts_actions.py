@@ -426,7 +426,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
     print("-"*20)
     print("payload :", payload)
     print("-"*20)
-    # await vts_analysis.post_blocked_tt_ims(payload)
+    await vts_analysis.post_blocked_tt_ims(payload)
 
     truck_details = {
         "bu": data.bu,
@@ -482,7 +482,7 @@ async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
         print("-"*20)
         print("payload :", payload)
         print("-"*20)
-        # await vts_analysis.post_blocked_tt_ims(payload)
+        await vts_analysis.post_blocked_tt_ims(payload)
 
         await VtsManualBlocked(**{
             "id": int(data.unblock_id),
