@@ -135,6 +135,7 @@ Enum IndentStatus str {
     TempClosed='TempClosed'
     ProductLowLevel='ProductLowLevel'
     OfflineOrFalseAlarm='OfflineOrFalseAlarm'
+    NotAvailable='NotAvailable'
 }
 
 Model RoleMapper internal {

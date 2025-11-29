@@ -448,7 +448,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     condition_2 = ' AND '.join(basic_condtion + ["dry_out_in_days = '2'"] + where_clause) if dry_out_in_days == '2' else ' AND '.join(basic_condtion + ["dry_out_in_days = '2'"])
     condition_3 = ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"] + where_clause) if dry_out_in_days == '3' else ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"])
 
-    condition = "interlock_name = 'Dry Out Each Indent Wise MainFlow' AND indent_status NOT IN ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')"
+    condition = "interlock_name = 'Dry Out Each Indent Wise MainFlow' AND indent_status NOT IN ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')"
     ext_cond = await hpcl_ceg_model.Alerts.get_clause_conditions(extra_key_mapping={"sap_id": "terminal_plant_id"}, default_mapping={"bu": "RO"})
     if ext_cond:
         condition += " AND " + " AND ".join(ext_cond)
@@ -594,7 +594,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     conditions = ' AND '.join(where_clause)
 
     stats_query = "select distinct sap_id, min(progress_rate) as present_stage " \
-                  f"from alerts where {conditions} and indent_status not in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm') " \
+                  f"from alerts where {conditions} and indent_status not in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable') " \
                   f"group by sap_id"
     stats_resp = await hpcl_ceg_model.Alerts.get_aggr_data(stats_query, limit=10000)
     where_clause_conditions = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
@@ -858,11 +858,11 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     conditions = ' AND '.join(where_clause)
     query = "select distinct on (sap_id, indent_no, product_code) location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
-            f"from alerts where indent_status not in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm') and {conditions}"
+            f"from alerts where indent_status not in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable') and {conditions}"
     if is_delivered:
         query = "select distinct on (sap_id, indent_no, product_code) location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
                 "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
-                f"from alerts where indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm') and {conditions} and DATE(updated_at) = '{_date}' and jsonb_array_length(alert_history::jsonb) > 2"
+                f"from alerts where indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable') and {conditions} and DATE(updated_at) = '{_date}' and jsonb_array_length(alert_history::jsonb) > 2"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query
