@@ -7582,7 +7582,7 @@ class GlobalAnalytics:
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
-        where_clauses = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')", daterange]
+        where_clauses = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')", daterange]
         if _filters:
             where_clauses.extend(_filters)
 
@@ -7661,7 +7661,7 @@ class GlobalAnalytics:
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
-        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')", daterange, "mark_as_false = 'true'"]
+        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')", daterange, "mark_as_false = 'true'"]
         if _filters:
             where_clauses.extend(_filters)
 
@@ -7747,7 +7747,7 @@ class GlobalAnalytics:
                         DATE(indent_raised_date) AS dryout_day,
                         TO_CHAR(created_at, 'YYYY-Mon') AS month
                       FROM alerts
-                      WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' and indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')
+                      WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' and indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')
                         AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months'
                     )
                     

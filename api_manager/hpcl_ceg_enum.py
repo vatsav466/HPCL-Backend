@@ -190,6 +190,7 @@ class IndentStatus(str, enum.Enum):
     TempClosed = 'TempClosed'
     ProductLowLevel = 'ProductLowLevel'
     OfflineOrFalseAlarm = 'OfflineOrFalseAlarm'
+    NotAvailable = 'NotAvailable'
 
 
 
