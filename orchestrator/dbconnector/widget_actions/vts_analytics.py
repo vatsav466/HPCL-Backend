@@ -1631,13 +1631,15 @@ class VTSAnalyticsActions:
                     # 4) Convert TRUE/FALSE to lowercase
                     df2["swipeoutl1"] = df2["swipeoutl1"].fillna("").astype(str).str.lower()
                     df2["swipeoutl2"] = df2["swipeoutl2"].fillna("").astype(str).str.lower()
+                    # swipe_out_l1 = df2[df2["swipeoutl1"] == "false"]
+                    # swipe_out_l2 = df2[df2["swipeoutl2"] == "false"]
 
-                    # 5) UI Logic (exact)
-                    swipe_out_l1 = df2[df2["swipeoutl1"] == "false"]
-                    swipe_out_l2 = df2[df2["swipeoutl2"] == "false"]
+                    final_df_pending = df2[
+                        (df2["swipeoutl1"] == "false") |
+                        (df2["swipeoutl2"] == "false")
+                    ].copy()
 
-                    # 6) Combine
-                    final_df_pending = pd.concat([swipe_out_l1, swipe_out_l2]).reset_index(drop=True)
+                    # final_df_pending = pd.concat([swipe_out_l1, swipe_out_l2]).reset_index(drop=True)
                     final_df_pending["violation_type"] = "open EM Lock"
 
                     print("Final EMLOCK rows:", len(final_df_pending))
