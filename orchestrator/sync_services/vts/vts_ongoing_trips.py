@@ -22,13 +22,16 @@ def get_db_connection():
     """
     creds = credential_loader.get_credentials('VTS_TRACK_DB')
     connection = pyodbc.connect(
-            'DRIVER={ODBC Driver 18 for SQL Server};'
-            f'Server={creds['host']},{creds['port']};'
-            f'Database={creds['database']};'
-            f'UID={creds['user']};'
-            f'PWD={creds['password']};'
-            'TrustServerCertificate=yes;MARS_Connection=yes;',
+        (
+            "DRIVER={ODBC Driver 18 for SQL Server};"
+            f"Server={creds['host']},{creds['port']};"
+            f"Database={creds['database']};"
+            f"UID={creds['user']};"
+            f"PWD={creds['password']};"
+            "TrustServerCertificate=yes;"
+            "MARS_Connection=yes;"
         )
+    )
     return connection
 
 
@@ -185,7 +188,12 @@ def get_ongoing_trip_data(table_name, params, max_date=None, master_data=pl.Data
             master_data.select(["bu", "sap_id", "name", "zone", "region"]), on="sap_id", how="left"
         )
     print("After Location Master Mappings :",len(data))
-    data = data.rename({"name": "location_name"})
+
+    # data = data.rename({"name": "location_name"})
+    if "name" in data.columns and "location_name" not in data.columns:
+        data = data.rename({"name": "location_name"})
+    elif "name" in data.columns and "location_name" in data.columns:
+        data = data.drop("name")
 
     print(data)
     print(data.columns)
