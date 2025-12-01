@@ -1613,6 +1613,9 @@
                     "name": "get_dried_out_ro"
                 },
                 {
+                    "name": "get_dried_out_ro_by_actions"
+                },
+                {
                     "name": "get_indent_raised_direct_sales"
                 },
                 {
@@ -1701,6 +1704,9 @@
                 },
                 {
                     "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_dried_out_ro_by_actions"
                 },
                 {
                     "name": "get_indent_raised_direct_sales"
@@ -1806,6 +1812,9 @@
                 },
                 {
                     "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_dried_out_ro_by_actions"
                 },
                 {
                     "name": "get_indent_raised_direct_sales"
@@ -7676,6 +7685,10 @@
         {
             "name": "get_dried_out_ro",
             "displayName": "get_dried_out_ro"
+        },
+        {
+            "name": "get_dried_out_ro_by_actions",
+            "displayName": "get_dried_out_ro_by_actions"
         },
         {
             "name": "get_indent_raised_direct_sales",

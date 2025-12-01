@@ -1048,3 +1048,173 @@ async def indentdryout_get_is_invoice_created_direct_sales(data: Indentdryout_Ge
 @router.post('/get_r3_swiped_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_r3_swiped_direct_sales(data: Indentdryout_Get_R3_Swiped_Direct_SalesParams):
     return await indentwise_direct_sales.IndentDryOutDirectSales().get_r3_swiped_direct_sales()
+
+
+# Action get_dried_out_ro_by_actions
+@router.post('/get_dried_out_ro_by_actions', tags=['IndentDryOut'])
+async def indentdryout_get_dried_out_ro_by_actions(data: Indentdryout_Get_Dried_Out_Ro_By_ActionsParams):
+    where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'", "mark_as_false = true"]
+    where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
+        extra_key_mapping={"sap_id": "terminal_plant_id"}, default_mapping={"bu": "RO"}))
+    dry_out_in_days_query = '1'
+    tt_count_filter = {}
+    for record in data.filters:
+        if record.key == "progress_rate":
+            if record.value:
+                where_clause.append(f"progress_rate={int(record.value[0])}")
+        else:
+            if record.value:
+                if record.key == 'dry_out_in_days':
+                    dry_out_in_days_query = record.value[0]
+                if record.key == "plant":
+                    record.key = "terminal_plant_id"
+                    tt_count_filter.update({record.key: record.value})
+                if record.key == "zone":
+                    tt_count_filter.update({record.key: record.value})
+                if len(record.value) == 1:
+                    where_clause.append(f"{record.key}='{record.value[0]}'")
+                else:
+                    where_clause.append(f"{record.key} in {tuple(record.value)}")
+    conditions = ' AND '.join(where_clause)
+    stats = []
+    if data.bu_type == 'ro' and data.actions == 'dry_out_aging':
+        dry_out_aging = await dry_out_analysis.get_dryout_aging(conditions)
+        less_than_2_days = dry_out_aging.get("less_than_2_days", 0)
+        from_3_to_7_days = dry_out_aging.get("from_3_to_7_days", 0)
+        from_8_to_15_days = dry_out_aging.get("from_8_to_15_days", 0)
+        more_than_15_days = dry_out_aging.get("more_than_15_days", 0)
+        indent_not_raised_count = less_than_2_days + from_3_to_7_days + from_8_to_15_days + more_than_15_days
+        count_50_klm = await dry_out_analysis.get_ro_count_less_50(conditions)
+        closed_outlet = await dry_out_analysis.get_closed_outlet(conditions=conditions,
+                                                                 dry_out_in_days=dry_out_in_days_query)
+        nozzle_sales = await dry_out_analysis.get_nozzle_sales(conditions=conditions,
+                                                               dry_out_in_days=dry_out_in_days_query)
+        stats = [
+            {
+                "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 24,
+                "condition": "=", "group": "dryout_analysis"
+            }, {
+                "section": "<2 Days", "value": less_than_2_days, "serial": 25,
+                "condition": "=", "group": "dryout_analysis"
+            }, {
+                "section": "3 to 7 Days", "value": from_3_to_7_days, "serial": 26,
+                "condition": "=", "group": "dryout_analysis"
+            }, {
+                "section": "8 to 15 Days", "value": from_8_to_15_days, "serial": 27,
+                "condition": "=", "group": "dryout_analysis"
+            }, {
+                "section": "> 15 Days", "value": more_than_15_days, "serial": 28,
+                "condition": "=", "group": "dryout_analysis"
+            }, {
+                "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 20,
+                "condition": "=", "group": "indent"
+            }, {
+                "section": "Low Volume(<50KLPM)", "value": count_50_klm, "serial": 21,
+                "condition": "=", "group": "indent"
+            }, {
+                "section": "Volume(>50KLPM)", "value": indent_not_raised_count - count_50_klm, "serial": 22,
+                "condition": "=", "group": "indent"
+            }, {
+                "section": "Closed Outlets", "value": closed_outlet, "serial": 23,
+                "condition": "=", "group": "indent"
+            }, {
+                "section": "Nozzle Sales Not Started", "value": nozzle_sales, "serial": 24,
+                "condition": "=", "group": "indent"
+            }
+        ]
+
+    if data.bu_type == 'ro' and data.actions == 'tar_analysis':
+        tar_analysis = await dry_out_analysis.get_tar_analysis(conditions)
+        _0_to_25_rs_lakhs = tar_analysis.get("less_1_cr", 0)
+        _25_to_50_rs_lakhs = tar_analysis.get("less_2_cr", 0)
+        _50_to_75_rs_lakhs = tar_analysis.get("less_5_cr", 0)
+        more_than_75_rs_lakhs = tar_analysis.get("greater_5_cr", 0)
+        indent_not_raised_count = _0_to_25_rs_lakhs + _25_to_50_rs_lakhs + _50_to_75_rs_lakhs + more_than_75_rs_lakhs
+        stats = [
+            {
+                "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 29,
+                "condition": "=", "group": "tar_analysis"
+            }, {
+                "section": "0 to 25 Rs Lakhs", "value": _0_to_25_rs_lakhs, "serial": 30,
+                "condition": "=", "group": "tar_analysis"
+            }, {
+                "section": "25 to 50 Rs Lakhs", "value": _25_to_50_rs_lakhs, "serial": 31,
+                "condition": "=", "group": "tar_analysis"
+            }, {
+                "section": "50 to 75 Rs Lakhs", "value": _50_to_75_rs_lakhs, "serial": 32,
+                "condition": "=", "group": "tar_analysis"
+            }, {
+                "section": "> 75 Rs Lakhs", "value": more_than_75_rs_lakhs, "serial": 33,
+                "condition": "=", "group": "tar_analysis"
+            }
+        ]
+
+    if data.bu_type == 'sod' and data.actions == 'dealer_truck_count':
+        dealer_truck_count = await dry_out_analysis.get_tt_counts(tt_count_filter)
+        stats = [
+            {
+                "section": "Dealer TT", "value": dealer_truck_count.get("dealer_tt", 0), "serial": 34,
+                "condition": "=", "group": "tt_available"
+            }, {
+                "section": "Transport TT", "value": dealer_truck_count.get("transport_tt", 0), "serial": 35,
+                "condition": "=", "group": "tt_available"
+            }
+        ]
+
+    ist = pytz.timezone('Asia/Kolkata')
+    carry_fwd_indent_date = datetime.datetime.now(ist).strftime("%H")
+    if int(carry_fwd_indent_date) > 0 and data.bu_type == 'sod' and data.actions == 'carry_fwd_indent':
+        carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
+        carry_fwd_data = pd.DataFrame(carry_fwd_data)
+
+        other_cwf_count = (
+            len(carry_fwd_data) - len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != '']) if len(
+                carry_fwd_data) else 0
+                                     - len(carry_fwd_data[carry_fwd_data['category'].fillna("") != ''])) if len(
+            carry_fwd_data) else 0
+
+        stats = [
+            {
+                "section": "Overall CarryFwd Indent",
+                "value": len(carry_fwd_data),
+                "serial": 15, "condition": "=", "group": "carry_fwd_indent"
+            }, {
+                "section": "DryOut CarryFwd Indent",
+                "value": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != ''])
+                if len(carry_fwd_data) else 0,
+                "serial": 16, "condition": "=", "group": "carry_fwd_indent"
+            }, {
+                "section": "CATA Carry Fwd Indent",
+                "value": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']) if len(carry_fwd_data) else 0,
+                "serial": 17, "condition": "=", "group": "carry_fwd_indent"
+            }, {
+                "section": "Others CarryFwd Indent",
+                "value": other_cwf_count,
+                "serial": 18, "condition": "=", "group": "carry_fwd_indent"
+            }
+        ]
+
+    if int(carry_fwd_indent_date) > 0 and data.bu_type == 'sod' and data.actions == 'pending_carry_fwd_indent':
+        pending_carry_fwd_data = await dry_out_analysis.get_previous_day_carry_fwd_indent()
+        pending_cwf_other_count = (
+                    pending_carry_fwd_data.get("cf_indents", 0) - pending_carry_fwd_data.get("dryout_count", 0)
+                    - pending_carry_fwd_data.get("category_a_count", 0))
+        stats = [{
+            "section": "Pending Overall CarryFwd Indent",
+            "value": pending_carry_fwd_data.get("cf_indents", 0),
+            "serial": 15, "condition": "=", "group": "pending_carry_fwd_indent"
+        }, {
+            "section": "Pending DryOut CarryFwd Indent",
+            "value": pending_carry_fwd_data.get("dryout_count", 0),
+            "serial": 16, "condition": "=", "group": "pending_carry_fwd_indent"
+        }, {
+            "section": "Pending CATA CarryFwd Indent",
+            "value": pending_carry_fwd_data.get("category_a_count", 0),
+            "serial": 17, "condition": "=", "group": "pending_carry_fwd_indent"
+        }, {
+            "section": "Pending Others CarryFwd Indent",
+            "value": pending_cwf_other_count,
+            "serial": 18, "condition": "=", "group": "pending_carry_fwd_indent"
+        }]
+
+    return stats

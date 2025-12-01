@@ -2568,6 +2568,16 @@ class Indentdryout_Get_Dried_Out_RoParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Indentdryout_Get_Dried_Out_Ro_By_ActionsParams(pydantic.BaseModel):
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
+    actions: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Indentdryout_Get_Indent_Raised_Direct_SalesParams(pydantic.BaseModel):
     pass
 
