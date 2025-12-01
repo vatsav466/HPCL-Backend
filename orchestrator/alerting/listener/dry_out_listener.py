@@ -53,9 +53,14 @@ class DryoutCollector:
     async def get_dry_out_data(cls):
         redis_queue = urdhva_base.redispool.RedisQueue('dry_out_camunda_queue')
         # Query to fetch dry out locations, intraday dry-out and potential dry out location
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        charts_ins = Charts_Connection_Vault_RoutingParams(
+            connection_id=connection_mapping.connection_mapping.get("cris", "2"),
+            action='execute_query'
+        )
+        function = await charts_connection_vault_routing(charts_ins)
         schema = connection_mapping.schema_mapping.get("cris", "public")
         table = connection_mapping.table_mapping.get("dry_out", "")
         query = f'''select site_id, fcc_code, item_name,item_name product_grp, rosapcode, tank_no, status, tank_cnt
