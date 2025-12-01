@@ -765,7 +765,7 @@ async def create_vts_alerts(enriched_data):
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
                 function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
                 query = f"""SELECT COUNT(*) FROM ROUTE_DEVIATION WHERE TT_NUMBER = '{entry['tl_number']}'
-                            AND INVOICE_NO = '{entry['invoice_number']}' AND DURATION > 15
+                            AND INVOICE_NO = '{entry['invoice_number']}' AND DURATION > 15 AND TRIP_STATUS = 'LOADED'
                             """
                 route_deviation_resp = await function(query=query)
                 count_value = list(route_deviation_resp.values())[0][0]
