@@ -372,7 +372,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
     rpt = urdhva_base.context.context.get('rpt', {})
     if not rpt:
         return {"status": False, "message": "Session got expired, Please Re-Login"}
-    query = (f"""alert_status='Open' and alert_section='VTS' and bu='{data.bu}' and vehicle_number='{data.truck_number}' """)
+    query = (f"""vehicle_unblocked_date is null and alert_section='VTS' and bu='{data.bu}' and vehicle_number='{data.truck_number}' """)
     print("-"*10)
     print("query :", query)
     print("-"*10)    
@@ -414,19 +414,33 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
     end_date = start_date + relativedelta(days=data.blocking_days)
 
     transaction_number = str(int(time.time() * 1000))[-7:] + "1"
-    payload = [
-        {
-            "transactNo": transaction_number,
-            "truckRegNo": data.truck_number,
-            "blockingFlag": "Y",
-            "blockingFrom": start_date.strftime("%Y%m%d"),
-            "blockingTo": end_date.strftime("%Y%m%d")
+
+    if data.bu in ['TAS']:
+        payload = [
+            {
+                "transactNo": transaction_number,
+                "truckRegNo": data.truck_number,
+                "blockingFlag": "Y",
+                "blockingFrom": start_date.strftime("%Y%m%d"),
+                "blockingTo": end_date.strftime("%Y%m%d")
+            }
+        ]
+        print("-"*20)
+        print("payload :", payload)
+        print("-"*20)
+        await vts_analysis.post_blocked_tt_ims(payload)
+    
+    if data.bu in ['LPG']:
+        payload = {
+                    "Request":{
+                        "Request_ID": transaction_number,
+                        "Vehicle_ID": data.truck_number,
+                        "Status": "B",
+                        "User_ID": "NOVEX_SYSTEM",
+                        "IP_Address": urdhva_base.settings.server_ip
+                    }
         }
-    ]
-    print("-"*20)
-    print("payload :", payload)
-    print("-"*20)
-    await vts_analysis.post_blocked_tt_ims(payload)
+        await vts_analysis.post_lpg_tt(payload)
 
     truck_details = {
         "bu": data.bu,
@@ -470,19 +484,35 @@ async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
             alert_data = alert_data.__dict__
         _date = urdhva_base.utilities.get_present_time()
         
-        payload = [
-            {
-                "transactNo": alert_data["transaction_number"],
-                "truckRegNo": alert_data["truck_number"],
-                "blockingFlag": "N",
-                "blockingFrom": alert_data["blocking_from"],
-                "blockingTo": alert_data["blocking_to"]
+        if alert_data['bu'] in ['TAS']:
+            payload = [
+                {
+                    "transactNo": str(alert_data["transaction_number"]) + "0",
+                    "truckRegNo": alert_data["truck_number"],
+                    "blockingFlag": "N",
+                    "blockingFrom": alert_data["blocking_from"],
+                    "blockingTo": alert_data["blocking_to"]
+                }
+            ]
+            print("-"*20)
+            print("payload :", payload)
+            print("-"*20)
+            await vts_analysis.post_blocked_tt_ims(payload)
+        
+        if alert_data['bu'] in ['LPG']:
+            payload = {
+                    "Request":{
+                        "Request_ID": str(alert_data["transaction_number"]) + "0",
+                        "Vehicle_ID": alert_data["truck_number"],
+                        "Status": "U",
+                        "User_ID": "NOVEX_SYSTEM",
+                        "IP_Address": urdhva_base.settings.server_ip
+                    }
             }
-        ]
-        print("-"*20)
-        print("payload :", payload)
-        print("-"*20)
-        await vts_analysis.post_blocked_tt_ims(payload)
+            print("-"*20)
+            print("payload :", payload)
+            print("-"*20)
+            await vts_analysis.post_lpg_tt(payload)
 
         await VtsManualBlocked(**{
             "id": int(data.unblock_id),
