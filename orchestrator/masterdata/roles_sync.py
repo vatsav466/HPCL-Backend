@@ -135,6 +135,23 @@ async def sync_user_roles():
                         "title": "RO Video Analytics"
                     }
                 ]
+            },
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Terminal Automation"
+                    }
+                ]
             }
         ],
         "status": True
