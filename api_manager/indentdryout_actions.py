@@ -27,14 +27,24 @@ router = fastapi.APIRouter(prefix='/indentdryout')
 # Action sync_data_from_cris_to_ceg
 @router.post('/sync_data_from_cris_to_ceg', tags=['IndentDryOut'])
 async def indentdryout_sync_data_from_cris_to_ceg(data: Indentdryout_Sync_Data_From_Cris_To_CegParams):
-    Charts_Connection_Vault_RoutingParams.connection_id = data.source_connection
-    Charts_Connection_Vault_RoutingParams.action = 'get_data'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = data.source_connection
+    # Charts_Connection_Vault_RoutingParams.action = 'get_data'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=data.source_connection,
+        action='get_data'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     records = await function(schema_name=data.source_schema, table_name=data.source_table)
 
-    Charts_Connection_Vault_RoutingParams.connection_id = data.destination_connection
-    Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = data.destination_connection
+    # Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins_1 = Charts_Connection_Vault_RoutingParams(
+        connection_id=data.destination_connection,
+        action='upsert_data'
+    )
+    function = await charts_connection_vault_routing(charts_ins_1)
     return await function(
         schema_name=data.destination_schema,
         table_name=data.destination_table,
@@ -66,9 +76,14 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         return df
 
     redis_queue = urdhva_base.redispool.RedisQueue('dry_out_camunda_queue')
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+        action='execute_query'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     schema = connection_mapping.schema_mapping.get("cris", "public")
     table = connection_mapping.table_mapping.get("dry_out", "")
     query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "indent_status" NOT IN ('Raised', 'Completed') AND "status" IN ('0', '1', '2');'''
@@ -129,9 +144,14 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         await redis_queue.put(json.dumps(alert_data))
         # await create_alert(alert_data)
 
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        charts_ins_2 = Charts_Connection_Vault_RoutingParams(
+            connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+            action='execute_query'
+        )
+        function = await charts_connection_vault_routing(charts_ins_2)
         query = f"""UPDATE "HPCL_HOS".sch_inventory_forecast_dashboard SET "indent_status" = 'Raised' """ \
                 f"""WHERE "site_id" = '{_dry['site_id']}' """ \
                 f"""AND "fcc_code" = '{_dry['fcc_code']}' """ \
@@ -532,9 +552,14 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
         query = f'''SELECT COUNT(indent_status) as count FROM alerts WHERE {where_clause}'''
         print(f"Generated Query for {indent_key}:", query)
         # Execute the query
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        charts_ins = Charts_Connection_Vault_RoutingParams(
+            connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+            action='execute_query'
+        )
+        function = await charts_connection_vault_routing(charts_ins)
         resp = await function(query=query)
 
         print(f"Response for {indent_key} --> ", resp)
@@ -839,8 +864,12 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
     where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
         extra_key_mapping={"sap_id": "terminal_plant_id"}, default_mapping={"bu": "RO"}))
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+        action='execute_query'
+    )
     ist = pytz.timezone('Asia/Kolkata')
     _date = datetime.datetime.now(ist).strftime("%Y-%m-%d")
     is_delivered = False
@@ -863,7 +892,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
         query = "select distinct on (sap_id, indent_no, product_code) location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
                 "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
                 f"from alerts where indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable') and {conditions} and DATE(updated_at) = '{_date}' and jsonb_array_length(alert_history::jsonb) > 2"
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    function = await charts_connection_vault_routing(charts_ins)
     resp = await function(
         query=query
     )
@@ -886,8 +915,12 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
 @router.post('/get_distinct_ro_name', tags=['IndentDryOut'])
 async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_NameParams):
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+        action='execute_query'
+    )
     for record in data.filters:
         if record.key == "progress_rate":
             where_clause.append(f"progress_rate={int(record.value[0])}")
@@ -903,7 +936,7 @@ async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_N
     query = f'''select dealer_id, location_name, terminal_plant_id, terminal_plant_name
                 from public.alerts where {conditions}
                 group by dealer_id, location_name, terminal_plant_id, terminal_plant_name'''
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    function = await charts_connection_vault_routing(charts_ins)
     resp = await function(
         query=query
     )
