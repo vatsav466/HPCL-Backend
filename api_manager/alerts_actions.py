@@ -372,7 +372,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
     rpt = urdhva_base.context.context.get('rpt', {})
     if not rpt:
         return {"status": False, "message": "Session got expired, Please Re-Login"}
-    query = (f"""vehicle_unblocked_date is null and alert_section='VTS' and bu='{data.bu}' and vehicle_number='{data.truck_number}' """)
+    query = (f"""vehicle_unblocked_date is null and alert_section='VTS' and bu='{data.bu.value}' and vehicle_number='{data.truck_number}' """)
     print("-"*10)
     print("query :", query)
     print("-"*10)    
@@ -443,7 +443,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
         await vts_analysis.post_lpg_tt(payload)
 
     truck_details = {
-        "bu": data.bu,
+        "bu": data.bu.value,
         "blocked_by": rpt["username"],
         "blocked_date": start_date,
         "truck_number": data.truck_number,
