@@ -1161,6 +1161,12 @@ Model IndentDryOut {
         bu_type optional str
     }
 
+    Action=> get_dried_out_ro_by_actions {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+        actions str
+    }
+
     Action=> get_indent_raised_direct_sales {
 
     }
