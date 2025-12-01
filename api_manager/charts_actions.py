@@ -39,9 +39,14 @@ async def charts_get_tables(data: Charts_Get_TablesParams):
     Output:
         ["organization","credential_vault","billing_cost","cloud_accounts","recommendations","metrics"]
     '''
-    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
-    Charts_Connection_Vault_RoutingParams.action = 'table_name'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    # Charts_Connection_Vault_RoutingParams.action = 'table_name'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=data.connection_id,
+        action='table_name'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     return await function(schema_name=data.schema)
 
 
@@ -62,9 +67,14 @@ async def charts_get_columns(data: Charts_Get_ColumnsParams):
     Output:
         ["resource_type","cloud_account_id","cloud_account_name","tenant_id"]
     '''
-    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
-    Charts_Connection_Vault_RoutingParams.action = 'column_names'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    # Charts_Connection_Vault_RoutingParams.action = 'column_names'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=data.connection_id,
+        action='column_names'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     return await function(schema_name=data.schema, table_name=data.table)
 
 
@@ -78,9 +88,14 @@ async def get_databases(connection_id: str):
     Output:
         ["database1","database2","database3 "]
     """
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_id
-    Charts_Connection_Vault_RoutingParams.action = 'get_databases'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_id
+    # Charts_Connection_Vault_RoutingParams.action = 'get_databases'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_id,
+        action='get_databases'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     return await function()
 
 
@@ -102,9 +117,14 @@ async def charts_get_unique_values(data: Charts_Get_Unique_ValuesParams):
     Output:
         {"jobStatus":["Success","Failed","Running","RolledBack"]}
     '''
-    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
-    Charts_Connection_Vault_RoutingParams.action = 'get_distinct_values'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    # Charts_Connection_Vault_RoutingParams.action = 'get_distinct_values'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=data.connection_id,
+        action='get_distinct_values'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     return await function(schema_name=data.schema, table_name=data.table, column_name=data.column)
 
 
@@ -165,9 +185,14 @@ async def drill_down_data(data: Charts_Drill_Down_DataParams):
     _query = await charts_functions.drill_down_query(
         data.table_name, data.table_schema, data.filter_mapping, data.limit
     )  # TO DO need to get query from respective database
-    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=data.connection_id,
+        action='execute_query'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     resp = await function(query=_query)
     return {
         "status": True, "message": "success", "data": resp
@@ -225,9 +250,14 @@ async def charts_get_distinct_values(data: Charts_Get_Distinct_ValuesParams):
     Output:
         {"jobStatus":["Success","Failed","Running","RolledBack"]}
     """
-    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
-    Charts_Connection_Vault_RoutingParams.action = 'get_distinct_values'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    # Charts_Connection_Vault_RoutingParams.action = 'get_distinct_values'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=data.connection_id,
+        action='get_distinct_values'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     return await function(
         schema_name=data.schema, table_name=data.table, column_name=data.column,
         where_clause=[cond.dict() for cond in data.where_cond]
@@ -262,9 +292,14 @@ async def charts_get_product_values(data: Charts_Get_Distinct_ValuesParams):
                     "Industrial Greases", "Industrial Specialities", "Base Oil"],
             "GAS": ["CNG", "LNG", "Compressed Bio Gas (CBG)"]
         }
-    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
-    Charts_Connection_Vault_RoutingParams.action = 'get_product_values'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    # Charts_Connection_Vault_RoutingParams.action = 'get_product_values'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=data.connection_id,
+        action='get_product_values'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     res_data  = await function(
         schema_name=data.schema, table_name=data.table, column_name=data.column, where_clause=[cond.dict() for cond in data.where_cond]
     )
@@ -545,9 +580,14 @@ async def charts_get_schema(data: Charts_Get_SchemaParams):
 
     '''
 
-    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
-    Charts_Connection_Vault_RoutingParams.action = 'get_schema'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    # Charts_Connection_Vault_RoutingParams.action = 'get_schema'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=data.connection_id,
+        action='get_schema'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     return await function(schema_name=data.schema)
 
 
@@ -596,9 +636,14 @@ async def charts_previous_present_month_sales(data: Charts_Previous_Present_Mont
     time_grain = data.time_grain
     drill_state = ""
     sort_by = data.sort_by
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+        action='execute_query'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     present_month_sales = lpg_plant_queries.lpg_plant_query.get('previous_current_month_sales')
     product_mapper = {
         "MS": "2811000",
@@ -678,9 +723,14 @@ async def charts_previous_present_month_sales(data: Charts_Previous_Present_Mont
 @router.post('/sales_drop_down', tags=['Charts'])
 async def charts_sales_drop_down(data: Charts_Sales_Drop_DownParams):
     filters = data.filters
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+        action='execute_query'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     _query = ''' select distinct zone, region, sales_area ,
                     CASE 
                     WHEN "product_code" = '2811000' THEN 'MS'
@@ -724,9 +774,14 @@ async def charts_previous_present_month_sales_by_product(data: Charts_Previous_P
     time_grain = data.time_grain
     drill_state = ""
     sort_by = data.sort_by
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+        action='execute_query'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     present_month_sales = lpg_plant_queries.lpg_plant_query.get('i_previous_current_month_sales_by_product')
     product_mapper = {
             "MS": "2811000",
@@ -810,9 +865,14 @@ async def charts_previous_present_month_amount_litres(data: Charts_Previous_Pres
     limit = data.limit
     time_grain = data.time_grain
     sort_by = data.sort_by
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+        action='execute_query'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     present_month_sales = lpg_plant_queries.lpg_plant_query.get('i_previous_current_month_amount_litres')
     product_mapper = {
         "MS": "2811000",
