@@ -35,12 +35,12 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
         
         
         user_response = await UsersCreate(**{
-            "username": data.get('username'),
+            "username": data.get('username',''),
             "email": data.get("email",""),
             "first_name": data.get('first_name',''),
             "last_name": data.get('last_name'),
-            "password": data.get('password'),
-            "employee_id": data.get('username'),
+            "password": data.get('password',''),
+            "employee_id": data.get('username',''),
             "bu": data.get('bu',[]),
             "sap_id": data.get('sap_id',[]),
             "system_role": data.get('system_role',[]),
