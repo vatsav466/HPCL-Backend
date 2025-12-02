@@ -51,7 +51,8 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
             "sales_area": data.get('sales_area',[]),
             "manual_user": True,
             "status": data.get('status'),
-            "is_ad_user": data.get('is_ad_user')
+            "is_ad_user": data.get('is_ad_user'),
+            "contact_number": data.get('contact_number','')
         }).create()
         if user_response:
             if rpt:
