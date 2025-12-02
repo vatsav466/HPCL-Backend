@@ -3689,6 +3689,7 @@ Model DeviceInstallation{
 
 Model CreateUser internal {
     username optional str
+    email optional str
     password optional str
     first_name optional str
     last_name optional str
@@ -3698,6 +3699,7 @@ Model CreateUser internal {
     region optional list str
     state optional list str
     sales_area optional list str
+    system_role optional list str
     novex_role optional list str
     bu optional list str
     contact_number optional str

@@ -10364,6 +10364,7 @@ class Deviceinstallation_Upload_CertificateParams(pydantic.BaseModel):
 
 class CreateUserCreate(pydantic.BaseModel):
     username: typing.Optional[str] = pydantic.Field("", **{})
+    email: typing.Optional[str] = pydantic.Field("", **{})
     password: typing.Optional[str] = pydantic.Field("", **{})
     first_name: typing.Optional[str] = pydantic.Field("", **{})
     last_name: typing.Optional[str] = pydantic.Field("", **{})
@@ -10373,6 +10374,7 @@ class CreateUserCreate(pydantic.BaseModel):
     region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     state: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    system_role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     novex_role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     bu: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     contact_number: typing.Optional[str] = pydantic.Field("", **{})
