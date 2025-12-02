@@ -3687,3 +3687,50 @@ Model DeviceInstallation{
     }
 }
 
+Model CreateUser internal {
+    username optional str
+    password optional str
+    first_name optional str
+    last_name optional str
+    employee_id optional str
+    sap_id optional list str
+    zone optional list str
+    region optional list str
+    state optional list str
+    sales_area optional list str
+    novex_role optional list str
+    bu optional list str
+    contact_number optional str
+    is_ad_user optional bool
+    status optional bool
+}
+
+Model UpdateUser internal {
+    username optional str
+    bu optional list str
+    sap_id optional list str
+    zone optional list str
+    region optional list str
+    state optional list str
+    sales_area optional list str
+    novex_role optional list str
+    contact_number optional str
+}
+
+Model UserMaster crud_disable {
+    Action=> create_user {
+        data CreateUser
+    }
+
+    Action=> update_user {
+        data UpdateUser
+    }
+}
+
+Model SystemAuditLog {
+    employee_id optional str
+    role optional list str
+    email optional str
+    section optional str
+    remarks optional str
+}

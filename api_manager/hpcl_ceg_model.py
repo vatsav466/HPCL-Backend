@@ -10360,3 +10360,99 @@ class Deviceinstallation_Upload_CertificateParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class CreateUserCreate(pydantic.BaseModel):
+    username: typing.Optional[str] = pydantic.Field("", **{})
+    password: typing.Optional[str] = pydantic.Field("", **{})
+    first_name: typing.Optional[str] = pydantic.Field("", **{})
+    last_name: typing.Optional[str] = pydantic.Field("", **{})
+    employee_id: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    state: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    novex_role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    bu: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    contact_number: typing.Optional[str] = pydantic.Field("", **{})
+    is_ad_user: typing.Optional[bool] = pydantic.Field(False, )
+    status: typing.Optional[bool] = pydantic.Field(False, )
+
+
+class UpdateUserCreate(pydantic.BaseModel):
+    username: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sap_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    state: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    novex_role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    contact_number: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class Usermaster_Create_UserParams(pydantic.BaseModel):
+    data: CreateUserCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Usermaster_Update_UserParams(pydantic.BaseModel):
+    data: UpdateUserCreate
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class SystemAuditLogSchema(UrdhvaPostgresBase):
+    __tablename__ = 'system_audit_log'
+    
+    employee_id: Mapped[typing.Optional[str]] = mapped_column("employee_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    role: Mapped[typing.Optional[typing.List[str]]] = mapped_column("role", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    email: Mapped[typing.Optional[str]] = mapped_column("email", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    section: Mapped[typing.Optional[str]] = mapped_column("section", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class SystemAuditLogCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'system_audit_log'
+    
+    employee_id: typing.Optional[str] = pydantic.Field("", **{})
+    role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    email: typing.Optional[str] = pydantic.Field("", **{})
+    section: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = SystemAuditLogSchema
+        upsert_keys = []
+
+
+class SystemAuditLog(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'system_audit_log'
+    
+    employee_id: typing.Optional[str] = pydantic.Field("", **{})
+    role: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    email: typing.Optional[str] = pydantic.Field("", **{})
+    section: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = SystemAuditLogSchema
+        upsert_keys = []
+
+
+class SystemAuditLogGetResp(pydantic.BaseModel):
+    data: typing.List[SystemAuditLog]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
