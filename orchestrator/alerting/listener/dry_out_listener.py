@@ -2,6 +2,8 @@ import urdhva_base
 import asyncio
 import math
 import json
+import os
+import pytz
 import datetime
 import polars as pl
 import hpcl_ceg_model
@@ -13,7 +15,9 @@ from orchestrator.alerting.alert_manager import create_alert
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from orchestrator.actions.indent_dry_out import IndentDryOut as indent_dry_out
+import utilities.minio_connector as minio_connector
 
+logger = urdhva_base.Logger.getInstance("dryout_listener.log")
 
 class DryoutCollector:
     @classmethod
@@ -87,6 +91,7 @@ class DryoutCollector:
         records = await function(query=query)
         for rec in records:
             rec['product_no'] = cls.get_product_codes(rec['item_name'])
+        dry_out_data = pl.DataFrame(records)
         records = pl.DataFrame(records)
         # records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
         records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
@@ -202,7 +207,100 @@ class DryoutCollector:
                 )
                 await hpcl_ceg_model.DryOutHistory.update_by_query(query)
         # await dry_out_analysis.mark_as_false_for_potential_records(potential_records)
+        dry_ou_days = [1, 2]
+        ist = pytz.timezone('Asia/Kolkata')
+        sync_date = datetime.datetime.now(ist).strftime("%y%m%d-%H") + "00"
+        for i in dry_ou_days:
+            total_dryouts = (dry_out_data.filter(pl.col("status") == i).select(pl.col("site_id").n_unique()).item())
 
+            ms_hsd_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
+                                                  (pl.col("item_name").is_in(["MS", "HSD"])))
+                                                  .select(pl.col("site_id").n_unique())
+                                                  .item())
+            
+            ms_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
+                                                  (pl.col("item_name").is_in(["MS"])))
+                                                  .select(pl.col("site_id").n_unique())
+                                                  .item())
+            
+            hsd_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
+                                                  (pl.col("item_name").is_in(["HSD"])))
+                                                  .select(pl.col("site_id").n_unique())
+                                                  .item())
+            
+            turbo_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
+                                                  (pl.col("item_name").is_in(["TURBO"])))
+                                                  .select(pl.col("site_id").n_unique())
+                                                  .item())
+            
+            e20_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
+                                                  (pl.col("item_name").is_in(["E20"])))
+                                                  .select(pl.col("site_id").n_unique())
+                                                  .item())
+            
+            power95_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
+                                                  (pl.col("item_name").is_in(["POWER 95"])))
+                                                  .select(pl.col("site_id").n_unique())
+                                                  .item())
+            
+            power99_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
+                                                  (pl.col("item_name").is_in(["POWER 99"])))
+                                                  .select(pl.col("site_id").n_unique())
+                                                  .item())
+            
+            power100_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
+                                                  (pl.col("item_name").is_in(["POWER 100"])))
+                                                  .select(pl.col("site_id").n_unique())
+                                                  .item())
+            
+            dry_out_df = (
+                dry_out_data
+                    .filter(pl.col("status") == i)
+                    .select([
+                        pl.col("rosapcode").alias("sap_id"),
+                        pl.col("product_grp").alias("product_name"),
+                        pl.col("tank_cnt").alias("tank"),
+                        pl.col("status").alias("dry_out_in_days"),
+                    ])
+            )
+
+            path = ""
+            if i == 1:
+                path = f"/tmp/{sync_date}_day_dry_out_details.csv"
+                dry_out_df.write_csv(path)
+            if i == 2:
+                path = f"/tmp/{sync_date}_intra_day_dry_out_details.csv"
+                dry_out_df.write_csv(path)
+                
+            status, minio_path = minio_connector.upload_to_minio("RO", "DryOut", str(sync_date.split('-')[0]), path)
+
+            if status:
+                print("File uploaded to minio successfully")
+                logger.info(f"File uploaded to minio successfully")
+                try:
+                    os.remove(path)
+                    print(f"Local file removed: {path}")
+                except Exception as e:
+                    print(f"Failed to remove local file: {e}")
+            else:
+                print("File Failed to upload minio")
+                logger.info(f"File Failed to upload minio")
+            
+            dryout_records = {
+                "run_id": str(sync_date),
+                "total_dryouts": total_dryouts if total_dryouts else 0,
+                "ms_hsd_dryouts": ms_hsd_dryouts if ms_hsd_dryouts else 0,
+                "ms_dryouts": ms_dryouts if ms_dryouts else ms_dryouts,
+                "hsd_dryouts": hsd_dryouts if hsd_dryouts else hsd_dryouts,
+                "turbo_dryouts": turbo_dryouts if turbo_dryouts else 0,
+                "e20_dryouts": e20_dryouts if e20_dryouts else 0,
+                "power95_dryouts": power95_dryouts if power95_dryouts else 0,
+                "power99_dryouts": power99_dryouts if power99_dryouts else power99_dryouts,
+                "power100_dryouts": power100_dryouts if power100_dryouts else power100_dryouts,
+                "dry_out_in_days": str(i),
+                "file_path": minio_path if minio_path else ""
+            }
+            await hpcl_ceg_model.CrisDryOutSyncCreate(**dryout_records).create()
 if __name__ == "__main__":
     print(f"Executing dry-out alert creation at {datetime.datetime.now(datetime.timezone.utc)}")
     asyncio.run(DryoutCollector.get_dry_out_data())

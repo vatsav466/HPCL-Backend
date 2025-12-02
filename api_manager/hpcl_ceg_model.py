@@ -10360,3 +10360,74 @@ class Deviceinstallation_Upload_CertificateParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class CrisDryOutSyncSchema(UrdhvaPostgresBase):
+    __tablename__ = 'cris_dry_out_sync'
+    
+    run_id: Mapped[typing.Optional[str]] = mapped_column("run_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    total_dryouts: Mapped[typing.Optional[int]] = mapped_column("total_dryouts", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    ms_hsd_dryouts: Mapped[typing.Optional[int]] = mapped_column("ms_hsd_dryouts", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    ms_dryouts: Mapped[typing.Optional[int]] = mapped_column("ms_dryouts", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    hsd_dryouts: Mapped[typing.Optional[int]] = mapped_column("hsd_dryouts", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    turbo_dryouts: Mapped[typing.Optional[int]] = mapped_column("turbo_dryouts", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    e20_dryouts: Mapped[typing.Optional[int]] = mapped_column("e20_dryouts", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    power95_dryouts: Mapped[typing.Optional[int]] = mapped_column("power95_dryouts", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    power99_dryouts: Mapped[typing.Optional[int]] = mapped_column("power99_dryouts", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    power100_dryouts: Mapped[typing.Optional[int]] = mapped_column("power100_dryouts", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    dry_out_in_days: Mapped[typing.Optional[str]] = mapped_column("dry_out_in_days", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    file_path: Mapped[typing.Optional[str]] = mapped_column("file_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class CrisDryOutSyncCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'cris_dry_out_sync'
+    
+    run_id: typing.Optional[str] = pydantic.Field("", **{})
+    total_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    ms_hsd_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    ms_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    hsd_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    turbo_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    e20_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    power95_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    power99_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    power100_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    dry_out_in_days: typing.Optional[str] = pydantic.Field("", **{})
+    file_path: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = CrisDryOutSyncSchema
+        upsert_keys = []
+
+
+class CrisDryOutSync(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'cris_dry_out_sync'
+    
+    run_id: typing.Optional[str] = pydantic.Field("", **{})
+    total_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    ms_hsd_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    ms_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    hsd_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    turbo_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    e20_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    power95_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    power99_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    power100_dryouts: typing.Optional[int] = pydantic.Field(0, **{})
+    dry_out_in_days: typing.Optional[str] = pydantic.Field("", **{})
+    file_path: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = CrisDryOutSyncSchema
+        upsert_keys = []
+
+
+class CrisDryOutSyncGetResp(pydantic.BaseModel):
+    data: typing.List[CrisDryOutSync]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

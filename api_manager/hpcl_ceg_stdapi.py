@@ -2100,3 +2100,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/deviceinstallation/{id}', tags=['DeviceInstallation'])
 async def delete(id: str):
     return await DeviceInstallation.delete(id)
+
+
+@router.post('/crisdryoutsync', response_model=CrisDryOutSync, tags=['CrisDryOutSync'])
+async def create(inputObj: CrisDryOutSyncCreate):
+    return await inputObj.create()
+
+
+@router.put('/crisdryoutsync', response_model=CrisDryOutSync, tags=['CrisDryOutSync'])
+async def update(inputObj: CrisDryOutSync):
+    return await inputObj.modify()
+
+
+@router.get('/crisdryoutsync/{id}', response_model=CrisDryOutSync, tags=['CrisDryOutSync'])
+async def get(id: str):
+    return await CrisDryOutSync.get(id, skip_secrets=True)
+
+
+@router.get('/crisdryoutsync', response_model=CrisDryOutSyncGetResp, tags=['CrisDryOutSync'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await CrisDryOutSync.get_all(params, skip_secrets=True)
+
+
+@router.delete('/crisdryoutsync/{id}', tags=['CrisDryOutSync'])
+async def delete(id: str):
+    return await CrisDryOutSync.delete(id)

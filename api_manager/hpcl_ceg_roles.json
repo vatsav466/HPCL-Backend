@@ -7340,6 +7340,69 @@
                     "name": "upload_certificate"
                 }
             ]
+        },
+        {
+            "name": "crisdryoutsync",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CrisDryOutSync",
+            "attributes": {},
+            "uris": [
+                "/api/crisdryoutsync/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "crisdryoutsync_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CrisDryOutSync_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/crisdryoutsync/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "crisdryoutsync_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CrisDryOutSync_admin",
+            "attributes": {},
+            "uris": [
+                "/api/crisdryoutsync/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
