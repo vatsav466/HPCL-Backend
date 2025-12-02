@@ -30,7 +30,7 @@
       {
         "name": "PQ Check Scale Rejection",
         "model": "percentage_rejection",
-        "weightage": 30,
+        "weightage": 25,
         "search_key": "interlock_name",
         "search_value": "Check Scale Rejection",
         "interlock_name": "Check Scale Rejection",
@@ -54,7 +54,7 @@
       {
         "name": "PQ O-Ring Leak Rejection",
         "model": "percentage_rejection",
-        "weightage": 30,
+        "weightage": 35,
         "search_key": "interlock_name",
         "search_value": "O-Ring Leak Rejection",
         "interlock_name": "O-Ring Leak Rejection",
