@@ -7342,6 +7342,144 @@
             ]
         },
         {
+            "name": "usermaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "UserMaster",
+            "attributes": {},
+            "uris": [
+                "/api/usermaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_user"
+                },
+                {
+                    "name": "update_user"
+                }
+            ]
+        },
+        {
+            "name": "usermaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "UserMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/usermaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "usermaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "UserMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/usermaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_user"
+                },
+                {
+                    "name": "update_user"
+                }
+            ]
+        },
+        {
+            "name": "systemauditlog",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "SystemAuditLog",
+            "attributes": {},
+            "uris": [
+                "/api/systemauditlog/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "systemauditlog_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "SystemAuditLog_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/systemauditlog/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "systemauditlog_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "SystemAuditLog_admin",
+            "attributes": {},
+            "uris": [
+                "/api/systemauditlog/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "crisdryoutsync",
             "type": "all",
             "ownerManagedAccess": false,
@@ -8144,6 +8282,14 @@
         {
             "name": "upload_certificate",
             "displayName": "upload_certificate"
+        },
+        {
+            "name": "create_user",
+            "displayName": "create_user"
+        },
+        {
+            "name": "update_user",
+            "displayName": "update_user"
         }
     ]
 }

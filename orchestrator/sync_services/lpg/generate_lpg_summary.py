@@ -247,7 +247,7 @@ async def main_concurrent():
     
     # Create semaphore to limit concurrent operations (adjust based on your system capacity)
     # Start with 10-15 concurrent operations, adjust based on database/API limits
-    semaphore = asyncio.Semaphore(15)
+    semaphore = asyncio.Semaphore(7)
     
     # Create tasks for all plants
     tasks = [process_plant_concurrent(plant, semaphore) for plant in plants.to_dict(orient="records")]

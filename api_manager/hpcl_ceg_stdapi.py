@@ -2102,6 +2102,31 @@ async def delete(id: str):
     return await DeviceInstallation.delete(id)
 
 
+@router.post('/systemauditlog', response_model=SystemAuditLog, tags=['SystemAuditLog'])
+async def create(inputObj: SystemAuditLogCreate):
+    return await inputObj.create()
+
+
+@router.put('/systemauditlog', response_model=SystemAuditLog, tags=['SystemAuditLog'])
+async def update(inputObj: SystemAuditLog):
+    return await inputObj.modify()
+
+
+@router.get('/systemauditlog/{id}', response_model=SystemAuditLog, tags=['SystemAuditLog'])
+async def get(id: str):
+    return await SystemAuditLog.get(id, skip_secrets=True)
+
+
+@router.get('/systemauditlog', response_model=SystemAuditLogGetResp, tags=['SystemAuditLog'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await SystemAuditLog.get_all(params, skip_secrets=True)
+
+
+@router.delete('/systemauditlog/{id}', tags=['SystemAuditLog'])
+async def delete(id: str):
+    return await SystemAuditLog.delete(id)
+
+
 @router.post('/crisdryoutsync', response_model=CrisDryOutSync, tags=['CrisDryOutSync'])
 async def create(inputObj: CrisDryOutSyncCreate):
     return await inputObj.create()
