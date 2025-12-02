@@ -49,26 +49,26 @@ async def users_login(request: fastapi.Request, data: Users_LoginParams):
         response.set_cookie(urdhva_base.settings.cookie_name, resp, httponly=urdhva_base.settings.session_httponly,
                             secure=urdhva_base.settings.session_secure, samesite=urdhva_base.settings.session_same_site)
     
-    user_agent = await parse_device_info(request.headers.get("user-agent", "Unknown"))
-    print("user_agent :", user_agent)
-    
-    f = Fernet(urdhva_base.settings.fernet_key)
-    cookie_data = json.loads(f.decrypt(resp.encode()).decode())
-    
-    login_audit = {
-        "login_id": cookie_data["cookie_id"],
-        "user_agent": user_agent,
-        "employee_id": data.username,
-        "email": user_info.get("email", ""),
-        "role": ",".join(user_info.get("novex_role", [])),
-        "login_time": urdhva_base.utilities.get_present_time(),
-        "login_status": LoginStatus.login,
-        "failure_reason": "",
-        "auth_method": "SSO" if user_info["is_ad_user"] else "Password",
-        "remarks": ""
-        }
-    print("login_audit :", login_audit)
-    await UserLoginAuditCreate(**login_audit).create()
+        user_agent = await parse_device_info(request.headers.get("user-agent", "Unknown"))
+        print("user_agent :", user_agent)
+
+        f = Fernet(urdhva_base.settings.fernet_key)
+        cookie_data = json.loads(f.decrypt(resp.encode()).decode())
+
+        login_audit = {
+            "login_id": cookie_data["cookie_id"],
+            "user_agent": user_agent,
+            "employee_id": data.username,
+            "email": user_info.get("email", ""),
+            "role": ",".join(user_info.get("novex_role", [])),
+            "login_time": urdhva_base.utilities.get_present_time(),
+            "login_status": LoginStatus.login,
+            "failure_reason": "",
+            "auth_method": "SSO" if user_info["is_ad_user"] else "Password",
+            "remarks": ""
+            }
+        # print("login_audit :", login_audit)
+        await UserLoginAuditCreate(**login_audit).create()
     return response
 
 
