@@ -113,7 +113,7 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         if not user_data["data"]:
             return False, "User does not exists to modify"
         
-        data_dict = data.model_dump()
+        data_dict = data
         data_dict.update({"id": user_data['data'][0]['id']})
         params = urdhva_base.QueryParams(q="")
         role = await Roles.get_all(params, resp_type="plain")
@@ -157,7 +157,7 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
                 await SystemAuditLogCreate(
                     **{
                         "employee_id": rpt["username"],
-                        "role": rpt["novex_role"][0],
+                        "role": rpt["novex_role"],
                         "email": rpt.get("email",""),
                         "section": "User Action",
                         "remarks": remarks
@@ -174,7 +174,7 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
             await SystemAuditLogCreate(
                 **{
                     "employee_id": rpt["username"],
-                    "role": rpt["novex_role"][0],
+                    "role": rpt["novex_role"],
                     "email": rpt.get("email",""),
                     "section": "User Action",
                     "remarks": "Failed to update user details "
