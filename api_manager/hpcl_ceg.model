@@ -3742,8 +3742,8 @@ Model SystemAuditLog {
 }
 
 Model CrisDryOutSync {
-    run_id index_field optional str
-    total_dryouts optional int
+    run_id index_field str
+    total_dryouts int
     ms_hsd_dryouts optional int
     ms_dryouts optional int
     hsd_dryouts optional int
@@ -3752,6 +3752,6 @@ Model CrisDryOutSync {
     power95_dryouts optional int
     power99_dryouts optional int
     power100_dryouts optional int
-    dry_out_in_days optional str
+    dry_out_in_days str
     file_path optional str
 }

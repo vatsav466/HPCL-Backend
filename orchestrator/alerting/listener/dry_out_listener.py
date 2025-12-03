@@ -211,46 +211,46 @@ class DryoutCollector:
         ist = pytz.timezone('Asia/Kolkata')
         sync_date = datetime.datetime.now(ist).strftime("%y%m%d-%H") + "00"
         for i in dry_ou_days:
-            total_dryouts = (dry_out_data.filter(pl.col("status") == i).select(pl.col("site_id").n_unique()).item())
+            total_dryouts = (dry_out_data.filter(pl.col("status") == i).select(pl.col("rosapcode").n_unique()).item())
 
             ms_hsd_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
                                                   (pl.col("item_name").is_in(["MS", "HSD"])))
-                                                  .select(pl.col("site_id").n_unique())
+                                                  .select(pl.col("rosapcode").n_unique())
                                                   .item())
             
             ms_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
                                                   (pl.col("item_name").is_in(["MS"])))
-                                                  .select(pl.col("site_id").n_unique())
+                                                  .select(pl.col("rosapcode").n_unique())
                                                   .item())
             
             hsd_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
                                                   (pl.col("item_name").is_in(["HSD"])))
-                                                  .select(pl.col("site_id").n_unique())
+                                                  .select(pl.col("rosapcode").n_unique())
                                                   .item())
             
             turbo_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
                                                   (pl.col("item_name").is_in(["TURBO"])))
-                                                  .select(pl.col("site_id").n_unique())
+                                                  .select(pl.col("rosapcode").n_unique())
                                                   .item())
             
             e20_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
                                                   (pl.col("item_name").is_in(["E20"])))
-                                                  .select(pl.col("site_id").n_unique())
+                                                  .select(pl.col("rosapcode").n_unique())
                                                   .item())
             
             power95_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
                                                   (pl.col("item_name").is_in(["POWER 95"])))
-                                                  .select(pl.col("site_id").n_unique())
+                                                  .select(pl.col("rosapcode").n_unique())
                                                   .item())
             
             power99_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
                                                   (pl.col("item_name").is_in(["POWER 99"])))
-                                                  .select(pl.col("site_id").n_unique())
+                                                  .select(pl.col("rosapcode").n_unique())
                                                   .item())
             
             power100_dryouts = (dry_out_data.filter((pl.col("status") == i) & 
                                                   (pl.col("item_name").is_in(["POWER 100"])))
-                                                  .select(pl.col("site_id").n_unique())
+                                                  .select(pl.col("rosapcode").n_unique())
                                                   .item())
             
             dry_out_df = (

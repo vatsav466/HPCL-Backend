@@ -196,32 +196,35 @@ async def usermaster_delete_user(data: Usermaster_Delete_UserParams):
         else:
             rpt = {}
 
-        if rpt and rpt.get('username','') in ['admin','superadmin']:
+        if rpt and rpt.get('username','') not in ['admin','superadmin','dnc_user']:
             return False, "Not allowed to perform this operation"
         
         if not isinstance(data,dict):
             data = data.__dict__
+        
+        query = f"""username = '{data.get('username','')}'
+                """
+        user_data = await Users.get_all(urdhva_base.QueryParams(q=query), resp_type="plain")
 
-        delete_user = f"""delete from users where username='{data.get('username')}'
+        delete_user = f"""delete from users where id='{user_data['data'][0]['id']}'
                        """
-        response = await Users.update_by_query(delete_user)
+        await Users.update_by_query(delete_user)
 
-        if response:
-            if rpt:
-                await SystemAuditLogCreate(
-                    **{
-                        "employee_id": rpt["username"],
-                        "role": rpt["novex_role"],
-                        "email": rpt.get("email",""),
-                        "section": "User Action",
-                        "remarks": f"User {data.get('username')} deleted successfully"
-                    }
-                ).create()
-            return {
-                "success": True, 
-                "message": "User deleted successfully",
-                "changes": f"User {data.get('username')} deleted successfully"
+        await SystemAuditLogCreate(
+            **{
+                "employee_id": rpt["username"],
+                "role": rpt["novex_role"],
+                "email": rpt.get("email",""),
+                "section": "User Action",
+                "remarks": f"User {data.get('username')} deleted successfully"
             }
+        ).create()
+        
+        return {
+            "success": True, 
+            "message": "User deleted successfully",
+            "changes": f"User {data.get('username')} deleted successfully"
+        }
     except Exception as e:
         print("traceback :", traceback.format_exc())
         if rpt:
