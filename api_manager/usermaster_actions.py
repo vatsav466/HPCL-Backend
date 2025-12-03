@@ -19,6 +19,9 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
         
         if rpt and rpt.get('username','') in ['admin','superadmin']:
             return False, "Not allowed to perform this operation"
+        
+        if data.username in ['admin','superadmin']:
+            return False, "Not allowed to perform this operation"
 
         if not isinstance(data.data,dict):
             data = data.data.__dict__
