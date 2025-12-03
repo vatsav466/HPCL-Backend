@@ -425,26 +425,28 @@ vts_query = {
     
     "vts_insite_history": """
                            SELECT
-                                tl_number,
-                                invoice_number,
-                                location_name,
-                                zone,
-                                DATE(scheduled_trip_start_datetime) AS created_at,
-                                MAX(stoppage_violations_count) AS stoppage_violations_count,
-                                MAX(route_deviation_count) AS route_deviation_count,
-                                MAX(device_tamper_count) AS device_tamper_count,
-                                MAX(main_supply_removal_count) AS main_supply_removal_count,
-                                MAX(night_driving_count) AS night_driving_count,
-                                MAX(speed_violation_count) AS speed_violation_count,
-                                MAX(continuous_driving_count) AS continuous_driving_count
-                            FROM (
-                                SELECT DISTINCT invoice_number, tl_number, scheduled_trip_start_datetime, location_name, zone,
-                                stoppage_violations_count, route_deviation_count, device_tamper_count,
-                                main_supply_removal_count, night_driving_count, speed_violation_count, 
-                                continuous_driving_count FROM vts_alert_history
-                                WHERE invoice_number IS NOT NULL
-                            ) AS history_data
-                            GROUP BY invoice_number, tl_number, DATE(scheduled_trip_start_datetime), location_name, zone;
+                               tl_number,
+                               invoice_number,
+                               location_name,
+                               zone,
+                               date_trunc('day', scheduled_trip_start_datetime) AS created_at,
+                               MAX(stoppage_violations_count) AS stoppage_violations_count,
+                               MAX(route_deviation_count) AS route_deviation_count,
+                               MAX(device_tamper_count) AS device_tamper_count,
+                               MAX(main_supply_removal_count) AS main_supply_removal_count,
+                               MAX(night_driving_count) AS night_driving_count,
+                               MAX(speed_violation_count) AS speed_violation_count,
+                               MAX(continuous_driving_count) AS continuous_driving_count
+                           FROM
+                               vts_alert_history
+                           WHERE
+                               invoice_number IS NOT NULL
+                           GROUP BY
+                               tl_number,
+                               invoice_number,
+                               location_name,
+                               zone,
+                               date_trunc('day', scheduled_trip_start_datetime);
                           """,
 
     "vts_insite_history_type": """
