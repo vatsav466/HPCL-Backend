@@ -3739,6 +3739,10 @@ Model SystemAuditLog {
     email optional str
     section optional str
     remarks optional str
+
+    Config=> {
+        crud_operations='read'
+    }
 }
 
 Model CrisDryOutSync {
@@ -3754,4 +3758,8 @@ Model CrisDryOutSync {
     power100_dryouts optional int
     dry_out_in_days str
     file_path optional str
+
+    Config=> {
+        crud_operations='read'
+    }
 }
