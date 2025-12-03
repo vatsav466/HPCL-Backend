@@ -507,11 +507,38 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             break_down[rec['carousel']].append(rec['break_net_hours'])
         # Todo:- need to fetch no of carousels and what was the max run time
         break_down = {key: max(value) for key, value in break_down.items()}
+        carousel_msg = []  
         total_hours = 0
         for carousel in distinct_carousels:
-            total_hours += float(df_working_hours[df_working_hours['PlantID'] == f"{location_id}"][int(carousel)].sum())
+            hours = float(
+                df_working_hours[df_working_hours['PlantID'] == f"{location_id}"][int(carousel)].sum()
+            )
+            total_hours += hours
+            carousel_msg.append(f"Carousel {carousel}: {hours}")
         if not total_hours:
             total_hours = 16
         uptime = 100 - (float(float((sum([value for _, value in break_down.items()]))) / float(total_hours)) * 100)
-        return {"name": rules.get('name', name), "score": round((uptime * rules['weightage']) / 100, 2),
-                "weightage": rules['weightage'], "results": []}
+        # return {"name": rules.get('name', name), "score": round((uptime * rules['weightage']) / 100, 2),
+        #         "weightage": rules['weightage'], "results": []}
+        final_score = round((uptime * rules['weightage']) / 100, 2)
+
+        msg = (
+            f"Carousel Hours → {', '.join(carousel_msg)} | "
+            f"Total Breakdown = {round(sum(break_down.values()), 2)} | "
+            f"Uptime = 100 - (({round(sum(break_down.values()),2)} / {total_hours}) * 100) = {round(uptime,2)}%"
+        )
+
+        results = [{
+            "name": "Uptime Calculation",
+            "score": round(uptime, 2),
+            "module": rules.get("name", name),
+            "weightage": rules["weightage"],
+            "msg": msg
+        }]
+
+        return {
+            "name": rules.get('name', name),
+            "score": final_score,
+            "weightage": rules['weightage'],
+            "results": results
+        }
