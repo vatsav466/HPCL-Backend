@@ -7368,6 +7368,9 @@
                 },
                 {
                     "name": "update_user"
+                },
+                {
+                    "name": "delete_user"
                 }
             ]
         },
@@ -7413,6 +7416,9 @@
                 },
                 {
                     "name": "update_user"
+                },
+                {
+                    "name": "delete_user"
                 }
             ]
         },
@@ -8290,6 +8296,10 @@
         {
             "name": "update_user",
             "displayName": "update_user"
+        },
+        {
+            "name": "delete_user",
+            "displayName": "delete_user"
         }
     ]
 }

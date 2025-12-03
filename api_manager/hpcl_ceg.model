@@ -3727,6 +3727,10 @@ Model UserMaster crud_disable {
     Action=> update_user {
         data UpdateUser
     }
+
+    Action=> delete_user {
+        username optional str
+    }
 }
 
 Model SystemAuditLog {

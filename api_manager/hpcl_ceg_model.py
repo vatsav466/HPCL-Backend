@@ -10410,6 +10410,14 @@ class Usermaster_Update_UserParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Usermaster_Delete_UserParams(pydantic.BaseModel):
+    username: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class SystemAuditLogSchema(UrdhvaPostgresBase):
     __tablename__ = 'system_audit_log'
     

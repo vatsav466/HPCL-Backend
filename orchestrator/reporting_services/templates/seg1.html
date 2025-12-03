@@ -186,23 +186,10 @@
             <td>{{dry_out_details['> 75 Rs Lakhs']}}</td>
         </tr>
     </tbody></table>
-    <h5>2.5. Day wise trend of Partial Dryout (MS/HSD):</h5>
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Dry out Count</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in dry_out_trends %}
-            <tr>
-                <td>{{ row['Date'] }}</td>
-                <td>{{ row['Dry out Count'] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h5>2.5 Last 30 days trend of Partial Dryout (MS/HSD)</h5>
+    <div class="logo">
+        <img src="cid:last_30_days_dry_out_trends" alt="Last 30 Days Dry Out Trends" width="1000" height="auto">
+    </div>
     <h5>2.6. Zone wise Date wise Listing of Partial Dry outs</h5>
     <table>
         <thead>
@@ -224,7 +211,7 @@
     </table>
     <h5>2.7 Monthly Loss of Sales due to Partial Dry-outs</h5>
     <div class="logo">
-        <img src="cid:dry_out_lost" alt="HP Pay Logo" width="800" height="auto">
+        <img src="cid:dry_out_lost" alt="HP Pay Logo" width="1000" height="auto">
     </div>
     <h5>2.8 Location/Depo wise dry out details</h5>
     <table>
