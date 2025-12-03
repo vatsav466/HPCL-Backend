@@ -3217,6 +3217,22 @@ class VTSAnalyticsActions:
                     if search_val:  # Ensure there is a value to search for
                         # Add a case-insensitive search condition for the specific column
                         conditions.append(f'CAST("{col}" AS TEXT) ILIKE \'%{search_val}%\'')
+            
+            # Add column-specific range filters (>=, <=)
+            range_filters = payload.get("range_filters")
+            if range_filters and isinstance(range_filters, list):
+                for r_filter in range_filters:
+                    col = r_filter.get("column")
+                    op = r_filter.get("operator")
+                    val = r_filter.get("value")
+
+                    if col and op and val is not None:
+                        supported_operators = ['>=', '<=', '>', '<', '=', '!=']
+                        if op not in supported_operators:
+                            continue
+
+                        conditions.append(f'CAST("{col}" AS NUMERIC) {op} {val}')
+
 
             # Build and execute count query first
             count_query = f'SELECT COUNT(*) FROM public."{table_name}"'
