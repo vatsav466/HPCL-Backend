@@ -71,6 +71,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     rpt = urdhva_base.context.context.get('rpt', None)
     print("rpt",rpt)
     user_name = rpt.get('user_name') if rpt else None
+    employee_id = rpt.get('employee_id') if rpt else None
     
 
     tdata = data.model_dump()
@@ -206,7 +207,9 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
             "allocated_time": startdate.isoformat() if startdate else processed_time.isoformat(),
             "action_msg": f"Ticket is created and is in {ticket_data['ticket_state']} state",
             "action_type": action_type_str,
-            "description": ticket_data.get("comment") or ""
+            "description": ticket_data.get("comment") or "",
+            "employee_id": employee_id
+
         })
 
         # Create the ticket
@@ -293,65 +296,230 @@ async def ticketing_close_ticket(data: Ticketing_Close_TicketParams):
 
 
 # Action update_ticket
+# @router.post('/update_ticket', tags=['Ticketing'])
+# async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
+#     # data_dict = data.model_dump()
+#     # print("Ticket Data: ", data_dict)
+#     # await Ticketing(**{"id": data.update_id, **data_dict}).modify()
+#     # return {"status": True,"message": "Ticket updated successfully", "data": data.update_id}
+#     try:
+#         data_dict = data.model_dump()
+#         print("data_dict",data_dict)
+#         if "alert_type" in data_dict:
+#             data_dict["interlock_name"] = data_dict.pop("alert_type")
+#         ticket_id = data.update_id
+#         # print("data_dict",data_dict)
+#         # Fetch existing ticket
+#         params = urdhva_base.queryparams.QueryParams()
+#         params.q = f"id='{ticket_id}'"
+#         params.limit = 1
+#         params.fields = ["id", "ticket_state", "ticket_history", "linked_alert_id"]
+#         resp = await Ticketing.get_all(params, resp_type='plain')
+#         if not resp or not resp.get("data"):
+#             return {"status": False, "message": f"Ticket {ticket_id} not found"}
+
+#         existing_ticket = resp["data"][0]
+
+#         # --- TIMINGS as per _update_alert_history ---
+#         processed_time = datetime.utcnow()
+#         existing_history = existing_ticket.get("ticket_history", []) or []
+#         last_allocated_time = processed_time.isoformat()
+#         if existing_history:
+#             last_allocated_time = existing_history[-1].get("processed_time", processed_time.isoformat())
+
+#         # --- UPDATE ticket_history ---
+#         ticket_state = data_dict.get("ticket_state")  # e.g., "InProgress"
+#         action_type_enum = TicketType[ticket_state].value  # e.g., "TicketInProgress"
+#         ticket_update_entry = {
+#             "action_msg": f"Ticket updated, state changed to {ticket_state}",
+#             "action_type": action_type_enum,
+#             "allocated_time": last_allocated_time,
+#             "processed_time": processed_time.isoformat()
+#         }
+#         updated_history = existing_history + [ticket_update_entry]
+#         if ticket_state in ["Resolved", "Cancelled"]:
+#             data_dict["ticket_status"] = "Close"
+#         else:
+#             data_dict["ticket_status"] = "Open"
+#             # print("ticket_status>>>>>>>",data_dict["ticket_status"])
+#         data_dict["ticket_history"] = updated_history
+
+#         # --- UPDATE THE TICKET ---
+#         await Ticketing(id=ticket_id, **data_dict).modify()
+
+#         # --- UPDATE ALERT HISTORY for linked_alert_id ---
+#         linked_alert_ids = data_dict.get("linked_alert_id", []) or existing_ticket.get("linked_alert_id", [])
+#         for alert_id in linked_alert_ids:
+#             # Fetch alert
+#             params = urdhva_base.queryparams.QueryParams()
+#             params.q = f"id='{alert_id}'"
+#             params.limit = 1
+#             params.fields = ["id", "alert_history"]
+#             resp_alert = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+#             if not resp_alert or not resp_alert.get("data"):
+#                 continue
+
+#             alert_obj = resp_alert["data"][0]
+#             alert_history = alert_obj.get("alert_history", []) or []
+
+#             # Determine allocated_time from last relevant entry
+#             last_alloc = processed_time.isoformat()
+#             for entry in reversed(alert_history):
+#                 if entry.get("action_type") in [
+#                     "TicketRaised", "TicketInProgress", "TicketCancelled", "TicketResolved", "TicketOnHold"
+#                 ]:
+#                     last_alloc = entry.get("processed_time", processed_time.isoformat())
+#                     break
+
+#             # Append new alert_history entry
+#             new_alert_entry = {
+#                 "action_msg": f"Ticket updated, state changed to {ticket_state}",
+#                 "action_type": action_type_enum,
+#                 "allocated_time": last_alloc,
+#                 "processed_time": processed_time.isoformat()
+#             }
+#             updated_alert_history = alert_history + [new_alert_entry]
+
+#             await hpcl_ceg_model.Alerts(id=alert_id, alert_history=updated_alert_history).modify()
+
+#         # return {"status": True, "message": "Ticket updated successfully", "data": ticket_id}
+#         return {
+#             "status": True,
+#             "message": "Ticket updated successfully",
+#             "data": {
+#                 "ticket_id": ticket_id,
+#                 "ticket_history": updated_history
+#             }
+#         }
+
+#     except Exception as e:
+#         print(f"Error in update_ticket: {str(e)}")
+#         # return {"status": False, "message": str(e)}
+#         return {
+#             "status": True,
+#             "message": "Ticket updated successfully",
+#             "data": {
+#                 "ticket_id": ticket_id,
+#                 "ticket_history": updated_history
+#             }
+#         }
 @router.post('/update_ticket', tags=['Ticketing'])
 async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
-    # data_dict = data.model_dump()
-    # print("Ticket Data: ", data_dict)
-    # await Ticketing(**{"id": data.update_id, **data_dict}).modify()
-    # return {"status": True,"message": "Ticket updated successfully", "data": data.update_id}
     try:
         data_dict = data.model_dump()
-        print("data_dict",data_dict)
+        print("data_dict", data_dict)
+
+        # Rename alert_type → interlock_name
         if "alert_type" in data_dict:
             data_dict["interlock_name"] = data_dict.pop("alert_type")
+
         ticket_id = data.update_id
-        # print("data_dict",data_dict)
+
         # Fetch existing ticket
         params = urdhva_base.queryparams.QueryParams()
         params.q = f"id='{ticket_id}'"
         params.limit = 1
         params.fields = ["id", "ticket_state", "ticket_history", "linked_alert_id"]
         resp = await Ticketing.get_all(params, resp_type='plain')
+
         if not resp or not resp.get("data"):
             return {"status": False, "message": f"Ticket {ticket_id} not found"}
 
         existing_ticket = resp["data"][0]
 
-        # --- TIMINGS as per _update_alert_history ---
+        # ---------------------------------------
+        # TIMINGS
+        # ---------------------------------------
         processed_time = datetime.utcnow()
         existing_history = existing_ticket.get("ticket_history", []) or []
         last_allocated_time = processed_time.isoformat()
+
         if existing_history:
             last_allocated_time = existing_history[-1].get("processed_time", processed_time.isoformat())
 
-        # --- UPDATE ticket_history ---
-        ticket_state = data_dict.get("ticket_state")  # e.g., "InProgress"
-        action_type_enum = TicketType[ticket_state].value  # e.g., "TicketInProgress"
-        ticket_update_entry = {
-            "action_msg": f"Ticket updated, state changed to {ticket_state}",
-            "action_type": action_type_enum,
-            "allocated_time": last_allocated_time,
-            "processed_time": processed_time.isoformat()
-        }
-        updated_history = existing_history + [ticket_update_entry]
-        if ticket_state in ["Resolved", "Cancelled"]:
-            data_dict["ticket_status"] = "Close"
+        # ---------------------------------------
+        # NEW LOGIC → CHECK ALERT STATUSES FIRST
+        # ---------------------------------------
+        linked_alert_ids = data_dict.get("linked_alert_id", []) or existing_ticket.get("linked_alert_id", [])
+
+        all_alerts_closed = True  # assume closed unless found otherwise
+
+        for alert_id in linked_alert_ids:
+            params = urdhva_base.queryparams.QueryParams()
+            params.q = f"id='{alert_id}'"
+            params.limit = 1
+            params.fields = ["id", "alert_status"]
+
+            alert_resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+
+            if not alert_resp or not alert_resp.get("data"):
+                continue
+
+            alert_status = alert_resp["data"][0].get("alert_status")
+
+            if alert_status in ["Open", "Pending", None]:
+                all_alerts_closed = False
+                break
+
+        # ---------------------------------------
+        # UPDATE ticket_history
+        # ---------------------------------------
+        ticket_state = data_dict.get("ticket_state")
+        action_type_enum = TicketType[ticket_state].value
+
+        # add employee_id here
+        # ------------------------------------------------------------
+        # HISTORY ENTRY logic based on alert status
+        # ------------------------------------------------------------
+        employee_id = data_dict.get("employee_id")
+
+        if all_alerts_closed:
+            # special message only when alerts are closed
+            action_msg = "All linked alerts are closed, so ticket moved to Closed state"
+            action_type_val = "TicketResolved"
         else:
-            data_dict["ticket_status"] = "Open"
-            # print("ticket_status>>>>>>>",data_dict["ticket_status"])
+            # your old behavior (no change)
+            action_msg = f"Ticket updated, state changed to {ticket_state}"
+            action_type_val = action_type_enum
+
+        ticket_update_entry = {
+            "action_msg": action_msg,
+            "action_type": action_type_val,
+            "allocated_time": last_allocated_time,
+            "processed_time": processed_time.isoformat(),
+            "employee_id": employee_id
+        }
+
+        updated_history = existing_history + [ticket_update_entry]
+
+        # ---------------------------------------
+        # APPLY FINAL DECISION → CLOSE TICKET IF ALL ALERTS CLOSED
+        # ---------------------------------------
+        if all_alerts_closed:
+            data_dict["ticket_status"] = "Close"
+            data_dict["ticket_state"] = "Resolved"
+        else:
+            if ticket_state in ["Resolved", "Cancelled"]:
+                data_dict["ticket_status"] = "Close"
+            else:
+                data_dict["ticket_status"] = "Open"
+
         data_dict["ticket_history"] = updated_history
 
-        # --- UPDATE THE TICKET ---
+        # ---------------------------------------
+        # UPDATE THE TICKET IN DB
+        # ---------------------------------------
         await Ticketing(id=ticket_id, **data_dict).modify()
 
-        # --- UPDATE ALERT HISTORY for linked_alert_id ---
-        linked_alert_ids = data_dict.get("linked_alert_id", []) or existing_ticket.get("linked_alert_id", [])
+        # ---------------------------------------
+        # UPDATE ALERT HISTORY (same as your code)
+        # ---------------------------------------
         for alert_id in linked_alert_ids:
-            # Fetch alert
             params = urdhva_base.queryparams.QueryParams()
             params.q = f"id='{alert_id}'"
             params.limit = 1
             params.fields = ["id", "alert_history"]
+
             resp_alert = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
             if not resp_alert or not resp_alert.get("data"):
                 continue
@@ -359,27 +527,26 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             alert_obj = resp_alert["data"][0]
             alert_history = alert_obj.get("alert_history", []) or []
 
-            # Determine allocated_time from last relevant entry
             last_alloc = processed_time.isoformat()
             for entry in reversed(alert_history):
                 if entry.get("action_type") in [
-                    "TicketRaised", "TicketInProgress", "TicketCancelled", "TicketResolved", "TicketOnHold"
+                    "TicketRaised", "TicketInProgress", "TicketCancelled",
+                    "TicketResolved", "TicketOnHold"
                 ]:
                     last_alloc = entry.get("processed_time", processed_time.isoformat())
                     break
 
-            # Append new alert_history entry
             new_alert_entry = {
                 "action_msg": f"Ticket updated, state changed to {ticket_state}",
                 "action_type": action_type_enum,
                 "allocated_time": last_alloc,
                 "processed_time": processed_time.isoformat()
             }
+
             updated_alert_history = alert_history + [new_alert_entry]
 
             await hpcl_ceg_model.Alerts(id=alert_id, alert_history=updated_alert_history).modify()
 
-        # return {"status": True, "message": "Ticket updated successfully", "data": ticket_id}
         return {
             "status": True,
             "message": "Ticket updated successfully",
@@ -391,7 +558,6 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
 
     except Exception as e:
         print(f"Error in update_ticket: {str(e)}")
-        # return {"status": False, "message": str(e)}
         return {
             "status": True,
             "message": "Ticket updated successfully",
@@ -400,7 +566,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
                 "ticket_history": updated_history
             }
         }
-    
+
 # Action delete_ticket
 @router.post('/delete_ticket', tags=['Ticketing'])
 async def ticketing_delete_ticket(data: Ticketing_Delete_TicketParams):
