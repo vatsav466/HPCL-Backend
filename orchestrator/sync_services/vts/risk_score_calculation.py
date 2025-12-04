@@ -8,7 +8,6 @@ from shapely.geometry import Point, Polygon
 from shapely.vectorized import contains
 from sqlalchemy import create_engine, text, Integer, Double, Boolean, DateTime, VARCHAR, Float
 import orchestrator.dbconnector.credential_loader as credential_loader
-import psycopg2
 from sklearn.neighbors import BallTree
 import json
 
@@ -1176,8 +1175,10 @@ def normalize(series):
     return (series - series.min()) / (series.max() - series.min())
 
 # --- Normalize components ---
-final_merged_df["atomic_risk_norm"] = final_merged_df["atomic_risk"]
+final_merged_df["atomic_risk_norm"] = soft_robust_normalize(final_merged_df["atomic_risk"])
+
 final_merged_df["combo_risk_norm"] = soft_robust_normalize(final_merged_df["combo_risk"])
+
 final_merged_df["location_sensitivity_norm"] = soft_robust_normalize(final_merged_df["location_sensitivity"])
 final_merged_df["entity_risk_norm"] = soft_robust_normalize(final_merged_df["entity_risk"])
 

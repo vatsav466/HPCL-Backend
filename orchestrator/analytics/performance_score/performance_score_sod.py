@@ -869,8 +869,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
                              'module': rules.get('name', name)})
         final_score = sum([score['score'] for score in pi_score])
-        # final_score = round((final_score * rules['weightage']) / 100, 2)
-        final_score = rules['weightage'] 
+        final_score = round((final_score * rules['weightage']) / 100, 2)
+        # final_score = rules['weightage'] 
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
         return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}

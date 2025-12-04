@@ -19,6 +19,9 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
         
         if rpt and rpt.get('username','') in ['admin','superadmin']:
             return False, "Not allowed to perform this operation"
+        
+        if data.username in ['admin','superadmin']:
+            return False, "Not allowed to perform this operation"
 
         if not isinstance(data.data,dict):
             data = data.data.__dict__
@@ -62,7 +65,7 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
                         "role": rpt["novex_role"],
                         "email": rpt.get("email",""),
                         "section": "User Action",
-                        "remarks": f"User {data.get('user_name')} created successfully"
+                        "remarks": f"User {data.get('username')} created successfully"
                     }
                     ).create()
                 return {
@@ -78,7 +81,7 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
                     "role": rpt["novex_role"],
                     "email": rpt.get("email",""),
                     "section": "User Action",
-                    "remarks": f"Failed to create user {data.get('user_name')}"
+                    "remarks": f"Failed to create user {data.get('username')}"
                 }
             ).create()
         
@@ -184,4 +187,60 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
         return {
             "success": False, 
             "message": "An error occurred while updating user details. "
+        }
+
+
+# Action delete_user
+@router.post('/delete_user', tags=['UserMaster'])
+async def usermaster_delete_user(data: Usermaster_Delete_UserParams):
+    try:
+        if urdhva_base.context.context.exists():
+            rpt = urdhva_base.context.context.get('rpt', {})
+        else:
+            rpt = {}
+
+        if rpt and rpt.get('username','') not in ['admin','superadmin','dnc_user']:
+            return False, "Not allowed to perform this operation"
+        
+        if not isinstance(data,dict):
+            data = data.__dict__
+        
+        query = f"""username = '{data.get('username','')}'
+                """
+        user_data = await Users.get_all(urdhva_base.QueryParams(q=query), resp_type="plain")
+
+        delete_user = f"""delete from users where id='{user_data['data'][0]['id']}'
+                       """
+        await Users.update_by_query(delete_user)
+
+        await SystemAuditLogCreate(
+            **{
+                "employee_id": rpt["username"],
+                "role": rpt["novex_role"],
+                "email": rpt.get("email",""),
+                "section": "User Action",
+                "remarks": f"User {data.get('username')} deleted successfully"
+            }
+        ).create()
+        
+        return {
+            "success": True, 
+            "message": "User deleted successfully",
+            "changes": f"User {data.get('username')} deleted successfully"
+        }
+    except Exception as e:
+        print("traceback :", traceback.format_exc())
+        if rpt:
+            await SystemAuditLogCreate(
+                **{
+                    "employee_id": rpt["username"],
+                    "role": rpt["novex_role"],
+                    "email": rpt.get("email",""),
+                    "section": "User Action",
+                    "remarks": f"Failed to Delete User {data.get('username')} "
+                }
+            ).create()
+        return {
+            "success": False, 
+            "message": f"Failed to Delete User {data.get('username')} "
         }

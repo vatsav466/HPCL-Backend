@@ -73,9 +73,9 @@ class CheckForUnblock:
                 time_difference = target_time_ist - now_ist
                 minutes = int(time_difference.total_seconds() // 60)
                 totalWaitTime = "PT" + str(minutes) + "M"
-            if alert_data.get('location_type') == "TAS" and (alert_data.get("alert_section") == "TAS" or not alert_data.get("alert_section")):
+            if alert_data.get('bu') == "TAS" and (alert_data.get("alert_section") == "TAS" or not alert_data.get("alert_section")):
                 escalation_time = params.get("escalate_time_block","")
-                totalWaitTime = tas_role_configuration.tas_role_mapping[alert_data["alert_section"]][alert_data["interlock_name"]]["block_time"][escalation_time]
+                totalWaitTime = tas_role_configuration.tas_role_mapping[alert_data["bu"]][alert_data["interlock_name"]]["block_time"][escalation_time]
                 print("totalWaittime---------->",totalWaitTime)
             return True, {"waitTime": totalWaitTime}
         except Exception as e:
