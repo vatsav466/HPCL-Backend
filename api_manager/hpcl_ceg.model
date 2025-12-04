@@ -3727,6 +3727,10 @@ Model UserMaster crud_disable {
     Action=> update_user {
         data UpdateUser
     }
+
+    Action=> delete_user {
+        username optional str
+    }
 }
 
 Model SystemAuditLog {
@@ -3735,4 +3739,27 @@ Model SystemAuditLog {
     email optional str
     section optional str
     remarks optional str
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model CrisDryOutSync {
+    run_id index_field str
+    total_dryouts int
+    ms_hsd_dryouts optional int
+    ms_dryouts optional int
+    hsd_dryouts optional int
+    turbo_dryouts optional int
+    e20_dryouts optional int
+    power95_dryouts optional int
+    power99_dryouts optional int
+    power100_dryouts optional int
+    dry_out_in_days str
+    file_path optional str
+
+    Config=> {
+        crud_operations='read'
+    }
 }

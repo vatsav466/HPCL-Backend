@@ -7368,6 +7368,9 @@
                 },
                 {
                     "name": "update_user"
+                },
+                {
+                    "name": "delete_user"
                 }
             ]
         },
@@ -7413,6 +7416,9 @@
                 },
                 {
                     "name": "update_user"
+                },
+                {
+                    "name": "delete_user"
                 }
             ]
         },
@@ -7463,6 +7469,69 @@
             "attributes": {},
             "uris": [
                 "/api/systemauditlog/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "crisdryoutsync",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CrisDryOutSync",
+            "attributes": {},
+            "uris": [
+                "/api/crisdryoutsync/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "crisdryoutsync_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CrisDryOutSync_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/crisdryoutsync/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "crisdryoutsync_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CrisDryOutSync_admin",
+            "attributes": {},
+            "uris": [
+                "/api/crisdryoutsync/*"
             ],
             "scopes": [
                 {
@@ -8227,6 +8296,10 @@
         {
             "name": "update_user",
             "displayName": "update_user"
+        },
+        {
+            "name": "delete_user",
+            "displayName": "delete_user"
         }
     ]
 }

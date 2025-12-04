@@ -1,6 +1,7 @@
 import urdhva_base
 import os
 import ast
+import sys
 import json
 import jinja2
 import decimal
@@ -37,6 +38,8 @@ cumulative = {"key": "\"C\"", "cond": "equals", "value": "true"}
 
 chart_path = ""
 zone_wise_pdf_path = ""
+last_30_days_chart_path = ""
+WRITE_TO_DB = False
 
 creds = credential_loader.get_credentials('APP_DB')
 
@@ -79,6 +82,69 @@ def get_growth_percentage(current, hist):
         return round_off(-100)
     else:
         return round_off(0)
+
+async def dry_out_trends_chart(last_30_days_trends_df, output_path='/tmp/dry_out_trends.png'):
+    global last_30_days_chart_path
+    last_30_days_chart_path = output_path
+
+    # If Polars DF → convert to Pandas
+    if not isinstance(last_30_days_trends_df, pd.DataFrame):
+        last_30_days_trends_df = last_30_days_trends_df.to_pandas()
+    
+    # Fix types
+    last_30_days_trends_df['dry_out_count'] = pd.to_numeric(
+        last_30_days_trends_df['dry_out_count'], errors='coerce'
+    )
+    
+    last_30_days_trends_df['dry_out_date'] = pd.to_datetime(
+        last_30_days_trends_df['dry_out_date'], errors='coerce'
+    )
+
+    # Format date label: Nov-21
+    last_30_days_trends_df['x_label'] = last_30_days_trends_df['dry_out_date'].dt.strftime('%b-%d')
+
+    plt.figure(figsize=(17, 9))
+
+    bars = plt.bar(
+        last_30_days_trends_df['x_label'],
+        last_30_days_trends_df['dry_out_count'],
+        width=0.45,
+        color="#A9A9A9"
+    )
+
+    # Add labels above bars
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + 30,
+            f'{int(height)}',
+            ha='center',
+            va='bottom',
+            rotation=90,        
+            fontsize=14,
+            fontweight='bold'
+        )
+    
+    # Y-axis ticks → 0, 200, 400, ...
+    max_val = last_30_days_trends_df['dry_out_count'].max()
+    upper_limit = int(np.ceil(max_val / 200.0) * 200)
+    plt.yticks(np.arange(0, upper_limit + 1, 200), fontsize=14)
+
+    # Add top space so text doesn’t touch border
+    plt.ylim(0, upper_limit + 300)
+
+    # Add vertical grid lines (like image)
+    plt.grid(axis='y', linestyle='--', linewidth=0.6, alpha=0.5)
+
+    plt.xlabel("Day Wise Count", fontsize=16, labelpad=20)
+    plt.xticks(rotation=45, ha='right', fontsize=14)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    return output_path
 
 async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
     global chart_path
@@ -671,6 +737,7 @@ async def supply_terminal_wise_counts():
 
 async def fetch_dryout_data():
     global zone_wise_pdf_path
+    global WRITE_TO_DB
     query = """
                 WITH dates AS (
                 SELECT CURRENT_DATE::date AS report_date
@@ -761,11 +828,16 @@ async def fetch_dryout_data():
             }
             await hpcl_ceg_model.DryOutDailyReportCreate(**data).create()
         else:
-            alert_id = existing['data'][0]['id']
-            await hpcl_ceg_model.DryOutDailyReport(**{"id": alert_id, 
-                                           "dry_out_count": str(report_data["Grand Total"]),
-                                           "dry_out_zone": dry_out_zone,
-                                           "dry_out_alert_ids": all_ids_list}).modify()
+            if WRITE_TO_DB:
+                alert_id = existing['data'][0]['id']
+                await hpcl_ceg_model.DryOutDailyReport(**{"id": alert_id, 
+                                                          "dry_out_count": str(report_data["Grand Total"]),
+                                                          "dry_out_zone": dry_out_zone,
+                                                          "dry_out_alert_ids": all_ids_list}).modify()
+                print("Data Inserted Successfully")
+            else:
+                print("Cannot update already existing Data")
+            
 
     payload_dict = {"filters": [{"key": "interlock_name", "cond": "=", "value": ["Dry Out Each Indent Wise MainFlow"]},
                                 {"key": "zone", "cond": "=", "value": []}, {"key": "plant", "cond": "=", "value": []},
@@ -938,11 +1010,19 @@ async def fetch_dryout_data():
                     ORDER BY
                         DATE_TRUNC('month', stock_date)
                     """
+    last_30_days_dry_out_trends_query = f"""SELECT dry_out_date, dry_out_count
+                                            FROM dry_out_daily_report Where created_at::DATE > CURRENT_DATE - INTERVAL '30 days'
+                                        """
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     zone_data = await function(query=loss_query)
+    last_30_days_trends = await function(query=last_30_days_dry_out_trends_query)
     zone_fuel_df = pd.DataFrame(zone_data)
+    last_30_days_trends_df = pd.DataFrame(last_30_days_trends)
+
+
+    zone_wise_chart = await dry_out_trends_chart(last_30_days_trends_df)
     chart_path = await generate_chart(zone_fuel_df)
 
     supply_terminal_query_ro_count_df = await supply_terminal_wise_counts()
@@ -1480,10 +1560,11 @@ async def publish_daily_novex_status_email():
         to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
         subject="Novex Daily Report",
         cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
-            "dry_out_lost": f"{chart_path}"
+            "dry_out_lost": f"{chart_path}",
+            "last_30_days_dry_out_trends": f"{last_30_days_chart_path}"
         },
         attachments = [zone_wise_pdf_path]
     )
@@ -1492,10 +1573,11 @@ async def publish_daily_novex_status_email():
         to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
         subject="Novex Daily Report: Retail",
         cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
-            "dry_out_lost": f"{chart_path}"
+            "dry_out_lost": f"{chart_path}",
+            "last_30_days_dry_out_trends": f"{last_30_days_chart_path}"
         },
         attachments = [zone_wise_pdf_path]
     )
@@ -1504,7 +1586,7 @@ async def publish_daily_novex_status_email():
         to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
         subject="Novex Daily Report: LPG",
         cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com"],
         notification_data=status_data
     )
     await send_notification(
@@ -1512,7 +1594,7 @@ async def publish_daily_novex_status_email():
         to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
         subject="Novex Daily Report: SOD",
         cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com"],
         notification_data=status_data,
         attachments = [zone_wise_pdf_path]
     )
@@ -1521,10 +1603,11 @@ async def publish_daily_novex_status_email():
         to_recipients=["sreedhar.maddipati@algofusiontech.com"],
         subject="Novex Daily Report",
         cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
-            "dry_out_lost": f"{chart_path}"
+            "dry_out_lost": f"{chart_path}",
+            "last_30_days_dry_out_trends": f"{last_30_days_chart_path}"
         },
         attachments = [zone_wise_pdf_path]
     )
@@ -1558,4 +1641,6 @@ async def send_notification(template_name, to_recipients, subject, cc_recipients
     )
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "true":
+        WRITE_TO_DB = True
     asyncio.run(publish_daily_novex_status_email())
