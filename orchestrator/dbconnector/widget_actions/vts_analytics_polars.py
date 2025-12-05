@@ -1162,7 +1162,7 @@ class VTSAnalyticsActions:
 
                 if str(payload.get("download", "")).lower() == "true":
                     return await download_streaming_data(merged_df)
-                return streaming_data(merged_df)
+                return await streaming_data(merged_df)
 
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
@@ -1178,8 +1178,8 @@ class VTSAnalyticsActions:
             merged_df = merged_df.drop(["truck_no"], strict=False)
 
             if str(payload.get("download", "")).lower() == "true":
-                return download_streaming_data(merged_df)
-            return streaming_data(merged_df)
+                return await download_streaming_data(merged_df)
+            return await streaming_data(merged_df)
 
         except Exception as e:
             print("traceback:", traceback.format_exc())
@@ -1451,8 +1451,9 @@ class VTSAnalyticsActions:
                               "transporter_name"] + all_violations
                 agg_df = agg_df.select(final_cols)
 
-                return StreamingResponse(streaming_data(agg_df, payload),
-                                         media_type="application/json")
+                if str(payload.get("download", "")).lower() == "true":
+                    return await download_streaming_data(agg_df)
+                return await streaming_data(agg_df)
 
             # ==================== SPECIFIC VIOLATION TYPES ====================
             if violation_types:
@@ -1520,8 +1521,9 @@ class VTSAnalyticsActions:
                         pl.col(col).fill_null(0).cast(pl.Int64)
                     )
 
-                return StreamingResponse(streaming_data(final_df, payload),
-                                         media_type="application/json")
+                if str(payload.get("download", "")).lower() == "true":
+                    return await download_streaming_data(final_df)
+                return await streaming_data(final_df)
 
             # ==================== DEFAULT CASE - ALL DATA ====================
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
@@ -1718,8 +1720,9 @@ class VTSAnalyticsActions:
                     "data": agg_df.to_dicts()
                 }
 
-            return StreamingResponse(streaming_data(final_df, payload),
-                                     media_type="application/json")
+            if str(payload.get("download", "")).lower() == "true":
+                return await download_streaming_data(final_df)
+            return await streaming_data(final_df)
 
         except Exception as e:
             print("ERROR:", traceback.format_exc())
