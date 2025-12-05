@@ -341,7 +341,7 @@ def merge_shortage_with_violations(
                     left_on=['tl_number', 'invoice_match_key'],
                     right_on=['tl_number', 'invoice_match_key'],
                     how=merge_how,
-                    suffix=('_shortage', ''),
+                    suffix='_shortage',
                     coalesce=True
                 )
                 # Use shortage invoice_number when violations invoice_number is null
@@ -378,7 +378,7 @@ def merge_shortage_with_violations(
                     left_on=['tl_number', 'invoice_match_key'],
                     right_on=['tl_number', 'invoice_match_key'],
                     how=merge_how,
-                    suffix=('', '_shortage'),
+                    suffix='_shortage',
                     coalesce=True
                 )
 
@@ -502,7 +502,7 @@ def merge_shortage_with_violations(
                     left_on=['tl_number', 'invoice_match_key'],
                     right_on=['tl_number', 'invoice_match_key'],
                     how=merge_how,
-                    suffix=('_shortage', ''),
+                    suffix='_shortage',
                     coalesce=True
                 )
                 if "invoice_number_shortage" in df_merged.columns:
@@ -538,7 +538,7 @@ def merge_shortage_with_violations(
                     left_on=['tl_number', 'invoice_match_key'],
                     right_on=['tl_number', 'invoice_match_key'],
                     how=merge_how,
-                    suffix=('', '_shortage'),
+                    suffix='_shortage',
                     coalesce=True
                 )
 
