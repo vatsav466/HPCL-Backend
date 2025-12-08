@@ -490,8 +490,8 @@ async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
                     "transactNo": str(alert_data["transaction_number"]) + "0",
                     "truckRegNo": alert_data["truck_number"],
                     "blockingFlag": "N",
-                    "blockingFrom": alert_data["blocking_from"],
-                    "blockingTo": alert_data["blocking_to"]
+                    "blockingFrom": (alert_data['blocking_from'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
+                    "blockingTo": (alert_data['blocking_to'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
                 }
             ]
             print("-"*20)

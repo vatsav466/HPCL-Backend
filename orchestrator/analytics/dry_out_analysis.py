@@ -1416,7 +1416,9 @@ async def get_ro_count_less_50(condition):
     data = pd.DataFrame.from_records(data, columns=columns)
     data['CUST_CD'] = data['CUST_CD'].astype(str)
 
-    query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    query = (f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} "
+             f"and progress_rate = '1' and alert_status != 'Close' "
+             f"order by sap_id, created_at asc")
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
     #     "hpcl_ceg", "1")
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
