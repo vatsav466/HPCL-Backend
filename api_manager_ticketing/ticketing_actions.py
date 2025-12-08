@@ -196,6 +196,8 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
             'comment_id': '',
         }.items():
             ticket_data[key] = value
+        ticket_data['parent_id'] = tdata.get('parent_id')
+
             
         action_type_str = TicketType[ticket_state_str].value
         action_type = AlertActionType[action_type_str]
@@ -510,6 +512,47 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         # UPDATE THE TICKET IN DB
         # ---------------------------------------
         await Ticketing(id=ticket_id, **data_dict).modify()
+        new_subtask = data_dict.get("subtask_id")
+
+        if new_subtask:
+            # 1️⃣ Fetch this ticket again to get parent_id
+            params_parent = urdhva_base.queryparams.QueryParams()
+            params_parent.q = f"id='{ticket_id}'"
+            params_parent.limit = 1
+            params_parent.fields = ["id", "parent_id"]
+
+            parent_info = await Ticketing.get_all(params_parent, resp_type='plain')
+
+            if parent_info and parent_info.get("data"):
+                parent_id = parent_info["data"][0].get("parent_id")
+
+                if parent_id:
+                    # 2️⃣ Fetch parent ticket by ticket_id
+                    params_p = urdhva_base.queryparams.QueryParams()
+                    params_p.q = f"ticket_id='{parent_id}'"
+                    params_p.limit = 1
+                    params_p.fields = ["id", "subtask_id"]
+
+                    parent_resp = await Ticketing.get_all(params_p, resp_type='plain')
+
+                    if parent_resp and parent_resp.get("data"):
+                        parent_ticket = parent_resp["data"][0]
+                        parent_db_id = parent_ticket["id"]
+
+                        # 3️⃣ Prepare subtask list
+                        existing_subtasks = parent_ticket.get("subtask_id") or []
+                        if not isinstance(existing_subtasks, list):
+                            existing_subtasks = []
+
+                        # 4️⃣ Add new subtask if not duplicate
+                        if new_subtask not in existing_subtasks:
+                            existing_subtasks.append(new_subtask)
+
+                        # 5️⃣ Save parent ticket
+                        await Ticketing(
+                            id=parent_db_id,
+                            subtask_id=existing_subtasks
+                        ).modify()
 
         # ---------------------------------------
         # UPDATE ALERT HISTORY (same as your code)

@@ -600,7 +600,7 @@ def dict_to_object(d):
         return SimpleNamespace(**{k: dict_to_object(v) for k, v in d.items()})
     return d
 
-async def supply_terminal_wise_counts():
+async def supply_terminal_wise_counts(by_ro=False):
     query = f"""SELECT DISTINCT
                     CASE 
                         WHEN a.zone = 'CEN' THEN 'CZ'
@@ -705,8 +705,12 @@ async def supply_terminal_wise_counts():
     carry_merge_df["INDCNT"] = carry_merge_df["INDCNT"].fillna(0).astype(int)
     carry_merge_df.drop(columns=["SAP_ID"], inplace=True)
 
+    required_columns = ["zone", "supply_location", "region"]
+    if by_ro:
+        required_columns.append("sap_id")
+
     summary_df = (
-        carry_merge_df.groupby(["zone", "supply_location", "region"], dropna=False)
+        carry_merge_df.groupby(required_columns, dropna=False)
         .agg(
             **{
                 "Count of Dryout ROs": ("sap_id", "nunique"),
