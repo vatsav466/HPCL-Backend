@@ -206,6 +206,9 @@ def insertToDB(data, table_name):
         if data[col].dtype in [pl.Utf8]:
             data = data.with_columns(pl.col(col).str.replace_all("\x00", "").alias(col))
     try:
+        if data.is_empty():
+            logger.info(f"No data to insert into {table_name}")
+            return True
         query = f'''
         COPY "{table_name}"
         FROM STDIN
