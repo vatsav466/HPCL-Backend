@@ -1545,11 +1545,15 @@ Model DeviceMaster {
 Model VtsAlertHistory {
     vendor_id optional str
     location_id optional str
+    base_location_id optional str
     bu optional str
     sap_id optional str
     zone optional str
+    base_zone optional str
     location_name optional str
+    base_location_name optional str
     region optional str
+    base_region optional str
     location_type optional str
     tl_number index_field str
     report_duration optional str

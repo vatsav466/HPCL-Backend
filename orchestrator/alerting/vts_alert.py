@@ -40,9 +40,9 @@ class VTSAlertManager(alert_factory.AlertFactory):
             dict: A dictionary containing the status, message and the created alert document
         """
         status, location_details = await alert_helper.get_location_details(alert_data['location_type'],
-                                                                           alert_data['location_id'])
+                                                                           alert_data['base_location_id'])
         if not status:
-            logger.info(f"Error in finding location {alert_data['location_id']} "
+            logger.info(f"Error in finding location {alert_data['base_location_id']} "
                         f"for bu {alert_data['location_type']} - {location_details}")
             location_details = {'name': ""}
 
@@ -51,7 +51,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
             logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
             return
         vts_alert_data = {"bu": alert_data['location_type'],
-                          "sap_id": alert_data['location_id'],
+                          "sap_id": alert_data['base_location_id'],
                           "location_name": location_details['name'],
                           "vehicle_number": alert_data['tl_number'],
                           "violation_type": violation_name}
@@ -129,7 +129,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         f"where truck_regno = '{tl_number}'")
         if query:
             await hpcl_ceg_model.VtsTruckDetails.update_by_query(query)
-        camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=alert_data['location_id'],
+        camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=alert_data['base_location_id'],
                                                     alert_section="VTS")
         await cls.create_alert(vts_alert_data, camunda_url)
 
