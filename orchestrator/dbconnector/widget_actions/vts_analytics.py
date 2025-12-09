@@ -1476,7 +1476,7 @@ class VTSAnalyticsActions:
 
                 if str(payload.get("download", "")).lower() == "true":
                     return await download_streaming_data(agg_df)
-                return streaming_data(agg_df)
+                return await streaming_data(agg_df)
 
             # ==================== SPECIFIC VIOLATION TYPES ====================
             if violation_types:
@@ -1546,7 +1546,7 @@ class VTSAnalyticsActions:
 
                 if str(payload.get("download", "")).lower() == "true":
                     return await download_streaming_data(final_df)
-                return streaming_data(final_df)
+                return await streaming_data(final_df)
 
             # ==================== DEFAULT CASE - ALL DATA ====================
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
@@ -1744,7 +1744,7 @@ class VTSAnalyticsActions:
                 }
             if str(payload.get("download", "")).lower() == "true":
                 return await download_streaming_data(final_df)
-            return streaming_data(final_df)
+            return await streaming_data(final_df)
 
         except Exception as e:
             print("ERROR:", traceback.format_exc())
