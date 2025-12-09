@@ -1910,7 +1910,16 @@ class Alerts_Unblock_Vts_TruckParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Alerts_Unblock_Alert_TructParams(pydantic.BaseModel):
+    unique_id: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Alerts_Get_Vts_Blocked_TrucksParams(pydantic.BaseModel):
+    tab: str
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
 
     class Config:

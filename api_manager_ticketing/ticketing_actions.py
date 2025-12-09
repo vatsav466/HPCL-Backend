@@ -223,6 +223,43 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         params.fields = ["id", "ticket_id"]
         resp = await Ticketing.get_all(params, resp_type='plain')
         db_ticket_id = resp['data'][0]['id']
+        parent_tid = ticket_data.get("parent_id")
+
+        if parent_tid:
+            # Fetch parent ticket by ticket_id
+            params_p = urdhva_base.queryparams.QueryParams()
+            params_p.q = f"ticket_id='{parent_tid}'"
+            params_p.limit = 1
+            params_p.fields = ["id", "subtask_id"]
+
+            parent_resp = await Ticketing.get_all(params_p, resp_type='plain')
+
+            if parent_resp and parent_resp.get("data"):
+                parent_ticket = parent_resp["data"][0]
+                parent_db_id = parent_ticket["id"]
+
+                # existing subtask list
+                existing_subtasks = parent_ticket.get("subtask_id") or []
+
+                # ensure list format
+                if not isinstance(existing_subtasks, list):
+                    existing_subtasks = []
+
+                # remove empty strings
+                existing_subtasks = [x for x in existing_subtasks if x]
+
+
+                # add new subtask (this ticket)
+                new_subtask_id = ticket_data["ticket_id"]
+
+                if new_subtask_id not in existing_subtasks:
+                    existing_subtasks.append(new_subtask_id)
+
+                # update parent ticket
+                await Ticketing(
+                    id=parent_db_id,
+                    subtask_id=existing_subtasks
+                ).modify()
 
         
         for lr in linked_res:
@@ -265,6 +302,8 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
             "alert_data": selected_alert,
             "reporter": user_name,
             "ticket_history": ticket_data['ticket_history'],
+            "parent_id": parent_tid,
+            "subtask_id": existing_subtasks if parent_tid else [],
             "linked_alerts": [
                 {
                     "sap_id": lr.get("sap_id"),
