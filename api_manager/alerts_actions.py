@@ -537,26 +537,91 @@ async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
 # Action get_vts_blocked_trucks
 @router.post('/get_vts_blocked_trucks', tags=['Alerts'])
 async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParams):
-    query = "blocking_status='blocked'"
 
-    query = await generate_filter_query(data.cross_filters, query)
+    tab = getattr(data, "tab", None)   
 
-    alert_data = await VtsManualBlocked.get_all(
-        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
-        )
-    if alert_data["data"]:
+    # ============================================================
+    # TAB 1: VTS BLOCKED LIST  (NO FILTERS SHOULD APPLY HERE)
+    # ============================================================
+    if tab == "vts":
+        query = "blocking_status='blocked'"
+
+       
+        vts_params = urdhva_base.queryparams.QueryParams(q=query)
+
+        alert_data = await VtsManualBlocked.get_all(vts_params, resp_type='plain')
+        vts_blocked_data = alert_data.get("data", [])
+
         return {
-            "status": True, 
-            "message": "success", 
-            "data": alert_data["data"]
+            "status": True,
+            "message": "success",
+            "data": {
+                "vts_blocked_list": vts_blocked_data
             }
-    
-    return {
-        "status": True, 
-        "message": "No data found",
-        "data": []
         }
 
+
+    # ============================================================
+    # TAB 2: ALERT BLOCKED LIST (ONLY THIS NEEDS FILTERS)
+    # ============================================================
+    if tab == "alerts":
+
+        # -------------------------
+        # Extract BU from filters
+        # -------------------------
+        bu_value = None
+        if data.cross_filters:
+            for f in data.cross_filters:
+                if getattr(f, "key", None) == "bu" and getattr(f, "value", None):
+                    bu_value = f.value
+                    break
+
+        # -------------------------
+        # Build alert query
+        # -------------------------
+        alert_query = "alert_status='Open' AND alert_section='VTS'"
+
+        if bu_value:
+            alert_query += f" AND bu='{bu_value}'"
+
+        # -------------------------
+        # Prepare params
+        # -------------------------
+        alert_params = urdhva_base.queryparams.QueryParams(q=alert_query , limit=0)
+        alert_params.fields = [
+            "bu",
+            "zone",
+            "location_name",
+            "sap_id",
+            "alert_status",
+            "alert_section",
+            "vehicle_number",
+            "vehicle_blocked_start_date",
+            "vehicle_blocked_end_date",
+            "transporter_code",
+            "unique_id"
+        ]
+
+        alerts_resp = await Alerts.get_all(alert_params, resp_type='plain')
+        alert_blocked_data = alerts_resp.get("data", [])
+
+        return {
+            "status": True,
+            "message": "success",
+            "data": {
+                "alert_blocked_list": alert_blocked_data
+            }
+        }
+
+
+    # ============================================================
+    # INVALID TAB HANDLING
+    # ============================================================
+    return {
+        "status": False,
+        "message": "Invalid tab. Valid values: 'vts', 'alerts'",
+        "data": {}
+    }
 
 # Action get_vts_unblocked_trucks
 @router.post('/get_vts_unblocked_trucks', tags=['Alerts'])
@@ -609,3 +674,62 @@ async def alerts_alerts_get_vts_query(data: Alerts_Alerts_Get_Vts_QueryParams):
             "message": "Internal error processing VTS query",
             "generated_sql": None
         }
+
+# Action unblock_alert_truck
+@router.post('/unblock_alert_truck', tags=['Alerts'])
+async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
+    try:
+        rpt = urdhva_base.context.context.get("rpt", {})
+        if not rpt:
+            return {"status": False, "message": "Session expired, please login again"}
+
+        username = rpt.get("username")
+        unique_id = data.unique_id
+
+        # ----------------------------
+        # FETCH ALERT BY unique_id
+        # ----------------------------
+        params = urdhva_base.queryparams.QueryParams(
+            q=f"unique_id='{unique_id}'", limit=1
+        )
+        params.fields = ["id", "alert_history", "alert_state", "alert_status"]
+
+        alert_resp = await Alerts.get_all(params, resp_type="plain")
+
+        if not alert_resp or not alert_resp.get("data"):
+            return {"status": False, "message": "Alert not found"}
+
+        alert = alert_resp["data"][0]
+        alert_id = alert["id"]
+        history = alert.get("alert_history", []) or []
+
+        # ----------------------------
+        # ADD NEW HISTORY DICT ONLY
+        # ----------------------------
+        new_history = {
+            "action_msg": "Alert unblocked",
+            "action_type": "UnBlocked",
+            "allocated_time": urdhva_base.utilities.get_present_time().isoformat(),
+            "processed_time": urdhva_base.utilities.get_present_time().isoformat(),
+            "action_by": username
+        }
+
+        history.append(new_history)
+
+        # ----------------------------
+        # UPDATE MAIN ALERT
+        # ----------------------------
+        update_payload = {
+            "id": alert_id,
+            "alert_status": "Close",
+            "alert_state": "Resolved",
+            "alert_history": history
+        }
+
+        await Alerts(**update_payload).modify()
+
+        return {"status": True, "message": "Alert unblocked successfully"}
+
+    except Exception as e:
+        print("Error:", e)
+        return {"status": False, "message": "Failed to unblock alert"}
