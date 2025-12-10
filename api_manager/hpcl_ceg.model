@@ -6,6 +6,7 @@ Enum BusinessUnit str {
     CP='CP'
     CDCMS='CDCMS'
     ALL='ALL'
+    DS='DS'
 }
 
 Enum DeviceType str {
