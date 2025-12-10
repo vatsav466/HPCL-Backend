@@ -1091,7 +1091,7 @@
                     "name": "unblock_vts_truck"
                 },
                 {
-                    "name": "unblock_alert_truct"
+                    "name": "unblock_alert_truck"
                 },
                 {
                     "name": "get_vts_blocked_trucks"
@@ -1199,7 +1199,7 @@
                     "name": "unblock_vts_truck"
                 },
                 {
-                    "name": "unblock_alert_truct"
+                    "name": "unblock_alert_truck"
                 },
                 {
                     "name": "get_vts_blocked_trucks"
@@ -7816,8 +7816,8 @@
             "displayName": "unblock_vts_truck"
         },
         {
-            "name": "unblock_alert_truct",
-            "displayName": "unblock_alert_truct"
+            "name": "unblock_alert_truck",
+            "displayName": "unblock_alert_truck"
         },
         {
             "name": "get_vts_blocked_trucks",

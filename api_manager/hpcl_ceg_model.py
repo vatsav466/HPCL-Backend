@@ -1910,7 +1910,7 @@ class Alerts_Unblock_Vts_TruckParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
-class Alerts_Unblock_Alert_TructParams(pydantic.BaseModel):
+class Alerts_Unblock_Alert_TruckParams(pydantic.BaseModel):
     unique_id: str
 
     class Config:

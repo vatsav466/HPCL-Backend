@@ -668,10 +668,9 @@ async def alerts_alerts_get_vts_query(data: Alerts_Alerts_Get_Vts_QueryParams):
             "generated_sql": None
         }
 
-
-# Action unblock_alert_truct
-@router.post('/unblock_alert_truct', tags=['Alerts'])
-async def alerts_unblock_alert_truct(data: Alerts_Unblock_Alert_TructParams):
+# Action unblock_alert_truck
+@router.post('/unblock_alert_truck', tags=['Alerts'])
+async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
     try:
         rpt = urdhva_base.context.context.get("rpt", {})
         if not rpt:

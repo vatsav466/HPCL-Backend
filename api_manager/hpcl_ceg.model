@@ -895,7 +895,7 @@ Model Alerts {
         unblock_id str
     }
 
-    Action=> unblock_alert_truct {
+    Action=> unblock_alert_truck {
         unique_id str
 
     }
