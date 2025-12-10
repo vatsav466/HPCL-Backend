@@ -137,7 +137,7 @@ class LpgRejections:
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
         rejections = rejections.with_columns(pl.lit("pt_rejections").alias("rejection_type"))
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).round(2).alias("rejection"))
-        rejections = rejections.filter((pl.col("rejection") > 12) | (pl.col("rejection") < 1))
+        rejections = rejections.filter((pl.col("rejection") < 6) | (pl.col("rejection") < 1))
         check_alerts = f""" SELECT
                                 sap_id, device_name, created_at
                             FROM
@@ -164,7 +164,7 @@ class LpgRejections:
             if float(data['rejection']) < 1:
                 self.params["message"] = f"O-Ring Leak rejection is going below 1%. The current rejection rate is {str(data['rejection'])}"
             else:
-                self.params["message"] = f"O-Ring Leak rejection is going above 12%. The current rejection rate is {str(data['rejection'])}"
+                self.params["message"] = f"O-Ring Leak rejection is going below 6%. The current rejection rate is {str(data['rejection'])}"
             self.params["alert_history"] = [{"action_msg": self.params["message"], "action_type": "Created"}]
             camunda_url = await helpers.get_camunda_url(bu=self.params["alert_type"], sap_id=self.params["sap_id"],
                                                         alert_section=self.params["alert_section"])

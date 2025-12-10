@@ -73,6 +73,18 @@ ro_query = """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOY
                     LEFT JOIN ZMMCV_PLANT_STG EPL on ZE.PLANT_CODE = EPL.PLANT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
                 WHERE ZE.PLANT_CODE like '7%' """
+
+# Add required roles in novex_role_master.csv
+# Direct Sales (I&C)
+ds_query = """SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  
+    ZE.EMP_EMAIL as EMP_EMAIL, 
+    ZE.EMP_BU_CODE,ZE.PLANT_CODE AS PLANT_CODE, ZE.PLANT_DESC,ZE.SALES_GRP, 
+    ZSA.SALES_GROUP_DESC,ZR.ROLE_NAME as ROLE_NAME, EPL.ZZONE as Zone,
+    ZE.EMP_CONTACT_NUMBER AS contact_number
+FROM ZGRCCV_ROLE_STG ZR left JOIN ZHRCV_EMP_NONHCM_STG ZE on ZR.USER_NAME = ZE.EMPLOYEE_NUMBER 
+    LEFT JOIN ZMMCV_PLANT_STG EPL on ZE.PLANT_CODE = EPL.PLANT
+    LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
+WHERE ZE.PLANT_CODE like '3%' """
 # AND ZR.ROLE_NAME IN ('SD_RREGNL_MNGR','SD_RHQO_OFFICER','SD_RSALES_OFFICER','SD_RHQO_GMSALES')
 
 # Zonal
@@ -163,6 +175,27 @@ location_configs = [
                 WHERE 
                     zca.deliv_plant <> '' AND zca.sales_org='7000' AND zca.DIST_CHANNEL=11 
                     AND zca.division in (11,12) AND zca.customer BETWEEN 4000000 AND 49999999 AND zca.INACTIVE=''
+                 """
+    },
+    {
+        "bu": "ds",
+        "query": """                               
+                SELECT
+                    zca.customer AS PLANT, zcs.name1 AS PLANT_DESC, zca.sales_district, zso.sales_district_desc, 
+                    zca.deliv_plant AS terminal_plant_id, deliv.PLANT_DESC as terminal_plant_name, zso.SALES_OFFICE_DESC, 
+                    zso.SALES_GROUP_DESC, plt.ZZONE, zcs.CITY AS CITY1, zcs.POSTAL_CODE AS POST_CODE1, zcs.ADDRESS1, zcs.ADDRESS2,
+                    zcs.ADDRESS3, zcs.ADDRESS4, zcs.ADDRESS5, plt.STATE_NAME, zcs.first_telephone_number AS dealer_phone,
+                    zcs.email_id AS dealer_email, zca.inactive, zcs.OUTLET_TYPE, zcs.gstin, zcs.OUTLET_TYPE,
+                    zcs.permanent_Account_number, zca.sales_grp
+                FROM ZSDCV_CUST_SA_STG zca 
+                    INNER join ZSDCV_CUSTOMER_STG zcs on zcs.customer_number = zca.customer 
+                    INNER join ZSDCV_SO_PARAM_STG zso on zso.sales_district = zca.sales_district AND
+                    zso.sales_org=zca.sales_org AND zso.sales_office=zca.sales_off AND zso.sales_group=zca.sales_grp
+                    INNER join EDW_DC_PLANT plt on zso.PLANT=plt.PLANT
+                    INNER join EDW_DC_PLANT deliv on deliv.PLANT=zca.deliv_plant
+                WHERE 
+                    zca.deliv_plant <> '' AND zca.sales_org='3000' AND zca.DIST_CHANNEL=12
+                    AND zca.customer BETWEEN 4000000 AND 49999999 AND zca.INACTIVE=''
                  """
     }
 ]

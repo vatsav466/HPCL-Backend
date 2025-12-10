@@ -521,8 +521,13 @@ vts_query = {
     "email_master_details": """
                             SELECT sap_id, zone, transporter_name, transporter_code, location_name
                             FROM email_master
-                            """
+                            """,
+    "alert_details":"""
+                    SELECT bu,zone,location_name,sap_id,alert_status,transporter_code,vehicle_number,unique_id,vehicle_blocked_start_date,vehicle_blocked_end_date 
+                    FROM alerts 
+                    """
+
                               
     }
-
+    
 
