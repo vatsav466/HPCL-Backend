@@ -46,7 +46,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         f"for bu {alert_data['location_type']} - {location_details}")
             location_details = {'name': ""}
 
-        instance_data, violation_name, vts_alert_history_ids = await vts_analysis.get_vts_instance(alert_data['tl_number'],alert_data['location_id'],alert_data['location_type'])
+        instance_data, violation_name, vts_alert_history_ids = await vts_analysis.get_vts_instance(alert_data['tl_number'],alert_data['base_location_id'],alert_data['location_type'])
         if not instance_data:
             logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
             return
