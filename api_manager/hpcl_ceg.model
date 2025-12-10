@@ -895,7 +895,13 @@ Model Alerts {
         unblock_id str
     }
 
+    Action=> unblock_alert_truck {
+        unique_id str
+
+    }
+
     Action=> get_vts_blocked_trucks {
+        tab str
         cross_filters optional list WidgetFilters
     }
     
