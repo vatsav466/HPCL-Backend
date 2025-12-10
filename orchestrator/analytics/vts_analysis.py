@@ -1029,7 +1029,7 @@ async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_sectio
 # continuous_driving_count
 
 async def get_base_location_details():
-    query = """SELECT "TRUCK_REGNNO", "BASE_LOCN" FROM "IMS_SAP".""VTS_TRUCK_DETAILS" WHERE "RECORD_STATUS" = 'A' """
+    query = """SELECT "TRUCK_REGNNO", "BASE_LOCN" FROM "IMS_SAP"."VTS_TRUCK_DETAILS" WHERE "RECORD_STATUS" = 'A' """
     charts_ins = dashboard_studio_model.Charts_Connection_Vault_RoutingParams(
         connection_id=1,
         action='get_data'
