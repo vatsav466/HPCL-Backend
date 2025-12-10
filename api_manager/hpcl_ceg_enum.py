@@ -11,6 +11,7 @@ class BusinessUnit(str, enum.Enum):
     CP = 'CP'
     CDCMS = 'CDCMS'
     ALL = 'ALL'
+    DS = 'DS'
 
 
 
