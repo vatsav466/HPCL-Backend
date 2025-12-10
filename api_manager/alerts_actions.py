@@ -373,7 +373,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
     if not rpt:
         return {"status": False, "message": "Session got expired, Please Re-Login"}
     
-    if ("HQO HSE SOD" not in rpt.get('novex_role',[])) or ("HQO LPG" not in rpt.get('novex_role',[])):
+    if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
         return {"status": False, "message": "Not Allowed To Perform This Action"}
 
     query = (f"""vehicle_unblocked_date is null and alert_section='VTS' and bu='{data.bu.value}' and vehicle_number='{data.truck_number}' """)
@@ -483,7 +483,7 @@ async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
         if not rpt:
             return {"status": False, "message": "Session got expired, Please Re-Login"}
         
-        if ("HQO HSE SOD" not in rpt.get('novex_role',[])) or ("HQO LPG" not in rpt.get('novex_role',[])):
+        if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
             return {"status": False, "message": "Not Allowed To Perform This Action"}
 
         alert_data = await VtsManualBlocked.get(int(data.unblock_id))
