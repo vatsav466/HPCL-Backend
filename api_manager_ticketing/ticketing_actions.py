@@ -75,6 +75,8 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     
 
     tdata = data.model_dump()
+    if not tdata.get("subtask_id"):
+            tdata["subtask_id"] = []
 
     # Build the alert query
     query = (
@@ -453,8 +455,8 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         # ------------------------------------------------------------
         # FIX → Convert subtask_id "" → []
         # ------------------------------------------------------------
-        if data_dict.get("subtask_id") in ["", None]:
-            data_dict["subtask_id"] = []
+        if not tdata.get("subtask_id"):
+            tdata["subtask_id"] = []
 
         # Rename alert_type → interlock_name
         if "alert_type" in data_dict:
