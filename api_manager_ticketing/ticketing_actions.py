@@ -450,6 +450,12 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         data_dict = data.model_dump()
         print("data_dict", data_dict)
 
+        # ------------------------------------------------------------
+        # FIX → Convert subtask_id "" → []
+        # ------------------------------------------------------------
+        if data_dict.get("subtask_id") in ["", None]:
+            data_dict["subtask_id"] = []
+
         # Rename alert_type → interlock_name
         if "alert_type" in data_dict:
             data_dict["interlock_name"] = data_dict.pop("alert_type")
@@ -507,19 +513,12 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         # ---------------------------------------
         ticket_state = data_dict.get("ticket_state")
         action_type_enum = TicketType[ticket_state].value
-
-        # add employee_id here
-        # ------------------------------------------------------------
-        # HISTORY ENTRY logic based on alert status
-        # ------------------------------------------------------------
         employee_id = data_dict.get("employee_id")
 
         if all_alerts_closed:
-            # special message only when alerts are closed
             action_msg = "All linked alerts are closed, so ticket moved to Closed state"
             action_type_val = "TicketResolved"
         else:
-            # your old behavior (no change)
             action_msg = f"Ticket updated, state changed to {ticket_state}"
             action_type_val = action_type_enum
 
@@ -551,6 +550,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         # UPDATE THE TICKET IN DB
         # ---------------------------------------
         await Ticketing(id=ticket_id, **data_dict).modify()
+
         new_subtask = data_dict.get("subtask_id")
 
         if new_subtask:
@@ -566,7 +566,6 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
                 parent_id = parent_info["data"][0].get("parent_id")
 
                 if parent_id:
-                    # 2️⃣ Fetch parent ticket by ticket_id
                     params_p = urdhva_base.queryparams.QueryParams()
                     params_p.q = f"ticket_id='{parent_id}'"
                     params_p.limit = 1
@@ -578,23 +577,20 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
                         parent_ticket = parent_resp["data"][0]
                         parent_db_id = parent_ticket["id"]
 
-                        # 3️⃣ Prepare subtask list
                         existing_subtasks = parent_ticket.get("subtask_id") or []
                         if not isinstance(existing_subtasks, list):
                             existing_subtasks = []
 
-                        # 4️⃣ Add new subtask if not duplicate
                         if new_subtask not in existing_subtasks:
                             existing_subtasks.append(new_subtask)
 
-                        # 5️⃣ Save parent ticket
                         await Ticketing(
                             id=parent_db_id,
                             subtask_id=existing_subtasks
                         ).modify()
 
         # ---------------------------------------
-        # UPDATE ALERT HISTORY (same as your code)
+        # UPDATE ALERT HISTORY 
         # ---------------------------------------
         for alert_id in linked_alert_ids:
             params = urdhva_base.queryparams.QueryParams()
@@ -641,12 +637,8 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
     except Exception as e:
         print(f"Error in update_ticket: {str(e)}")
         return {
-            "status": True,
-            "message": "Ticket updated successfully",
-            "data": {
-                "ticket_id": ticket_id,
-                "ticket_history": updated_history
-            }
+            "status": False,
+            "message": str(e)
         }
 
 # Action delete_ticket
