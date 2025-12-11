@@ -9,6 +9,7 @@ import json
 import math
 import fastapi
 import datetime
+import api_helpers
 import polars as pl
 import dateutil.parser as parser
 import orchestrator.alerting.alert_helper as alert_helper
@@ -1053,31 +1054,11 @@ async def indentdryout_get_r3_swiped_direct_sales(data: Indentdryout_Get_R3_Swip
 # Action get_dried_out_ro_by_actions
 @router.post('/get_dried_out_ro_by_actions', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_ro_by_actions(data: Indentdryout_Get_Dried_Out_Ro_By_ActionsParams):
-    where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'", "mark_as_false = true"]
-    where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
-        extra_key_mapping={"sap_id": "terminal_plant_id"}, default_mapping={"bu": "RO"}))
-    dry_out_in_days_query = '1'
-    tt_count_filter = {}
-    for record in data.filters:
-        if record.key == "progress_rate":
-            if record.value:
-                where_clause.append(f"progress_rate={int(record.value[0])}")
-        else:
-            if record.value:
-                if record.key == 'dry_out_in_days':
-                    dry_out_in_days_query = record.value[0]
-                if record.key == "plant":
-                    record.key = "terminal_plant_id"
-                    tt_count_filter.update({record.key: record.value})
-                if record.key == "zone":
-                    tt_count_filter.update({record.key: record.value})
-                if len(record.value) == 1:
-                    where_clause.append(f"{record.key}='{record.value[0]}'")
-                else:
-                    where_clause.append(f"{record.key} in {tuple(record.value)}")
-    conditions = ' AND '.join(where_clause)
+    conditions, dry_out_in_days_query, tt_count_filter = await api_helpers.get_where_clause_condition(data.filters)
     stats = []
-    if data.bu_type == 'ro' and data.actions == 'dry_out_aging':
+    if data.actions == "initial_steps":
+        return await api_helpers.get_initial_dryout_counts(data.bu_type, conditions, dry_out_in_days_query)
+    if data.bu_type == 'ro' and data.actions == 'dryout_analysis':
         dry_out_aging = await dry_out_analysis.get_dryout_aging(conditions)
         less_than_2_days = dry_out_aging.get("less_than_2_days", 0)
         from_3_to_7_days = dry_out_aging.get("from_3_to_7_days", 0)
