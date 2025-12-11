@@ -3,6 +3,7 @@ import os
 import json
 import datetime
 import time
+import ast
 import requests
 import asyncio
 import pandas as pd
@@ -32,6 +33,98 @@ req_keys = {
     "DS": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "sap_id", "name"]
 }
 
+async def flatten_zone(rows):
+        out = []
+
+        for rec in rows:
+            val = rec['zone']
+
+            # CASE 1: value is a string that looks like a list
+            if isinstance(val, str) and val.startswith('[') and val.endswith(']'):
+                try:
+                    parsed = ast.literal_eval(val)  # convert string → actual list
+                    out.extend(parsed)
+                except:
+                    out.append(val)
+
+            # CASE 2: value is a real list
+            elif isinstance(val, list):
+                out.extend(val)
+
+            # CASE 3: normal single string
+            else:
+                if val:  # skip empty strings
+                    out.append(val)
+
+        cleaned = list(set(out))
+
+        print('*' * 100)
+        print('Flattened zone:', cleaned)
+        print('*' * 100)
+
+        return cleaned
+
+async def flatten_region(rows):
+        out = []
+
+        for rec in rows:
+            val = rec['region']
+
+            # CASE 1: value is a string that looks like a list
+            if isinstance(val, str) and val.startswith('[') and val.endswith(']'):
+                try:
+                    parsed = ast.literal_eval(val)  # convert string → actual list
+                    out.extend(parsed)
+                except:
+                    out.append(val)
+
+            # CASE 2: value is a real list
+            elif isinstance(val, list):
+                out.extend(val)
+
+            # CASE 3: normal single string
+            else:
+                if val:  # skip empty strings
+                    out.append(val)
+
+        cleaned = list(set(out))
+
+        print('*' * 100)
+        print('Flattened region:', cleaned)
+        print('*' * 100)
+
+        return cleaned
+
+async def flatten_sales_area(rows):
+        out = []
+
+        for rec in rows:
+            val = rec['sales_area']
+
+            # CASE 1: value is a string that looks like a list
+            if isinstance(val, str) and val.startswith('[') and val.endswith(']'):
+                try:
+                    parsed = ast.literal_eval(val)  # convert string → actual list
+                    out.extend(parsed)
+                except:
+                    out.append(val)
+
+            # CASE 2: value is a real list
+            elif isinstance(val, list):
+                out.extend(val)
+
+            # CASE 3: normal single string
+            else:
+                if val:  # skip empty strings
+                    out.append(val)
+
+        cleaned = list(set(out))
+
+        print('*' * 100)
+        print('Flattened sales_area:', cleaned)
+        print('*' * 100)
+
+        return cleaned
 
 async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False, location_onboard=False):
     """
@@ -66,6 +159,32 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                 region.extend(rec['value'])
             else:
                 region.append(rec['value'])
+            if region and not zone:
+                regions = "', '".join(region)
+                query = f"""select DISTINCT zone from location_master where region IN ('{regions}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    zone = await flatten_zone(resp['data'])
+        elif rec['key'] == 'sales_area':
+            if not sales_area:
+                sales_area = []
+            if isinstance(rec['value'], list):
+                sales_area.extend(rec['value'])
+            else:
+                sales_area.append(rec['value'])
+            if sales_area and not zone:
+                sales_areas = "', '".join(sales_area)
+                query = f"""select DISTINCT zone from location_master where sales_area IN ('{sales_areas}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    zone = await flatten_zone(resp['data'])
+            
+            if sales_area and not region:
+                sales_areas = "', '".join(sales_area)
+                query = f"""select DISTINCT region from location_master where sales_area IN ('{sales_areas}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    region = await flatten_region(resp['data'])
         elif rec['key'] == 'sap_id':
             if not plant:
                 plant = []
@@ -76,13 +195,27 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                     plant.extend([x for x in rec['value'].split(",")])
                 else:
                     plant.append(rec['value'])
-        elif rec['key'] == 'sales_area':
-            if not sales_area:
-                sales_area = []
-            if isinstance(rec['value'], list):
-                sales_area.extend(rec['value'])
-            else:
-                sales_area.append(rec['value'])
+            if plant and not zone:
+                plants = "', '".join(plant)
+                query = f"""select DISTINCT zone from location_master where sap_id IN ('{plants}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    zone = await flatten_zone(resp['data'])
+            
+            if plant and not region:
+                plants = "', '".join(plant)
+                query = f"""select DISTINCT region from location_master where sap_id IN ('{plants}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    region = await flatten_region(resp['data'])
+            
+            if plant and not sales_area:
+                plants = "', '".join(plant)
+                query = f"""select DISTINCT sales_area from location_master where sap_id IN ('{plants}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    sales_area = await flatten_sales_area(resp['data'])
+
     redis_client = await urdhva_base.redispool.get_redis_connection()
     location_data = await redis_client.hgetall("location_master")
 
