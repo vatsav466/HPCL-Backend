@@ -163,11 +163,13 @@ class IndentDryOutDirectSales:
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
-        ims_query = f"""SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
-                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" = 'N' AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" = 'N' 
+                        AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                     """
         
         if where_clause:
@@ -210,11 +212,13 @@ class IndentDryOutDirectSales:
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
-        ims_query = f"""SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."TRUCK_REGNO" IS NULL AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."TRUCK_REGNO" IS NULL 
+                        AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                     """
         
         if where_clause:
@@ -257,12 +261,14 @@ class IndentDryOutDirectSales:
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
-        ims_query = f"""SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" 
                         FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" IN ('Y','H') AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" IN ('Y','H') 
+                        AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                         AND ir."TRUCK_REGNO" IS NOT NULL
                     """
         
@@ -306,11 +312,13 @@ class IndentDryOutDirectSales:
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
-        ims_query = f"""SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" IN ('Y','H') AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" IN ('Y','H') 
+                        AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                         AND ir."TRUCK_REGNO" IS NOT NULL AND ir."SEND_TO_JDE_TIME" IS NULL
                     """
         
@@ -354,11 +362,13 @@ class IndentDryOutDirectSales:
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
-        ims_query = f"""SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."TRUCK_REGNO" IS NOT NULL AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."TRUCK_REGNO" IS NOT NULL 
+                        AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                         AND ir."VALID_INDENT" IN ('Y','H') AND ir."SEND_TO_JDE_TIME" IS NOT NULL
                     """
         
@@ -403,7 +413,9 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" ir INNER JOIN  
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT" 
+                        FROM "IMS_SAP"."INDENT_REQUEST" ir INNER JOIN  
                         "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
                         WHERE SUBSTR(ir."DEALER_CODE",15,2) = '12'
@@ -422,10 +434,9 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
-            indent_raised_resp = indent_raised_resp[0]
             return {
                 "status": "success",
-                "sales_order_placed_count": indent_raised_resp.get("count")
+                "sales_order_placed_count": len(indent_raised_resp)
             }
         return {
             "status": "success",
@@ -456,8 +467,9 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT COUNT(*) AS "count" FROM
-                        "IMS_SAP"."INDENT_REQUEST" ir 
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT"
+                        FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
                         WHERE TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
@@ -465,8 +477,6 @@ class IndentDryOutDirectSales:
                         AND ts."CARD_STATUS" = 'I'
                         AND ir."DELIVERY_DATE" = ts."CARD_DATE"
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12'
-                        ORDER BY ir."LOCN_CODE", ir."TRUCK_REGNO", ir."INDENT_NO",
-                        TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd'), ts."CARD_DATE"
                         """
         
         if where_clause:
@@ -477,10 +487,9 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
-            indent_raised_resp = indent_raised_resp[0]
             return {
                 "status": "success",
-                "r2_swiped_count": indent_raised_resp.get("count")
+                "r2_swiped_count": len(indent_raised_resp)
             }
         return {
             "status": "success",
@@ -511,7 +520,8 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT COUNT(*) AS "count"
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
@@ -530,10 +540,9 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
-            indent_raised_resp = indent_raised_resp[0]
             return {
                 "status": "success",
-                "is_invoice_created_count": indent_raised_resp.get("count")
+                "is_invoice_created_count": len(indent_raised_resp)
             }
         return {
             "status": "success",
@@ -564,8 +573,9 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT COUNT(*) AS "count" FROM
-                        "IMS_SAP"."INDENT_REQUEST" ir
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT"
+                        FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
                         WHERE TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
@@ -573,8 +583,6 @@ class IndentDryOutDirectSales:
                         AND ts."CARD_STATUS" = 'O'
                         AND ir."DELIVERY_DATE" = ts."CARD_DATE"
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12'
-                        ORDER BY ir."LOCN_CODE", ir."TRUCK_REGNO", ir."INDENT_NO",
-                        TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd'), ts."CARD_DATE"
                         """
         
         if where_clause:
@@ -585,10 +593,9 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
-            indent_raised_resp = indent_raised_resp[0]
             return {
                 "status": "success",
-                "r3_swiped_count": indent_raised_resp.get("count")
+                "r3_swiped_count": len(indent_raised_resp)
             }
         return {
             "status": "success",
