@@ -1,5 +1,7 @@
 import urdhva_base
 import asyncio
+import fastapi
+import re
 import charts_actions
 import dashboard_studio_model
 
@@ -7,7 +9,21 @@ import dashboard_studio_model
 logger = urdhva_base.logger.Logger.getInstance("direct-sales-logging")
 
 class IndentDryOutDirectSales:
-    async def get_indent_raised_direct_sales(self):
+    async def get_indent_raised_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        where_clause = []
+        for record in data.filters:
+            if record.value:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
+        conditions = ' AND '.join(where_clause)
         ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO","VALID_INDENT","CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" WHERE
                         TO_CHAR("DELIVERY_DATE",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd') AND SUBSTR("DEALER_CODE",15,2)='12'
@@ -26,7 +42,21 @@ class IndentDryOutDirectSales:
             "indent_raised_count": 0
             }
         
-    async def get_indent_on_hold_direct_sales(self):
+    async def get_indent_on_hold_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        where_clause = []
+        for record in data.filters:
+            if record.value:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
+        conditions = ' AND '.join(where_clause)
         ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO",
                         "VALID_INDENT","CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE 
                         TO_CHAR("DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
@@ -46,7 +76,21 @@ class IndentDryOutDirectSales:
             "indent_on_hold_count": 0
             }
 
-    async def get_pending_indents_direct_sales(self):
+    async def get_pending_indents_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        where_clause = []
+        for record in data.filters:
+            if record.value:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
+        conditions = ' AND '.join(where_clause)
         ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO",
                         "VALID_INDENT","CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE 
                         TO_CHAR("DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
@@ -66,7 +110,21 @@ class IndentDryOutDirectSales:
             "pending_indent_count": 0
             }
     
-    async def get_valid_indent_direct_sales(self):
+    async def get_valid_indent_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        where_clause = []
+        for record in data.filters:
+            if record.value:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
+        conditions = ' AND '.join(where_clause)
         ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO",
                         "VALID_INDENT","CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE 
                         TO_CHAR("DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
@@ -87,7 +145,21 @@ class IndentDryOutDirectSales:
             "valid_indent_count": 0
             }
     
-    async def get_truck_allocated_direct_sales(self):
+    async def get_truck_allocated_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        where_clause = []
+        for record in data.filters:
+            if record.value:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
+        conditions = ' AND '.join(where_clause)
         ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO",
                         "VALID_INDENT","CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE 
                         TO_CHAR("DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
@@ -108,7 +180,21 @@ class IndentDryOutDirectSales:
             "truck_allocated_count": 0
             }
     
-    async def get_send_to_sap_direct_sales(self):
+    async def get_send_to_sap_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        where_clause = []
+        for record in data.filters:
+            if record.value:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
+        conditions = ' AND '.join(where_clause)
         ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO",
                         "VALID_INDENT","CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE 
                         TO_CHAR("DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
@@ -129,7 +215,21 @@ class IndentDryOutDirectSales:
             "indent_send_sap_count": 0
             }
     
-    async def get_sales_order_placed_direct_sales(self):
+    async def get_sales_order_placed_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        where_clause = []
+        for record in data.filters:
+            if record.value:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
+        conditions = ' AND '.join(where_clause)
         ims_query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" a, 
                         "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",15,2) = '12' AND
                         a."LOCN_CODE" = b."LOCN_CODE" 
@@ -153,7 +253,21 @@ class IndentDryOutDirectSales:
             "sales_order_placed_count": 0
         }
     
-    async def get_r2_swipe_direct_sales(self):
+    async def get_r2_swipe_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        where_clause = []
+        for record in data.filters:
+            if record.value:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
+        conditions = ' AND '.join(where_clause)
         ims_query = f"""
                         SELECT COUNT(*) AS "count" FROM
                         "IMS_SAP"."INDENT_REQUEST" a,
@@ -182,7 +296,21 @@ class IndentDryOutDirectSales:
             "r2_swiped_count": 0
         }
 
-    async def get_is_invoice_created_direct_sales(self):
+    async def get_is_invoice_created_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        where_clause = []
+        for record in data.filters:
+            if record.value:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
+        conditions = ' AND '.join(where_clause)
         ims_query = f"""SELECT COUNT(*) AS "count"
                         FROM "IMS_SAP"."INDENT_REQUEST" a, 
                         "IMS_SAP"."INDENT_PRODUCTS" b 
@@ -208,7 +336,21 @@ class IndentDryOutDirectSales:
             "is_invoice_created_count": 0
         }
     
-    async def get_r3_swiped_direct_sales(self):
+    async def get_r3_swiped_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        where_clause = []
+        for record in data.filters:
+            if record.value:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
+        conditions = ' AND '.join(where_clause)
         ims_query = f"""
                         SELECT COUNT(*) AS "count" FROM
                         "IMS_SAP"."INDENT_REQUEST" a,

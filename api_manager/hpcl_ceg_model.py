@@ -2588,7 +2588,8 @@ class Indentdryout_Get_Dried_Out_Ro_By_ActionsParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Indent_Raised_Direct_SalesParams(pydantic.BaseModel):
-    pass
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2596,7 +2597,8 @@ class Indentdryout_Get_Indent_Raised_Direct_SalesParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Indent_On_Hold_Direct_SalesParams(pydantic.BaseModel):
-    pass
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2604,7 +2606,8 @@ class Indentdryout_Get_Indent_On_Hold_Direct_SalesParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Pending_Indents_Direct_SalesParams(pydantic.BaseModel):
-    pass
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2612,7 +2615,8 @@ class Indentdryout_Get_Pending_Indents_Direct_SalesParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Valid_Indent_Direct_SalesParams(pydantic.BaseModel):
-    pass
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2620,7 +2624,8 @@ class Indentdryout_Get_Valid_Indent_Direct_SalesParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Truck_Allocated_Direct_SalesParams(pydantic.BaseModel):
-    pass
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2628,7 +2633,8 @@ class Indentdryout_Get_Truck_Allocated_Direct_SalesParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Send_To_Sap_Direct_SalesParams(pydantic.BaseModel):
-    pass
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2636,7 +2642,8 @@ class Indentdryout_Get_Send_To_Sap_Direct_SalesParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Sales_Order_Placed_Direct_SalesParams(pydantic.BaseModel):
-    pass
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2644,7 +2651,8 @@ class Indentdryout_Get_Sales_Order_Placed_Direct_SalesParams(pydantic.BaseModel)
 
 
 class Indentdryout_Get_R2_Swipe_Direct_SalesParams(pydantic.BaseModel):
-    pass
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2652,7 +2660,8 @@ class Indentdryout_Get_R2_Swipe_Direct_SalesParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Is_Invoice_Created_Direct_SalesParams(pydantic.BaseModel):
-    pass
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2660,7 +2669,8 @@ class Indentdryout_Get_Is_Invoice_Created_Direct_SalesParams(pydantic.BaseModel)
 
 
 class Indentdryout_Get_R3_Swiped_Direct_SalesParams(pydantic.BaseModel):
-    pass
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

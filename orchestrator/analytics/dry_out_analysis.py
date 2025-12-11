@@ -28,7 +28,8 @@ from utilities.connection_mapping import product_code_mapping, connection_mappin
 req_keys = {
     "TAS": ["zone", "sap_id", "name", "category", "location_onboard"],
     "LPG": ["zone", "sap_id", "name", "category"],
-    "RO": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "category", "sap_id", "name"]
+    "RO": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "category", "sap_id", "name"],
+    "DS": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "sap_id", "name"]
 }
 
 
@@ -93,7 +94,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
             bu_data[key] = ""
     bu_data = bu_data[req_keys[bu]]
     bu_data.fillna("", inplace=True)
-    if bu.upper() == "RO":
+    if bu.upper() in ["RO","DS"]:
         # Updating Plant Name in case if missing
         tas_data = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
                     if helpers.normalize_string(key).startswith(f"TAS_")]
@@ -101,7 +102,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
         bu_data['terminal_plant_name'] = bu_data['terminal_plant_id'].apply(lambda x: terminal_name_mapping.get(x, x))
         bu_data = bu_data[bu_data['terminal_plant_name'].notna()]
     final_data = {"zone": {}, "plant": {}, "customer": {}}
-    if bu.upper() == "RO":
+    if bu.upper() in ["RO","DS"]:
         final_data.update({"region": {}, "sales_area": {}, "customer": {}})
 
     def check_category(category):
@@ -222,7 +223,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                 if cat_a_dealers and check_category(rec['category']) != "A":
                     continue
                 final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"],
-                                                         "category": check_category(rec['category'])}
+                                                         "category": check_category(rec.get('category',None))}
 
     for key, details in final_data.items():
         final_data[key] = list(details.values())

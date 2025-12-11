@@ -1175,43 +1175,53 @@ Model IndentDryOut {
     }
 
     Action=> get_indent_raised_direct_sales {
-
+        filters list IndentDryOutDataFilters
+        bu_type optional str
     }
 
     Action=> get_indent_on_hold_direct_sales {
-
+        filters list IndentDryOutDataFilters
+        bu_type optional str
     }
 
     Action=> get_pending_indents_direct_sales {
-
+        filters list IndentDryOutDataFilters
+        bu_type optional str
     }
     
     Action=> get_valid_indent_direct_sales {
-
+        filters list IndentDryOutDataFilters
+        bu_type optional str
     }
 
     Action=> get_truck_allocated_direct_sales {
-
+        filters list IndentDryOutDataFilters
+        bu_type optional str
     }
 
     Action=> get_send_to_sap_direct_sales {
-
+        filters list IndentDryOutDataFilters
+        bu_type optional str
     }
 
     Action=> get_sales_order_placed_direct_sales {
-
+        filters list IndentDryOutDataFilters
+        bu_type optional str
     }
 
     Action=> get_r2_swipe_direct_sales {
-
+        filters list IndentDryOutDataFilters
+        bu_type optional str
     }
 
     Action=> get_is_invoice_created_direct_sales {
-
+        filters list IndentDryOutDataFilters
+        bu_type optional str
     }
 
     Action=> get_r3_swiped_direct_sales {
-
+        filters list IndentDryOutDataFilters
+        bu_type optional str
     }
 
     Action=> get_dried_out_ro_data {

@@ -993,61 +993,61 @@ async def indentdryout_generate_dryout_group_data(data: Indentdryout_Generate_Dr
 # Action get_indent_raised_direct_sales
 @router.post('/get_indent_raised_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_indent_raised_direct_sales(data: Indentdryout_Get_Indent_Raised_Direct_SalesParams):
-    return await indentwise_direct_sales.IndentDryOutDirectSales().get_indent_raised_direct_sales()
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_indent_raised_direct_sales(data)
 
 
 # Action get_indent_on_hold_direct_sales
 @router.post('/get_indent_on_hold_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_indent_on_hold_direct_sales(data: Indentdryout_Get_Indent_On_Hold_Direct_SalesParams):
-    return await indentwise_direct_sales.IndentDryOutDirectSales().get_indent_on_hold_direct_sales()
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_indent_on_hold_direct_sales(data)
 
 
 # Action get_pending_indents_direct_sales
 @router.post('/get_pending_indents_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_pending_indents_direct_sales(data: Indentdryout_Get_Pending_Indents_Direct_SalesParams):
-    return await indentwise_direct_sales.IndentDryOutDirectSales().get_pending_indents_direct_sales()
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_pending_indents_direct_sales(data)
 
 
 # Action get_valid_indent_direct_sales
 @router.post('/get_valid_indent_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_valid_indent_direct_sales(data: Indentdryout_Get_Valid_Indent_Direct_SalesParams):
-    return await indentwise_direct_sales.IndentDryOutDirectSales().get_valid_indent_direct_sales()
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_valid_indent_direct_sales(data)
 
 
 # Action get_truck_allocated_direct_sales
 @router.post('/get_truck_allocated_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_truck_allocated_direct_sales(data: Indentdryout_Get_Truck_Allocated_Direct_SalesParams):
-    return await indentwise_direct_sales.IndentDryOutDirectSales().get_truck_allocated_direct_sales()
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_truck_allocated_direct_sales(data)
 
 
 # Action get_send_to_sap_direct_sales
 @router.post('/get_send_to_sap_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_send_to_sap_direct_sales(data: Indentdryout_Get_Send_To_Sap_Direct_SalesParams):
-    return await indentwise_direct_sales.IndentDryOutDirectSales().get_send_to_sap_direct_sales()
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_send_to_sap_direct_sales(data)
 
 
 # Action get_sales_order_placed_direct_sales
 @router.post('/get_sales_order_placed_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_sales_order_placed_direct_sales(data: Indentdryout_Get_Sales_Order_Placed_Direct_SalesParams):
-    return await indentwise_direct_sales.IndentDryOutDirectSales().get_sales_order_placed_direct_sales()
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_sales_order_placed_direct_sales(data)
 
 
 # Action get_r2_swipe_direct_sales
 @router.post('/get_r2_swipe_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_r2_swipe_direct_sales(data: Indentdryout_Get_R2_Swipe_Direct_SalesParams):
-    return await indentwise_direct_sales.IndentDryOutDirectSales().get_r2_swipe_direct_sales()
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_r2_swipe_direct_sales(data)
 
 
 # Action get_is_invoice_created_direct_sales
 @router.post('/get_is_invoice_created_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_is_invoice_created_direct_sales(data: Indentdryout_Get_Is_Invoice_Created_Direct_SalesParams):
-    return await indentwise_direct_sales.IndentDryOutDirectSales().get_is_invoice_created_direct_sales()
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_is_invoice_created_direct_sales(data)
 
 
 # Action get_r3_swiped_direct_sales
 @router.post('/get_r3_swiped_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_r3_swiped_direct_sales(data: Indentdryout_Get_R3_Swiped_Direct_SalesParams):
-    return await indentwise_direct_sales.IndentDryOutDirectSales().get_r3_swiped_direct_sales()
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_r3_swiped_direct_sales(data)
 
 
 # Action get_dried_out_ro_by_actions
