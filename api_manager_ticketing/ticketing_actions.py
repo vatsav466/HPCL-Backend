@@ -75,6 +75,8 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     
 
     tdata = data.model_dump()
+    if tdata.get("subtask_id") in ["", None]:
+        tdata["subtask_id"] = []
 
     # Build the alert query
     query = (
