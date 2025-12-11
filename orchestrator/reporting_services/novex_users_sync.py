@@ -260,7 +260,14 @@ async def sync_users():
         if roles:
             roles_condition = "ZR.ROLE_NAME IN ({})".format(', '.join([f"'{role}'" for role in roles]))
             query += f" AND {roles_condition}"        
-        data = await fetch_data(cursor, query)        
+        data = await fetch_data(cursor, query)
+        
+        if bu == 'ds':
+            data.loc[
+                data['PLANT_DESC'].str.contains('DSRO', na=False),
+                'PLANT_DESC'
+            ] = data['PLANT_DESC'].str.replace('DSRO', 'I&C RO', regex=False)
+
         print("Length of Data Before Merge:", len(data))
         data = pd.merge(data, role_master[['novex_role', 'tibco_role']], left_on='ROLE_NAME', right_on='tibco_role', how='left')
         print("Length of Data After Merge:", len(data))
