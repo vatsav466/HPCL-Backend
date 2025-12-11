@@ -16,6 +16,13 @@ import warnings
 warnings.filterwarnings('ignore')
 # NORMALIZATION HELPER
 
+def normalization_min_max(series):
+    max_v = series.max()
+    # avoid division by zero
+    if max_v == 0:
+        return series * 0  # all zeros remain zeros
+    return (series / max_v)*100
+
 def normalize_code(code):
 
     """Normalize transporter code by stripping leading zeros to match master data format."""
@@ -78,22 +85,22 @@ def load_alerts_data():
     """Load alert data from PostgreSQL database tables"""
     
     # Load Route Deviation
-    rd = pd.read_sql_query('SELECT * FROM route_deviation', vts_engine)
+    rd = pd.read_sql_query("SELECT * FROM route_deviation where LOCATION_TYPE = 'TAS' ", vts_engine)
     print(f"Loaded {len(rd)} route_deviation records")
    # print(rd.columns)
     
     # Load Stoppage Violation
-    stp = pd.read_sql_query('SELECT * FROM stoppage_violation', vts_engine)
+    stp = pd.read_sql_query("SELECT * FROM stoppage_violation where LOCATION_TYPE = 'TAS' ", vts_engine)
     print(f"Loaded {len(stp)} stoppage_violation records")
    # print(stp.columns)
 
     # Load Device Removed
-    dr = pd.read_sql_query('SELECT * FROM device_removed', vts_engine)
+    dr = pd.read_sql_query("SELECT * FROM device_removed where LOCATION_TYPE = 'TAS' ", vts_engine)
     print(f"Loaded {len(dr)} device_removed records")
     #print(dr.columns)
 
     # Load Power Disconnect
-    pdw = pd.read_sql_query('SELECT * FROM power_disconnect', vts_engine)
+    pdw = pd.read_sql_query("SELECT * FROM power_disconnect where LOCATION_TYPE = 'TAS' ", vts_engine)
     print(f"Loaded {len(pdw)} power_disconnect records")
     #print(pdw.columns)
     
@@ -169,7 +176,7 @@ VEHICLE_MASTER_RENAME_MAP = {
     
 }
 
-master_df = pd.read_sql_query("SELECT * FROM public.vts_truck_master where bu='TAS' ", app_db_engine)
+master_df = pd.read_sql_query("SELECT * FROM public.truck_m", app_db_engine)
 print(f"Loaded {len(master_df)} vehicle master records")
 master_df.rename(columns=VEHICLE_MASTER_RENAME_MAP, inplace=True)
 master_df.rename(columns={"Transporter Code":"TRANSPORTER_CODE","Transporter Name":"TRANSPORTER_NAME", 
@@ -359,7 +366,7 @@ alert_summary_pivot = (
 alert_summary_pivot.columns.name = None
 
 # STEP 3: MERGE TRIP & ALERT DATA
-final_alert_summary = trip_counts.merge(alert_summary_pivot, on="TRANSPORTER_CODE", how="left")
+final_alert_summary = trip_counts.merge(alert_summary_pivot, on="TRANSPORTER_CODE", how="right")
 final_alert_summary.fillna(0, inplace=True)
 
 # STEP 4: CONFIGURATION
@@ -584,18 +591,18 @@ alert_pivot = alert_summary_tt.pivot_table(
 
 # Merge alerts into trip summary
 final_merged = pd.merge(merged, alert_pivot, on="INVOICE_NO", how="left")
-final_merged = final_merged.fillna(0)
 
+# Separate numeric columns and fill them with 0, leaving datetime columns untouched
+numeric_cols_to_fill = final_merged.select_dtypes(include=np.number).columns
+final_merged[numeric_cols_to_fill] = final_merged[numeric_cols_to_fill].fillna(0)
 # ===========================
 # STEP 5: AGGREGATE BY INVOICE_DATE + LOCATION
 # ===========================
-cols_to_use = ["SCHEDULED_TRIP_START_DATETIME", "LOCATION", "total_trips"] + [
-    col for col in final_merged.columns
-    if col not in ["INVOICE_NO", "SCHEDULED_TRIP_START_DATETIME", "LOCATION", "total_trips"]
-]
+numeric_cols = final_merged.select_dtypes(include=np.number).columns.tolist()
+
 
 final_alert_summary_loc = (
-    final_merged[cols_to_use]
+    final_merged[numeric_cols + ["SCHEDULED_TRIP_START_DATETIME", "LOCATION"]]
     .groupby(["SCHEDULED_TRIP_START_DATETIME", "LOCATION"], as_index=False)
     .sum(numeric_only=True)
 )
@@ -1175,11 +1182,11 @@ def normalize(series):
     return (series - series.min()) / (series.max() - series.min())
 
 # --- Normalize components ---
-final_merged_df["atomic_risk_norm"] = soft_robust_normalize(final_merged_df["atomic_risk"])
+final_merged_df["atomic_risk_norm"] = normalization_min_max(final_merged_df["atomic_risk"])
 
-final_merged_df["combo_risk_norm"] = soft_robust_normalize(final_merged_df["combo_risk"])
+final_merged_df["combo_risk_norm"] = normalization_min_max(final_merged_df["combo_risk"])
 
-final_merged_df["location_sensitivity_norm"] = soft_robust_normalize(final_merged_df["location_sensitivity"])
+final_merged_df["location_sensitivity_norm"] = normalization_min_max(final_merged_df["location_sensitivity"])
 final_merged_df["entity_risk_norm"] = soft_robust_normalize(final_merged_df["entity_risk"])
 
 
@@ -1202,13 +1209,26 @@ final_merged_df["Risk_Score"] = ((cum - cum.min()) / (cum.max() - cum.min())) * 
 
 
 Location_name_map = (
-    master_df.drop_duplicates(subset=["TRANSPORTER_CODE"])
-    .set_index("TRANSPORTER_CODE")["LOCATION_NAME"]
+    master_df.drop_duplicates(subset=["LOCATION_CODE"])
+    .set_index("LOCATION_CODE")["LOCATION_NAME"]
     .to_dict()
 )
 
-final_merged_df["LOCATION_NAME"] = final_merged_df["TRANSPORTER_CODE"].map(Location_name_map)
+final_merged_df["LOCATION_NAME"] = final_merged_df["LOCATION"].map(Location_name_map)
 
+# Fallback: Extract location name from TRIP_NAME if LOCATION_NAME is null
+# TRIP_NAME format: "1528( RAIPUR IRD-II ) To 0041015826( THAKUR FUELS )"
+def extract_location_from_trip_name(trip_name):
+    if pd.isna(trip_name):
+        return None
+    import re
+    match = re.search(r'\(\s*(.+?)\s*\)', str(trip_name))
+    return match.group(1).strip() if match else None
+
+final_merged_df["LOCATION_NAME"] = final_merged_df.apply(
+    lambda row: extract_location_from_trip_name(row["TRIP_NAME"]) if pd.isna(row["LOCATION_NAME"]) else row["LOCATION_NAME"],
+    axis=1
+)
 
 # Final output
 final_merged = final_merged_df[[
