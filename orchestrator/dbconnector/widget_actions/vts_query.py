@@ -429,7 +429,7 @@ vts_query = {
                                invoice_number,
                                location_name,
                                zone,
-                               date_trunc('day', scheduled_trip_start_datetime) AS created_at,
+                               TO_CHAR(date_trunc('day', scheduled_trip_start_datetime), 'YYYYMMDD') AS created_at,
                                MAX(stoppage_violations_count) AS stoppage_violations_count,
                                MAX(route_deviation_count) AS route_deviation_count,
                                MAX(device_tamper_count) AS device_tamper_count,
