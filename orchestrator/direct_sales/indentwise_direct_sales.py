@@ -4,11 +4,93 @@ import fastapi
 import re
 import charts_actions
 import dashboard_studio_model
+import ast
 
 
 logger = urdhva_base.logger.Logger.getInstance("direct-sales-logging")
 
 class IndentDryOutDirectSales:
+
+    async def flatten_sales_areas(self, rows):
+        out = []
+
+        for rec in rows:
+            val = rec['sales_area']
+
+            # CASE 1: value is a string that looks like a list
+            if isinstance(val, str) and val.startswith('[') and val.endswith(']'):
+                try:
+                    parsed = ast.literal_eval(val)  # convert string → actual list
+                    out.extend(parsed)
+                except:
+                    out.append(val)
+
+            # CASE 2: value is a real list
+            elif isinstance(val, list):
+                out.extend(val)
+
+            # CASE 3: normal single string
+            else:
+                if val:  # skip empty strings
+                    out.append(val)
+
+        cleaned = list(set(out))
+
+        print('*' * 100)
+        print('Flattened sales_area:', cleaned)
+        print('*' * 100)
+
+        return cleaned
+    
+    async def get_clause_conditions(self):
+        clause_conditions = {}
+        if urdhva_base.ctx.exists():
+            rpt = urdhva_base.context.context.get('rpt', {})
+            sap_id = rpt.get('sap_id')
+            if sap_id:
+                clause_conditions['DEALER_CODE'] = sap_id
+            elif rpt.get('sales_area'):
+                clause_conditions['SALES_AREA'] = rpt.get('sales_area')
+            elif rpt.get('region'):
+                regions = "', '".join(rpt['region'])
+                query = f"""select DISTINCT sales_area from location_master where region IN ('{regions}') and bu='DS' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    clause_conditions['SALES_AREA'] = await self.flatten_sales_areas(resp['data'])
+            elif rpt.get('zone'):
+                zones = "', '".join(rpt['zone'])
+                query = f"""select DISTINCT sales_area from location_master where region IN ('{zones}') and bu='DS' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    clause_conditions['SALES_AREA'] = await self.flatten_sales_areas(resp['data'])
+        return [{'key': key, 'value': value} for key, value in clause_conditions.items()]
+    
+    async def generate_filters(self, data):
+        filters = {}
+        for record in data.filters:
+            if record.key == "dealer_id" and record.value:
+                filters['DEALER_CODE'] = record.value
+            elif record.key == "sales_area" and record.value:
+                filters['SALES_AREA'] = record.value
+            elif record.key == "region" and record.value:
+                regions = "', '".join(record.value)
+                query = f"""select DISTINCT sales_area from location_master where region IN ('{regions}') and bu='DS' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    filters['SALES_AREA'] = await self.flatten_sales_areas(resp['data'])
+            elif record.key == "zone" and record.value:
+                zones = "', '".join(record.value)
+                query = f"""select DISTINCT sales_area from location_master where zone IN ('{zones}') and bu='DS' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    filters['SALES_AREA'] = await self.flatten_sales_areas(resp['data'])
+        return [{'key': key, 'value': value} for key, value in filters.items()]
+    
+    async def build_clause_conditions(self, data):
+        clause_conditions = await self.get_clause_conditions()
+        filters = await self.generate_filters(data)
+        return clause_conditions + filters
+
     async def get_indent_raised_direct_sales(self,data):
         for rec in data.filters:
             for index, val in enumerate(rec.value):
@@ -19,15 +101,31 @@ class IndentDryOutDirectSales:
                         status_code=422,
                         detail=f"values[{index}] not matching criteria"
                     )
+        
+        conditions = await self.build_clause_conditions(data)
         where_clause = []
-        for record in data.filters:
-            if record.value:
-                where_clause.append(f"{record.key} in {tuple(record.value)}")
-        conditions = ' AND '.join(where_clause)
-        ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO","VALID_INDENT","CANCEL_INDENT"
-                        FROM "IMS_SAP"."INDENT_REQUEST" WHERE
-                        TO_CHAR("DELIVERY_DATE",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd') AND SUBSTR("DEALER_CODE",15,2)='12'
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+        
+        ims_query = f"""
+                    SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                    ir."VALID_INDENT", ir."CANCEL_INDENT"
+                    FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                    INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                    TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                    AND SUBSTR(ir."DEALER_CODE",15,2)='12'
                     """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
@@ -52,16 +150,31 @@ class IndentDryOutDirectSales:
                         status_code=422,
                         detail=f"values[{index}] not matching criteria"
                     )
+                
+        conditions = await self.build_clause_conditions(data)
         where_clause = []
-        for record in data.filters:
-            if record.value:
-                where_clause.append(f"{record.key} in {tuple(record.value)}")
-        conditions = ' AND '.join(where_clause)
-        ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO",
-                        "VALID_INDENT","CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE 
-                        TO_CHAR("DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
-                        AND SUBSTR("DEALER_CODE",15,2)='12' AND "VALID_INDENT" = 'N' AND ("CANCEL_INDENT" IS NULL OR "CANCEL_INDENT" <> 'Y')
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                        TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" = 'N' 
+                        AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                     """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
@@ -86,16 +199,31 @@ class IndentDryOutDirectSales:
                         status_code=422,
                         detail=f"values[{index}] not matching criteria"
                     )
+        
+        conditions = await self.build_clause_conditions(data)
         where_clause = []
-        for record in data.filters:
-            if record.value:
-                where_clause.append(f"{record.key} in {tuple(record.value)}")
-        conditions = ' AND '.join(where_clause)
-        ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO",
-                        "VALID_INDENT","CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE 
-                        TO_CHAR("DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND SUBSTR("DEALER_CODE",15,2)='12' AND "TRUCK_REGNO" IS NULL AND ("CANCEL_INDENT" IS NULL OR "CANCEL_INDENT" <> 'Y')
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                        TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."TRUCK_REGNO" IS NULL 
+                        AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                     """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
@@ -120,17 +248,33 @@ class IndentDryOutDirectSales:
                         status_code=422,
                         detail=f"values[{index}] not matching criteria"
                     )
+        
+        conditions = await self.build_clause_conditions(data)
         where_clause = []
-        for record in data.filters:
-            if record.value:
-                where_clause.append(f"{record.key} in {tuple(record.value)}")
-        conditions = ' AND '.join(where_clause)
-        ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO",
-                        "VALID_INDENT","CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE 
-                        TO_CHAR("DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND SUBSTR("DEALER_CODE",15,2)='12' AND "VALID_INDENT" IN ('Y','H') AND ("CANCEL_INDENT" IS NULL OR "CANCEL_INDENT" <> 'Y')
-                        AND "TRUCK_REGNO" IS NOT NULL
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        ir."VALID_INDENT", ir."CANCEL_INDENT" 
+                        FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                        TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" IN ('Y','H') 
+                        AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
+                        AND ir."TRUCK_REGNO" IS NOT NULL
                     """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
@@ -155,17 +299,32 @@ class IndentDryOutDirectSales:
                         status_code=422,
                         detail=f"values[{index}] not matching criteria"
                     )
+        
+        conditions = await self.build_clause_conditions(data)
         where_clause = []
-        for record in data.filters:
-            if record.value:
-                where_clause.append(f"{record.key} in {tuple(record.value)}")
-        conditions = ' AND '.join(where_clause)
-        ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO",
-                        "VALID_INDENT","CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE 
-                        TO_CHAR("DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND SUBSTR("DEALER_CODE",15,2)='12' AND "VALID_INDENT" IN ('Y','H') AND ("CANCEL_INDENT" IS NULL OR "CANCEL_INDENT" <> 'Y')
-                        AND "TRUCK_REGNO" IS NOT NULL AND "SEND_TO_JDE_TIME" IS NULL
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                        TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" IN ('Y','H') 
+                        AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
+                        AND ir."TRUCK_REGNO" IS NOT NULL AND ir."SEND_TO_JDE_TIME" IS NULL
                     """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
@@ -190,17 +349,32 @@ class IndentDryOutDirectSales:
                         status_code=422,
                         detail=f"values[{index}] not matching criteria"
                     )
+        
+        conditions = await self.build_clause_conditions(data)
         where_clause = []
-        for record in data.filters:
-            if record.value:
-                where_clause.append(f"{record.key} in {tuple(record.value)}")
-        conditions = ' AND '.join(where_clause)
-        ims_query = f"""SELECT "INDENT_NO","INDENT_DATE","PROD_REQD_DT","DEALER_CODE","TRUCK_REGNO",
-                        "VALID_INDENT","CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE 
-                        TO_CHAR("DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND SUBSTR("DEALER_CODE",15,2)='12' AND "TRUCK_REGNO" IS NOT NULL AND ("CANCEL_INDENT" IS NULL OR "CANCEL_INDENT" <> 'Y')
-                        AND "VALID_INDENT" IN ('Y','H') AND "SEND_TO_JDE_TIME" IS NOT NULL
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                        TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."TRUCK_REGNO" IS NOT NULL 
+                        AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
+                        AND ir."VALID_INDENT" IN ('Y','H') AND ir."SEND_TO_JDE_TIME" IS NOT NULL
                     """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
@@ -225,28 +399,44 @@ class IndentDryOutDirectSales:
                         status_code=422,
                         detail=f"values[{index}] not matching criteria"
                     )
+        
+        conditions = await self.build_clause_conditions(data)
         where_clause = []
-        for record in data.filters:
-            if record.value:
-                where_clause.append(f"{record.key} in {tuple(record.value)}")
-        conditions = ' AND '.join(where_clause)
-        ims_query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" a, 
-                        "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",15,2) = '12' AND
-                        a."LOCN_CODE" = b."LOCN_CODE" 
-                        AND TO_CHAR(a."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
-                        AND a."CANCEL_INDENT" IS NULL AND a."TRUCK_REGNO" IS NOT NULL 
-                        AND (a."VALID_INDENT" = 'Y' OR a."VALID_INDENT" = 'H')
-                        AND a."BATCH_FLAG" = 'Y' AND b."SALES_ORDERNO" IS NOT NULL AND a."INDENT_NO"=b."INDENT_NO"
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT" 
+                        FROM "IMS_SAP"."INDENT_REQUEST" ir INNER JOIN  
+                        "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
+                        WHERE SUBSTR(ir."DEALER_CODE",15,2) = '12'
+                        AND TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
+                        AND ir."CANCEL_INDENT" IS NULL AND ir."TRUCK_REGNO" IS NOT NULL 
+                        AND (ir."VALID_INDENT" = 'Y' OR ir."VALID_INDENT" = 'H')
+                        AND ir."BATCH_FLAG" = 'Y' AND ip."SALES_ORDERNO" IS NOT NULL
+                        AND ir."INDENT_NO"=ip."INDENT_NO"
                     """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
-            indent_raised_resp = indent_raised_resp[0]
             return {
                 "status": "success",
-                "sales_order_placed_count": indent_raised_resp.get("count")
+                "sales_order_placed_count": len(indent_raised_resp)
             }
         return {
             "status": "success",
@@ -263,33 +453,43 @@ class IndentDryOutDirectSales:
                         status_code=422,
                         detail=f"values[{index}] not matching criteria"
                     )
+        
+        conditions = await self.build_clause_conditions(data)
         where_clause = []
-        for record in data.filters:
-            if record.value:
-                where_clause.append(f"{record.key} in {tuple(record.value)}")
-        conditions = ' AND '.join(where_clause)
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+
         ims_query = f"""
-                        SELECT COUNT(*) AS "count" FROM
-                        "IMS_SAP"."INDENT_REQUEST" a,
-                        "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" b
-                        WHERE a."LOCN_CODE" = b."LOCN_CODE"
-                        AND TO_CHAR(a."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
-                        AND b."CARD_STATUS" = 'I'
-                        AND a."DELIVERY_DATE" = b."CARD_DATE"
-                        AND SUBSTR(a."DEALER_CODE",15,2)='12'
-                        ORDER BY a."LOCN_CODE", a."TRUCK_REGNO", a."INDENT_NO",
-                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd'), b."CARD_DATE"
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT"
+                        FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                        INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
+                        WHERE TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND ir."TRUCK_REGNO" = ts."TRUCK_REGNO"
+                        AND ts."CARD_STATUS" = 'I'
+                        AND ir."DELIVERY_DATE" = ts."CARD_DATE"
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12'
                         """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
-            indent_raised_resp = indent_raised_resp[0]
             return {
                 "status": "success",
-                "r2_swiped_count": indent_raised_resp.get("count")
+                "r2_swiped_count": len(indent_raised_resp)
             }
         return {
             "status": "success",
@@ -306,30 +506,43 @@ class IndentDryOutDirectSales:
                         status_code=422,
                         detail=f"values[{index}] not matching criteria"
                     )
+        
+        conditions = await self.build_clause_conditions(data)
         where_clause = []
-        for record in data.filters:
-            if record.value:
-                where_clause.append(f"{record.key} in {tuple(record.value)}")
-        conditions = ' AND '.join(where_clause)
-        ims_query = f"""SELECT COUNT(*) AS "count"
-                        FROM "IMS_SAP"."INDENT_REQUEST" a, 
-                        "IMS_SAP"."INDENT_PRODUCTS" b 
-                        WHERE SUBSTR(a."DEALER_CODE",15,2) = '12' 
-                        AND a."LOCN_CODE" = b."LOCN_CODE" 
-                        AND TO_CHAR(a."DELIVERY_DATE",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND a."CANCEL_INDENT" IS NULL
-                        AND a."DEALER_CODE" = b."DEALER_CODE" 
-                        AND a."INDENT_NO" = b."INDENT_NO" AND b."INVOICE_NO" IS NOT NULL
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT"
+                        FROM "IMS_SAP"."INDENT_REQUEST" ir
+                        INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
+                        WHERE SUBSTR(ir."DEALER_CODE",15,2) = '12' 
+                        AND TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND ir."CANCEL_INDENT" IS NULL
+                        AND ir."DEALER_CODE" = ip."DEALER_CODE" 
+                        AND ir."INDENT_NO" = ip."INDENT_NO" AND ip."INVOICE_NO" IS NOT NULL
                     """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
-            indent_raised_resp = indent_raised_resp[0]
             return {
                 "status": "success",
-                "is_invoice_created_count": indent_raised_resp.get("count")
+                "is_invoice_created_count": len(indent_raised_resp)
             }
         return {
             "status": "success",
@@ -346,33 +559,43 @@ class IndentDryOutDirectSales:
                         status_code=422,
                         detail=f"values[{index}] not matching criteria"
                     )
+        
+        conditions = await self.build_clause_conditions(data)
         where_clause = []
-        for record in data.filters:
-            if record.value:
-                where_clause.append(f"{record.key} in {tuple(record.value)}")
-        conditions = ' AND '.join(where_clause)
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+
         ims_query = f"""
-                        SELECT COUNT(*) AS "count" FROM
-                        "IMS_SAP"."INDENT_REQUEST" a,
-                        "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" b
-                        WHERE a."LOCN_CODE" = b."LOCN_CODE"
-                        AND TO_CHAR(a."DELIVERY_DATE",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
-                        AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
-                        AND b."CARD_STATUS" = 'O'
-                        AND a."DELIVERY_DATE" = b."CARD_DATE"
-                        AND SUBSTR(a."DEALER_CODE",15,2)='12'
-                        ORDER BY a."LOCN_CODE", a."TRUCK_REGNO", a."INDENT_NO",
-                        TO_CHAR(a."PROD_REQD_DT",'yyyymmdd'), b."CARD_DATE"
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT"
+                        FROM "IMS_SAP"."INDENT_REQUEST" ir
+                        INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
+                        WHERE TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND ir."TRUCK_REGNO" = ts."TRUCK_REGNO"
+                        AND ts."CARD_STATUS" = 'O'
+                        AND ir."DELIVERY_DATE" = ts."CARD_DATE"
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12'
                         """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
-            indent_raised_resp = indent_raised_resp[0]
             return {
                 "status": "success",
-                "r3_swiped_count": indent_raised_resp.get("count")
+                "r3_swiped_count": len(indent_raised_resp)
             }
         return {
             "status": "success",
