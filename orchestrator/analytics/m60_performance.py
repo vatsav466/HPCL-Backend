@@ -180,6 +180,19 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     print("query",query)
     access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.M60LevelMetaData.get_clause_conditions(formated=True)]
+    if table_name == 'industry_performance':
+        #for filter_key in access_filters:
+        #    print("filter_key",filter_key)
+        #    if filter_key.key =='SBU_Name':
+        #        access_filters[access_filters.index(filter_key)][filter_key.key] == 'sbu_name'
+        for f in access_filters:
+                f.key = f.key.strip().lower()
+                if f.key.strip().lower() == 'sbu_name':
+                    if f.value =='DS':
+                        f.value = 'I&C'
+                #if f.key.strip().lower() == "sbu_name":
+                #            f.key = "sbu_name"
+    
     query =  await widget_actions.WidgetActions.apply_filter_drilldown(query, access_filters, drilldown = '')
     #resp = await function(query=query)
     resp = await hpcl_ceg_model.M60LevelMetaData.get_aggr_data(query, limit=1000)

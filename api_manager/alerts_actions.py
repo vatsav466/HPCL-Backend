@@ -579,7 +579,13 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
         # -------------------------
         # Build alert query
         # -------------------------
-        alert_query = "alert_status='Open' AND alert_section='VTS'"
+        # alert_query = "alert_status='Open' AND alert_section='VTS'"
+        alert_query = """
+        alert_section='VTS'
+        AND vehicle_unblocked_date IS NULL
+        AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
+        AND mark_as_false = TRUE
+        """
 
         if bu_value:
             alert_query += f" AND bu='{bu_value}'"
@@ -599,7 +605,8 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
             "vehicle_blocked_start_date",
             "vehicle_blocked_end_date",
             "transporter_code",
-            "unique_id"
+            "unique_id",
+            "device_id"
         ]
 
         alerts_resp = await Alerts.get_all(alert_params, resp_type='plain')

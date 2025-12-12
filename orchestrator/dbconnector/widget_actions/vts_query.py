@@ -8,46 +8,110 @@ vts_query = {
 
     "unblocked_by_L1": """SELECT COUNT(*) AS location_incharge_sod_count
                             FROM alerts a
-                            WHERE alert_section = 'VTS'
-                            AND vehicle_unblocked_date IS NOT NULL
-                            AND mark_as_false = TRUE
-                            AND (device_msg IS NULL OR TRIM(device_msg) = '')
-                            AND EXISTS (
-                                SELECT 1
-                                FROM jsonb_array_elements(a.alert_history) AS elem
-                                WHERE elem->>'action_msg' ILIKE '%Location In-Charge SOD%'
-                            )""",
+                            WHERE a.alert_section = 'VTS'
+                            AND a.vehicle_unblocked_date IS NOT NULL
+                            AND a.mark_as_false = 'TRUE'
+                            AND a.sap_id NOT IN ('1652','1672','1693','1462','1649','1689','1676','1700','1691')
+                            AND (
+                                    /* CONDITION A: Approved but NOT "Approved unblock request by..." */
+                                    EXISTS (
+                                        SELECT 1
+                                        FROM jsonb_array_elements(a.alert_history) AS elem(obj)
+                                        WHERE obj->>'action_type' = 'Approved'
+                                        AND obj->>'action_msg' NOT LIKE 'Approved unblock request by%'
+                                    )
+
+                                    AND
+
+                                    /* CONDITION B: Active with specific recipients */
+                                    EXISTS (
+                                        SELECT 1
+                                        FROM jsonb_array_elements(a.alert_history) AS elem(obj)
+                                        WHERE obj->>'action_type' = 'Active'
+                                        AND (
+                                                obj->>'action_msg' ILIKE '%Safety Officer SOD%'
+                                            OR obj->>'action_msg' ILIKE '%Maintenance Officer SOD%'
+                                            OR obj->>'action_msg' ILIKE '%Planning Officer SOD%'
+                                            )
+                                    )
+                                )""",
 
     "unblocked_by_L2": """SELECT COUNT(*) AS zonal_transport_officer_sod_count
                             FROM alerts a
-                            WHERE alert_section = 'VTS'
-                            AND vehicle_unblocked_date IS NOT NULL
-                            AND mark_as_false = TRUE
-                            AND (device_msg IS NULL OR TRIM(device_msg) = '')
-                            AND EXISTS (
-                                SELECT 1
-                                FROM jsonb_array_elements(a.alert_history) AS elem
-                                WHERE elem->>'action_msg' ILIKE '%Zonal Transport Officer SOD%'
-                            )""",
+                            WHERE a.alert_section = 'VTS'
+                            AND a.vehicle_unblocked_date IS NOT NULL
+                            AND a.mark_as_false = 'TRUE'
+                            AND (
+                                    /* CONDITION A: Approved but NOT "Approved unblock request by..." */
+                                    EXISTS (
+                                        SELECT 1
+                                        FROM jsonb_array_elements(a.alert_history) AS elem(obj)
+                                        WHERE obj->>'action_type' = 'Approved'
+                                        AND obj->>'action_msg' NOT LIKE 'Approved unblock request by%'
+                                    )
+
+                                    AND
+
+                                    /* CONDITION B1: Active + Safety/Maintenance/Planning (SAP IDs in list) */
+                                    (
+                                        a.sap_id IN ('1652','1672','1693','1462','1649','1689','1676','1700','1691')
+                                        AND EXISTS (
+                                            SELECT 1
+                                            FROM jsonb_array_elements(a.alert_history) AS elem(obj)
+                                            WHERE obj->>'action_type' = 'Active'
+                                            AND (
+                                                    obj->>'action_msg' ILIKE '%Safety Officer SOD%'
+                                                OR obj->>'action_msg' ILIKE '%Maintenance Officer SOD%'
+                                                OR obj->>'action_msg' ILIKE '%Planning Officer SOD%'
+                                            )
+                                        )
+                                    )
+
+                                    OR
+
+                                    /* CONDITION B2: Active + Location Incharge (other SAP IDs) */
+                                    (
+                                        a.sap_id NOT IN ('1652','1672','1693','1462','1649','1689','1676','1700','1691')
+                                        AND EXISTS (
+                                            SELECT 1
+                                            FROM jsonb_array_elements(a.alert_history) AS elem(obj)
+                                            WHERE obj->>'action_type' = 'Active'
+                                            AND obj->>'action_msg' ILIKE '%Location Incharge SOD%'
+                                        )
+                                    )
+                                )""",
 
     "unblocked_by_L3": """SELECT COUNT(*) AS zonal_head_sod_count
                             FROM alerts a
-                            WHERE alert_section = 'VTS'
-                            AND vehicle_unblocked_date IS NOT NULL
-                            AND mark_as_false = TRUE
-                            AND (device_msg IS NULL OR TRIM(device_msg) = '')
-                            AND EXISTS (
-                                SELECT 1
-                                FROM jsonb_array_elements(a.alert_history) AS elem
-                                WHERE elem->>'action_msg' ILIKE '%Zonal Head SOD%'
-                            )""",
+                            WHERE a.alert_section = 'VTS'
+                            AND a.vehicle_unblocked_date IS NOT NULL
+                            AND a.mark_as_false = 'TRUE'
+                            AND (
+                                    /* CONDITION A: Approved but NOT "Approved unblock request by..." */
+                                    EXISTS (
+                                        SELECT 1
+                                        FROM jsonb_array_elements(a.alert_history) AS elem(obj)
+                                        WHERE obj->>'action_type' = 'Approved'
+                                        AND obj->>'action_msg' NOT LIKE 'Approved unblock request by%'
+                                    )
+
+                                    AND
+
+                                    /* CONDITION B: Active mail sent to Zonal Transport Officer SOD */
+                                    EXISTS (
+                                        SELECT 1
+                                        FROM jsonb_array_elements(a.alert_history) AS elem(obj)
+                                        WHERE obj->>'action_type' = 'Active'
+                                        AND obj->>'action_msg' ILIKE '%Zonal Transport Officer SOD%'
+                                    )
+                                )""",
     "unblocked_by_L4":"""SELECT COUNT(*) AS alert_manager_count
                             FROM alerts
                             WHERE alert_section = 'VTS'
                             AND vehicle_unblocked_date IS NOT NULL
                             AND mark_as_false = TRUE
-                            AND device_msg IS NOT NULL
-                            AND TRIM(device_msg) <> ''""",
+                            AND assigned_user_roles IS NOT NULL
+                            AND array_length(assigned_user_roles, 1) > 0""",
 
     "unblocked_within_day": """select count (*) from alerts where alert_section = 'VTS' 
                                                             and alert_status = 'Close' 
