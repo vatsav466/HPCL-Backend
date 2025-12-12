@@ -820,8 +820,9 @@ async def create_vts_alerts(enriched_data):
                 function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
                 query = f"""SELECT DISTINCT(SHIP_TO_PARTY) FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' AND SUPPLY_LOC = '{entry['location_id']}' """
                 lpg_delivery_location_resp = await function(query=query)
-                if lpg_delivery_location_resp:
-                    entry['base_location_id'] = lpg_delivery_location_resp['SHIP_TO_PARTY'][0].lstrip('P')
+                ship_to_list = lpg_delivery_location_resp.get("SHIP_TO_PARTY") or []
+                if len(ship_to_list) > 0:
+                    entry["base_location_id"] = ship_to_list[0].lstrip("P")
 
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],
