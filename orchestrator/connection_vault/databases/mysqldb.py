@@ -40,6 +40,7 @@ class Mysqldb(BaseAction):
             self.params = self.params.__dict__
         if 'credentials' in self.params.keys():
             self.params = self.params['credentials']
+            self.params["password"] = urdhva_base.types.Secret(self.params['password']).get_secret()
         if self.params.get('is_ssh_tunnel', False):
             tunnel = SSHTunnelForwarder(
                 (self.params['ssh_tunnel']['host'], self.params['ssh_tunnel']['port']),

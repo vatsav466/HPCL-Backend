@@ -809,21 +809,33 @@ async def create_vts_alerts(enriched_data):
             
             entry["bu"] = entry["location_type"]
             entry["sap_id"] = str(entry["location_id"])
-            entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
+
+            if entry['location_type'] == 'TAS':
+                entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
+
+            if entry['location_type'] == 'LPG':
+                invoice_no = entry['invoice_number'].split("-")[0]
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+                function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+                query = f"""SELECT DISTINCT(SHIP_TO_PARTY) FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' AND SUPPLY_LOC = '{entry['location_id']}' """
+                lpg_delivery_location_resp = await function(query=query)
+                if lpg_delivery_location_resp:
+                    entry['base_location_id'] = lpg_delivery_location_resp['SHIP_TO_PARTY'][0].lstrip('P')
 
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],
                 location_id=entry["location_id"]  
                )
 
-            if entry['base_location_id'] and entry['location_type'] == 'TAS':
+            if entry['base_location_id']:
                 _, base_location_data = await cache_api_actions.get_location_data(
                     bu=entry["location_type"],
                     location_id=entry["base_location_id"]
                 )
-                entry["base_region"] = base_location_data.get("region")
-                entry["base_zone"] = base_location_data.get("zone")
-                entry["base_location_name"] = base_location_data.get("name")
+                entry["base_region"] = base_location_data.get("region","")
+                entry["base_zone"] = base_location_data.get("zone","")
+                entry["base_location_name"] = base_location_data.get("name","")
             else:
                 entry['base_location_id'] = entry['location_id']
                 entry["base_region"] = location_data.get("region")
