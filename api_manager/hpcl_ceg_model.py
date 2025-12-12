@@ -3885,6 +3885,15 @@ class VtsAlertHistoryGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class Vtsalerthistory_Vts_Alerts_AnalyticsParams(pydantic.BaseModel):
+    alert_id: str
+    interlock_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class EmLockAlertHistorySchema(UrdhvaPostgresBase):
     __tablename__ = 'em_lock_alert_history'
     
