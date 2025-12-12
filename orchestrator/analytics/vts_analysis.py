@@ -576,7 +576,7 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
 
 async def update_vts_instance(alert_data):
     vts_end_datetime = alert_data.get('vts_end_datetime',None)
-    instance_data, violation_name, vts_alert_history_ids, alert_id = await get_updated_vts_instance(alert_data['tl_number'],alert_data['location_id'],alert_data['location_type'])
+    instance_data, violation_name, vts_alert_history_ids, alert_id = await get_updated_vts_instance(alert_data['tl_number'],alert_data['base_location_id'],alert_data['location_type'])
     if not instance_data:
         logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
         return
@@ -760,6 +760,7 @@ async def create_vts_violation_alerts(enriched_data):
     
 async def create_vts_alerts(enriched_data):
     try:
+        base_location_data = await get_base_location_details()
         for entry in enriched_data:
             vts_duplicate_check_query = f"""select invoice_number,location_id from vts_alert_history where tl_number = '{entry['tl_number']}'
                                                 and invoice_number = '{entry['invoice_number']}' and location_id = '{entry['location_id']}'"""
@@ -794,11 +795,26 @@ async def create_vts_alerts(enriched_data):
             
             entry["bu"] = entry["location_type"]
             entry["sap_id"] = str(entry["location_id"])
+            entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
 
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],
                 location_id=entry["location_id"]  
                )
+
+            if entry['base_location_id'] and entry['location_type'] == 'TAS':
+                _, base_location_data = await cache_api_actions.get_location_data(
+                    bu=entry["location_type"],
+                    location_id=entry["base_location_id"]
+                )
+                entry["base_region"] = base_location_data.get("region")
+                entry["base_zone"] = base_location_data.get("zone")
+                entry["base_location_name"] = base_location_data.get("name")
+            else:
+                entry['base_location_id'] = entry['location_id']
+                entry["base_region"] = location_data.get("region")
+                entry["base_zone"] = location_data.get("zone")
+                entry["base_location_name"] = location_data.get("name")
             
             entry["region"] = location_data.get("region")
             entry["zone"] = location_data.get("zone")
@@ -1011,6 +1027,16 @@ async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_sectio
 # speed_violation_count
 # night_driving_count
 # continuous_driving_count
+
+async def get_base_location_details():
+    query = """SELECT "TRUCK_REGNNO", "BASE_LOCN" FROM "IMS_SAP"."VTS_TRUCK_DETAILS" WHERE "RECORD_STATUS" = 'A' """
+    charts_ins = dashboard_studio_model.Charts_Connection_Vault_RoutingParams(
+        connection_id=1,
+        action='get_data'
+    )
+    function = await charts_actions.charts_connection_vault_routing(charts_ins)
+    base_location_data = await function(query=query, schema_name="IMS_SAP", table_name="VTS_TRUCK_DETAILS")
+    return dict(zip(base_location_data["TRUCK_REGNNO"].to_list(), base_location_data["BASE_LOCN"].to_list()))
 
 def get_geofence_data():
     GEOFENCE_RENAME_MAP = {
