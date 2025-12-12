@@ -828,7 +828,7 @@ async def create_vts_alerts(enriched_data):
                 location_id=entry["location_id"]  
                )
 
-            if entry['base_location_id']:
+            if entry.get('base_location_id'):
                 _, base_location_data = await cache_api_actions.get_location_data(
                     bu=entry["location_type"],
                     location_id=entry["base_location_id"]
