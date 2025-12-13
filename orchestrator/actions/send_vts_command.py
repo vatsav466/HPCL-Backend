@@ -34,6 +34,7 @@ class SendVtsCommand:
 
         if params.get("interrupt").lower() == 'block':            
             # Blocking in IMS blockingFlag="Y"
+            blocking_status = None
             if alert_data['bu'] in ['TAS']:
                 payload = [{
                     "transactNo": str(alert_data['id']) + "1",
@@ -42,8 +43,7 @@ class SendVtsCommand:
                     "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
                     "blockingTo": (alert_data['vehicle_blocked_end_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
                 }]
-                await vts_analysis.post_blocked_tt_ims(payload)
-            
+                blocking_status = await vts_analysis.post_blocked_tt_ims(payload)
             if alert_data['bu'] in ['LPG']:
                 payload = {
                     "Request":{
@@ -54,7 +54,11 @@ class SendVtsCommand:
                         "IP_Address": urdhva_base.settings.server_ip
                     }
                 }
-                await vts_analysis.post_lpg_tt(payload)
+                blocking_status = await vts_analysis.post_lpg_tt(payload)
+            
+            if not blocking_status:
+                return False, "Blocking Payload Not posted to SAP or IMS"
+
             alert_message = (
                 f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Block, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to block the Vehicle "
             )
@@ -65,6 +69,7 @@ class SendVtsCommand:
 
         if params.get("interrupt").lower() == 'unblock':
             # UnBlocking in IMS blockingFlag="N"
+            unblocking_status = None
             if alert_data['bu'] in ['TAS']:
                 payload = [{
                     "transactNo": str(alert_data['id']) + "0",
@@ -73,7 +78,7 @@ class SendVtsCommand:
                     "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
                     "blockingTo": (alert_data['vehicle_blocked_end_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
                 }]
-                await vts_analysis.post_blocked_tt_ims(payload)
+                unblocking_status = await vts_analysis.post_blocked_tt_ims(payload)
 
             if alert_data['bu'] in ['LPG']:
                 payload = {
@@ -85,7 +90,11 @@ class SendVtsCommand:
                     "IP_Address": urdhva_base.settings.server_ip
                     }
                 }
-                await vts_analysis.post_lpg_tt(payload)            
+                unblocking_status = await vts_analysis.post_lpg_tt(payload)
+            
+            if not unblocking_status:
+                return False, "UnBlocking Payload Not posted to SAP or IMS"
+                        
             if not params['auto_unblock']:
                 query = (f"location_id='{alert_data['sap_id']}' and tl_number='{alert_data['vehicle_number']}' "
                          f"and {alert_data['violation_type']}>=1 and created_at<'{alert_data['created_at']}' and location_type='{alert_data['bu']}' "
