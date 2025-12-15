@@ -1333,76 +1333,44 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
 @router.post('/get_location_data', tags=['Ticketing'])
 async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
 
-    # ---------------- PRIORITY 1: sap_id override -----------------
-    if data.sap_id:
-        params = urdhva_base.queryparams.QueryParams()
-        params.q = f"sap_id = '{data.sap_id}'"
-        params.fields = ["sap_id", "bu", "zone", "region", "sales_area", "name"]
-        resp = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type="plain")
-        return {
-            "status": True,
-            "message": "Location data via SAP ID",
-            "data": resp.get("data", [])
-        }
-
-    # ---------------- Build normal filters ------------------------
     filters = []
 
-    if data.bu:
-        filters.append(f"bu = '{data.bu}'")
+    def add_filter(field, value):
+        if value not in ("", None):
+            filters.append(f"{field} = '{value}'")
 
-    if data.zone:
-        filters.append(f"zone = '{data.zone}'")
+    add_filter("bu", data.bu)
+    add_filter("zone", data.zone)
+    add_filter("region", data.region)
+    add_filter("sales_area", data.sales_area)
+    add_filter("sap_id", data.sap_id)
 
-    if data.name:
-        filters.append(f"name = '{data.name}'")
-
-    if data.region:
-        filters.append(f"region = '{data.region}'")
-
-    if data.sales_area:
-        filters.append(f"sales_area = '{data.sales_area}'")
-
-    q = " and ".join(filters) if filters else None
-
+   
     params = urdhva_base.queryparams.QueryParams()
-    params.q = q
-    params.limit = 10000
+    params.q = " AND ".join(filters) if filters else None
+    params.limit = 100000000
     params.fields = ["sap_id", "bu", "zone", "region", "sales_area", "name"]
 
     resp = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type="plain")
     rows = resp.get("data", [])
 
-    # ---------------- HIERARCHY LOGIC -----------------------------
-
-    # LEVEL 0: No BU → return all BUs
-    if not data.bu:
-        unique_bus = sorted({row["bu"] for row in rows if row.get("bu")})
-        return {"status": True, "message": "BU list", "data": unique_bus}
-
-    # LEVEL 1: BU only → return Zones
-    if data.bu and not data.zone:
-        unique_zones = sorted({row["zone"] for row in rows if row.get("zone")})
-        return {"status": True, "message": "Zones list", "data": unique_zones}
-
-    # LEVEL 2: BU + Zone → return plant names
-    if data.bu and data.zone and not data.name:
-        unique_names = sorted({row["name"] for row in rows if row.get("name")})
-        return {"status": True, "message": "Plant Names list", "data": unique_names}
-
-    # LEVEL 3: BU + Zone + Name → return Regions
-    if data.bu and data.zone and data.name and not data.region:
-        unique_regions = sorted({row["region"] for row in rows if row.get("region")})
-        return {"status": True, "message": "Regions list", "data": unique_regions}
-
-    # LEVEL 4: BU + Zone + Name + Region → return Sales Areas
-    if data.bu and data.zone and data.name and data.region and not data.sales_area:
-        unique_sales = sorted({row["sales_area"] for row in rows if row.get("sales_area")})
-        return {"status": True, "message": "Sales Areas list", "data": unique_sales}
-
-    # LEVEL 5: All filters → final exact rows
+    bu_list      = sorted({r["bu"] for r in rows if r.get("bu")})
+    zones        = sorted({r["zone"] for r in rows if r.get("zone")})
+    regions      = sorted({r["region"] for r in rows if r.get("region")})
+    sales_areas  = sorted({r["sales_area"] for r in rows if r.get("sales_area")})
+    names        = sorted({r["name"] for r in rows if r.get("name")})
+    sap_ids      = sorted({r["sap_id"] for r in rows if r.get("sap_id")})
+ 
+    # ------------------ RETURN ------------------
     return {
         "status": True,
-        "message": "Final location rows",
-        "data": rows
+        "message": "All filter values",
+        "data": {
+            "bu_list": bu_list,
+            "zones": zones,
+            "regions": regions,
+            "sales_areas": sales_areas,
+            "names": names,
+            "sap_ids": sap_ids
+        }
     }

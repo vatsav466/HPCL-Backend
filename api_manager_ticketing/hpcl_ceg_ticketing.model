@@ -253,7 +253,6 @@ Model Ticketing {
     Action=> get_location_data {
         bu optional str
         zone optional str
-        name optional str
         region optional str
         sales_area optional str
         sap_id optional str

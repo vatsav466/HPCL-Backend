@@ -388,7 +388,6 @@ class Ticketing_Delete_File_From_CommentParams(pydantic.BaseModel):
 class Ticketing_Get_Location_DataParams(pydantic.BaseModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
-    name: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
