@@ -78,10 +78,12 @@ async def get_initial_dryout_counts(bu, conditions, dry_out_in_days_query):
         "section": "Valid \\ WIP Indents",
         "value": sum(item['value'] for item in stats if 4 <= item['serial'] <= 10),
         "serial": 14, "condition": "=", "group": "pending"
-    }, {
-        "section": "EMUnLock",
-        "value": 0, "serial": 18, "condition": "=", "group": "wip"
-    }])
+    }
+    # ,{
+    #     "section": "EMUnLock",
+    #     "value": 0, "serial": 18, "condition": "=", "group": "wip"
+    # }
+    ])
 
     updated_stats = []
     for each_stats in stats:
