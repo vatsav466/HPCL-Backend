@@ -293,8 +293,7 @@ class LogAuditSummaryReport:
         try:
             ins = await notification_factory.get_notification_module("email")
             recipients = [["cvmallinath@hpcl.in","sreedhar.maddipati@algofusiontech.com","purushm@hpcl.in",
-                           "sachinkwarghane@hpcl.in","bala@algofusiontech.com","venu@algofusiontech.com",
-                           "shrihari.b@algofusiontech.com","yesu.p@algofusiontech.com"]]
+                           "sachinkwarghane@hpcl.in","bala@algofusiontech.com","venu@algofusiontech.com","yesu.p@algofusiontech.com"]]
             IST = pytz.timezone("Asia/Kolkata")
             today_ist = datetime.datetime.now(IST).strftime("%d-%m-%Y")
             for recipient in recipients:
