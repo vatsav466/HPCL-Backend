@@ -279,8 +279,8 @@ async def post_blocked_tt_ims(input_data: typing.List[typing.Dict[str, typing.An
                 logger.error(f"IMS Post failed (Attempt {attempt}/{max_retries}): {e}")
             # retry delay
             if attempt < max_retries:
-                logger.info(f"Retrying in 5 seconds...")
-                await asyncio.sleep(5)
+                logger.info(f"Retrying in 10 seconds...")
+                await asyncio.sleep(10)
         # after max retries
         logger.error(f"IMS post failed after 3 attempts for data: {input_data}")
         return False
@@ -966,15 +966,15 @@ async def fetch_access_token():
             logger.error(f"Token API failed (Attempt {attempt}/{max_retries}): {e}")
         
         if attempt < max_retries:
-            logger.info(f"Retrying in 2 seconds...")
-            await asyncio.sleep(5)
+            logger.info(f"Retrying in 15 seconds...")
+            await asyncio.sleep(15)
     logger.error(f"All attempts to fetch token failed.")
     return None
 
 async def post_lpg_tt(payload):
     access_token = await fetch_access_token()
     if not access_token:
-        logger.error(f"Failed to fetch token")
+        logger.error(f"Failed to fetch token {payload}")
         return None
     headers = {
         "Authorization": f"Bearer {access_token}",
@@ -1002,7 +1002,7 @@ async def post_lpg_tt(payload):
         except requests.exceptions.RequestException as e:
             logger.error(f"Publish API failed (Attempt {attempt}/{max_retries}): {e}")
             if attempt < max_retries:
-                await asyncio.sleep(10)  # wait before retry
+                await asyncio.sleep(15)  # wait before retry
             else:
                 ist = pytz.timezone("Asia/Kolkata")
                 now_ist = datetime.datetime.now(ist)
@@ -1015,7 +1015,7 @@ async def post_lpg_tt(payload):
                     "updated_time": now_ist.strftime("%H%M%S")
                 }
                 await hpcl_ceg_model.LpgDataPostingAuditCreate(**post_sap_response).create()
-                logger.error(f"All retry attempts failed while posting block/unblock details to SAP")
+                logger.error(f"All retry attempts failed while posting block/unblock details to SAP {payload}")
                 return None
 
 async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_section:str):

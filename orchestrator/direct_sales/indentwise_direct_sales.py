@@ -5,7 +5,7 @@ import re
 import charts_actions
 import dashboard_studio_model
 import ast
-
+import polars as pl
 
 logger = urdhva_base.logger.Logger.getInstance("direct-sales-logging")
 
@@ -115,7 +115,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
         
         ims_query = f"""
-                    SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                    SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
                     ir."VALID_INDENT", ir."CANCEL_INDENT"
                     FROM "IMS_SAP"."INDENT_REQUEST" ir 
                     INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
@@ -131,13 +131,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "indent_raised_count": len(indent_raised_resp)
+                "indent_raised_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "indent_raised_count": 0
+            "indent_raised_count": 0,
+            "data": []
             }
         
     async def get_indent_on_hold_direct_sales(self,data):
@@ -164,7 +167,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
@@ -180,13 +183,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "indent_on_hold_count": len(indent_raised_resp)
+                "indent_on_hold_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "indent_on_hold_count": 0
+            "indent_on_hold_count": 0,
+            "data": []
             }
 
     async def get_pending_indents_direct_sales(self,data):
@@ -213,7 +219,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
@@ -229,13 +235,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "pending_indent_count": len(indent_raised_resp)
+                "pending_indent_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "pending_indent_count": 0
+            "pending_indent_count": 0,
+            "data": []
             }
     
     async def get_valid_indent_direct_sales(self,data):
@@ -262,7 +271,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" 
                         FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
@@ -280,13 +289,66 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "valid_indent_count": len(indent_raised_resp)
+                "valid_indent_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "valid_indent_count": 0
+            "valid_indent_count": 0,
+            "data": []
+            }
+    
+    async def get_cancelled_indent_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        conditions = await self.build_clause_conditions(data)
+        where_clause = []
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+        
+        ims_query = f"""
+                    SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
+                    ir."VALID_INDENT", ir."CANCEL_INDENT"
+                    FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                    INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                    TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                    AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."CANCEL_INDENT" = 'Y'
+                    """
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+        
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        indent_raised_resp = await function(query=ims_query)
+        if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
+            return {
+                "status": "success",
+                "cancelled_indent_count": len(indent_raised_resp),
+                "data": df.to_dicts()
+            }
+        return {
+            "status": "success",
+            "cancelled_indent_count": 0,
+            "data": []
             }
     
     async def get_truck_allocated_direct_sales(self,data):
@@ -313,7 +375,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
@@ -330,13 +392,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "truck_allocated_count": len(indent_raised_resp)
+                "truck_allocated_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "truck_allocated_count": 0
+            "truck_allocated_count": 0,
+            "data": []
             }
     
     async def get_send_to_sap_direct_sales(self,data):
@@ -363,7 +428,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
@@ -380,13 +445,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "indent_send_sap_count": len(indent_raised_resp)
+                "indent_send_sap_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "indent_send_sap_count": 0
+            "indent_send_sap_count": 0,
+            "data": []
             }
     
     async def get_sales_order_placed_direct_sales(self,data):
@@ -413,7 +481,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT" 
                         FROM "IMS_SAP"."INDENT_REQUEST" ir INNER JOIN  
                         "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
@@ -434,13 +502,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "sales_order_placed_count": len(indent_raised_resp)
+                "sales_order_placed_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "sales_order_placed_count": 0
+            "sales_order_placed_count": 0,
+            "data": []
         }
     
     async def get_r2_swipe_direct_sales(self,data):
@@ -467,7 +538,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
@@ -487,13 +558,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "r2_swiped_count": len(indent_raised_resp)
+                "r2_swiped_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "r2_swiped_count": 0
+            "r2_swiped_count": 0,
+            "data": []
         }
 
     async def get_is_invoice_created_direct_sales(self,data):
@@ -520,7 +594,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
@@ -540,13 +614,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "is_invoice_created_count": len(indent_raised_resp)
+                "is_invoice_created_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "is_invoice_created_count": 0
+            "is_invoice_created_count": 0,
+            "data": []
         }
     
     async def get_r3_swiped_direct_sales(self,data):
@@ -573,7 +650,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
@@ -593,13 +670,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "r3_swiped_count": len(indent_raised_resp)
+                "r3_swiped_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "r3_swiped_count": 0
+            "r3_swiped_count": 0,
+            "data": []
         }
     
 # async def main():

@@ -26,8 +26,7 @@ async def send_notification(subject: str, body: str) -> None:
     try:
         ins = await notification_factory.get_notification_module("email")
         recipients = [["sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com",
-                       "shrihari.b@algofusiontech.com","yesu.p@algofusiontech.com",
-                       "manoj.m@algofusiontech.com"]]
+                       "yesu.p@algofusiontech.com"]]
         IST = pytz.timezone("Asia/Kolkata")
         today_ist = datetime.datetime.now(IST).strftime("%d-%m-%Y")
 
