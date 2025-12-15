@@ -22,7 +22,8 @@ from hpcl_ceg_ticketing_model import (
     Ticketing_Add_Comment_To_TicketParams,
     Ticketing_Delete_DescriptionParams,
     Ticketing_Attach_File_To_CommentParams,
-    Ticketing_Delete_File_From_CommentParams
+    Ticketing_Delete_File_From_CommentParams,
+    Ticketing_Get_Location_DataParams
 
 )
 import os, uuid
@@ -137,6 +138,8 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         ticket_data['ticket_id'] = await alert_helper.get_alert_unique_id(
             ticket_data['bu'], ticket_data['sap_id'], ticket_data.get('sop_id')
         )
+        ticket_data['ticket_id'] = f"TKT-{ticket_data['ticket_id']}"
+
 
         # Generate incremental ticket_name
         redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -450,13 +453,16 @@ async def ticketing_close_ticket(data: Ticketing_Close_TicketParams):
 async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
     try:
         data_dict = data.model_dump()
+        
         print("data_dict", data_dict)
 
         # ------------------------------------------------------------
         # FIX → Convert subtask_id "" → []
         # ------------------------------------------------------------
-        if not tdata.get("subtask_id"):
-            tdata["subtask_id"] = []
+        #if not data_dict.get("subtask_id"):
+        if data_dict.get("subtask_id") == [""]:
+            data_dict["subtask_id"] = []
+        
 
         # Rename alert_type → interlock_name
         if "alert_type" in data_dict:
@@ -706,6 +712,8 @@ async def ticketing_attach_file(
 
     except Exception as e:
         return {"status": False, "message": f"Error saving file: {str(e)}"}
+
+
 
 # Action delete_file_attachment
 @router.post('/delete_file_attachment', tags=['Ticketing'])
@@ -1319,3 +1327,82 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
         "ticket": main_ticket
     }
 
+
+
+# Action get_location_data
+@router.post('/get_location_data', tags=['Ticketing'])
+async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
+
+    # ---------------- PRIORITY 1: sap_id override -----------------
+    if data.sap_id:
+        params = urdhva_base.queryparams.QueryParams()
+        params.q = f"sap_id = '{data.sap_id}'"
+        params.fields = ["sap_id", "bu", "zone", "region", "sales_area", "name"]
+        resp = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type="plain")
+        return {
+            "status": True,
+            "message": "Location data via SAP ID",
+            "data": resp.get("data", [])
+        }
+
+    # ---------------- Build normal filters ------------------------
+    filters = []
+
+    if data.bu:
+        filters.append(f"bu = '{data.bu}'")
+
+    if data.zone:
+        filters.append(f"zone = '{data.zone}'")
+
+    if data.name:
+        filters.append(f"name = '{data.name}'")
+
+    if data.region:
+        filters.append(f"region = '{data.region}'")
+
+    if data.sales_area:
+        filters.append(f"sales_area = '{data.sales_area}'")
+
+    q = " and ".join(filters) if filters else None
+
+    params = urdhva_base.queryparams.QueryParams()
+    params.q = q
+    params.limit = 10000
+    params.fields = ["sap_id", "bu", "zone", "region", "sales_area", "name"]
+
+    resp = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type="plain")
+    rows = resp.get("data", [])
+
+    # ---------------- HIERARCHY LOGIC -----------------------------
+
+    # LEVEL 0: No BU → return all BUs
+    if not data.bu:
+        unique_bus = sorted({row["bu"] for row in rows if row.get("bu")})
+        return {"status": True, "message": "BU list", "data": unique_bus}
+
+    # LEVEL 1: BU only → return Zones
+    if data.bu and not data.zone:
+        unique_zones = sorted({row["zone"] for row in rows if row.get("zone")})
+        return {"status": True, "message": "Zones list", "data": unique_zones}
+
+    # LEVEL 2: BU + Zone → return plant names
+    if data.bu and data.zone and not data.name:
+        unique_names = sorted({row["name"] for row in rows if row.get("name")})
+        return {"status": True, "message": "Plant Names list", "data": unique_names}
+
+    # LEVEL 3: BU + Zone + Name → return Regions
+    if data.bu and data.zone and data.name and not data.region:
+        unique_regions = sorted({row["region"] for row in rows if row.get("region")})
+        return {"status": True, "message": "Regions list", "data": unique_regions}
+
+    # LEVEL 4: BU + Zone + Name + Region → return Sales Areas
+    if data.bu and data.zone and data.name and data.region and not data.sales_area:
+        unique_sales = sorted({row["sales_area"] for row in rows if row.get("sales_area")})
+        return {"status": True, "message": "Sales Areas list", "data": unique_sales}
+
+    # LEVEL 5: All filters → final exact rows
+    return {
+        "status": True,
+        "message": "Final location rows",
+        "data": rows
+    }

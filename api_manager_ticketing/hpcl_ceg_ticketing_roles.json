@@ -81,6 +81,9 @@
                 },
                 {
                     "name": "delete_file_from_comment"
+                },
+                {
+                    "name": "get_location_data"
                 }
             ]
         },
@@ -99,6 +102,9 @@
                 },
                 {
                     "name": "get_ticket"
+                },
+                {
+                    "name": "get_location_data"
                 }
             ]
         },
@@ -180,6 +186,9 @@
                 },
                 {
                     "name": "delete_file_from_comment"
+                },
+                {
+                    "name": "get_location_data"
                 }
             ]
         }
@@ -335,6 +344,10 @@
         {
             "name": "delete_file_from_comment",
             "displayName": "delete_file_from_comment"
+        },
+        {
+            "name": "get_location_data",
+            "displayName": "get_location_data"
         }
     ]
 }
