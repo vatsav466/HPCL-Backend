@@ -5,7 +5,7 @@ import re
 import charts_actions
 import dashboard_studio_model
 import ast
-
+import polars as pl
 
 logger = urdhva_base.logger.Logger.getInstance("direct-sales-logging")
 
@@ -131,13 +131,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "indent_raised_count": len(indent_raised_resp)
+                "indent_raised_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "indent_raised_count": 0
+            "indent_raised_count": 0,
+            "data": []
             }
         
     async def get_indent_on_hold_direct_sales(self,data):
@@ -180,13 +183,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "indent_on_hold_count": len(indent_raised_resp)
+                "indent_on_hold_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "indent_on_hold_count": 0
+            "indent_on_hold_count": 0,
+            "data": []
             }
 
     async def get_pending_indents_direct_sales(self,data):
@@ -229,13 +235,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "pending_indent_count": len(indent_raised_resp)
+                "pending_indent_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "pending_indent_count": 0
+            "pending_indent_count": 0,
+            "data": []
             }
     
     async def get_valid_indent_direct_sales(self,data):
@@ -280,13 +289,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "valid_indent_count": len(indent_raised_resp)
+                "valid_indent_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "valid_indent_count": 0
+            "valid_indent_count": 0,
+            "data": []
             }
     
     async def get_truck_allocated_direct_sales(self,data):
@@ -330,13 +342,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "truck_allocated_count": len(indent_raised_resp)
+                "truck_allocated_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "truck_allocated_count": 0
+            "truck_allocated_count": 0,
+            "data": []
             }
     
     async def get_send_to_sap_direct_sales(self,data):
@@ -380,13 +395,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "indent_send_sap_count": len(indent_raised_resp)
+                "indent_send_sap_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "indent_send_sap_count": 0
+            "indent_send_sap_count": 0,
+            "data": []
             }
     
     async def get_sales_order_placed_direct_sales(self,data):
@@ -434,13 +452,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "sales_order_placed_count": len(indent_raised_resp)
+                "sales_order_placed_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "sales_order_placed_count": 0
+            "sales_order_placed_count": 0,
+            "data": []
         }
     
     async def get_r2_swipe_direct_sales(self,data):
@@ -487,13 +508,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "r2_swiped_count": len(indent_raised_resp)
+                "r2_swiped_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "r2_swiped_count": 0
+            "r2_swiped_count": 0,
+            "data": []
         }
 
     async def get_is_invoice_created_direct_sales(self,data):
@@ -540,13 +564,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "is_invoice_created_count": len(indent_raised_resp)
+                "is_invoice_created_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "is_invoice_created_count": 0
+            "is_invoice_created_count": 0,
+            "data": []
         }
     
     async def get_r3_swiped_direct_sales(self,data):
@@ -593,13 +620,16 @@ class IndentDryOutDirectSales:
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         indent_raised_resp = await function(query=ims_query)
         if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "r3_swiped_count": len(indent_raised_resp)
+                "r3_swiped_count": len(indent_raised_resp),
+                "data": df.to_dicts()
             }
         return {
             "status": "success",
-            "r3_swiped_count": 0
+            "r3_swiped_count": 0,
+            "data": []
         }
     
 # async def main():
