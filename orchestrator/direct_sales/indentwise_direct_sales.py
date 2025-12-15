@@ -301,6 +301,56 @@ class IndentDryOutDirectSales:
             "data": []
             }
     
+    async def get_cancelled_indent_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        conditions = await self.build_clause_conditions(data)
+        where_clause = []
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+        
+        ims_query = f"""
+                    SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
+                    ir."VALID_INDENT", ir."CANCEL_INDENT"
+                    FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                    INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                    TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                    AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."CANCEL_INDENT" = 'Y'
+                    """
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+        
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        indent_raised_resp = await function(query=ims_query)
+        if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
+            return {
+                "status": "success",
+                "cancelled_indent_count": len(indent_raised_resp),
+                "data": df.to_dicts()
+            }
+        return {
+            "status": "success",
+            "cancelled_indent_count": 0,
+            "data": []
+            }
+    
     async def get_truck_allocated_direct_sales(self,data):
         for rec in data.filters:
             for index, val in enumerate(rec.value):

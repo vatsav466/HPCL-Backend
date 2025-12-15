@@ -1205,3 +1205,9 @@ async def indentdryout_get_dried_out_ro_by_actions(data: Indentdryout_Get_Dried_
         }]
 
     return stats
+
+
+# Action get_cancelled_indent_direct_sales
+@router.post('/get_cancelled_indent_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_cancelled_indent_direct_sales(data: Indentdryout_Get_Cancelled_Indent_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_cancelled_indent_direct_sales(data)
