@@ -115,7 +115,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
         
         ims_query = f"""
-                    SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                    SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
                     ir."VALID_INDENT", ir."CANCEL_INDENT"
                     FROM "IMS_SAP"."INDENT_REQUEST" ir 
                     INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
@@ -167,7 +167,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
@@ -219,7 +219,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
@@ -271,7 +271,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" 
                         FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
@@ -325,7 +325,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
@@ -378,7 +378,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
@@ -431,7 +431,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT" 
                         FROM "IMS_SAP"."INDENT_REQUEST" ir INNER JOIN  
                         "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
@@ -488,7 +488,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
@@ -544,7 +544,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
@@ -600,7 +600,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", ir."DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8), ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
