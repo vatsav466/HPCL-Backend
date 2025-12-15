@@ -1194,6 +1194,11 @@ Model IndentDryOut {
         bu_type optional str
     }
 
+    Action=> get_cancelled_indent_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
     Action=> get_truck_allocated_direct_sales {
         filters list IndentDryOutDataFilters
         bu_type optional str

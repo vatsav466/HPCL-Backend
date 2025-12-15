@@ -1634,6 +1634,9 @@
                     "name": "get_valid_indent_direct_sales"
                 },
                 {
+                    "name": "get_cancelled_indent_direct_sales"
+                },
+                {
                     "name": "get_truck_allocated_direct_sales"
                 },
                 {
@@ -1725,6 +1728,9 @@
                 },
                 {
                     "name": "get_valid_indent_direct_sales"
+                },
+                {
+                    "name": "get_cancelled_indent_direct_sales"
                 },
                 {
                     "name": "get_truck_allocated_direct_sales"
@@ -1833,6 +1839,9 @@
                 },
                 {
                     "name": "get_valid_indent_direct_sales"
+                },
+                {
+                    "name": "get_cancelled_indent_direct_sales"
                 },
                 {
                     "name": "get_truck_allocated_direct_sales"
@@ -7928,6 +7937,10 @@
         {
             "name": "get_valid_indent_direct_sales",
             "displayName": "get_valid_indent_direct_sales"
+        },
+        {
+            "name": "get_cancelled_indent_direct_sales",
+            "displayName": "get_cancelled_indent_direct_sales"
         },
         {
             "name": "get_truck_allocated_direct_sales",

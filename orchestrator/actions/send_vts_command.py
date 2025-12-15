@@ -57,6 +57,7 @@ class SendVtsCommand:
                 blocking_status = await vts_analysis.post_lpg_tt(payload)
             
             if not blocking_status:
+                logger.error(f"Blocking Payload Not posted to SAP or IMS {alert_data}")
                 return False, "Blocking Payload Not posted to SAP or IMS"
 
             alert_message = (
@@ -93,6 +94,7 @@ class SendVtsCommand:
                 unblocking_status = await vts_analysis.post_lpg_tt(payload)
             
             if not unblocking_status:
+                logger.error(f"UnBlocking Payload Not posted to SAP or IMS {alert_data}")
                 return False, "UnBlocking Payload Not posted to SAP or IMS"
                         
             if not params['auto_unblock']:

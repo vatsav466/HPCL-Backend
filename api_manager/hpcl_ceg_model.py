@@ -2623,6 +2623,15 @@ class Indentdryout_Get_Valid_Indent_Direct_SalesParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Indentdryout_Get_Cancelled_Indent_Direct_SalesParams(pydantic.BaseModel):
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Indentdryout_Get_Truck_Allocated_Direct_SalesParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
     bu_type: typing.Optional[str] = pydantic.Field("", **{})
