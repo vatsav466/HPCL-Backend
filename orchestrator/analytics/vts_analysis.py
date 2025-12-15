@@ -967,7 +967,7 @@ async def fetch_access_token():
         
         if attempt < max_retries:
             logger.info(f"Retrying in 2 seconds...")
-            await asyncio.sleep(5)
+            await asyncio.sleep(15)
     logger.error(f"All attempts to fetch token failed.")
     return None
 
@@ -1002,7 +1002,7 @@ async def post_lpg_tt(payload):
         except requests.exceptions.RequestException as e:
             logger.error(f"Publish API failed (Attempt {attempt}/{max_retries}): {e}")
             if attempt < max_retries:
-                await asyncio.sleep(10)  # wait before retry
+                await asyncio.sleep(15)  # wait before retry
             else:
                 ist = pytz.timezone("Asia/Kolkata")
                 now_ist = datetime.datetime.now(ist)
