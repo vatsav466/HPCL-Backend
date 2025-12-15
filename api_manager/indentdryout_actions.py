@@ -1071,10 +1071,11 @@ async def indentdryout_get_dried_out_ro_by_actions(data: Indentdryout_Get_Dried_
         nozzle_sales = await dry_out_analysis.get_nozzle_sales(conditions=conditions,
                                                                dry_out_in_days=dry_out_in_days_query)
         stats = [
+            # {
+            #     "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 24,
+            #     "condition": "=", "group": "dryout_analysis"
+            # },
             {
-                "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 24,
-                "condition": "=", "group": "dryout_analysis"
-            }, {
                 "section": "<2 Days", "value": less_than_2_days, "serial": 25,
                 "condition": "=", "group": "dryout_analysis"
             }, {
@@ -1139,6 +1140,11 @@ async def indentdryout_get_dried_out_ro_by_actions(data: Indentdryout_Get_Dried_
             }, {
                 "section": "Transport TT", "value": dealer_truck_count.get("transport_tt", 0), "serial": 35,
                 "condition": "=", "group": "tt_available"
+            }, {
+                'section': 'Dealer TT Return', 'value': 0, 'serial': 36, 'condition': '=',
+                'group': 'tt_available'
+            }, {'section': 'Transport TT Return', 'value': 0, 'serial': 37, 'condition': '=',
+                'group': 'tt_available'
             }
         ]
 
