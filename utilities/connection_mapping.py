@@ -42,7 +42,7 @@ dry_out_top_x_axis = [{"name": "Indent Not Raised", "group": "not_raised"},
                   {"name": "Truck Allocated", "group": "wip"},
                   {"name": "Sent to SAP", "group": "wip"}, {"name": "Sales Order Placed", "group": "wip"},
                   {"name": "R2 Swiped", "group": "wip"}, {"name": "Invoice Created", "group": "wip"},
-                  {"name": "R3 Swiped", "group": "wip"}, {"name": "In Transit(TAS→RO)", "group": "wip"},
+                  {"name": "R3 Swiped", "group": "wip"}, {"name": "Transit(TAS→RO)", "group": "wip"},
                   {"name": "ATG Ack", "group": "delivered"}, {"name": "Delivery Confirmation", "group": "delivered"},
                   {"name": "EMLock", "group": "delivered"}, {"name": "VTS Return", "group": "delivered"},
                   {"name": "Trip Completed", "group": "delivered"}]
