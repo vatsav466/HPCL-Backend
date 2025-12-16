@@ -22,7 +22,8 @@ from hpcl_ceg_ticketing_model import (
     Ticketing_Add_Comment_To_TicketParams,
     Ticketing_Delete_DescriptionParams,
     Ticketing_Attach_File_To_CommentParams,
-    Ticketing_Delete_File_From_CommentParams
+    Ticketing_Delete_File_From_CommentParams,
+    Ticketing_Get_Location_DataParams
 
 )
 import os, uuid
@@ -137,6 +138,8 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         ticket_data['ticket_id'] = await alert_helper.get_alert_unique_id(
             ticket_data['bu'], ticket_data['sap_id'], ticket_data.get('sop_id')
         )
+        ticket_data['ticket_id'] = f"TKT-{ticket_data['ticket_id']}"
+
 
         # Generate incremental ticket_name
         redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -450,13 +453,16 @@ async def ticketing_close_ticket(data: Ticketing_Close_TicketParams):
 async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
     try:
         data_dict = data.model_dump()
+        
         print("data_dict", data_dict)
 
         # ------------------------------------------------------------
         # FIX → Convert subtask_id "" → []
         # ------------------------------------------------------------
-        if not tdata.get("subtask_id"):
-            tdata["subtask_id"] = []
+        #if not data_dict.get("subtask_id"):
+        if data_dict.get("subtask_id") == [""]:
+            data_dict["subtask_id"] = []
+        
 
         # Rename alert_type → interlock_name
         if "alert_type" in data_dict:
@@ -706,6 +712,8 @@ async def ticketing_attach_file(
 
     except Exception as e:
         return {"status": False, "message": f"Error saving file: {str(e)}"}
+
+
 
 # Action delete_file_attachment
 @router.post('/delete_file_attachment', tags=['Ticketing'])
@@ -1319,3 +1327,50 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
         "ticket": main_ticket
     }
 
+
+
+# Action get_location_data
+@router.post('/get_location_data', tags=['Ticketing'])
+async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
+
+    filters = []
+
+    def add_filter(field, value):
+        if value not in ("", None):
+            filters.append(f"{field} = '{value}'")
+
+    add_filter("bu", data.bu)
+    add_filter("zone", data.zone)
+    add_filter("region", data.region)
+    add_filter("sales_area", data.sales_area)
+    add_filter("sap_id", data.sap_id)
+
+   
+    params = urdhva_base.queryparams.QueryParams()
+    params.q = " AND ".join(filters) if filters else None
+    params.limit = 100000000
+    params.fields = ["sap_id", "bu", "zone", "region", "sales_area", "name"]
+
+    resp = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type="plain")
+    rows = resp.get("data", [])
+
+    bu_list      = sorted({r["bu"] for r in rows if r.get("bu")})
+    zones        = sorted({r["zone"] for r in rows if r.get("zone")})
+    regions      = sorted({r["region"] for r in rows if r.get("region")})
+    sales_areas  = sorted({r["sales_area"] for r in rows if r.get("sales_area")})
+    names        = sorted({r["name"] for r in rows if r.get("name")})
+    sap_ids      = sorted({r["sap_id"] for r in rows if r.get("sap_id")})
+ 
+    # ------------------ RETURN ------------------
+    return {
+        "status": True,
+        "message": "All filter values",
+        "data": {
+            "bu_list": bu_list,
+            "zones": zones,
+            "regions": regions,
+            "sales_areas": sales_areas,
+            "names": names,
+            "sap_ids": sap_ids
+        }
+    }

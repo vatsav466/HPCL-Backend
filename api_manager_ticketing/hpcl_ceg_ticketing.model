@@ -250,6 +250,14 @@ Model Ticketing {
         file_path optional str
     }
 
+    Action=> get_location_data {
+        bu optional str
+        zone optional str
+        region optional str
+        sales_area optional str
+        sap_id optional str
+    }
+
     Config=> {
         crud_operations='read'
     }
