@@ -120,7 +120,7 @@ location_configs = [
                     ZPS.ZZONE, ZPS.CITY1, ZPS.POST_CODE1, ZPS.STREET, ZPS.STR_SUPPL1,
                     ZPS.REPORTING_OFFICE FROM 
                     ZMMCV_PLANT_STG ZPS INNER JOIN ZSDCV_AY_INV3_STG ZCA ON ZCA.SUPPLY_LOC = ZPS.PLANT
-                    WHERE ZPS.ZLOC_TYPE IN ('12','17','32','33','11','18','19') AND ZPS.SBU='LPG' AND
+                    WHERE ZPS.ZLOC_TYPE IN ('12','17','32','33','11','18','19','35') AND ZPS.SBU='LPG' AND
                     ZCA.INVOICE_DATE >= DATE_SUB(NOW(), INTERVAL 1 YEAR) AND ZCA.INVOICE_DATE <= NOW();
                 """,
         # '12', '17', '25', '32', '33','68'
