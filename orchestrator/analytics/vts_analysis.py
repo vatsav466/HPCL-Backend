@@ -830,7 +830,7 @@ async def create_vts_alerts(enriched_data):
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
                 function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
                 query = f"""SELECT DISTINCT(SHIP_TO_PARTY) FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
-                            AND SUPPLY_LOC = '{entry['location_id']}' AND SHIP_TO_PARTY ILIKE ('p%')"""
+                            AND SUPPLY_LOC = '{entry['location_id']}'"""
                 lpg_delivery_location_resp = await function(query=query)
                 ship_to_list = lpg_delivery_location_resp.get("SHIP_TO_PARTY") or []
                 if len(ship_to_list) > 0:
@@ -1047,7 +1047,7 @@ async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_
         vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
     elif sap_id in lpg_vts_with_one_officer:
         vts_mapping = vts_role_mapping.lpg_one_officer_unblocking_matrix[alert_section]
-    elif sap_id in lpg_vts_with_no_officer:
+    elif sap_id in lpg_vts_with_no_officer or sap_id.startswith('4'):
         vts_mapping = vts_role_mapping.lpg_no_officer_unblocking_matrix[alert_section]
         
     if bu in vts_mapping.keys():
@@ -1076,7 +1076,7 @@ async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_sectio
         vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
     elif sap_id in lpg_vts_with_one_officer:
         vts_mapping = vts_role_mapping.lpg_one_officer_unblocking_matrix[alert_section]
-    elif sap_id in lpg_vts_with_no_officer:
+    elif sap_id in lpg_vts_with_no_officer or sap_id.startswith('4'):
         vts_mapping = vts_role_mapping.lpg_no_officer_unblocking_matrix[alert_section]
 
     if bu in vts_mapping.keys():

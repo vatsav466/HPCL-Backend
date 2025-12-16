@@ -1002,7 +1002,7 @@ class SendNotification:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer:
                     rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
-                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer:
+                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4'):
                     rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if mailto and mailto in ["0","1","2"]:
                     return rolemapping["rolemailto"].get(mailto,"")
@@ -1042,7 +1042,7 @@ class SendNotification:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer:
                     rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
-                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer:
+                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4'):
                     rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if mqof and mqof in ["0","1","2"]:
                     return rolemapping["mqof"].get(mqof,"")
