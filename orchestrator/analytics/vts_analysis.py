@@ -414,6 +414,12 @@ async def is_alert_exists(tl_number: str):
     print("vts_alert_data: ", vts_alert_data)
     if vts_alert_data.get("data", []):
         return True
+    query = f"blocking_status='blocked' and truck_number='{tl_number}'"
+    manual_blocked = await hpcl_ceg_model.VtsManualBlocked.get_all(
+        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
+    )
+    if manual_blocked["data"]:
+        return True
     return False
 
 async def last_closed_at(tt_number: str):
@@ -818,7 +824,8 @@ async def create_vts_alerts(enriched_data):
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
                 function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-                query = f"""SELECT DISTINCT(SHIP_TO_PARTY) FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' AND SUPPLY_LOC = '{entry['location_id']}' """
+                query = f"""SELECT DISTINCT(SHIP_TO_PARTY) FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
+                            AND SUPPLY_LOC = '{entry['location_id']}' AND SHIP_TO_PARTY LIKE ('P%')"""
                 lpg_delivery_location_resp = await function(query=query)
                 ship_to_list = lpg_delivery_location_resp.get("SHIP_TO_PARTY") or []
                 if len(ship_to_list) > 0:
