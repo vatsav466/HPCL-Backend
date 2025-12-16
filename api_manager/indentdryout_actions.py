@@ -1071,11 +1071,10 @@ async def indentdryout_get_dried_out_ro_by_actions(data: Indentdryout_Get_Dried_
         nozzle_sales = await dry_out_analysis.get_nozzle_sales(conditions=conditions,
                                                                dry_out_in_days=dry_out_in_days_query)
         stats = [
-            # {
-            #     "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 24,
-            #     "condition": "=", "group": "dryout_analysis"
-            # },
             {
+                "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 24,
+                "condition": "=", "group": "dryout_analysis"
+            }, {
                 "section": "<2 Days", "value": less_than_2_days, "serial": 25,
                 "condition": "=", "group": "dryout_analysis"
             }, {
@@ -1113,10 +1112,11 @@ async def indentdryout_get_dried_out_ro_by_actions(data: Indentdryout_Get_Dried_
         more_than_75_rs_lakhs = tar_analysis.get("greater_5_cr", 0)
         indent_not_raised_count = _0_to_25_rs_lakhs + _25_to_50_rs_lakhs + _50_to_75_rs_lakhs + more_than_75_rs_lakhs
         stats = [
+            # {
+            #     "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 29,
+            #     "condition": "=", "group": "tar_analysis"
+            # },
             {
-                "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 29,
-                "condition": "=", "group": "tar_analysis"
-            }, {
                 "section": "0 to 25 Rs Lakhs", "value": _0_to_25_rs_lakhs, "serial": 30,
                 "condition": "=", "group": "tar_analysis"
             }, {
