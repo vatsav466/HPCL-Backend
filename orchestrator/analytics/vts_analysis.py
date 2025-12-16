@@ -600,6 +600,11 @@ async def update_vts_instance(alert_data):
     if not instance_data:
         logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
         return
+    
+    if not alert_id:
+        logger.info(f"Alert Got Blocked From Admin Module {alert_data['tl_number']}")
+        return
+    
     alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
@@ -825,11 +830,12 @@ async def create_vts_alerts(enriched_data):
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
                 function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
                 query = f"""SELECT DISTINCT(SHIP_TO_PARTY) FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
-                            AND SUPPLY_LOC = '{entry['location_id']}' AND SHIP_TO_PARTY LIKE ('P%')"""
+                            AND SUPPLY_LOC = '{entry['location_id']}' AND SHIP_TO_PARTY ILIKE ('p%')"""
                 lpg_delivery_location_resp = await function(query=query)
                 ship_to_list = lpg_delivery_location_resp.get("SHIP_TO_PARTY") or []
                 if len(ship_to_list) > 0:
-                    entry["base_location_id"] = ship_to_list[0].lstrip("P")
+                    base_sap_id = ship_to_list[0].lstrip("P")
+                    entry["base_location_id"] = str(int(base_sap_id))
 
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],
@@ -837,10 +843,17 @@ async def create_vts_alerts(enriched_data):
                )
 
             if entry.get('base_location_id'):
-                _, base_location_data = await cache_api_actions.get_location_data(
-                    bu=entry["location_type"],
-                    location_id=entry["base_location_id"]
-                )
+                base_location_data = {}
+                if entry['base_location_id'].startswith('4'):
+                    query = (f"select * from location_master where sap_id = '{entry["base_location_id"]}'")
+                    vts_location_data = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=0)
+                    if vts_location_data.get("data", []):
+                        base_location_data = vts_location_data['data'][0]
+                else:
+                    _, base_location_data = await cache_api_actions.get_location_data(
+                        bu=entry["location_type"],
+                        location_id=entry["base_location_id"]
+                    )
                 entry["base_region"] = base_location_data.get("region","")
                 entry["base_zone"] = base_location_data.get("zone","")
                 entry["base_location_name"] = base_location_data.get("name","")
