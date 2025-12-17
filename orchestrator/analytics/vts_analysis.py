@@ -414,6 +414,12 @@ async def is_alert_exists(tl_number: str):
     print("vts_alert_data: ", vts_alert_data)
     if vts_alert_data.get("data", []):
         return True
+    query = f"blocking_status='blocked' and truck_number='{tl_number}'"
+    manual_blocked = await hpcl_ceg_model.VtsManualBlocked.get_all(
+        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
+    )
+    if manual_blocked["data"]:
+        return True
     return False
 
 async def last_closed_at(tt_number: str):
@@ -594,6 +600,11 @@ async def update_vts_instance(alert_data):
     if not instance_data:
         logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
         return
+    
+    if not alert_id:
+        logger.info(f"Alert Got Blocked From Admin Module {alert_data['tl_number']}")
+        return
+    
     alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
@@ -818,11 +829,13 @@ async def create_vts_alerts(enriched_data):
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
                 function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-                query = f"""SELECT DISTINCT(SHIP_TO_PARTY) FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' AND SUPPLY_LOC = '{entry['location_id']}' """
+                query = f"""SELECT DISTINCT(SHIP_TO_PARTY) FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
+                            AND SUPPLY_LOC = '{entry['location_id']}'"""
                 lpg_delivery_location_resp = await function(query=query)
                 ship_to_list = lpg_delivery_location_resp.get("SHIP_TO_PARTY") or []
                 if len(ship_to_list) > 0:
-                    entry["base_location_id"] = ship_to_list[0].lstrip("P")
+                    base_sap_id = ship_to_list[0].lstrip("P")
+                    entry["base_location_id"] = str(int(base_sap_id))
 
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],
@@ -830,10 +843,17 @@ async def create_vts_alerts(enriched_data):
                )
 
             if entry.get('base_location_id'):
-                _, base_location_data = await cache_api_actions.get_location_data(
-                    bu=entry["location_type"],
-                    location_id=entry["base_location_id"]
-                )
+                base_location_data = {}
+                if entry['base_location_id'].startswith('4'):
+                    query = (f"select * from location_master where sap_id = '{entry["base_location_id"]}'")
+                    vts_location_data = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=0)
+                    if vts_location_data.get("data", []):
+                        base_location_data = vts_location_data['data'][0]
+                else:
+                    _, base_location_data = await cache_api_actions.get_location_data(
+                        bu=entry["location_type"],
+                        location_id=entry["base_location_id"]
+                    )
                 entry["base_region"] = base_location_data.get("region","")
                 entry["base_zone"] = base_location_data.get("zone","")
                 entry["base_location_name"] = base_location_data.get("name","")
@@ -1027,7 +1047,7 @@ async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_
         vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
     elif sap_id in lpg_vts_with_one_officer:
         vts_mapping = vts_role_mapping.lpg_one_officer_unblocking_matrix[alert_section]
-    elif sap_id in lpg_vts_with_no_officer:
+    elif sap_id in lpg_vts_with_no_officer or sap_id.startswith('4'):
         vts_mapping = vts_role_mapping.lpg_no_officer_unblocking_matrix[alert_section]
         
     if bu in vts_mapping.keys():
@@ -1056,7 +1076,7 @@ async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_sectio
         vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
     elif sap_id in lpg_vts_with_one_officer:
         vts_mapping = vts_role_mapping.lpg_one_officer_unblocking_matrix[alert_section]
-    elif sap_id in lpg_vts_with_no_officer:
+    elif sap_id in lpg_vts_with_no_officer or sap_id.startswith('4'):
         vts_mapping = vts_role_mapping.lpg_no_officer_unblocking_matrix[alert_section]
 
     if bu in vts_mapping.keys():

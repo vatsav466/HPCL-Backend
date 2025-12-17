@@ -39,12 +39,19 @@ class VTSAlertManager(alert_factory.AlertFactory):
         Returns:
             dict: A dictionary containing the status, message and the created alert document
         """
-        status, location_details = await alert_helper.get_location_details(alert_data['location_type'],
+        location_details = {}
+        if alert_data['base_location_id'].startswith('4'):
+            query = (f"select * from location_master where sap_id = '{alert_data["base_location_id"]}'")
+            vts_location_data = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=0)
+            if vts_location_data.get("data", []):
+                location_details = vts_location_data['data'][0]
+        else:
+            status, location_details = await alert_helper.get_location_details(alert_data['location_type'],
                                                                            alert_data['base_location_id'])
-        if not status:
-            logger.info(f"Error in finding location {alert_data['base_location_id']} "
-                        f"for bu {alert_data['location_type']} - {location_details}")
-            location_details = {'name': ""}
+            if not status:
+                logger.info(f"Error in finding location {alert_data['base_location_id']} "
+                            f"for bu {alert_data['location_type']} - {location_details}")
+                location_details = {}
 
         instance_data, violation_name, vts_alert_history_ids = await vts_analysis.get_vts_instance(alert_data['tl_number'],alert_data['base_location_id'],alert_data['location_type'])
         if not instance_data:
@@ -52,7 +59,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
             return
         vts_alert_data = {"bu": alert_data['location_type'],
                           "sap_id": alert_data['base_location_id'],
-                          "location_name": location_details['name'],
+                          "location_name": location_details.get('name',''),
                           "vehicle_number": alert_data['tl_number'],
                           "violation_type": violation_name}
 
@@ -87,6 +94,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
             instance_count = resp.get("count", 0)
         interlock_name, instance = helpers.get_interlock_name_and_instance_name_vts(interlock_details.get("interlock_name"),instance_count+1)
         vts_alert_data.update(interlock_details)
+        vts_alert_data['location_data'] = location_details.__dict__ if not isinstance(location_details,dict) else location_details
         vts_alert_data['alert_section'] = 'VTS'
         vts_alert_data['alert_history'] = alert_history
         vts_alert_data['severity'] = instance_data['severity']

@@ -1002,7 +1002,7 @@ class SendNotification:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer:
                     rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
-                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer:
+                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4'):
                     rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if mailto and mailto in ["0","1","2"]:
                     return rolemapping["rolemailto"].get(mailto,"")
@@ -1042,7 +1042,7 @@ class SendNotification:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer:
                     rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
-                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer:
+                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4'):
                     rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if mqof and mqof in ["0","1","2"]:
                     return rolemapping["mqof"].get(mqof,"")
@@ -1065,8 +1065,12 @@ class SendNotification:
                 if mqof and mqof in ["0","1","2"]:
                     va_mapping = va_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
                     if mqof == "0":
+                        if isinstance(va_mapping['assign_role'],tuple):
+                            return ",".join(va_mapping['assign_role'])
                         return va_mapping['assign_role']
                     if mqof == "1":
+                        if isinstance(va_mapping['escalation_role'],tuple):
+                            return ",".join(va_mapping['escalation_role'])
                         return va_mapping['escalation_role']
                     
         elif self.alert_data.get("alert_section","") in ["EMLock"]:
@@ -1126,9 +1130,24 @@ class SendNotification:
         if self.alert_data['violation_type'] in va_mapping.keys():
             va_mapping = va_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
             if mailto == "0":
+                if isinstance(va_mapping['assign_role'],tuple):
+                    return ",".join(va_mapping['assign_role'])
                 return va_mapping['assign_role']
             if mailto == "1":
+                if isinstance(va_mapping['escalation_role'],tuple):
+                    return ",".join(va_mapping['escalation_role'])
                 return va_mapping['escalation_role']
             if mailto == "2":
+                if isinstance(va_mapping['assign_role'],tuple) and isinstance(va_mapping['escalation_role'],tuple):
+                    combined_roles = va_mapping['assign_role'] + va_mapping['escalation_role']
+                    roles = []
+                    for item in combined_roles:
+                        roles.extend(item.split(","))
+
+                    # remove empty + duplicates (preserve order)
+                    distinct_roles = list(dict.fromkeys(r.strip() for r in roles if r.strip()))
+
+                    return ",".join(distinct_roles)
+                
                 return f"{va_mapping['assign_role']},{va_mapping['escalation_role']}"
         return mailto

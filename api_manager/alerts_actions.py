@@ -459,7 +459,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
         "blocking_to": end_date,
         "remarks": data.remarks
     }
-    query = f"select sap_id from vts_truck_master where truck_no='{data.truck_number}'"
+    query = f"select * from vts_truck_master where truck_no='{data.truck_number}'"
     location_data = await urdhva_base.BasePostgresModel.get_aggr_data(query)
     if location_data["data"]:
         location_data = location_data["data"][0]
