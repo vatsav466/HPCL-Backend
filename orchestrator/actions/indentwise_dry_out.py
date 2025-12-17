@@ -579,7 +579,7 @@ class IndentDryOut:
             #    datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             #    pytz.timezone('Asia/Kolkata')))
             todays_date = datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
-            if todays_date.date() >= workflow_date.date():
+            if todays_date.date() > workflow_date.date():
                 dry_alert_data = await Alerts.get(self.params["alert_id"])
                 if not isinstance(dry_alert_data, dict):
                     dry_alert_data = dry_alert_data.__dict__
