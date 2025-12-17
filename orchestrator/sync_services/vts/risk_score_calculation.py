@@ -1230,9 +1230,27 @@ final_merged_df["LOCATION_NAME"] = final_merged_df.apply(
     axis=1
 )
 
-# Final output
+alert_count = (
+    train_data.groupby(["INVOICE_NO", "ALERT_TYPE"])
+    .agg(total_alerts=("ALERT_TYPE", "count"))
+    .reset_index()
+)
+
+# Pivot ALERT_TYPE as columns
+alert_count_pivot = alert_count.pivot_table(
+    index="INVOICE_NO",
+    columns="ALERT_TYPE",
+    values="total_alerts",
+    fill_value=0
+).reset_index()
+
+alert_count_pivot.columns.name = None
+
+final_merged_df = pd.merge(final_merged_df, alert_count_pivot, on="INVOICE_NO", how="left")
+
 final_merged = final_merged_df[[
-    'TRIP_NAME', 'TRIP_ID', 'Risk_Score','SCHEDULED_TRIP_START_DATETIME', 'SCHEDULED_TRIP_END_DATETIME', 
+    'TRIP_NAME', 'TRIP_ID', 'Risk_Score','DEVICE_REMOVED', 'POWER_DISCONNECT', 'ROUTE_DEVIATION',
+       'STOPPAGE_VIOLATION','Total_Combo_Count','SCHEDULED_TRIP_START_DATETIME', 'SCHEDULED_TRIP_END_DATETIME', 
     'INVOICE_NO', 'TT_NUMBER', 'TRANSPORTER_CODE', 'ROUTE_NO', 'ZONE', 'LOCATION_NAME'
 ]].copy()
 
