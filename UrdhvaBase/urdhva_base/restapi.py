@@ -343,7 +343,9 @@ async def authMiddleware(request: fastapi.Request, call_next):
             return add_security_headers(response)
         # redirect_url = f"https://{request.base_url.hostname}/login"
         # resp_dict = {"url": redirect_url}
-        response = fastapi.responses.HTMLResponse("", 401)
+        response = fastapi.responses.HTMLResponse("Invalid Session", 401)
+    elif cookie and not rpt:
+        response = fastapi.responses.HTMLResponse("Invalid Session", 401)
     elif cookie or rpt:
         if await has_permission(request.method, request.scope['path']):
             response: fastapi.responses.Response = await call_next(request)
