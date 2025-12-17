@@ -842,7 +842,7 @@ class SendNotification:
 
         assigning_roles = ""
         if self.alert_data.get("alert_section","") in ["VTS","VA","LPG","EMLock","RO","TAS"]:
-            assigning_roles = await self.normalize_roles(await self._role_configuration_mqofrole())
+            assigning_roles = (await self._role_configuration_mqofrole() or "")
         else:
             assigning_roles = self.params.get("mqofrole", "")
 
@@ -868,7 +868,7 @@ class SendNotification:
             if self.alert_data.get("alert_section","") in ["VTS","RO","TAS"]:
                 self.update_alert["last_escalated_to"] = (await self._role_configuration_rolemailto()).split(",")
             elif self.alert_data.get("alert_section", "") in ["VA","LPG","EMLock"]:
-                self.update_alert["last_escalated_to"] = await self.normalize_roles(await self._get_va_roles_list())
+                self.update_alert["last_escalated_to"] = (await self._get_va_roles_list()).split(",")
             else:
                 self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",")
             self.update_alert["action_msg"] = "Escalated to " + ", ".join(f"'{roles_name}'" for roles_name in self.update_alert["last_escalated_to"])
@@ -876,7 +876,7 @@ class SendNotification:
             if self.alert_data.get("alert_section","") in ["VTS","RO","TAS"]:
                 self.update_alert["last_notified_to"] = (await self._role_configuration_rolemailto()).split(",")
             elif self.alert_data.get("alert_section", "") in ["VA", "LPG", "EMLock"]:
-                self.update_alert["last_notified_to"] = await self.normalize_roles(await self._get_va_roles_list())
+                self.update_alert["last_notified_to"] = (await self._get_va_roles_list()).split(",")
             else:
                 self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",")
             self.update_alert["action_msg"] = "Mail sent to " + ", ".join(f"'{roles_name}'" for roles_name in self.update_alert["last_notified_to"])
