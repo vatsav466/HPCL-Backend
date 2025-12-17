@@ -139,6 +139,16 @@ class SendNotification:
                     self.alert_data['transporter_name'] = transporter_details_data['data'][0]['transporter_name']
             return True
         return False
+    
+    async def normalize_roles(self,raw_roles):
+        if not raw_roles:
+            return ""
+        
+        return [
+            r.strip()
+            for x in (raw_roles if isinstance(raw_roles, (list, tuple)) else [raw_roles])
+            for r in x.split(",")
+        ]
 
     async def _process_roles_and_users(self):
         """
@@ -832,7 +842,7 @@ class SendNotification:
 
         assigning_roles = ""
         if self.alert_data.get("alert_section","") in ["VTS","VA","LPG","EMLock","RO","TAS"]:
-            assigning_roles = (await self._role_configuration_mqofrole() or "")
+            assigning_roles = await self.normalize_roles(await self._role_configuration_mqofrole())
         else:
             assigning_roles = self.params.get("mqofrole", "")
 
@@ -858,7 +868,7 @@ class SendNotification:
             if self.alert_data.get("alert_section","") in ["VTS","RO","TAS"]:
                 self.update_alert["last_escalated_to"] = (await self._role_configuration_rolemailto()).split(",")
             elif self.alert_data.get("alert_section", "") in ["VA","LPG","EMLock"]:
-                self.update_alert["last_escalated_to"] = (await self._get_va_roles_list()).split(",")
+                self.update_alert["last_escalated_to"] = await self.normalize_roles(await self._get_va_roles_list())
             else:
                 self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",")
             self.update_alert["action_msg"] = "Escalated to " + ", ".join(f"'{roles_name}'" for roles_name in self.update_alert["last_escalated_to"])
@@ -866,7 +876,7 @@ class SendNotification:
             if self.alert_data.get("alert_section","") in ["VTS","RO","TAS"]:
                 self.update_alert["last_notified_to"] = (await self._role_configuration_rolemailto()).split(",")
             elif self.alert_data.get("alert_section", "") in ["VA", "LPG", "EMLock"]:
-                self.update_alert["last_notified_to"] = (await self._get_va_roles_list()).split(",")
+                self.update_alert["last_notified_to"] = await self.normalize_roles(await self._get_va_roles_list())
             else:
                 self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",")
             self.update_alert["action_msg"] = "Mail sent to " + ", ".join(f"'{roles_name}'" for roles_name in self.update_alert["last_notified_to"])
