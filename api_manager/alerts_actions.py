@@ -264,7 +264,7 @@ async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
             "bu", "tt_number", "sap_id", "location_name", "severity","zone",
             "instance_level", "instance_status", "violation_type",
             "maker", "checker", "actual_trip_end_date", "novex_alert_created_date",
-            "vehicle_blocked_start_date", "vehicle_blocked_end_date", "alert_id", "id","action_type","action_by"
+            "vehicle_blocked_start_date", "vehicle_blocked_end_date", "alert_id", "id","action_type"
         ]
     
     if alert_data["data"]:
@@ -284,12 +284,12 @@ async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
       .struct.field("action_type")     # extract action_type
       .alias("action_type")
 )
-        df = df.with_columns(
-    pl.col("alert_history")
-      .list.last()                     # get last struct in the list
-      .struct.field("action_by")     # extract action_type
-      .alias("action_by")
-)
+#         df = df.with_columns(
+#     pl.col("alert_history")
+#       .list.last()                     # get last struct in the list
+#       .struct.field("action_by")     # extract action_type
+#       .alias("action_by")
+# )
         print(df['action_type'].unique())
        
         df = df.rename(

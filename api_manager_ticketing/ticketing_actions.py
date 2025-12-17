@@ -1358,8 +1358,10 @@ async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
     zones        = sorted({r["zone"] for r in rows if r.get("zone")})
     regions      = sorted({r["region"] for r in rows if r.get("region")})
     sales_areas  = sorted({r["sales_area"] for r in rows if r.get("sales_area")})
-    names        = sorted({r["name"] for r in rows if r.get("name")})
-    sap_ids      = sorted({r["sap_id"] for r in rows if r.get("sap_id")})
+    rows = sorted(rows, key=lambda x: x['name'])
+    names        = [r["name"] for r in rows]
+    sap_ids      = [r["sap_id"] for r in rows]
+    
  
     # ------------------ RETURN ------------------
     return {
@@ -1372,5 +1374,6 @@ async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
             "sales_areas": sales_areas,
             "names": names,
             "sap_ids": sap_ids
+         
         }
     }
