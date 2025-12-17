@@ -23,6 +23,7 @@ from fastapi.responses import JSONResponse, FileResponse
 from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.dbconnector.widget_actions.vts_query as vts_query
 import orchestrator.dbconnector.credential_loader as credential_loader
+import orchestrator.sync_services.vts.vts_ongoing_trips as vts_ongoing_trips
 
 
 async def generate_cross_filter(cross_filters):
@@ -2999,6 +3000,7 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
    
+    
     @staticmethod
     async def vts_ongoing_trips(filters, cross_filters, drill_state, payload):
         try:
@@ -3056,22 +3058,55 @@ class VTSAnalyticsActions:
             if not invoice_list:
                 return {"status": True, "message": "No invoices found in trips", "data": []}
 
-            invoices_str = "', '".join(invoice_list)
-            completed_trips_query = f"""
-                SELECT DISTINCT invoice_no
-                FROM vts_completed_trip
-                WHERE invoice_no IN ('{invoices_str}')
-            """
-            alert_df = await VTSAnalyticsActions.execute_query(completed_trips_query)
-            alert_invoice_list = alert_df["invoice_no"].astype(str).tolist() if not alert_df.empty else []
+            
+            # completed_trips_query = f"""
+            #     SELECT DISTINCT invoice_no
+            #     FROM vts_completed_trip
+            #     WHERE invoice_no IN ('{invoices_str}')
+            # """
+            # alert_df = await VTSAnalyticsActions.execute_query(completed_trips_query)
+            
+            completed_invoice_set = set()
 
-            # Step 6: Filter based on live / closed status
+            conn = vts_ongoing_trips.get_db_connection()
+            cursor = conn.cursor()
+
+            CHUNK_SIZE = 1000  # Safe size to avoid 8623
+
+            for i in range(0, len(invoice_list), CHUNK_SIZE):
+                chunk = invoice_list[i:i + CHUNK_SIZE]
+                invoices_str = "', '".join(chunk)
+
+                completed_query = f"""
+                    SELECT DISTINCT CHALLAN_NO
+                    FROM COMPLETED_TRIP
+                    WHERE CHALLAN_NO IN ('{invoices_str}')
+                """
+
+                cursor.execute(completed_query)
+                rows = cursor.fetchall()
+
+                completed_invoice_set.update(
+                    str(r[0]).strip()
+                    for r in rows
+                    if r[0] is not None
+                )
+
+            cursor.close()
+            conn.close()
+
+     
             status_filter = payload.get("status")
-            if status_filter == "live":
-                merged_df = merged_df[~merged_df["invoice_no"].astype(str).isin(alert_invoice_list)]
-            elif status_filter == "closed":
-                merged_df = merged_df[merged_df["invoice_no"].astype(str).isin(alert_invoice_list)]
 
+            if status_filter == "live":
+                merged_df = merged_df[
+                    ~merged_df["invoice_no"].isin(completed_invoice_set)
+                ]
+            elif status_filter == "closed":
+                merged_df = merged_df[
+                    merged_df["invoice_no"].isin(completed_invoice_set)
+                ]
+     
             if merged_df.empty:
                 return {"status": True, "message": f"No {status_filter} trips found", "data": []}
 
