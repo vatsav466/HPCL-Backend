@@ -139,16 +139,6 @@ class SendNotification:
                     self.alert_data['transporter_name'] = transporter_details_data['data'][0]['transporter_name']
             return True
         return False
-    
-    async def normalize_roles(self,raw_roles):
-        if not raw_roles:
-            return ""
-        
-        return [
-            r.strip()
-            for x in (raw_roles if isinstance(raw_roles, (list, tuple)) else [raw_roles])
-            for r in x.split(",")
-        ]
 
     async def _process_roles_and_users(self):
         """
@@ -1075,8 +1065,12 @@ class SendNotification:
                 if mqof and mqof in ["0","1","2"]:
                     va_mapping = va_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
                     if mqof == "0":
+                        if isinstance(va_mapping['assign_role'],tuple):
+                            return ",".join(va_mapping['assign_role'])
                         return va_mapping['assign_role']
                     if mqof == "1":
+                        if isinstance(va_mapping['escalation_role'],tuple):
+                            return ",".join(va_mapping['escalation_role'])
                         return va_mapping['escalation_role']
                     
         elif self.alert_data.get("alert_section","") in ["EMLock"]:
@@ -1136,9 +1130,24 @@ class SendNotification:
         if self.alert_data['violation_type'] in va_mapping.keys():
             va_mapping = va_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
             if mailto == "0":
+                if isinstance(va_mapping['assign_role'],tuple):
+                    return ",".join(va_mapping['assign_role'])
                 return va_mapping['assign_role']
             if mailto == "1":
+                if isinstance(va_mapping['escalation_role'],tuple):
+                    return ",".join(va_mapping['escalation_role'])
                 return va_mapping['escalation_role']
             if mailto == "2":
+                if isinstance(va_mapping['assign_role'],tuple) and isinstance(va_mapping['escalation_role'],tuple):
+                    combined_roles = va_mapping['assign_role'] + va_mapping['escalation_role']
+                    roles = []
+                    for item in combined_roles:
+                        roles.extend(item.split(","))
+
+                    # remove empty + duplicates (preserve order)
+                    distinct_roles = list(dict.fromkeys(r.strip() for r in roles if r.strip()))
+
+                    return ",".join(distinct_roles)
+                
                 return f"{va_mapping['assign_role']},{va_mapping['escalation_role']}"
         return mailto
