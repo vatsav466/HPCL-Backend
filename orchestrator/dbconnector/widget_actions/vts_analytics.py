@@ -698,23 +698,23 @@ async def download_streaming_data(df: pl.DataFrame):
         cs.datetime(time_zone="*").dt.replace_time_zone(None)
     )
 
-    df = df.select(
-        [s.name for s in df if s.null_count() < df.height]
-    )
-    mask_df = df.select(
-        [
-            pl.col(c)
-            .cast(pl.String)
-            .fill_null("")  # null -> ""
-            .str.strip_chars()  # strip whitespace
-            .eq("")  # non-empty?
-            .any()  # any row is non-empty?
-            .alias(c)
-            for c in df.columns
-        ]
-    )
-    cols_to_keep = [c for c in df.columns if mask_df[c][0]]
-    df = df.select(cols_to_keep)
+    # df = df.select(
+    #     [s.name for s in df if s.null_count() < df.height]
+    # )
+    # mask_df = df.select(
+    #     [
+    #         pl.col(c)
+    #         .cast(pl.String)
+    #         .fill_null("")  # null -> ""
+    #         .str.strip_chars()  # strip whitespace
+    #         .eq("")  # non-empty?
+    #         .any()  # any row is non-empty?
+    #         .alias(c)
+    #         for c in df.columns
+    #     ]
+    # )
+    # cols_to_keep = [c for c in df.columns if mask_df[c][0]]
+    # df = df.select(cols_to_keep)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"violations_{timestamp}.xlsx"
