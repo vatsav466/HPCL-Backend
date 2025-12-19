@@ -693,8 +693,9 @@ def merge_shortage_with_violations(
     return df_merged
 
 async def download_streaming_data(df: pl.DataFrame):
+
     df = df.with_columns(
-        pl.col(cs.datetime(time_zone="*")).dt.replace_time_zone(None)
+        cs.datetime(time_zone="*").dt.replace_time_zone(None)
     )
 
     df = df.select(
@@ -706,7 +707,7 @@ async def download_streaming_data(df: pl.DataFrame):
             .cast(pl.String)
             .fill_null("")  # null -> ""
             .str.strip_chars()  # strip whitespace
-            .neq("")  # non-empty?
+            .eq("")  # non-empty?
             .any()  # any row is non-empty?
             .alias(c)
             for c in df.columns
