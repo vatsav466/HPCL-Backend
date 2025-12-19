@@ -835,12 +835,12 @@ async def create_vts_alerts(enriched_data):
                 lpg_delivery_location_resp = await function(query=query)
                 ship_to_list = lpg_delivery_location_resp.get("SHIP_TO_PARTY") or []
                 destination_code = lpg_delivery_location_resp.get("CUSTOMER") or []
+                
                 if len(ship_to_list) > 0 and entry['location_type'] in ['LPG']:
-                    base_sap_id = ship_to_list[0].lstrip("P")
-                    entry["base_location_id"] = str(int(base_sap_id))
+                    entry["base_location_id"] = ship_to_list[0].lstrip("P").lstrip("00")
+
                 if len(destination_code) > 0:
-                    destination_location_code = destination_code[0].lstrip("P")
-                    entry['destination_code'] = str(int(destination_location_code))
+                    entry['destination_code']  = destination_code[0].lstrip("P").lstrip("00")
 
 
             _, location_data = await cache_api_actions.get_location_data(
