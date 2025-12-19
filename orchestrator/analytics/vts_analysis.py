@@ -13,6 +13,7 @@ import polars as pl
 import hpcl_ceg_model
 import hpcl_ceg_enum
 import charts_actions
+import traceback
 from datetime import time
 import dashboard_studio_model
 from collections import Counter
@@ -824,18 +825,23 @@ async def create_vts_alerts(enriched_data):
             if entry['location_type'] == 'TAS':
                 entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
 
-            if entry['location_type'] == 'LPG':
+            if entry['location_type'] in ['LPG','TAS']:
                 invoice_no = entry['invoice_number'].split("-")[0]
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
                 function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-                query = f"""SELECT DISTINCT(SHIP_TO_PARTY) FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
+                query = f"""SELECT DISTINCT SHIP_TO_PARTY,CUSTOMER FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
                             AND SUPPLY_LOC = '{entry['location_id']}'"""
                 lpg_delivery_location_resp = await function(query=query)
                 ship_to_list = lpg_delivery_location_resp.get("SHIP_TO_PARTY") or []
-                if len(ship_to_list) > 0:
-                    base_sap_id = ship_to_list[0].lstrip("P")
-                    entry["base_location_id"] = str(int(base_sap_id))
+                destination_code = lpg_delivery_location_resp.get("CUSTOMER") or []
+                
+                if len(ship_to_list) > 0 and entry['location_type'] in ['LPG']:
+                    entry["base_location_id"] = ship_to_list[0].lstrip("P").lstrip("00")
+
+                if len(destination_code) > 0:
+                    entry['destination_code']  = destination_code[0].lstrip("P").lstrip("00")
+
 
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],
@@ -869,6 +875,10 @@ async def create_vts_alerts(enriched_data):
 
 
             await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
+
+            if entry['location_type'] in ['LUB']:
+                continue
+
             # Skipping if the truck is already blacklisted
             if await is_vehicle_blacklisted(entry['tl_number']):
                 black_list_query = f"select * from vts_truck_details where truck_regno = '{entry['tl_number']}'"
@@ -897,6 +907,8 @@ async def create_vts_alerts(enriched_data):
             else:
                 await update_vts_instance(entry)
     except Exception as e:
+        print(traceback.format_exc())
+        logger.error(f"Error creating VTS Alert : Traceback: {traceback.format_exc()}")
         logger.error(f"Error creating VTS Alert : {str(e)}")
 
 async def close_camunda_workflow(alert_id):

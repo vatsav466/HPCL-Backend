@@ -50,6 +50,7 @@
         .openAlert th{
             width: 300px;
         }
+        .logo { margin: 15px 0; }
     </style>
 </head>
 
@@ -58,8 +59,12 @@
     <p><strong>Date:</strong> {{today_date}} | <strong>Day:</strong> {{today_week}}</p>
     <hr>
     <h4>1. LPG Operations Summary</h4>
-    <h5>Average score for all LPG Plants – {{lpg_avg_score_resp}}</h5>
-    <h5>1.1. Top 3 LPG plants based on performance score ({{present_month}})</h5>
+    <h5>1.1 Average score for all LPG Plants – { {{lpg_avg_score_resp}} }, (Refer attachment for Day wise trend)</h5>
+    <h5>1.2 Monthly Average of Plant Score</h5>
+    <div class="logo">
+        <img src="cid:monthly_score_path" alt="Monthly Average of Plant Score" width="1000" height="auto">
+    </div>
+    <h5>1.3 Top 3 LPG plants based on performance score ({{present_month}})</h5>
     <table>
         <thead>
             <tr>
@@ -78,7 +83,7 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>1.2. Bottom 3 LPG plants based on performance score ({{present_month}})</h5>
+    <h5>1.4 Bottom 3 LPG plants based on performance score ({{present_month}})</h5>
     <table>
         <thead>
             <tr>
@@ -97,7 +102,11 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>1.3. Open Alert Summary ({{present_month}})</h5>
+    <h5>1.5 Plant wise Average Score from Month start</h5>
+    <div class="logo">
+        <img src="cid:plant_wise_score_path" alt="Monthly Average of Plant Score" width="1000" height="auto">
+    </div>
+    <h5>1.6 Open Alert Summary ({{present_month}}),(Refer attachment for Plant wise breakup)</h5>
         <div class="openAlert">
             <table>
                 <tbody>
@@ -121,37 +130,44 @@
                 </tbody>
             </table>
         </div>
-    <h5>1.4. LPG VTS Governance ({{present_month}})</h5>
+    <h5>1.7 LPG VTS Governance ({{present_month}})</h5>
+    <h6>1.7.1 ITDG Alert Summary</h6>
+        <table>
+            <thead>
+                <tr>
+                    <th>TTs Blocked by Novex</th>
+                    <th>TTs Manually Unblocked</th>
+                    <th>TTs unblocked as per ITDG</th>
+                    <th>TTs currently under Block</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ lpg_blocked_data_resp.TTs_Blocked_by_Novex_LPG }}</td>
+                    <td>{{ lpg_blocked_data_resp.TTs_Manually_Unblocked_LPG }}</td>
+                    <td>{{ lpg_blocked_data_resp.TTs_Auto_Unblocked_LPG }}</td>
+                    <td>{{ lpg_blocked_data_resp.TTs_currently_under_Block_LPG }}</td>
+                </tr>
+            </tbody>
+        </table>
+    <h6>1.7.2 ITDG Alert Break Up</h6>
     <table>
-        <tr>
-            <th>
-                TTs Blocked by Novex
-            </th>
-            <th>
-                TTs Manually Unblocked
-            </th>
-            <th>
-                TTs unblocked as per ITDG
-            </th>
-            <th>
-                TTs currently under Block
-            </th>
-        </tr>
-    
-        <tr>
-            <td>
-                {{TTs_Blocked_by_Novex_LPG}}
-            </td>
-            <td>
-                {{TTs_Manually_Unblocked_LPG}}
-            </td>
-            <td>
-                {{TTs_Auto_Unblocked_LPG}}
-            </td>
-            <td>
-                {{TTs_currently_under_Block_LPG}}
-            </td>
-        </tr>
+        <thead>
+            <tr>
+                {% for col in lpg_blocked_data_resp_violation.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in lpg_blocked_data_resp_violation.to_dict(orient='records') %}
+            <tr>
+                {% for col in lpg_blocked_data_resp_violation.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 <script>
     window.onload = function () {

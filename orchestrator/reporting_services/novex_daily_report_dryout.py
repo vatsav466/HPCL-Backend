@@ -27,6 +27,7 @@ import orchestrator.analytics.m60_performance as m60_performance
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.notification_manager.notification_factory as notification_factory
 import orchestrator.dbconnector.credential_loader as credential_loader
+import orchestrator.reporting_services.lpg_reporting as lpg_reporting
 # from datetime import datetime, timedelta
 
 actual = {"key": "\"A\"", "cond": "equals", "value": "true"}
@@ -40,6 +41,11 @@ chart_path = ""
 zone_wise_pdf_path = ""
 last_30_days_chart_path = ""
 WRITE_TO_DB = False
+lpg_day_wise_trend_exl_path = ""
+monthly_score_path = ""
+plant_wise_score_path=""
+lpg_va_path = ""
+lpg_pq_path = ""
 
 creds = credential_loader.get_credentials('APP_DB')
 
@@ -65,6 +71,160 @@ def round_off(value, input_type='growth'):
             return round(float(value), 2) if round(float(value), 1) == 0 else round(float(value), 1)
         return round(float(value), 1)
     return value
+
+def generate_monthly_lpg_score_chart(df, output_path="/tmp/lpg_monthly_score.png"):
+    """
+    df columns required:
+        - month (YYYY-MM-DD)
+        - score (float)
+
+    Output:
+        Saves PNG bar chart to /tmp
+    """
+    global monthly_score_path
+    monthly_score_path = output_path
+    # Ensure datetime & correct order
+    df = df.copy()
+    df["month"] = pd.to_datetime(df["month"])
+    df = df.sort_values("month")
+
+    # Format month labels like Jun'25
+    month_labels = df["month"].dt.strftime("%b'%y")
+    scores = df["score"].tolist()
+
+    # Create figure (matches provided image)
+    plt.figure(figsize=(10, 5.2))
+
+    bars = plt.bar(
+        month_labels,
+        df["score"],
+        width=0.45,
+        color="#0B4F6C"  # exact dark blue shade
+    )
+
+    # Title
+    plt.title("Monthly Average of Plant Scores", fontsize=12)
+
+    # Y-axis & grid
+    plt.ylim(0, 110)
+    plt.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.7)
+
+    # Clean borders
+    ax = plt.gca()
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    # No axis labels (same as image)
+    plt.xlabel("")
+    plt.ylabel("")
+
+    # Add score values on top of bars
+    for bar, score in zip(bars, scores):
+        plt.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 2,
+            f"{score:.2f}",
+            ha="center",
+            va="bottom",
+            fontsize=10,
+            fontweight="bold"
+        )
+
+    # Tight layout
+    plt.tight_layout()
+
+    # Save PNG
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close()
+
+    return output_path
+
+def generate_plant_wise_score_chart(
+    df,
+    output_path="/tmp/lpg_plant_wise_average_score.png"
+):
+    """
+    df columns required:
+        - name
+        - score
+    """
+    global plant_wise_score_path
+    plant_wise_score_path = output_path
+
+    # Copy & sort descending
+    df = df.copy()
+    df = df.sort_values("score", ascending=False).reset_index(drop=True)
+
+    x_labels = df["name"].astype(str).tolist()
+    scores = pd.to_numeric(df["score"], errors="coerce").fillna(0)
+
+    # ===== Figure (same feel as dry-out chart) =====
+    plt.figure(figsize=(17, 9))
+
+    bars = plt.bar(
+        x_labels,
+        scores,
+        width=0.45,              # same bar thickness
+        color="#0B4F6C"
+    )
+
+    # ===== Title =====
+    plt.title("Plant wise Average Score", fontsize=18, pad=20)
+
+    # ===== Y-axis =====
+    max_val = scores.max()
+    upper_limit = int(np.ceil(max_val / 10.0) * 10)
+
+    plt.ylim(0, upper_limit + 15)
+    plt.yticks(
+        np.arange(0, upper_limit + 1, 10),
+        fontsize=14
+    )
+
+    # ===== Grid (same as dry-out chart) =====
+    plt.grid(
+        axis="y",
+        linestyle="--",
+        linewidth=0.6,
+        alpha=0.5
+    )
+
+    # ===== X-axis formatting (KEY FIX) =====
+    plt.xticks(
+        rotation=90,
+        ha="right",
+        fontsize=14
+    )
+
+    plt.xlabel("Plant Name", fontsize=16, labelpad=20)
+    plt.ylabel("", fontsize=14)
+
+    # ===== FULL BOX BORDER (KEY FIX) =====
+    ax = plt.gca()
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_linewidth(1.2)
+
+    # ===== Value labels on top of bars =====
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + 1,
+            f"{height:.1f}",
+            ha="center",
+            va="bottom",
+            rotation=90,
+            fontsize=14,
+            fontweight="bold"
+        )
+
+    # ===== Layout & Save =====
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    return output_path
 
 
 def get_growth_percentage(current, hist):
@@ -655,7 +815,7 @@ async def supply_terminal_wise_counts(by_ro=False):
         carry_forward_query = f"""SELECT b."ZONECD",a."LOCN_CODE",SUBSTR(a."DEALER_CODE", 1, 10) AS "SAP_ID",
                                   count(a."INDENT_NO") AS "INDCNT" 
                                   FROM "IMS_SAP"."INDENT_REQUEST" a,"IMS_SAP"."LOCN_MASTER" b WHERE a."LOCN_CODE" = b."LOCN_CODE" AND
-                                  TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') <= TO_CHAR(SYSDATE,'yyyymmdd') AND
+                                  TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') < TO_CHAR(SYSDATE,'yyyymmdd') AND
                                   TO_CHAR(a."PROD_REQD_DT",'yyyymmdd') > TO_CHAR(SYSDATE-3,'yyyymmdd')
                                   AND SUBSTR(a."DEALER_CODE", 1, 10) IN ({batch_str})
                                   --and TO_CHAR(sysdate-7,'dd/mm/yyyy')
@@ -674,13 +834,28 @@ async def supply_terminal_wise_counts(by_ro=False):
         carry_forward_bacthes.append(carry_df)
 
     # Combine all batches into one DataFrame
-    final_df = pd.concat(all_batches, ignore_index=True)
-    carry_forward_final_df = pd.concat(carry_forward_bacthes, ignore_index=True)
-    carry_forward_final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
-    carry_forward_final_df["SAP_ID"] = carry_forward_final_df["SAP_ID"].astype(str).str.lstrip("0")
-    # Optionally remove duplicates if needed
-    final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
-    final_df["SAP_ID"] = final_df["SAP_ID"].astype(str).str.lstrip("0")
+    # final_df = pd.concat(all_batches, ignore_index=True)
+    # carry_forward_final_df = pd.concat(carry_forward_bacthes, ignore_index=True)
+    # carry_forward_final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
+    # carry_forward_final_df["SAP_ID"] = carry_forward_final_df["SAP_ID"].astype(str).str.lstrip("0")
+    # # Optionally remove duplicates if needed
+    # final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
+    # final_df["SAP_ID"] = final_df["SAP_ID"].astype(str).str.lstrip("0")
+    # Handle empty IMS batches safely
+    if all_batches:
+        final_df = pd.concat(all_batches, ignore_index=True)
+        final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
+        final_df["SAP_ID"] = final_df["SAP_ID"].astype(str).str.lstrip("0")
+    else:
+        final_df = pd.DataFrame(columns=["SAP_ID", "VALID_COUNT"])
+    
+    if carry_forward_bacthes:
+        carry_forward_final_df = pd.concat(carry_forward_bacthes, ignore_index=True)
+        carry_forward_final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
+        carry_forward_final_df["SAP_ID"] = carry_forward_final_df["SAP_ID"].astype(str).str.lstrip("0")
+    else:
+        carry_forward_final_df = pd.DataFrame(columns=["SAP_ID", "INDCNT"])
+
     # print(final_df)
     # print("Combined DataFrame created successfully with", len(final_df), "records.")
     merged_df = data_resp.merge(
@@ -1444,6 +1619,178 @@ async def get_vts_tas_blocked_counts():
         }
     return tas_blocked_data
 
+async def get_va_path():
+    date = urdhva_base.utilities.get_present_time()
+
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format=None
+    )
+
+    date_filter = (
+        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
+    query = f"""
+        SELECT
+            location_name AS "Plant Wise VA Alerts",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            1 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'VA'
+        AND {date_filter}
+        AND bu = 'LPG'
+        AND location_name != ''
+        GROUP BY location_name
+
+        UNION ALL
+
+        SELECT
+            'Total',
+            COUNT(*) FILTER (WHERE severity = 'Critical'),
+            COUNT(*) FILTER (WHERE severity = 'High'),
+            2 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'VA'
+        AND bu = 'LPG'
+        AND location_name != ''
+        AND {date_filter}
+
+        ORDER BY sort_order
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
+    resp = await function(query=query)
+
+    df = pd.DataFrame(resp)
+
+    # Remove helper column
+    df = df.drop(columns=["sort_order"])
+
+    global lpg_va_path
+    lpg_va_path = "/tmp/Plant Wise VA Alerts.xlsx"
+
+    with pd.ExcelWriter(lpg_va_path, engine="xlsxwriter") as writer:
+        df.to_excel(
+            writer,
+            sheet_name="Plant Wise VA Alerts",
+            index=False,
+            startrow=1,
+            header=False   #important
+        )
+
+        workbook = writer.book
+        worksheet = writer.sheets["Plant Wise VA Alerts"]
+
+        header_format = workbook.add_format({
+            "bold": True,
+            "align": "center",
+            "valign": "middle",
+            "border": 1
+        })
+
+        # Write header ONCE
+        for col_num, col_name in enumerate(df.columns):
+            worksheet.write(0, col_num, col_name, header_format)
+            worksheet.set_column(col_num, col_num, 30)
+
+    return lpg_va_path
+
+
+async def get_pq_path():
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    query = f"""
+        SELECT
+            location_name AS "Plant Wise PQ Alerts",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            1 AS sort_order
+        FROM alerts
+        WHERE alert_section = 'LPG'
+        AND created_at>='{today}'
+        AND interlock_name IN (
+            'O-Ring Leak Rejection',
+            'Valve Leak Rejection',
+            'Check Scale Rejection'
+        )
+        GROUP BY location_name
+
+        UNION ALL
+
+        SELECT
+            'Total',
+            COUNT(*) FILTER (WHERE severity = 'Critical'),
+            COUNT(*) FILTER (WHERE severity = 'High'),
+            2 AS sort_order
+        FROM alerts
+        WHERE alert_section = 'LPG'
+        AND created_at>='{today}'
+        AND interlock_name IN (
+            'O-Ring Leak Rejection',
+            'Valve Leak Rejection',
+            'Check Scale Rejection'
+        )
+        ORDER BY sort_order
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
+    resp = await function(query=query)
+
+    df = pd.DataFrame(resp)
+
+    # Drop helper column
+    df = df.drop(columns=["sort_order"])
+
+    global lpg_pq_path
+    lpg_pq_path = "/tmp/Plant Wise PQ Alerts.xlsx"
+
+    with pd.ExcelWriter(lpg_pq_path, engine="xlsxwriter") as writer:
+        df.to_excel(
+            writer,
+            sheet_name="Plant Wise PQ Alerts",
+            index=False,
+            startrow=1,
+            header=False   # IMPORTANT
+        )
+
+        workbook = writer.book
+        worksheet = writer.sheets["Plant Wise PQ Alerts"]
+
+        header_format = workbook.add_format({
+            "bold": True,
+            "align": "center",
+            "valign": "middle",
+            "border": 1
+        })
+
+        # Write header ONCE
+        for col_num, col_name in enumerate(df.columns):
+            worksheet.write(0, col_num, col_name, header_format)
+            worksheet.set_column(col_num, col_num, 30)
+
+    return lpg_pq_path
+
 async def get_vts_lpg_blocked_counts():
     # Making sure alerts considering only after May 31st in prod
     date = urdhva_base.utilities.get_present_time()
@@ -1453,32 +1800,62 @@ async def get_vts_lpg_blocked_counts():
                                                date_time_format="%Y-%m-%d")
     date_filter = f"created_at::DATE >= '{month_start}' AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'" # As per HPCL request changed the date to be in the present month
     lpg_query = f"""SELECT
-                        COUNT(*) FILTER (WHERE alert_section='VTS'
-                                        AND bu='LPG'
-                                        AND {date_filter})
-                            AS "TTs_Blocked_by_Novex_LPG",
+                        CASE violation_type
+                            WHEN 'route_deviation_count'      THEN 'Route Deviation'
+                            WHEN 'power_disconnection_count'  THEN 'Power Disconnection'
+                            WHEN 'device_tamper_count'        THEN 'Device Tampering'
+                            WHEN 'stoppage_violations_count'  THEN 'Stoppage Violation'
+                            WHEN 'night_driving_count'        THEN 'Night Driving Violation'
+                            WHEN 'continuous_driving_count'   THEN 'Continuous Driving Violation'
+                            WHEN 'speed_violation_count'      THEN 'Speed Violation'
+                        END AS "Alert Nature",
 
-                        COUNT(*) FILTER (WHERE alert_section='VTS'
-                                        AND bu='LPG'
-                                        AND {date_filter}
-                                        AND mark_as_false = 'true'
-                                        AND vehicle_unblocked_date IS NOT NULL)
-                            AS "TTs_Manually_Unblocked_LPG",
+                        COUNT(*) FILTER (
+                            WHERE alert_section='VTS'
+                            AND bu='LPG'
+                            AND {date_filter}
+                        ) AS "TTs_Blocked_by_Novex",
 
-                        COUNT(*) FILTER (WHERE alert_section='VTS'
-                                        AND bu='LPG'
-                                        AND {date_filter}
-                                        AND vehicle_unblocked_date IS NULL)
-                            AS "TTs_currently_under_Block_LPG",
+                        COUNT(*) FILTER (
+                            WHERE alert_section='VTS'
+                            AND bu='LPG'
+                            AND {date_filter}
+                            AND mark_as_false='true'
+                            AND vehicle_unblocked_date IS NOT NULL
+                        ) AS "TTs_Manually_Unblocked",
 
-                        COUNT(*) FILTER (WHERE alert_section='VTS'
-                                        AND bu='LPG'
-                                        AND {date_filter}
-                                        AND mark_as_false = 'false'
-                                        AND vehicle_unblocked_date IS NOT NULL)
-                            AS "TTs_Auto_Unblocked_LPG"
+                        COUNT(*) FILTER (
+                            WHERE alert_section='VTS'
+                            AND bu='LPG'
+                            AND {date_filter}
+                            AND mark_as_false='false'
+                            AND vehicle_unblocked_date IS NOT NULL
+                        ) AS "TTs_Unblocked_as_per_ITDG",
 
-                    FROM alerts;"""
+                        COUNT(*) FILTER (
+                            WHERE alert_section='VTS'
+                            AND bu='LPG'
+                            AND {date_filter}
+                            AND vehicle_unblocked_date IS NULL
+                        ) AS "TTs_currently_under_Block"
+
+                    FROM alerts
+                    WHERE alert_section='VTS'
+                    AND bu='LPG'
+                    AND {date_filter}
+                    GROUP BY violation_type
+
+                    ORDER BY
+                        CASE violation_type
+                            WHEN 'route_deviation_count'      THEN 1
+                            WHEN 'power_disconnection_count'  THEN 2
+                            WHEN 'device_tamper_count'        THEN 3
+                            WHEN 'stoppage_violations_count'  THEN 4
+                            WHEN 'night_driving_count'        THEN 5
+                            WHEN 'continuous_driving_count'   THEN 6
+                            WHEN 'speed_violation_count'      THEN 7
+                        END;
+                """
     
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1487,12 +1864,11 @@ async def get_vts_lpg_blocked_counts():
     lpg_blocked_data_resp = pd.DataFrame(lpg_blocked_data_resp)
     # Extract values from the first (and only) row safely
     if not lpg_blocked_data_resp.empty:
-        row = lpg_blocked_data_resp.iloc[0]
         lpg_blocked_data = {
-            "TTs_Blocked_by_Novex_LPG": int(row.get("TTs_Blocked_by_Novex_LPG", 0)),
-            "TTs_Manually_Unblocked_LPG": int(row.get("TTs_Manually_Unblocked_LPG", 0)),
-            "TTs_currently_under_Block_LPG": int(row.get("TTs_currently_under_Block_LPG", 0)),
-            "TTs_Auto_Unblocked_LPG": int(row.get("TTs_Auto_Unblocked_LPG", 0))
+            "TTs_Blocked_by_Novex_LPG": int(lpg_blocked_data_resp["TTs_Blocked_by_Novex"].sum()),
+            "TTs_Manually_Unblocked_LPG": int(lpg_blocked_data_resp["TTs_Manually_Unblocked"].sum()),
+            "TTs_currently_under_Block_LPG": int(lpg_blocked_data_resp["TTs_currently_under_Block"].sum()),
+            "TTs_Auto_Unblocked_LPG": int(lpg_blocked_data_resp["TTs_Unblocked_as_per_ITDG"].sum())
         }
     else:
         # Default if no data returned
@@ -1502,7 +1878,71 @@ async def get_vts_lpg_blocked_counts():
             "TTs_currently_under_Block_LPG": 0,
             "TTs_Auto_Unblocked_LPG": 0
         }
-    return lpg_blocked_data
+    lpg_blocked_data_resp.rename(columns={
+        "TTs_Blocked_by_Novex": "TTs Blocked by Novex",
+        "TTs_Manually_Unblocked": "TTs Manually Unblocked",
+        "TTs_Unblocked_as_per_ITDG": "TTs unblocked as per ITDG",
+        "TTs_currently_under_Block": "TTs currently under Block"
+    }, inplace=True)
+
+    print('*'*200)
+    print(lpg_blocked_data_resp)
+    print('*'*200)
+
+    
+    lpg_day_wise_trend = await lpg_reporting.get_lpg_day_wise_trends(by_day=True, by_plant=True)
+    lpg_day_wise_trend_df = pd.DataFrame(lpg_day_wise_trend)
+    # Ensure correct types
+    lpg_day_wise_trend_df["timestamp"] = pd.to_datetime(
+        lpg_day_wise_trend_df["timestamp"]
+    )
+    # Pivot: Date vs Plant (SAP ID)
+    excel_df = lpg_day_wise_trend_df.pivot_table(
+        index="timestamp",
+        columns="name",
+        values="score",
+        aggfunc="mean"   # safe if duplicates exist
+    )
+
+    # Sort by date
+    excel_df = excel_df.sort_index()
+
+    # FORMAT DATE AS "Dec 1", "Dec 2"
+    excel_df.index = excel_df.index.strftime("%b %d")
+
+    excel_df.index.name = "Day Wise Score"
+
+    # Write to Exce
+    global lpg_day_wise_trend_exl_path
+    output_file = "/tmp/LPG Plant Day Wise Trend.xlsx"
+    lpg_day_wise_trend_exl_path = output_file
+    excel_df.to_excel(
+        output_file,
+        sheet_name="Day Wise Trend"
+    )
+
+    start_date = "2025-06-01"
+    end_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+    time_range = f"{start_date},{end_date}"
+
+    monthly_average_plant_score = await lpg_reporting.get_lpg_day_wise_trends(by_day=False, by_month=True, time_range=time_range)
+    monthly_average_plant_score_df = pd.DataFrame(monthly_average_plant_score)
+    lpg_monthyl_score_path = generate_monthly_lpg_score_chart(monthly_average_plant_score_df)
+
+
+    plant_wise_score = await lpg_reporting.get_lpg_day_wise_trends(by_day=False, by_plant=True)
+    plant_wise_score_df = pd.DataFrame(plant_wise_score)
+    plant_wise_score_df_path = generate_plant_wise_score_chart(plant_wise_score_df)
+
+    zone_wise_cylinder_count = await lpg_reporting.get_zone_wise_cylinder_backlog()
+    zone_wise_cylinder_count_df = pd.DataFrame(zone_wise_cylinder_count)
+
+    await get_va_path()
+    await get_pq_path()
+
+    return {"lpg_blocked_data_resp":lpg_blocked_data, 
+            "lpg_blocked_data_resp_violation": lpg_blocked_data_resp,
+            "zone_wise_cylinder_count_df": zone_wise_cylinder_count_df}
 
 async def publish_daily_novex_status_email():
     date = urdhva_base.utilities.get_present_time()
@@ -1591,7 +2031,12 @@ async def publish_daily_novex_status_email():
         subject="Novex Daily Report: LPG",
         cc_recipients=["venu@algofusiontech.com", "santoshkumar.s@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
         bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com"],
-        notification_data=status_data
+        notification_data=status_data,
+        inline_images={
+            "monthly_score_path": f"{monthly_score_path}",
+            "plant_wise_score_path": f"{plant_wise_score_path}"
+        },
+        attachments= [lpg_day_wise_trend_exl_path,lpg_va_path,lpg_pq_path]
     )
     await send_notification(
         template_name="seg4.html",
