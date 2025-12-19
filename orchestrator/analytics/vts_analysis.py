@@ -870,6 +870,10 @@ async def create_vts_alerts(enriched_data):
 
 
             await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
+
+            if entry['location_type'] in ['LUB']:
+                continue
+
             # Skipping if the truck is already blacklisted
             if await is_vehicle_blacklisted(entry['tl_number']):
                 black_list_query = f"select * from vts_truck_details where truck_regno = '{entry['tl_number']}'"
