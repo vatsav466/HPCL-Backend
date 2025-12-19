@@ -13,6 +13,7 @@ import polars as pl
 import hpcl_ceg_model
 import hpcl_ceg_enum
 import charts_actions
+import traceback
 from datetime import time
 import dashboard_studio_model
 from collections import Counter
@@ -897,6 +898,8 @@ async def create_vts_alerts(enriched_data):
             else:
                 await update_vts_instance(entry)
     except Exception as e:
+        print(traceback.format_exc())
+        logger.error(f"Error creating VTS Alert : Traceback: {traceback.format_exc()}")
         logger.error(f"Error creating VTS Alert : {str(e)}")
 
 async def close_camunda_workflow(alert_id):
