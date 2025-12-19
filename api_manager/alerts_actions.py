@@ -560,40 +560,31 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
             }
         }
 
-
-    # ============================================================
-    # TAB 2: ALERT BLOCKED LIST (ONLY THIS NEEDS FILTERS)
-    # ============================================================
     if tab == "alerts":
 
-        # -------------------------
-        # Extract BU from filters
-        # -------------------------
+        # Extract BU filter only
         bu_value = None
+
         if data.cross_filters:
             for f in data.cross_filters:
-                if getattr(f, "key", None) == "bu" and getattr(f, "value", None):
+                if f.key == "bu" and f.value:
                     bu_value = f.value
-                    break
 
-        # -------------------------
+        
         # Build alert query
-        # -------------------------
-        # alert_query = "alert_status='Open' AND alert_section='VTS'"
         alert_query = """
-        alert_section='VTS'
-        AND vehicle_unblocked_date IS NULL
-        AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
-        AND mark_as_false = TRUE
+            alert_section = 'VTS'
+            AND vehicle_unblocked_date IS NULL
+            AND alert_status = 'Close'
+            AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
         """
 
         if bu_value:
-            alert_query += f" AND bu='{bu_value}'"
+            alert_query += f" AND bu = '{bu_value}'"
 
-        # -------------------------
-        # Prepare params
-        # -------------------------
+        print("FINAL alert_query >>>", alert_query)
         alert_params = urdhva_base.queryparams.QueryParams(q=alert_query , limit=0)
+
         alert_params.fields = [
             "bu",
             "zone",
@@ -607,6 +598,7 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
             "transporter_code",
             "unique_id",
             "device_id"
+            
         ]
 
         alerts_resp = await Alerts.get_all(alert_params, resp_type='plain')
@@ -620,10 +612,8 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
             }
         }
 
-
-    # ============================================================
+   
     # INVALID TAB HANDLING
-    # ============================================================
     return {
         "status": False,
         "message": "Invalid tab. Valid values: 'vts', 'alerts'",
