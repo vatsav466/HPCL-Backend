@@ -834,15 +834,38 @@ async def supply_terminal_wise_counts(by_ro=False):
         carry_forward_bacthes.append(carry_df)
 
     # Combine all batches into one DataFrame
-    final_df = pd.concat(all_batches, ignore_index=True)
-    carry_forward_final_df = pd.concat(carry_forward_bacthes, ignore_index=True)
-    carry_forward_final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
-    carry_forward_final_df["SAP_ID"] = carry_forward_final_df["SAP_ID"].astype(str).str.lstrip("0")
+    # final_df = pd.concat(all_batches, ignore_index=True)
+    # carry_forward_final_df = pd.concat(carry_forward_bacthes, ignore_index=True)
+    # carry_forward_final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
+    # carry_forward_final_df["SAP_ID"] = carry_forward_final_df["SAP_ID"].astype(str).str.lstrip("0")
     # Optionally remove duplicates if needed
-    final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
-    final_df["SAP_ID"] = final_df["SAP_ID"].astype(str).str.lstrip("0")
+    # final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
+    # final_df["SAP_ID"] = final_df["SAP_ID"].astype(str).str.lstrip("0")
     # print(final_df)
     # print("Combined DataFrame created successfully with", len(final_df), "records.")
+
+    valid_batches = [
+        df for df in all_batches
+        if not df.empty and "SAP_ID" in df.columns
+    ]
+    if valid_batches:
+        final_df = pd.concat(valid_batches, ignore_index=True)
+        final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
+        final_df["SAP_ID"] = final_df["SAP_ID"].astype(str).str.lstrip("0")
+    else:
+        final_df = pd.DataFrame(columns=["SAP_ID", "VALID_COUNT"])
+    
+    valid_carry_batches = [
+        df for df in carry_forward_bacthes
+        if not df.empty and "SAP_ID" in df.columns
+    ]
+    if valid_carry_batches:
+        carry_forward_final_df = pd.concat(valid_carry_batches, ignore_index=True)
+        carry_forward_final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
+        carry_forward_final_df["SAP_ID"] = carry_forward_final_df["SAP_ID"].astype(str).str.lstrip("0")
+    else:
+        carry_forward_final_df = pd.DataFrame(columns=["SAP_ID", "INDCNT"])
+
     merged_df = data_resp.merge(
         final_df,
         how="left",
@@ -2040,9 +2063,11 @@ async def publish_daily_novex_status_email():
         notification_data=status_data,
         inline_images={
             "dry_out_lost": f"{chart_path}",
-            "last_30_days_dry_out_trends": f"{last_30_days_chart_path}"
+            "last_30_days_dry_out_trends": f"{last_30_days_chart_path}",
+            "monthly_score_path": f"{monthly_score_path}",
+            "plant_wise_score_path": f"{plant_wise_score_path}"
         },
-        attachments = [zone_wise_pdf_path]
+        attachments = [zone_wise_pdf_path,lpg_day_wise_trend_exl_path,lpg_va_path,lpg_pq_path]
     )
 
 
