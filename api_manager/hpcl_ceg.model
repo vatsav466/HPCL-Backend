@@ -1600,6 +1600,7 @@ Model VtsAlertHistory {
     invoice_number optional index_field str
     tt_type optional str
     violation_type optional list str
+    destination_code optional str
 
     Action=> vts_alerts_analytics{
         alert_id str

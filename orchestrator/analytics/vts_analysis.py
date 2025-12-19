@@ -825,18 +825,23 @@ async def create_vts_alerts(enriched_data):
             if entry['location_type'] == 'TAS':
                 entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
 
-            if entry['location_type'] == 'LPG':
+            if entry['location_type'] in ['LPG','TAS']:
                 invoice_no = entry['invoice_number'].split("-")[0]
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
                 function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-                query = f"""SELECT DISTINCT(SHIP_TO_PARTY) FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
+                query = f"""SELECT DISTINCT SHIP_TO_PARTY,CUSTOMER FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
                             AND SUPPLY_LOC = '{entry['location_id']}'"""
                 lpg_delivery_location_resp = await function(query=query)
                 ship_to_list = lpg_delivery_location_resp.get("SHIP_TO_PARTY") or []
-                if len(ship_to_list) > 0:
+                destination_code = lpg_delivery_location_resp.get("CUSTOMER") or []
+                if len(ship_to_list) > 0 and entry['location_type'] in ['LPG']:
                     base_sap_id = ship_to_list[0].lstrip("P")
                     entry["base_location_id"] = str(int(base_sap_id))
+                if len(destination_code) > 0:
+                    destination_location_code = destination_code[0].lstrip("P")
+                    entry['destination_code'] = str(int(destination_location_code))
+
 
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],
