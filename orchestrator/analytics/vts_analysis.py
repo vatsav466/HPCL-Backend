@@ -819,7 +819,7 @@ async def get_delivered_location(invoice_number,supply_location,vehicle_number):
                 await asyncio.sleep(RETRY_DELAY)
     
     ship_to_list = lpg_delivery_location_resp.get("CONSUMER_ERP_CODE") or []
-    
+
     return ship_to_list
     
 async def create_vts_alerts(enriched_data):
@@ -864,7 +864,7 @@ async def create_vts_alerts(enriched_data):
                 entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
 
             if entry['location_type'] in ['LPG','TAS']:
-                ship_to_list = await get_delivered_location(entry['invoice_number'],entry['location_id'])
+                ship_to_list = await get_delivered_location(entry['invoice_number'],entry['location_id'],entry['tl_number'])
                 if len(ship_to_list) > 0 and entry['location_type'] in ['LPG']:
                     entry["base_location_id"] = ship_to_list[0].lstrip("P").lstrip("00")
                 if len(ship_to_list) > 0:
