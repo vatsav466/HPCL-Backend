@@ -4188,26 +4188,29 @@ class VTSAnalyticsActions:
             return {"status": False, "message": str(e), "data": []}
     
     async def get_emlock_open_data(filters, cross_filters, drill_state, payload):
+        """
+        Retrieve and process emlock open data with filters and drill-down.
+        """
         try:
-            # ---------------------------------------------------
-            # CROSS FILTERS
-            # ---------------------------------------------------
             _filters, daterange = await generate_cross_filter(cross_filters)
             current_date = datetime.now().strftime("%Y-%m-%d")
 
             query = vts_query.vts_query.get("get_emlock_open_data")
+            print("Base query from config:\n", query)
 
-            # Drill Down filters
             query = await get_drill_down_filter(filters, query)
+            print("Query after drill-down filters:\n", query)
 
             access_filters = [
                 dashboard_studio_model.WidgetFiltersCreate(**rec)
-                for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)
+                for rec in await hpcl_ceg_model.LpgOperationsSummary
+                .get_clause_conditions(formated=True)
             ]
+            print("Access filters applied:", access_filters)
+
             query = await widget_actions.WidgetActions.apply_filter_drilldown(
                 query, access_filters, drill_state
             )
-
             clause = "WHERE" if "where" not in query.lower() else "AND"
 
             if daterange:
@@ -4215,92 +4218,177 @@ class VTSAnalyticsActions:
             else:
                 query += f" {clause} CAST(createdat AS DATE) = '{current_date}'"
 
-            print("Final Query for emlock open data:", query)
+            print("FINAL SQL QUERY (emlock open data):\n", query)
 
-            # ---------------------------------------------------
-            # FETCH DATA
-            # ---------------------------------------------------
-            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+                query=query, limit=0
+            )
+
+            print("Raw DB response keys:", resp.keys())
+            print("Total rows fetched from DB:", len(resp.get("data", [])))
+
             df = pd.DataFrame(resp.get("data", []))
+            print("DataFrame shape after fetch:", df.shape)
 
             if df.empty:
+                print("No data returned from DB.")
                 return {"status": True, "message": "No data found", "data": []}
-
-            # Apply frontend filters
+            
             df = await filter_data(df, _filters)
 
             if payload.get("search") == "true":
-                return {"status": True, "message": "success", "data": df.to_dict(orient="records")}
+                print("Search mode enabled. Returning raw filtered data.")
+                return {
+                    "status": True,
+                    "message": "success",
+                    "data": df.to_dict(orient="records")
+                }
+            df["has_swipeoutl1"] = (
+                df["swipeoutl1"]
+                .fillna("")
+                .astype(str)
+                .str.lower()
+                .eq("false")
+            )
+            df["has_swipeoutl2"] = (
+                df["swipeoutl2"]
+                .fillna("")
+                .astype(str)
+                .str.lower()
+                .eq("false")
+            )
 
-            # ---------------------------------------------------
-            # NORMALIZE L1 & L2
-            # ---------------------------------------------------
-            df["swipeoutl1"] = df["swipeoutl1"].fillna("").astype(str).str.lower()
-            df["swipeoutl2"] = df["swipeoutl2"].fillna("").astype(str).str.lower()
+            base_group_cols = [
+                "zone", "region", "location_name", "invoice_number", "trucknumber"
+            ]
+            available_cols = [col for col in base_group_cols if col in df.columns]
+            print("Grouping columns used:", available_cols)
 
-            # Rows having either L1 or L2 false
-            df_false_any = df[(df["swipeoutl1"] == "false") | (df["swipeoutl2"] == "false")]
-            df_false_any['truck_no'] = df['trucknumber']
-            print("df_false_any",df_false_any.columns)
-            print("df_false_any tuck unkique",df_false_any['trucknumber'].unique())
-            # DISTINCT total summary
-            total_invoice = df_false_any["invoice_number"].nunique()
-            total_vehicle = df_false_any["trucknumber"].nunique()
+            base = (
+                df.groupby(available_cols, as_index=False)
+                .agg(
+                    has_swipeoutl1=("has_swipeoutl1", "any"),
+                    has_swipeoutl2=("has_swipeoutl2", "any"),
+                )
+            )
 
-            total_swipe_l1 = (df["swipeoutl1"] == "false").sum()
-            total_swipe_l2 = (df["swipeoutl2"] == "false").sum()
+            invoice_list = (
+                base["invoice_number"].dropna().astype(str).unique().tolist()
+            )
+            print("Invoice list count for status check:", len(invoice_list))
 
-            # ---------------------------------------------------
-            # HIERARCHY LOGIC (same as old)
-            # ---------------------------------------------------
+            completed_invoice_list = []
+            if invoice_list:
+                invoices_str = "', '".join(invoice_list)
+                completed_query = f"""
+                    SELECT DISTINCT invoice_no
+                    FROM vts_completed_trip
+                    WHERE invoice_no IN ('{invoices_str}')
+                """
+
+                completed_df = await VTSAnalyticsActions.execute_query(
+                    completed_query
+                )
+                print("Completed trip rows fetched:", completed_df.shape[0])
+
+                if not completed_df.empty:
+                    completed_invoice_list = (
+                        completed_df["invoice_no"].astype(str).tolist()
+                    )
+
+            status_filter = payload.get("status")
+
+            if status_filter == "live":
+                base = base[
+                    ~base["invoice_number"].astype(str).isin(
+                        completed_invoice_list
+                    )
+                ]
+            elif status_filter == "closed":
+                base = base[
+                    base["invoice_number"].astype(str).isin(
+                        completed_invoice_list
+                    )
+                ]
+            if base.empty:
+                print("No data after applying status filter.")
+                return {
+                    "status": True,
+                    "message": f"No {status_filter} data found",
+                    "data": [],
+                    "swipe_out_l1_count": 0,
+                    "swipe_out_l2_count": 0,
+                    "distinct_invoice_count": 0,
+                    "distinct_vehicle_count": 0,
+                }
+            
+            total_swipe_l1 = base[base["has_swipeoutl1"]]["invoice_number"].nunique()
+            total_swipe_l2 = base[base["has_swipeoutl2"]]["invoice_number"].nunique()
+
+            filtered_base = base[
+                base["has_swipeoutl1"] | base["has_swipeoutl2"]
+            ]
+
+            total_invoice = filtered_base["invoice_number"].nunique()
+            total_vehicle = filtered_base["trucknumber"].nunique()
+
             group_by_keys = ["zone"]
 
             if filters:
                 filter_keys = [str(rec.key).lower() for rec in filters]
 
                 if "zone" in filter_keys and "region" not in filter_keys:
-                    group_by_keys = ["zone", "region"]
-
+                    group_by_keys = ["region"]
                 elif "zone" in filter_keys and "region" in filter_keys and "location_name" not in filter_keys:
-                    group_by_keys = ["zone", "region", "location_name",]
-
+                    group_by_keys = ["location_name"]
                 elif (
-                    "zone" in filter_keys
-                    and "region" in filter_keys
-                    and "location_name" in filter_keys
-                    and "trucknumber" not in filter_keys
+                    "zone" in filter_keys and
+                    "region" in filter_keys and
+                    "location_name" in filter_keys and
+                    "trucknumber" not in filter_keys
                 ):
-                    group_by_keys = ["zone", "region", "location_name", "trucknumber",'truck_no']
+                    group_by_keys = ["trucknumber"]
+                elif (
+                    "zone" in filter_keys and
+                    "region" in filter_keys and
+                    "location_name" in filter_keys and
+                    "trucknumber" in filter_keys
+                ):
+                    group_by_keys = ["invoice_number"]
 
-            # ---------------------------------------------------
-            # FINAL GROUPING WITH ALL COUNTS
-            # ---------------------------------------------------
-            
+            group_by_keys = [col for col in group_by_keys if col in base.columns]
+            print("Final group_by keys:", group_by_keys)
+
             grouped_df = (
-                df_false_any.groupby(group_by_keys, as_index=False)
-                .agg({
-                    "swipeoutl1": lambda x: (x == "false").sum(),
-                    "swipeoutl2": lambda x: (x == "false").sum(),
-                    "invoice_number": "nunique",
-                    "trucknumber": "nunique",
-                })
+                base.groupby(group_by_keys, as_index=False)
+                .agg(
+                    swipeoutl1_count=(
+                        "invoice_number",
+                        lambda x: x[base.loc[x.index, "has_swipeoutl1"]].nunique()
+                    ),
+                    swipeoutl2_count=(
+                        "invoice_number",
+                        lambda x: x[base.loc[x.index, "has_swipeoutl2"]].nunique()
+                    ),
+                    distinct_invoice_count=(
+                        "invoice_number",
+                        lambda x: x[
+                            base.loc[x.index, "has_swipeoutl1"] |
+                            base.loc[x.index, "has_swipeoutl2"]
+                        ].nunique()
+                    ),
+                    distinct_vehicle_count=(
+                        "trucknumber",
+                        lambda x: x[
+                            base.loc[x.index, "has_swipeoutl1"] |
+                            base.loc[x.index, "has_swipeoutl2"]
+                        ].nunique()
+                    ),
+                )
             )
-            print("grouped_df cols",grouped_df.columns)
-            print("grouped_df uni",grouped_df['trucknumber'].unique())
-            grouped_df.rename(columns={
-                "invoice_number": "distinct_invoice_count",
-                "trucknumber": "distinct_vehicle_count",
-            }, inplace=True)
 
             grouped_df = grouped_df.fillna(0)
 
-            # Convert numpy ints to normal ints
-            import numpy as np
-            grouped_df = grouped_df.astype(object).where(pd.notnull(grouped_df), None)
-            grouped_df = grouped_df.applymap(
-                lambda x: int(x) if isinstance(x, (np.integer,)) else x
-            )
-            print("grouped_df columns",grouped_df.columns)
             return {
                 "status": True,
                 "message": "success",
@@ -4311,9 +4399,9 @@ class VTSAnalyticsActions:
                 "data": grouped_df.to_dict(orient="records"),
             }
 
-        except Exception as e:
-            print("-- Exception in zone wise productivity widget --")
+        except Exception:
             print("traceback:", traceback.format_exc())
+            return {"status": False, "message": "Internal error", "data": []}
 
 
     @staticmethod
@@ -4517,6 +4605,20 @@ class VTSAnalyticsActions:
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers=headers
                 )
+
+            clicked_invoice_no = payload.get("clicked_invoice_no")
+            if table_name == "completed_trips_risk_score" and clicked_invoice_no:
+                safe_invoice = str(clicked_invoice_no).replace("'", "''")
+                combo_query = f"SELECT * FROM public.combo_alerts WHERE invoice_no = '{safe_invoice}'"
+                combo_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=combo_query, skip_total=True)
+                combo_alerts_data = combo_resp.get('data', [])
+                return {
+                    "status": True,
+                    "message": f"Combo alerts for invoice {clicked_invoice_no}",
+                    "data": combo_alerts_data,
+                    "total_records": len(combo_alerts_data)
+                }
+
             return {
                 "status": True,
                 "message": f"Successfully fetched {len(resp['data'])} records from {table_name}",

@@ -111,7 +111,7 @@ def load_alerts_data():
     # Filter
     if "LOCATION_TYPE" in alerts.columns and "TRIP_STATUS" in alerts.columns:
         alerts = alerts[
-            (alerts["LOCATION_TYPE"] == "TAS") &
+            (alerts["LOCATION_TYPE"].isin(["TAS","LPG"])) &
             (alerts["TRIP_STATUS"].isin(["LOADED", "UN LOADED"]))
         ]
 
@@ -192,7 +192,7 @@ VEHICLE_MASTER_RENAME_MAP = {
 }
 
 #master_df = pd.read_sql_query('SELECT * FROM public.vehicle_master', engine)
-master_df=pd.read_sql_query("SELECT * FROM public.vts_truck_master where bu='TAS' ", app_db_engine)
+master_df=pd.read_sql_query("SELECT * FROM public.vts_truck_master ", app_db_engine)
 print(f"Loaded {len(master_df)} vehicle master records")
 master_df.rename(columns=VEHICLE_MASTER_RENAME_MAP, inplace=True)
 master_df.rename(columns={"Transporter Code":"TRANSPORTER_CODE","Transporter Name":"TRANSPORTER_NAME",
@@ -352,7 +352,7 @@ def extract_alert_summary(merged_alerts_df):
         raise ValueError(". Alerts dataframe is empty!")
 
     # Filter TAS only
-    df = merged_alerts_df[merged_alerts_df["LOCATION_TYPE"] == "TAS"]
+    df = merged_alerts_df[merged_alerts_df["LOCATION_TYPE"].isin(["TAS", "LPG"])]
 
     # Create pivot table
     pivot_df = (
@@ -679,7 +679,7 @@ shortage_score_1day=compute_shortage_score(shortage_1day, trips_summary_1day, al
 shortage_score=compute_shortage_score(shortage_df, trips_summary, allowable_threshold)
 
 
-def calculate_location_risk_score(VSS_score, alerts_Sensitivity_df, shortage_score, master_df):
+def calculate_location_risk_score(VSS_score, alerts_Sensitivity_df, shortage_score, master_df, app_db_engine):
 
 
     print("🔹 Merging all component scores...")
@@ -719,8 +719,23 @@ def calculate_location_risk_score(VSS_score, alerts_Sensitivity_df, shortage_sco
     # -------------------------------------------------------
     # 3️⃣ Prepare Clean Final Output Table and Add LOCATION_NAME
     # -------------------------------------------------------
+    # First try to get location name from vts_truck_master
     location_map = dict(zip(master_df["LOCATION_CODE"], master_df["LOCATION_NAME"]))
     merged_df["LOCATION_NAME"] = merged_df["LOCATION"].map(location_map)
+    
+    # For missing location names, fetch from location_master table
+    missing_locations = merged_df[merged_df["LOCATION_NAME"].isna()]["LOCATION"].unique().tolist()
+    if missing_locations:
+        print(f"Fetching {len(missing_locations)} missing location names from location_master...")
+        location_master_df = pd.read_sql_query("SELECT sap_id, name FROM location_master", app_db_engine)
+        location_master_df["sap_id"] = location_master_df["sap_id"].astype(str).str.strip()
+        location_master_map = dict(zip(location_master_df["sap_id"], location_master_df["name"]))
+        
+        # Fill missing location names from location_master
+        merged_df["LOCATION_NAME"] = merged_df.apply(
+            lambda row: row["LOCATION_NAME"] if pd.notna(row["LOCATION_NAME"]) else location_master_map.get(row["LOCATION"]),
+            axis=1
+        )
 
 
     Final_LRS = merged_df[
@@ -729,8 +744,8 @@ def calculate_location_risk_score(VSS_score, alerts_Sensitivity_df, shortage_sco
     ]
 
     return Final_LRS
-Final_LRS_1day=calculate_location_risk_score(VSS_score_1day, alert_data_sen_1day, shortage_score_1day, master_df)
-Final_LRS=calculate_location_risk_score(VSS_score, alert_data_sen, shortage_score, master_df)
+Final_LRS_1day=calculate_location_risk_score(VSS_score_1day, alert_data_sen_1day, shortage_score_1day, master_df, app_db_engine)
+Final_LRS=calculate_location_risk_score(VSS_score, alert_data_sen, shortage_score, master_df, app_db_engine)
 
 
 
@@ -800,6 +815,7 @@ l_r_df.to_sql(
     index=False,
     dtype=l_r_dtypes
 )
+
 
 print(f"\n. Location Risk Score saved to public.{L_R_TABLE} ({len(l_r_df)} rows)")
 
