@@ -798,6 +798,10 @@ async def get_delivered_location(invoice_number,supply_location,vehicle_number):
                     AND DEPOT_ERP_CODE = '{supply_location}'
             """
     
+    print('*'*100)
+    print('query',query)
+    print('*'*100)
+    
     lpg_delivery_location_resp = {}
 
     for attempt in range(1, MAX_RETRIES + 1):
