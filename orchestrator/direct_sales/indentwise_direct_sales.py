@@ -769,7 +769,7 @@ class IndentDryOutDirectSales:
                         WHERE SUBSTR(ir."DEALER_CODE", 15, 2) = '12'     
                         AND ir."LOCN_CODE" = ar."ORIGIN_LOCN" 
                         AND ir."INVOICE_NO" = ar."INVOICE_NO"
-                        AND ar.shipment_date = to_char(sysdate,'yyyymmdd')
+                        AND ar."SHIPMENT_DATE" = TO_CHAR(SYSDATE,'yyyymmdd')
                         """
         
         if where_clause:
