@@ -673,12 +673,122 @@ class IndentDryOutDirectSales:
             df = pl.DataFrame(indent_raised_resp)
             return {
                 "status": "success",
-                "r3_swiped_count": len(indent_raised_resp),
-                "data": df.to_dicts()
+                "r3_swiped_count": 0,
+                "data": []
             }
         return {
             "status": "success",
             "r3_swiped_count": 0,
+            "data": []
+        }
+    
+    async def get_vts_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        
+        conditions = await self.build_clause_conditions(data)
+        where_clause = []
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT"
+                        FROM "IMS_SAP"."INDENT_REQUEST" ir
+                        INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
+                        WHERE TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND ir."TRUCK_REGNO" = ts."TRUCK_REGNO"
+                        AND ts."CARD_STATUS" = 'O'
+                        AND ir."DELIVERY_DATE" = ts."CARD_DATE"
+                        AND SUBSTR(ir."DEALER_CODE",15,2)='12'
+                        """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        indent_raised_resp = await function(query=ims_query)
+        if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
+            return {
+                "status": "success",
+                "vts_count": len(indent_raised_resp),
+                "data": df.to_dicts()
+            }
+        return {
+            "status": "success",
+            "vts_count": 0,
+            "data": []
+        }
+    
+    async def get_delivery_confirmation_direct_sales(self,data):
+        for rec in data.filters:
+            for index, val in enumerate(rec.value):
+                if not val:
+                    continue
+                if not re.fullmatch('^[a-zA-Z0-9,\\/+\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]*$', val):
+                    raise fastapi.HTTPException(
+                        status_code=422,
+                        detail=f"values[{index}] not matching criteria"
+                    )
+        
+        conditions = await self.build_clause_conditions(data)
+        where_clause = []
+        for condition in conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                where_clause.append(f"""SUBSTR(ir."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+
+        ims_query = f"""
+                        SELECT ir."INDENT_NO", ir."INDENT_DATE", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."JDE_TRUCK_NO" AS "TRUCK_REGNO"
+                        FROM "IMS_SAP"."INDENT_PRODUCTS" ir 
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
+                        INNER JOIN "IMS_SAP"."AUTO_DC_REQUESTS" ar SUBSTR(ir."DEALER_CODE", 1, 10) = ar."SHIP_TO_CUST" 
+                        WHERE SUBSTR(ir."DEALER_CODE", 15, 2) = '12'     
+                        AND ir."LOCN_CODE" = ar."ORIGIN_LOCN" 
+                        AND ir."INVOICE_NO" = ar."INVOICE_NO"
+                        AND ar.shipment_date = to_char(sysdate,'yyyymmdd')
+                        """
+        
+        if where_clause:
+            ims_query +=  ' AND ' + ' AND '.join(where_clause)
+
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 3
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        indent_raised_resp = await function(query=ims_query)
+        if indent_raised_resp:
+            df = pl.DataFrame(indent_raised_resp)
+            return {
+                "status": "success",
+                "delivery_confirmation_count": len(indent_raised_resp),
+                "data": df.to_dicts()
+            }
+        return {
+            "status": "success",
+            "delivery_confirmation_count": 0,
             "data": []
         }
     
