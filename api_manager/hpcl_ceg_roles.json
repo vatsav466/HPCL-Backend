@@ -1655,6 +1655,12 @@
                     "name": "get_r3_swiped_direct_sales"
                 },
                 {
+                    "name": "get_vts_direct_sales"
+                },
+                {
+                    "name": "get_delivery_confirmation_direct_sales"
+                },
+                {
                     "name": "get_dried_out_ro_data"
                 },
                 {
@@ -1749,6 +1755,12 @@
                 },
                 {
                     "name": "get_r3_swiped_direct_sales"
+                },
+                {
+                    "name": "get_vts_direct_sales"
+                },
+                {
+                    "name": "get_delivery_confirmation_direct_sales"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -1860,6 +1872,12 @@
                 },
                 {
                     "name": "get_r3_swiped_direct_sales"
+                },
+                {
+                    "name": "get_vts_direct_sales"
+                },
+                {
+                    "name": "get_delivery_confirmation_direct_sales"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -7965,6 +7983,14 @@
         {
             "name": "get_r3_swiped_direct_sales",
             "displayName": "get_r3_swiped_direct_sales"
+        },
+        {
+            "name": "get_vts_direct_sales",
+            "displayName": "get_vts_direct_sales"
+        },
+        {
+            "name": "get_delivery_confirmation_direct_sales",
+            "displayName": "get_delivery_confirmation_direct_sales"
         },
         {
             "name": "get_dried_out_ro_data",

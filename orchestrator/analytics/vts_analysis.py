@@ -783,6 +783,48 @@ async def create_vts_violation_alerts(enriched_data):
             await trigger_vts_alarm_alert(entry)
     except Exception as e:
         logger.error(f"Error creating VTS Alert : {str(e)}")
+
+async def get_delivered_location(invoice_number,supply_location,vehicle_number):
+    MAX_RETRIES = 3
+    RETRY_DELAY = 10
+    # Fetching voilations from VTS DB
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    query = f"""
+                SELECT DISTINCT CONSUMER_ERP_CODE FROM COMPLETED_TRIP 
+                    WHERE CHALLAN_NO = '{invoice_number}' 
+                    AND VEHICLE_RTO_NO = '{vehicle_number}' 
+                    AND DEPOT_ERP_CODE = '{supply_location}'
+            """
+    
+    print('*'*100)
+    print('query',query)
+    print('*'*100)
+    
+    lpg_delivery_location_resp = {}
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            lpg_delivery_location_resp = await function(query=query)
+            # Break retry loop if valid response received
+            if lpg_delivery_location_resp:
+                break
+
+        except Exception as e:
+            print(traceback.format_exc())
+            logger.error(f"Vehicle Track DB query failed for getting delivery_location : Traceback: {traceback.format_exc()}")
+            logger.error(
+                f"Vehicle Track DB query failed (attempt {attempt}/{MAX_RETRIES}) "
+                f"Invoice={invoice_number}, Location={supply_location}, Error={e}"
+                )
+            
+            if attempt < MAX_RETRIES:
+                await asyncio.sleep(RETRY_DELAY)
+    
+    ship_to_list = lpg_delivery_location_resp.get("CONSUMER_ERP_CODE") or []
+
+    return ship_to_list
     
 async def create_vts_alerts(enriched_data):
     try:
@@ -826,22 +868,11 @@ async def create_vts_alerts(enriched_data):
                 entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
 
             if entry['location_type'] in ['LPG','TAS']:
-                invoice_no = entry['invoice_number'].split("-")[0]
-                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
-                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-                function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-                query = f"""SELECT DISTINCT SHIP_TO_PARTY,CUSTOMER FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
-                            AND SUPPLY_LOC = '{entry['location_id']}'"""
-                lpg_delivery_location_resp = await function(query=query)
-                ship_to_list = lpg_delivery_location_resp.get("SHIP_TO_PARTY") or []
-                destination_code = lpg_delivery_location_resp.get("CUSTOMER") or []
-                
+                ship_to_list = await get_delivered_location(entry['invoice_number'],entry['location_id'],entry['tl_number'])
                 if len(ship_to_list) > 0 and entry['location_type'] in ['LPG']:
                     entry["base_location_id"] = ship_to_list[0].lstrip("P").lstrip("00")
-
-                if len(destination_code) > 0:
-                    entry['destination_code']  = destination_code[0].lstrip("P").lstrip("00")
-
+                if len(ship_to_list) > 0:
+                    entry['destination_code']  = ship_to_list[0].lstrip("P").lstrip("00")
 
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],

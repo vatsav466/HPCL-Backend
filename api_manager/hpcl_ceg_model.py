@@ -2686,6 +2686,24 @@ class Indentdryout_Get_R3_Swiped_Direct_SalesParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Indentdryout_Get_Vts_Direct_SalesParams(pydantic.BaseModel):
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Get_Delivery_Confirmation_Direct_SalesParams(pydantic.BaseModel):
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Indentdryout_Get_Dried_Out_Ro_DataParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
 

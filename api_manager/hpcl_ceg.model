@@ -1229,6 +1229,16 @@ Model IndentDryOut {
         bu_type optional str
     }
 
+    Action=> get_vts_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_delivery_confirmation_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
     Action=> get_dried_out_ro_data {
         filters list IndentDryOutDataFilters
     }
