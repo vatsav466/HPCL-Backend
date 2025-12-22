@@ -672,6 +672,7 @@ async def alerts_alerts_get_vts_query(data: Alerts_Alerts_Get_Vts_QueryParams):
             "generated_sql": None
         }
 
+
 # Action unblock_alert_truck
 @router.post('/unblock_alert_truck', tags=['Alerts'])
 async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
@@ -689,8 +690,7 @@ async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
         params = urdhva_base.queryparams.QueryParams(
             q=f"unique_id='{unique_id}'", limit=1
         )
-        params.fields = ["id", "alert_history", "alert_state", "alert_status"]
-
+        
         alert_resp = await Alerts.get_all(params, resp_type="plain")
 
         if not alert_resp or not alert_resp.get("data"):
@@ -698,32 +698,130 @@ async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
 
         alert = alert_resp["data"][0]
         alert_id = alert["id"]
-        history = alert.get("alert_history", []) or []
-
-        # ----------------------------
-        # ADD NEW HISTORY DICT ONLY
-        # ----------------------------
-        new_history = {
-            "action_msg": "Alert unblocked",
-            "action_type": "UnBlocked",
-            "allocated_time": urdhva_base.utilities.get_present_time().isoformat(),
-            "processed_time": urdhva_base.utilities.get_present_time().isoformat(),
-            "action_by": username
-        }
-
-        history.append(new_history)
-
-        # ----------------------------
-        # UPDATE MAIN ALERT
-        # ----------------------------
-        update_payload = {
-            "id": alert_id,
-            "alert_status": "Close",
-            "alert_state": "Resolved",
-            "alert_history": history
-        }
-
-        await Alerts(**update_payload).modify()
+        #history = alert.get("alert_history", []) or []
+        transaction_id = f"{alert['id']}0"
+        closed_at = alert.get('closed_at')
+        process_instance_id = alert['workflow_instance_id']
+        camunda_url = alert['workflow_url']
+        for key in ['created_at', 'updated_at', '_sa_instance_state', '']:
+            if key in alert:
+                del alert[key]
+        vehicle_number = alert['vehicle_number']
+        if alert["bu"] in ["TAS"]:
+            try:
+                payload = [{
+                    "blockingFlag": "N", 
+                    "transactNo": transaction_id,
+                    "truckRegNo": alert['vehicle_number'],
+                    "blockingFrom": alert['vehicle_blocked_start_date'].strftime("%Y%m%d"),
+                    "blockingTo": alert['vehicle_blocked_end_date'].strftime("%Y%m%d")
+                }]
+                headers = {
+                    "Content-Type": "application/json"
+                }
+                resp = requests.post(urdhva_base.settings.post_to_ims_url, json=payload, headers=headers, timeout=30)
+                resp.raise_for_status()
+                unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED', blacklist='false' where truck_regno = '{vehicle_number}'"
+                await VtsTruckDetails.update_by_query(unblock_query)
+                vehicle_unblocked_date = datetime.datetime.now(tz=datetime.timezone.utc)
+                if closed_at:
+                    await Alerts(**{"id": alert_id,
+                                    "vehicle_unblocked_date": vehicle_unblocked_date,
+                                    "mark_as_false": True}).modify()
+                else:
+                    if not username:
+                        username = "Approver SOD"
+                    alert["action_msg"] = f"Vehicle unblocked by {username}"
+                    alert["action_type"] = "Approved"
+                    await alert_manager.AlertAction.update_alert_history(input_data=alert, alert_data=alert)
+                    await Alerts(**{"id": alert_id,
+                                    "vehicle_unblocked_date": vehicle_unblocked_date,
+                                    "closed_at": vehicle_unblocked_date,
+                                    "alert_status": "Close",
+                                    "alert_state": "Resolved",
+                                    "device_msg": "unblocked_by_hqo_officer",
+                                    "mark_as_false": True}).modify()
+                data = resp.json()
+                print("Status:", resp.status_code)
+                print("Response JSON:", data)
+                delete_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}"
+                delete_response = requests.delete(delete_url)
+                print("workflow_deletion Status code:", delete_response.status_code)
+                print("workflow_deletion Response body:", delete_response.text)
+            except requests.exceptions.HTTPError as e:
+                print("HTTP error:", e, "Body:", getattr(e.response, "text", None))
+            except requests.exceptions.RequestException as e:
+                print("Request failed:", e)
+        elif alert["bu"] in ["LPG"]:
+            try:
+                payload = {
+                    "Request":{
+                        "Request_ID": transaction_id,
+                        "Vehicle_ID": alert['vehicle_number'],
+                        "Status": "U",
+                        "User_ID": "NOVEX_SYSTEM",
+                        "IP_Address": "10.90.38.218"
+                    }
+                }
+                access_token = await vts_analysis.fetch_access_token()
+                if not access_token:
+                    print(f"[ERROR] Failed to fetch token")
+                    return None
+                
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                }
+                print("*" * 50)
+                print(urdhva_base.settings.lpg_publish_url)
+                print(headers)
+                print(payload)
+                print("*" * 50)
+                response = requests.post(urdhva_base.settings.lpg_publish_url, headers=headers, data=json.dumps(payload),
+                                            timeout=15, verify=False)
+                post_sap_response = {
+                    "request_id": str(response.json().get("Response", {}).get("Request_ID")),
+                    "vehicle_number": response.json().get("Response", {}).get("Vehicle_ID"),
+                    "status": response.json().get("Response", {}).get("Status"),
+                    "remark": response.json().get("Response", {}).get("Remark"),
+                    "updated_date": str(response.json().get("Response", {}).get("Updated_Date")),
+                    "updated_time": str(response.json().get("Response", {}).get("Updated_Time"))
+                }
+                await LpgDataPostingAuditCreate(**post_sap_response).create()
+                response.raise_for_status()
+                unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED', blacklist='false' where truck_regno = '{vehicle_number}'"
+                await VtsTruckDetails.update_by_query(unblock_query)
+                vehicle_unblocked_date = datetime.datetime.now(tz=datetime.timezone.utc)
+                if closed_at:
+                    await Alerts(**{"id": alert_id,
+                                    "vehicle_unblocked_date": vehicle_unblocked_date,
+                                    "mark_as_false": True}).modify()
+                else:
+                    if not username:
+                        username = "Approver LPG"
+                    alert["action_msg"] = f"Vehicle unblocked by {username}"
+                    alert["action_type"] = "Approved"
+                    await alert_manager.AlertAction.update_alert_history(input_data=alert, alert_data=alert)
+                    await Alerts(**{"id": alert_id,
+                                    "vehicle_unblocked_date": vehicle_unblocked_date,
+                                    "closed_at": vehicle_unblocked_date,
+                                    "alert_status": "Close",
+                                    "alert_state": "Resolved",
+                                    "device_msg": "unblocked_by_hqo_officer",
+                                    "mark_as_false": True}).modify()
+                
+                data = response.json()
+                print("Status:", response.status_code)
+                print("Response JSON:", data)
+                delete_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}"
+                delete_response = requests.delete(delete_url)
+                print("workflow_deletion Status code:", delete_response.status_code)
+                print("workflow_deletion Response body:", delete_response.text)
+            except requests.exceptions.HTTPError as e:
+                print("HTTP error:", e, "Body:", getattr(e.response, "text", None))
+            except requests.exceptions.RequestException as e:
+                print("Request failed:", e)
 
         return {"status": True, "message": "Alert unblocked successfully"}
 
