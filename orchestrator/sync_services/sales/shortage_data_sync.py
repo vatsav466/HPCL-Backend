@@ -143,7 +143,7 @@ def enrich_data(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
             .otherwise(pl.col("ship_to_party"))
             .alias("destination_code")
         )
-        df = df.drop_columns("ship_to_party")
+        df = df.drop("ship_to_party")
 
     # You can add more enrichment steps here (e.g. ITEM_NAME_MAP mapping)
     if any(c.lower() == "item_no" for c in df.columns):
