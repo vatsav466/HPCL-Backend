@@ -69,7 +69,17 @@ class VTSAlertsListener:
                             "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","yesu.p@algofusiontech.com"],
             bcc_recipients= [],
             html_content=True,
-            body="Data is not being received from the VTS ingest_data API. Please check and resolve the issue at the earliest.",
+            body="""
+            <p>Hi Sir,</p>
+
+            <p>
+            Data is not being received from the VTS <b>ingest_data API</b>.
+            Please check and resolve the issue at the earliest.
+            </p>
+
+            <p>Thanks & Regards,<br>
+            Novex System</p>
+            """,
             force_send=True,
             inline_images= {},
             attachments= []
