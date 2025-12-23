@@ -756,11 +756,14 @@ class VTSAnalyticsActions:
         #     return "location_type"
         # if query and "vts_alert_history" in query.lower() and key.lower() == "sap_id":
         #     return "location_id" 
-        if query and 'sales_trips_till_date' in query.lower() and key.lower() == 'bu':
+        if query and 'sales_trips_till_date' in query.lower() and key.lower() in ('transporter_code','bu'):
             return None
          
         if query and 'sales_trips_till_date' in query.lower() and key.lower() == 'zone':
             return 'zone_nm'
+        
+        if query and 'sales_trips_till_date' in query.lower() and key.lower() == 'location_name':
+            return 'plant_nm'
         
         return key
     
@@ -2501,6 +2504,7 @@ class VTSAnalyticsActions:
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
             df = await VTSAnalyticsActions.execute_query(query)
+            total_trip_count=len(df)          # Total vts_trip_count
 
             emlock_conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, emlock_open_query)
             emlock_query = VTSAnalyticsActions.apply_conditions_to_query(emlock_open_query, emlock_conditions)
@@ -2534,10 +2538,10 @@ class VTSAnalyticsActions:
                     df_viol[col] = df_viol[col].apply(lambda x: 1 if x and x != 0 else 0)
 
             # Step 4: Count each violation across all invoices
-            violation_counts = {col: df_viol[col].sum() for col in violation_cols}
+            violation_counts = {col: int(df_viol[col].sum()) for col in violation_cols}
 
             # Step 5: Add emlock_open
-            violation_counts["emlock_open"] = emlock_open
+            violation_counts["emlock_open"] = int(emlock_open)
 
             # Step 6: Get shortage count
             shortage_result = await VTSAnalyticsActions.total_count_shortage(filters, cross_filters, drill_state, payload)
@@ -2550,25 +2554,15 @@ class VTSAnalyticsActions:
                 print(f"{key}: {count}")
 
             # Step 7: Calculate total and percentages
-            total_all = sum(violation_counts.values())
             percentages = {}
             for key, count in violation_counts.items():
-                percentages[key] = round(100 * count / total_all, 2) if total_all > 0 else 0
+                percentages[key] = round(100 * count / total_trip_count, 2) if total_trip_count > 0 else 0
 
-            # Step 8: Adjust rounding so total = 100
-            total_percent = round(sum(percentages.values()), 2)
-            diff = round(100 - total_percent, 2)
-            if diff != 0:
-                largest_key = max(percentages, key=percentages.get)
-                percentages[largest_key] = round(percentages[largest_key] + diff, 2)
             
-
-
-            # Step 9: Return final response
             return {
-                "status": True,
-                "message": "Violation percentages calculated",
-                "data": percentages
+                "status": True,"message": "Violation percentages calculated",
+                "data": { "counts": violation_counts,"percentages": percentages,"total_trip":total_trip_count
+                }
             }
 
         except Exception as e:
@@ -2698,7 +2692,7 @@ class VTSAnalyticsActions:
                 invoice_df.rename(columns={
                     "invoice_number": "invoice_no",
                     "created_at": "created_at",
-                    violation_type: f"actual_{violation_type}"  
+                    violation_type: f"{violation_type}"  
                 }, inplace=True)
 
                 result = invoice_df.to_dict(orient="records")
@@ -2852,6 +2846,7 @@ class VTSAnalyticsActions:
                     # 7) Write to Excel
                     if final_df_pending.empty:
                         pd.DataFrame([{"message": "No data found for emlock_open"}]).to_excel(
+                            
                             writer, index=False, sheet_name="emlock_open"
                         )
                     else:
@@ -3312,8 +3307,16 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
     
+                
     @staticmethod
     async def safety_compliance_percentage(filters, cross_filters, drill_state, payload):
+                           
+            total_trips_count = vts_query.vts_query.get("total_trips")
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, total_trips_count)
+            total_trips_count = VTSAnalyticsActions.apply_conditions_to_query(total_trips_count, conditions)            
+            df_total = await VTSAnalyticsActions.execute_query(total_trips_count)            
+            total_length=int(df_total.iloc[0, 0])
+                                      
             try:
                 # Queries returning counts
                 query_keys = [
@@ -3321,9 +3324,8 @@ class VTSAnalyticsActions:
                     "vts_harsh_braking",
                     "vts_harsh_acceleration",
                     "vts_device_removed"
-                ]
-
-            
+                    
+                ]                                                            
                 counts = {}
                 for key in query_keys:
                     query = vts_query.vts_query.get(key)
@@ -3332,22 +3334,12 @@ class VTSAnalyticsActions:
                 
                     df = await VTSAnalyticsActions.execute_query(query)
                     counts[key] = int(df.iloc[0, 0]) if not df.empty else 0
-                  
-
+                    
+                                     
+                percentages = {k: round((v / total_length) * 100, 2) for k, v in counts.items()}
+                return {"status": True, "message": "Success", "data": { "percentages":
+                    percentages,"total_trip":total_length,"counts":counts}}
             
-                total = sum(counts.values())
-                if total == 0:
-                    return {"status": True, "message": "No data found", "data": []}
-
-                percentages = {k: round((v / total) * 100, 2) for k, v in counts.items()}
-
-            
-                diff = 100 - sum(percentages.values())
-                if abs(diff) > 0.01:
-                    max_key = max(percentages, key=percentages.get)
-                    percentages[max_key] = round(percentages[max_key] + diff, 2)
-
-                return {"status": True, "message": "Success", "data": percentages}
 
             except Exception as e:
                 print("traceback:", traceback.format_exc())

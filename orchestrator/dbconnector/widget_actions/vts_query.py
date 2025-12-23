@@ -173,16 +173,15 @@ vts_query = {
                                 zone from 
                             {drill_state}
                           """,
+    
+    "vts_panic" : """SELECT count(distinct invoice_no) as driver_panic from vts_panic""",
 
+    "vts_harsh_braking" : """SELECT count(distinct invoice_no) as harsh_braking from vts_harsh_braking""",
 
-    "vts_panic" : """SELECT count(event_date) as driver_panic from vts_panic""",
+    "vts_harsh_acceleration" : """SELECT count(distinct invoice_no) as harsh_acceleration from vts_harsh_acceleration""",
 
-    "vts_harsh_braking" : """SELECT count(event_date) as harsh_braking from vts_harsh_braking""",
-
-    "vts_harsh_acceleration" : """SELECT count(event_date) as harsh_acceleration from vts_harsh_acceleration""",
-
-    "vts_device_removed" : """SELECT count(event_date) as device_removed from vts_device_removed""",
-   
+    "vts_device_removed" : """SELECT count(distinct invoice_no) as device_removed from vts_device_removed""",
+    
     "total_violations_product": """
                 SELECT 
                 (
