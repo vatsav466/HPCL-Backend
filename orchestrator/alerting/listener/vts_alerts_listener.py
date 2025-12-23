@@ -6,6 +6,7 @@ import asyncio
 import traceback
 import urdhva_base.redispool
 import orchestrator.analytics.vts_analysis as vts_analysis
+import orchestrator.notification_manager.notification_factory as notification_factory
 
 logger = urdhva_base.Logger.getInstance("vts_alerts_listener.log")
 
@@ -15,6 +16,7 @@ class VTSAlertsListener:
         self.connector_name = connector_name
         self.queue_name = queue_name
         self.worker_start_time = int(time.time())
+        self.idle_time = 3600
 
     @classmethod
     async def restart_validator(cls):
@@ -37,7 +39,7 @@ class VTSAlertsListener:
                 logger.error(f"Exception while converting restart triggered time to integer, {e}")
         await redis_ins.connection_pool.disconnect()
         return restart_triggered_time
-
+    
     @classmethod
     async def validate_restart(cls, start_time):
         """
@@ -57,14 +59,32 @@ class VTSAlertsListener:
         except Exception as _:
             pass
         return False
+    
+    async def send_no_data_mail(self):
+        ins = await notification_factory.get_notification_module("email")
+        await ins.publish_message(
+            subject="VTS Issue: No Data Received from ingest_data API",
+            recipients=["mberde@aryaomnitalk.com"],
+            cc_recipients= ["adityapandey@hpcl.in","purushm@hpcl.in","adeshingkar@aryaomnitalk.com","kshah@aryaomnitalk.com",
+                            "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","yesu.p@algofusiontech.com"],
+            bcc_recipients= [],
+            html_content=True,
+            body="Data is not being received from the VTS ingest_data API. Please check and resolve the issue at the earliest.",
+            force_send=True,
+            inline_images= {},
+            attachments= []
+        )
 
     async def listener(self):
         queue_ins = urdhva_base.redispool.RedisQueue(self.queue_name)
         base_time = int(time.time())
+        last_event_received_time = int(time.time())
+        last_reported_time = 0
         while True:
             try:
                 task = await queue_ins.get(timeout=60)
                 if task:
+                    last_event_received_time = int(time.time())
                     await self.process_task(json.loads(task))
             except Exception as e:
                 if 'Timeout reading' not in str(e):
@@ -75,6 +95,12 @@ class VTSAlertsListener:
                     logger.info(f"Restart message received for {self.queue_name}")
                     break
                 base_time = int(time.time())
+            if int(time.time()) - last_event_received_time >= self.idle_time:
+                if int(time.time()) - last_reported_time <= self.idle_time:
+                    continue
+                print(f"Not Received data for more than idle time ({self.idle_time}), Last received time: {last_event_received_time}")
+                await self.send_no_data_mail()
+                last_reported_time = int(time.time())
 
     async def process_task(self, task):
         await vts_analysis.create_vts_alerts(task)
