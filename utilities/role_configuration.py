@@ -863,26 +863,26 @@ vts_unblocking_matrix = {
         "LPG": {
             "level - 1": {
                 "rolemailto": {
-                    "0": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Creator LPG",
-                    "1": "Location In-Charge LPG,Approver LPG",
-                    "2": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Location In-Charge LPG,Creator LPG,Approver LPG"
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG",
+                    "2": "Zonal Distributions Head LPG,Zonal Operations LPG,Creator LPG,Approver LPG"
                 },
                 "mqof": {
-                    "0": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Creator LPG",
-                    "1": "Location In-Charge LPG,Approver LPG"
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG"
                 },
                 "condition": "<",
                 "value": 1
             },
             "level - 2": {
                 "rolemailto": {
-                    "0": "Location In-Charge LPG,Creator LPG",
-                    "1": "Zonal Distributions Head LPG,Approver LPG",
-                    "2": "Location In-Charge LPG,Zonal Distributions Head LPG,Creator LPG,Approver LPG"
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG",
+                    "2": "Zonal Distributions Head LPG,Zonal Operations LPG,Creator LPG,Approver LPG"
                 },
                 "mqof": {
-                    "0": "Location In-Charge LPG,Creator LPG",
-                    "1": "Zonal Distributions Head LPG,Approver LPG"
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG"
                 },
                 "condition": "<>",
                 "value": 2
@@ -955,26 +955,26 @@ lpg_one_officer_unblocking_matrix = {
         "LPG": {
             "level - 1": {
                 "rolemailto": {
-                    "0": "Location In-Charge LPG,Creator LPG",
-                    "1": "Zonal Distributions Head LPG,Approver LPG",
-                    "2": "Location In-Charge LPG,Zonal Distributions Head LPG,Creator LPG,Approver LPG"
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG",
+                    "2": "Zonal Distributions Head LPG,Zonal Operations LPG,Creator LPG,Approver LPG"
                 },
                 "mqof": {
-                    "0": "Location In-Charge LPG,Creator LPG",
-                    "1": "Zonal Distributions Head LPG,Approver LPG"
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG"
                 },
                 "condition": "<",
                 "value": 1
             },
             "level - 2": {
                 "rolemailto": {
-                    "0": "Location In-Charge LPG,Creator LPG",
-                    "1": "Zonal Distributions Head LPG,Approver LPG",
-                    "2": "Location In-Charge LPG,Zonal Distributions Head LPG,Creator LPG,Approver LPG"
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG",
+                    "2": "Zonal Distributions Head LPG,Zonal Operations LPG,Creator LPG,Approver LPG"
                 },
                 "mqof": {
-                    "0": "Location In-Charge LPG,Creator LPG",
-                    "1": "Zonal Distributions Head LPG,Approver LPG"
+                    "0": "Zonal Distributions Head LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG"
                 },
                 "condition": "<>",
                 "value": 2
