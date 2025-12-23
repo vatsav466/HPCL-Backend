@@ -787,28 +787,46 @@ async def create_vts_violation_alerts(enriched_data):
 async def get_delivered_location(invoice_number,supply_location,vehicle_number):
     MAX_RETRIES = 3
     RETRY_DELAY = 10
-    # Fetching voilations from VTS DB
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    query = f"""
-                SELECT DISTINCT CONSUMER_ERP_CODE FROM COMPLETED_TRIP 
-                    WHERE CHALLAN_NO = '{invoice_number}' 
-                    AND VEHICLE_RTO_NO = '{vehicle_number}' 
-                    AND DEPOT_ERP_CODE = '{supply_location}'
-            """
-    
-    print('*'*100)
-    print('query',query)
-    print('*'*100)
-    
-    lpg_delivery_location_resp = {}
+
+    delivery_location_resp = {}
 
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            lpg_delivery_location_resp = await function(query=query)
+            # Fetching voilations from VTS DB
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            query = f"""
+                        SELECT DISTINCT CONSUMER_ERP_CODE FROM COMPLETED_TRIP 
+                            WHERE CHALLAN_NO = '{invoice_number}' 
+                            AND VEHICLE_RTO_NO = '{vehicle_number}' 
+                            AND DEPOT_ERP_CODE = '{supply_location}'
+                    """
+            
+            print('*'*100)
+            print('query',query)
+            print('*'*100)
+
+            delivery_location_resp = await function(query=query)
             # Break retry loop if valid response received
-            if lpg_delivery_location_resp:
+            if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
+                break
+            
+            invoice_no = invoice_number.split("-")[0]
+            # Fetching voilations from VTS DB
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            query = f"""SELECT DISTINCT CUSTOMER AS CONSUMER_ERP_CODE FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
+                        AND SUPPLY_LOC = '{supply_location}'"""
+
+            print('*'*100)
+            print('query',query)
+            print('*'*100)
+
+            delivery_location_resp = await function(query=query) 
+
+            if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
                 break
 
         except Exception as e:
@@ -822,7 +840,7 @@ async def get_delivered_location(invoice_number,supply_location,vehicle_number):
             if attempt < MAX_RETRIES:
                 await asyncio.sleep(RETRY_DELAY)
     
-    ship_to_list = lpg_delivery_location_resp.get("CONSUMER_ERP_CODE") or []
+    ship_to_list = delivery_location_resp.get("CONSUMER_ERP_CODE") or []
 
     return ship_to_list
     
