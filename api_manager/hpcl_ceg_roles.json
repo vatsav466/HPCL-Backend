@@ -1101,6 +1101,12 @@
                 },
                 {
                     "name": "alerts_get_vts_query"
+                },
+                {
+                    "name": "attach_alert_blocked_file"
+                },
+                {
+                    "name": "attach_vts_blocked_file"
                 }
             ]
         },
@@ -1209,6 +1215,12 @@
                 },
                 {
                     "name": "alerts_get_vts_query"
+                },
+                {
+                    "name": "attach_alert_blocked_file"
+                },
+                {
+                    "name": "attach_vts_blocked_file"
                 }
             ]
         },
@@ -7863,6 +7875,14 @@
         {
             "name": "alerts_get_vts_query",
             "displayName": "alerts_get_vts_query"
+        },
+        {
+            "name": "attach_alert_blocked_file",
+            "displayName": "attach_alert_blocked_file"
+        },
+        {
+            "name": "attach_vts_blocked_file",
+            "displayName": "attach_vts_blocked_file"
         },
         {
             "name": "upload_cems_location_master",

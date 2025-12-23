@@ -709,7 +709,9 @@ Model VtsManualBlocked {
     sap_id optional str
     zone optional str
     region optional str
-    location_name optional str    
+    location_name optional str
+    remarks_unblocked optional str
+    file_uploaded_path optional str   
 }
 
 Model Alerts {
@@ -818,6 +820,8 @@ Model Alerts {
     mark_as_false optional bool
     vts_alert_history_ids optional list str
     action_on optional MakerChecker
+    remarks_unblocked optional str
+    file_uploaded_path optional str
 
     Action=> alert_action {
         bu optional str
@@ -913,6 +917,16 @@ Model Alerts {
     Action=> alerts_get_vts_query {
         vehicle_number optional str
         cross_filters optional list WidgetFilters
+    }
+
+    Action=> attach_alert_blocked_file {
+        unique_id str
+        remarks_unblocked str
+    }
+
+    Action=> attach_vts_blocked_file {
+        unblock_id str
+        remarks_unblocked str
     }
     
     Config=> {
