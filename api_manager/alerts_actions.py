@@ -828,3 +828,106 @@ async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
     except Exception as e:
         print("Error:", e)
         return {"status": False, "message": "Failed to unblock alert"}
+
+
+# Action attach_alert_blocked_file
+@router.post('/attach_alert_blocked_file', tags=['Alerts'])
+async def alerts_attach_alert_blocked_file(
+        unique_id: str = fastapi.Form(...),
+        remarks_unblocked: str = fastapi.Form(None),
+        upload_file: fastapi.UploadFile = fastapi.File(...)
+    ):
+    try:
+        params = urdhva_base.queryparams.QueryParams(
+            q=f"unique_id='{unique_id}'", limit=1
+        )
+        record_resp = await Alerts.get_all(params, resp_type="plain")
+
+        if not record_resp.get("data"):
+            return {
+                "status": False,
+                "message": "Record not found for given unique_id"
+            }
+
+        record = record_resp["data"][0]
+        row_id = record["id"]   # <-- Required primary key
+        upload_dir = "/opt/downloads"
+        os.makedirs(upload_dir, exist_ok=True)
+
+        file_path = os.path.join(upload_dir, upload_file.filename)
+
+        with open(file_path, "wb") as f:
+            f.write(await upload_file.read())
+
+        # =====================
+        # 3️⃣ Prepare update payload
+        # =====================
+        update_data = {
+            "id": row_id,
+            "file_uploaded_path": file_path
+        }
+
+        if remarks_unblocked:
+            update_data["remarks_unblocked"] = remarks_unblocked
+
+        await Alerts(**update_data).modify()
+
+        return {
+            "status": True,
+            "message": "Attachment uploaded successfully",
+            "file_path": file_path,
+            "remarks_unblocked": remarks_unblocked
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed to upload file",
+            "error": str(e)
+        }
+
+
+
+# Action attach_vts_blocked_file
+@router.post('/attach_vts_blocked_file', tags=['Alerts'])
+async def alerts_attach_vts_blocked_file(
+        unblock_id : str = fastapi.Form(...),
+        remarks_unblocked: str = fastapi.Form(None),
+        upload_file: fastapi.UploadFile = fastapi.File(...)
+    ):
+    try:
+        upload_dir = "/opt/downloads"
+        os.makedirs(upload_dir, exist_ok=True)
+
+        file_path = os.path.join(upload_dir, upload_file.filename)
+
+        # Save file
+        with open(file_path, "wb") as f:
+            f.write(await upload_file.read())
+
+        # Prepare update payload
+        update_data = {
+            "id": unblock_id,
+            "file_uploaded_path": file_path
+        }
+
+        if remarks_unblocked:
+            update_data["remarks_unblocked"] = remarks_unblocked
+
+        # Update DB
+        await VtsManualBlocked(**update_data).modify()
+
+        return {
+            "status": True,
+            "message": "Attachment uploaded successfully",
+            "file_path": file_path,
+            "remarks_unblocked":remarks_unblocked
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed to upload file",
+            "error": str(e)
+        }
+

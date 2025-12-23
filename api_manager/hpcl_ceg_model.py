@@ -1403,6 +1403,8 @@ class VtsManualBlockedSchema(UrdhvaPostgresBase):
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    remarks_unblocked: Mapped[typing.Optional[str]] = mapped_column("remarks_unblocked", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    file_uploaded_path: Mapped[typing.Optional[str]] = mapped_column("file_uploaded_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(transaction_number, name="vts_manual_blocked_transaction_number"),)
 
@@ -1427,6 +1429,8 @@ class VtsManualBlockedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
+    remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
+    file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1456,6 +1460,8 @@ class VtsManualBlocked(urdhva_base.postgresmodel.PostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
+    remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
+    file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1563,6 +1569,8 @@ class AlertsSchema(UrdhvaPostgresBase):
     mark_as_false: Mapped[typing.Optional[bool]] = mapped_column("mark_as_false", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     vts_alert_history_ids: Mapped[typing.Optional[typing.List[str]]] = mapped_column("vts_alert_history_ids", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     action_on: Mapped[typing.Optional[typing.Any]] = mapped_column("action_on", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    remarks_unblocked: Mapped[typing.Optional[str]] = mapped_column("remarks_unblocked", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    file_uploaded_path: Mapped[typing.Optional[str]] = mapped_column("file_uploaded_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1657,6 +1665,8 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     mark_as_false: typing.Optional[bool] = pydantic.Field(False, )
     vts_alert_history_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     action_on: typing.Optional[hpcl_ceg_enum.MakerChecker] | None = None
+    remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
+    file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1760,6 +1770,8 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     mark_as_false: typing.Optional[bool] = pydantic.Field(False, )
     vts_alert_history_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     action_on: typing.Optional[hpcl_ceg_enum.MakerChecker] | None = None
+    remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
+    file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1938,6 +1950,24 @@ class Alerts_Get_Vts_Unblocked_TrucksParams(pydantic.BaseModel):
 class Alerts_Alerts_Get_Vts_QueryParams(pydantic.BaseModel):
     vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Attach_Alert_Blocked_FileParams(pydantic.BaseModel):
+    unique_id: str
+    remarks_unblocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Attach_Vts_Blocked_FileParams(pydantic.BaseModel):
+    unblock_id: str
+    remarks_unblocked: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
