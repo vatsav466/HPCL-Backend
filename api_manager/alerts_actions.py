@@ -16,6 +16,7 @@ import utilities.helpers as helpers
 from fastapi.responses import FileResponse
 import utilities.vts_mapping as vts_mapping
 from dateutil.relativedelta import relativedelta
+import utilities.minio_connector as minio_connector
 import utilities.connection_mapping as connection_mapping
 import orchestrator.analytics.vts_analysis as vts_analysis
 from utilities.helpers import generate_filter_query, get_location_details
@@ -833,11 +834,14 @@ async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
 # Action attach_alert_blocked_file
 @router.post('/attach_alert_blocked_file', tags=['Alerts'])
 async def alerts_attach_alert_blocked_file(
-        unique_id: str = fastapi.Form(...),
-        remarks_unblocked: str = fastapi.Form(None),
-        upload_file: fastapi.UploadFile = fastapi.File(...)
-    ):
+    unique_id: str = fastapi.Form(...),
+    remarks_unblocked: str = fastapi.Form(None),
+    upload_file: fastapi.UploadFile = fastapi.File(...)
+):
     try:
+        # -----------------------------------
+        # 1. Fetch alert record
+        # -----------------------------------
         params = urdhva_base.queryparams.QueryParams(
             q=f"unique_id='{unique_id}'", limit=1
         )
@@ -850,21 +854,43 @@ async def alerts_attach_alert_blocked_file(
             }
 
         record = record_resp["data"][0]
-        row_id = record["id"]   # <-- Required primary key
-        upload_dir = "/opt/downloads"
-        os.makedirs(upload_dir, exist_ok=True)
+        row_id = record["id"]
 
-        file_path = os.path.join(upload_dir, upload_file.filename)
+        # -----------------------------------
+        # 2. TEMP FILE SAVE (LIKE NOTICE API)
+        # -----------------------------------
+        UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, "alerts")
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+        file_name = upload_file.filename
+        file_path = os.path.join(UPLOAD_DIR, file_name)
 
         with open(file_path, "wb") as f:
             f.write(await upload_file.read())
 
-        # =====================
-        # 3️⃣ Prepare update payload
-        # =====================
+        # -----------------------------------
+        # 3. MINIO UPLOAD (PATH BASED)
+        # -----------------------------------
+        status, minio_path = minio_connector.upload_to_minio(
+            "alerts",        # bucket
+            "blocked_files", # section
+            unique_id,       # folder
+            file_path        # filepath
+        )
+
+        if not status:
+            return {
+                "status": False,
+                "message": "MinIO upload failed",
+                "error": minio_path
+            }
+
+        # -----------------------------------
+        # 4. UPDATE SAME COLUMN
+        # -----------------------------------
         update_data = {
             "id": row_id,
-            "file_uploaded_path": file_path
+            "file_uploaded_path": minio_path
         }
 
         if remarks_unblocked:
@@ -875,7 +901,7 @@ async def alerts_attach_alert_blocked_file(
         return {
             "status": True,
             "message": "Attachment uploaded successfully",
-            "file_path": file_path,
+            "file_uploaded_path": minio_path,
             "remarks_unblocked": remarks_unblocked
         }
 
@@ -887,41 +913,78 @@ async def alerts_attach_alert_blocked_file(
         }
 
 
-
 # Action attach_vts_blocked_file
 @router.post('/attach_vts_blocked_file', tags=['Alerts'])
 async def alerts_attach_vts_blocked_file(
-        unblock_id : str = fastapi.Form(...),
-        remarks_unblocked: str = fastapi.Form(None),
-        upload_file: fastapi.UploadFile = fastapi.File(...)
-    ):
+    unblock_id: str = fastapi.Form(...),
+    remarks_unblocked: str = fastapi.Form(None),
+    upload_file: fastapi.UploadFile = fastapi.File(...)
+):
     try:
-        upload_dir = "/opt/downloads"
-        os.makedirs(upload_dir, exist_ok=True)
+        # -----------------------------------
+        # 1. Fetch VTS blocked record
+        # -----------------------------------
+        params = urdhva_base.queryparams.QueryParams(
+            q=f"id='{unblock_id}'", limit=1
+        )
+        record_resp = await VtsManualBlocked.get_all(params, resp_type="plain")
 
-        file_path = os.path.join(upload_dir, upload_file.filename)
+        if not record_resp.get("data"):
+            return {
+                "status": False,
+                "message": "Record not found for given unblock_id"
+            }
 
-        # Save file
+        record = record_resp["data"][0]
+        row_id = record["id"]
+
+        # -----------------------------------
+        # 2. TEMP FILE SAVE (SAME AS ALERT API)
+        # -----------------------------------
+        UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, "vts_blocked")
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+        file_name = upload_file.filename
+        file_path = os.path.join(UPLOAD_DIR, file_name)
+
         with open(file_path, "wb") as f:
             f.write(await upload_file.read())
 
-        # Prepare update payload
+        # -----------------------------------
+        # 3. MINIO UPLOAD (PATH BASED)
+        # -----------------------------------
+        status, minio_path = minio_connector.upload_to_minio(
+            "alerts",         # bucket (same bucket)
+            "vts_blocked",    # section/folder
+            unblock_id,       # sub-folder
+            file_path         # local filepath
+        )
+
+        if not status:
+            return {
+                "status": False,
+                "message": "MinIO upload failed",
+                "error": minio_path
+            }
+
+        # -----------------------------------
+        # 4. UPDATE DB (SAME COLUMN)
+        # -----------------------------------
         update_data = {
-            "id": unblock_id,
-            "file_uploaded_path": file_path
+            "id": row_id,
+            "file_uploaded_path": minio_path
         }
 
         if remarks_unblocked:
             update_data["remarks_unblocked"] = remarks_unblocked
 
-        # Update DB
         await VtsManualBlocked(**update_data).modify()
 
         return {
             "status": True,
             "message": "Attachment uploaded successfully",
-            "file_path": file_path,
-            "remarks_unblocked":remarks_unblocked
+            "file_uploaded_path": minio_path,
+            "remarks_unblocked": remarks_unblocked
         }
 
     except Exception as e:
@@ -930,4 +993,3 @@ async def alerts_attach_vts_blocked_file(
             "message": "Failed to upload file",
             "error": str(e)
         }
-
