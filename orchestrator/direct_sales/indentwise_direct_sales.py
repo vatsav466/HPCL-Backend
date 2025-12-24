@@ -224,6 +224,7 @@ class IndentDryOutDirectSales:
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
                         TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."TRUCK_REGNO" IS NULL 
+                        AND ir."VALID_INDENT" <> 'N' 
                         AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                     """
         
