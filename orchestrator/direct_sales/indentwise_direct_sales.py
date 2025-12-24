@@ -119,7 +119,7 @@ class IndentDryOutDirectSales:
                     ir."VALID_INDENT", ir."CANCEL_INDENT"
                     FROM "IMS_SAP"."INDENT_REQUEST" ir 
                     INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
-                    TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                    TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                     AND SUBSTR(ir."DEALER_CODE",15,2)='12'
                     """
         
@@ -170,7 +170,7 @@ class IndentDryOutDirectSales:
                         SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
-                        TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
+                        TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" = 'N' 
                         AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                     """
@@ -222,7 +222,7 @@ class IndentDryOutDirectSales:
                         SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
-                        TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                        TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."TRUCK_REGNO" IS NULL 
                         AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                     """
@@ -275,7 +275,7 @@ class IndentDryOutDirectSales:
                         ir."VALID_INDENT", ir."CANCEL_INDENT" 
                         FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
-                        TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                        TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" IN ('Y','H') 
                         AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                         AND ir."TRUCK_REGNO" IS NOT NULL
@@ -328,7 +328,7 @@ class IndentDryOutDirectSales:
                     ir."VALID_INDENT", ir."CANCEL_INDENT"
                     FROM "IMS_SAP"."INDENT_REQUEST" ir 
                     INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
-                    TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                    TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                     AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."CANCEL_INDENT" = 'Y'
                     """
         if where_clause:
@@ -378,7 +378,7 @@ class IndentDryOutDirectSales:
                         SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
-                        TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                        TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" IN ('Y','H') 
                         AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                         AND ir."TRUCK_REGNO" IS NOT NULL AND ir."SEND_TO_JDE_TIME" IS NULL
@@ -431,7 +431,7 @@ class IndentDryOutDirectSales:
                         SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
-                        TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                        TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."TRUCK_REGNO" IS NOT NULL 
                         AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
                         AND ir."VALID_INDENT" IN ('Y','H') AND ir."SEND_TO_JDE_TIME" IS NOT NULL
@@ -487,7 +487,7 @@ class IndentDryOutDirectSales:
                         "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
                         WHERE SUBSTR(ir."DEALER_CODE",15,2) = '12'
-                        AND TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
+                        AND TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
                         AND ir."CANCEL_INDENT" IS NULL AND ir."TRUCK_REGNO" IS NOT NULL 
                         AND (ir."VALID_INDENT" = 'Y' OR ir."VALID_INDENT" = 'H')
                         AND ir."BATCH_FLAG" = 'Y' AND ip."SALES_ORDERNO" IS NOT NULL
@@ -543,10 +543,10 @@ class IndentDryOutDirectSales:
                         FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
-                        WHERE TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
+                        WHERE TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                         AND ir."TRUCK_REGNO" = ts."TRUCK_REGNO"
                         AND ts."CARD_STATUS" = 'I'
-                        AND ir."DELIVERY_DATE" = ts."CARD_DATE"
+                        AND ir."PROD_REQD_DT" = ts."CARD_DATE"
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12'
                         """
         
@@ -600,7 +600,7 @@ class IndentDryOutDirectSales:
                         INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
                         WHERE SUBSTR(ir."DEALER_CODE",15,2) = '12' 
-                        AND TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
+                        AND TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
                         AND ir."CANCEL_INDENT" IS NULL
                         AND ir."DEALER_CODE" = ip."DEALER_CODE" 
                         AND ir."INDENT_NO" = ip."INDENT_NO" AND ip."INVOICE_NO" IS NOT NULL
@@ -655,10 +655,10 @@ class IndentDryOutDirectSales:
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
-                        WHERE TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
+                        WHERE TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
                         AND ir."TRUCK_REGNO" = ts."TRUCK_REGNO"
                         AND ts."CARD_STATUS" = 'O'
-                        AND ir."DELIVERY_DATE" = ts."CARD_DATE"
+                        AND ir."PROD_REQD_DT" = ts."CARD_DATE"
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12'
                         """
         
@@ -711,10 +711,10 @@ class IndentDryOutDirectSales:
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
-                        WHERE TO_CHAR(ir."DELIVERY_DATE",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
+                        WHERE TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
                         AND ir."TRUCK_REGNO" = ts."TRUCK_REGNO"
                         AND ts."CARD_STATUS" = 'O'
-                        AND ir."DELIVERY_DATE" = ts."CARD_DATE"
+                        AND ir."PROD_REQD_DT" = ts."CARD_DATE"
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12'
                         """
         
