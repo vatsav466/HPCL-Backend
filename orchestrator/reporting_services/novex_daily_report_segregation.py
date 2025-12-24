@@ -111,7 +111,7 @@ async def publish_daily_novex_status_email():
         to_recipients=["adsul@hpcl.in","gbala@hpcl.in"],
         subject="Novex Daily Report: LPG",
         cc_recipients=["kapild@hpcl.in","sanjayk@hpcl.in","gargam@hpcl.in"],
-        bcc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
+        bcc_recipients=["cvmallinath@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
         notification_data=status_data,
         inline_images={
             "monthly_score_path": f"{status_data.get('lpg_monthyl_score_path')}",
