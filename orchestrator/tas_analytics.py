@@ -293,10 +293,74 @@ async def location_alert_critical(data):
 
         return result_df.to_dicts()
 
+async def critical_alerts_by_equipment(data):
+    alert_query = """
+        alert_section = 'TAS'
+        AND severity = 'Critical'
+    """    
+    
+    # Add date filter only if both dates are provided, not empty, and not "string"
+    if (data.start_date and data.end_date and 
+        data.start_date.strip() and data.end_date.strip() and
+        data.start_date.lower() != "string" and data.end_date.lower() != "string"):
+        alert_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
+    
+    if data.equipment_type:
+        alert_query += f" AND equipment_type = '{data.equipment_type}'"
+
+    print("FINAL alert_query >>>", alert_query)
+
+    alert_params = urdhva_base.queryparams.QueryParams(
+        q=alert_query
+    )
+    alert_params.limit = 0
+    alert_params.fields = [
+        "equipment_type"
+    ]
+    
+    # Check if location_name is NOT "false" (string comparison)
+    if data.location_name and data.location_name.lower() != "false":
+        alert_params.fields.append("location_name")
+
+    alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
+    alert_data = alerts_resp.get("data", [])
+    
+    print(f"Total records fetched: {len(alert_data)}")  
+
+    if not alert_data:
+        return []
+
+    alerts_df = pl.DataFrame(alert_data)
+    
+    if alerts_df.is_empty():
+        return []
+    
+    # Check if location_name is provided and NOT "false"
+    if data.location_name and data.location_name.lower() != "false":
+        critical_alerts_df = (
+            alerts_df
+            .group_by(["location_name", "equipment_type"])
+            .agg(pl.len().alias("critical_count"))
+            .sort(["location_name", "critical_count"], descending=[False, True])
+        )
+    else:
+        # location_name is "false" or not provided - group by equipment_type only
+        critical_alerts_df = (
+            alerts_df
+            .group_by(["equipment_type"])
+            .agg(pl.len().alias("critical_count"))
+            .sort(["critical_count"], descending=[True])
+        )
+    
+    print(f"Grouped results:\n{critical_alerts_df}")  
+
+    return critical_alerts_df.to_dicts()
+
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
-    "Location Alert Critical": location_alert_critical
+    "Location Alert Critical": location_alert_critical,
+    "Critical_Alerts_By_Equipment":critical_alerts_by_equipment
 }
 
 

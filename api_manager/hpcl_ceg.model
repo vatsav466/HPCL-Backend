@@ -950,6 +950,7 @@ Model TasAnalytics crud_disable {
         zone            optional str
         start_date      str
         end_date        str
+        equipment_type  optional str
     }
 
 }
