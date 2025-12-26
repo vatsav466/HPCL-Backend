@@ -3156,6 +3156,12 @@ class VTSAnalyticsActions:
                 return {"status": True, "message": "No data found", "data": []}
             
             df = await filter_data(df, _filters)
+            
+            # Keep first occurrence of duplicates based on key columns
+            dedup_cols = [col for col in ["invoice_number", "trucknumber", "zone", "location_name"] if col in df.columns]
+            if dedup_cols:
+                df = df.drop_duplicates(subset=dedup_cols, keep='first')
+                print(f"After deduplication: {len(df)} rows")
 
             if payload.get("search") == "true":
                 print("Search mode enabled. Returning raw filtered data.")
@@ -3164,6 +3170,80 @@ class VTSAnalyticsActions:
                     "message": "success",
                     "data": df.to_dict(orient="records")
                 }
+            
+            if payload.get("table") == "true":
+                print("Table mode enabled. Returning table data with drill down filters.")
+                
+                # Get completed invoices for status filtering
+                invoice_list = df["invoice_number"].dropna().astype(str).unique().tolist()
+                completed_invoice_list = []
+                
+                if invoice_list:
+                    invoices_str = "', '".join(invoice_list)
+                    completed_query = f"""
+                        SELECT DISTINCT invoice_no
+                        FROM vts_completed_trip
+                        WHERE invoice_no IN ('{invoices_str}')
+                    """
+                    completed_df = await VTSAnalyticsActions.execute_query(completed_query)
+                    if not completed_df.empty:
+                        completed_invoice_list = completed_df["invoice_no"].astype(str).tolist()
+                
+                status_filter = payload.get("status")
+                if status_filter:
+                    status_filter = status_filter.lower().strip()
+                    if status_filter == "close":
+                        status_filter = "closed"
+                
+                if status_filter == "live":
+                    df = df[~df["invoice_number"].astype(str).isin(completed_invoice_list)]
+                elif status_filter == "closed":
+                    df = df[df["invoice_number"].astype(str).isin(completed_invoice_list)]
+                
+                df["has_swipeoutl1"] = (
+                    df["swipeoutl1"]
+                    .fillna("")
+                    .astype(str)
+                    .str.lower()
+                    .eq("false")
+                )
+                df["has_swipeoutl2"] = (
+                    df["swipeoutl2"]
+                    .fillna("")
+                    .astype(str)
+                    .str.lower()
+                    .eq("false")
+                )
+                
+                df = df[df["has_swipeoutl1"] | df["has_swipeoutl2"]]
+                df_clean = df.replace([np.nan, np.inf, -np.inf], None)
+
+                return {
+                    "status": True,
+                    "message": f"success - {status_filter} data",
+                    "data": df_clean.to_dict(orient="records"),
+                    "total_records": len(df_clean)
+                }
+            
+            invoice_list = df["invoice_number"].dropna().astype(str).unique().tolist()
+            completed_invoice_list = []
+            
+            if invoice_list:
+                invoices_str = "', '".join(invoice_list)
+                completed_query = f"""
+                    SELECT DISTINCT invoice_no
+                    FROM vts_completed_trip
+                    WHERE invoice_no IN ('{invoices_str}')
+                """
+                completed_df = await VTSAnalyticsActions.execute_query(completed_query)
+                if not completed_df.empty:
+                    completed_invoice_list = completed_df["invoice_no"].astype(str).tolist()
+            status_filter = payload.get("status")
+            
+            if status_filter == "live":
+                df = df[~df["invoice_number"].astype(str).isin(completed_invoice_list)]
+            elif status_filter == "closed":
+                df = df[df["invoice_number"].astype(str).isin(completed_invoice_list)]
             df["has_swipeoutl1"] = (
                 df["swipeoutl1"]
                 .fillna("")
@@ -3309,6 +3389,8 @@ class VTSAnalyticsActions:
             )
 
             grouped_df = grouped_df.fillna(0)
+            
+            grouped_df = grouped_df[grouped_df["distinct_invoice_count"] > 0]
 
             return {
                 "status": True,
