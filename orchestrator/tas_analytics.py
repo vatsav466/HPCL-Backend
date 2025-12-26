@@ -209,6 +209,7 @@ async def location_alert_critical(data):
     params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
     params.fields = [
         "unique_id",
+        "zone",
         "alert_status",
         "interlock_name",
         "location_name",
@@ -228,7 +229,7 @@ async def location_alert_critical(data):
     if not data.location_name and not data.alert_severity:
 
         return (
-            df.group_by("location_name")
+            df.group_by(["zone", "location_name"])
               .agg(pl.len().alias("critical_count"))
               .sort("critical_count", descending=True)
               .head(5)
@@ -255,6 +256,7 @@ async def location_alert_critical(data):
             ])
             .select([
                 "unique_id",
+                "zone",
                 "alert_status",
                 "interlock_name",
                 "location_name",
@@ -264,18 +266,32 @@ async def location_alert_critical(data):
             .sort("ageing_days", descending=True)
             .to_dicts()
         )
-    # CASE 3
-    # No location + severity key present
-    # → Top 10 (location + interlock) counts
+
     if not data.location_name and data.alert_severity == "Critical":
 
-        return (
-            df.group_by(["location_name", "interlock_name"])
-              .agg(pl.len().alias("count"))
-              .sort("count", descending=True)
-              .head(10)
-              .to_dicts()
+        base_df = (
+            df.group_by(["zone", "location_name", "interlock_name"])
+            .agg(pl.len().alias("count"))
         )
+
+        totals_df = (
+            base_df.group_by(["zone", "location_name"])
+                .agg(pl.sum("count").alias("total_critical"))
+                .sort("total_critical", descending=True)
+                .head(10)  
+        )
+
+        result_df = (
+            totals_df.join(base_df, on=["zone", "location_name"])
+                    .group_by(["zone", "location_name"])
+                    .agg([
+                        pl.first("total_critical"),
+                        pl.struct(["interlock_name", "count"]).alias("interlocks")
+                    ])
+                    .sort("total_critical", descending=True)
+        )
+
+        return result_df.to_dicts()
 
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
