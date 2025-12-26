@@ -548,9 +548,9 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
         query = "blocking_status='blocked'"
 
        
-        vts_params = urdhva_base.queryparams.QueryParams(q=query)
+        vts_params = urdhva_base.queryparams.QueryParams(q=query, limit=0)
 
-        alert_data = await VtsManualBlocked.get_all(vts_params, resp_type='plain',limit=0)
+        alert_data = await VtsManualBlocked.get_all(vts_params, resp_type='plain')
         vts_blocked_data = alert_data.get("data", [])
 
         return {
