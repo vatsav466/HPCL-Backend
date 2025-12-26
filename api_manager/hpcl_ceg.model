@@ -940,6 +940,21 @@ Model Alerts {
     }
 }
 
+Model TasAnalytics crud_disable {
+    Action=> tas_analytics {
+        analytical_model      str    
+        location_name   optional str
+        interlock_name  optional str
+        alert_status    optional str
+        alert_severity  optional str
+        zone            optional str
+        start_date      str
+        end_date        str
+    }
+
+}
+
+
 Model CEMSLocationMaster {
     bu_id str
     bu optional index_field BusinessUnit

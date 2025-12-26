@@ -1974,6 +1974,21 @@ class Alerts_Attach_Vts_Blocked_FileParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Tasanalytics_Tas_AnalyticsParams(pydantic.BaseModel):
+    analytical_model: str
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_name: typing.Optional[str] = pydantic.Field("", **{})
+    alert_status: typing.Optional[str] = pydantic.Field("", **{})
+    alert_severity: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    start_date: str
+    end_date: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class CEMSLocationMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'cems_location_master'
     
