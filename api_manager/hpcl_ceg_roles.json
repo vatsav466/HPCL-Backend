@@ -1225,6 +1225,75 @@
             ]
         },
         {
+            "name": "tasanalytics",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasAnalytics",
+            "attributes": {},
+            "uris": [
+                "/api/tasanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_analytics"
+                }
+            ]
+        },
+        {
+            "name": "tasanalytics_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasAnalytics_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tasanalytics_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasAnalytics_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_analytics"
+                }
+            ]
+        },
+        {
             "name": "cemslocationmaster",
             "type": "all",
             "ownerManagedAccess": false,
@@ -7883,6 +7952,10 @@
         {
             "name": "attach_vts_blocked_file",
             "displayName": "attach_vts_blocked_file"
+        },
+        {
+            "name": "tas_analytics",
+            "displayName": "tas_analytics"
         },
         {
             "name": "upload_cems_location_master",

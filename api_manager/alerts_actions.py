@@ -550,7 +550,7 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
        
         vts_params = urdhva_base.queryparams.QueryParams(q=query)
 
-        alert_data = await VtsManualBlocked.get_all(vts_params, resp_type='plain')
+        alert_data = await VtsManualBlocked.get_all(vts_params, resp_type='plain',limit=0)
         vts_blocked_data = alert_data.get("data", [])
 
         return {
@@ -627,7 +627,7 @@ async def alerts_get_vts_unblocked_trucks(data: Alerts_Get_Vts_Unblocked_TrucksP
     query = "blocking_status='unblocked'"
     query = await generate_filter_query(data.cross_filters, query)
     alert_data = await VtsManualBlocked.get_all(
-        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
+        urdhva_base.queryparams.QueryParams(q=query,limit=0),resp_type='plain'
         )
     if alert_data["data"]:
         return {
