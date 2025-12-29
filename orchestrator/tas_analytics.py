@@ -1,7 +1,12 @@
 import polars as pl
 import urdhva_base
 from datetime import datetime
-from hpcl_ceg_model import Alerts
+from hpcl_ceg_model import Alerts, HostMFMFactor 
+import decimal
+from orchestrator.dbconnector.widget_actions.vts_analytics import  download_streaming_data
+
+
+
 
 async def top_repeat_alerts(data):
 
@@ -356,11 +361,147 @@ async def critical_alerts_by_equipment(data):
 
     return critical_alerts_df.to_dicts()
 
+async def tas_alerts_exception_report(data):
+    alert_query = "alert_section = 'TAS'"
+
+    alert_params = urdhva_base.queryparams.QueryParams(q=alert_query)
+    alert_params.limit = 0
+
+    alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
+    alert_data = alerts_resp.get("data", [])
+
+    if not alert_data:
+        return []
+
+    df = pl.DataFrame(alert_data)
+
+    print("Original Polars DataFrame:")
+    print(df)
+
+    # Fetch host_mfm_factor data
+    mfm_params = urdhva_base.queryparams.QueryParams()
+    mfm_params.limit = 0
+    mfm_resp = await HostMFMFactor.get_all(mfm_params, resp_type="plain")
+    mfm_data = mfm_resp.get("data", [])
+    
+    # Convert any Decimal types to float before creating DataFrame
+    if mfm_data:
+        for row in mfm_data:
+            for key, value in row.items():
+                if isinstance(value, decimal.Decimal):
+                    row[key] = float(value)
+    
+    # Handle empty data case
+    if not mfm_data:
+        mfm_df = pl.DataFrame()
+        valid_sap_ids = set()
+    else:
+        mfm_df = pl.DataFrame(mfm_data)
+        
+        # Get sap_ids where last_k_factor IS NOT NULL
+        valid_sap_ids = set()
+        if not mfm_df.is_empty() and "sap_id" in mfm_df.columns and "last_k_factor" in mfm_df.columns:
+            valid_sap_ids = set(
+                mfm_df.filter(pl.col("last_k_factor").is_not_null())
+                .select("sap_id")
+                .to_series()
+                .to_list()
+            )
+
+    print(f"\nValid SAP IDs with last_k_factor: {valid_sap_ids}")
+
+    # Filter out MFM K Factor Change alerts where sap_id doesn't have last_k_factor
+    df = df.with_columns(
+        pl.when(
+            (pl.col("interlock_name").str.to_lowercase().str.replace_all(" ", "") == "mfmkfactorchange") &
+            (~pl.col("sap_id").is_in(valid_sap_ids))
+        )
+        .then(pl.lit(True))
+        .otherwise(pl.lit(False))
+        .alias("exclude_from_count")
+    )
+
+    # Filter out excluded rows
+    df = df.filter(~pl.col("exclude_from_count"))
+
+    # Normalize interlock_name: convert to lowercase and remove spaces for matching
+    df = df.with_columns(
+        pl.col("interlock_name").str.to_lowercase().str.replace_all(" ", "").alias("interlock_name_normalized")
+    )
+
+    # Define the interlock names you want as columns (original format)
+    interlock_columns = [
+        "Bay reassignment",
+        "Unauthorized flow_BCU",
+        "BCU vs MFM totalizer mismatch alarm",
+        "Cancel TT Reported",
+        "Unauthorized Flow Alarm Blend_BCU",
+        "MFM K Factor Change",
+        "Sick TT Reported",
+        "BCU Local Loading",
+        "K Factor Change_BCU",
+        "K Factor Change Blend_BCU"
+    ]
+
+    # Create normalized versions for matching
+    interlock_normalized = {
+        col.lower().replace(" ", ""): col for col in interlock_columns
+    }
+
+    print("\nNormalized mapping:")
+    print(interlock_normalized)
+
+    # Map the normalized names back to original names
+    df = df.with_columns(
+        pl.col("interlock_name_normalized").replace(interlock_normalized, default=pl.col("interlock_name")).alias(
+            "interlock_name_mapped")
+    )
+
+    print("\nDataFrame with normalized and mapped columns:")
+    print(df.select(["location_name", "interlock_name", "interlock_name_normalized", "interlock_name_mapped"]))
+
+    # Create a pivot table counting occurrences of each interlock_name per location_name
+    pivot_df = df.group_by(["location_name", "interlock_name_mapped"]).agg(
+        pl.len().alias("count")
+    ).pivot(
+        values="count",
+        index="location_name",
+        columns="interlock_name_mapped",
+        aggregate_function="sum"
+    )
+
+    # Ensure all required columns exist, fill missing ones with 0
+    for col in interlock_columns:
+        if col not in pivot_df.columns:
+            pivot_df = pivot_df.with_columns(pl.lit(0).alias(col))
+
+    # Reorder columns to match the desired order
+    column_order = ["location_name"] + interlock_columns
+    pivot_df = pivot_df.select([col for col in column_order if col in pivot_df.columns])
+
+    # Fill null values with 0
+    pivot_df = pivot_df.fill_null(0)
+
+    # Rename location_name to Location for final output
+    pivot_df = pivot_df.rename({"location_name": "Location"})
+    pivot_df = pivot_df.filter(pl.col("Location").is_not_null() & (pl.col("Location") != ""))
+    pivot_df = pivot_df.sort("Location")
+
+    print("\nPivot Table (Location-wise Interlock Counts):")
+    print(pivot_df)
+    
+    # Check if download is requested (handle both string "true" and boolean True)
+    if data.download and str(data.download).lower() == "true":
+        return await download_streaming_data(pivot_df, filename="exception_report")
+
+    return pivot_df.to_dicts()
+
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
     "Location Alert Critical": location_alert_critical,
-    "Critical_Alerts_By_Equipment":critical_alerts_by_equipment
+    "Critical Alerts By Equipment":critical_alerts_by_equipment,
+    "Tas Alerts Exception Report":tas_alerts_exception_report
 }
 
 

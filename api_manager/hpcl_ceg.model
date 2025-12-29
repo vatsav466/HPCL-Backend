@@ -951,6 +951,7 @@ Model TasAnalytics crud_disable {
         start_date      str
         end_date        str
         equipment_type  optional str
+        download        str
     }
 
 }
