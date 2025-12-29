@@ -360,7 +360,7 @@ AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
     "Location Alert Critical": location_alert_critical,
-    "Critical_Alerts_By_Equipment":critical_alerts_by_equipment
+    "Critical Alerts By Equipment":critical_alerts_by_equipment
 }
 
 
