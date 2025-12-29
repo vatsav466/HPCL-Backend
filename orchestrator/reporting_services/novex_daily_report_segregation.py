@@ -65,7 +65,7 @@ async def publish_daily_novex_status_email():
 
     status_data.update(await sales_data.fetch_sales_data())
     # print("status_data before :", status_data)
-    status_data.update(await retail_data.fetch_dryout_data())
+    status_data.update(await retail_data.fetch_dryout_data(WRITE_TO_DB))
     status_data.update(await lpg_data.get_lpg_rejection())
     status_data.update(await retail_data.get_ro_alerts())
     status_data.update(await sod_data.get_tas_alerts())
