@@ -1983,6 +1983,8 @@ class Tasanalytics_Tas_AnalyticsParams(pydantic.BaseModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     start_date: str
     end_date: str
+    equipment_type: typing.Optional[str] = pydantic.Field("", **{})
+    download: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

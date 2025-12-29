@@ -703,7 +703,7 @@ def merge_shortage_with_violations(
 
     return df_merged
 
-async def download_streaming_data(df: pl.DataFrame):
+async def download_streaming_data(df: pl.DataFrame, filename='violations'):
 
     df = df.with_columns(
         cs.datetime(time_zone="*").dt.replace_time_zone(None)
@@ -728,12 +728,12 @@ async def download_streaming_data(df: pl.DataFrame):
     # df = df.select(cols_to_keep)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"violations_{timestamp}.xlsx"
+    file_name = f"{filename}_{timestamp}.xlsx"
 
     output = io.BytesIO()
     df.write_excel(
         workbook=output,  # BytesIO
-        worksheet="violations",  # sheet name
+        worksheet=f"{filename}",  # sheet name
     )
     output.seek(0)
     headers = {
@@ -1119,7 +1119,7 @@ class VTSAnalyticsActions:
             merged_df = merged_df.drop(["truck_no"], strict=False)
 
             if payload.get("download") == "true":
-                return await download_streaming_data(merged_df)
+                return await download_streaming_data(merged_df,filename='itdgAlerts')
 
             return await streaming_data(merged_df)
 
@@ -1370,7 +1370,7 @@ class VTSAnalyticsActions:
                     "data": agg_df.to_dicts()
                 }
             if str(payload.get("download", "")).lower() == "true":
-                return await download_streaming_data(final_df)
+                return await download_streaming_data(final_df, filename='violations')
             return await streaming_data(final_df)
 
         except Exception as e:
