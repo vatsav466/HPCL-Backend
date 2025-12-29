@@ -58,7 +58,7 @@ class SendVtsCommand:
             
             if not blocking_status:
                 logger.error(f"Blocking Payload Not posted to SAP or IMS {alert_data}")
-                return False, "Blocking Payload Not posted to SAP or IMS"
+                return True, {"blocked": False}
 
             alert_message = (
                 f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Block, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to block the Vehicle "
@@ -66,7 +66,7 @@ class SendVtsCommand:
             alert_data["action_msg"] = alert_message
             alert_data["action_type"] = "VTS"
             await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
-            return True, {"sapcommandsent": True}
+            return True, {"blocked": True}
 
         if params.get("interrupt").lower() == 'unblock':
             # UnBlocking in IMS blockingFlag="N"
@@ -95,7 +95,7 @@ class SendVtsCommand:
             
             if not unblocking_status:
                 logger.error(f"UnBlocking Payload Not posted to SAP or IMS {alert_data}")
-                return False, "UnBlocking Payload Not posted to SAP or IMS"
+                return True, {"unblocked": False}
                         
             if not params['auto_unblock']:
                 query = (f"location_id='{alert_data['sap_id']}' and tl_number='{alert_data['vehicle_number']}' "
@@ -119,7 +119,7 @@ class SendVtsCommand:
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
                                                "mark_as_false": True,
                                                "vehicle_unblocked_date": vehicle_unblocked_date}).modify()
-                return True, {"sapcommandsent": True}
+                return True, {"unblocked": True}
             
             if params['auto_unblock']:
                 alert_message = (
@@ -133,6 +133,6 @@ class SendVtsCommand:
                 await hpcl_ceg_model.VtsTruckDetails.update_by_query(unblock_query)
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
                                                "vehicle_unblocked_date": vehicle_unblocked_date}).modify()
-                return True, {"sapcommandsent": True}
+                return True, {"unblocked": True}
             
         return False, {"sapcommandsent": False}
