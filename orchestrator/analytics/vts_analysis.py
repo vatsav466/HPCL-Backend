@@ -266,6 +266,8 @@ async def post_blocked_tt_ims(input_data: typing.List[typing.Dict[str, typing.An
     """
     url = urdhva_base.settings.post_to_ims_url
     session = requests.Session()
+    ims_response = None
+    error_msg = None
     max_retries = 3
     try:
         for attempt in range(1, max_retries + 1):
@@ -274,9 +276,12 @@ async def post_blocked_tt_ims(input_data: typing.List[typing.Dict[str, typing.An
                 response = session.post(url, json=input_data, headers=default_headers)
                 if response.status_code // 100 == 2:
                     logger.info(f"Data successfully posted to IMS {response.json()}")
-                    return response.json()
+                    ims_response = response.json()
+                    return ims_response, error_msg
+                error_msg = f"IMS responded with {response.status_code}: {response.text}"
                 logger.error(f"IMS responded with {response.status_code}. Response: {response.text}")
             except requests.exceptions.RequestException as e:
+                error_msg = f"IMS Post failed {str(e)}"
                 logger.error(f"IMS Post failed (Attempt {attempt}/{max_retries}): {e}")
             # retry delay
             if attempt < max_retries:
@@ -284,7 +289,7 @@ async def post_blocked_tt_ims(input_data: typing.List[typing.Dict[str, typing.An
                 await asyncio.sleep(10)
         # after max retries
         logger.error(f"IMS post failed after 3 attempts for data: {input_data}")
-        return False
+        return ims_response, error_msg
     finally:
         session.close()
 
@@ -611,6 +616,9 @@ async def update_vts_instance(alert_data):
         alert_data = alert_data.__dict__
     if "_sa_instance_state" in alert_data.keys():
         del alert_data["_sa_instance_state"]
+    
+    if alert_data.get('interlock_name') in ['Itdg Admin Block', 'No VTS No Load']:
+        return
 
     alert_message = (
         f"Instance Updated for this Vehicle Number: {alert_data['vehicle_number']} from {alert_data['device_id']} to {instance_data['instance']} with violation {violation_name}"
@@ -1032,6 +1040,8 @@ async def fetch_access_token():
         "client_secret": urdhva_base.settings.lpg_vts_client_secret_key,
         "client_authentication": "send_as_basic_auth_header"
     }
+    token = None
+    error_msg = None
     max_retries = 3
     for attempt in range(1, max_retries + 1):
         try:
@@ -1042,26 +1052,31 @@ async def fetch_access_token():
             token = token_data.get("access_token")
             if token:
                 logger.info(f"Token fetched successfully.")
-                return token
+                return token, error_msg
+            else:
+                error_msg = "Token API succeeded but access_token missing"
+                logger.error(error_msg)
         except requests.exceptions.RequestException as e:
+            error_msg = f"Token API failed: {str(e)}"
             logger.error(f"Token API failed (Attempt {attempt}/{max_retries}): {e}")
         
         if attempt < max_retries:
             logger.info(f"Retrying in 15 seconds...")
             await asyncio.sleep(15)
     logger.error(f"All attempts to fetch token failed.")
-    return None
+    return token, error_msg
 
 async def post_lpg_tt(payload):
-    access_token = await fetch_access_token()
+    access_token,error_msg = await fetch_access_token()
     if not access_token:
         logger.error(f"Failed to fetch token {payload}")
-        return None
+        return None, error_msg
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
+    sap_response = None
     max_retries = 3
     for attempt in range(1, max_retries + 1):
         try:
@@ -1079,7 +1094,8 @@ async def post_lpg_tt(payload):
             }
             await hpcl_ceg_model.LpgDataPostingAuditCreate(**post_sap_response).create()
             print("response->",response.json())
-            return response.json()
+            sap_response = response.json()
+            return sap_response, error_msg
         except requests.exceptions.RequestException as e:
             logger.error(f"Publish API failed (Attempt {attempt}/{max_retries}): {e}")
             if attempt < max_retries:
@@ -1096,8 +1112,9 @@ async def post_lpg_tt(payload):
                     "updated_time": now_ist.strftime("%H%M%S")
                 }
                 await hpcl_ceg_model.LpgDataPostingAuditCreate(**post_sap_response).create()
+                error_msg = f"Publish API failed {str(e)}"
                 logger.error(f"All retry attempts failed while posting block/unblock details to SAP {payload}")
-                return None
+                return sap_response, error_msg
 
 async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_section:str):
     vts_mapping = vts_role_mapping.vts_unblocking_matrix[alert_section]
