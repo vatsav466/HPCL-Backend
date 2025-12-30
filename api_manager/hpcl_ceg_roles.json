@@ -1107,6 +1107,9 @@
                 },
                 {
                     "name": "attach_vts_blocked_file"
+                },
+                {
+                    "name": "hqo_blocked_vehicles"
                 }
             ]
         },
@@ -1221,6 +1224,9 @@
                 },
                 {
                     "name": "attach_vts_blocked_file"
+                },
+                {
+                    "name": "hqo_blocked_vehicles"
                 }
             ]
         },
@@ -7952,6 +7958,10 @@
         {
             "name": "attach_vts_blocked_file",
             "displayName": "attach_vts_blocked_file"
+        },
+        {
+            "name": "hqo_blocked_vehicles",
+            "displayName": "hqo_blocked_vehicles"
         },
         {
             "name": "tas_analytics",

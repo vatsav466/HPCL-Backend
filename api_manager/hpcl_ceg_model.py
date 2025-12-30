@@ -1974,6 +1974,16 @@ class Alerts_Attach_Vts_Blocked_FileParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Alerts_Hqo_Blocked_VehiclesParams(pydantic.BaseModel):
+    alert_status: str
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    end_date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Tasanalytics_Tas_AnalyticsParams(pydantic.BaseModel):
     analytical_model: str
     location_name: typing.Optional[str] = pydantic.Field("", **{})
