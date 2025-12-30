@@ -213,7 +213,7 @@ class AlertFactory:
                     bu=base_data['bu'], violation_type=alert_data.get('violation_type', ''),
                     sap_id=str(base_data['sap_id'])
                 )
-            elif alert_data.get("alert_section", '') in ["VTS"]:
+            elif alert_data.get("alert_section", '') in ["VTS"] and alert_data.get("interlock_name","") not in ["No VTS No Load"]:
                 alert_level = await vts_analysis.get_vts_levels(
                     bu=base_data['bu'], vehicle_number=alert_data.get('vehicle_number', ''),
                     sap_id=str(base_data['sap_id']),
@@ -288,7 +288,7 @@ class AlertFactory:
                 #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
 
                 # Updating for VTS Alert history with alert_id
-                if alert_data_dict.get("alert_section") == "VTS":
+                if alert_data_dict.get("alert_section") == "VTS" and alert_data_dict.get("interlock_name","") not in ["No VTS No Load"]:
                     await vts_analysis.update_alert_id_to_vts_history(alert_id=str(alert_resp['id']), vts_alert_id=alert_data_dict.get("vts_alert_history_ids", []))
                     blocked_tt_data = dict()
                     blocked_tt_data['TT_No'] = alert_data_dict.get('vehicle_number','')
