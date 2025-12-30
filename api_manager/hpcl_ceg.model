@@ -928,6 +928,11 @@ Model Alerts {
         unblock_id str
         remarks_unblocked str
     }
+    Action=> hqo_blocked_vehicles {
+        alert_status str
+        start_date optional str
+        end_date optional str
+    }
     
     Config=> {
         crud_operations='read'
