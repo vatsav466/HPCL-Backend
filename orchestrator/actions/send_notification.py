@@ -101,7 +101,7 @@ class SendNotification:
                 return await self._handle_invalid_alert()
 
             await self._prepare_base_alert_data()
-            if self.base_alert_data['interlock_name'] == 'Dry Out Each Indent Wise MainFlow':
+            if self.base_alert_data['interlock_name'] in ['Dry Out Each Indent Wise MainFlow','No VTS No Load']:
                 return True, {"msg": "Notification skipped"}
             await self._process_roles_and_users()
             await self._process_message_type()
