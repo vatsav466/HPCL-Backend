@@ -10,8 +10,7 @@ from fastapi.responses import StreamingResponse
 # =====================================================
 # EXCEL CONFIG (LOAD ONCE AT STARTUP)
 # =====================================================
-# EXCEL_PATH = "/home/novex/Copy_of_Novex_Report-TAS.xlsx"
-EXCEL_PATH = "/Users/algofusion/Downloads/Copy_of_Novex_Report-TAS.xlsx"
+EXCEL_PATH = "/home/novex/Copy_of_Novex_Report-TAS.xlsx"
 SHEET_NAME = "Alerts summary report"
 
 _sop_df = pl.read_excel(EXCEL_PATH, sheet_name=SHEET_NAME)
