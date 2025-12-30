@@ -43,7 +43,39 @@ class SendVtsCommand:
                     "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
                     "blockingTo": (alert_data['vehicle_blocked_end_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
                 }]
-                blocking_status = await vts_analysis.post_blocked_tt_ims(payload)
+                blocking_status,error_msg = await vts_analysis.post_blocked_tt_ims(payload)
+
+                if not blocking_status:
+                    logger.error(f"Blocking Payload Not posted to IMS {alert_data}")
+                    alert_message = (
+                        f"{error_msg}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "VTS"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"blocked": False}
+                
+                if blocking_status and isinstance(blocking_status,list) and blocking_status[0]['successFlag'] not in ['Y']:
+                    logger.error(f"Blocking Payload Not posted to IMS {alert_data}")
+                    alert_message = (
+                        f"{blocking_status[0]['message']}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "VTS"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"blocked": False}
+                
+                if not isinstance(blocking_status,list):
+                    logger.error(f"Blocking Payload Not posted to IMS {alert_data}")
+                    alert_message = (
+                        f"{blocking_status.get('message','Blocking Payload Not posted to IMS')}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "VTS"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"blocked": False}
+
+
             if alert_data['bu'] in ['LPG']:
                 payload = {
                     "Request":{
@@ -54,11 +86,26 @@ class SendVtsCommand:
                         "IP_Address": urdhva_base.settings.server_ip
                     }
                 }
-                blocking_status = await vts_analysis.post_lpg_tt(payload)
-            
-            if not blocking_status:
-                logger.error(f"Blocking Payload Not posted to SAP or IMS {alert_data}")
-                return True, {"blocked": False}
+                blocking_status,error_msg = await vts_analysis.post_lpg_tt(payload)
+                if not blocking_status:
+                    logger.error(f"Blocking Payload Not posted to SAP {alert_data}")
+                    alert_message = (
+                        f"{error_msg}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "VTS"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"blocked": False}
+                
+                if blocking_status and blocking_status.get("Response", {}).get("Status") not in ['S']:
+                    logger.error(f"Blocking Payload Not posted to SAP {alert_data}")
+                    alert_message = (
+                        f"{blocking_status.get("Response", {}).get("Remark")}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "VTS"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"blocked": False}
 
             alert_message = (
                 f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Block, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to block the Vehicle "
@@ -79,7 +126,38 @@ class SendVtsCommand:
                     "blockingFrom": (alert_data['vehicle_blocked_start_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
                     "blockingTo": (alert_data['vehicle_blocked_end_date'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
                 }]
-                unblocking_status = await vts_analysis.post_blocked_tt_ims(payload)
+                unblocking_status,error_msg = await vts_analysis.post_blocked_tt_ims(payload)
+
+                if not unblocking_status:
+                    logger.error(f"UnBlocking Payload Not posted to IMS {alert_data}")
+                    alert_message = (
+                        f"{error_msg}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "VTS"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"unblocked": False}
+                
+                if unblocking_status and isinstance(unblocking_status,list) and unblocking_status[0]['successFlag'] not in ['Y']:
+                    logger.error(f"UnBlocking Payload Not posted to IMS {alert_data}")
+                    alert_message = (
+                        f"{unblocking_status[0]['message']}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "VTS"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"unblocked": False}
+                
+                if not isinstance(unblocking_status,list):
+                    logger.error(f"UnBlocking Payload Not posted to IMS {alert_data}")
+                    alert_message = (
+                        f"{unblocking_status.get('message','UnBlocking Payload Not posted to IMS')}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "VTS"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"unblocked": False}
+
 
             if alert_data['bu'] in ['LPG']:
                 payload = {
@@ -91,11 +169,25 @@ class SendVtsCommand:
                     "IP_Address": urdhva_base.settings.server_ip
                     }
                 }
-                unblocking_status = await vts_analysis.post_lpg_tt(payload)
-            
-            if not unblocking_status:
-                logger.error(f"UnBlocking Payload Not posted to SAP or IMS {alert_data}")
-                return True, {"unblocked": False}
+                unblocking_status,error_msg = await vts_analysis.post_lpg_tt(payload)
+                if not unblocking_status:
+                    logger.error(f"UnBlocking Payload Not posted to SAP {alert_data}")
+                    alert_message = (
+                        f"{error_msg}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "VTS"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"unblocked": False}
+                if unblocking_status and unblocking_status.get("Response", {}).get("Status") not in ['S']:
+                    logger.error(f"UnBlocking Payload Not posted to SAP {alert_data}")
+                    alert_message = (
+                        f"{unblocking_status.get("Response", {}).get("Remark")}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "VTS"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"unblocked": False}
                         
             if not params['auto_unblock']:
                 query = (f"location_id='{alert_data['sap_id']}' and tl_number='{alert_data['vehicle_number']}' "
