@@ -922,6 +922,13 @@ async def alerts_attach_vts_blocked_file(
     upload_file: fastapi.UploadFile = fastapi.File(...)
 ):
     try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        
+        if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
+            return {"status": False, "message": "Not Allowed To Perform This Action"}
+        
         # -----------------------------------
         # 1. Fetch VTS blocked record
         # -----------------------------------
@@ -961,6 +968,8 @@ async def alerts_attach_vts_blocked_file(
             file_path         # local filepath
         )
 
+        _date = urdhva_base.utilities.get_present_time()
+
         if not status:
             return {
                 "status": False,
@@ -971,8 +980,43 @@ async def alerts_attach_vts_blocked_file(
         # -----------------------------------
         # 4. UPDATE DB (SAME COLUMN)
         # -----------------------------------
+
+        if record['bu'] in ['TAS']:
+            payload = [
+                {
+                    "transactNo": str(record["transaction_number"]) + "0",
+                    "truckRegNo": record["truck_number"],
+                    "blockingFlag": "N",
+                    "blockingFrom": (record['blocking_from'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
+                    "blockingTo": (record['blocking_to'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
+                }
+            ]
+            print("-"*20)
+            print("payload :", payload)
+            print("-"*20)
+            await vts_analysis.post_blocked_tt_ims(payload)
+        
+        if record['bu'] in ['LPG']:
+            payload = {
+                    "Request":{
+                        "Request_ID": str(record["transaction_number"]) + "0",
+                        "Vehicle_ID": record["truck_number"],
+                        "Status": "U",
+                        "User_ID": "NOVEX_SYSTEM",
+                        "IP_Address": urdhva_base.settings.server_ip
+                    }
+            }
+            print("-"*20)
+            print("payload :", payload)
+            print("-"*20)
+            await vts_analysis.post_lpg_tt(payload)
+
         update_data = {
-            "id": row_id,
+            "id": int(row_id),
+            "unblocked_by": rpt["username"],
+            "blocking_status": "unblocked",
+            "blocking_flag": "N",
+            "unblocked_date": _date,
             "file_uploaded_path": minio_path
         }
 
@@ -983,7 +1027,7 @@ async def alerts_attach_vts_blocked_file(
 
         return {
             "status": True,
-            "message": "Attachment uploaded successfully",
+            "message": "Attachment Uploaded to Minio And TT Unblocked successfully",
             "file_uploaded_path": minio_path,
             "remarks_unblocked": remarks_unblocked
         }
