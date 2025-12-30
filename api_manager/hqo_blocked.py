@@ -81,6 +81,8 @@ async def check_any_interlock_exists(
     query = (
         f"interlock_name IN ({names}) "
         "AND alert_status = 'Open' "
+        "AND bu = 'TAS' "
+        "AND alert_section = 'TAS' "
         f"AND created_at::date BETWEEN '{start_date}' AND '{end_date}'"
     )
 
@@ -170,6 +172,8 @@ async def get_blocked_trucks_service(start_date: str, end_date: str):
 
     alert_query = (
         "alert_status = 'Open' "
+        "AND bu = 'TAS' "
+        "AND alert_section = 'TAS' "
         f"AND created_at::date BETWEEN '{start_date}' AND '{end_date}'"
     )
 
@@ -199,10 +203,9 @@ async def get_blocked_trucks_service(start_date: str, end_date: str):
         )
 
         result.append({
-            "unique_id": alert.get("unique_id"),
-            "alert_status": alert.get("alert_status"),
-            "interlock_name": alert.get("interlock_name"),
             "location_name": alert.get("location_name"),
+            "unique_id": alert.get("unique_id"),
+            "interlock_name": alert.get("interlock_name"),
             "created_at": alert.get("created_at"),
             "reason": sop_result["reason"],
             "impact": sop_result["impact"],

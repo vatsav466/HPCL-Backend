@@ -292,6 +292,14 @@ async def sync_user_roles():
                         "title": "VTS ITDG Alert Home"
                     }
                 ]
+            },
+            {
+                "menu_name": "LPG",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Pro Dash"
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -1049,6 +1057,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             }
@@ -1072,6 +1083,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             }
@@ -1095,6 +1109,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             }
