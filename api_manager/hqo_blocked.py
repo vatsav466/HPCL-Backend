@@ -81,6 +81,7 @@ async def check_any_interlock_exists(
     query = (
         f"interlock_name IN ({names}) "
         "AND alert_status = 'Open' "
+        "AND bu = 'TAS' "
         f"AND created_at::date BETWEEN '{start_date}' AND '{end_date}'"
     )
 
@@ -170,6 +171,7 @@ async def get_blocked_trucks_service(start_date: str, end_date: str):
 
     alert_query = (
         "alert_status = 'Open' "
+        "AND bu = 'TAS' "
         f"AND created_at::date BETWEEN '{start_date}' AND '{end_date}'"
     )
 
