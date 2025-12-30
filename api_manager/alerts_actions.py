@@ -919,7 +919,7 @@ async def alerts_attach_alert_blocked_file(
 async def alerts_attach_vts_blocked_file(
     unblock_id: str = fastapi.Form(...),
     remarks_unblocked: str = fastapi.Form(None),
-    upload_file: fastapi.UploadFile = fastapi.File(...)
+    upload_file: fastapi.UploadFile | None = fastapi.File(None)
 ):
     try:
         rpt = urdhva_base.context.context.get('rpt', {})
@@ -949,38 +949,38 @@ async def alerts_attach_vts_blocked_file(
         # -----------------------------------
         # 2. TEMP FILE SAVE (SAME AS ALERT API)
         # -----------------------------------
-        UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, "vts_blocked")
-        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        minio_path = ""
+        if upload_file:
+            UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, "vts_blocked")
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-        file_name = upload_file.filename
-        file_path = os.path.join(UPLOAD_DIR, file_name)
+            file_name = upload_file.filename
+            file_path = os.path.join(UPLOAD_DIR, file_name)
 
-        with open(file_path, "wb") as f:
-            f.write(await upload_file.read())
+            with open(file_path, "wb") as f:
+                f.write(await upload_file.read())
 
-        # -----------------------------------
-        # 3. MINIO UPLOAD (PATH BASED)
-        # -----------------------------------
-        status, minio_path = minio_connector.upload_to_minio(
-            "alerts",         # bucket (same bucket)
-            "vts_blocked",    # section/folder
-            unblock_id,       # sub-folder
-            file_path         # local filepath
-        )
+            # -----------------------------------
+            # 3. MINIO UPLOAD (PATH BASED)
+            # -----------------------------------
+            status, minio_path = minio_connector.upload_to_minio(
+                "alerts",         # bucket (same bucket)
+                "vts_blocked",    # section/folder
+                unblock_id,       # sub-folder
+                file_path         # local filepath
+            )
 
-        _date = urdhva_base.utilities.get_present_time()
-
-        if not status:
-            return {
-                "status": False,
-                "message": "MinIO upload failed",
-                "error": minio_path
-            }
+            if not status:
+                return {
+                    "status": False,
+                    "message": "MinIO upload failed",
+                    "error": minio_path
+                }
 
         # -----------------------------------
         # 4. UPDATE DB (SAME COLUMN)
         # -----------------------------------
-
+        _date = urdhva_base.utilities.get_present_time()
         if record['bu'] in ['TAS']:
             payload = [
                 {
