@@ -56,7 +56,7 @@ class NRDAlertManager(alert_factory.AlertFactory):
                                       "alert_history":alert_history,
                                       "violation_type": "No VTS No Load"
                                     })
-            interlock_details['transporter_code'] = trucK_master_data.get('transporter_code','')
+            interlock_details["transporter_code"] = (trucK_master_data or {}).get("transporter_code", "")
             interlock_details['equipment_name'] = "No VTS No Load"
             interlock_details['vehicle_blocked_start_date'] = (urdhva_base.utilities.get_present_time()).isoformat()
             interlock_details['vehicle_blocked_end_date'] = urdhva_base.utilities.get_present_time() + datetime.timedelta(days=1826)
