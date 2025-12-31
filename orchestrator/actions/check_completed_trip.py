@@ -24,7 +24,7 @@ class CheckCompletedTrip:
             if alert_data["interlock_name"] == 'Itdg Admin Blocked':
                 query = f"blocking_status='blocked' and truck_number='{truck_number}'"
                 manual_blocked = await hpcl_ceg_model.VtsManualBlocked.get_all(
-                    urdhva_base.queryparms.QueryParams(q=query),resp_type='plain'
+                    urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
                 )
                 if len(manual_blocked['data']) > 0:
                     return True, {"tripCompleted": True}
