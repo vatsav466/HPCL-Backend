@@ -65,7 +65,7 @@ class SendVtsCommand:
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"blocked": False}
                 
-                if not isinstance(blocking_status,list):
+                if isinstance(blocking_status,dict):
                     logger.error(f"Blocking Payload Not posted to IMS {alert_data}")
                     alert_message = (
                         f"{blocking_status.get('message','Blocking Payload Not posted to IMS')}"
@@ -148,7 +148,7 @@ class SendVtsCommand:
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
                 
-                if not isinstance(unblocking_status,list):
+                if isinstance(unblocking_status,dict):
                     logger.error(f"UnBlocking Payload Not posted to IMS {alert_data}")
                     alert_message = (
                         f"{unblocking_status.get('message','UnBlocking Payload Not posted to IMS')}"
