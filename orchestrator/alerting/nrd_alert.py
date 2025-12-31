@@ -42,6 +42,11 @@ class NRDAlertManager(alert_factory.AlertFactory):
             interlock_details = utilities.interlock_mapping.get_interlock_name(
                 alert_data['bu'],"No VTS No Load")
             logger.info(f"NRD interlock data: {interlock_details}")
+
+            truck_master_query = f"select * from vts_truck_master where truck_no='{alert_data['vehicle_number']}'"
+            trucK_master_data = await urdhva_base.BasePostgresModel.get_aggr_data(truck_master_query)
+            if trucK_master_data["data"]:
+                trucK_master_data = trucK_master_data["data"][0]
             
             # preparing alert_data for NRD
             interlock_details.update({"bu": alert_data['bu'],
@@ -51,7 +56,7 @@ class NRDAlertManager(alert_factory.AlertFactory):
                                       "alert_history":alert_history,
                                       "violation_type": "No VTS No Load"
                                     })
-            
+            interlock_details["transporter_code"] = (trucK_master_data or {}).get("transporter_code", "")
             interlock_details['equipment_name'] = "No VTS No Load"
             interlock_details['vehicle_blocked_start_date'] = (urdhva_base.utilities.get_present_time()).isoformat()
             interlock_details['vehicle_blocked_end_date'] = urdhva_base.utilities.get_present_time() + datetime.timedelta(days=1826)
