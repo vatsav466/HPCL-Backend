@@ -70,7 +70,8 @@ _sop_df = _sop_df.with_columns(
 async def check_any_interlock_exists(
     interlock_names: list[str],
     start_date: str,
-    end_date: str
+    end_date: str, 
+    alert_status: str
 ) -> bool:
 
     if not interlock_names:
@@ -80,11 +81,12 @@ async def check_any_interlock_exists(
 
     query = (
         f"interlock_name IN ({names}) "
-        "AND alert_status = 'Open' "
+        f"AND alert_status = '{alert_status}' "
         "AND bu = 'TAS' "
         "AND alert_section = 'TAS' "
         f"AND created_at::date BETWEEN '{start_date}' AND '{end_date}'"
     )
+    print("query",query)
 
     params = urdhva_base.queryparams.QueryParams(q=query, limit=1)
     resp = await Alerts.get_all(params, resp_type="plain")
@@ -95,7 +97,8 @@ async def check_any_interlock_exists(
 async def resolve_sop_logic(
     interlock_name: str,
     start_date: str,
-    end_date: str
+    end_date: str,
+    alert_status: str
 ) -> dict:
 
     norm_alert = normalize_exact(interlock_name)
@@ -124,7 +127,10 @@ async def resolve_sop_logic(
     for row in sop_rows.iter_rows(named=True):
         if row["backend_rules"]:
             if await check_any_interlock_exists(
-                row["backend_rules"], start_date, end_date
+                row["backend_rules"],
+                start_date,
+                end_date,
+                alert_status
             ):
                 return {
                     "reason": row["reason"],
@@ -168,14 +174,15 @@ async def streaming_data(df: pl.DataFrame):
     )
 
 # MAIN SERVICE FUNCTION (STREAMING RESPONSE)
-async def get_blocked_trucks_service(start_date: str, end_date: str):
+async def get_blocked_trucks_service(alert_status: str,start_date: str, end_date: str):
 
     alert_query = (
-        "alert_status = 'Open' "
+        f"alert_status = '{alert_status}' "
         "AND bu = 'TAS' "
         "AND alert_section = 'TAS' "
         f"AND created_at::date BETWEEN '{start_date}' AND '{end_date}'"
     )
+    print("alert_query",alert_query)
 
     alert_params = urdhva_base.queryparams.QueryParams(
         q=alert_query,
@@ -183,6 +190,7 @@ async def get_blocked_trucks_service(start_date: str, end_date: str):
     )
 
     alert_params.fields = [
+        "sap_id",
         "unique_id",
         "alert_status",
         "interlock_name",
@@ -199,10 +207,12 @@ async def get_blocked_trucks_service(start_date: str, end_date: str):
         sop_result = await resolve_sop_logic(
             alert.get("interlock_name"),
             start_date,
-            end_date
+            end_date,
+            alert_status
         )
 
         result.append({
+            "sap_id":alert.get("sap_id"),
             "location_name": alert.get("location_name"),
             "unique_id": alert.get("unique_id"),
             "interlock_name": alert.get("interlock_name"),
@@ -211,6 +221,10 @@ async def get_blocked_trucks_service(start_date: str, end_date: str):
             "impact": sop_result["impact"],
             "action_required": sop_result["action_required"]
         })
+
+    # Convert result → Polars DataFrame
+    if not result:
+        return await streaming_data(pl.DataFrame([]))
 
     # Convert result → Polars DataFrame
     df = pl.DataFrame(result).with_columns(

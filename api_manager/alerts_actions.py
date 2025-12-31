@@ -1044,6 +1044,7 @@ async def alerts_attach_vts_blocked_file(
 @router.post('/hqo_blocked_vehicles', tags=['Alerts'])
 async def alerts_hqo_blocked_vehicles(data: Alerts_Hqo_Blocked_VehiclesParams):
     return await get_blocked_trucks_service(
+        data.alert_status,
         data.start_date,
         data.end_date
     )
