@@ -377,7 +377,7 @@ class SendNotification:
             dict: A dictionary containing the base alert data.
         """
         # logger.info(f"self.alert_data: {self.alert_data}") 
-        if self.alert_data["alert_section"] in ['VTS'] and self.alert_data["bu"] in ['TAS']:
+        if self.alert_data["alert_section"] in ['VTS'] and self.alert_data["bu"] in ['TAS'] and self.alert_data['interlock_name'] not in ['No VTS No Load']:
             self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
             self.vts_assigned_role = "Location In-Charge SOD" if self.alert_data.get('violation_type','') not in ['device_tamper_count','main_supply_removal_count'] else (await self._role_configuration_mqofrole() or "")
             if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
