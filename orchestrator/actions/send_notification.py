@@ -101,7 +101,7 @@ class SendNotification:
                 return await self._handle_invalid_alert()
 
             await self._prepare_base_alert_data()
-            if self.base_alert_data['interlock_name'] in ['Dry Out Each Indent Wise MainFlow','No VTS No Load']:
+            if self.base_alert_data['interlock_name'] in ['Dry Out Each Indent Wise MainFlow']:
                 return True, {"msg": "Notification skipped"}
             await self._process_roles_and_users()
             await self._process_message_type()
@@ -377,8 +377,10 @@ class SendNotification:
             dict: A dictionary containing the base alert data.
         """
         # logger.info(f"self.alert_data: {self.alert_data}") 
-        if self.alert_data["alert_section"] in ['VTS'] and self.alert_data["bu"] in ['TAS'] and self.alert_data['interlock_name'] not in ['No VTS No Load']:
-            self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
+        if self.alert_data["alert_section"] in ['VTS'] and self.alert_data["bu"] in ['TAS']:
+            self.interlock_name = self.alert_data.get('interlock_name', '')
+            if self.alert_data['interlock_name'] not in ['No VTS No Load']:
+                self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
             self.vts_assigned_role = "Location In-Charge SOD" if self.alert_data.get('violation_type','') not in ['device_tamper_count','main_supply_removal_count'] else (await self._role_configuration_mqofrole() or "")
             if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
                 self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
@@ -934,7 +936,8 @@ class SendNotification:
             del alert_data["_sa_instance_state"]
 
         # Update the database
-        await hpcl_ceg_model.Alerts(**alert_data).modify()
+        if alert_data.get('interlock_name') not in ['No VTS No Load']:
+            await hpcl_ceg_model.Alerts(**alert_data).modify()
 
 
     async def read_template(self, filename: str) -> str:
