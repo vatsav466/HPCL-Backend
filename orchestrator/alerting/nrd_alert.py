@@ -54,7 +54,8 @@ class NRDAlertManager(alert_factory.AlertFactory):
                                       "sap_id": alert_data['sap_id'],
                                       "alert_section": "VTS",
                                       "alert_history":alert_history,
-                                      "violation_type": "No VTS No Load"
+                                      "violation_type": "No VTS No Load",
+                                      "vehicle_number": alert_data['vehicle_number']
                                     })
             interlock_details["transporter_code"] = (trucK_master_data or {}).get("transporter_code", "")
             interlock_details['equipment_name'] = "No VTS No Load"
