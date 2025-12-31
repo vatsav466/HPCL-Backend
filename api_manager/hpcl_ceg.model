@@ -111,6 +111,8 @@ Enum AlertActionType str {
     SendItBack='SendItBack'
     FalseViolation='FalseViolation'
     AcceptViolation='AcceptViolation'
+    BlockFailed='BlockFailed'
+    UnblockFailed='UnblockFailed'
 }
 
 Enum IndentStatus str {

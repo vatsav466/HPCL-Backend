@@ -51,7 +51,7 @@ class SendVtsCommand:
                         f"{error_msg}"
                     )
                     alert_data["action_msg"] = alert_message
-                    alert_data["action_type"] = "VTS"
+                    alert_data["action_type"] = "BlockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"blocked": False}
                 
@@ -61,7 +61,7 @@ class SendVtsCommand:
                         f"{blocking_status[0]['message']}"
                     )
                     alert_data["action_msg"] = alert_message
-                    alert_data["action_type"] = "VTS"
+                    alert_data["action_type"] = "BlockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"blocked": False}
                 
@@ -71,7 +71,7 @@ class SendVtsCommand:
                         f"{blocking_status.get('message','Blocking Payload Not posted to IMS')}"
                     )
                     alert_data["action_msg"] = alert_message
-                    alert_data["action_type"] = "VTS"
+                    alert_data["action_type"] = "BlockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"blocked": False}
 
@@ -93,7 +93,7 @@ class SendVtsCommand:
                         f"{error_msg}"
                     )
                     alert_data["action_msg"] = alert_message
-                    alert_data["action_type"] = "VTS"
+                    alert_data["action_type"] = "BlockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"blocked": False}
                 
@@ -103,7 +103,7 @@ class SendVtsCommand:
                         f"{blocking_status.get("Response", {}).get("Remark")}"
                     )
                     alert_data["action_msg"] = alert_message
-                    alert_data["action_type"] = "VTS"
+                    alert_data["action_type"] = "BlockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"blocked": False}
 
@@ -134,7 +134,7 @@ class SendVtsCommand:
                         f"{error_msg}"
                     )
                     alert_data["action_msg"] = alert_message
-                    alert_data["action_type"] = "VTS"
+                    alert_data["action_type"] = "UnblockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
                 
@@ -144,7 +144,7 @@ class SendVtsCommand:
                         f"{unblocking_status[0]['message']}"
                     )
                     alert_data["action_msg"] = alert_message
-                    alert_data["action_type"] = "VTS"
+                    alert_data["action_type"] = "UnblockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
                 
@@ -154,7 +154,7 @@ class SendVtsCommand:
                         f"{unblocking_status.get('message','UnBlocking Payload Not posted to IMS')}"
                     )
                     alert_data["action_msg"] = alert_message
-                    alert_data["action_type"] = "VTS"
+                    alert_data["action_type"] = "UnblockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
 
@@ -176,7 +176,7 @@ class SendVtsCommand:
                         f"{error_msg}"
                     )
                     alert_data["action_msg"] = alert_message
-                    alert_data["action_type"] = "VTS"
+                    alert_data["action_type"] = "UnblockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
                 if unblocking_status and unblocking_status.get("Response", {}).get("Status") not in ['S']:
@@ -185,7 +185,7 @@ class SendVtsCommand:
                         f"{unblocking_status.get("Response", {}).get("Remark")}"
                     )
                     alert_data["action_msg"] = alert_message
-                    alert_data["action_type"] = "VTS"
+                    alert_data["action_type"] = "UnblockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
                         
