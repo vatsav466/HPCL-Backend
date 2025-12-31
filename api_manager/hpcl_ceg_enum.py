@@ -161,6 +161,8 @@ class AlertActionType(str, enum.Enum):
     SendItBack = 'SendItBack'
     FalseViolation = 'FalseViolation'
     AcceptViolation = 'AcceptViolation'
+    BlockFailed = 'BlockFailed'
+    UnblockFailed = 'UnblockFailed'
 
 
 
