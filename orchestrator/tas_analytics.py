@@ -363,6 +363,12 @@ async def critical_alerts_by_equipment(data):
 
 async def tas_alerts_exception_report(data):
     alert_query = "alert_section = 'TAS'"
+    
+    # Add date filter if provided
+    if (data.start_date and data.end_date and 
+        data.start_date.strip() and data.end_date.strip() and
+        data.start_date.lower() != "string" and data.end_date.lower() != "string"):
+        alert_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
 
     alert_params = urdhva_base.queryparams.QueryParams(q=alert_query)
     alert_params.limit = 0
