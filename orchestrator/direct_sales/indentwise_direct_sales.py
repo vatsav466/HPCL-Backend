@@ -72,6 +72,8 @@ class IndentDryOutDirectSales:
                 filters['DEALER_CODE'] = record.value
             elif record.key == "sales_area" and record.value:
                 filters['SALES_AREA'] = record.value
+            elif record.key == "product_code" and record.value:
+                filters['PROD'] = record.value
             elif record.key == "region" and record.value:
                 regions = "', '".join(record.value)
                 query = f"""select DISTINCT sales_area from location_master where region IN ('{regions}') and bu='DS' """
@@ -84,6 +86,7 @@ class IndentDryOutDirectSales:
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
                 if resp['data']:
                     filters['SALES_AREA'] = await self.flatten_sales_areas(resp['data'])
+
         return [{'key': key, 'value': value} for key, value in filters.items()]
     
     async def build_clause_conditions(self, data):
@@ -113,12 +116,17 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
         
         ims_query = f"""
-                    SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
+                    SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
                     ir."VALID_INDENT", ir."CANCEL_INDENT"
                     FROM "IMS_SAP"."INDENT_REQUEST" ir 
-                    INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                    INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE
+                    INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
+                    WHERE 
                     TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                     AND SUBSTR(ir."DEALER_CODE",15,2)='12'
                     """
@@ -165,11 +173,16 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
-                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE 
+                        INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
+                        WHERE 
                         TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd') 
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" = 'N' 
                         AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
@@ -217,11 +230,16 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
-                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE 
+                        INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
+                        WHERE 
                         TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."TRUCK_REGNO" IS NULL 
                         AND ir."VALID_INDENT" <> 'N' 
@@ -270,12 +288,17 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" 
                         FROM "IMS_SAP"."INDENT_REQUEST" ir 
-                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE 
+                        INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
+                        WHERE 
                         TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" IN ('Y','H') 
                         AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
@@ -323,12 +346,17 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
         
         ims_query = f"""
-                    SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
+                    SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
                     ir."VALID_INDENT", ir."CANCEL_INDENT"
                     FROM "IMS_SAP"."INDENT_REQUEST" ir 
-                    INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                    INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE
+                    INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE" 
+                    WHERE 
                     TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                     AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."CANCEL_INDENT" = 'Y'
                     """
@@ -374,11 +402,16 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
-                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE 
+                        INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
+                        WHERE 
                         TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."VALID_INDENT" IN ('Y','H') 
                         AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
@@ -427,11 +460,16 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
+                        SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
                         ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
-                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE WHERE 
+                        INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE 
+                        INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
+                        WHERE 
                         TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                         AND SUBSTR(ir."DEALER_CODE",15,2)='12' AND ir."TRUCK_REGNO" IS NOT NULL 
                         AND (ir."CANCEL_INDENT" IS NULL OR ir."CANCEL_INDENT" <> 'Y')
@@ -480,9 +518,12 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT" 
                         FROM "IMS_SAP"."INDENT_REQUEST" ir INNER JOIN  
                         "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
@@ -537,13 +578,17 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT  DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
+                        INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
                         WHERE TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') =  TO_CHAR(SYSDATE,'yyyymmdd')
                         AND ir."TRUCK_REGNO" = ts."TRUCK_REGNO"
                         AND ts."CARD_STATUS" = 'I'
@@ -593,9 +638,13 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
+
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
@@ -649,13 +698,18 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
+
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
+                        INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
                         WHERE TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
                         AND ir."TRUCK_REGNO" = ts."TRUCK_REGNO"
                         AND ts."CARD_STATUS" = 'O'
@@ -705,13 +759,17 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ip."PROD" IN ('{product_code}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
+                        SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
                         ir."VALID_INDENT", ir."CANCEL_INDENT"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
+                        INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
                         WHERE TO_CHAR(ir."PROD_REQD_DT",'yyyymmdd') = TO_CHAR(SYSDATE,'yyyymmdd')
                         AND ir."TRUCK_REGNO" = ts."TRUCK_REGNO"
                         AND ts."CARD_STATUS" = 'O'
@@ -761,9 +819,12 @@ class IndentDryOutDirectSales:
             elif condition_key == 'SALES_AREA':
                 sales_area = "', '".join(condition_value)
                 where_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                where_clause.append(f"""ir."PROD" IN ('{product_code}')""")
 
         ims_query = f"""
-                        SELECT ir."INDENT_NO", ir."INDENT_DATE", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."JDE_TRUCK_NO" AS "TRUCK_REGNO"
+                        SELECT  ir."INDENT_NO", ir."INDENT_DATE", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."JDE_TRUCK_NO" AS "TRUCK_REGNO"
                         FROM "IMS_SAP"."INDENT_PRODUCTS" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
                         INNER JOIN "IMS_SAP"."AUTO_DC_REQUESTS" ar ON SUBSTR(ir."DEALER_CODE", 1, 10) = ar."SHIP_TO_CUST" 
