@@ -824,7 +824,7 @@ class IndentDryOutDirectSales:
                 where_clause.append(f"""ir."PROD" IN ('{product_code}')""")
 
         ims_query = f"""
-                        SELECT  ir."INDENT_NO", ir."INDENT_DATE", ip."PROD", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."JDE_TRUCK_NO" AS "TRUCK_REGNO"
+                        SELECT  ir."INDENT_NO", ir."INDENT_DATE", ir."PROD", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."JDE_TRUCK_NO" AS "TRUCK_REGNO"
                         FROM "IMS_SAP"."INDENT_PRODUCTS" ir
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
                         INNER JOIN "IMS_SAP"."AUTO_DC_REQUESTS" ar ON SUBSTR(ir."DEALER_CODE", 1, 10) = ar."SHIP_TO_CUST" 
