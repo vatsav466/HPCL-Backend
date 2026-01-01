@@ -378,35 +378,35 @@ alert_action = {
                     "close_alert": False,
                     "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
                               "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
-                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD"]
+                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD", "HQO HSE SOD"]
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": True,
                     "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
                               "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
-                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD"]
+                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD", "HQO HSE SOD"]
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
                     "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
                               "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
-                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD"]
+                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD", "HQO HSE SOD"]
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": True,
                     "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
                               "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
-                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD"]
+                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD", "HQO HSE SOD"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
                     "roles": ["Admin", "Safety Officer SOD", "Maintenance Officer SOD", "Location In-Charge SOD", "Plant In-Charge SOD", "Planning Officer SOD",
                               "Zonal SOD", "Zonal Manager SOD", "Zonal Transport Officer SOD", "Zonal Chief Manager SOD", "Zonal Executive Officer SOD",
-                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD"]
+                              "Distribution Manager SOD", "HQO Manager SOD", "HQO Supply Officer SOD", "HQO HSE SOD"]
                 }
             },
             "category": {
