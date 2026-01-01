@@ -1423,6 +1423,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "LPG Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             },

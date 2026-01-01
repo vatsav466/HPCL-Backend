@@ -24,7 +24,7 @@ import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.actions.check_violation_count as check_violation_count
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
-from api_manager.hqo_blocked import get_blocked_trucks_service
+from orchestrator.hqo_blocked import get_blocked_trucks_service
 from orchestrator.gen_ai.vts_nlp.core_functions import process_vts_query
 
 router = fastapi.APIRouter(prefix='/alerts')
@@ -1044,6 +1044,7 @@ async def alerts_attach_vts_blocked_file(
 @router.post('/hqo_blocked_vehicles', tags=['Alerts'])
 async def alerts_hqo_blocked_vehicles(data: Alerts_Hqo_Blocked_VehiclesParams):
     return await get_blocked_trucks_service(
+        data.alert_status,
         data.start_date,
         data.end_date
     )
