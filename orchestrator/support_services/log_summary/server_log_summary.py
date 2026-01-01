@@ -38,7 +38,7 @@ DB_CONFIG = {
 
 log_blocks = []
 csv_data = []
-error_frequency = {}   # 🔥 NEW for sorting most frequent errors
+error_frequency = {}   # NEW for sorting most frequent errors
 
 
 # -----------------------------------------------------------------------
