@@ -325,7 +325,6 @@ async def send_mail(excel_path):
             "bala@algofusiontech.com",
             "venu@algofusiontech.com",
             "moufikali@algofusiontech.com",
-            "vamsi.c@urdhvapay.com",
             "yesu.p@algofusiontech.com",
             "manohar.v@algofusiontech.com",
             "mohith.p@algofusiontech.com",
