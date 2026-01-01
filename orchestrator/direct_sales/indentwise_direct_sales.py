@@ -122,7 +122,7 @@ class IndentDryOutDirectSales:
         
         ims_query = f"""
                     SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
-                    ir."VALID_INDENT", ir."CANCEL_INDENT"
+                    ir."VALID_INDENT", ir."CANCEL_INDENT",ip."PROD"
                     FROM "IMS_SAP"."INDENT_REQUEST" ir 
                     INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE
                     INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
@@ -179,7 +179,7 @@ class IndentDryOutDirectSales:
 
         ims_query = f"""
                         SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
-                        ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT", ip."PROD" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE 
                         INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
                         WHERE 
@@ -236,7 +236,7 @@ class IndentDryOutDirectSales:
 
         ims_query = f"""
                         SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
-                        ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT", ip."PROD" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE 
                         INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
                         WHERE 
@@ -294,7 +294,7 @@ class IndentDryOutDirectSales:
 
         ims_query = f"""
                         SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
-                        ir."VALID_INDENT", ir."CANCEL_INDENT" 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT" ,ip."PROD"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE 
                         INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
@@ -352,7 +352,7 @@ class IndentDryOutDirectSales:
         
         ims_query = f"""
                     SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
-                    ir."VALID_INDENT", ir."CANCEL_INDENT"
+                    ir."VALID_INDENT", ir."CANCEL_INDENT", ip."PROD"
                     FROM "IMS_SAP"."INDENT_REQUEST" ir 
                     INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE
                     INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE" 
@@ -408,7 +408,7 @@ class IndentDryOutDirectSales:
 
         ims_query = f"""
                         SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
-                        ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT", ip."PROD" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE 
                         INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
                         WHERE 
@@ -466,7 +466,7 @@ class IndentDryOutDirectSales:
 
         ims_query = f"""
                         SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO",
-                        ir."VALID_INDENT", ir."CANCEL_INDENT" FROM "IMS_SAP"."INDENT_REQUEST" ir 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT", ip."PROD" FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir.DEALER_CODE = dd.DEALER_CODE 
                         INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."DEALER_CODE" = ip."DEALER_CODE"
                         WHERE 
@@ -524,7 +524,7 @@ class IndentDryOutDirectSales:
 
         ims_query = f"""
                         SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
-                        ir."VALID_INDENT", ir."CANCEL_INDENT" 
+                        ir."VALID_INDENT", ir."CANCEL_INDENT", ip."PROD"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir INNER JOIN  
                         "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
@@ -584,7 +584,7 @@ class IndentDryOutDirectSales:
 
         ims_query = f"""
                         SELECT  DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
-                        ir."VALID_INDENT", ir."CANCEL_INDENT"
+                        ir."VALID_INDENT", ir."CANCEL_INDENT", ip."PROD"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir 
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
@@ -645,7 +645,7 @@ class IndentDryOutDirectSales:
 
         ims_query = f"""
                         SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
-                        ir."VALID_INDENT", ir."CANCEL_INDENT"
+                        ir."VALID_INDENT", ir."CANCEL_INDENT", ip."PROD"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."INDENT_PRODUCTS" ip ON ir."LOCN_CODE" = ip."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
@@ -705,7 +705,7 @@ class IndentDryOutDirectSales:
 
         ims_query = f"""
                         SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
-                        ir."VALID_INDENT", ir."CANCEL_INDENT"
+                        ir."VALID_INDENT", ir."CANCEL_INDENT", ip."PROD"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
@@ -765,7 +765,7 @@ class IndentDryOutDirectSales:
 
         ims_query = f"""
                         SELECT DISTINCT ir."INDENT_NO", ir."INDENT_DATE", ir."PROD_REQD_DT", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."TRUCK_REGNO", 
-                        ir."VALID_INDENT", ir."CANCEL_INDENT"
+                        ir."VALID_INDENT", ir."CANCEL_INDENT", ip."PROD"
                         FROM "IMS_SAP"."INDENT_REQUEST" ir
                         INNER JOIN "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts ON ir."LOCN_CODE" = ts."LOCN_CODE"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
@@ -825,7 +825,7 @@ class IndentDryOutDirectSales:
 
         ims_query = f"""
                         SELECT  ir."INDENT_NO", ir."INDENT_DATE", SUBSTR(ir."DEALER_CODE",3,8) AS "DEALER_CODE", ir."JDE_TRUCK_NO" AS "TRUCK_REGNO"
-                        FROM "IMS_SAP"."INDENT_PRODUCTS" ir 
+                        FROM "IMS_SAP"."INDENT_PRODUCTS" ir, ir."PROD"
                         INNER JOIN "IMS_SAP"."DEALER_DETAILS" dd ON ir."DEALER_CODE" = dd."DEALER_CODE"
                         INNER JOIN "IMS_SAP"."AUTO_DC_REQUESTS" ar ON SUBSTR(ir."DEALER_CODE", 1, 10) = ar."SHIP_TO_CUST" 
                         WHERE SUBSTR(ir."DEALER_CODE", 15, 2) = '12'     
@@ -870,3 +870,4 @@ class IndentDryOutDirectSales:
 
 # if __name__ == "__main__":
 #     asyncio.run(main())
+
