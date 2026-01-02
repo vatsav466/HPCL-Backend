@@ -52,7 +52,7 @@ class CloseAlert:
             if alert_data.get("alert_section","") in ["VTS"] and alert_data.get("interlock_name", "") == "Itdg Admin Blocked":
                 await hpcl_ceg_model.Alerts(**{"id": params.get("alert_id", ""),
                                                "alert_state": "Resolved", 
-                                               "updated_at":datetime.now(timezone.utc)}).modify()
+                                               "closed_at":datetime.now(timezone.utc)}).modify()
                 
                 return True, { "message": "Alert Resolved for itdg admin blocked"}
             

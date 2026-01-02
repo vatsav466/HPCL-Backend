@@ -73,10 +73,32 @@ class SendNotification:
             list: A list of strings representing the required variables.
         """
         return [
-            "alert_id", "BU", "interlock_name", "interlock_id", "messagetype","vehicle_number",
+            "alert_id", "BU", "interlock_name", "interlock_id", "messagetype",
             "msg_subject", "mqofrole", "location_type", "location_device_id", "va_level",
             "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail"
         ]
+    
+    async def check_already_blocked_in_admin_module(self):
+        if self.alert_data.get('interlock_name') == 'Itdg Admin Blocked':
+            truck_number = self.alert_data.get('vehicle_number')
+            query = f"blocking_status='blocked' and truck_number='{truck_number}'"
+            manual_blocked = await hpcl_ceg_model.VtsManualBlocked.get_all(
+                urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
+            )
+            data = manual_blocked.get('data', [])
+            print(len(data) > 0)
+            if len(data) > 0:
+                print('*'*200)
+                print("Notification skipped1")
+                print('*'*200)
+                return True
+            elif self.alert_data.get('bu') == '' or self.alert_data.get('sap_id') == '':
+                print('*'*200)
+                print("Notification skipped2")
+                print('*'*200)
+                return True
+            return False
+        return False
 
     async def process(self, params: typing.Dict):
         """
@@ -97,10 +119,13 @@ class SendNotification:
         self.params = params
         # print("parms: ", self.params)
         try:
-                
             if not await self._load_and_validate_alert():
                 return await self._handle_invalid_alert()
-
+            
+            check_status = self.check_already_blocked_in_admin_module()
+            if check_status:
+                return True, {"msg": "Notification skipped Because Of Admin Module"}
+            
             await self._prepare_base_alert_data()
             if self.base_alert_data['interlock_name'] in ['Dry Out Each Indent Wise MainFlow']:
                 return True, {"msg": "Notification skipped"}
@@ -132,9 +157,10 @@ class SendNotification:
 
         if alert_data:
             self.alert_data = alert_data.__dict__ if not isinstance(alert_data, dict) else alert_data
-            if self.alert_data.get('transporter_code'):
-                query = f"select * from email_master where transporter_code='{self.alert_data['transporter_code']}'"
-                transporter_details_data = await hpcl_ceg_model.EmailMaster.get_aggr_data(query)
+            if self.alert_data['transporter_code']:
+                query = (f"transporter_code='{self.alert_data['transporter_code']}'")
+                transporter_details_data = await hpcl_ceg_model.EmailMaster.get_all(urdhva_base.queryparams.QueryParams(q=query),
+                                                                                    resp_type='plain')
                 if len(transporter_details_data.get("data",[])):
                     self.alert_data['transporter_name'] = transporter_details_data['data'][0]['transporter_name']
             return True
@@ -162,9 +188,6 @@ class SendNotification:
         sap_id = self.alert_data.get("sap_id", "")
         message_type = self.params.get("messagetype", '')
         roles_list = ""
-        if not bu or not sap_id:
-            logger.warning(f"Missing BU or SAP ID: bu={bu}, sap_id={sap_id}")
-            return True, {"msg" : "Skip Notification"}
         if self.alert_data.get("alert_section","") in ["VTS","RO","TAS"]:
             roles_list = (await self._role_configuration_rolemailto() or "")
         elif self.alert_data.get("alert_section","") in ["VA","LPG","EMLock"]:
@@ -382,7 +405,7 @@ class SendNotification:
         # logger.info(f"self.alert_data: {self.alert_data}") 
         if self.alert_data["alert_section"] in ['VTS'] and self.alert_data["bu"] in ['TAS']:
             self.interlock_name = self.alert_data.get('interlock_name', '')
-            if self.alert_data['interlock_name'] not in ['No VTS No Load','Itdg Admin Blocked']:
+            if self.alert_data['interlock_name'] not in ['No VTS No Load', 'Itdg Admin Blocked']:
                 self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
             self.vts_assigned_role = "Location In-Charge SOD" if self.alert_data.get('violation_type','') not in ['device_tamper_count','main_supply_removal_count'] else (await self._role_configuration_mqofrole() or "")
             if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
@@ -391,7 +414,6 @@ class SendNotification:
         self.base_alert_data = {
             "alert_id": self.params.get("alert_id"),
             "interlock_name": self.interlock_name if self.interlock_name else await self._get_interlock_name(),
-            "vehicle_number": self.params.get("vehicle_number"),
             "plant_id": self.alert_data.get("sap_id", ''),
             "plant_location": self.alert_data["location_name"][:30],
             "portal_link": "https://ceg.hpcl.co.in",
@@ -622,15 +644,14 @@ class SendNotification:
             await self._send_standard_notification()
 
     async def get_vts_recipients(self):
-
         transporter_code = (
             str(int(self.alert_data['transporter_code']))
             if str(self.alert_data.get('transporter_code', '')).strip().isdigit()
             else "0"
         )
-
-        query = f"select * from email_master where transporter_code='{transporter_code}'"
-        transporter_details_data = await hpcl_ceg_model.EmailMaster.get_aggr_data(query)
+        query = (f"transporter_code='{transporter_code}'")
+        transporter_details_data = await hpcl_ceg_model.EmailMaster.get_all(urdhva_base.queryparams.QueryParams(q=query),
+                                                                                    resp_type='plain')
         transporter_mail = []
         if len(transporter_details_data.get("data",[])):
             transporter_details_data = transporter_details_data['data'][0]
@@ -641,8 +662,9 @@ class SendNotification:
                 transporter_mail.append(transporter_details_data['transporter_email2'])
             self.transporter_details['transporter_email'] = ",".join(str(x) for x in transporter_mail)
         
-        cc_query = f"select * from email_master where sap_id='{self.alert_data['sap_id']}'"
-        cc_query_data = await hpcl_ceg_model.EmailMaster.get_aggr_data(cc_query)
+        cc_query = (f"sap_id='{self.alert_data['sap_id']}'")
+        cc_query_data = await hpcl_ceg_model.EmailMaster.get_all(urdhva_base.queryparams.QueryParams(q=cc_query),
+                                                                                    resp_type='plain')
         cc_recipients = []
         if len(cc_query_data.get("data",[])):
             cc_recipients_data = cc_query_data['data'][0]
@@ -985,19 +1007,6 @@ class SendNotification:
             Tuple[bool, str]: Returns a tuple indicating the success status and a
             message. If an error occurs, returns False and an error message.
         """
-        if params.get('interlock_name') == 'Itdg Admin Blocked':
-               truck_number = params.get('vehicle_number')
-               query = f"blocking_status='blocked' and truck_number='{truck_number}'"
-               print(query)
-               manual_blocked = await hpcl_ceg_model.VtsManualBlocked.get_all(
-                   urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
-               )
-               data = manual_blocked.get('data', [])
-               print(len(data) > 0)
-               if len(data) > 0:
-                   return True, {"msg": "Notification skipped"}
-               elif params.get('bu') == '' or params.get('sap_id') == '':
-                   return True, {"msg": "Notification skipped"}
         return await self.process(params)
 
     async def _create_task_result(self):

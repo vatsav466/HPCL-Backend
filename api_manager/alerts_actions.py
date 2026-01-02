@@ -412,14 +412,10 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
     if not rpt:
         return {"status": False, "message": "Session got expired, Please Re-Login"}
     
-    # if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
-    #     return {"status": False, "message": "Not Allowed To Perform This Action"}
+    if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
+        return {"status": False, "message": "Not Allowed To Perform This Action"}
      
-    query = (f"""vehicle_unblocked_date is null and alert_section='VTS' and bu='{data.bu.value}' and vehicle_number='{data.truck_number}' """)
-    print("-"*10)
-    print("query :", query)
-    print("-"*10)    
-
+    query = (f"""vehicle_unblocked_date is null and alert_section='VTS' and vehicle_number='{data.truck_number}' """)
     alert_data = await Alerts.get_all(
         urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
         )
@@ -461,6 +457,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
         "vehicle_blocked_start_date": start_date,
         "vehicle_blocked_end_date": end_date,
         "alert_section": "VTS",
+        "violation_type": data.remarks,
         "interlock_name": "Itdg Admin Blocked",
         "sap_id": sap_id,
         "blocking_days": data.blocking_days,
@@ -492,13 +489,14 @@ async def alerts_unblock_vts_truck(
     unblock_id: str = fastapi.Form(...),
     remarks_unblocked: str | None = fastapi.Form(None),
     upload_file: fastapi.UploadFile | None = fastapi.File(None)):
+
     try:
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
             return {"status": False, "message": "Session got expired, Please Re-Login"}
          
-        # if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
-        #     return {"status": False, "message": "Not Allowed To Perform This Action"}
+        if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
+            return {"status": False, "message": "Not Allowed To Perform This Action"}
 
         if unblock_id is None:
             logger.error("unblock_id missing in request payload")
@@ -580,7 +578,7 @@ async def alerts_unblock_vts_truck(
             logger.error(f"Camunda unblock failed | alert_id={alert_id} | response={response.text}")
             return {"status": False, "message": "Failed to unblock the truck via workflow"}
 
-        return {"status": True,"message": "Truck has been unblocked successfully"}
+        return {"status": True,"message": "Truck has been moved to unblock"}
 
     except Exception:
         logger.exception("Unhandled error during VTS unblock")
