@@ -2,6 +2,7 @@ import urdhva_base
 import hpcl_ceg_model
 import orchestrator.alerting.alert_factory as alert_factory
 import asyncio
+import utilities.helpers as helpers
 import orchestrator.alerting.alert_helper as alert_helper
 from datetime import datetime
 
@@ -88,7 +89,8 @@ async def create_vts_manual_block():
         }
         
         cls =  alert_factory.AlertFactory()
-        await cls.create_alert(alert_payload, urdhva_base.settings.camunda_url)
+        camunda_url = await helpers.get_alert_camunda_url(bu,sap_id,alert_section='VTS')
+        await cls.create_alert(alert_payload, camunda_url)
     
     
     return {"status": "processed for block", "results": results}

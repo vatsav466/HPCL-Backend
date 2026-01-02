@@ -420,11 +420,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
         urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
         )
     
-    query = f"blocking_status='blocked' and truck_number='{data.truck_number}'"
-    manual_blocked = await VtsManualBlocked.get_all(
-        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
-        )
-    if alert_data["data"] or manual_blocked["data"]:
+    if alert_data["data"]:
         return {"status": False, "message": "Truck has already been blocked"}
     
     location_data = await get_truck_location_data(data.truck_number)
@@ -479,7 +475,8 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
 
     # need to trigger camunda workflow 
     cls = alert_factory.AlertFactory()
-    await cls.create_alert(alert_data, urdhva_base.settings.camunda_url)
+    camunda_url = await helpers.get_camunda_url(data.bu.value,sap_id,alert_section='VTS')
+    await cls.create_alert(alert_data, camunda_url)
     return {"status": True, "message": "Truck has been moved check to completed trip or not"}
 
 
