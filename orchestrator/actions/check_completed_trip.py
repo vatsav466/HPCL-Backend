@@ -17,10 +17,7 @@ class CheckCompletedTrip:
                alert_data = alert_data.__dict__
             
             truck_number = alert_data.get('vehicle_number','')
-
-            if alert_data["interlock_name"] == 'No VTS No Load':
-                return True, {"tripCompleted": True}
-            
+              
             if alert_data["interlock_name"] == 'Itdg Admin Blocked':
                 print("checking itdg interlock")
                 query = f"blocking_status='blocked' and truck_number='{truck_number}'"
