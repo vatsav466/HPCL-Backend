@@ -2,6 +2,7 @@ import urdhva_base
 import traceback
 import hpcl_ceg_model
 import orchestrator.alerting.alert_factory as af
+from datetime import datetime, timezone
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -47,6 +48,13 @@ class CloseAlert:
                 alert_data = alert_data.__dict__
             if "_sa_instance_state" in alert_data.keys():
                 del alert_data["_sa_instance_state"]
+            
+            if alert_data.get("alert_section","") in ["VTS"] and alert_data.get("interlock_name", "") == "Itdg Admin Blocked":
+                await hpcl_ceg_model.Alerts(**{"id": params.get("alert_id", ""),
+                                               "alert_state": "Resolved", 
+                                               "updated_at":datetime.now(timezone.utc)}).modify()
+                
+                return True, { "message": "Alert Resolved for itdg admin blocked"}
             
             if alert_data.get("alert_section","") in ["VTS"] and alert_data.get("alert_status","") == 'Close':
                 return True, { "message": "Alert Already Closed"}

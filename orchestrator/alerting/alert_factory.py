@@ -137,10 +137,16 @@ class AlertFactory:
                     alert_data['alert_timestamp'] = alert_data['alert_timestamp'].replace(tzinfo=None)
                 except:
                     ...
+
+            alert_status = hpcl_ceg_enum.AlertStatus.Open
+            closed_at = None
+            if alert_data['interlock_name'] == 'Itdg Admin Blocked':
+                alert_status = hpcl_ceg_enum.AlertStatus.Close
+                closed_at = datetime.datetime.now()
             alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity').capitalize() if alert_data.get('severity') else "Medium",
                                                         'alert_category': alert_data.get('alert_category'),
-                                                        'alert_status': hpcl_ceg_enum.AlertStatus.Open,
+                                                        'alert_status': alert_status,
                                                         'alert_state': hpcl_ceg_enum.AlertState.InProgress,
                                                         'unique_id': unique_id, 'alert_section': alert_data.get("alert_section", bu),
                                                         'external_id': alert_data.get('vendor_alert_id', alert_data['alert_id']),
@@ -195,6 +201,7 @@ class AlertFactory:
                                                         'workflow_url': alert_data.get('workflow_url', ''),
                                                         'workflow_port': alert_data.get('workflow_port', ''),
                                                         'vts_alert_history_ids': alert_data.get('vts_alert_history_ids',[]),
+                                                        'closed_at': closed_at,
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -251,6 +258,12 @@ class AlertFactory:
                                     "device_type": {"value": alert_data.get('device_type', ''), "type": "String"}, # Added for TAS use
                                     "tas_device_name": {"value": alert_data.get('tas_device_name', ''), "type": "String"}, # Added for TAS use
                                     }}
+            
+            if alert_data.get("interlock_name") == "Itdg Admin Blocked":
+                 payload['variables'].update({"waitTime": {"value": alert_data.get('waitTime', ''), "type": "String"},
+                                               "bu": {"value": alert_data.get('bu', ''), "type": "String"},
+                                               "auto_unblock": {"value": alert_data.get('auto_unblock', ''), "type": "String"},
+                                               "vehicle_number":{"value": alert_data.get('vehicle_number', ''), "type": "String"}})
 
             # Create Interlock
             # Start workflow after creating the interlock

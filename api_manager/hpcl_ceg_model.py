@@ -1916,6 +1916,7 @@ class Alerts_Block_Vts_TruckParams(pydantic.BaseModel):
 
 class Alerts_Unblock_Vts_TruckParams(pydantic.BaseModel):
     unblock_id: str
+    remarks_unblocked: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
