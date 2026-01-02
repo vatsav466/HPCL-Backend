@@ -139,10 +139,8 @@ class AlertFactory:
                     ...
 
             alert_status = hpcl_ceg_enum.AlertStatus.Open
-            closed_at = None
             if alert_data['interlock_name'] == 'Itdg Admin Blocked':
                 alert_status = hpcl_ceg_enum.AlertStatus.Close
-                closed_at = datetime.datetime.now()
             alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity').capitalize() if alert_data.get('severity') else "Medium",
                                                         'alert_category': alert_data.get('alert_category'),
@@ -201,7 +199,6 @@ class AlertFactory:
                                                         'workflow_url': alert_data.get('workflow_url', ''),
                                                         'workflow_port': alert_data.get('workflow_port', ''),
                                                         'vts_alert_history_ids': alert_data.get('vts_alert_history_ids',[]),
-                                                        'closed_at': closed_at,
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
