@@ -590,7 +590,16 @@ vts_query = {
     "alert_details":"""
                     SELECT bu,zone,location_name,sap_id,alert_status,transporter_code,vehicle_number,unique_id,vehicle_blocked_start_date,vehicle_blocked_end_date 
                     FROM alerts 
-                    """
+                    """,
+    
+    "accept_and_block":"""
+                SELECT
+                    a.id AS alert_id, a.vehicle_number,
+                    n.alert_id, n.notices
+                FROM alerts a, notices_vts n
+                WHERE a.alert_section = 'VTS' AND a.alert_status = 'Close'
+                AND a.vehicle_unblocked_date IS NULL AND CAST(n.alert_id AS BIGINT) = a.id
+                {final_condition}  """    
 
                               
     }
