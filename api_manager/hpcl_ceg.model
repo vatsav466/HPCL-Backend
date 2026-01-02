@@ -900,6 +900,7 @@ Model Alerts {
 
     Action=> unblock_vts_truck {
         unblock_id str
+        remarks_unblocked str
     }
 
     Action=> unblock_alert_truck {

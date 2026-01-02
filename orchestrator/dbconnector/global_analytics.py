@@ -5004,7 +5004,13 @@ class GlobalAnalytics:
             current_date = datetime.now().date()
             yesterday = current_date - timedelta(days=1)
 
-            if cross_filters:
+            # Default date range for monthly view (last 1 month from today)
+            if not cross_filters or (cross_filters and not any(hasattr(cf, 'value') and cf.value for cf in cross_filters)):
+                selected_start_date = current_date - timedelta(days=30)
+                start_date = selected_start_date.strftime('%Y-%m-%d 00:00:00')
+                end = current_date.strftime('%Y-%m-%d')
+                end_date = f'{end} 23:59:59'
+            else:
                 for date_range in cross_filters:
                     value = date_range.value if hasattr(date_range, 'value') else None
                 

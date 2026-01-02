@@ -32,7 +32,17 @@ class SendVtsCommand:
         else:
             rpt = {}
 
-        if params.get("interrupt").lower() == 'block':            
+        if params.get("interrupt").lower() == 'block':  
+            #check in vts_manual_blocked table if that truck is already blocked are not
+
+            if alert_data['interlock_name'] == 'Itdg Admin Blocked':
+                truck_number =alert_data.get('vehicle_number')
+                query = f"blocking_status='blocked' and truck_number='{truck_number}'" 
+                manual_blocked = await hpcl_ceg_model.VtsManualBlocked.get_all(
+                    urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
+                ) 
+                if len(manual_blocked['data']) > 0:
+                    return True, {"blocked": True}            
             # Blocking in IMS blockingFlag="Y"
             blocking_status = None
             if alert_data['bu'] in ['TAS']:
@@ -190,7 +200,7 @@ class SendVtsCommand:
                     return True, {"unblocked": False}
                         
             if not params['auto_unblock']:
-                if alert_data['interlock_name'] not in ['No VTS No Load']:
+                if alert_data['interlock_name'] not in ['No VTS No Load', 'Itdg Admin Blocked']:
                     query = (f"location_id='{alert_data['sap_id']}' and tl_number='{alert_data['vehicle_number']}' "
                             f"and {alert_data['violation_type']}>=1 and created_at<'{alert_data['created_at']}' and location_type='{alert_data['bu']}' "
                             f"and auto_unblock!='false'")
@@ -225,7 +235,7 @@ class SendVtsCommand:
                 alert_data["action_type"] = "VTS"
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
 
-                if alert_data['interlock_name'] not in ['No VTS No Load']:
+                if alert_data['interlock_name'] not in ['No VTS No Load', 'Itdg Admin Blocked']:
                     unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED', blacklist='false' where truck_regno = '{alert_data['vehicle_number']}'"
                     await hpcl_ceg_model.VtsTruckDetails.update_by_query(unblock_query)
 
