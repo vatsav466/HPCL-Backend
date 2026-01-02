@@ -3695,6 +3695,58 @@ class VTSAnalyticsActions:
             return{"status" :True , "message":"success","data":df.to_dict(orient="records")}
         except Exception as e:
             return {"status": False, "message": str(e), "data": {}}
+    
+    @staticmethod
+    async def vts_accept_and_block(filters, cross_filters, drill_state, payload):
+        try:
+            base_query = vts_query.vts_query.get("accept_and_block")
+            condition = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
+            
+            if isinstance(condition, list):
+                condition = " AND ".join(condition)
+
+            final_condition = ""
+            if condition:
+                condition = (
+                    condition.replace("bu", "a.bu").replace("created_at", "a.created_at"))
+
+                final_condition = " AND " + condition
+
+            final_query = base_query.format(final_condition=final_condition)
+            print("Final Query: ", final_query)
+
+            merged_df = await VTSAnalyticsActions.execute_query(final_query, engine="polars")
+            merged_df = (merged_df.explode("notices").unnest("notices"))
+            
+            # Unique alert_id sets
+            system_ids = (
+                merged_df.filter(pl.col("doc_type") == "System Generated").select("alert_id").unique())
+                        
+            user_ids = (
+                merged_df.filter(pl.col("doc_type") == "User Created").select("alert_id").unique())
+
+            # Compare alert_id sets
+            system_only_ids = system_ids.join( user_ids, on = "alert_id", how = "anti")                                 
+            system_only_df = (merged_df.join(system_only_ids, on = "alert_id", how = "inner").unique(subset=["alert_id"]))
+            
+            both_ids = system_ids.join( user_ids, on="alert_id", how="inner")
+            both_df = ( merged_df.join(both_ids, on="alert_id", how="inner").unique(subset=["alert_id"]))
+            
+            system_only_df, both_df = (
+                    system_only_df.drop("file_path", strict=False) , both_df.drop("file_path", strict=False))
+            
+
+            if payload.get("download") == "true":
+                return await download_streaming_data(system_only_df,filename='system_only') 
+            
+            if payload.get("download") == "system_and_user_generated":
+                return await download_streaming_data(both_df,filename='system_and_user_generated')   
+                        
+            return {"status": True, "message": "success","data":{ "system_only" :system_only_df.height,"system_and_user":both_ids.height}}
+        except Exception as e:
+            print("Exception in vts_accept_and_block:", str(e))
+            print("traceback:", traceback.format_exc())
+            return {"status": False,"message": str(e),"data": []}
 
     @staticmethod
     async def action_device_vts(filters, cross_filters, drill_state, payload):
