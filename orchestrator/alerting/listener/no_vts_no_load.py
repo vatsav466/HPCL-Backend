@@ -59,14 +59,6 @@ class VTSNoLoadAlert:
                 print(f"Alert Already Created For This Vehicle: {alert['TRUCK_REGNO']}")
                 continue
 
-            query = f"blocking_status='blocked' and truck_number='{alert['TRUCK_REGNO']}'"
-            manual_blocked = await hpcl_ceg_model.VtsManualBlocked.get_all(
-                urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
-            )
-            if manual_blocked["data"]:
-                print(f"Alert Already Created For This Vehicle: {alert['TRUCK_REGNO']}")
-                continue
-
             entry = {
                 "vehicle_number": alert['TRUCK_REGNO'],
                 "last_check_date": alert['LAST_CHECK_DATE'],

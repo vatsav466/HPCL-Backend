@@ -78,24 +78,9 @@ class SendNotification:
             "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail"
         ]
     
-    async def check_already_blocked_in_admin_module(self):
+    async def check_sap_id_empty(self):
         if self.alert_data.get('interlock_name') == 'Itdg Admin Blocked':
-            truck_number = self.alert_data.get('vehicle_number')
-            query = f"blocking_status='blocked' and truck_number='{truck_number}'"
-            manual_blocked = await hpcl_ceg_model.VtsManualBlocked.get_all(
-                urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
-            )
-            data = manual_blocked.get('data', [])
-            print(len(data) > 0)
-            if len(data) > 0:
-                print('*'*200)
-                print("Notification skipped1")
-                print('*'*200)
-                return True
-            elif self.alert_data.get('bu') == '' or self.alert_data.get('sap_id') == '':
-                print('*'*200)
-                print("Notification skipped2")
-                print('*'*200)
+            if self.alert_data.get('bu') == '' or self.alert_data.get('sap_id') == '':
                 return True
             return False
         return False
@@ -122,7 +107,7 @@ class SendNotification:
             if not await self._load_and_validate_alert():
                 return await self._handle_invalid_alert()
             
-            check_status = self.check_already_blocked_in_admin_module()
+            check_status = self.check_sap_id_empty()
             if check_status:
                 return True, {"msg": "Notification skipped Because Of Admin Module"}
             

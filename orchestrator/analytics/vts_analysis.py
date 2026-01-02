@@ -420,12 +420,6 @@ async def is_alert_exists(tl_number: str):
     print("vts_alert_data: ", vts_alert_data)
     if vts_alert_data.get("data", []):
         return True
-    query = f"blocking_status='blocked' and truck_number='{tl_number}'"
-    manual_blocked = await hpcl_ceg_model.VtsManualBlocked.get_all(
-        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
-    )
-    if manual_blocked["data"]:
-        return True
     return False
 
 async def last_closed_at(tt_number: str):
