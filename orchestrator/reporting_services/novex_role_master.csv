@@ -44,3 +44,6 @@ sl_no,novex_role,tibco_role,bu
 43,DS HQO Officer,SD_DHQO_PLM,DS
 44,DS HQO Officer,SD_DHQO_GMSALES,DS
 45,DS HQO Officer,SD_DHQO_OFFICER,DS
+46,DS Sales Officer,SD_CRDTDBT,DS
+47,DS Sales Officer,SD_PRC,DS
+48,DS Sales Officer,SD_DMKTG_OFFICER,DS

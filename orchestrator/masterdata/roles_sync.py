@@ -1198,30 +1198,6 @@ async def sync_user_roles():
     "DS HQO Officer": {
         "allowed_pages": [
             {
-                "menu_name": "Performance",
-                "allowed_sub_menus": [
-                    {
-                        "title": "Industry",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Industry Performance"
-                            }
-                        ]
-                    },
-                    {
-                        "title": "Sales Performance",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Insights"
-                            },
-                            {
-                            "title": "I&C Campaign"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
                 "menu_name": "Direct Sales",
                 "allowed_sub_menus": [
                     {
@@ -1229,6 +1205,12 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Supply Chain"
+                    },
+                    {
+                        "title": "I&C Insights"
+                    },
+                    {
+                        "title": "I&C Campaign"
                     }
                 ]
             }
@@ -1239,27 +1221,6 @@ async def sync_user_roles():
     "DS Regional Manager": {
         "allowed_pages": [
             {
-                "menu_name": "Performance",
-                "allowed_sub_menus": [
-                    {
-                        "title": "Industry",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Industry Performance"
-                            }
-                        ]
-                    },
-                    {
-                        "title": "Sales Performance",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Insights"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
                 "menu_name": "Direct Sales",
                 "allowed_sub_menus": [
                     {
@@ -1267,6 +1228,12 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Supply Chain"
+                    },
+                    {
+                        "title": "I&C Insights"
+                    },
+                    {
+                        "title": "I&C Campaign"
                     }
                 ]
             }
@@ -1277,27 +1244,6 @@ async def sync_user_roles():
     "DS Sales Officer": {
         "allowed_pages": [
             {
-                "menu_name": "Performance",
-                "allowed_sub_menus": [
-                    {
-                        "title": "Industry",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Industry Performance"
-                            }
-                        ]
-                    },
-                    {
-                        "title": "Sales Performance",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Insights"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
                 "menu_name": "Direct Sales",
                 "allowed_sub_menus": [
                     {
@@ -1305,6 +1251,12 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Supply Chain"
+                    },
+                    {
+                        "title": "I&C Insights"
+                    },
+                    {
+                        "title": "I&C Campaign"
                     }
                 ]
             }
