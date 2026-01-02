@@ -79,8 +79,8 @@ class SendNotification:
         ]
     
     async def check_sap_id_empty(self):
-        if self.alert_data.get('interlock_name') == 'Itdg Admin Blocked':
-            if self.alert_data.get('bu') == '' or self.alert_data.get('sap_id') == '':
+        if self.alert_data.get('interlock_name') in ['Itdg Admin Blocked']:
+            if not self.alert_data.get('bu') or not self.alert_data.get('sap_id'):
                 return True
             return False
         return False
@@ -107,9 +107,9 @@ class SendNotification:
             if not await self._load_and_validate_alert():
                 return await self._handle_invalid_alert()
             
-            check_status = self.check_sap_id_empty()
+            check_status = await self.check_sap_id_empty()
             if check_status:
-                return True, {"msg": "Notification skipped Because Of Admin Module"}
+                return True, {"empty_sap_id": "Notification skipped Because Of Admin Module"}
             
             await self._prepare_base_alert_data()
             if self.base_alert_data['interlock_name'] in ['Dry Out Each Indent Wise MainFlow']:
