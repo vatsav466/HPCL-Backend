@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import re
 
 
-from tas_queries import (
+from .tas_queries import (
     ESD_QUERIES, ESD_FIELDS, ESD_CATEGORIES,
     VFT_QUERIES, VFT_FIELDS, VFT_CATEGORIES,
     RADAR_QUERIES, RADAR_FIELDS, RADAR_CATEGORIES,
