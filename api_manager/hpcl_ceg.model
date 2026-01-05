@@ -905,7 +905,7 @@ Model Alerts {
 
     Action=> unblock_alert_truck {
         unique_id str
-
+        remarks_unblocked str
     }
 
     Action=> get_vts_blocked_trucks {
