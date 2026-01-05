@@ -159,10 +159,10 @@ class SendVtsCommand:
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
                 elif unblocking_status and not isinstance(unblocking_status,list):
-                    logger.error(f"Blocking Payload Not posted to IMS {alert_data}")
+                    logger.error(f"UnBlocking Payload Not posted to IMS {alert_data}")
                     alert_message = f"{unblocking_status}"
                     alert_data["action_msg"] = alert_message
-                    alert_data["action_type"] = "BlockFailed"
+                    alert_data["action_type"] = "UnblockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
 
