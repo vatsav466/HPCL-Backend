@@ -524,6 +524,141 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "solarpanelcleaning",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "SolarPanelCleaning",
+            "attributes": {},
+            "uris": [
+                "/api/solarpanelcleaning/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_solar_dashboard_summary"
+                }
+            ]
+        },
+        {
+            "name": "solarpanelcleaning_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "SolarPanelCleaning_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/solarpanelcleaning/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_solar_dashboard_summary"
+                }
+            ]
+        },
+        {
+            "name": "solarpanelcleaning_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "SolarPanelCleaning_admin",
+            "attributes": {},
+            "uris": [
+                "/api/solarpanelcleaning/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_solar_dashboard_summary"
+                }
+            ]
+        },
+        {
+            "name": "solarpanelwetdrycleaning",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "SolarPanelWetDryCleaning",
+            "attributes": {},
+            "uris": [
+                "/api/solarpanelwetdrycleaning/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "solarpanelwetdrycleaning_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "SolarPanelWetDryCleaning_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/solarpanelwetdrycleaning/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "solarpanelwetdrycleaning_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "SolarPanelWetDryCleaning_admin",
+            "attributes": {},
+            "uris": [
+                "/api/solarpanelwetdrycleaning/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
@@ -713,6 +848,10 @@
         {
             "name": "update_dashboard_group_order",
             "displayName": "update_dashboard_group_order"
+        },
+        {
+            "name": "get_solar_dashboard_summary",
+            "displayName": "get_solar_dashboard_summary"
         }
     ]
 }
