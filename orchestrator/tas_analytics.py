@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import re
 
 
-from tas_queries import (
+from orchestrator.tas_queries import (
     ESD_QUERIES, ESD_FIELDS, ESD_CATEGORIES,
     VFT_QUERIES, VFT_FIELDS, VFT_CATEGORIES,
     RADAR_QUERIES, RADAR_FIELDS, RADAR_CATEGORIES,
@@ -40,7 +40,6 @@ async def top_repeat_alerts(data):
     if data.interlock_name:
         alert_query += f" AND interlock_name = '{data.interlock_name}'"
 
-    print("FINAL alert_query >>>", alert_query)
 
     alert_params = urdhva_base.queryparams.QueryParams(
         q=alert_query,
@@ -132,7 +131,6 @@ async def tas_severity_summary(data):
     if data.location_name:
         alert_query += f" AND location_name = '{data.location_name}'"
 
-    print("FINAL alert_query >>>", alert_query)
 
     alert_params = urdhva_base.queryparams.QueryParams(
         q=alert_query,
@@ -217,8 +215,6 @@ async def location_alert_critical(data):
 
     if data.location_name:
         alert_query += f" AND location_name = '{data.location_name}'"
-
-    print("FINAL alert_query >>>", alert_query)
 
     # FETCH DATA
     params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
@@ -323,8 +319,6 @@ async def critical_alerts_by_equipment(data):
     if data.equipment_type:
         alert_query += f" AND equipment_type = '{data.equipment_type}'"
 
-    print("FINAL alert_query >>>", alert_query)
-
     alert_params = urdhva_base.queryparams.QueryParams(
         q=alert_query
     )
@@ -339,9 +333,6 @@ async def critical_alerts_by_equipment(data):
 
     alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
-    
-    print(f"Total records fetched: {len(alert_data)}")  
-
     if not alert_data:
         return []
 
@@ -367,8 +358,6 @@ async def critical_alerts_by_equipment(data):
             .sort(["critical_count"], descending=[True])
         )
     
-    print(f"Grouped results:\n{critical_alerts_df}")  
-
     return critical_alerts_df.to_dicts()
 
 async def tas_alerts_exception_report(data):
@@ -390,9 +379,6 @@ async def tas_alerts_exception_report(data):
         return []
 
     df = pl.DataFrame(alert_data)
-
-    print("Original Polars DataFrame:")
-    print(df)
 
     # Fetch host_mfm_factor data
     mfm_params = urdhva_base.queryparams.QueryParams()
@@ -423,8 +409,6 @@ async def tas_alerts_exception_report(data):
                 .to_series()
                 .to_list()
             )
-
-    print(f"\nValid SAP IDs with last_k_factor: {valid_sap_ids}")
 
     # Filter out MFM K Factor Change alerts where sap_id doesn't have last_k_factor
     df = df.with_columns(
@@ -464,18 +448,11 @@ async def tas_alerts_exception_report(data):
         col.lower().replace(" ", ""): col for col in interlock_columns
     }
 
-    print("\nNormalized mapping:")
-    print(interlock_normalized)
-
     # Map the normalized names back to original names
     df = df.with_columns(
         pl.col("interlock_name_normalized").replace(interlock_normalized, default=pl.col("interlock_name")).alias(
             "interlock_name_mapped")
     )
-
-    print("\nDataFrame with normalized and mapped columns:")
-    print(df.select(["location_name", "interlock_name", "interlock_name_normalized", "interlock_name_mapped"]))
-
     # Create a pivot table counting occurrences of each interlock_name per location_name
     pivot_df = df.group_by(["location_name", "interlock_name_mapped"]).agg(
         pl.len().alias("count")
@@ -502,9 +479,6 @@ async def tas_alerts_exception_report(data):
     pivot_df = pivot_df.rename({"location_name": "Location"})
     pivot_df = pivot_df.filter(pl.col("Location").is_not_null() & (pl.col("Location") != ""))
     pivot_df = pivot_df.sort("Location")
-
-    print("\nPivot Table (Location-wise Interlock Counts):")
-    print(pivot_df)
     
     # Check if download is requested (handle both string "true" and boolean True)
     if data.download and str(data.download).lower() == "true":
@@ -517,7 +491,6 @@ async def equipment_location_wise_count(data):
     Get location-wise counts with Success/Fail breakdown for specific interlocks
     Supports ESD, VFT, RADAR, BCU, and Fire Effect equipment types
     """
-    print(f"Input equipment_name: '{data.equipment_name}'")
     
     # Determine which equipment types to process
     equipment_types = []
@@ -578,17 +551,11 @@ async def process_esd_data(data):
         data.end_date,
         data.location_name
     )
-
-    print("ESD Pushbutton query >>>", esd_pushbutton_query)
-
     esd_pushbutton_params = urdhva_base.queryparams.QueryParams(q=esd_pushbutton_query, limit=0)
     esd_pushbutton_params.fields = ESD_FIELDS["pushbutton_activated"]
 
     esd_pushbutton_resp = await Alerts.get_all(esd_pushbutton_params, resp_type="plain")
     esd_pushbutton_data = esd_pushbutton_resp.get("data", [])
-    
-    print(f"ESD Pushbutton data count: {len(esd_pushbutton_data)}")
-
     # Process ESD Pushbutton data with details
     esd_activated_details = {}
     if len(esd_pushbutton_data) > 0:
@@ -734,7 +701,6 @@ async def process_esd_data(data):
             location_results[key][category] = {"success": 0, "failed": 0}
     
     # Process alerts with 1-minute window logic AND unique_id matching
-    print("Processing ESD alerts with 1-minute window + unique_id validation...")
     processed_count = 0
     success_count = 0
     failed_count = 0
@@ -844,16 +810,11 @@ async def process_vft_data(data):
         data.location_name
     )
 
-    print("VFT HHH alarm query >>>", vft_hhh_query)
-
     vft_hhh_params = urdhva_base.queryparams.QueryParams(q=vft_hhh_query, limit=0)
     vft_hhh_params.fields = VFT_FIELDS["hhh_alarm"]
 
     vft_hhh_resp = await Alerts.get_all(vft_hhh_params, resp_type="plain")
     vft_hhh_data = vft_hhh_resp.get("data", [])
-    
-    print(f"VFT HHH data count: {len(vft_hhh_data)}")
-
     # Build other interlocks query
     alert_query = build_complete_query(
         VFT_QUERIES["other_interlocks"],
@@ -862,16 +823,11 @@ async def process_vft_data(data):
         data.location_name
     )
 
-    print("VFT alert_query >>>", alert_query)
-
     alert_params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
     alert_params.fields = VFT_FIELDS["other_interlocks"]
 
     alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
-    alert_data = alerts_resp.get("data", [])
-    
-    print(f"VFT other interlocks data count: {len(alert_data)}")
-    
+    alert_data = alerts_resp.get("data", [])    
     # Process VFT HHH data with details
     vft_activated_details = {}
     if len(vft_hhh_data) > 0:
@@ -895,7 +851,6 @@ async def process_vft_data(data):
         return []
     
     if not alert_data and vft_hhh_data:
-        print("No other VFT interlock data found, returning HHH counts only")
         result = {}
         for key, details in vft_activated_details.items():
             result[key] = {
@@ -960,10 +915,7 @@ async def process_vft_data(data):
     
     # Sort alerts by time
     for key in alerts_by_unique_id:
-        alerts_by_unique_id[key].sort(key=lambda x: x['time'])
-    
-    print(f"Organized {len(alerts_by_unique_id)} unique_id + SAP ID + Location + Category combinations")
-    
+        alerts_by_unique_id[key].sort(key=lambda x: x['time'])    
     # Get unique locations
     unique_locations = {}
     for alert in alert_data:
@@ -996,7 +948,6 @@ async def process_vft_data(data):
             location_results[key][category] = {"success": 0, "failed": 0}
     
     # Process alerts with 1-minute window + unique_id matching
-    print("Processing VFT alerts with 1-minute window + unique_id validation...")
     processed_count = 0
     success_count = 0
     failed_count = 0
@@ -1098,16 +1049,11 @@ async def process_radar_data(data):
         data.location_name
     )
 
-    print("RADAR Activated query >>>", radar_activated_query)
-
     radar_activated_params = urdhva_base.queryparams.QueryParams(q=radar_activated_query, limit=0)
     radar_activated_params.fields = RADAR_FIELDS["radar_activated"]
 
     radar_activated_resp = await Alerts.get_all(radar_activated_params, resp_type="plain")
     radar_activated_data = radar_activated_resp.get("data", [])
-    
-    print(f"RADAR Activated data count: {len(radar_activated_data)}")
-
     # Build other interlocks query
     alert_query = build_complete_query(
         RADAR_QUERIES["other_interlocks"],
@@ -1115,8 +1061,6 @@ async def process_radar_data(data):
         data.end_date,
         data.location_name
     )
-
-    print("RADAR alert_query >>>", alert_query)
 
     alert_params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
     alert_params.fields = RADAR_FIELDS["other_interlocks"]
@@ -1213,10 +1157,7 @@ async def process_radar_data(data):
     
     # Sort alerts by time
     for key in alerts_by_unique_id:
-        alerts_by_unique_id[key].sort(key=lambda x: x['time'])
-    
-    print(f"Organized {len(alerts_by_unique_id)} unique_id + SAP ID + Location + Category combinations")
-    
+        alerts_by_unique_id[key].sort(key=lambda x: x['time'])    
     # Get unique locations
     unique_locations = {}
     for alert in alert_data:
@@ -1249,7 +1190,6 @@ async def process_radar_data(data):
             location_results[key][category] = {"success": 0, "failed": 0}
     
     # Process alerts with 1-minute window + unique_id matching
-    print("Processing RADAR alerts with 1-minute window + unique_id validation...")
     processed_count = 0
     success_count = 0
     failed_count = 0
@@ -1332,10 +1272,7 @@ async def process_radar_data(data):
         
         final_result.append(result_item)
     
-    final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))
-    
-    print(f"\nRADAR Location-wise counts: {len(final_result)} locations")
-    
+    final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))    
     return final_result
 
 async def process_bcu_data(data):
@@ -1352,16 +1289,12 @@ async def process_bcu_data(data):
         data.location_name
     )
 
-    print("BCU Alarm query >>>", bcu_alarm_query)
-
     bcu_alarm_params = urdhva_base.queryparams.QueryParams(q=bcu_alarm_query, limit=0)
     bcu_alarm_params.fields = BCU_FIELDS["bcu_alarm"]
     
     bcu_alarm_resp = await Alerts.get_all(bcu_alarm_params, resp_type="plain")
     bcu_alarm_data = bcu_alarm_resp.get("data", [])
     
-    print(f"BCU Alarm data count: {len(bcu_alarm_data)}")
-
     if not bcu_alarm_data:
         return []
 
@@ -1402,9 +1335,7 @@ async def process_bcu_data(data):
             }
     
     sap_ids = list(set(loc['sap_id'] for loc in unique_locations.values()))
-    
-    print(f"Processing {len(sap_ids)} unique SAP IDs...")
-    
+        
     # Build batch query for all interlocks using template
     interlocks_str = format_interlocks_for_query(BCU_INTERLOCKS)
     sap_ids_str = format_sap_ids_for_query(sap_ids)
@@ -1419,14 +1350,12 @@ async def process_bcu_data(data):
             data.start_date.lower() != "string" and data.end_date.lower() != "string"):
         all_interlocks_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
     
-    print("Fetching all interlock alerts in ONE batch query...")
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
     interlock_params.fields = BCU_FIELDS["interlocks"]
     
     interlock_resp = await Alerts.get_all(interlock_params, resp_type="plain")
     all_interlock_alerts = interlock_resp.get("data", [])
     
-    print(f"Fetched {len(all_interlock_alerts)} total interlock alerts")
     
     # Build batch query for BCU Permissive Off using template
     permissive_query = BCU_QUERIES["permissive_off_template"].format(
@@ -1438,15 +1367,12 @@ async def process_bcu_data(data):
             data.start_date.lower() != "string" and data.end_date.lower() != "string"):
         permissive_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
     
-    print("Fetching all BCU Permissive Off alerts in ONE batch query...")
     permissive_params = urdhva_base.queryparams.QueryParams(q=permissive_query, limit=0)
     permissive_params.fields = BCU_FIELDS["permissive_off"]
     
     permissive_resp = await Alerts.get_all(permissive_params, resp_type="plain")
     all_permissive_alerts = permissive_resp.get("data", [])
-    
-    print(f"Fetched {len(all_permissive_alerts)} BCU Permissive Off alerts")
-    
+        
     # Create efficient lookup structure organized by unique_id
     permissive_by_unique_id = {}
     for alert in all_permissive_alerts:
@@ -1477,9 +1403,7 @@ async def process_bcu_data(data):
     # Sort permissive alerts by time
     for unique_id in permissive_by_unique_id:
         permissive_by_unique_id[unique_id].sort(key=lambda x: x['time'])
-    
-    print(f"Organized {len(permissive_by_unique_id)} unique_ids with permissive alerts")
-    
+        
     # Initialize results structure
     location_results = {}
     
@@ -1503,7 +1427,6 @@ async def process_bcu_data(data):
             location_results[key][interlock] = {"success": 0, "failed": 0}
     
     # Process each interlock alert with 1-minute window logic + unique_id matching
-    print("Processing alerts with 1-minute window + unique_id validation...")
     processed_count = 0
     success_count = 0
     failed_count = 0
@@ -1583,10 +1506,7 @@ async def process_bcu_data(data):
         
         final_result.append(result_item)
     
-    final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))
-    
-    print(f"BCU Location-wise counts: {len(final_result)} locations processed")
-    
+    final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))    
     return final_result
 
 async def process_fire_effect_data(data):
@@ -1642,9 +1562,7 @@ async def process_fire_effect_data(data):
             }
     
     sap_ids = list(set(loc['sap_id'] for loc in unique_locations.values()))
-    
-    print(f"Processing {len(sap_ids)} unique SAP IDs for Fire Effect...")
-    
+        
     # Build batch query for all interlocks using template
     sap_ids_str = format_sap_ids_for_query(sap_ids)
     
@@ -1657,15 +1575,12 @@ async def process_fire_effect_data(data):
             data.start_date.lower() != "string" and data.end_date.lower() != "string"):
         all_interlocks_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
     
-    print("Fetching all Fire Effect interlock alerts in ONE batch query...")
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
     interlock_params.fields = FIRE_EFFECT_FIELDS["interlocks"]
     
     interlock_resp = await Alerts.get_all(interlock_params, resp_type="plain")
     all_interlock_alerts = interlock_resp.get("data", [])
-    
-    print(f"Fetched {len(all_interlock_alerts)} total Fire Effect interlock alerts")
-    
+        
     if not all_interlock_alerts:
         result = []
         for key, details in fire_effect_alarm_details.items():
@@ -1731,7 +1646,6 @@ async def process_fire_effect_data(data):
     for key in alerts_by_unique_id:
         alerts_by_unique_id[key].sort(key=lambda x: x['time'])
     
-    print(f"Organized {len(alerts_by_unique_id)} unique_id + SAP ID + Location + Category combinations")
     
     # Initialize results structure
     location_results = {}
@@ -1755,7 +1669,6 @@ async def process_fire_effect_data(data):
             location_results[key][interlock] = {"success": 0, "failed": 0}
     
     # Process alerts with 1-minute window logic + unique_id matching
-    print("Processing Fire Effect alerts with 1-minute window + unique_id validation...")
     processed_count = 0
     success_count = 0
     failed_count = 0
@@ -1846,7 +1759,6 @@ async def process_fire_effect_data(data):
     
     final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))
     
-    print(f"Fire Effect Location-wise counts: {len(final_result)} locations processed")
     
     return final_result
 
