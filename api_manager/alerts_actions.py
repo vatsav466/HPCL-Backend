@@ -848,10 +848,6 @@ async def alerts_unblock_alert_truck(
                         "IP_Address": "10.90.38.218"
                     }
                 }
-                access_token = await vts_analysis.fetch_access_token()
-                if not access_token:
-                    print(f"[ERROR] Failed to fetch token")
-                    return None
                 
                 unblocking_status,error_msg = await vts_analysis.post_lpg_tt(payload)
             
