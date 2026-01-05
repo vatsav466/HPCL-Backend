@@ -3012,9 +3012,8 @@ class VTSAnalyticsActions:
             # Cross filters
             _filters, daterange = await generate_cross_filter(cross_filters)
             current_date = datetime.now().strftime("%Y-%m-%d")
+
             closed_query = vts_query.vts_query.get("closed_alerts")
-            
-            # Updated shortage query - remove hardcoded conditions
             shortage_query = vts_query.vts_query.get("unblocked_tt_shortage")
 
             # Drill Down filters for closed_query
@@ -3024,33 +3023,51 @@ class VTSAnalyticsActions:
                 dashboard_studio_model.WidgetFiltersCreate(**rec)
                 for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)
             ]
+
             closed_query = await widget_actions.WidgetActions.apply_filter_drilldown(closed_query, access_filters, drill_state)
 
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
             shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
             shortage_query += " GROUP BY vehicle_id"
 
-            # Apply date condition to closed_query only (since shortage_query date is handled by build_filter_conditions)
+            # Date condition only for closed_query
             clause = "WHERE" if "where" not in closed_query.lower() else "AND"
             if daterange:
                 closed_query += f" {clause} created_at BETWEEN {daterange}"
             else:
                 closed_query += f" {clause} CAST(created_at AS DATE) = '{current_date}'"
-
             print("Final Shortage Query:", shortage_query)
-
+            # Execute queries
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=closed_query, limit=0)
             shortage_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=shortage_query, limit=0)
-            
+
+            # DataFrames
             df = pd.DataFrame(resp.get("data", []))
+            
+
             df = await filter_data(df, _filters)
+
             shortage = pd.DataFrame(shortage_resp.get("data", []))
 
+            # AVERAGE UNBLOCKING LOGIC (NEW)
+            # Use blocked → unblocked dates from query
             df["vehicle_blocked_end_date"] = pd.to_datetime(df["vehicle_blocked_end_date"]).dt.tz_localize(None)
             df["vehicle_blocked_start_date"] = pd.to_datetime(df["vehicle_blocked_start_date"]).dt.tz_localize(None)
+            
+            df["created_at"] = pd.to_datetime(
+                df["created_at"]
+            ).dt.tz_localize(None)
 
-            df["ageing"] = (df["vehicle_blocked_end_date"] - df["vehicle_blocked_start_date"]).dt.days + 1
-                        
+            # consider only unblocked records
+            df = df[df["vehicle_unblocked_date"].notna()]
+
+
+            # Average Unblocking duration (days)
+            df["unblocking_days"] = (
+                (df["vehicle_unblocked_date"] - df["created_at"])
+                .dt.total_seconds() / 86400
+            ).clip(lower=0)
+            # Violation counts
             violation_counts = (
                 df.pivot_table(
                     index=["sap_id", "zone", "tt_number"],
@@ -3060,49 +3077,105 @@ class VTSAnalyticsActions:
                     fill_value=0
                 )
             )
-            avg_ageing = (
-                df.groupby(["sap_id", "location_name", "transporter_code", "zone", "tt_number"])["ageing"]
-                .mean()
-                .reset_index()
+
+            # Average Unblocking (group level)
+            avg_unblocking = (
+                df.groupby(
+                    ["sap_id", "location_name", "transporter_code", "zone", "tt_number"],
+                    as_index=False
+                )
+                .agg(
+                    total_unblocking_days=("unblocking_days", "sum"),
+                    total_alerts=("unblocking_days", "count")
+                )
             )
-            df = (
-                avg_ageing.merge(violation_counts, on=["sap_id", "tt_number"], how="left")
+
+            avg_unblocking["average_unblocking"] = (
+                avg_unblocking["total_unblocking_days"]
+                / avg_unblocking["total_alerts"]
+            ).round(2)
+
+            df = avg_unblocking.merge(
+                violation_counts, on=["sap_id", "tt_number"], how="left"
             )
+
             df.columns.name = None
-            df["ageing"] = df["ageing"].round(2)
+
+            # Merge shortage
             df = pd.merge(df, shortage, on="tt_number", how="left")
             df = df.fillna(0)
 
+            # Ensure violation columns
             for col in [
-                "continuous_driving_count", "device_tamper_count", "main_supply_removal_count",
-                "night_driving_count", "route_deviation_count", "speed_violation_count",
+                "continuous_driving_count", "device_tamper_count",
+                "main_supply_removal_count", "night_driving_count",
+                "route_deviation_count", "speed_violation_count",
                 "stoppage_violations_count"
-                ]:
+            ]:
                 if col not in df.columns:
                     df[col] = 0
-            df.rename(
-                columns={"continuous_driving_count": "CD", "device_tamper_count": "DT",
-                        "main_supply_removal_count": "PD", "night_driving_count": "ND",
-                        "route_deviation_count": "RD", "speed_violation_count": "SV",
-                        "stoppage_violations_count": "US"}, inplace=True)            
 
+            df.rename(
+                columns={
+                    "continuous_driving_count": "CD",
+                    "device_tamper_count": "DT",
+                    "main_supply_removal_count": "PD",
+                    "night_driving_count": "ND",
+                    "route_deviation_count": "RD",
+                    "speed_violation_count": "SV",
+                    "stoppage_violations_count": "US"
+                },
+                inplace=True
+            )
+
+            # Drill-down aggregation
             if drill_state:
                 group_by_keys = [drill_state]
+
                 if filters:
                     filter_keys = [rec.key.strip('"') for rec in filters]
+
                     if "zone" in filter_keys and "location_name" not in filter_keys:
                         group_by_keys = ["zone", "location_name"]
-                    elif "zone" in filter_keys and "location_name" in filter_keys and "transporter_code" not in filter_keys:
+                    elif (
+                        "zone" in filter_keys and
+                        "location_name" in filter_keys and
+                        "transporter_code" not in filter_keys
+                    ):
                         group_by_keys = ["zone", "location_name", "transporter_code"]
-                    elif "zone" in filter_keys and "location_name" in filter_keys and "transporter_code" in filter_keys and "tt_number" not in filter_keys:
-                        group_by_keys = ["zone", "location_name", "transporter_code", "tt_number"]
+                    elif (
+                        "zone" in filter_keys and
+                        "location_name" in filter_keys and
+                        "transporter_code" in filter_keys and
+                        "tt_number" not in filter_keys
+                    ):
+                        group_by_keys = [
+                            "zone", "location_name", "transporter_code", "tt_number"
+                        ]
 
                 df = df.groupby(group_by_keys, as_index=False).agg({
-                                "CD": "sum", "DT": "sum", "PD": "sum",
-                                "ND": "sum", "RD": "sum", "SV": "sum",
-                                "US": "sum", "ageing": "mean", "shortage": "sum"})
+                    "CD": "sum",
+                    "DT": "sum",
+                    "PD": "sum",
+                    "ND": "sum",
+                    "RD": "sum",
+                    "SV": "sum",
+                    "US": "sum",
+                    "average_unblocking": "mean",
+                    "shortage": "sum"
+                })
+                closing_cols = ["CD", "DT", "PD", "ND", "RD", "SV", "US"]
 
-            return {"status": True, "message": "success", "data": df.to_dict(orient='records')}
+                df["average_closing"] = (
+                    df[closing_cols].sum(axis=1) / len(closing_cols)
+                ).round(2)
+
+            return {
+                "status": True,
+                "message": "success",
+                "data": df.to_dict(orient="records")
+            }
+
         except Exception as e:
             print("-- Exception in get unblock ageing widget --")
             print("traceback :", traceback.format_exc())
