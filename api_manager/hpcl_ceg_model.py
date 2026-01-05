@@ -1996,6 +1996,7 @@ class Tasanalytics_Tas_AnalyticsParams(pydantic.BaseModel):
     start_date: str
     end_date: str
     equipment_type: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
     download: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
