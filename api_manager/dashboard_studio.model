@@ -17,6 +17,11 @@ Enum DashboardStatus str {
     Completed='Completed'
 }
 
+Enum panel_status str {
+    Pending='Pending'
+    Completed='Completed'
+}
+
 Model salesFilters internal {
     key str
     cond optional str
@@ -553,5 +558,44 @@ Model AITexts {
    
     Config=> {
         collection_name=ai_texts
+    }
+}
+
+Model SolarPanelCleaning crud_disable {
+
+    Action=> get_solar_dashboard_summary {
+        bu str
+        action str
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+        category optional str
+    }
+
+
+    Config=> {
+        access_key_mapping='bu,zone,name,sap_id'
+        search_fields='bu,sap_id,name,zone'
+    }
+}
+
+
+Model SolarPanelWetDryCleaning {
+    bu  str
+    sap_id  str
+    location  str
+    zone  str
+    cleaning_type  str
+    frequency  int
+    last_cleaning_date str
+    cleaning_date str
+    panel_status  optional panel_status
+
+    Config=> {
+        crud_operations='read'
+        access_key_mapping='bu,zone,location,sap_id'
+        search_fields='bu,sap_id,location,zone'
     }
 }

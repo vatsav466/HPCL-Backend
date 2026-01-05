@@ -6,6 +6,7 @@ import traceback
 import urdhva_base.settings
 from cryptography.fernet import Fernet
 import urdhva_base.queryparams as queryparams
+import authenticator.saml_validation as saml_validation
 import authenticator.authentication_manager_ad as auth_manager
 router = fastapi.APIRouter(prefix='/users')
 
@@ -48,26 +49,26 @@ async def users_login(request: fastapi.Request, data: Users_LoginParams):
         response.set_cookie(urdhva_base.settings.cookie_name, resp, httponly=urdhva_base.settings.session_httponly,
                             secure=urdhva_base.settings.session_secure, samesite=urdhva_base.settings.session_same_site)
     
-    user_agent = await parse_device_info(request.headers.get("user-agent", "Unknown"))
-    print("user_agent :", user_agent)
-    
-    f = Fernet(urdhva_base.settings.fernet_key)
-    cookie_data = json.loads(f.decrypt(resp.encode()).decode())
-    
-    login_audit = {
-        "login_id": cookie_data["cookie_id"],
-        "user_agent": user_agent,
-        "employee_id": data.username,
-        "email": user_info.get("email", ""),
-        "role": ",".join(user_info.get("novex_role", [])),
-        "login_time": urdhva_base.utilities.get_present_time(),
-        "login_status": LoginStatus.login,
-        "failure_reason": "",
-        "auth_method": "SSO" if user_info["is_ad_user"] else "Password",
-        "remarks": ""
-        }
-    print("login_audit :", login_audit)
-    await UserLoginAuditCreate(**login_audit).create()
+        user_agent = await parse_device_info(request.headers.get("user-agent", "Unknown"))
+        print("user_agent :", user_agent)
+
+        f = Fernet(urdhva_base.settings.fernet_key)
+        cookie_data = json.loads(f.decrypt(resp.encode()).decode())
+
+        login_audit = {
+            "login_id": cookie_data["cookie_id"],
+            "user_agent": user_agent,
+            "employee_id": data.username,
+            "email": user_info.get("email", ""),
+            "role": ",".join(user_info.get("novex_role", [])),
+            "login_time": urdhva_base.utilities.get_present_time(),
+            "login_status": LoginStatus.login,
+            "failure_reason": "",
+            "auth_method": "SSO" if user_info["is_ad_user"] else "Password",
+            "remarks": ""
+            }
+        # print("login_audit :", login_audit)
+        await UserLoginAuditCreate(**login_audit).create()
     return response
 
 
@@ -134,3 +135,61 @@ async def users_update_user_status(request: fastapi.Request, data: Users_Update_
 async def users_logout(request: fastapi.Request, data: Users_LogoutParams):
     # Clearing the session
     return await auth_manager.AuthenticationManager.logout(request)
+
+
+# Action sso_auth_callback
+@router.get('/sso_auth_callback', tags=['Users'])
+async def sso_auth_callback(request: fastapi.Request, code: typing.Optional[str] = None,
+                entity_id: typing.Optional[str] = ""):
+    status, resp, user_info = await saml_validation.auth_callback(code, urdhva_base.settings.saml_tenant_id,
+                                               urdhva_base.settings.saml_client_id,
+                                               urdhva_base.settings.saml_client_secret,
+                                               urdhva_base.settings.saml_redirect_uri)
+    if not status:
+        response = fastapi.responses.JSONResponse({"status": False, "msg": resp}, 401)
+        return response
+    else:
+        response = fastapi.responses.JSONResponse({"status": True, "msg": "Logged in Successfully"},
+                                                  200)
+        response.set_cookie(urdhva_base.settings.cookie_name, resp,
+                            httponly=urdhva_base.settings.session_httponly,
+                            secure=urdhva_base.settings.session_secure,
+                            samesite=urdhva_base.settings.session_same_site)
+
+    user_agent = await parse_device_info(request.headers.get("user-agent", "Unknown"))
+
+    f = Fernet(urdhva_base.settings.fernet_key)
+    cookie_data = json.loads(f.decrypt(resp.encode()).decode())
+
+    login_audit = {
+        "login_id": cookie_data["cookie_id"],
+        "user_agent": user_agent,
+        "employee_id": user_info.get("employee_id", ""),
+        "email": user_info.get("email", ""),
+        "role": ",".join(user_info.get("novex_role", [])),
+        "login_time": urdhva_base.utilities.get_present_time(),
+        "login_status": LoginStatus.login,
+        "failure_reason": "",
+        "auth_method": "SSO",
+        "remarks": ""
+    }
+
+    await UserLoginAuditCreate(**login_audit).create()
+    return response
+
+
+# Action sso_auth_url
+@router.get('/sso_auth_url', tags=['Users'])
+async def sso_auth_url(request: fastapi.Request):
+    return await saml_validation.get_redirect_url(urdhva_base.settings.saml_tenant_id,
+                                                  urdhva_base.settings.saml_client_id,
+                                                  urdhva_base.settings.saml_client_secret,
+                                                  urdhva_base.settings.saml_redirect_uri)
+
+# Action sso_redirection_url
+@router.get('/sso_redirection_url', tags=['Users'])
+async def sso_redirection_url(request: fastapi.Request):
+    return await saml_validation.get_redirect_url(urdhva_base.settings.saml_tenant_id,
+                                                  urdhva_base.settings.saml_client_id,
+                                                  urdhva_base.settings.saml_client_secret,
+                                                  urdhva_base.settings.saml_redirect_uri, "redirection")

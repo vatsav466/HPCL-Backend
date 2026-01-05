@@ -66,19 +66,97 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         """
         self.va_data = va_data
 
+    # async def generate_performance_index(self, location_id=None):
+    #     """
+    #     Async method to generate Performance Index score for SOD.
+
+    #     :param location_id: Unique identifier of location
+    #     :return: A tuple containing a dictionary of module scores and total weightage
+    #     """
+    #     module_scores = {}
+    #     total_weight = sum(module["weightage"] for module in self.config.values())
+    #     for module_name, module in self.config.items():
+    #         mod = getattr(self, f'_compute_{module_name.lower()}_pi_score')
+    #         module_score = await mod(module_name, module, location_id)
+    #         module_scores[module_name] = module_score
+    #     return module_scores, total_weight
     async def generate_performance_index(self, location_id=None):
         """
-        Async method to generate Performance Index score for SOD.
-
-        :param location_id: Unique identifier of location
-        :return: A tuple containing a dictionary of module scores and total weightage
+        Updated to support parent-level modules like 'TAS' which contain nested rule groups.
         """
         module_scores = {}
         total_weight = sum(module["weightage"] for module in self.config.values())
+
         for module_name, module in self.config.items():
-            mod = getattr(self, f'_compute_{module_name.lower()}_pi_score')
-            module_score = await mod(module_name, module, location_id)
-            module_scores[module_name] = module_score
+
+            method_name = f"_compute_{module_name.lower()}_pi_score"
+
+            # ------------------------------------------
+            # CASE 1 → Compute function exists normally
+            # ------------------------------------------
+            if hasattr(self, method_name):
+                mod = getattr(self, method_name)
+                module_score = await mod(module_name, module, location_id)
+                module_scores[module_name] = module_score
+                continue
+
+            # ------------------------------------------
+            # CASE 2 → Parent module (like TAS)
+            # ------------------------------------------
+            print(f"[Parent Module] Processing: {module_name}")
+            query = f"SELECT location_onboard FROM location_master WHERE sap_id = '{location_id}'"
+            data = await hpcl_ceg_model.LocationMaster.get_aggr_data(query)
+
+            raw_value = None
+            if data.get("data"):
+                raw_value = data["data"][0].get("location_onboard")
+
+            # Normalize value
+            # TRUE if: True, "True", "true", "TRUE"
+            is_onboard = str(raw_value).strip().lower() == "true"
+
+            
+            if not is_onboard:
+                module_scores[module_name] = {
+                    "name": module_name,
+                    "score": module["weightage"],   # full score
+                    "weightage": module["weightage"],
+                    "results": [],
+                    "reason": f"location_onboard = {raw_value} → full score assigned"
+                }
+                continue
+
+            parent_results = []
+            parent_score = 0
+
+            # Loop through nested modules inside TAS
+            for child in module.get("rules", []):
+                child_name = child["name"]
+                method_child = f"_compute_{child_name.lower()}_pi_score"
+
+                if hasattr(self, method_child):
+                    print(f" → Calling child method: {method_child}")
+                    mod_child = getattr(self, method_child)
+                    child_result = await mod_child(child_name, child, location_id)
+
+                    parent_results.append(child_result)
+                    parent_score += child_result.get("score", 0)
+
+                else:
+                    print(f" ⚠️ No compute method for child: {child_name}")
+
+            # Apply parent module weightage
+            parent_final = round((parent_score * module["weightage"]) / 100, 2)
+            # parent_final = module["weightage"]
+
+
+            module_scores[module_name] = {
+                "name": module_name,
+                "score": parent_final,
+                "weightage": module["weightage"],
+                "results": parent_results
+            }
+
         return module_scores, total_weight
 
     async def _compute_safety_interlocks_pi_score(self, name, rules, location_id):
@@ -212,7 +290,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     WHERE device_type = '{rule['equipment_name']}' AND sap_id = '{location_id}'
                 """
                 arch_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(param_query)
-                parameter_count = int(arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)
+                parameter_count = int(arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)             
 
                 # Separate Tank_Under Maintenance and other alerts by device
                 tank_maintenance_devices = set()
@@ -245,6 +323,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             "weightage": rules['weightage'],
             "results": pi_score
         }
+        
 
 
     async def _compute_gantry_interlocks_pi_score(self, name, rules, location_id):
@@ -448,7 +527,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             "weightage": rules['weightage'], 
             "results": gantry_score
         }
-
+        
 
     async def _compute_process_interlocks_pi_score(self, name, rules, location_id):
         """
@@ -562,64 +641,150 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             "weightage": rules['weightage'],
             "results": process_score
         }
+       
 
+    # async def _compute_va_pi_score(self, name, rules, location_id):
+    #     pi_score = []
+
+    #     for rule in rules['rules']:
+    #         score = 0
+    #         rule_weightage = rule['weightage']
+            
+    #         if rule['model'] == 'va_portal':
+    #             if self.va_data:
+    #                 raw_score = float(self.va_data.get('OVERALL_SCORE', 0))
+    #                 if raw_score == 0:
+    #                     score = round(rule_weightage, 2)  # full score if portal score is 0
+    #                 else:
+    #                     score = round((raw_score * 10 * rule_weightage) / 100, 2)
+    #             else:
+    #                 score = round(rule_weightage, 2)  # assume full score if data is missing
+    #         # elif rule['model'] == 'va_alerts':
+    #         #     severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
+    #         #     in_clause_raw = ", ".join(f"'{value}'" for value in severity)
+    #         #     # For all open alerts
+    #         #     query_open = (
+    #         #         f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
+    #         #         f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'VA' and "
+    #         #         f"bu = 'TAS' group by severity")
+    #         #     data = await hpcl_ceg_model.Alerts.get_aggr_data(query_open)
+    #         #     open_alerts = {data['severity']: data['count'] for data in data['data']}
+
+    #         #     # For all closure alerts in last 24 hours
+    #         #     query_close = (
+    #         #         f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
+    #         #         f"sap_id = '{location_id}' and alert_status = 'Close' and alert_section = 'VA' and "
+    #         #         f"bu = 'TAS' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
+    #         #     data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
+    #         #     close_alerts = {data['severity']: data['count'] for data in data['data']}
+    #         #     alert_score = []
+
+    #         #     for rule_ in rule['rules']:
+    #         #         int_name = rule_['interlock_name']
+    #         #         if int_name in open_alerts or int_name in close_alerts:
+    #         #             close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
+    #         #                                                      (close_alerts.get(int_name, 0) +
+    #         #                                                       open_alerts.get(int_name, 0)))
+    #         #             alert_score.append(close_percentage)
+    #         #         else:
+    #         #             alert_score.append(rule_['weightage'])
+    #         #     print(alert_score, rules['weightage'])
+    #         #     score = round((sum(alert_score) * rules['weightage']) / 100, 2)
+    #         # else:
+    #         #     ...
+    #         pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
+    #                          'module': rules.get('name', name)})
+    #     print(" vts pi score -----> ", pi_score)
+    #     final_score = sum([score['score'] for score in pi_score])
+    #     final_score = round((final_score * rules['weightage']) / 100, 2)
+    #     for rec in pi_score:
+    #         rec['score'] = round(rec['score'], 2)
+    #     print("final_score    ----->   ", final_score)
+    #     return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
     async def _compute_va_pi_score(self, name, rules, location_id):
         pi_score = []
-
+        msg = ""
         for rule in rules['rules']:
             score = 0
-            rule_weightage = rule['weightage']
-            
             if rule['model'] == 'va_portal':
                 if self.va_data:
-                    raw_score = float(self.va_data.get('OVERALL_SCORE', 0))
-                    if raw_score == 0:
-                        score = round(rule_weightage, 2)  # full score if portal score is 0
-                    else:
-                        score = round((raw_score * 10 * rule_weightage) / 100, 2)
+                    score = round((float(self.va_data['OVERALL_SCORE']) * 10 * rule['weightage']) / 100, 2)
+                    msg = f"VA Portal overall score: {self.va_data['OVERALL_SCORE']} * 10 * {rule['weightage']} / 100"
                 else:
-                    score = round(rule_weightage, 2)  # assume full score if data is missing
-            # elif rule['model'] == 'va_alerts':
-            #     severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
-            #     in_clause_raw = ", ".join(f"'{value}'" for value in severity)
-            #     # For all open alerts
-            #     query_open = (
-            #         f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
-            #         f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'VA' and "
-            #         f"bu = 'TAS' group by severity")
-            #     data = await hpcl_ceg_model.Alerts.get_aggr_data(query_open)
-            #     open_alerts = {data['severity']: data['count'] for data in data['data']}
+                    score = 0
+                    msg = "VA Portal data not available, score set to 0"
+            elif rule['model'] == 'va_alerts':
+                severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
+                in_clause_raw = ", ".join(f"'{value}'" for value in severity)
+                # For all open alerts
+                query_open = (
+                    f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
+                    f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'VA' and "
+                    f"bu = 'TAS' and created_at::DATE >= '2025-09-01' and created_at >= NOW() - INTERVAL '30 days ' group by severity")
+                data = await hpcl_ceg_model.Alerts.get_aggr_data(query_open)
+                open_alerts = {data['severity']: data['count'] for data in data['data']}
 
-            #     # For all closure alerts in last 24 hours
-            #     query_close = (
-            #         f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
-            #         f"sap_id = '{location_id}' and alert_status = 'Close' and alert_section = 'VA' and "
-            #         f"bu = 'TAS' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
-            #     data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
-            #     close_alerts = {data['severity']: data['count'] for data in data['data']}
-            #     alert_score = []
+                # For all closure alerts in last 24 hours
+                query_close = (
+                    f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
+                    f"sap_id = '{location_id}' and alert_status = 'Close' and alert_section = 'VA' and "
+                    f"bu = 'TAS'and created_at::DATE >= '2025-09-01' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
+                data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
+                close_alerts = {data['severity']: data['count'] for data in data['data']}
+                alert_score = []
 
-            #     for rule_ in rule['rules']:
-            #         int_name = rule_['interlock_name']
-            #         if int_name in open_alerts or int_name in close_alerts:
-            #             close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
-            #                                                      (close_alerts.get(int_name, 0) +
-            #                                                       open_alerts.get(int_name, 0)))
-            #             alert_score.append(close_percentage)
-            #         else:
-            #             alert_score.append(rule_['weightage'])
-            #     print(alert_score, rules['weightage'])
-            #     score = round((sum(alert_score) * rules['weightage']) / 100, 2)
-            # else:
-            #     ...
-            pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
-                             'module': rules.get('name', name)})
-        print(" vts pi score -----> ", pi_score)
-        final_score = sum([score['score'] for score in pi_score])
+                for rule_ in rule['rules']:
+                    int_name = rule_['interlock_name']
+                    if not open_alerts and not close_alerts:
+                        alert_score.append(rule_['weightage'])
+                        print("alert_score:",alert_score)
+                    elif int_name in open_alerts or int_name in close_alerts:
+                        close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
+                                                                 (close_alerts.get(int_name, 0) +
+                                                                  open_alerts.get(int_name, 0)))
+                        alert_score.append(close_percentage)
+                    else:
+                        alert_score.append(rule_['weightage'])
+                print(alert_score, rule['weightage'])
+                total_alerts = sum(open_alerts.values()) + sum(close_alerts.values())
+                closed_alerts = sum(close_alerts.values())
+                if all(s == 0 for s in alert_score):
+                    # If perfect compliance is achieved, force the module score to 100.0
+                    score = rule['weightage'] # rules['weightage']
+                else:
+                    score = round((sum(alert_score) * rule['weightage']) / 100, 2)
+                msg = f"Total alerts: {total_alerts}. closed_alerts :{closed_alerts} .Calculation: ({round(sum(alert_score), 2)}) * ({rule['weightage']}) / 100"
+            else:
+                ...
+            pi_score.append({
+                "name": rule['name'], 
+                "score": score, 
+                "weightage": rule['weightage'],
+                'module': rules.get('name', name),
+                "msg": msg
+                })
+        # final_score = sum([score['score'] for score in pi_score])
+        
+        print("-"*20)
+        print("pi_score :", pi_score)
+        print("-"*20)
+        alert_score = sum(
+            s["score"] for s in pi_score
+            if "alert" in s["name"].lower()
+        )
+
+        va_portal_score = sum(
+            s["score"] for s in pi_score
+            if "alert" not in s["name"].lower()  
+        )
+
+        # alert_score = round((alert_score * 10) / 100, 2)
+        # va_portal_score = round((va_portal_score * 90) / 100, 2)
+
+        final_score = alert_score + va_portal_score
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
-        print("final_score    ----->   ", final_score)
         return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
 
 
@@ -705,6 +870,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                              'module': rules.get('name', name)})
         final_score = sum([score['score'] for score in pi_score])
         final_score = round((final_score * rules['weightage']) / 100, 2)
+        # final_score = rules['weightage'] 
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
         return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}

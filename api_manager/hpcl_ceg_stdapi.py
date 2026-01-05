@@ -2076,3 +2076,48 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await NoticesVTS.get_all(params, skip_secrets=True)
 
+
+@router.post('/deviceinstallation', response_model=DeviceInstallation, tags=['DeviceInstallation'])
+async def create(inputObj: DeviceInstallationCreate):
+    return await inputObj.create()
+
+
+@router.put('/deviceinstallation', response_model=DeviceInstallation, tags=['DeviceInstallation'])
+async def update(inputObj: DeviceInstallation):
+    return await inputObj.modify()
+
+
+@router.get('/deviceinstallation/{id}', response_model=DeviceInstallation, tags=['DeviceInstallation'])
+async def get(id: str):
+    return await DeviceInstallation.get(id, skip_secrets=True)
+
+
+@router.get('/deviceinstallation', response_model=DeviceInstallationGetResp, tags=['DeviceInstallation'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await DeviceInstallation.get_all(params, skip_secrets=True)
+
+
+@router.delete('/deviceinstallation/{id}', tags=['DeviceInstallation'])
+async def delete(id: str):
+    return await DeviceInstallation.delete(id)
+
+
+@router.get('/systemauditlog/{id}', response_model=SystemAuditLog, tags=['SystemAuditLog'])
+async def get(id: str):
+    return await SystemAuditLog.get(id, skip_secrets=True)
+
+
+@router.get('/systemauditlog', response_model=SystemAuditLogGetResp, tags=['SystemAuditLog'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await SystemAuditLog.get_all(params, skip_secrets=True)
+
+
+@router.get('/crisdryoutsync/{id}', response_model=CrisDryOutSync, tags=['CrisDryOutSync'])
+async def get(id: str):
+    return await CrisDryOutSync.get(id, skip_secrets=True)
+
+
+@router.get('/crisdryoutsync', response_model=CrisDryOutSyncGetResp, tags=['CrisDryOutSync'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await CrisDryOutSync.get_all(params, skip_secrets=True)
+

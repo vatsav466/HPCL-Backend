@@ -249,7 +249,7 @@ async def insert_ro_dealer(cursor):
 async def sync_users():
     connection = await get_db_connection()
     cursor = connection.cursor()
-    for bu in ["lpg", "tas", "ro"]:
+    for bu in ["lpg", "tas", "ro", "ds"]:
         role_master = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/novex_role_master.csv")
         role_master = role_master[role_master["bu"] == str(bu).upper()]
         role_master = role_master.drop_duplicates("tibco_role")
@@ -260,7 +260,14 @@ async def sync_users():
         if roles:
             roles_condition = "ZR.ROLE_NAME IN ({})".format(', '.join([f"'{role}'" for role in roles]))
             query += f" AND {roles_condition}"        
-        data = await fetch_data(cursor, query)        
+        data = await fetch_data(cursor, query)
+        
+        if bu == 'ds':
+            data.loc[
+                data['PLANT_DESC'].str.contains('DSRO', na=False),
+                'PLANT_DESC'
+            ] = data['PLANT_DESC'].str.replace('DSRO', 'I&C RO', regex=False)
+
         print("Length of Data Before Merge:", len(data))
         data = pd.merge(data, role_master[['novex_role', 'tibco_role']], left_on='ROLE_NAME', right_on='tibco_role', how='left')
         print("Length of Data After Merge:", len(data))

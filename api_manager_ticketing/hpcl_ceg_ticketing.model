@@ -103,6 +103,8 @@ Model Ticketing {
     comment_attachment_path optional str
     context optional str
     merge_status optional str
+    parent_id optional str
+    subtask_id optional list str
     
 
 
@@ -130,6 +132,8 @@ Model Ticketing {
         file_attachment_name optional str
         file_attachment_id optional str
         linked_alert_id optional list str
+        parent_id optional str
+        subtask_id optional list str
       
 
     }
@@ -157,6 +161,8 @@ Model Ticketing {
         file_attachment_name optional str
         file_attachment_id optional str
         linked_alert_id optional list str
+        parent_id optional str
+        subtask_id optional list str
       
        
     }
@@ -242,6 +248,14 @@ Model Ticketing {
         ticket_id str
         comment_id str
         file_path optional str
+    }
+
+    Action=> get_location_data {
+        bu optional str
+        zone optional str
+        region optional str
+        sales_area optional str
+        sap_id optional str
     }
 
     Config=> {

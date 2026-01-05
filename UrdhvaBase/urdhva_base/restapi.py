@@ -73,8 +73,9 @@ async def decrypt_middleware(request: fastapi.Request, call_next):
             key = key.encode()
         cipher = Fernet(key)
         path = request.url.path
-        if path in ['/api/session/me', '/api/session/encryption-status', '/api/ping',
-                                '/docs', '/openapi.json', '/api/logout']:
+        if path in ['/api/session/me', '/api/session/encryption-status', '/api/ping', '/docs',
+                    '/openapi.json', '/api/logout', '/api/users/sso_auth_url',
+                    '/api/users/sso_redirection_url']:
             response = await call_next(request)
             return response
 
@@ -326,7 +327,9 @@ async def authMiddleware(request: fastapi.Request, call_next):
     # return await call_next(request)
     response = fastapi.Response(None, 403)
     if (request.url.path in ['/docs', '/openapi.json', '/api/login', '/api/session/me', '/api/users/login',
-                             '/api/session/encryption-status', '/api/ping'] +
+                             '/api/session/encryption-status', '/api/ping',
+                             '/api/users/sso_auth_url', '/api/users/sso_auth_callback',
+                             '/api/users/sso_redirection_url'] +
             urdhva_base.settings.noauth_urls or \
             re.match(r"/api/[\S\s\w]*login\b(?![a-zA-Z])", request.url.path) \
             or re.match(r"/api/[\S\s\w]*authorize", request.url.path)):
@@ -340,7 +343,9 @@ async def authMiddleware(request: fastapi.Request, call_next):
             return add_security_headers(response)
         # redirect_url = f"https://{request.base_url.hostname}/login"
         # resp_dict = {"url": redirect_url}
-        response = fastapi.responses.HTMLResponse("", 401)
+        response = fastapi.responses.HTMLResponse("Invalid Session", 401)
+    elif cookie and not rpt:
+        response = fastapi.responses.HTMLResponse("Invalid Session", 401)
     elif cookie or rpt:
         if await has_permission(request.method, request.scope['path']):
             response: fastapi.responses.Response = await call_next(request)

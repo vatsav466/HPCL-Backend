@@ -124,11 +124,24 @@ async def performancescore_download_performance_score(data: Performancescore_Dow
                 "Production (MT)",
                 "LPG Production interruption (Hrs)"]
         common_columns = ["Video Analytics", "VTS"]
-        base_columns = ["Sr No", "SAP ID", "Name", "Zone", "Region", "Score", "Rank"]
+        # base_columns = ["Sr No", "SAP ID", "Name", "Zone", "Region", "Score", "Rank"]
+        base_columns = ["Sr No", "SAP ID", "Name", "Zone", "Region", "Score", "Rank", "Zonal Average","All India Average"]
+
         fixed_columns = base_columns + bu_columns + common_columns
 
         temp_result = sorted(sap_scores.values(), key=lambda x: -x['overall'])
+        # Calculate All India Average (average of all plant overall scores)
+        all_india_average = round(
+            sum(rec['overall'] for rec in temp_result) / len(temp_result), 2
+        )
         df_rows = []
+        zone_map = {}    # zone → list of scores
+        for rec in temp_result:
+            zone = rec['zone']
+            score = rec['overall']
+            zone_map.setdefault(zone, []).append(score)
+
+        zone_avg = {z: round(sum(vals) / len(vals), 2) for z, vals in zone_map.items()}
         rank = 1
         prev_score = None
         # print("temp_result: ",temp_result)
@@ -147,6 +160,7 @@ async def performancescore_download_performance_score(data: Performancescore_Dow
             if prev_score is not None and current_score < prev_score:
                 rank = rank + 1
             prev_score = current_score
+            
             def get_bu_data(bu, rec):
                 data = {
                     "Sr No": i + 1,
@@ -156,6 +170,8 @@ async def performancescore_download_performance_score(data: Performancescore_Dow
                     "Region": rec['region'],
                     "Score": rec['overall'],
                     "Rank": rank,
+                    "Zonal Average": zone_avg.get(rec['zone'], 0),
+                    "All India Average": all_india_average,
                     "Video Analytics": get_score(rec, "VA"),
                     "VTS": get_score(rec, "VTS")
                 }
@@ -181,6 +197,7 @@ async def performancescore_download_performance_score(data: Performancescore_Dow
         # --- 3. Save Excel with 3-Row Header (Manual Writing - IMPLEMENTING FORMATTING) ---
         # output_dir = "/Users/algofusion/Downloads"
         output_dir = "/opt/downloads"
+        # output_dir = "/Users/algofusion/downloads"
         os.makedirs(output_dir, exist_ok=True)
         template_file_path = os.path.join(output_dir, f"Updated_{data.bu}_infra_data.xlsx")
         
@@ -213,7 +230,7 @@ async def performancescore_download_performance_score(data: Performancescore_Dow
         param_cols = {}
         # --- Column Mappings (Used to determine where to write scores and weightages) ---
         if data.bu == 'TAS':
-            start_num = 7
+            start_num = 8
             for key, name in {'Safety_Interlocks': 'Safety Interlocks',
              'Gantry_Interlocks': 'Gantry Interlocks',
              'Process_Interlocks': 'Process Interlocks',
@@ -227,27 +244,31 @@ async def performancescore_download_performance_score(data: Performancescore_Dow
                 start_num += 1
         elif data.bu == 'LPG':
             param_cols = {
-                "Cyl. Rejections (Check Scale, Valve Leak & O Ring Leak)": {"col_idx": 7, "cat_key": "PQ Rejection"},
-                "Productivity (Cyl/hr)": {"col_idx": 8, "cat_key": "Productivity"},
-                "Production (MT)": {"col_idx": 9, "cat_key": "Production"},
-                "LPG Production interruption (Hrs)": {"col_idx": 10, "cat_key": "LPG Breakdown"},
-                "Video Analytics": {"col_idx": 11, "cat_key": "VA"},
-                "VTS": {"col_idx": 12, "cat_key": "VTS"},
+                "Cyl. Rejections (Check Scale, Valve Leak & O Ring Leak)": {"col_idx": 9, "cat_key": "PQ Rejection"},
+                "Productivity (Cyl/hr)": {"col_idx": 10, "cat_key": "Productivity"},
+                "Production (MT)": {"col_idx": 11, "cat_key": "Production"},
+                "LPG Production interruption (Hrs)": {"col_idx": 12, "cat_key": "LPG Breakdown"},
+                "Video Analytics": {"col_idx": 13, "cat_key": "VA"},
+                "VTS": {"col_idx": 14, "cat_key": "VTS"},
             }
         last_col_index = len(fixed_columns) - 1 
         
         # --- Row 1 (index 0): Merged Header ---
-        worksheet.merge_range(0, 7, 0, last_col_index, 'Parameter wise Scores', merge_orange_format)
+        worksheet.merge_range(0, 9, 0, last_col_index, 'Parameter wise Scores', merge_orange_format)
         
         # Merge the first 7 columns across all three header rows (Rows 1-3)
-        for col_num in range(7):
+        for col_num in range(9):
             worksheet.merge_range(0, col_num, 2, col_num, fixed_columns[col_num], merge_orange_format)
-            
-        # --- Row 2 (index 1): Main Headers (Full Names) with Filters ---
-        # The main headers for parameter scores start at column 7 and are written in Row 2 (index 1)
+        for col_num, col_name in enumerate(base_columns):
+            worksheet.write(1, col_num, col_name, orange_format)
+
         for header, info in param_cols.items():
             col_num = info["col_idx"]
             worksheet.write(1, col_num, header, orange_format)
+            
+        # --- Row 2 (index 1): Main Headers (Full Names) with Filters ---
+        # The main headers for parameter scores start at column 7 and are written in Row 2 (index 1)
+        
             
         # --- Row 3 (index 2): Weightages ---
         # Write parameter weightage numbers on Row 3

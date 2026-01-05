@@ -186,23 +186,10 @@
             <td>{{dry_out_details['> 75 Rs Lakhs']}}</td>
         </tr>
     </tbody></table>
-    <h5>2.5. Day wise trend of Partial Dryout (MS/HSD):</h5>
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Dry out Count</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in dry_out_trends %}
-            <tr>
-                <td>{{ row['Date'] }}</td>
-                <td>{{ row['Dry out Count'] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h5>2.5 Last 30 days trend of Partial Dryout (MS/HSD)</h5>
+    <div class="logo">
+        <img src="cid:last_30_days_dry_out_trends" alt="Last 30 Days Dry Out Trends" width="1000" height="auto">
+    </div>
     <h5>2.6. Zone wise Date wise Listing of Partial Dry outs</h5>
     <table>
         <thead>
@@ -224,7 +211,7 @@
     </table>
     <h5>2.7 Monthly Loss of Sales due to Partial Dry-outs</h5>
     <div class="logo">
-        <img src="cid:dry_out_lost" alt="HP Pay Logo" width="800" height="auto">
+        <img src="cid:dry_out_lost" alt="HP Pay Logo" width="1000" height="auto">
     </div>
     <h5>2.8 Location/Depo wise dry out details</h5>
     <table>
@@ -272,35 +259,22 @@
         </div>
     <h5>3.2. LPG VTS Governance ({{present_month}})</h5>
     <table>
-        <tr>
-            <th>
-                TTs Blocked by Novex
-            </th>
-            <th>
-                TTs Manually Unblocked
-            </th>
-            <th>
-                TTs currently under Block
-            </th>
-            <th>
-                TTs Auto Unblocked
-            </th>
-        </tr>
-    
-        <tr>
-            <td>
-                {{TTs_Blocked_by_Novex_LPG}}
-            </td>
-            <td>
-                {{TTs_Manually_Unblocked_LPG}}
-            </td>
-            <td>
-                {{TTs_currently_under_Block_LPG}}
-            </td>
-            <td>
-                {{TTs_Auto_Unblocked_LPG}}
-            </td>
-        </tr>
+        <thead>
+            <tr>
+                <th>TTs Blocked by Novex</th>
+                <th>TTs Manually Unblocked</th>
+                <th>TTs unblocked as per ITDG</th>
+                <th>TTs currently under Block</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ lpg_blocked_data_resp.TTs_Blocked_by_Novex_LPG }}</td>
+                <td>{{ lpg_blocked_data_resp.TTs_Manually_Unblocked_LPG }}</td>
+                <td>{{ lpg_blocked_data_resp.TTs_Auto_Unblocked_LPG }}</td>
+                <td>{{ lpg_blocked_data_resp.TTs_currently_under_Block_LPG }}</td>
+            </tr>
+        </tbody>
     </table>
 <h4>4. SOD Operations Summary</h4>
 <h5>4.1. Open Alert Summary ({{present_month}})</h5>
@@ -342,10 +316,10 @@
             TTs Manually Unblocked
         </th>
         <th>
-            TTs currently under Block
+            TTs unblocked as per ITDG
         </th>
         <th>
-            TTs Auto Unblocked
+            TTs currently under Block
         </th>
     </tr>
 
@@ -357,10 +331,10 @@
             {{TTs_Manually_Unblocked_TAS}}
         </td>
         <td>
-            {{TTs_currently_under_Block_TAS}}
+            {{TTs_Auto_Unblocked_TAS}}
         </td>
         <td>
-            {{TTs_Auto_Unblocked_TAS}}
+            {{TTs_currently_under_Block_TAS}}
         </td>
     </tr>
 </table>

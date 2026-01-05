@@ -7,8 +7,15 @@ import aiohttp
 import asyncio
 import requests
 import datetime
+import pytz
+import numpy as np
+import polars as pl
 import hpcl_ceg_model
 import hpcl_ceg_enum
+import charts_actions
+import traceback
+from datetime import time
+import dashboard_studio_model
 from collections import Counter
 from geopy.distance import geodesic
 import utilities.helpers as helpers
@@ -27,6 +34,16 @@ import cache_gateway.cache_api_actions as cache_api_actions
 logger = urdhva_base.logger.Logger.getInstance('vts_alert_log')
 
 default_headers = {"Content-Type": "application/json"}
+
+POLARS_OPERATOR_MAP = {
+    ">": "gt",
+    ">=": "ge",
+    "<": "lt",
+    "<=": "le",
+    "=": "eq",
+    "==": "eq",
+    "!=": "ne"
+}
 
 async def get_creds(db_name: str):
     creds = credential_loader.get_credentials(db_name)
@@ -249,12 +266,30 @@ async def post_blocked_tt_ims(input_data: typing.List[typing.Dict[str, typing.An
     """
     url = urdhva_base.settings.post_to_ims_url
     session = requests.Session()
+    ims_response = None
+    error_msg = None
+    max_retries = 3
     try:
-        response = session.post(url, json=input_data, headers=default_headers)
-        if response.status_code // 100 == 2:
-            logger.info(f"Data successfully posted to IMS {response.json()}")
-            return response.json()
-        return response.json()
+        for attempt in range(1, max_retries + 1):
+            try:
+                logger.info(f"IMS Post Attempt {attempt}/{max_retries}")
+                response = session.post(url, json=input_data, headers=default_headers)
+                if response.status_code // 100 == 2:
+                    logger.info(f"Data successfully posted to IMS {response.json()}")
+                    ims_response = response.json()
+                    return ims_response, error_msg
+                error_msg = f"IMS responded with {response.status_code}: {response.text}"
+                logger.error(f"IMS responded with {response.status_code}. Response: {response.text}")
+            except requests.exceptions.RequestException as e:
+                error_msg = f"IMS Post failed {str(e)}"
+                logger.error(f"IMS Post failed (Attempt {attempt}/{max_retries}): {e}")
+            # retry delay
+            if attempt < max_retries:
+                logger.info(f"Retrying in 10 seconds...")
+                await asyncio.sleep(10)
+        # after max retries
+        logger.error(f"IMS post failed after 3 attempts for data: {input_data}")
+        return ims_response, error_msg
     finally:
         session.close()
 
@@ -561,15 +596,23 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
 
 async def update_vts_instance(alert_data):
     vts_end_datetime = alert_data.get('vts_end_datetime',None)
-    instance_data, violation_name, vts_alert_history_ids, alert_id = await get_updated_vts_instance(alert_data['tl_number'],alert_data['location_id'],alert_data['location_type'])
+    instance_data, violation_name, vts_alert_history_ids, alert_id = await get_updated_vts_instance(alert_data['tl_number'],alert_data['base_location_id'],alert_data['location_type'])
     if not instance_data:
         logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
         return
+    
+    if not alert_id:
+        logger.info(f"Alert Got Blocked From Admin Module {alert_data['tl_number']}")
+        return
+    
     alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
     if "_sa_instance_state" in alert_data.keys():
         del alert_data["_sa_instance_state"]
+    
+    if alert_data.get('interlock_name') in ['Itdg Admin Block', 'No VTS No Load']:
+        return
 
     alert_message = (
         f"Instance Updated for this Vehicle Number: {alert_data['vehicle_number']} from {alert_data['device_id']} to {instance_data['instance']} with violation {violation_name}"
@@ -742,9 +785,70 @@ async def create_vts_violation_alerts(enriched_data):
             await trigger_vts_alarm_alert(entry)
     except Exception as e:
         logger.error(f"Error creating VTS Alert : {str(e)}")
+
+async def get_delivered_location(invoice_number,supply_location,vehicle_number):
+    MAX_RETRIES = 3
+    RETRY_DELAY = 10
+
+    delivery_location_resp = {}
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            # Fetching voilations from VTS DB
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            query = f"""
+                        SELECT DISTINCT CONSUMER_ERP_CODE FROM COMPLETED_TRIP 
+                            WHERE CHALLAN_NO = '{invoice_number}' 
+                            AND VEHICLE_RTO_NO = '{vehicle_number}' 
+                            AND DEPOT_ERP_CODE = '{supply_location}'
+                    """
+            
+            print('*'*100)
+            print('query',query)
+            print('*'*100)
+
+            delivery_location_resp = await function(query=query)
+            # Break retry loop if valid response received
+            if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
+                break
+            
+            invoice_no = invoice_number.split("-")[0]
+            # Fetching voilations from VTS DB
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            query = f"""SELECT DISTINCT CUSTOMER AS CONSUMER_ERP_CODE FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
+                        AND SUPPLY_LOC = '{supply_location}'"""
+
+            print('*'*100)
+            print('query',query)
+            print('*'*100)
+
+            delivery_location_resp = await function(query=query) 
+
+            if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
+                break
+
+        except Exception as e:
+            print(traceback.format_exc())
+            logger.error(f"Vehicle Track DB query failed for getting delivery_location : Traceback: {traceback.format_exc()}")
+            logger.error(
+                f"Vehicle Track DB query failed (attempt {attempt}/{MAX_RETRIES}) "
+                f"Invoice={invoice_number}, Location={supply_location}, Error={e}"
+                )
+            
+            if attempt < MAX_RETRIES:
+                await asyncio.sleep(RETRY_DELAY)
+    
+    ship_to_list = delivery_location_resp.get("CONSUMER_ERP_CODE") or []
+
+    return ship_to_list
     
 async def create_vts_alerts(enriched_data):
     try:
+        base_location_data = await get_base_location_details()
         for entry in enriched_data:
             vts_duplicate_check_query = f"""select invoice_number,location_id from vts_alert_history where tl_number = '{entry['tl_number']}'
                                                 and invoice_number = '{entry['invoice_number']}' and location_id = '{entry['location_id']}'"""
@@ -754,6 +858,24 @@ async def create_vts_alerts(enriched_data):
                 #print(f"Received duplicate Event {entry} with existing data {vts_duplicate_check_data}")
                 logger.info(f"Received duplicate Event {entry} with existing data {vts_duplicate_check_data}")
                 continue
+            # Moving counts got from VTS route deviation into _orig key, 
+            # Validating VTS Route Deviation DB to verify Invoices > 15 minutes
+            entry['route_deviation_count_orig'] = entry.get("route_deviation_count", 0)
+            if entry.get("route_deviation_count"):
+                # Fetching voilations from VTS DB
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+                function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+                query = f"""SELECT COUNT(*) FROM ROUTE_DEVIATION WHERE TT_NUMBER = '{entry['tl_number']}'
+                            AND INVOICE_NO = '{entry['invoice_number']}' AND DURATION > 15 AND TRIP_STATUS = 'LOADED'
+                            """
+                route_deviation_resp = await function(query=query)
+                count_value = list(route_deviation_resp.values())[0][0]
+                if int(count_value) > 0:
+                    entry['route_deviation_count'] = int(count_value)
+                else:
+                    entry['route_deviation_count'] = 0
+
             entry['auto_unblock'] = True
             entry['violation_type'] = await get_vts_violation(entry)
             entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
@@ -762,10 +884,41 @@ async def create_vts_alerts(enriched_data):
             entry["bu"] = entry["location_type"]
             entry["sap_id"] = str(entry["location_id"])
 
+            if entry['location_type'] == 'TAS':
+                entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
+
+            if entry['location_type'] in ['LPG','TAS']:
+                ship_to_list = await get_delivered_location(entry['invoice_number'],entry['location_id'],entry['tl_number'])
+                if len(ship_to_list) > 0 and entry['location_type'] in ['LPG']:
+                    entry["base_location_id"] = ship_to_list[0].lstrip("P").lstrip("00")
+                if len(ship_to_list) > 0:
+                    entry['destination_code']  = ship_to_list[0].lstrip("P").lstrip("00")
+
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],
                 location_id=entry["location_id"]  
                )
+
+            if entry.get('base_location_id'):
+                base_location_data = {}
+                if entry['base_location_id'].startswith('4'):
+                    query = (f"select * from location_master where sap_id = '{entry["base_location_id"]}'")
+                    vts_location_data = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=0)
+                    if vts_location_data.get("data", []):
+                        base_location_data = vts_location_data['data'][0]
+                else:
+                    _, base_location_data = await cache_api_actions.get_location_data(
+                        bu=entry["location_type"],
+                        location_id=entry["base_location_id"]
+                    )
+                entry["base_region"] = base_location_data.get("region","")
+                entry["base_zone"] = base_location_data.get("zone","")
+                entry["base_location_name"] = base_location_data.get("name","")
+            else:
+                entry['base_location_id'] = entry['location_id']
+                entry["base_region"] = location_data.get("region")
+                entry["base_zone"] = location_data.get("zone")
+                entry["base_location_name"] = location_data.get("name")
             
             entry["region"] = location_data.get("region")
             entry["zone"] = location_data.get("zone")
@@ -773,6 +926,10 @@ async def create_vts_alerts(enriched_data):
 
 
             await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
+
+            if entry['location_type'] in ['LUB']:
+                continue
+
             # Skipping if the truck is already blacklisted
             if await is_vehicle_blacklisted(entry['tl_number']):
                 black_list_query = f"select * from vts_truck_details where truck_regno = '{entry['tl_number']}'"
@@ -785,6 +942,7 @@ async def create_vts_alerts(enriched_data):
                     "invoice_number": entry["invoice_number"],
                     "stoppage_violations_count": entry["stoppage_violations_count"],
                     "route_deviation_count": entry["route_deviation_count"],
+                    "route_deviation_count_orig": entry["route_deviation_count_orig"],
                     "speed_violation_count": entry["speed_violation_count"],
                     "main_supply_removal_count": entry["main_supply_removal_count"],
                     "night_driving_count": entry["night_driving_count"],
@@ -800,6 +958,8 @@ async def create_vts_alerts(enriched_data):
             else:
                 await update_vts_instance(entry)
     except Exception as e:
+        print(traceback.format_exc())
+        logger.error(f"Error creating VTS Alert : Traceback: {traceback.format_exc()}")
         logger.error(f"Error creating VTS Alert : {str(e)}")
 
 async def close_camunda_workflow(alert_id):
@@ -874,43 +1034,81 @@ async def fetch_access_token():
         "client_secret": urdhva_base.settings.lpg_vts_client_secret_key,
         "client_authentication": "send_as_basic_auth_header"
     }
-    try:
-        response = requests.post(urdhva_base.settings.lpg_vts_auth_url, headers=headers, data=data, timeout=10, verify=False)
-        response.raise_for_status()
-        token_data = response.json()
-        return token_data.get("access_token")
-    except requests.exceptions.RequestException as e:
-        print(f"[ERROR] Failed to fetch token: {e}")
-        return None
+    token = None
+    error_msg = None
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            logger.info(f"Fetching token… Attempt {attempt}/{max_retries}")
+            response = requests.post(urdhva_base.settings.lpg_vts_auth_url, headers=headers, data=data, timeout=10, verify=False)
+            response.raise_for_status()
+            token_data = response.json()
+            token = token_data.get("access_token")
+            if token:
+                logger.info(f"Token fetched successfully.")
+                return token, error_msg
+            else:
+                error_msg = "Token API succeeded but access_token missing"
+                logger.error(error_msg)
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Token API failed: {str(e)}"
+            logger.error(f"Token API failed (Attempt {attempt}/{max_retries}): {e}")
+        
+        if attempt < max_retries:
+            logger.info(f"Retrying in 15 seconds...")
+            await asyncio.sleep(15)
+    logger.error(f"All attempts to fetch token failed.")
+    return token, error_msg
 
 async def post_lpg_tt(payload):
-    access_token = await fetch_access_token()
+    access_token,error_msg = await fetch_access_token()
     if not access_token:
-        print(f"[ERROR] Failed to fetch token")
-        return None
+        logger.error(f"Failed to fetch token {payload}")
+        return None, error_msg
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
-    try:
-        response = requests.post(urdhva_base.settings.lpg_publish_url, headers=headers, data=json.dumps(payload),
-                                 timeout=15, verify=False)
-        post_sap_response = {
-            "request_id": str(response.json().get("Response", {}).get("Request_ID")),
-            "vehicle_number": response.json().get("Response", {}).get("Vehicle_ID"),
-            "status": response.json().get("Response", {}).get("Status"),
-            "remark": response.json().get("Response", {}).get("Remark"),
-            "updated_date": str(response.json().get("Response", {}).get("Updated_Date")),
-            "updated_time": str(response.json().get("Response", {}).get("Updated_Time"))
-        }
-        await hpcl_ceg_model.LpgDataPostingAuditCreate(**post_sap_response).create()
-        response.raise_for_status()
-        print("response->",response.json())
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"[ERROR] Publish API call failed: {e}")
-        return None
+    sap_response = None
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            logger.info(f"Attempt {attempt} to publish LPG TT...")
+            response = requests.post(urdhva_base.settings.lpg_publish_url, headers=headers, data=json.dumps(payload),
+                                     timeout=15, verify=False)
+            response.raise_for_status()
+            post_sap_response = {
+                "request_id": str(response.json().get("Response", {}).get("Request_ID")),
+                "vehicle_number": response.json().get("Response", {}).get("Vehicle_ID"),
+                "status": response.json().get("Response", {}).get("Status"),
+                "remark": response.json().get("Response", {}).get("Remark"),
+                "updated_date": str(response.json().get("Response", {}).get("Updated_Date")),
+                "updated_time": str(response.json().get("Response", {}).get("Updated_Time"))
+            }
+            await hpcl_ceg_model.LpgDataPostingAuditCreate(**post_sap_response).create()
+            print("response->",response.json())
+            sap_response = response.json()
+            return sap_response, error_msg
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Publish API failed (Attempt {attempt}/{max_retries}): {e}")
+            if attempt < max_retries:
+                await asyncio.sleep(15)  # wait before retry
+            else:
+                ist = pytz.timezone("Asia/Kolkata")
+                now_ist = datetime.datetime.now(ist)
+                post_sap_response = {
+                    "request_id": str(payload["Request"]["Request_ID"]),
+                    "vehicle_number": str(payload["Request"]["Vehicle_ID"]),
+                    "status": 'F',
+                    "remark": str(e),
+                    "updated_date": now_ist.strftime("%Y%m%d"),
+                    "updated_time": now_ist.strftime("%H%M%S")
+                }
+                await hpcl_ceg_model.LpgDataPostingAuditCreate(**post_sap_response).create()
+                error_msg = f"Publish API failed {str(e)}"
+                logger.error(f"All retry attempts failed while posting block/unblock details to SAP {payload}")
+                return sap_response, error_msg
 
 async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_section:str):
     vts_mapping = vts_role_mapping.vts_unblocking_matrix[alert_section]
@@ -921,15 +1119,15 @@ async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_
         vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
     elif sap_id in lpg_vts_with_one_officer:
         vts_mapping = vts_role_mapping.lpg_one_officer_unblocking_matrix[alert_section]
-    elif sap_id in lpg_vts_with_no_officer:
+    elif sap_id in lpg_vts_with_no_officer or sap_id.startswith('4'):
         vts_mapping = vts_role_mapping.lpg_no_officer_unblocking_matrix[alert_section]
         
     if bu in vts_mapping.keys():
         query = (f"""select count(*) as "count" from alerts """
                  f"where bu = '{bu}' and "
                  f"alert_section = 'VTS' and "
-                 f"vehicle_number = '{vehicle_number}' and "
-                 f"sap_id = '{sap_id}'")
+                 f"vehicle_number = '{vehicle_number}'")
+        #           f"sap_id = '{sap_id}'")
         # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
         # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         # function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
@@ -950,7 +1148,7 @@ async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_sectio
         vts_mapping = vts_role_mapping.vts_sod_top_unblocking_matrix[alert_section]
     elif sap_id in lpg_vts_with_one_officer:
         vts_mapping = vts_role_mapping.lpg_one_officer_unblocking_matrix[alert_section]
-    elif sap_id in lpg_vts_with_no_officer:
+    elif sap_id in lpg_vts_with_no_officer or sap_id.startswith('4'):
         vts_mapping = vts_role_mapping.lpg_no_officer_unblocking_matrix[alert_section]
 
     if bu in vts_mapping.keys():
@@ -977,3 +1175,619 @@ async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_sectio
 # speed_violation_count
 # night_driving_count
 # continuous_driving_count
+
+async def get_base_location_details():
+    query = """SELECT "TRUCK_REGNNO", "BASE_LOCN" FROM "IMS_SAP"."VTS_TRUCK_DETAILS" WHERE "RECORD_STATUS" = 'A' """
+    charts_ins = dashboard_studio_model.Charts_Connection_Vault_RoutingParams(
+        connection_id=1,
+        action='get_data'
+    )
+    function = await charts_actions.charts_connection_vault_routing(charts_ins)
+    base_location_data = await function(query=query, schema_name="IMS_SAP", table_name="VTS_TRUCK_DETAILS")
+    return dict(zip(base_location_data["TRUCK_REGNNO"].to_list(), base_location_data["BASE_LOCN"].to_list()))
+
+def get_geofence_data():
+    GEOFENCE_RENAME_MAP = {
+        "geofence_name": "GEOFENCE_NAME",
+        "latitude": "LATITUDE",
+        "longitude": "LONGITUDE",
+        "radius": "RADIUS",
+        "latlon": "latlon",
+        "geofence_type": "GEOFENCE_TYPE",
+    }
+
+    geofence_df = (
+        pl.read_csv(
+            f"{urdhva_base.settings.mft_path}/geofence_master.csv")
+        .rename(GEOFENCE_RENAME_MAP)
+        .rename({c: c.upper() for c in map(str.upper, GEOFENCE_RENAME_MAP.values())})
+        .with_columns([
+            pl.col("LATITUDE").cast(pl.Float64),
+            pl.col("LONGITUDE").cast(pl.Float64),
+            pl.col("RADIUS").cast(pl.Float64),
+        ])
+    )
+    geofence_df = geofence_df.with_columns([
+        (pl.col("LATITUDE") * np.pi / 180).alias("LAT_RAD"),
+        (pl.col("LONGITUDE") * np.pi / 180).alias("LON_RAD"),
+    ])
+    return geofence_df
+
+def compute_geofence_batch(batch: pl.DataFrame, geofence_df: pl.DataFrame) -> pl.DataFrame:
+    """
+    Batch-wise computation.
+    Input: batch of data_stp rows (ALERT_LAT_RAD, ALERT_LON_RAD)
+    Output: same batch with ALERT_GEOFENCE_TYPE column added
+    """
+    gf_lat = geofence_df["LAT_RAD"].to_numpy()
+    gf_lon = geofence_df["LON_RAD"].to_numpy()
+    gf_rad = geofence_df["RADIUS"].to_numpy()
+    gf_type = geofence_df["GEOFENCE_TYPE"].to_list()
+    R = 6371
+    lat = batch["ALERT_LAT_RAD"].to_numpy()
+    lon = batch["ALERT_LON_RAD"].to_numpy()
+
+    result = []
+
+    for lat1, lon1 in zip(lat, lon):
+        dlat = gf_lat - lat1
+        dlon = gf_lon - lon1
+
+        a = (
+            np.sin(dlat / 2) ** 2
+            + np.cos(lat1) * np.cos(gf_lat) * np.sin(dlon / 2) ** 2
+        )
+
+        c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+        dist = R * c
+
+        inside = dist <= gf_rad
+
+        if inside.any():
+            nearest = np.argmin(dist)
+            result.append(gf_type[nearest])
+        else:
+            result.append("NA")
+
+    return batch.with_columns(
+        pl.Series("ALERT_GEOFENCE_TYPE", result)
+    )
+
+async def _get_data_from_vts(query, connection_id):
+    charts_ins = dashboard_studio_model.Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_id,
+        action='get_data'
+    )
+    function = await charts_actions.charts_connection_vault_routing(charts_ins)
+    return await function(query=query)
+
+async def itdg_speed_violation_old():
+    speed_violation_cfg = {
+        "speed": 60,
+        "speed_condition": ">",
+        "max_violation_count": 3,
+        "max_violation_count_condition": ">",
+        "trip_status": ["LOADED", "RETURN"],
+        "max_violation_time": 3,
+        "max_violation_time_condition": ">",
+        "group_by": ["TT_NUMBER", "INVOICE_NO", "LOAD_NO"]
+    }
+
+    query = f"""SELECT "TRIP_STATUS", "START_SPEED", "START_SPEED", "DURATION", "LOCATION_TYPE", "TT_NUMBER", "INVOICE_NO",
+            "ZONE", "LOCATION", "LOAD_NO", "TRANSPORTER_ID" FROM "SPEED_VIOLATION" WHERE "LOCATION_TYPE" = 'TAS'"""
+    data = await _get_data_from_vts(query=query, connection_id=5)
+    data = data.lazy()
+    data = data.with_columns([
+        pl.col("START_SPEED").cast(pl.Int64),
+        pl.col("DURATION").cast(pl.Int64)
+    ])
+    data = (
+        data.filter(
+            (
+                pl.col("TRIP_STATUS").is_in(speed_violation_cfg["trip_status"])
+            )
+            & (pl.col("START_SPEED") > speed_violation_cfg["speed"])
+            & (pl.col("DURATION") > speed_violation_cfg["max_violation_time"])
+            & (pl.col("LOCATION_TYPE") == 'TAS')
+        )
+    )
+
+    # Group by TT_NUMBER + INVOICE_NO
+    data = (
+        data
+        .group_by(speed_violation_cfg["group_by"])
+        .agg([
+            pl.col("ZONE").first(),
+            pl.col("LOCATION").first(),
+            pl.col("TRANSPORTER_ID").first(),
+            pl.col("START_SPEED").max().alias("MAX_START_SPEED"),
+            pl.col("DURATION").max().alias("MAX_DURATION"),
+            pl.len().alias("VIOLATION_COUNT"),
+        ]).filter(pl.col("VIOLATION_COUNT") >= speed_violation_cfg["max_violation_count"])
+    )
+    return data.collect()
+
+async def itdg_speed_violation():
+    speed_violation_cfg = {
+        "normal_speed": 60,
+        "normal_speed_condition": ">",
+        "max_violation_count_normal_speed": 3,
+        "accident_speed": 30,
+        "accident_speed_condition": ">",
+        "max_violation_count_accident_speed": 3,
+        "max_violation_count_condition": ">",
+        "trip_status": ["LOADED", "RETURN"],
+        "max_violation_time": 3,
+        "earth_radius": 6371.0,
+        "max_violation_time_condition": ">",
+        "group_by": ["TT_NUMBER", "INVOICE_NO", "LOAD_NO"]
+    }
+
+    query = f"""SELECT "TRIP_STATUS", "START_SPEED", "START_SPEED", "DURATION", "LOCATION_TYPE", "TT_NUMBER", "INVOICE_NO",
+            "ZONE", "LOCATION", "LOAD_NO", "TRANSPORTER_ID" FROM "SPEED_VIOLATION" WHERE "LOCATION_TYPE" = 'TAS'"""
+    data = await _get_data_from_vts(query=query, connection_id=5)
+    data = data.lazy()
+    geofence_df = get_geofence_data()
+    data = data.with_row_index("ALERT_ID")
+    data = data.with_columns([
+        (pl.col("START_LATITUDE") * np.pi / 180).alias("ALERT_LAT_RAD"),
+        (pl.col("START_LONGITUDE") * np.pi / 180).alias("ALERT_LON_RAD"),
+    ])
+    data = (
+        data.lazy()
+        .map_batches(lambda batch: compute_geofence_batch(batch, geofence_df=geofence_df),
+                     validate_output_schema=False)
+        .collect()
+    )
+    # joined = (
+    #     data
+    #     .join(geofence_df.lazy(), how="cross")
+    #     .with_columns([
+    #         (pl.col("LAT_RAD") - pl.col("ALERT_LAT_RAD")).alias("DLAT"),
+    #         (pl.col("LON_RAD") - pl.col("ALERT_LON_RAD")).alias("DLON"),
+    #     ])
+    #     .with_columns([
+    #         # Haversine
+    #         (
+    #                 2
+    #                 * pl.arctan2(
+    #             ((pl.col("DLAT") / 2).sin().pow(2)
+    #              + pl.col("ALERT_LAT_RAD").cos() * pl.col("LAT_RAD").cos()
+    #              * (pl.col("DLON") / 2).sin().pow(2)
+    #              ).sqrt(),
+    #             (
+    #                     1 - (
+    #                     (pl.col("DLAT") / 2).sin().pow(2)
+    #                     + pl.col("ALERT_LAT_RAD").cos() * pl.col("LAT_RAD").cos()
+    #                     * (pl.col("DLON") / 2).sin().pow(2)
+    #             )
+    #             ).sqrt()
+    #         ) * speed_violation_cfg['earth_radius']
+    #         ).alias("DIST_KM")
+    #     ])
+    #     # Keep only geofences where DIST <= RADIUS
+    #     .filter(pl.col("DIST_KM") <= pl.col("RADIUS"))
+    #     # Sort geofences per alert
+    #     .sort(["ALERT_ID", "DIST_KM"])
+    #     # Pick nearest geofence
+    #     .group_by("ALERT_ID")
+    #     .agg([
+    #         pl.first("GEOFENCE_TYPE").alias("ALERT_GEOFENCE_TYPE")
+    #     ])
+    #     .collect()
+    # )
+    # data = data.join(joined.lazy(), on="ALERT_ID", how="left").with_columns(
+    #     pl.col("ALERT_GEOFENCE_TYPE").fill_null("NA")
+    # )
+    data = (
+        data
+        .with_columns([
+            # Normal overspeed
+            (
+                    (pl.col("ALERT_GEOFENCE_TYPE") != "Accident Prone Area") &
+                    (pl.col("START_SPEED") > speed_violation_cfg['normal_speed']) &
+                    (pl.col("DURATION") >= speed_violation_cfg['max_violation_count_normal_speed'])
+            ).alias("is_normal_over"),
+
+            # Accident-prone overspeed
+            (
+                    (pl.col("ALERT_GEOFENCE_TYPE") == "Accident Prone Area") &
+                    (pl.col("START_SPEED") > speed_violation_cfg['accident_speed']) &
+                    (pl.col("DURATION") >= speed_violation_cfg['max_violation_count_accident_speed'])
+            ).alias("is_acc_over"),
+        ])
+        .group_by(["TT_NUMBER", "INVOICE_NO"])
+        .agg([
+            pl.col("ZONE").first(),
+            pl.col("LOCATION").first(),
+            pl.col("TRANSPORTER_ID").first(),
+            pl.col("START_SPEED").max().alias("MAX_START_SPEED"),
+            pl.col("DURATION").max().alias("MAX_DURATION"),
+            pl.sum("is_normal_over").alias("normal_streaks"),
+            pl.sum("is_acc_over").alias("acc_streaks"),
+
+            # Violations = floor(streaks / 3)
+            (pl.sum("is_normal_over") // speed_violation_cfg['max_violation_count_normal_speed']).alias("normal_violation"),
+            (pl.sum("is_acc_over") // speed_violation_cfg['max_violation_count_normal_speed']).alias("accident_violation"),
+
+            # Total
+            ((pl.sum("is_normal_over") // speed_violation_cfg['max_violation_count_normal_speed']) +
+             (pl.sum("is_acc_over") // speed_violation_cfg['max_violation_count_normal_speed'])).alias("total_violations")
+        ])
+    )
+    return data
+
+async def itdg_stoppage_violation():
+    geofence_df = get_geofence_data()
+    stoppage_violation_cfg = {
+        "unauth_stoppage_with_rd": 30,
+        "max_violation_count_unauth_stoppage_with_rd": 1,
+        "max_violation_count_unauth_stoppage_with_rd_condition": ">",
+        "unauth_stoppage_without_rd": 60,
+        "max_violation_count_unauth_stoppage_without_rd": 1,
+        "max_violation_count_unauth_stoppage_without_rd_condition": ">",
+        "cumulative_stoppage": 120,
+        "cumulative_stoppage_condition": ">",
+        "cumulative_stoppage_ignore": 10,
+        "cumulative_stoppage_ignore_condition": "<",
+        "trip_status": ["LOADED", "RETURN", "UN LOADED"],
+        "group_by": ["TT_NUMBER", "INVOICE_NO", "LOAD_NO"],
+        "violation_label": "Stoppage Violation"
+    }
+    query_with_rd = f"""SELECT "TRIP_STATUS", "START_SPEED", "START_SPEED", "DURATION", "LOCATION_TYPE", "TT_NUMBER", "INVOICE_NO",
+              "ZONE", "LOCATION", "LOAD_NO", "TRANSPORTER_ID" FROM "STOPPAGE" WHERE "LOCATION_TYPE" = 'TAS'"""
+    query_only_rd = f"""SELECT "TRIP_STATUS", "START_SPEED", "START_SPEED", "DURATION", "LOCATION_TYPE", "TT_NUMBER", "INVOICE_NO",
+              "ZONE", "LOCATION", "LOAD_NO", "TRANSPORTER_ID" FROM "STOPPAGE_ROUTE_DEVIATION" WHERE "LOCATION_TYPE" = 'TAS'"""
+
+    data_with_rd = await _get_data_from_vts(query=query_with_rd, connection_id=5)
+    data_only_rd = await _get_data_from_vts(query=query_only_rd, connection_id=5)
+    data_with_rd = data_with_rd.rename({"STOPPAGE_LATITUDE": "START_LATITUDE", "STOPPAGE_LONGITUDE": "START_LONGITUDE"})
+    data_with_rd = data_with_rd.filter(pl.col("TRIP_STATUS").is_in(stoppage_violation_cfg["trip_status"]))
+
+    data_only_rd = data_only_rd.filter(pl.col("TRIP_STATUS").is_in(stoppage_violation_cfg["trip_status"]))
+
+    data_with_rd = data_with_rd.with_columns([
+        pl.col("DURATION").cast(pl.Int64)
+    ])
+    data_only_rd = data_only_rd.with_columns([
+        pl.col("DURATION").cast(pl.Int64)
+    ])
+
+    match_cols = [
+        "DESTINATION",
+        "TT_NUMBER",
+        "TRANSPORTER_ID",
+        "INVOICE_NO",
+        "LOAD_NO",
+        "START_LATITUDE",
+        "START_LONGITUDE",
+    ]
+
+    data_with_rd = (
+        data_with_rd.lazy()
+        .join(
+            data_only_rd.lazy().select(match_cols),
+            on=match_cols,
+            how="anti"
+        )
+    )
+    data_with_rd = data_with_rd.collect()
+    data_with_rd = data_with_rd.with_row_index("ALERT_ID")
+    data_with_rd = data_with_rd.with_columns([
+        (pl.col("START_LATITUDE") * np.pi / 180).alias("ALERT_LAT_RAD"),
+        (pl.col("START_LONGITUDE") * np.pi / 180).alias("ALERT_LON_RAD"),
+    ])
+    data_with_rd = (
+        data_with_rd.lazy()
+        .map_batches(lambda batch: compute_geofence_batch(batch, geofence_df=geofence_df),
+                     validate_output_schema=False)
+        .collect()
+    )
+    data_only_rd = (
+        data_only_rd.filter(
+            (
+                pl.col("TRIP_STATUS").is_in(stoppage_violation_cfg["trip_status"])
+            )
+            & (pl.col("DURATION") > stoppage_violation_cfg["unauth_stoppage_with_rd"])
+            & (pl.col("LOCATION_TYPE") != 'LPG')
+        )
+    )
+    data_only_rd = (
+        data_only_rd
+        .group_by(stoppage_violation_cfg['group_by'])
+        .agg([
+            pl.col("ZONE").first(),
+            pl.col("LOCATION").first(),
+            pl.col("TRANSPORTER_ID").first(),
+            pl.col("DURATION").max().alias("MAX_DURATION"),
+            pl.len().alias("VIOLATION_COUNT"),
+        ]).filter(
+            pl.col("VIOLATION_COUNT") >= stoppage_violation_cfg["max_violation_count_unauth_stoppage_with_rd"])
+    )
+
+    rule_a = (
+        data_with_rd.filter((pl.col("ALERT_GEOFENCE_TYPE") == "UnAuthorised") &
+                            (pl.col("DURATION") > stoppage_violation_cfg['unauth_stoppage_without_rd']))
+        .group_by(["TT_NUMBER", "INVOICE_NO", "LOAD_NO"])
+        .agg([
+            pl.col("ZONE").first(),
+            pl.col("LOCATION").first(),
+            pl.col("TRANSPORTER_ID").first(),
+            pl.col("DURATION").max(),
+            pl.len().alias("violation_rule_a"),
+        ])
+    )
+    rule_b = (
+        data_with_rd.filter((pl.col("ALERT_GEOFENCE_TYPE") == "UnAuthorised") & (pl.col("DURATION") > stoppage_violation_cfg['cumulative_stoppage_ignore']))
+        .group_by(["TT_NUMBER", "INVOICE_NO", "LOAD_NO"])
+        .agg([
+            pl.sum("DURATION").alias("DURATION"),
+            pl.col("ZONE").first(),
+            pl.col("LOCATION").first(),
+            pl.col("TRANSPORTER_ID").first(),
+        ])
+        .with_columns(
+            (pl.col("DURATION") > stoppage_violation_cfg['cumulative_stoppage'])
+            .cast(pl.Int8)
+            .alias("violation_rule_b")
+        )
+    )
+    data_with_rd = (
+        rule_a.join(rule_b, on=["TT_NUMBER", "INVOICE_NO", "LOAD_NO", "ZONE", "LOCATION", "TRANSPORTER_ID"], how="full",
+                    coalesce=True)
+        .fill_null(0)
+        .with_columns(
+            (pl.col("violation_rule_a") + pl.col("violation_rule_b"))
+            .alias("total_violations")
+        ).rename({"DURATION_right": "SUM_DURATION", "DURATION": "MAX_DURATION"})
+    )
+    return pl.concat([data_with_rd, data_only_rd], how="diagonal_relaxed")
+
+async def itdg_route_deviation():
+    route_deviation_config = {
+        "min_duration_minutes": 15,
+        "duration_condition": ">",
+        "max_violation_count": 1,
+        "max_violation_count_condition": ">",
+        "trip_status": ["LOADED"],
+        "group_by": ["TT_NUMBER", "INVOICE_NO", "LOAD_NO"],
+        "violation_label": "Route Deviation Violation"
+    }
+    query = f"""SELECT "TRIP_STATUS", "START_SPEED", "START_SPEED", "DURATION", "LOCATION_TYPE", "TT_NUMBER", "INVOICE_NO",
+                "ZONE", "LOCATION", "LOAD_NO", "TRANSPORTER_ID" FROM "ROUTE_DEVIATION" WHERE "LOCATION_TYPE" = 'TAS'"""
+    data = await _get_data_from_vts(query=query, connection_id=5)
+    data = data.lazy()
+    data = data.with_columns([
+        pl.col("DURATION").cast(pl.Int64)
+    ])
+
+    data = (
+        data.filter(
+            (pl.col("TRIP_STATUS").is_in(route_deviation_config["trip_status"]))
+            & (pl.col("DURATION") > route_deviation_config["min_duration_minutes"])
+        )
+    )
+
+    data = (
+        data
+        .group_by(route_deviation_config['group_by'])
+        .agg([
+            pl.col("ZONE").first(),
+            pl.col("LOCATION").first(),
+            pl.col("TRANSPORTER_ID").first(),
+            pl.col("START_SPEED").max().alias("MAX_START_SPEED"),
+            pl.col("DURATION").max().alias("MAX_DURATION"),
+            pl.len().alias("VIOLATION_COUNT"),
+        ]).filter(pl.col("VIOLATION_COUNT") > route_deviation_config["max_violation_count"])
+    )
+
+    return data.collect()
+
+async def itdg_night_driving():
+    night_driving_config = {
+        "start_time": "23:00:00",
+        "end_time": "05:00:00",
+        "min_duration_minutes": 30,
+        "duration_condition": ">",
+        "max_violation_count": 0,
+        "max_violation_count_condition": ">",
+        "trip_status": ["LOADED", "RETURN", "UN LOADED"],
+        "group_by": ["TT_NUMBER", "INVOICE_NO", "LOAD_NO"],
+        "violation_label": "Night Driving Violation"
+    }
+    # Time range boundaries
+    start_t = time.fromisoformat(night_driving_config["start_time"])
+    end_t = time.fromisoformat(night_driving_config["end_time"])
+
+    query = f"""SELECT "TRIP_STATUS", "START_SPEED", "START_SPEED", "DURATION", "LOCATION_TYPE", "TT_NUMBER", "INVOICE_NO",
+                    "ZONE", "LOCATION", "LOAD_NO", "TRANSPORTER_ID", "EVENT_DATE"  FROM "NIGHT_DRIVING" WHERE "LOCATION_TYPE" = 'TAS'"""
+    data = await _get_data_from_vts(query=query, connection_id=5)
+    data = data.lazy()
+    # data = (
+    #     data
+    #     .with_columns([
+    #         pl.col("DURATION").cast(pl.Int64),
+    #         pl.col("EVENT_DATE").str.strptime(pl.Datetime).alias("EVENT_DATETIME"),
+    #     ])
+    #     .with_columns([
+    #         pl.col("EVENT_DATETIME").dt.time().alias("EVENT_TIME")
+    #     ])
+    # )
+    #
+    #
+    # # Apply filters
+    # data = (
+    #     data.filter(
+    #         (pl.col("TRIP_STATUS").is_in(night_driving_config["trip_status"]))
+    #         & (pl.col("EVENT_TIME") >= start_t) | (pl.col("EVENT_TIME") <= end_t)
+    #         & (pl.col("DURATION") > night_driving_config["min_duration_minutes"])
+    #     )
+    # )
+
+    # other logic
+    # Build violations logic exactly like your Pandas version
+    data = data.with_columns([
+        pl.col("START_DATETIME").str.strptime(pl.Datetime),
+        pl.col("END_DATETIME").str.strptime(pl.Datetime),
+        pl.col("DURATION").cast(pl.Int64)
+    ])
+
+    data = data.with_columns([
+        pl.col("START_DATETIME").dt.time().alias("START_TIME"),
+        pl.col("END_DATETIME").dt.time().alias("END_TIME")
+    ])
+
+    # Case 1: Fully within night window
+    case1 = (
+            (pl.col("START_TIME") >= start_t) |
+            (pl.col("START_TIME") <= end_t)
+    )
+
+    # Case 2: Crosses midnight: start < 23:00 and end > 05:00
+    case2 = (
+            (pl.col("START_TIME") < start_t) &
+            (pl.col("END_TIME") > end_t)
+    )
+
+    # Case 3: Partial overlap
+    case3 = (
+            ((pl.col("START_TIME") < start_t) & (pl.col("END_TIME") >= start_t)) |
+            ((pl.col("START_TIME") <= end_t) & (pl.col("END_TIME") > end_t))
+    )
+
+    # Combine cases + minimum duration
+    data = (
+        data
+        .filter(pl.col("DURATION") > night_driving_config["min_duration_minutes"])
+        .filter(case1 | case2 | case3)
+    )
+
+    # Grouping violations
+    data = (
+        data
+        .group_by(night_driving_config["group_by"])
+        .agg([
+            pl.col("ZONE").first(),
+            pl.col("LOCATION").first(),
+            pl.col("TRANSPORTER_ID").first(),
+            pl.col("DURATION").max().alias("MAX_DURATION"),
+            pl.len().alias("VIOLATION_COUNT"),
+        ]).filter(pl.col("VIOLATION_COUNT") > night_driving_config["max_violation_count"])
+    )
+    return data.collect()
+
+async def itdg_power_disconnect():
+    power_disconnect_config = {
+        "min_duration_minutes": 1,
+        "duration_condition": ">",
+        "max_violation_count": 0,
+        "max_violation_count_condition": ">",
+        "trip_status": ["LOADED", "RETURN", "UN LOADED"],
+        "group_by": ["TT_NUMBER", "INVOICE_NO", "LOAD_NO"],
+        "violation_label": "Power Disconnect Violation"
+    }
+    query = f"""SELECT "TRIP_STATUS", "START_SPEED", "START_SPEED", "DURATION", "LOCATION_TYPE", "TT_NUMBER", "INVOICE_NO",
+                       "ZONE", "LOCATION", "LOAD_NO", "TRANSPORTER_ID"  FROM "POWER_DISCONNECT" WHERE "LOCATION_TYPE" = 'TAS'"""
+    data = await _get_data_from_vts(query=query, connection_id=5)
+    data = data.lazy()
+    data = data.with_columns([
+        pl.col("DURATION").cast(pl.Int64)
+    ])
+    data = (
+        data.filter(
+            (pl.col("TRIP_STATUS").is_in(power_disconnect_config["trip_status"]))
+            & (pl.col("DURATION") > power_disconnect_config["min_duration_minutes"])
+        )
+    )
+
+    data = (
+        data
+        .group_by(power_disconnect_config['group_by'])
+        .agg([
+            pl.col("ZONE").first(),
+            pl.col("LOCATION").first(),
+            pl.col("TRANSPORTER_ID").first(),
+            pl.col("START_SPEED").max().alias("MAX_START_SPEED"),
+            pl.col("DURATION").max().alias("MAX_DURATION"),
+            pl.len().alias("VIOLATION_COUNT"),
+        ]).filter(pl.col("VIOLATION_COUNT") > power_disconnect_config["max_violation_count"])
+    )
+
+    return data.collect()
+
+async def itdg_device_tampering():
+    device_tamper_config = {
+        "min_duration_minutes": 1,
+        "duration_condition": ">",
+        "max_violation_count": 0,
+        "max_violation_count_condition": ">",
+        "trip_status": ["LOADED", "RETURN", "UN LOADED"],
+        "group_by": ["TT_NUMBER", "INVOICE_NO", "LOAD_NO"],
+        "violation_label": "Device Tamper Violation"
+    }
+    query = f"""SELECT "TRIP_STATUS", "START_SPEED", "START_SPEED", "DURATION", "LOCATION_TYPE", "TT_NUMBER", "INVOICE_NO",
+                       "ZONE", "LOCATION", "LOAD_NO", "TRANSPORTER_ID"  FROM "DEVICE_REMOVED" WHERE "LOCATION_TYPE" = 'TAS'"""
+    data = await _get_data_from_vts(query=query, connection_id=5)
+    data = data.lazy()
+    data = data.with_columns([
+        pl.col("DURATION").cast(pl.Int64)
+    ])
+    data = (
+        data.filter(
+            (pl.col("TRIP_STATUS").is_in(device_tamper_config["trip_status"]))
+            & (pl.col("DURATION") > device_tamper_config["min_duration_minutes"])
+        )
+    )
+
+    data = (
+        data
+        .group_by(device_tamper_config['group_by'])
+        .agg([
+            pl.col("ZONE").first(),
+            pl.col("LOCATION").first(),
+            pl.col("TRANSPORTER_ID").first(),
+            pl.col("START_SPEED").max().alias("MAX_START_SPEED"),
+            pl.col("DURATION").max().alias("MAX_DURATION"),
+            pl.len().alias("VIOLATION_COUNT"),
+        ]).filter(pl.col("VIOLATION_COUNT") > device_tamper_config["max_violation_count"])
+    )
+
+    return data.collect()
+
+async def itdg_continuous_driving():
+    continuous_driving_config = {
+        "min_duration_minutes": 240,
+        "duration_condition": ">",
+        "max_violation_count": 0,
+        "max_violation_count_condition": ">",
+        "trip_status": ["LOADED", "RETURN", "UN LOADED"],
+        "group_by": ["TT_NUMBER", "INVOICE_NO", "LOAD_NO"],
+        "violation_label": "Continuous Driving Violation"
+    }
+    query = f"""SELECT "TRIP_STATUS", "START_SPEED", "START_SPEED", "DURATION", "LOCATION_TYPE", "TT_NUMBER", "INVOICE_NO",
+                       "ZONE", "LOCATION", "LOAD_NO", "TRANSPORTER_ID"  FROM "CONTINUOUS_DRIVING" WHERE "LOCATION_TYPE" = 'TAS'"""
+    data = await _get_data_from_vts(query=query, connection_id=5)
+    data = data.lazy()
+    data = data.with_columns([
+        pl.col("DURATION").cast(pl.Int64)
+    ])
+    data = (
+        data.filter(
+            (pl.col("TRIP_STATUS").is_in(continuous_driving_config["trip_status"]))
+            & (pl.col("DURATION") > continuous_driving_config["min_duration_minutes"])
+        )
+    )
+
+    data = (
+        data
+        .group_by(continuous_driving_config['group_by'])
+        .agg([
+            pl.col("ZONE").first(),
+            pl.col("LOCATION").first(),
+            pl.col("TRANSPORTER_ID").first(),
+            pl.col("START_SPEED").max().alias("MAX_START_SPEED"),
+            pl.col("DURATION").max().alias("MAX_DURATION"),
+            pl.len().alias("VIOLATION_COUNT"),
+        ]).filter(pl.col("VIOLATION_COUNT") > continuous_driving_config["max_violation_count"])
+    )
+    return data.collect()

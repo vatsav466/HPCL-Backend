@@ -112,8 +112,9 @@ async def tas_listener(rmsg):
         logger.info('-' * 12)
         if rmsg['status'] == 'ACTIVE_UNACK':
             alertdata = rmsg['details']['additionalInfo']
-            alertdata['severity'] = rmsg['severity']
+            alertdata['severity'] = rmsg['details']['additionalInfo']['severity']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
+            alertdata['alert_section'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
             
             if alertdata.get('interlock_name') in ["ROSOV_Close Status", "MOV_Close Status"]:

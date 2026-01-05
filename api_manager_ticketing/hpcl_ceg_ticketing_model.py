@@ -69,6 +69,8 @@ class TicketingSchema(UrdhvaPostgresBase):
     comment_attachment_path: Mapped[typing.Optional[str]] = mapped_column("comment_attachment_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     context: Mapped[typing.Optional[str]] = mapped_column("context", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     merge_status: Mapped[typing.Optional[str]] = mapped_column("merge_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    parent_id: Mapped[typing.Optional[str]] = mapped_column("parent_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    subtask_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("subtask_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),)
 
@@ -108,6 +110,8 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     comment_attachment_path: typing.Optional[str] = pydantic.Field("", **{})
     context: typing.Optional[str] = pydantic.Field("", **{})
     merge_status: typing.Optional[str] = pydantic.Field("", **{})
+    parent_id: typing.Optional[str] = pydantic.Field("", **{})
+    subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -152,6 +156,8 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     comment_attachment_path: typing.Optional[str] = pydantic.Field("", **{})
     context: typing.Optional[str] = pydantic.Field("", **{})
     merge_status: typing.Optional[str] = pydantic.Field("", **{})
+    parent_id: typing.Optional[str] = pydantic.Field("", **{})
+    subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -195,6 +201,8 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     file_attachment_name: typing.Optional[str] = pydantic.Field("", **{})
     file_attachment_id: typing.Optional[str] = pydantic.Field("", **{})
     linked_alert_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    parent_id: typing.Optional[str] = pydantic.Field("", **{})
+    subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -228,6 +236,8 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     file_attachment_name: typing.Optional[str] = pydantic.Field("", **{})
     file_attachment_id: typing.Optional[str] = pydantic.Field("", **{})
     linked_alert_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    parent_id: typing.Optional[str] = pydantic.Field("", **{})
+    subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -369,6 +379,18 @@ class Ticketing_Delete_File_From_CommentParams(pydantic.BaseModel):
     ticket_id: str
     comment_id: str
     file_path: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Ticketing_Get_Location_DataParams(pydantic.BaseModel):
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

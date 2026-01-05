@@ -31,9 +31,14 @@ async def lpgrejections_get_pt_rejections(data: Lpgrejections_Get_Pt_RejectionsP
 # Action get_rejections
 @router.post('/get_rejections', tags=['LpgRejections'])
 async def lpgrejections_get_rejections(data: Lpgrejections_Get_RejectionsParams):
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)    
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+        action='execute_query'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     cs_query = """ select * from lpg_cs_rejections """
     gd_query = """ select * from lpg_gd_rejections """
     pt_query = """ select * from lpg_pt_rejections """

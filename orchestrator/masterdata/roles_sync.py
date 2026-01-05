@@ -45,6 +45,117 @@ async def sync_user_roles():
         "name": "SOD",
         "status": True
     },
+    "SOD & LPG Operations":{
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Terminal Automation"
+                    }
+                ]
+            },
+            {
+                "menu_name": "LPG",
+                "allowed_sub_menus": [
+                    {
+                        "title": "LPG Operations"
+                    },
+                    {
+                        "title": "LPG Plant"
+                    },
+                    {
+                        "title": "Pro Dash"
+                    },
+                    {
+                        "title": "LPG Inventory"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "LPG Analytics"
+                    }
+                ]
+            }
+        ],
+        "status": True
+    },
+    "C&MD":{
+        "allowed_pages": [],
+        "status": True
+    },
+    "IS User":{
+        "allowed_pages": [
+            {
+                "menu_name": "LPG",
+                "allowed_sub_menus": [
+                    {
+                        "title": "LPG Operations"
+                    },
+                    {
+                        "title": "LPG Plant"
+                    },
+                    {
+                        "title": "Pro Dash"
+                    },
+                    {
+                        "title": "LPG Inventory"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "LPG Analytics"
+                    }
+                ]
+            },
+            {
+                "menu_name": "VA",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VA Home"
+                    },
+                    {
+                        "title": "SOD Video Analytics"
+                    },
+                    {
+                        "title": "LPG Video Analytics"
+                    },
+                    {
+                        "title": "RO Video Analytics"
+                    }
+                ]
+            },
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Terminal Automation"
+                    }
+                ]
+            }
+        ],
+        "status": True
+    },
     "Zonal Operations LPG": {
         "allowed_pages": [
             {
@@ -179,6 +290,14 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "VTS ITDG Alert Home"
+                    }
+                ]
+            },
+            {
+                "menu_name": "LPG",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             }
@@ -648,6 +767,18 @@ async def sync_user_roles():
                             },
                             {
                             "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
                             }
                         ]
                     },
@@ -926,6 +1057,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             }
@@ -949,6 +1083,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             }
@@ -972,6 +1109,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             }
@@ -1053,6 +1193,75 @@ async def sync_user_roles():
             }
         ],
         "name": "LPG",
+        "status": True
+    },
+    "DS HQO Officer": {
+        "allowed_pages": [
+            {
+                "menu_name": "Direct Sales",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Insights"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "I&C Insights"
+                    },
+                    {
+                        "title": "I&C Campaign"
+                    }
+                ]
+            }
+        ],
+        "name": "Sales",
+        "status": True
+    },
+    "DS Regional Manager": {
+        "allowed_pages": [
+            {
+                "menu_name": "Direct Sales",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Insights"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "I&C Insights"
+                    },
+                    {
+                        "title": "I&C Campaign"
+                    }
+                ]
+            }
+        ],
+        "name": "Sales",
+        "status": True
+    },
+    "DS Sales Officer": {
+        "allowed_pages": [
+            {
+                "menu_name": "Direct Sales",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Insights"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "I&C Insights"
+                    },
+                    {
+                        "title": "I&C Campaign"
+                    }
+                ]
+            }
+        ],
+        "name": "Sales",
         "status": True
     },
     "Zonal Officer LPG": {
@@ -1166,6 +1375,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "LPG Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             },
@@ -1199,6 +1411,18 @@ async def sync_user_roles():
                             },
                             {
                             "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
                             }
                         ]
                     },
@@ -1438,13 +1662,49 @@ async def sync_user_roles():
                         "allowed_sub_menus": [
                             {
                             "title": "I&C Insights"
+                            },
+                            {
+                            "title": "I&C Campaign"
                             }
-          ]
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Direct Sales",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Insights"
+                    },
+                    {
+                        "title": "Supply Chain"
                     }
                 ]
             }
         ],
         "name": "Sales",
+        "status": True
+    },
+    "temp_role": {
+        
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Terminal Automation"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    }
+                ]
+            }
+            
+        ],
+        "name": "SOD",
         "status": True
     },
     "Admin": {
@@ -1481,6 +1741,23 @@ async def sync_user_roles():
                         "title": "Retail Insights"
                         }
           ]
+                    }
+                ]
+            }
+        ],
+        "name": "RO",
+        "status": True
+    },
+    "Ro_role": {
+        "allowed_pages": [
+            {
+                "menu_name": "Retail Outlet",
+                "allowed_sub_menus": [
+                    {
+                        "title": "RO Home"
+                    },
+                    {
+                        "title": "Supply Chain"
                     }
                 ]
             }

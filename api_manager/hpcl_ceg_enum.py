@@ -11,6 +11,7 @@ class BusinessUnit(str, enum.Enum):
     CP = 'CP'
     CDCMS = 'CDCMS'
     ALL = 'ALL'
+    DS = 'DS'
 
 
 
@@ -160,6 +161,8 @@ class AlertActionType(str, enum.Enum):
     SendItBack = 'SendItBack'
     FalseViolation = 'FalseViolation'
     AcceptViolation = 'AcceptViolation'
+    BlockFailed = 'BlockFailed'
+    UnblockFailed = 'UnblockFailed'
 
 
 
@@ -190,6 +193,7 @@ class IndentStatus(str, enum.Enum):
     TempClosed = 'TempClosed'
     ProductLowLevel = 'ProductLowLevel'
     OfflineOrFalseAlarm = 'OfflineOrFalseAlarm'
+    NotAvailable = 'NotAvailable'
 
 
 

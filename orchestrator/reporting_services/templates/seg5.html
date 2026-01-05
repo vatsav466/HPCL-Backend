@@ -186,23 +186,10 @@
             <td>{{dry_out_details['> 75 Rs Lakhs']}}</td>
         </tr>
     </tbody></table>
-    <h5>2.5. Day wise trend of Partial Dryout (MS/HSD):</h5>
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Dry out Count</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in dry_out_trends %}
-            <tr>
-                <td>{{ row['Date'] }}</td>
-                <td>{{ row['Dry out Count'] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h5>2.5 Last 30 days trend of Partial Dryout (MS/HSD)</h5>
+    <div class="logo">
+        <img src="cid:last_30_days_dry_out_trends" alt="Last 30 Days Dry Out Trends" width="1000" height="auto">
+    </div>
     <h5>2.6. Zone wise Date wise Listing of Partial Dry outs</h5>
     <table>
         <thead>
@@ -224,7 +211,7 @@
     </table>
     <h5>2.7 Monthly Loss of Sales due to Partial Dry-outs</h5>
     <div class="logo">
-        <img src="cid:dry_out_lost" alt="HP Pay Logo" width="800" height="auto">
+        <img src="cid:dry_out_lost" alt="HP Pay Logo" width="1000" height="auto">
     </div>
     <h5>2.8 Location/Depo wise dry out details</h5>
     <table>
@@ -246,8 +233,12 @@
         </tbody>
     </table>
     <h4>3. LPG Operations Summary</h4>
-    <h5>Average score for all LPG Plants – {{lpg_avg_score_resp}}</h5>
-    <h5>3.1. Top 3 LPG plants based on performance score ({{present_month}})</h5>
+    <h5>3.1 Average score for all LPG Plants – { {{lpg_avg_score_resp}} }, (Refer attachment for Day wise trend)</h5>
+    <h5>3.2 Monthly Average of Plant Score</h5>
+    <div class="logo">
+        <img src="cid:monthly_score_path" alt="Monthly Average of Plant Score" width="1000" height="auto">
+    </div>
+    <h5>3.3 Top 3 LPG plants based on performance score ({{present_month}})</h5>
     <table>
         <thead>
             <tr>
@@ -266,7 +257,7 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>3.2. Bottom 3 LPG plants based on performance score ({{present_month}})</h5>
+    <h5>3.4 Bottom 3 LPG plants based on performance score ({{present_month}})</h5>
     <table>
         <thead>
             <tr>
@@ -285,7 +276,11 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>3.3. Open Alert Summary ({{present_month}})</h5>
+    <h5>3.5 Plant wise Average Score from Month start</h5>
+    <div class="logo">
+        <img src="cid:plant_wise_score_path" alt="Monthly Average of Plant Score" width="1000" height="auto">
+    </div>
+    <h5>3.6 Open Alert Summary ({{present_month}}),(Refer attachment for Plant wise breakup)</h5>
         <div class="openAlert">
             <table>
                 <tbody>
@@ -309,37 +304,44 @@
                 </tbody>
             </table>
         </div>
-    <h5>3.4. LPG VTS Governance ({{present_month}})</h5>
+    <h5>3.7 LPG VTS Governance ({{present_month}})</h5>
+    <h6>3.7.1 ITDG Alert Summary</h6>
+        <table>
+            <thead>
+                <tr>
+                    <th>TTs Blocked by Novex</th>
+                    <th>TTs Manually Unblocked</th>
+                    <th>TTs unblocked as per ITDG</th>
+                    <th>TTs currently under Block</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ lpg_blocked_data_resp.TTs_Blocked_by_Novex_LPG }}</td>
+                    <td>{{ lpg_blocked_data_resp.TTs_Manually_Unblocked_LPG }}</td>
+                    <td>{{ lpg_blocked_data_resp.TTs_Auto_Unblocked_LPG }}</td>
+                    <td>{{ lpg_blocked_data_resp.TTs_currently_under_Block_LPG }}</td>
+                </tr>
+            </tbody>
+        </table>
+    <h6>3.7.2 ITDG Alert Break Up</h6>
     <table>
-        <tr>
-            <th>
-                TTs Blocked by Novex
-            </th>
-            <th>
-                TTs Manually Unblocked
-            </th>
-            <th>
-                TTs currently under Block
-            </th>
-            <th>
-                TTs Auto Unblocked
-            </th>
-        </tr>
-    
-        <tr>
-            <td>
-                {{TTs_Blocked_by_Novex_LPG}}
-            </td>
-            <td>
-                {{TTs_Manually_Unblocked_LPG}}
-            </td>
-            <td>
-                {{TTs_currently_under_Block_LPG}}
-            </td>
-            <td>
-                {{TTs_Auto_Unblocked_LPG}}
-            </td>
-        </tr>
+        <thead>
+            <tr>
+                {% for col in lpg_blocked_data_resp_violation.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in lpg_blocked_data_resp_violation.to_dict(orient='records') %}
+            <tr>
+                {% for col in lpg_blocked_data_resp_violation.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 <h4>4. SOD Operations Summary</h4>
 <h5>4.1. Open Alert Summary ({{present_month}})</h5>
@@ -381,10 +383,10 @@
             TTs Manually Unblocked
         </th>
         <th>
-            TTs currently under Block
+            TTs unblocked as per ITDG
         </th>
         <th>
-            TTs Auto Unblocked
+            TTs currently under Block
         </th>
     </tr>
 
@@ -396,10 +398,10 @@
             {{TTs_Manually_Unblocked_TAS}}
         </td>
         <td>
-            {{TTs_currently_under_Block_TAS}}
+            {{TTs_Auto_Unblocked_TAS}}
         </td>
         <td>
-            {{TTs_Auto_Unblocked_TAS}}
+            {{TTs_currently_under_Block_TAS}}
         </td>
     </tr>
 </table>

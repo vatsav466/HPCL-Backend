@@ -550,7 +550,7 @@ async def send_notification(notification_data):
         ["sanjayk@hpcl.in", "debeshp@hpcl.in","gargam@hpcl.in"],
         ["cvmallinath@hpcl.in","purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in"],
         ["rujutadoiphode@hpcl.in"],
-        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com","santoshkumar.s@algofusiontech.com", "shrihari.b@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"]
+        ["venu@algofusiontech.com", "sreedhar.maddipati@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com"]
         ]:
         await ins.publish_message(
             subject="Novex Daily Report",

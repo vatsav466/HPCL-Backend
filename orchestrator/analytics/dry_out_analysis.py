@@ -3,6 +3,7 @@ import os
 import json
 import datetime
 import time
+import ast
 import requests
 import asyncio
 import pandas as pd
@@ -28,9 +29,102 @@ from utilities.connection_mapping import product_code_mapping, connection_mappin
 req_keys = {
     "TAS": ["zone", "sap_id", "name", "category", "location_onboard"],
     "LPG": ["zone", "sap_id", "name", "category"],
-    "RO": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "category", "sap_id", "name"]
+    "RO": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "category", "sap_id", "name"],
+    "DS": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "sap_id", "name"]
 }
 
+async def flatten_zone(rows):
+        out = []
+
+        for rec in rows:
+            val = rec['zone']
+
+            # CASE 1: value is a string that looks like a list
+            if isinstance(val, str) and val.startswith('[') and val.endswith(']'):
+                try:
+                    parsed = ast.literal_eval(val)  # convert string → actual list
+                    out.extend(parsed)
+                except:
+                    out.append(val)
+
+            # CASE 2: value is a real list
+            elif isinstance(val, list):
+                out.extend(val)
+
+            # CASE 3: normal single string
+            else:
+                if val:  # skip empty strings
+                    out.append(val)
+
+        cleaned = list(set(out))
+
+        print('*' * 100)
+        print('Flattened zone:', cleaned)
+        print('*' * 100)
+
+        return cleaned
+
+async def flatten_region(rows):
+        out = []
+
+        for rec in rows:
+            val = rec['region']
+
+            # CASE 1: value is a string that looks like a list
+            if isinstance(val, str) and val.startswith('[') and val.endswith(']'):
+                try:
+                    parsed = ast.literal_eval(val)  # convert string → actual list
+                    out.extend(parsed)
+                except:
+                    out.append(val)
+
+            # CASE 2: value is a real list
+            elif isinstance(val, list):
+                out.extend(val)
+
+            # CASE 3: normal single string
+            else:
+                if val:  # skip empty strings
+                    out.append(val)
+
+        cleaned = list(set(out))
+
+        print('*' * 100)
+        print('Flattened region:', cleaned)
+        print('*' * 100)
+
+        return cleaned
+
+async def flatten_sales_area(rows):
+        out = []
+
+        for rec in rows:
+            val = rec['sales_area']
+
+            # CASE 1: value is a string that looks like a list
+            if isinstance(val, str) and val.startswith('[') and val.endswith(']'):
+                try:
+                    parsed = ast.literal_eval(val)  # convert string → actual list
+                    out.extend(parsed)
+                except:
+                    out.append(val)
+
+            # CASE 2: value is a real list
+            elif isinstance(val, list):
+                out.extend(val)
+
+            # CASE 3: normal single string
+            else:
+                if val:  # skip empty strings
+                    out.append(val)
+
+        cleaned = list(set(out))
+
+        print('*' * 100)
+        print('Flattened sales_area:', cleaned)
+        print('*' * 100)
+
+        return cleaned
 
 async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False, location_onboard=False):
     """
@@ -65,6 +159,32 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                 region.extend(rec['value'])
             else:
                 region.append(rec['value'])
+            if region and not zone:
+                regions = "', '".join(region)
+                query = f"""select DISTINCT zone from location_master where region IN ('{regions}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    zone = await flatten_zone(resp['data'])
+        elif rec['key'] == 'sales_area':
+            if not sales_area:
+                sales_area = []
+            if isinstance(rec['value'], list):
+                sales_area.extend(rec['value'])
+            else:
+                sales_area.append(rec['value'])
+            if sales_area and not zone:
+                sales_areas = "', '".join(sales_area)
+                query = f"""select DISTINCT zone from location_master where sales_area IN ('{sales_areas}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    zone = await flatten_zone(resp['data'])
+            
+            if sales_area and not region:
+                sales_areas = "', '".join(sales_area)
+                query = f"""select DISTINCT region from location_master where sales_area IN ('{sales_areas}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    region = await flatten_region(resp['data'])
         elif rec['key'] == 'sap_id':
             if not plant:
                 plant = []
@@ -75,13 +195,27 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                     plant.extend([x for x in rec['value'].split(",")])
                 else:
                     plant.append(rec['value'])
-        elif rec['key'] == 'sales_area':
-            if not sales_area:
-                sales_area = []
-            if isinstance(rec['value'], list):
-                sales_area.extend(rec['value'])
-            else:
-                sales_area.append(rec['value'])
+            if plant and not zone:
+                plants = "', '".join(plant)
+                query = f"""select DISTINCT zone from location_master where sap_id IN ('{plants}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    zone = await flatten_zone(resp['data'])
+            
+            if plant and not region:
+                plants = "', '".join(plant)
+                query = f"""select DISTINCT region from location_master where sap_id IN ('{plants}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    region = await flatten_region(resp['data'])
+            
+            if plant and not sales_area:
+                plants = "', '".join(plant)
+                query = f"""select DISTINCT sales_area from location_master where sap_id IN ('{plants}') and bu='{bu}' """
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                if resp['data']:
+                    sales_area = await flatten_sales_area(resp['data'])
+
     redis_client = await urdhva_base.redispool.get_redis_connection()
     location_data = await redis_client.hgetall("location_master")
 
@@ -93,7 +227,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
             bu_data[key] = ""
     bu_data = bu_data[req_keys[bu]]
     bu_data.fillna("", inplace=True)
-    if bu.upper() == "RO":
+    if bu.upper() in ["RO","DS"]:
         # Updating Plant Name in case if missing
         tas_data = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
                     if helpers.normalize_string(key).startswith(f"TAS_")]
@@ -101,7 +235,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
         bu_data['terminal_plant_name'] = bu_data['terminal_plant_id'].apply(lambda x: terminal_name_mapping.get(x, x))
         bu_data = bu_data[bu_data['terminal_plant_name'].notna()]
     final_data = {"zone": {}, "plant": {}, "customer": {}}
-    if bu.upper() == "RO":
+    if bu.upper() in ["RO","DS"]:
         final_data.update({"region": {}, "sales_area": {}, "customer": {}})
 
     def check_category(category):
@@ -222,7 +356,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                 if cat_a_dealers and check_category(rec['category']) != "A":
                     continue
                 final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"],
-                                                         "category": check_category(rec['category'])}
+                                                         "category": check_category(rec.get('category',None))}
 
     for key, details in final_data.items():
         final_data[key] = list(details.values())
@@ -1371,7 +1505,7 @@ async def get_dryout_aging(conditions):
     query = f"""WITH distinct_alerts AS (
                 SELECT DISTINCT ON (sap_id) sap_id, created_at
                 FROM alerts
-                WHERE {conditions} AND progress_rate = '1' AND indent_status NOT IN ('TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')
+                WHERE {conditions} AND progress_rate = '1' AND indent_status NOT IN ('TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')
                 ORDER BY sap_id, created_at ASC
             )
             SELECT 
@@ -1416,7 +1550,9 @@ async def get_ro_count_less_50(condition):
     data = pd.DataFrame.from_records(data, columns=columns)
     data['CUST_CD'] = data['CUST_CD'].astype(str)
 
-    query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    query = (f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} "
+             f"and progress_rate = '1' and alert_status != 'Close' "
+             f"order by sap_id, created_at asc")
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
     #     "hpcl_ceg", "1")
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1480,7 +1616,7 @@ async def get_tar_analysis(condition):
     cust_resp['rosapcode'] = cust_resp['rosapcode'].astype(str)
 
     query = f"""select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' 
-                and indent_status not in ('TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm') 
+                and indent_status not in ('TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable') 
                 order by sap_id, created_at asc"""
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
     #     "hpcl_ceg", "1")
@@ -1698,7 +1834,7 @@ async def get_dryout_aging_data():
                     dry_out_in_days
                     FROM alerts
                     WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND mark_as_false = true AND progress_rate = '1'
-                    AND indent_status NOT IN ('TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')
+                    AND indent_status NOT IN ('TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')
                     ORDER BY sap_id, created_at ASC
                 )
                 SELECT *,

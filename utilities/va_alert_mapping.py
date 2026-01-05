@@ -320,10 +320,10 @@ VA_Alert_Mapping = {
                     "value": 1,
                     "assign_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
                                     f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
-                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD"),
                     "escalation_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
                                     f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
-                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD"),
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
@@ -331,10 +331,10 @@ VA_Alert_Mapping = {
                     "value": 2,
                     "assign_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
                                     f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
-                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD"),
                     "escalation_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
                                     f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
-                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD"),
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
@@ -342,10 +342,10 @@ VA_Alert_Mapping = {
                     "value": 2,
                     "assign_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
                                     f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
-                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD"),
                     "escalation_role": (f"Safety Officer SOD,Maintenance Officer SOD,Location In-Charge SOD,Plant In-Charge SOD,Planning Officer SOD,",
                                     f"Zonal SOD,Zonal Manager SOD,Zonal Transport Officer SOD,Zonal Chief Manager SOD,Zonal Executive Officer SOD,",
-                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD"),
+                                    f"Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD"),
                     "escalation_time": "PT30S"
                 }
             }
@@ -372,8 +372,8 @@ VA_Alert_Mapping = {
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
-                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
-                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
                     "escalation_time": "PT1H"
                 }
             }
@@ -400,8 +400,8 @@ VA_Alert_Mapping = {
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
-                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
-                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
                     "escalation_time": "PT1H"
                 }
             }
@@ -428,8 +428,8 @@ VA_Alert_Mapping = {
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
-                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
-                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
                     "escalation_time": "PT1H"
                 }
             }
@@ -456,8 +456,8 @@ VA_Alert_Mapping = {
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
-                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
-                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
                     "escalation_time": "PT1H"
                 }
             }
@@ -540,8 +540,8 @@ VA_Alert_Mapping = {
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
-                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
-                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
                     "escalation_time": "PT1H"
                 }
             }
@@ -624,8 +624,8 @@ VA_Alert_Mapping = {
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
-                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
-                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD",
+                    "assign_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
+                    "escalation_role": "Distribution Manager SOD,HQO Manager SOD,HQO Supply Officer SOD,HQO HSE SOD",
                     "escalation_time": "PT1H"
                 }
             }

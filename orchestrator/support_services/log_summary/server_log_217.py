@@ -114,12 +114,8 @@ async def monitor_remote_logs():
                     "yesu.p@algofusiontech.com",
                     "sreedhar.maddipati@algofusiontech.com",
                     "venu@algofusiontech.com",
-                    "shrihari.b@algofusiontech.com",
-                    "santoshkumar.s@algofusiontech.com",
-                    "keerthesrep@algofusiontech.com",
                     "moufikali@algofusiontech.com",
                     "bala@algofusiontech.com",
-                    "manoj.m@algofusiontech.com",
                     "manohar.v@algofusiontech.com"
                 ],
                 html_content=True,

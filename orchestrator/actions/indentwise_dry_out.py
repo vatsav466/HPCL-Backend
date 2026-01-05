@@ -121,7 +121,7 @@ class IndentDryOut:
         query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                  f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params["sap_id"]}' and "
                  f"indent_no='{each_indent["INDENT_NO"]}' and alert_status='Close' and "
-                 f"product_code='{self.params["product_code"]}' and indent_status in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')")
+                 f"product_code='{self.params["product_code"]}' and indent_status in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')")
         alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         if alerts_data.get("data", []):
             return True
@@ -415,14 +415,40 @@ class IndentDryOut:
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
         
-        if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        if await self._check_dry_out_history():
+            dryout_alert_data = await Alerts.get(self.params["alert_id"])
+            if not isinstance(dryout_alert_data, dict):
+                dryout_alert_data = dryout_alert_data.__dict__
+            
+            if dryout_alert_data.get("alert_status") == 'Close' and dryout_alert_data.get('indent_status') == 'NotAvailable':
+                await self._close_camunda_workflow()
+            
+            if dryout_alert_data.get("alert_status") != 'Close' or dryout_alert_data.get('indent_status') != 'NotAvailable':
+                print("Not Available In CRIS but still alert is in Intial stage")
+                # print("Params: ", self.params)
+                input_data = {
+                    "action_msg": "",
+                    "event_tags": {
+                        "is_delivered": False
+                    }
+                }
+                input_data["action_msg"] = "Not Available In CRIS but still alert is in Intial stage"
+                input_data["action_type"] = "Created"
+                input_data["event_tags"]["is_delivered"] = False
+                await self.update_alert_status(
+                    indent_status=IndentStatus.NotAvailable,
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    input_data=input_data,
+                    progress_rate=dryout_alert_data.get("progress_rate","0")
+                )
+                await self.close_supply_chain_alert(
+                    alert_id=self.params.get("alert_id"),
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    indent_status=IndentStatus.NotAvailable
+                )
+            return await self.send_alert_action(is_raised=False)
 
         query = f"""SELECT a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE", a."PROD_REQD_DT" AS "PROD_REQD_DT" """ \
                 f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
@@ -443,14 +469,40 @@ class IndentDryOut:
             self.params = params
             await self.get_connection_name()
         
-        if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        if await self._check_dry_out_history():
+            dryout_alert_data = await Alerts.get(self.params["alert_id"])
+            if not isinstance(dryout_alert_data, dict):
+                dryout_alert_data = dryout_alert_data.__dict__
+            
+            if dryout_alert_data.get("alert_status") == 'Close' and dryout_alert_data.get('indent_status') == 'NotAvailable':
+                await self._close_camunda_workflow()
+            
+            if dryout_alert_data.get("alert_status") != 'Close' or dryout_alert_data.get('indent_status') != 'NotAvailable':
+                print("Not Available In CRIS but still alert is in Intial stage")
+                # print("Params: ", self.params)
+                input_data = {
+                    "action_msg": "",
+                    "event_tags": {
+                        "is_delivered": False
+                    }
+                }
+                input_data["action_msg"] = "Not Available In CRIS but still alert is in Intial stage"
+                input_data["action_type"] = "Created"
+                input_data["event_tags"]["is_delivered"] = False
+                await self.update_alert_status(
+                    indent_status=IndentStatus.NotAvailable,
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    input_data=input_data,
+                    progress_rate=dryout_alert_data.get("progress_rate","0")
+                )
+                await self.close_supply_chain_alert(
+                    alert_id=self.params.get("alert_id"),
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    indent_status=IndentStatus.NotAvailable
+                )
+            return await self.send_alert_action(is_raised=False)
             
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -723,15 +775,41 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
-
-        if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        
+        if await self._check_dry_out_history():
+            dryout_alert_data = await Alerts.get(self.params["alert_id"])
+            if not isinstance(dryout_alert_data, dict):
+                dryout_alert_data = dryout_alert_data.__dict__
+            
+            if dryout_alert_data.get("alert_status") == 'Close' and dryout_alert_data.get('indent_status') == 'NotAvailable':
+                await self._close_camunda_workflow()
+            
+            if dryout_alert_data.get("alert_status") != 'Close' or dryout_alert_data.get('indent_status') != 'NotAvailable':
+                print("Not Available In CRIS but still alert is in Intial stage")
+                # print("Params: ", self.params)
+                input_data = {
+                    "action_msg": "",
+                    "event_tags": {
+                        "is_delivered": False
+                    }
+                }
+                input_data["action_msg"] = "Not Available In CRIS but still alert is in Intial stage"
+                input_data["action_type"] = "Created"
+                input_data["event_tags"]["is_delivered"] = False
+                await self.update_alert_status(
+                    indent_status=IndentStatus.NotAvailable,
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    input_data=input_data,
+                    progress_rate=dryout_alert_data.get("progress_rate","0")
+                )
+                await self.close_supply_chain_alert(
+                    alert_id=self.params.get("alert_id"),
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    indent_status=IndentStatus.NotAvailable
+                )
+            return await self.send_alert_action(is_raised=False)
 
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = "','".join(self.params.get("indent_no").split(","))
@@ -798,14 +876,40 @@ class IndentDryOut:
             self.params = params
             await self.get_connection_name()
         
-        if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        if await self._check_dry_out_history():
+            dryout_alert_data = await Alerts.get(self.params["alert_id"])
+            if not isinstance(dryout_alert_data, dict):
+                dryout_alert_data = dryout_alert_data.__dict__
+            
+            if dryout_alert_data.get("alert_status") == 'Close' and dryout_alert_data.get('indent_status') == 'NotAvailable':
+                await self._close_camunda_workflow()
+            
+            if dryout_alert_data.get("alert_status") != 'Close' or dryout_alert_data.get('indent_status') != 'NotAvailable':
+                print("Not Available In CRIS but still alert is in Intial stage")
+                # print("Params: ", self.params)
+                input_data = {
+                    "action_msg": "",
+                    "event_tags": {
+                        "is_delivered": False
+                    }
+                }
+                input_data["action_msg"] = "Not Available In CRIS but still alert is in Intial stage"
+                input_data["action_type"] = "Created"
+                input_data["event_tags"]["is_delivered"] = False
+                await self.update_alert_status(
+                    indent_status=IndentStatus.NotAvailable,
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    input_data=input_data,
+                    progress_rate=dryout_alert_data.get("progress_rate","0")
+                )
+                await self.close_supply_chain_alert(
+                    alert_id=self.params.get("alert_id"),
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    indent_status=IndentStatus.NotAvailable
+                )
+            return await self.send_alert_action(is_raised=False)
             
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -936,14 +1040,40 @@ class IndentDryOut:
             self.params = params
             await self.get_connection_name()
         
-        if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        if await self._check_dry_out_history():
+            dryout_alert_data = await Alerts.get(self.params["alert_id"])
+            if not isinstance(dryout_alert_data, dict):
+                dryout_alert_data = dryout_alert_data.__dict__
+            
+            if dryout_alert_data.get("alert_status") == 'Close' and dryout_alert_data.get('indent_status') == 'NotAvailable':
+                await self._close_camunda_workflow()
+            
+            if dryout_alert_data.get("alert_status") != 'Close' or dryout_alert_data.get('indent_status') != 'NotAvailable':
+                print("Not Available In CRIS but still alert is in Intial stage")
+                # print("Params: ", self.params)
+                input_data = {
+                    "action_msg": "",
+                    "event_tags": {
+                        "is_delivered": False
+                    }
+                }
+                input_data["action_msg"] = "Not Available In CRIS but still alert is in Intial stage"
+                input_data["action_type"] = "Created"
+                input_data["event_tags"]["is_delivered"] = False
+                await self.update_alert_status(
+                    indent_status=IndentStatus.NotAvailable,
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    input_data=input_data,
+                    progress_rate=dryout_alert_data.get("progress_rate","0")
+                )
+                await self.close_supply_chain_alert(
+                    alert_id=self.params.get("alert_id"),
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    indent_status=IndentStatus.NotAvailable
+                )
+            return await self.send_alert_action(is_raised=False)
 
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1030,14 +1160,40 @@ class IndentDryOut:
             self.params = params
             await self.get_connection_name()
         
-        if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        if await self._check_dry_out_history():
+            dryout_alert_data = await Alerts.get(self.params["alert_id"])
+            if not isinstance(dryout_alert_data, dict):
+                dryout_alert_data = dryout_alert_data.__dict__
+            
+            if dryout_alert_data.get("alert_status") == 'Close' and dryout_alert_data.get('indent_status') == 'NotAvailable':
+                await self._close_camunda_workflow()
+            
+            if dryout_alert_data.get("alert_status") != 'Close' or dryout_alert_data.get('indent_status') != 'NotAvailable':
+                print("Not Available In CRIS but still alert is in Intial stage")
+                # print("Params: ", self.params)
+                input_data = {
+                    "action_msg": "",
+                    "event_tags": {
+                        "is_delivered": False
+                    }
+                }
+                input_data["action_msg"] = "Not Available In CRIS but still alert is in Intial stage"
+                input_data["action_type"] = "Created"
+                input_data["event_tags"]["is_delivered"] = False
+                await self.update_alert_status(
+                    indent_status=IndentStatus.NotAvailable,
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    input_data=input_data,
+                    progress_rate=dryout_alert_data.get("progress_rate","0")
+                )
+                await self.close_supply_chain_alert(
+                    alert_id=self.params.get("alert_id"),
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    indent_status=IndentStatus.NotAvailable
+                )
+            return await self.send_alert_action(is_raised=False)
 
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1136,14 +1292,40 @@ class IndentDryOut:
             self.params = params
             await self.get_connection_name()
         
-        if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        if await self._check_dry_out_history():
+            dryout_alert_data = await Alerts.get(self.params["alert_id"])
+            if not isinstance(dryout_alert_data, dict):
+                dryout_alert_data = dryout_alert_data.__dict__
+            
+            if dryout_alert_data.get("alert_status") == 'Close' and dryout_alert_data.get('indent_status') == 'NotAvailable':
+                await self._close_camunda_workflow()
+            
+            if dryout_alert_data.get("alert_status") != 'Close' or dryout_alert_data.get('indent_status') != 'NotAvailable':
+                print("Not Available In CRIS but still alert is in Intial stage")
+                # print("Params: ", self.params)
+                input_data = {
+                    "action_msg": "",
+                    "event_tags": {
+                        "is_delivered": False
+                    }
+                }
+                input_data["action_msg"] = "Not Available In CRIS but still alert is in Intial stage"
+                input_data["action_type"] = "Created"
+                input_data["event_tags"]["is_delivered"] = False
+                await self.update_alert_status(
+                    indent_status=IndentStatus.NotAvailable,
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    input_data=input_data,
+                    progress_rate=dryout_alert_data.get("progress_rate","0")
+                )
+                await self.close_supply_chain_alert(
+                    alert_id=self.params.get("alert_id"),
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    indent_status=IndentStatus.NotAvailable
+                )
+            return await self.send_alert_action(is_raised=False)
 
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1254,14 +1436,40 @@ class IndentDryOut:
             self.params = params
             await self.get_connection_name()
         
-        if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        if await self._check_dry_out_history():
+            dryout_alert_data = await Alerts.get(self.params["alert_id"])
+            if not isinstance(dryout_alert_data, dict):
+                dryout_alert_data = dryout_alert_data.__dict__
+            
+            if dryout_alert_data.get("alert_status") == 'Close' and dryout_alert_data.get('indent_status') == 'NotAvailable':
+                await self._close_camunda_workflow()
+            
+            if dryout_alert_data.get("alert_status") != 'Close' or dryout_alert_data.get('indent_status') != 'NotAvailable':
+                print("Not Available In CRIS but still alert is in Intial stage")
+                # print("Params: ", self.params)
+                input_data = {
+                    "action_msg": "",
+                    "event_tags": {
+                        "is_delivered": False
+                    }
+                }
+                input_data["action_msg"] = "Not Available In CRIS but still alert is in Intial stage"
+                input_data["action_type"] = "Created"
+                input_data["event_tags"]["is_delivered"] = False
+                await self.update_alert_status(
+                    indent_status=IndentStatus.NotAvailable,
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    input_data=input_data,
+                    progress_rate=dryout_alert_data.get("progress_rate","0")
+                )
+                await self.close_supply_chain_alert(
+                    alert_id=self.params.get("alert_id"),
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    indent_status=IndentStatus.NotAvailable
+                )
+            return await self.send_alert_action(is_raised=False)
 
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1352,15 +1560,41 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
-
-        if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        
+        if await self._check_dry_out_history():
+            dryout_alert_data = await Alerts.get(self.params["alert_id"])
+            if not isinstance(dryout_alert_data, dict):
+                dryout_alert_data = dryout_alert_data.__dict__
+            
+            if dryout_alert_data.get("alert_status") == 'Close' and dryout_alert_data.get('indent_status') == 'NotAvailable':
+                await self._close_camunda_workflow()
+            
+            if dryout_alert_data.get("alert_status") != 'Close' or dryout_alert_data.get('indent_status') != 'NotAvailable':
+                print("Not Available In CRIS but still alert is in Intial stage")
+                # print("Params: ", self.params)
+                input_data = {
+                    "action_msg": "",
+                    "event_tags": {
+                        "is_delivered": False
+                    }
+                }
+                input_data["action_msg"] = "Not Available In CRIS but still alert is in Intial stage"
+                input_data["action_type"] = "Created"
+                input_data["event_tags"]["is_delivered"] = False
+                await self.update_alert_status(
+                    indent_status=IndentStatus.NotAvailable,
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    input_data=input_data,
+                    progress_rate=dryout_alert_data.get("progress_rate","0")
+                )
+                await self.close_supply_chain_alert(
+                    alert_id=self.params.get("alert_id"),
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    indent_status=IndentStatus.NotAvailable
+                )
+            return await self.send_alert_action(is_raised=False)
 
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1660,14 +1894,40 @@ class IndentDryOut:
             self.params = params
             await self.get_connection_name()
         
-        if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+        if await self._check_dry_out_history():
+            dryout_alert_data = await Alerts.get(self.params["alert_id"])
+            if not isinstance(dryout_alert_data, dict):
+                dryout_alert_data = dryout_alert_data.__dict__
+            
+            if dryout_alert_data.get("alert_status") == 'Close' and dryout_alert_data.get('indent_status') == 'NotAvailable':
+                await self._close_camunda_workflow()
+            
+            if dryout_alert_data.get("alert_status") != 'Close' or dryout_alert_data.get('indent_status') != 'NotAvailable':
+                print("Not Available In CRIS but still alert is in Intial stage")
+                # print("Params: ", self.params)
+                input_data = {
+                    "action_msg": "",
+                    "event_tags": {
+                        "is_delivered": False
+                    }
+                }
+                input_data["action_msg"] = "Not Available In CRIS but still alert is in Intial stage"
+                input_data["action_type"] = "Created"
+                input_data["event_tags"]["is_delivered"] = False
+                await self.update_alert_status(
+                    indent_status=IndentStatus.NotAvailable,
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    input_data=input_data,
+                    progress_rate=dryout_alert_data.get("progress_rate","0")
+                )
+                await self.close_supply_chain_alert(
+                    alert_id=self.params.get("alert_id"),
+                    alert_status=AlertStatus.Close,
+                    alert_state=AlertState.Resolved,
+                    indent_status=IndentStatus.NotAvailable
+                )
+            return await self.send_alert_action(is_raised=False)
 
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1728,15 +1988,6 @@ class IndentDryOut:
                 "is_vts": False
             }
         }
-
-        if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
 
         input_data["action_msg"] = "VTS Enabled"
         input_data["action_type"] = "VTS"

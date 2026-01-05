@@ -62,6 +62,12 @@ async def sync_auto_dc_requests():
         }
 
         auto_dc_data = pd.DataFrame(auto_dc_data)
+        schema_cols = set(auto_dc_schema.keys())
+        present_cols = set(auto_dc_data.columns)
+        # Find extra/unwanted columns
+        extra_cols = present_cols - schema_cols
+        # Drop them
+        auto_dc_data.drop(columns=list(extra_cols), inplace=True)
         auto_dc_data = pl.DataFrame(auto_dc_data, schema=auto_dc_schema)
         ist = pytz.timezone('Asia/Kolkata')
         sync_date = datetime.datetime.now(ist).strftime("%y%m%d-%H") + "00"

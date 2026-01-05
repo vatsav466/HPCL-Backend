@@ -6,6 +6,7 @@ Enum BusinessUnit str {
     CP='CP'
     CDCMS='CDCMS'
     ALL='ALL'
+    DS='DS'
 }
 
 Enum DeviceType str {
@@ -110,6 +111,8 @@ Enum AlertActionType str {
     SendItBack='SendItBack'
     FalseViolation='FalseViolation'
     AcceptViolation='AcceptViolation'
+    BlockFailed='BlockFailed'
+    UnblockFailed='UnblockFailed'
 }
 
 Enum IndentStatus str {
@@ -135,6 +138,7 @@ Enum IndentStatus str {
     TempClosed='TempClosed'
     ProductLowLevel='ProductLowLevel'
     OfflineOrFalseAlarm='OfflineOrFalseAlarm'
+    NotAvailable='NotAvailable'
 }
 
 Model RoleMapper internal {
@@ -256,6 +260,8 @@ Model Users {
         password str
         login_type optional default='employee' str
     }
+
+    
 
     Action=> applogin {
         username str regex="^[a-zA-Z0-9_.-]+$"
@@ -573,6 +579,9 @@ Model Alert_History internal {
     action_type AlertActionType
     alert_status optional AlertStatus
     action_msg str
+    rca_reason optional str
+    category optional str
+    employee_id optional stremployee_id optional str
     remarks optional str
     doc_link optional str
     atr_uploaded optional bool
@@ -702,7 +711,9 @@ Model VtsManualBlocked {
     sap_id optional str
     zone optional str
     region optional str
-    location_name optional str    
+    location_name optional str
+    remarks_unblocked optional str
+    file_uploaded_path optional str   
 }
 
 Model Alerts {
@@ -811,6 +822,8 @@ Model Alerts {
     mark_as_false optional bool
     vts_alert_history_ids optional list str
     action_on optional MakerChecker
+    remarks_unblocked optional str
+    file_uploaded_path optional str
 
     Action=> alert_action {
         bu optional str
@@ -887,14 +900,41 @@ Model Alerts {
 
     Action=> unblock_vts_truck {
         unblock_id str
+        remarks_unblocked str
+    }
+
+    Action=> unblock_alert_truck {
+        unique_id str
+
     }
 
     Action=> get_vts_blocked_trucks {
+        tab str
         cross_filters optional list WidgetFilters
     }
     
     Action=> get_vts_unblocked_trucks {
         cross_filters optional list WidgetFilters
+    }
+
+    Action=> alerts_get_vts_query {
+        vehicle_number optional str
+        cross_filters optional list WidgetFilters
+    }
+
+    Action=> attach_alert_blocked_file {
+        unique_id str
+        remarks_unblocked str
+    }
+
+    Action=> attach_vts_blocked_file {
+        unblock_id str
+        remarks_unblocked str
+    }
+    Action=> hqo_blocked_vehicles {
+        alert_status str
+        start_date optional str
+        end_date optional str
     }
     
     Config=> {
@@ -907,6 +947,23 @@ Model Alerts {
         search_fields='bu,sap_id,sop_id,location_name,alert_section,alert_status,interlock_name,vehicle_number,device_name,device_id,device_msg,device_type,violation_type,rca_type,assigned_to,region,zone,indent_status'
     }
 }
+
+Model TasAnalytics crud_disable {
+    Action=> tas_analytics {
+        analytical_model      str    
+        location_name   optional str
+        interlock_name  optional str
+        alert_status    optional str
+        alert_severity  optional str
+        zone            optional str
+        start_date      str
+        end_date        str
+        equipment_type  optional str
+        download        optional str
+    }
+
+}
+
 
 Model CEMSLocationMaster {
     bu_id str
@@ -1146,6 +1203,77 @@ Model IndentDryOut {
     }
 
     Action=> get_dried_out_ro {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_dried_out_ro_by_actions {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+        actions str
+    }
+
+    Action=> get_indent_raised_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_indent_on_hold_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_pending_indents_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+    
+    Action=> get_valid_indent_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_cancelled_indent_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_truck_allocated_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_send_to_sap_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_sales_order_placed_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_r2_swipe_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_is_invoice_created_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_r3_swiped_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_vts_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_delivery_confirmation_direct_sales {
         filters list IndentDryOutDataFilters
         bu_type optional str
     }
@@ -1488,11 +1616,15 @@ Model DeviceMaster {
 Model VtsAlertHistory {
     vendor_id optional str
     location_id optional str
+    base_location_id optional str
     bu optional str
     sap_id optional str
     zone optional str
+    base_zone optional str
     location_name optional str
+    base_location_name optional str
     region optional str
+    base_region optional str
     location_type optional str
     tl_number index_field str
     report_duration optional str
@@ -1501,6 +1633,7 @@ Model VtsAlertHistory {
     total_trips optional int
     stoppage_violations_count optional int
     route_deviation_count optional int
+    route_deviation_count_orig optional int
     scheduled_trip_start_datetime optional datetime
     scheduled_trip_end_datetime optional datetime
     speed_violation_count optional int
@@ -1516,6 +1649,12 @@ Model VtsAlertHistory {
     invoice_number optional index_field str
     tt_type optional str
     violation_type optional list str
+    destination_code optional str
+
+    Action=> vts_alerts_analytics{
+        alert_id str
+        interlock_name optional str
+    }
 
     Config=> {
         crud_operations='read'
@@ -2537,6 +2676,7 @@ Model VtsTruckHistory internal {
     invoice_number optional str
     stoppage_violations_count optional int
     route_deviation_count optional int
+    route_deviation_count_orig optional int
     speed_violation_count optional int
     main_supply_removal_count optional int
     night_driving_count optional int
@@ -3577,6 +3717,129 @@ Model NoticesVTS {
     Action=> upload_notice {
     }
     
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model DeviceInstallation{
+    sap_tt_no  str  
+    tt_chassis_no optional str  
+    tt_engine_no optional str  
+    select_business optional str  
+    location optional str  
+    transporter optional str  
+    device optional str  
+    vehicle_installed_by optional str  
+    vehicle_installation_date optional str  
+    device_installation_approved_by optional str  
+    contract_valid_upto optional str  
+    certificate optional str  
+    status optional str
+    remarks optional str
+    reason_for_cancel optional str
+    status_decommissioning optional str
+
+    Action=> update_device_installation {
+            sap_tt_no  str  
+            tt_chassis_no optional str  
+            tt_engine_no optional str  
+            select_business optional str  
+            location optional str  
+            transporter optional str  
+            device optional str  
+            vehicle_installed_by optional str  
+            vehicle_installation_date optional str  
+            device_installation_approved_by optional str  
+            contract_valid_upto optional str  
+            certificate optional str  
+            status optional  str
+            remarks optional  str
+            reason_for_cancel optional str
+            status_decommissioning optional str
+        }
+    Action=> upload_certificate {
+        sap_tt_no str
+        certificate optional str
+    }
+
+    Config=> {
+        access_key_mapping='sap_tt_no'
+    }
+}
+
+Model CreateUser internal {
+    username optional str
+    email optional str
+    password optional str
+    first_name optional str
+    last_name optional str
+    employee_id optional str
+    sap_id optional list str
+    zone optional list str
+    region optional list str
+    state optional list str
+    sales_area optional list str
+    system_role optional list str
+    novex_role optional list str
+    bu optional list str
+    contact_number optional str
+    is_ad_user optional bool
+    status optional bool
+}
+
+Model UpdateUser internal {
+    username optional str
+    bu optional list str
+    sap_id optional list str
+    zone optional list str
+    region optional list str
+    state optional list str
+    sales_area optional list str
+    novex_role optional list str
+    contact_number optional str
+}
+
+Model UserMaster crud_disable {
+    Action=> create_user {
+        data CreateUser
+    }
+
+    Action=> update_user {
+        data UpdateUser
+    }
+
+    Action=> delete_user {
+        username optional str
+    }
+}
+
+Model SystemAuditLog {
+    employee_id optional str
+    role optional list str
+    email optional str
+    section optional str
+    remarks optional str
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model CrisDryOutSync {
+    run_id index_field str
+    total_dryouts int
+    ms_hsd_dryouts optional int
+    ms_dryouts optional int
+    hsd_dryouts optional int
+    turbo_dryouts optional int
+    e20_dryouts optional int
+    power95_dryouts optional int
+    power99_dryouts optional int
+    power100_dryouts optional int
+    dry_out_in_days str
+    file_path optional str
+
     Config=> {
         crud_operations='read'
     }

@@ -77,6 +77,13 @@ class SendNotification:
             "msg_subject", "mqofrole", "location_type", "location_device_id", "va_level",
             "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail"
         ]
+    
+    async def check_sap_id_empty(self):
+        if self.alert_data.get('interlock_name') in ['Itdg Admin Blocked']:
+            if not self.alert_data.get('bu') or not self.alert_data.get('sap_id'):
+                return True
+            return False
+        return False
 
     async def process(self, params: typing.Dict):
         """
@@ -99,9 +106,13 @@ class SendNotification:
         try:
             if not await self._load_and_validate_alert():
                 return await self._handle_invalid_alert()
-
+            
+            check_status = await self.check_sap_id_empty()
+            if check_status:
+                return True, {"empty_sap_id": "Notification skipped Because Of Admin Module"}
+            
             await self._prepare_base_alert_data()
-            if self.base_alert_data['interlock_name'] == 'Dry Out Each Indent Wise MainFlow':
+            if self.base_alert_data['interlock_name'] in ['Dry Out Each Indent Wise MainFlow']:
                 return True, {"msg": "Notification skipped"}
             await self._process_roles_and_users()
             await self._process_message_type()
@@ -378,7 +389,9 @@ class SendNotification:
         """
         # logger.info(f"self.alert_data: {self.alert_data}") 
         if self.alert_data["alert_section"] in ['VTS'] and self.alert_data["bu"] in ['TAS']:
-            self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
+            self.interlock_name = self.alert_data.get('interlock_name', '')
+            if self.alert_data['interlock_name'] not in ['No VTS No Load', 'Itdg Admin Blocked']:
+                self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
             self.vts_assigned_role = "Location In-Charge SOD" if self.alert_data.get('violation_type','') not in ['device_tamper_count','main_supply_removal_count'] else (await self._role_configuration_mqofrole() or "")
             if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
                 self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
@@ -616,7 +629,12 @@ class SendNotification:
             await self._send_standard_notification()
 
     async def get_vts_recipients(self):
-        query = (f"transporter_code='{self.alert_data['transporter_code']}'")
+        transporter_code = (
+            str(int(self.alert_data['transporter_code']))
+            if str(self.alert_data.get('transporter_code', '')).strip().isdigit()
+            else "0"
+        )
+        query = (f"transporter_code='{transporter_code}'")
         transporter_details_data = await hpcl_ceg_model.EmailMaster.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                                     resp_type='plain')
         transporter_mail = []
@@ -933,7 +951,8 @@ class SendNotification:
             del alert_data["_sa_instance_state"]
 
         # Update the database
-        await hpcl_ceg_model.Alerts(**alert_data).modify()
+        if alert_data.get('interlock_name') not in ['No VTS No Load', 'Itdg Admin Blocked']:
+            await hpcl_ceg_model.Alerts(**alert_data).modify()
 
 
     async def read_template(self, filename: str) -> str:
@@ -1001,7 +1020,7 @@ class SendNotification:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer:
                     rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
-                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer:
+                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4'):
                     rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if mailto and mailto in ["0","1","2"]:
                     return rolemapping["rolemailto"].get(mailto,"")
@@ -1041,7 +1060,7 @@ class SendNotification:
                 rolemapping = role_configuration.vts_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer:
                     rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
-                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer:
+                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4'):
                     rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if mqof and mqof in ["0","1","2"]:
                     return rolemapping["mqof"].get(mqof,"")
@@ -1064,8 +1083,12 @@ class SendNotification:
                 if mqof and mqof in ["0","1","2"]:
                     va_mapping = va_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
                     if mqof == "0":
+                        if isinstance(va_mapping['assign_role'],tuple):
+                            return ",".join(va_mapping['assign_role'])
                         return va_mapping['assign_role']
                     if mqof == "1":
+                        if isinstance(va_mapping['escalation_role'],tuple):
+                            return ",".join(va_mapping['escalation_role'])
                         return va_mapping['escalation_role']
                     
         elif self.alert_data.get("alert_section","") in ["EMLock"]:
@@ -1125,9 +1148,24 @@ class SendNotification:
         if self.alert_data['violation_type'] in va_mapping.keys():
             va_mapping = va_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
             if mailto == "0":
+                if isinstance(va_mapping['assign_role'],tuple):
+                    return ",".join(va_mapping['assign_role'])
                 return va_mapping['assign_role']
             if mailto == "1":
+                if isinstance(va_mapping['escalation_role'],tuple):
+                    return ",".join(va_mapping['escalation_role'])
                 return va_mapping['escalation_role']
             if mailto == "2":
+                if isinstance(va_mapping['assign_role'],tuple) and isinstance(va_mapping['escalation_role'],tuple):
+                    combined_roles = va_mapping['assign_role'] + va_mapping['escalation_role']
+                    roles = []
+                    for item in combined_roles:
+                        roles.extend(item.split(","))
+
+                    # remove empty + duplicates (preserve order)
+                    distinct_roles = list(dict.fromkeys(r.strip() for r in roles if r.strip()))
+
+                    return ",".join(distinct_roles)
+                
                 return f"{va_mapping['assign_role']},{va_mapping['escalation_role']}"
         return mailto

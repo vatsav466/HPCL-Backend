@@ -1091,10 +1091,25 @@
                     "name": "unblock_vts_truck"
                 },
                 {
+                    "name": "unblock_alert_truck"
+                },
+                {
                     "name": "get_vts_blocked_trucks"
                 },
                 {
                     "name": "get_vts_unblocked_trucks"
+                },
+                {
+                    "name": "alerts_get_vts_query"
+                },
+                {
+                    "name": "attach_alert_blocked_file"
+                },
+                {
+                    "name": "attach_vts_blocked_file"
+                },
+                {
+                    "name": "hqo_blocked_vehicles"
                 }
             ]
         },
@@ -1193,10 +1208,94 @@
                     "name": "unblock_vts_truck"
                 },
                 {
+                    "name": "unblock_alert_truck"
+                },
+                {
                     "name": "get_vts_blocked_trucks"
                 },
                 {
                     "name": "get_vts_unblocked_trucks"
+                },
+                {
+                    "name": "alerts_get_vts_query"
+                },
+                {
+                    "name": "attach_alert_blocked_file"
+                },
+                {
+                    "name": "attach_vts_blocked_file"
+                },
+                {
+                    "name": "hqo_blocked_vehicles"
+                }
+            ]
+        },
+        {
+            "name": "tasanalytics",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasAnalytics",
+            "attributes": {},
+            "uris": [
+                "/api/tasanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_analytics"
+                }
+            ]
+        },
+        {
+            "name": "tasanalytics_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasAnalytics_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tasanalytics_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasAnalytics_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_analytics"
                 }
             ]
         },
@@ -1607,6 +1706,48 @@
                     "name": "get_dried_out_ro"
                 },
                 {
+                    "name": "get_dried_out_ro_by_actions"
+                },
+                {
+                    "name": "get_indent_raised_direct_sales"
+                },
+                {
+                    "name": "get_indent_on_hold_direct_sales"
+                },
+                {
+                    "name": "get_pending_indents_direct_sales"
+                },
+                {
+                    "name": "get_valid_indent_direct_sales"
+                },
+                {
+                    "name": "get_cancelled_indent_direct_sales"
+                },
+                {
+                    "name": "get_truck_allocated_direct_sales"
+                },
+                {
+                    "name": "get_send_to_sap_direct_sales"
+                },
+                {
+                    "name": "get_sales_order_placed_direct_sales"
+                },
+                {
+                    "name": "get_r2_swipe_direct_sales"
+                },
+                {
+                    "name": "get_is_invoice_created_direct_sales"
+                },
+                {
+                    "name": "get_r3_swiped_direct_sales"
+                },
+                {
+                    "name": "get_vts_direct_sales"
+                },
+                {
+                    "name": "get_delivery_confirmation_direct_sales"
+                },
+                {
                     "name": "get_dried_out_ro_data"
                 },
                 {
@@ -1665,6 +1806,48 @@
                 },
                 {
                     "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_dried_out_ro_by_actions"
+                },
+                {
+                    "name": "get_indent_raised_direct_sales"
+                },
+                {
+                    "name": "get_indent_on_hold_direct_sales"
+                },
+                {
+                    "name": "get_pending_indents_direct_sales"
+                },
+                {
+                    "name": "get_valid_indent_direct_sales"
+                },
+                {
+                    "name": "get_cancelled_indent_direct_sales"
+                },
+                {
+                    "name": "get_truck_allocated_direct_sales"
+                },
+                {
+                    "name": "get_send_to_sap_direct_sales"
+                },
+                {
+                    "name": "get_sales_order_placed_direct_sales"
+                },
+                {
+                    "name": "get_r2_swipe_direct_sales"
+                },
+                {
+                    "name": "get_is_invoice_created_direct_sales"
+                },
+                {
+                    "name": "get_r3_swiped_direct_sales"
+                },
+                {
+                    "name": "get_vts_direct_sales"
+                },
+                {
+                    "name": "get_delivery_confirmation_direct_sales"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -1740,6 +1923,48 @@
                 },
                 {
                     "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_dried_out_ro_by_actions"
+                },
+                {
+                    "name": "get_indent_raised_direct_sales"
+                },
+                {
+                    "name": "get_indent_on_hold_direct_sales"
+                },
+                {
+                    "name": "get_pending_indents_direct_sales"
+                },
+                {
+                    "name": "get_valid_indent_direct_sales"
+                },
+                {
+                    "name": "get_cancelled_indent_direct_sales"
+                },
+                {
+                    "name": "get_truck_allocated_direct_sales"
+                },
+                {
+                    "name": "get_send_to_sap_direct_sales"
+                },
+                {
+                    "name": "get_sales_order_placed_direct_sales"
+                },
+                {
+                    "name": "get_r2_swipe_direct_sales"
+                },
+                {
+                    "name": "get_is_invoice_created_direct_sales"
+                },
+                {
+                    "name": "get_r3_swiped_direct_sales"
+                },
+                {
+                    "name": "get_vts_direct_sales"
+                },
+                {
+                    "name": "get_delivery_confirmation_direct_sales"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -2469,6 +2694,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "vts_alerts_analytics"
                 }
             ]
         },
@@ -2508,6 +2736,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "vts_alerts_analytics"
                 }
             ]
         },
@@ -7160,6 +7391,288 @@
                     "name": "upload_notice"
                 }
             ]
+        },
+        {
+            "name": "deviceinstallation",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceInstallation",
+            "attributes": {},
+            "uris": [
+                "/api/deviceinstallation/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "update_device_installation"
+                },
+                {
+                    "name": "upload_certificate"
+                }
+            ]
+        },
+        {
+            "name": "deviceinstallation_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceInstallation_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/deviceinstallation/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "deviceinstallation_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceInstallation_admin",
+            "attributes": {},
+            "uris": [
+                "/api/deviceinstallation/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "update_device_installation"
+                },
+                {
+                    "name": "upload_certificate"
+                }
+            ]
+        },
+        {
+            "name": "usermaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "UserMaster",
+            "attributes": {},
+            "uris": [
+                "/api/usermaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_user"
+                },
+                {
+                    "name": "update_user"
+                },
+                {
+                    "name": "delete_user"
+                }
+            ]
+        },
+        {
+            "name": "usermaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "UserMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/usermaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "usermaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "UserMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/usermaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_user"
+                },
+                {
+                    "name": "update_user"
+                },
+                {
+                    "name": "delete_user"
+                }
+            ]
+        },
+        {
+            "name": "systemauditlog",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "SystemAuditLog",
+            "attributes": {},
+            "uris": [
+                "/api/systemauditlog/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "systemauditlog_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "SystemAuditLog_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/systemauditlog/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "systemauditlog_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "SystemAuditLog_admin",
+            "attributes": {},
+            "uris": [
+                "/api/systemauditlog/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "crisdryoutsync",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CrisDryOutSync",
+            "attributes": {},
+            "uris": [
+                "/api/crisdryoutsync/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "crisdryoutsync_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CrisDryOutSync_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/crisdryoutsync/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "crisdryoutsync_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CrisDryOutSync_admin",
+            "attributes": {},
+            "uris": [
+                "/api/crisdryoutsync/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
@@ -7423,12 +7936,36 @@
             "displayName": "unblock_vts_truck"
         },
         {
+            "name": "unblock_alert_truck",
+            "displayName": "unblock_alert_truck"
+        },
+        {
             "name": "get_vts_blocked_trucks",
             "displayName": "get_vts_blocked_trucks"
         },
         {
             "name": "get_vts_unblocked_trucks",
             "displayName": "get_vts_unblocked_trucks"
+        },
+        {
+            "name": "alerts_get_vts_query",
+            "displayName": "alerts_get_vts_query"
+        },
+        {
+            "name": "attach_alert_blocked_file",
+            "displayName": "attach_alert_blocked_file"
+        },
+        {
+            "name": "attach_vts_blocked_file",
+            "displayName": "attach_vts_blocked_file"
+        },
+        {
+            "name": "hqo_blocked_vehicles",
+            "displayName": "hqo_blocked_vehicles"
+        },
+        {
+            "name": "tas_analytics",
+            "displayName": "tas_analytics"
         },
         {
             "name": "upload_cems_location_master",
@@ -7503,6 +8040,62 @@
             "displayName": "get_dried_out_ro"
         },
         {
+            "name": "get_dried_out_ro_by_actions",
+            "displayName": "get_dried_out_ro_by_actions"
+        },
+        {
+            "name": "get_indent_raised_direct_sales",
+            "displayName": "get_indent_raised_direct_sales"
+        },
+        {
+            "name": "get_indent_on_hold_direct_sales",
+            "displayName": "get_indent_on_hold_direct_sales"
+        },
+        {
+            "name": "get_pending_indents_direct_sales",
+            "displayName": "get_pending_indents_direct_sales"
+        },
+        {
+            "name": "get_valid_indent_direct_sales",
+            "displayName": "get_valid_indent_direct_sales"
+        },
+        {
+            "name": "get_cancelled_indent_direct_sales",
+            "displayName": "get_cancelled_indent_direct_sales"
+        },
+        {
+            "name": "get_truck_allocated_direct_sales",
+            "displayName": "get_truck_allocated_direct_sales"
+        },
+        {
+            "name": "get_send_to_sap_direct_sales",
+            "displayName": "get_send_to_sap_direct_sales"
+        },
+        {
+            "name": "get_sales_order_placed_direct_sales",
+            "displayName": "get_sales_order_placed_direct_sales"
+        },
+        {
+            "name": "get_r2_swipe_direct_sales",
+            "displayName": "get_r2_swipe_direct_sales"
+        },
+        {
+            "name": "get_is_invoice_created_direct_sales",
+            "displayName": "get_is_invoice_created_direct_sales"
+        },
+        {
+            "name": "get_r3_swiped_direct_sales",
+            "displayName": "get_r3_swiped_direct_sales"
+        },
+        {
+            "name": "get_vts_direct_sales",
+            "displayName": "get_vts_direct_sales"
+        },
+        {
+            "name": "get_delivery_confirmation_direct_sales",
+            "displayName": "get_delivery_confirmation_direct_sales"
+        },
+        {
             "name": "get_dried_out_ro_data",
             "displayName": "get_dried_out_ro_data"
         },
@@ -7549,6 +8142,10 @@
         {
             "name": "get_pt_rejections",
             "displayName": "get_pt_rejections"
+        },
+        {
+            "name": "vts_alerts_analytics",
+            "displayName": "vts_alerts_analytics"
         },
         {
             "name": "generate_ai_industry_performance",
@@ -7845,6 +8442,26 @@
         {
             "name": "upload_notice",
             "displayName": "upload_notice"
+        },
+        {
+            "name": "update_device_installation",
+            "displayName": "update_device_installation"
+        },
+        {
+            "name": "upload_certificate",
+            "displayName": "upload_certificate"
+        },
+        {
+            "name": "create_user",
+            "displayName": "create_user"
+        },
+        {
+            "name": "update_user",
+            "displayName": "update_user"
+        },
+        {
+            "name": "delete_user",
+            "displayName": "delete_user"
         }
     ]
 }

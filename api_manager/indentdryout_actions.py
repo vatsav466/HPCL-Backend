@@ -9,6 +9,7 @@ import json
 import math
 import fastapi
 import datetime
+import api_helpers
 import polars as pl
 import dateutil.parser as parser
 import orchestrator.alerting.alert_helper as alert_helper
@@ -16,6 +17,7 @@ import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from orchestrator.alerting.alert_manager import create_alert
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
+import orchestrator.direct_sales.indentwise_direct_sales as indentwise_direct_sales
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from orchestrator.actions.indent_dry_out import IndentDryOut as indent_dry_out
 import orchestrator.alerting.listener.sync_ro_daily_sales as sync_ro_daily_sales
@@ -26,14 +28,24 @@ router = fastapi.APIRouter(prefix='/indentdryout')
 # Action sync_data_from_cris_to_ceg
 @router.post('/sync_data_from_cris_to_ceg', tags=['IndentDryOut'])
 async def indentdryout_sync_data_from_cris_to_ceg(data: Indentdryout_Sync_Data_From_Cris_To_CegParams):
-    Charts_Connection_Vault_RoutingParams.connection_id = data.source_connection
-    Charts_Connection_Vault_RoutingParams.action = 'get_data'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = data.source_connection
+    # Charts_Connection_Vault_RoutingParams.action = 'get_data'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=data.source_connection,
+        action='get_data'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     records = await function(schema_name=data.source_schema, table_name=data.source_table)
 
-    Charts_Connection_Vault_RoutingParams.connection_id = data.destination_connection
-    Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = data.destination_connection
+    # Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins_1 = Charts_Connection_Vault_RoutingParams(
+        connection_id=data.destination_connection,
+        action='upsert_data'
+    )
+    function = await charts_connection_vault_routing(charts_ins_1)
     return await function(
         schema_name=data.destination_schema,
         table_name=data.destination_table,
@@ -65,9 +77,14 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         return df
 
     redis_queue = urdhva_base.redispool.RedisQueue('dry_out_camunda_queue')
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+        action='execute_query'
+    )
+    function = await charts_connection_vault_routing(charts_ins)
     schema = connection_mapping.schema_mapping.get("cris", "public")
     table = connection_mapping.table_mapping.get("dry_out", "")
     query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "indent_status" NOT IN ('Raised', 'Completed') AND "status" IN ('0', '1', '2');'''
@@ -128,9 +145,14 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         await redis_queue.put(json.dumps(alert_data))
         # await create_alert(alert_data)
 
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        charts_ins_2 = Charts_Connection_Vault_RoutingParams(
+            connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+            action='execute_query'
+        )
+        function = await charts_connection_vault_routing(charts_ins_2)
         query = f"""UPDATE "HPCL_HOS".sch_inventory_forecast_dashboard SET "indent_status" = 'Raised' """ \
                 f"""WHERE "site_id" = '{_dry['site_id']}' """ \
                 f"""AND "fcc_code" = '{_dry['fcc_code']}' """ \
@@ -447,7 +469,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     condition_2 = ' AND '.join(basic_condtion + ["dry_out_in_days = '2'"] + where_clause) if dry_out_in_days == '2' else ' AND '.join(basic_condtion + ["dry_out_in_days = '2'"])
     condition_3 = ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"] + where_clause) if dry_out_in_days == '3' else ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"])
 
-    condition = "interlock_name = 'Dry Out Each Indent Wise MainFlow' AND indent_status NOT IN ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm')"
+    condition = "interlock_name = 'Dry Out Each Indent Wise MainFlow' AND indent_status NOT IN ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')"
     ext_cond = await hpcl_ceg_model.Alerts.get_clause_conditions(extra_key_mapping={"sap_id": "terminal_plant_id"}, default_mapping={"bu": "RO"})
     if ext_cond:
         condition += " AND " + " AND ".join(ext_cond)
@@ -531,9 +553,14 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
         query = f'''SELECT COUNT(indent_status) as count FROM alerts WHERE {where_clause}'''
         print(f"Generated Query for {indent_key}:", query)
         # Execute the query
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        charts_ins = Charts_Connection_Vault_RoutingParams(
+            connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+            action='execute_query'
+        )
+        function = await charts_connection_vault_routing(charts_ins)
         resp = await function(query=query)
 
         print(f"Response for {indent_key} --> ", resp)
@@ -593,7 +620,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     conditions = ' AND '.join(where_clause)
 
     stats_query = "select distinct sap_id, min(progress_rate) as present_stage " \
-                  f"from alerts where {conditions} and indent_status not in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm') " \
+                  f"from alerts where {conditions} and indent_status not in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable') " \
                   f"group by sap_id"
     stats_resp = await hpcl_ceg_model.Alerts.get_aggr_data(stats_query, limit=10000)
     where_clause_conditions = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
@@ -838,8 +865,12 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
     where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
         extra_key_mapping={"sap_id": "terminal_plant_id"}, default_mapping={"bu": "RO"}))
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+        action='execute_query'
+    )
     ist = pytz.timezone('Asia/Kolkata')
     _date = datetime.datetime.now(ist).strftime("%Y-%m-%d")
     is_delivered = False
@@ -857,12 +888,12 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     conditions = ' AND '.join(where_clause)
     query = "select distinct on (sap_id, indent_no, product_code) location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
-            f"from alerts where indent_status not in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm') and {conditions}"
+            f"from alerts where indent_status not in ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable') and {conditions}"
     if is_delivered:
         query = "select distinct on (sap_id, indent_no, product_code) location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
                 "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
-                f"from alerts where indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm') and {conditions} and DATE(updated_at) = '{_date}' and jsonb_array_length(alert_history::jsonb) > 2"
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+                f"from alerts where indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable') and {conditions} and DATE(updated_at) = '{_date}' and jsonb_array_length(alert_history::jsonb) > 2"
+    function = await charts_connection_vault_routing(charts_ins)
     resp = await function(
         query=query
     )
@@ -885,8 +916,12 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
 @router.post('/get_distinct_ro_name', tags=['IndentDryOut'])
 async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_NameParams):
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    charts_ins = Charts_Connection_Vault_RoutingParams(
+        connection_id=connection_mapping.connection_mapping.get("hpcl_ceg", "1"),
+        action='execute_query'
+    )
     for record in data.filters:
         if record.key == "progress_rate":
             where_clause.append(f"progress_rate={int(record.value[0])}")
@@ -902,7 +937,7 @@ async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_N
     query = f'''select dealer_id, location_name, terminal_plant_id, terminal_plant_name
                 from public.alerts where {conditions}
                 group by dealer_id, location_name, terminal_plant_id, terminal_plant_name'''
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    function = await charts_connection_vault_routing(charts_ins)
     resp = await function(
         query=query
     )
@@ -955,3 +990,236 @@ async def indentdryout_generate_dryout_group_data(data: Indentdryout_Generate_Dr
         return await dry_out_analysis.get_previous_day_carry_fwd_indent(data="data")
 
     return {}
+
+# Action get_indent_raised_direct_sales
+@router.post('/get_indent_raised_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_indent_raised_direct_sales(data: Indentdryout_Get_Indent_Raised_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_indent_raised_direct_sales(data)
+
+
+# Action get_indent_on_hold_direct_sales
+@router.post('/get_indent_on_hold_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_indent_on_hold_direct_sales(data: Indentdryout_Get_Indent_On_Hold_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_indent_on_hold_direct_sales(data)
+
+
+# Action get_pending_indents_direct_sales
+@router.post('/get_pending_indents_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_pending_indents_direct_sales(data: Indentdryout_Get_Pending_Indents_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_pending_indents_direct_sales(data)
+
+
+# Action get_valid_indent_direct_sales
+@router.post('/get_valid_indent_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_valid_indent_direct_sales(data: Indentdryout_Get_Valid_Indent_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_valid_indent_direct_sales(data)
+
+
+# Action get_truck_allocated_direct_sales
+@router.post('/get_truck_allocated_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_truck_allocated_direct_sales(data: Indentdryout_Get_Truck_Allocated_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_truck_allocated_direct_sales(data)
+
+
+# Action get_send_to_sap_direct_sales
+@router.post('/get_send_to_sap_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_send_to_sap_direct_sales(data: Indentdryout_Get_Send_To_Sap_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_send_to_sap_direct_sales(data)
+
+
+# Action get_sales_order_placed_direct_sales
+@router.post('/get_sales_order_placed_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_sales_order_placed_direct_sales(data: Indentdryout_Get_Sales_Order_Placed_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_sales_order_placed_direct_sales(data)
+
+
+# Action get_r2_swipe_direct_sales
+@router.post('/get_r2_swipe_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_r2_swipe_direct_sales(data: Indentdryout_Get_R2_Swipe_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_r2_swipe_direct_sales(data)
+
+
+# Action get_is_invoice_created_direct_sales
+@router.post('/get_is_invoice_created_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_is_invoice_created_direct_sales(data: Indentdryout_Get_Is_Invoice_Created_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_is_invoice_created_direct_sales(data)
+
+
+# Action get_r3_swiped_direct_sales
+@router.post('/get_r3_swiped_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_r3_swiped_direct_sales(data: Indentdryout_Get_R3_Swiped_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_r3_swiped_direct_sales(data)
+
+
+# Action get_dried_out_ro_by_actions
+@router.post('/get_dried_out_ro_by_actions', tags=['IndentDryOut'])
+async def indentdryout_get_dried_out_ro_by_actions(data: Indentdryout_Get_Dried_Out_Ro_By_ActionsParams):
+    conditions, dry_out_in_days_query, tt_count_filter = await api_helpers.get_where_clause_condition(data.filters)
+    stats = []
+    if data.actions == "initial_steps":
+        return await api_helpers.get_initial_dryout_counts(data.bu_type, conditions, dry_out_in_days_query)
+    if data.bu_type == 'ro' and data.actions == 'dryout_analysis':
+        dry_out_aging = await dry_out_analysis.get_dryout_aging(conditions)
+        less_than_2_days = dry_out_aging.get("less_than_2_days", 0)
+        from_3_to_7_days = dry_out_aging.get("from_3_to_7_days", 0)
+        from_8_to_15_days = dry_out_aging.get("from_8_to_15_days", 0)
+        more_than_15_days = dry_out_aging.get("more_than_15_days", 0)
+        indent_not_raised_count = less_than_2_days + from_3_to_7_days + from_8_to_15_days + more_than_15_days
+        count_50_klm = await dry_out_analysis.get_ro_count_less_50(conditions)
+        closed_outlet = await dry_out_analysis.get_closed_outlet(conditions=conditions,
+                                                                 dry_out_in_days=dry_out_in_days_query)
+        nozzle_sales = await dry_out_analysis.get_nozzle_sales(conditions=conditions,
+                                                               dry_out_in_days=dry_out_in_days_query)
+        stats = [
+            {
+                "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 24,
+                "condition": "=", "group": "dryout_analysis"
+            }, {
+                "section": "<2 Days", "value": less_than_2_days, "serial": 25,
+                "condition": "=", "group": "dryout_analysis"
+            }, {
+                "section": "3 to 7 Days", "value": from_3_to_7_days, "serial": 26,
+                "condition": "=", "group": "dryout_analysis"
+            }, {
+                "section": "8 to 15 Days", "value": from_8_to_15_days, "serial": 27,
+                "condition": "=", "group": "dryout_analysis"
+            }, {
+                "section": "> 15 Days", "value": more_than_15_days, "serial": 28,
+                "condition": "=", "group": "dryout_analysis"
+            }, {
+                "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 20,
+                "condition": "=", "group": "indent"
+            }, {
+                "section": "Low Volume(<50KLPM)", "value": count_50_klm, "serial": 21,
+                "condition": "=", "group": "indent"
+            }, {
+                "section": "Volume(>50KLPM)", "value": indent_not_raised_count - count_50_klm, "serial": 22,
+                "condition": "=", "group": "indent"
+            }, {
+                "section": "Closed Outlets", "value": closed_outlet, "serial": 23,
+                "condition": "=", "group": "indent"
+            }, {
+                "section": "Nozzle Sales Not Started", "value": nozzle_sales, "serial": 24,
+                "condition": "=", "group": "indent"
+            }
+        ]
+
+    if data.bu_type == 'ro' and data.actions == 'tar_analysis':
+        tar_analysis = await dry_out_analysis.get_tar_analysis(conditions)
+        _0_to_25_rs_lakhs = tar_analysis.get("less_1_cr", 0)
+        _25_to_50_rs_lakhs = tar_analysis.get("less_2_cr", 0)
+        _50_to_75_rs_lakhs = tar_analysis.get("less_5_cr", 0)
+        more_than_75_rs_lakhs = tar_analysis.get("greater_5_cr", 0)
+        indent_not_raised_count = _0_to_25_rs_lakhs + _25_to_50_rs_lakhs + _50_to_75_rs_lakhs + more_than_75_rs_lakhs
+        stats = [
+            # {
+            #     "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 29,
+            #     "condition": "=", "group": "tar_analysis"
+            # },
+            {
+                "section": "0 to 25 Rs Lakhs", "value": _0_to_25_rs_lakhs, "serial": 30,
+                "condition": "=", "group": "tar_analysis"
+            }, {
+                "section": "25 to 50 Rs Lakhs", "value": _25_to_50_rs_lakhs, "serial": 31,
+                "condition": "=", "group": "tar_analysis"
+            }, {
+                "section": "50 to 75 Rs Lakhs", "value": _50_to_75_rs_lakhs, "serial": 32,
+                "condition": "=", "group": "tar_analysis"
+            }, {
+                "section": "> 75 Rs Lakhs", "value": more_than_75_rs_lakhs, "serial": 33,
+                "condition": "=", "group": "tar_analysis"
+            }
+        ]
+
+    if data.bu_type == 'sod' and data.actions == 'dealer_truck_count':
+        dealer_truck_count = await dry_out_analysis.get_tt_counts(tt_count_filter)
+        stats = [
+            {
+                "section": "Dealer TT", "value": dealer_truck_count.get("dealer_tt", 0), "serial": 34,
+                "condition": "=", "group": "tt_available"
+            }, {
+                "section": "Transport TT", "value": dealer_truck_count.get("transport_tt", 0), "serial": 35,
+                "condition": "=", "group": "tt_available"
+            }, {
+                'section': 'Dealer TT Return', 'value': 0, 'serial': 36, 'condition': '=',
+                'group': 'tt_available'
+            }, {'section': 'Transport TT Return', 'value': 0, 'serial': 37, 'condition': '=',
+                'group': 'tt_available'
+            }
+        ]
+
+    ist = pytz.timezone('Asia/Kolkata')
+    carry_fwd_indent_date = datetime.datetime.now(ist).strftime("%H")
+    if int(carry_fwd_indent_date) > 0 and data.bu_type == 'sod' and data.actions == 'carry_fwd_indent':
+        carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
+        carry_fwd_data = pd.DataFrame(carry_fwd_data)
+
+        other_cwf_count = (
+            len(carry_fwd_data) - len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != '']) if len(
+                carry_fwd_data) else 0
+                                     - len(carry_fwd_data[carry_fwd_data['category'].fillna("") != ''])) if len(
+            carry_fwd_data) else 0
+
+        stats = [
+            {
+                "section": "Overall CarryFwd Indent",
+                "value": len(carry_fwd_data),
+                "serial": 15, "condition": "=", "group": "carry_fwd_indent"
+            }, {
+                "section": "DryOut CarryFwd Indent",
+                "value": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != ''])
+                if len(carry_fwd_data) else 0,
+                "serial": 16, "condition": "=", "group": "carry_fwd_indent"
+            }, {
+                "section": "CATA Carry Fwd Indent",
+                "value": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']) if len(carry_fwd_data) else 0,
+                "serial": 17, "condition": "=", "group": "carry_fwd_indent"
+            }, {
+                "section": "Others CarryFwd Indent",
+                "value": other_cwf_count,
+                "serial": 18, "condition": "=", "group": "carry_fwd_indent"
+            }
+        ]
+
+    if int(carry_fwd_indent_date) > 0 and data.bu_type == 'sod' and data.actions == 'pending_carry_fwd_indent':
+        pending_carry_fwd_data = await dry_out_analysis.get_previous_day_carry_fwd_indent()
+        pending_cwf_other_count = (
+                    pending_carry_fwd_data.get("cf_indents", 0) - pending_carry_fwd_data.get("dryout_count", 0)
+                    - pending_carry_fwd_data.get("category_a_count", 0))
+        stats = [{
+            "section": "Pending Overall CarryFwd Indent",
+            "value": pending_carry_fwd_data.get("cf_indents", 0),
+            "serial": 15, "condition": "=", "group": "pending_carry_fwd_indent"
+        }, {
+            "section": "Pending DryOut CarryFwd Indent",
+            "value": pending_carry_fwd_data.get("dryout_count", 0),
+            "serial": 16, "condition": "=", "group": "pending_carry_fwd_indent"
+        }, {
+            "section": "Pending CATA CarryFwd Indent",
+            "value": pending_carry_fwd_data.get("category_a_count", 0),
+            "serial": 17, "condition": "=", "group": "pending_carry_fwd_indent"
+        }, {
+            "section": "Pending Others CarryFwd Indent",
+            "value": pending_cwf_other_count,
+            "serial": 18, "condition": "=", "group": "pending_carry_fwd_indent"
+        }]
+
+    return stats
+
+
+# Action get_cancelled_indent_direct_sales
+@router.post('/get_cancelled_indent_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_cancelled_indent_direct_sales(data: Indentdryout_Get_Cancelled_Indent_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_cancelled_indent_direct_sales(data)
+
+
+# Action get_vts_direct_sales
+@router.post('/get_vts_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_vts_direct_sales(data: Indentdryout_Get_Vts_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_vts_direct_sales(data)
+
+
+# Action get_delivery_confirmation_direct_sales
+@router.post('/get_delivery_confirmation_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_delivery_confirmation_direct_sales(data: Indentdryout_Get_Delivery_Confirmation_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_delivery_confirmation_direct_sales(data)

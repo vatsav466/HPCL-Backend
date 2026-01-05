@@ -34,3 +34,13 @@ class DashboardStatus(str, enum.Enum):
 
 
 
+
+
+
+class panel_status(str, enum.Enum):
+    Pending = 'Pending'
+    Completed = 'Completed'
+
+
+
+

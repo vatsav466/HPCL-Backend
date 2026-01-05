@@ -203,6 +203,9 @@ def insertToDB(data, table_name):
             data = data.with_columns(pl.lit(0).alias(col))
     data = data.select(columns)
     try:
+        if data.is_empty():
+            logger.error(f"No data to insert into {table_name}")
+            return True
         query = f'''
         COPY "{table_name}"
         FROM STDIN
