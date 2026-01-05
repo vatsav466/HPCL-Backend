@@ -721,14 +721,25 @@ async def alerts_alerts_get_vts_query(data: Alerts_Alerts_Get_Vts_QueryParams):
 
 # Action unblock_alert_truck
 @router.post('/unblock_alert_truck', tags=['Alerts'])
-async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
+async def alerts_unblock_alert_truck(
+    unique_id: str = fastapi.Form(...),
+    remarks_unblocked: str | None = fastapi.Form(None),
+    upload_file: fastapi.UploadFile | None = fastapi.File(None)
+    ):
     try:
         rpt = urdhva_base.context.context.get("rpt", {})
+
         if not rpt:
-            return {"status": False, "message": "Session expired, please login again"}
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+         
+        if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
+            return {"status": False, "message": "Not Allowed To Perform This Action"}
+
+        if unique_id is None:
+            logger.error("unblock_id missing in request payload")
+            return { "status": False, "message": "unblock_id is required"}
 
         username = rpt.get("username")
-        unique_id = data.unique_id
 
         # ----------------------------
         # FETCH ALERT BY unique_id
@@ -741,8 +752,33 @@ async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
 
         if not alert_resp or not alert_resp.get("data"):
             return {"status": False, "message": "Alert not found"}
-
+        
         alert = alert_resp["data"][0]
+
+        if alert.get("vehicle_unblocked_date") is not None:
+            return {"status": False,"message": "Truck is already unblocked"}
+        
+        minio_path = ""
+        file_path = ""
+
+        if upload_file:
+            UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, "vts_blocked")
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+            file_name = upload_file.filename
+            file_path = os.path.join(UPLOAD_DIR, file_name)
+            with open(file_path, "wb") as f:
+                f.write(await upload_file.read())
+            
+        status, minio_path = minio_connector.upload_to_minio(
+            "alerts",         # bucket (same bucket)
+            "vts_blocked",    # section/folder
+            str(unique_id),       # sub-folder
+            file_path         # local filepath
+        )
+
+        if not status:
+            return {"status": False,"message": "MinIO upload failed", "error": minio_path}
+        
         alert_id = alert["id"]
         #history = alert.get("alert_history", []) or []
         transaction_id = f"{alert['id']}0"
@@ -762,17 +798,18 @@ async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
                     "blockingFrom": alert['vehicle_blocked_start_date'].strftime("%Y%m%d"),
                     "blockingTo": alert['vehicle_blocked_end_date'].strftime("%Y%m%d")
                 }]
-                headers = {
-                    "Content-Type": "application/json"
-                }
-                resp = requests.post(urdhva_base.settings.post_to_ims_url, json=payload, headers=headers, timeout=30)
-                resp.raise_for_status()
+
+                unblocking_status,error_msg = await vts_analysis.post_blocked_tt_ims(payload)
+                
                 unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED', blacklist='false' where truck_regno = '{vehicle_number}'"
                 await VtsTruckDetails.update_by_query(unblock_query)
                 vehicle_unblocked_date = datetime.datetime.now(tz=datetime.timezone.utc)
+                
                 if closed_at:
                     await Alerts(**{"id": alert_id,
                                     "vehicle_unblocked_date": vehicle_unblocked_date,
+                                    "remarks_unblocked": remarks_unblocked,
+                                    "file_uploaded_path": minio_path if minio_path else "",
                                     "mark_as_false": True}).modify()
                 else:
                     if not username:
@@ -786,10 +823,12 @@ async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
                                     "alert_status": "Close",
                                     "alert_state": "Resolved",
                                     "device_msg": "unblocked_by_hqo_officer",
+                                    "remarks_unblocked": remarks_unblocked,
+                                    "file_uploaded_path": minio_path if minio_path else "",
                                     "mark_as_false": True}).modify()
-                data = resp.json()
-                print("Status:", resp.status_code)
-                print("Response JSON:", data)
+
+                print("Status:", unblocking_status)
+                print("Response JSON:", unblocking_status)
                 delete_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}"
                 delete_response = requests.delete(delete_url)
                 print("workflow_deletion Status code:", delete_response.status_code)
@@ -809,39 +848,17 @@ async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
                         "IP_Address": "10.90.38.218"
                     }
                 }
-                access_token = await vts_analysis.fetch_access_token()
-                if not access_token:
-                    print(f"[ERROR] Failed to fetch token")
-                    return None
                 
-                headers = {
-                    "Authorization": f"Bearer {access_token}",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                }
-                print("*" * 50)
-                print(urdhva_base.settings.lpg_publish_url)
-                print(headers)
-                print(payload)
-                print("*" * 50)
-                response = requests.post(urdhva_base.settings.lpg_publish_url, headers=headers, data=json.dumps(payload),
-                                            timeout=15, verify=False)
-                post_sap_response = {
-                    "request_id": str(response.json().get("Response", {}).get("Request_ID")),
-                    "vehicle_number": response.json().get("Response", {}).get("Vehicle_ID"),
-                    "status": response.json().get("Response", {}).get("Status"),
-                    "remark": response.json().get("Response", {}).get("Remark"),
-                    "updated_date": str(response.json().get("Response", {}).get("Updated_Date")),
-                    "updated_time": str(response.json().get("Response", {}).get("Updated_Time"))
-                }
-                await LpgDataPostingAuditCreate(**post_sap_response).create()
-                response.raise_for_status()
+                unblocking_status,error_msg = await vts_analysis.post_lpg_tt(payload)
+            
                 unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED', blacklist='false' where truck_regno = '{vehicle_number}'"
                 await VtsTruckDetails.update_by_query(unblock_query)
                 vehicle_unblocked_date = datetime.datetime.now(tz=datetime.timezone.utc)
                 if closed_at:
                     await Alerts(**{"id": alert_id,
                                     "vehicle_unblocked_date": vehicle_unblocked_date,
+                                    "remarks_unblocked": remarks_unblocked,
+                                    "file_uploaded_path": minio_path if minio_path else "",
                                     "mark_as_false": True}).modify()
                 else:
                     if not username:
@@ -854,12 +871,13 @@ async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
                                     "closed_at": vehicle_unblocked_date,
                                     "alert_status": "Close",
                                     "alert_state": "Resolved",
+                                    "remarks_unblocked": remarks_unblocked,
+                                    "file_uploaded_path": minio_path if minio_path else "",
                                     "device_msg": "unblocked_by_hqo_officer",
                                     "mark_as_false": True}).modify()
                 
-                data = response.json()
-                print("Status:", response.status_code)
-                print("Response JSON:", data)
+                print("Status:", unblocking_status)
+                print("Response JSON:", unblocking_status)
                 delete_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}"
                 delete_response = requests.delete(delete_url)
                 print("workflow_deletion Status code:", delete_response.status_code)
