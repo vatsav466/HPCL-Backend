@@ -594,6 +594,7 @@ Model SolarPanelWetDryCleaning {
     panel_status  optional panel_status
 
     Config=> {
+        crud_operations='read'
         access_key_mapping='bu,zone,location,sap_id'
         search_fields='bu,sap_id,location,zone'
     }
