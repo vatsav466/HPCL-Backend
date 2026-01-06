@@ -192,6 +192,7 @@ class AlertFactory:
                                                         'mark_as_false': alert_data.get('mark_as_false', False),
                                                         'temporary_close': alert_data.get('temporary_close', False),
                                                         'permanent_close': alert_data.get('permanent_close', False),
+                                                        'alert_message': alert_data.get('alert_message', ''),
                                                         'ro_offline': alert_data.get('ro_offline', False),
                                                         'external_timestamp': alert_data.get('alert_timestamp', urdhva_base.utilities.get_present_time().replace(tzinfo=None).isoformat()),
                                                         'tt_load_number': str(alert_data.get('tt_load_number', '')),

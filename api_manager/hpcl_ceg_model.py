@@ -1907,6 +1907,7 @@ class Alerts_Block_Vts_TruckParams(pydantic.BaseModel):
     bu: hpcl_ceg_enum.BusinessUnit
     truck_number: str
     blocking_days: int
+    reason: typing.Optional[str] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
