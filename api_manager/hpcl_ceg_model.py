@@ -10660,3 +10660,78 @@ class CrisDryOutSyncGetResp(pydantic.BaseModel):
     data: typing.List[CrisDryOutSync]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class HyperLocalZoneSummaryCreate(pydantic.BaseModel):
+    zone: str
+    rating: int
+
+
+class ReviewsSentimentCreate(pydantic.BaseModel):
+    zone: str
+    sales_area: str
+    region: str
+    store_code: str
+    store_name: str
+    reviewer_name: str
+    rating: int
+    review_comment: str
+    tone_type: str
+    review_date: datetime.datetime
+    rank: int
+
+
+class HyperLocalSchema(UrdhvaPostgresBase):
+    __tablename__ = 'hyper_local'
+    
+    report_date: Mapped[datetime.date] = mapped_column("report_date", DATE, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    total_reviews: Mapped[int] = mapped_column("total_reviews", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    positive_reviews: Mapped[int] = mapped_column("positive_reviews", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    negative_reviews: Mapped[int] = mapped_column("negative_reviews", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    neutral_reviews: Mapped[int] = mapped_column("neutral_reviews", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone_summary: Mapped[typing.List[typing.Any]] = mapped_column("zone_summary", JSONB, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sentiment_of_reviews: Mapped[typing.List[typing.Any]] = mapped_column("sentiment_of_reviews", JSONB, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class HyperLocalCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'hyper_local'
+    
+    report_date: datetime.date
+    total_reviews: int
+    positive_reviews: int
+    negative_reviews: int
+    neutral_reviews: int
+    zone_summary: typing.List[HyperLocalZoneSummaryCreate]
+    sentiment_of_reviews: typing.List[ReviewsSentimentCreate]
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HyperLocalSchema
+        upsert_keys = []
+
+
+class HyperLocal(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'hyper_local'
+    
+    report_date: typing.Optional[datetime.date] | None = None
+    total_reviews: typing.Optional[int] | None = None
+    positive_reviews: typing.Optional[int] | None = None
+    negative_reviews: typing.Optional[int] | None = None
+    neutral_reviews: typing.Optional[int] | None = None
+    zone_summary: typing.Optional[typing.List[HyperLocalZoneSummaryCreate]] | None = None
+    sentiment_of_reviews: typing.Optional[typing.List[ReviewsSentimentCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HyperLocalSchema
+        upsert_keys = []
+
+
+class HyperLocalGetResp(pydantic.BaseModel):
+    data: typing.List[HyperLocal]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

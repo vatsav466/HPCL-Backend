@@ -7667,6 +7667,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "hyperlocal",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HyperLocal",
+            "attributes": {},
+            "uris": [
+                "/api/hyperlocal/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hyperlocal_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HyperLocal_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/hyperlocal/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "hyperlocal_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HyperLocal_admin",
+            "attributes": {},
+            "uris": [
+                "/api/hyperlocal/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
