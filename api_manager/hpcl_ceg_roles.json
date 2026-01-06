@@ -2694,9 +2694,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "vts_alerts_analytics"
                 }
             ]
         },
@@ -2736,9 +2733,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "vts_alerts_analytics"
                 }
             ]
         },
@@ -8142,10 +8136,6 @@
         {
             "name": "get_pt_rejections",
             "displayName": "get_pt_rejections"
-        },
-        {
-            "name": "vts_alerts_analytics",
-            "displayName": "vts_alerts_analytics"
         },
         {
             "name": "generate_ai_industry_performance",

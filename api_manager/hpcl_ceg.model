@@ -113,6 +113,7 @@ Enum AlertActionType str {
     AcceptViolation='AcceptViolation'
     BlockFailed='BlockFailed'
     UnblockFailed='UnblockFailed'
+    OngoingTrip='OngoingTrip'
 }
 
 Enum IndentStatus str {
@@ -1653,12 +1654,7 @@ Model VtsAlertHistory {
     tt_type optional str
     violation_type optional list str
     destination_code optional str
-
-    Action=> vts_alerts_analytics{
-        alert_id str
-        interlock_name optional str
-    }
-
+    
     Config=> {
         crud_operations='read'
         access_key_mapping='location_id:sap_id'
