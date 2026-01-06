@@ -1887,6 +1887,98 @@ async def sync_user_roles():
         "name": "RO",
         "status": True
     },
+    "VTS SOD": {
+        "allowed_pages": [
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Violation Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            },
+                            {
+                            "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Alert Manager"
+                    }
+                ]
+            }
+        ],
+        "name": "SOD",
+        "status": True
+    },
+    "VTS LPG": {
+        "allowed_pages": [
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Violation Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            },
+                            {
+                            "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Alert Manager"
+                    }
+                ]
+            }
+        ],
+        "name": "LPG",
+        "status": True
+    },
     "Zonal Officer RO": {
         "allowed_pages": [
             {
