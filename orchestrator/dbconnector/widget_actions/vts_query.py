@@ -161,6 +161,31 @@ vts_query = {
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id """,
     
+    "total_alerts_download" : """
+                                 SELECT * FROM alerts WHERE  alert_section = 'VTS' AND
+                                 device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
+                               """ ,
+
+    "blocked_alerts_download" : """
+                                   SELECT * FROM alerts  WHERE  alert_section = 'VTS'
+                                   AND vehicle_unblocked_date is null and
+                                   device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')	                                                                                          
+                                """,
+
+    "auto_unblock_download" : """
+                              SELECT * FROM alerts WHERE  alert_section = 'VTS'
+                              AND alert_status = 'Close' and mark_as_false = false and
+                              vehicle_unblocked_date is not null  AND 
+                              device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')                                                     
+                              """,
+                              
+    "manual_unblock_download" : """
+                                SELECT * FROM alerts
+                                WHERE  alert_section = 'VTS'
+                                AND alert_status = 'Close' AND mark_as_false = true and
+                                vehicle_unblocked_date is not null AND
+                                device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
+                                """,                          
     "safety_compliance" : """
                             SELECT 
                                 event_date, 
