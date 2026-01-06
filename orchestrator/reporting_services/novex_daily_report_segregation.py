@@ -123,7 +123,7 @@ async def publish_daily_novex_status_email():
         template_name="seg4.html",
         to_recipients=["dramarao@hpcl.in"],
         subject="Novex Daily Report: SOD",
-        cc_recipients=["subodh@hpcl.in"],
+        cc_recipients=["subodh@hpcl.in","SOD.OPNS.HQO@hpcl.in","jays@hpcl.in","rvaid@hpcl.in","gauravyadav1@hpcl.in","Diwakar.Kumar@hpcl.in"],
         bcc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
         notification_data=status_data,
         attachments = [status_data.get('zone_wise_pdf_path')]
