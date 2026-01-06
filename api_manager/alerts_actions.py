@@ -439,7 +439,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
     transaction_number = str(int(time.time() * 1000))[-7:] + "1"
 
     alert_history = [{
-        "action_msg" : f"Truck {data.truck_number} blocked manually by {rpt['username']} from {start_date.strftime('%d-%m-%Y %H:%M:%S')} to {end_date.strftime('%d-%m-%Y %H:%M:%S')}",
+        "action_msg" : f"Truck {data.truck_number} intitated for blocked manually by {rpt['username']} from {start_date.strftime('%d-%m-%Y %H:%M:%S')} to {end_date.strftime('%d-%m-%Y %H:%M:%S')}",
         "action_type" : "Blocked",
         "action_by" : rpt['username']
     }]
@@ -540,8 +540,8 @@ async def alerts_unblock_vts_truck(
 
         alert_history.append({
             "action_msg": (
-                f"Truck {alert_record.get('vehicle_number')} "
-                f"unblocked manually by {rpt['username']} "
+                f"Truck {alert_record.get('vehicle_number')} intiated "
+                f"for unblocked manually by {rpt['username']} "
                 f"at {unblock_time.strftime('%d-%m-%Y %H:%M:%S')}"
             ),
             "action_type": "UnBlocked",
