@@ -552,8 +552,7 @@ async def alerts_unblock_vts_truck(
             "id": alert_record.get("id"),
             "alert_history": alert_history,
             "remarks_unblocked": remarks_unblocked,
-            "file_uploaded_path": minio_path if minio_path else "",
-            "vehicle_unblocked_date": unblock_time,
+            "file_uploaded_path": minio_path if minio_path else ""
         }).modify()
             
         alert_id = alert_record.get("id")
