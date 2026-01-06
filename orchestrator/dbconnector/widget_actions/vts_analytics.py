@@ -949,13 +949,17 @@ class VTSAnalyticsActions:
             return conditions
             
         if alert_type.lower() == "blocked":
-            conditions.append("vehicle_unblocked_date is null")
+            conditions.append("alert_status = 'Open' and vehicle_unblocked_date is null") 
+        if alert_type.lower() == "acceptance_close":
+            conditions.append("alert_status = 'Close' and vehicle_unblocked_date is null")
         elif alert_type.lower() == "auto_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = false AND vehicle_unblocked_date is not null")
         elif alert_type.lower() == "manual_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = true and vehicle_unblocked_date is not null")
-        # 'all_alerts' -> no extra conditions
-        
+        else:
+        # all_alerts or unknown value → no extra condition
+           pass
+     
         return conditions
 
     @staticmethod
@@ -2400,12 +2404,10 @@ class VTSAnalyticsActions:
             
             alerts_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
 
-            print(alerts_query)
-
             # Execute queries
-            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
+            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query, engine='polars')
             
-            if alerts_df.empty:
+            if alerts_df.is_empty():
                 return {"status": True, "message": "success", "data": [], "percentages": []}
 
             # Get group by column
@@ -2416,39 +2418,39 @@ class VTSAnalyticsActions:
             if 'violation_type' not in alerts_df.columns:
                 return {"status": False, "message": "violation_type column not found", "data": [], "percentages": []}
             
-            alerts_df = alerts_df[
-                  alerts_df[group_by_column].notnull() & 
-                 (alerts_df[group_by_column] != "")
-                ]
+            alerts_df = alerts_df.filter((pl.col(group_by_column).is_not_null()) & (pl.col(group_by_column) != ""))
+          
+            if alerts_df.is_empty():
+                return {"status": True, "message": "success", "data": [], "percentages": []}
             
-            if alerts_df.empty:
-                 return {"status": True, "message": "success", "data": [], "percentages": []}
+            grouped = (alerts_df.group_by([group_by_column, "violation_type"]).agg(pl.count().alias("count")))
             
-            grouped = alerts_df.groupby([group_by_column, 'violation_type']).size().reset_index(name='count')
-            
-            if grouped.empty:
+            if grouped.is_empty():
                  return {"status": True, "message": "success", "data": [], "percentages": []}
         
             # Prepare response data
             data_response = []
-            for group_value in grouped[group_by_column].unique():
-                group_data = grouped[grouped[group_by_column] == group_value]
+            for group_value in grouped[group_by_column].unique().to_list():
+                group_data = grouped.filter(pl.col(group_by_column) == group_value)
                 violations_list = [
                     {"violation_type": row['violation_type'], "count": int(row['count'])}
-                    for _, row in group_data.iterrows()
+                    for row in group_data.to_dicts()
                 ]
                 
                 if violations_list:
                     data_response.append({group_value: violations_list})
 
             # Calculate percentages
-            violation_totals = grouped.groupby('violation_type')['count'].sum().to_dict()
-            grand_total = sum(violation_totals.values())
+            violation_totals = (grouped.group_by('violation_type').agg(pl.sum("count")))
+            grand_total = violation_totals["count"].sum()
             percentages = []
             if grand_total > 0:
                 percentages = [
-                    {"violation_type": vtype, "percentage": round((count / grand_total) * 100, 2)}
-                    for vtype, count in violation_totals.items()
+                    {
+                    "violation_type": row["violation_type"],
+                    "percentage": round((row["count"] / grand_total) * 100, 2)
+                    }
+                     for row in violation_totals.iter_rows(named=True)
                 ]
 
             return {
@@ -2480,38 +2482,34 @@ class VTSAnalyticsActions:
             alerts_query = base_query.format(period_expr=period_expr)
             alerts_query = VTSAnalyticsActions.apply_conditions_to_query(alerts_query, conditions)
 
-            print(alerts_query)
-
             # Execute queries
-            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
+            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query,engine='polars')
             
-            if alerts_df.empty:
+            if alerts_df.height == 0:
                 return {"status": True, "message": "success", "data": []}
 
-            if 'violation_type' not in alerts_df.columns or 'period' not in alerts_df.columns:
+            if not {"violation_type", "period"}.issubset(alerts_df.columns):
                  return {"status": False, "message": "Required columns not found", "data": []}
             
-            alerts_df = alerts_df[
-                (alerts_df["period"].notna()) &                      
-                (alerts_df["period"].astype(str).str.strip() != "")
-            ]
-
-            if alerts_df.empty:
-                return {"status": True, "message": "success", "data": []}
+            alerts_df = alerts_df.filter(pl.col("period").is_not_null() & (pl.col("period").cast(pl.Utf8).str.strip_chars() != ""))
             
-            grouped = alerts_df.groupby(['period', 'violation_type']).size().reset_index(name='count')
+            if alerts_df.height == 0:
+                 return {"status": True, "message": "success", "data": []}
             
-            if grouped.empty:
+            
+            grouped = (alerts_df.group_by(['period', 'violation_type']).agg(pl.len().alias("count")))
+            
+            if grouped.height == 0:
                 return {"status": True, "message": "success", "data": []}
             
             result = []
-            for period in grouped['period'].unique():
-                period_data = grouped[grouped['period'] == period]
+            for period in grouped.select('period').unique().to_series():
+                period_data = grouped.filter(pl.col('period') == period)
                 formatted_date = VTSAnalyticsActions.format_date(period, drill_state)
                 
                 values = [
                     {"violation_type": row['violation_type'], "count": int(row['count'])}
-                    for _, row in period_data.iterrows()
+                    for row in period_data.iter_rows(named=True)
                 ]
                 
                 if values:
