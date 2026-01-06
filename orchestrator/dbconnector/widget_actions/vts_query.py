@@ -536,7 +536,7 @@ vts_query = {
     "closed_alerts": """ SELECT 
                             sap_id, location_name, zone, vehicle_number as tt_number, transporter_code, 
                             violation_type, zone, vehicle_blocked_start_date, 
-                            vehicle_blocked_end_date, vehicle_unblocked_date
+                            vehicle_blocked_end_date, vehicle_unblocked_date,created_at
                         FROM 
                             alerts 
                         WHERE 
