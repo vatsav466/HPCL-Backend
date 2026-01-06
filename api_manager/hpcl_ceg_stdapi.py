@@ -2121,3 +2121,13 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await CrisDryOutSync.get_all(params, skip_secrets=True)
 
+
+@router.get('/hyperlocal/{id}', response_model=HyperLocal, tags=['HyperLocal'])
+async def get(id: str):
+    return await HyperLocal.get(id, skip_secrets=True)
+
+
+@router.get('/hyperlocal', response_model=HyperLocalGetResp, tags=['HyperLocal'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HyperLocal.get_all(params, skip_secrets=True)
+

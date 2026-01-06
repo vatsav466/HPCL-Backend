@@ -3847,3 +3847,36 @@ Model CrisDryOutSync {
         crud_operations='read'
     }
 }
+
+Model HyperLocalZoneSummary internal {
+    zone str
+    rating int
+}
+
+Model ReviewsSentiment internal {
+    zone str
+    sales_area str
+    region str
+    store_code str
+    store_name str
+    reviewer_name str
+    rating int
+    review_comment str
+    tone_type str
+    review_date datetime
+    rank int
+}
+
+Model HyperLocal {
+    report_date index_field date
+    total_reviews int
+    positive_reviews int
+    negative_reviews int
+    neutral_reviews int
+    zone_summary list HyperLocalZoneSummary
+    sentiment_of_reviews list ReviewsSentiment
+
+    Config=> {
+        crud_operations='read'
+    }
+}
