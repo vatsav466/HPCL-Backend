@@ -327,8 +327,7 @@ async def critical_alerts_by_equipment(data):
         "equipment_type"
     ]
     
-    # Check if location_name is NOT "false" (string comparison)
-    if data.location_name and data.location_name.lower() != "false":
+    if data.location_name and data.location_name.lower() == "true":
         alert_params.fields.append("location_name")
 
     alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
@@ -341,16 +340,26 @@ async def critical_alerts_by_equipment(data):
     if alerts_df.is_empty():
         return []
     
-    # Check if location_name is provided and NOT "false"
-    if data.location_name and data.location_name.lower() != "false":
+    # Filter out rows where equipment_type is null or empty
+    alerts_df = alerts_df.filter(
+        (pl.col("equipment_type").is_not_null()) & 
+        (pl.col("equipment_type").str.strip_chars() != "")
+    )
+    
+    # Check again if dataframe is empty after filtering
+    if alerts_df.is_empty():
+        return []
+    
+    # Check if location_name is "true" - group by location only
+    if data.location_name and data.location_name.lower() == "true":
         critical_alerts_df = (
             alerts_df
-            .group_by(["location_name", "equipment_type"])
+            .group_by(["location_name"])
             .agg(pl.len().alias("critical_count"))
-            .sort(["location_name", "critical_count"], descending=[False, True])
+            .sort(["critical_count"], descending=[True])
         )
     else:
-        # location_name is "false" or not provided - group by equipment_type only
+        # location_name is not "true" - group by equipment_type only
         critical_alerts_df = (
             alerts_df
             .group_by(["equipment_type"])
