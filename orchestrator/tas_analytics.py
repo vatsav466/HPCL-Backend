@@ -247,48 +247,48 @@ async def location_alert_critical(data):
     # → Top 5 locations (TOTAL critical count)
     if not data.location_name and not data.alert_severity:
 
-    # =====================================================
-    # 3. SEVERITY NORMALIZATION
-    # =====================================================
-    severity_filter = data.alert_severity
+        # =====================================================
+        # 3. SEVERITY NORMALIZATION
+        # =====================================================
+        severity_filter = data.alert_severity
 
-    if isinstance(severity_filter, list):
-        severity_filter = [s for s in severity_filter if s]
+        if isinstance(severity_filter, list):
+            severity_filter = [s for s in severity_filter if s]
 
-    if severity_filter:
-        df = df.filter(pl.col("severity").is_in(severity_filter))
+        if severity_filter:
+            df = df.filter(pl.col("severity").is_in(severity_filter))
 
-    # =====================================================
-    # 4. DRILL-DOWN (LOCATION SELECTED)
-    # =====================================================
-    if data.location_name:
-        now = datetime.utcnow()
+        # =====================================================
+        # 4. DRILL-DOWN (LOCATION SELECTED)
+        # =====================================================
+        if data.location_name:
+            now = datetime.utcnow()
 
-        return (
-            df.filter(pl.col("severity") == "Critical")
-              .with_columns([
-                  pl.col("created_at")
-                    .dt.strftime("%Y-%m-%dT%H:%M:%S")
-                    .alias("created_at"),
-                  (
-                      (pl.lit(now) - pl.col("created_at"))
-                      .dt.total_days()
-                      .cast(pl.Int64)
-                  ).alias("ageing_days")
-              ])
-              .select([
-                  "unique_id",
-                  "zone",
-                  "severity",
-                  "alert_status",
-                  "interlock_name",
-                  "location_name",
-                  "created_at",
-                  "ageing_days"
-              ])
-              .sort("ageing_days", descending=True)
-              .to_dicts()
-        )
+            return (
+                df.filter(pl.col("severity") == "Critical")
+                .with_columns([
+                    pl.col("created_at")
+                        .dt.strftime("%Y-%m-%dT%H:%M:%S")
+                        .alias("created_at"),
+                    (
+                        (pl.lit(now) - pl.col("created_at"))
+                        .dt.total_days()
+                        .cast(pl.Int64)
+                    ).alias("ageing_days")
+                ])
+                .select([
+                    "unique_id",
+                    "zone",
+                    "severity",
+                    "alert_status",
+                    "interlock_name",
+                    "location_name",
+                    "created_at",
+                    "ageing_days"
+                ])
+                .sort("ageing_days", descending=True)
+                .to_dicts()
+            )
 
     # =====================================================
     # 5. TOP-N DECISION
