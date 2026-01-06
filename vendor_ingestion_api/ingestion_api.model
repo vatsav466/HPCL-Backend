@@ -494,14 +494,6 @@ Model ReviewsSentiment internal {
 }
 
 Model HyperLocal crud_disable {
-    report_date index_field date
-    total_reviews int
-    positive_reviews int
-    negative_reviews int
-    neutral_reviews int
-    zone_summary list HyperLocalZoneSummary
-    sentiment_of_reviews list ReviewsSentiment
-
     Action=> ingest_data {
         report_date date
         total_reviews int
