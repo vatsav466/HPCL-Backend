@@ -25,6 +25,13 @@ lpg_role_mapping={
                     "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
                     "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
                     "escalation_time": "PT24H"
+                },
+                "level - 4": {
+                    "condition": ">",
+                    "value": 10,
+                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "escalation_time": "PT24H"
                 }
             }
         },
@@ -53,6 +60,13 @@ lpg_role_mapping={
                     "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
                     "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
                     "escalation_time": "PT24H"
+                },
+                "level - 4": {
+                    "condition": ">",
+                    "value": 10,
+                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "escalation_time": "PT24H"
                 }
             }
         },
@@ -76,6 +90,13 @@ lpg_role_mapping={
                     "escalation_time": "PT24H"
                 },
                 "level - 3": {
+                    "condition": ">",
+                    "value": 10,
+                    "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "escalation_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
+                    "escalation_time": "PT24H"
+                },
+                "level - 4": {
                     "condition": ">",
                     "value": 10,
                     "assign_role": "HQO LPG,HQO Head LPG,HQO Sale General Manager,HQ Operations LPG,HQO HSE LPG",
