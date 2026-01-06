@@ -954,13 +954,14 @@ Model TasAnalytics crud_disable {
         location_name   optional str
         interlock_name  optional str
         alert_status    optional str
-        alert_severity  optional str
+        alert_severity  optional list str
         zone            optional str
         start_date      str
         end_date        str
         equipment_type  optional str
         equipment_name  optional str
         download        optional str
+        top_n      optional int
     }
 
 }

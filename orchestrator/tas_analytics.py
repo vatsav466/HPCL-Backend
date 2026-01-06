@@ -40,6 +40,10 @@ async def top_repeat_alerts(data):
     if data.interlock_name:
         alert_query += f" AND interlock_name = '{data.interlock_name}'"
 
+    if data.alert_severity:
+        alert_query += f" AND severity = '{data.alert_severity}'"
+
+    print("FINAL alert_query >>>", alert_query)
 
     alert_params = urdhva_base.queryparams.QueryParams(
         q=alert_query,
@@ -50,6 +54,7 @@ async def top_repeat_alerts(data):
     alert_params.fields = [
         "unique_id",
         "alert_status",
+        "severity",
         "interlock_name",
         "location_name",
         "created_at"
@@ -86,7 +91,8 @@ async def top_repeat_alerts(data):
             ])
             .select([
                 "unique_id",
-                "alert_status",      
+                "alert_status",  
+                "severity",  
                 "interlock_name",
                 "location_name",
                 "created_at",
@@ -131,6 +137,7 @@ async def tas_severity_summary(data):
     if data.location_name:
         alert_query += f" AND location_name = '{data.location_name}'"
 
+    print("FINAL alert_query >>>", alert_query)
 
     alert_params = urdhva_base.queryparams.QueryParams(
         q=alert_query,
@@ -198,14 +205,10 @@ async def tas_severity_summary(data):
 
 async def location_alert_critical(data):
 
-    alert_query = """
-        alert_section = 'TAS'
-        AND severity = 'Critical'
-    """
-
-    alert_query += (
-        f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
-    )
+    
+    # 1. BASE QUERY
+    alert_query = "alert_section = 'TAS'"
+    alert_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
 
     if data.zone:
         alert_query += f" AND zone = '{data.zone}'"
@@ -216,12 +219,17 @@ async def location_alert_critical(data):
     if data.location_name:
         alert_query += f" AND location_name = '{data.location_name}'"
 
-    # FETCH DATA
+    print("FINAL alert_query >>>", alert_query)
+
+    # =====================================================
+    # 2. FETCH DATA
+    # =====================================================
     params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
     params.fields = [
         "unique_id",
         "zone",
         "alert_status",
+        "severity",
         "interlock_name",
         "location_name",
         "created_at"
@@ -239,70 +247,95 @@ async def location_alert_critical(data):
     # → Top 5 locations (TOTAL critical count)
     if not data.location_name and not data.alert_severity:
 
+        # =====================================================
+        # 3. SEVERITY NORMALIZATION
+        # =====================================================
+        severity_filter = data.alert_severity
+
+        if isinstance(severity_filter, list):
+            severity_filter = [s for s in severity_filter if s]
+
+        if severity_filter:
+            df = df.filter(pl.col("severity").is_in(severity_filter))
+
+        # =====================================================
+        # 4. DRILL-DOWN (LOCATION SELECTED)
+        # =====================================================
+        if data.location_name:
+            now = datetime.utcnow()
+
+            return (
+                df.filter(pl.col("severity") == "Critical")
+                .with_columns([
+                    pl.col("created_at")
+                        .dt.strftime("%Y-%m-%dT%H:%M:%S")
+                        .alias("created_at"),
+                    (
+                        (pl.lit(now) - pl.col("created_at"))
+                        .dt.total_days()
+                        .cast(pl.Int64)
+                    ).alias("ageing_days")
+                ])
+                .select([
+                    "unique_id",
+                    "zone",
+                    "severity",
+                    "alert_status",
+                    "interlock_name",
+                    "location_name",
+                    "created_at",
+                    "ageing_days"
+                ])
+                .sort("ageing_days", descending=True)
+                .to_dicts()
+            )
+
+    # =====================================================
+    # 5. TOP-N DECISION
+    # =====================================================
+    top_n = int(getattr(data, "top_n", 5) or 5)
+
+    # -------------------------
+    # TOP-5 → SIMPLE LOCATION COUNT
+    # -------------------------
+    if top_n == 5:
         return (
-            df.group_by(["zone", "location_name"])
-              .agg(pl.len().alias("critical_count"))
-              .sort("critical_count", descending=True)
+            df.filter(pl.col("severity") == "Critical")
+              .group_by(["zone", "location_name"])
+              .agg(pl.len().alias("count"))
+              .sort("count", descending=True)
               .head(5)
               .to_dicts()
         )
 
-    # CASE 2
-    # Location selected
-    # → ALL critical alerts with ageing
-    if data.location_name and not data.alert_severity:
+    # -------------------------
+    # TOP-10 → INTERLOCK + SEVERITY
+    # -------------------------
+    base_df = (
+        df.group_by(["zone", "location_name", "interlock_name", "severity"])
+          .agg(pl.len().alias("count"))
+    )
 
-        now = datetime.utcnow()
+    totals_df = (
+        base_df.group_by(["zone", "location_name"])
+               .agg(pl.sum("count").alias("total_alerts"))
+               .sort("total_alerts", descending=True)
+               .head(top_n)
+    )
 
-        return (
-            df.with_columns([
-                pl.col("created_at")
-                  .dt.strftime("%Y-%m-%dT%H:%M:%S")
-                  .alias("created_at"),
-                (
-                    (pl.lit(now) - pl.col("created_at"))
-                    .dt.total_days()
-                    .cast(pl.Int64)
-                ).alias("ageing_days")
-            ])
-            .select([
-                "unique_id",
-                "zone",
-                "alert_status",
-                "interlock_name",
-                "location_name",
-                "created_at",
-                "ageing_days"
-            ])
-            .sort("ageing_days", descending=True)
-            .to_dicts()
-        )
+    result_df = (
+        totals_df.join(base_df, on=["zone", "location_name"])
+                 .group_by(["zone", "location_name"])
+                 .agg([
+                     pl.first("total_alerts"),
+                     pl.struct(
+                         ["interlock_name", "severity", "count"]
+                     ).alias("interlocks")
+                 ])
+                 .sort("total_alerts", descending=True)
+    )
 
-    if not data.location_name and data.alert_severity == "Critical":
-
-        base_df = (
-            df.group_by(["zone", "location_name", "interlock_name"])
-            .agg(pl.len().alias("count"))
-        )
-
-        totals_df = (
-            base_df.group_by(["zone", "location_name"])
-                .agg(pl.sum("count").alias("total_critical"))
-                .sort("total_critical", descending=True)
-                .head(10)  
-        )
-
-        result_df = (
-            totals_df.join(base_df, on=["zone", "location_name"])
-                    .group_by(["zone", "location_name"])
-                    .agg([
-                        pl.first("total_critical"),
-                        pl.struct(["interlock_name", "count"]).alias("interlocks")
-                    ])
-                    .sort("total_critical", descending=True)
-        )
-
-        return result_df.to_dicts()
+    return result_df.to_dicts()
 
 async def critical_alerts_by_equipment(data):
     alert_query = """
