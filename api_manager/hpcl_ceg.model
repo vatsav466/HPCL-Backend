@@ -895,6 +895,7 @@ Model Alerts {
         bu BusinessUnit
         truck_number str
         blocking_days int
+        reason optional str
         remarks optional str
     }
 

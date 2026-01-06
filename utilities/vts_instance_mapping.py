@@ -88,7 +88,7 @@ instance_mapping = {
     "LPG":{
         "0":{
             "device_tamper_count":{
-                "violation_count": 3
+                "violation_count": 2
             },
             "main_supply_removal_count":{
                 "violation_count": 3
@@ -103,10 +103,10 @@ instance_mapping = {
                 "violation_count": 2
             },
             "night_driving_count":{
-                "violation_count": 2
+                "violation_count": 3
             },
             "continuous_driving_count":{
-                "violation_count": 2
+                "violation_count": 3
             }
         },
         "1":{
@@ -117,19 +117,19 @@ instance_mapping = {
                 "violation_count": 2
             },
             "route_deviation_count":{
-                "violation_count": 0
+                "violation_count": 2
             },
             "stoppage_violations_count":{
-                "violation_count": 0
+                "violation_count": 3
             },
             "speed_violation_count":{
-                "violation_count": 0
+                "violation_count": 2
             },
             "night_driving_count":{
-                "violation_count": 0
+                "violation_count": 2
             },
             "continuous_driving_count":{
-                "violation_count": 0
+                "violation_count": 2
             }
         },
         "2":{
@@ -140,19 +140,19 @@ instance_mapping = {
                 "violation_count": 2
             },
             "route_deviation_count":{
-                "violation_count": 0
+                "violation_count": 2
             },
             "stoppage_violations_count":{
-                "violation_count": 0
+                "violation_count": 3
             },
             "speed_violation_count":{
-                "violation_count": 0
+                "violation_count": 2
             },
             "night_driving_count":{
-                "violation_count": 0
+                "violation_count": 2
             },
             "continuous_driving_count":{
-                "violation_count": 0
+                "violation_count": 2
             }
         }
     }

@@ -709,24 +709,6 @@ async def download_streaming_data(df: pl.DataFrame, filename='violations'):
         cs.datetime(time_zone="*").dt.replace_time_zone(None)
     )
 
-    # df = df.select(
-    #     [s.name for s in df if s.null_count() < df.height]
-    # )
-    # mask_df = df.select(
-    #     [
-    #         pl.col(c)
-    #         .cast(pl.String)
-    #         .fill_null("")  # null -> ""
-    #         .str.strip_chars()  # strip whitespace
-    #         .eq("")  # non-empty?
-    #         .any()  # any row is non-empty?
-    #         .alias(c)
-    #         for c in df.columns
-    #     ]
-    # )
-    # cols_to_keep = [c for c in df.columns if mask_df[c][0]]
-    # df = df.select(cols_to_keep)
-
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"{filename}_{timestamp}.xlsx"
 
@@ -1025,14 +1007,10 @@ class VTSAnalyticsActions:
         try:
             # Get base query           
             card_query = vts_query.vts_query.get(drill_state.split(",")[0])
-            print("Base Query:", card_query)
 
             # Build and apply conditions (pass the query for key transformation)
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, card_query)
             final_query = VTSAnalyticsActions.apply_conditions_to_query(card_query, conditions)
-            
-            print("-" * 50)
-            print("Final card_query ---->", final_query)
 
             # Execute query
             df = await VTSAnalyticsActions.execute_query(final_query, engine='dict')
@@ -1041,6 +1019,72 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("Exception in BigNumber Chart:", str(e))
             print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+    
+    @staticmethod
+    async def vts_dashboard_card_download(filters, cross_filters, drill_state, payload):
+        """
+            Download VTS dashboard cards as an Excel file.
+
+            This function retrieves the required data from the database and generates
+            an Excel file containing the selected columns for download.
+
+            :param filters: Filters applied based on location, SAP ID, and BU for data filtering.
+            :param cross_filters: Additional filters, primarily used for date range selection.
+            :param drill_state: Used to map and select the appropriate query
+                                from the `vts_query` file in the same path.
+            :param payload: Additional parameters passed from the frontend
+                            for applying extra conditional checks if required.
+            :return: Excel file response as a downloadable stream.
+            :rtype: dict[str, Any] | StreamingResponse
+        """
+
+        try:
+            # 1. Build and execute query
+            download_card_query = vts_query.vts_query.get(drill_state.split(",")[0])
+            conditions = VTSAnalyticsActions.build_filter_conditions(
+                filters, cross_filters, download_card_query
+            )
+            final_query = VTSAnalyticsActions.apply_conditions_to_query(
+                download_card_query, conditions
+            )
+
+            df = await VTSAnalyticsActions.execute_query(final_query, engine="polars")
+
+            # 2. Extract creator_id and approver_id from alert_history (JSONB)
+            df = df.with_columns([
+                    # Creator ID → first employee_id where action_type == Justification
+                    pl.col("alert_history").list.eval(pl.element().struct.field("employee_id").filter(
+                            pl.element().struct.field("action_type") == "Justification")
+                    ).list.first().alias("creator_id"),
+
+                    # Approver ID → first employee_id where action_type == Approved
+                    pl.col("alert_history").list.eval(pl.element().struct.field("employee_id").filter(
+                            pl.element().struct.field("action_type") == "Approved")
+                    ).list.first().alias("approver_id"),
+                ])
+
+
+            # 3. Select required columns for Excel
+            df = (df.select(["zone", "sap_id", "location_name",  "vehicle_number", "violation_type",
+                            "unique_id", "alert_status", "device_name", "severity", "created_at", 
+                            "creator_id", "approver_id", "vehicle_unblocked_date", "vehicle_blocked_end_date" 
+                ])
+                .rename({
+                    "unique_id": "Alert ID",
+                    "sap_id" : "Location ID",
+                    "vehicle_number" : "Truck Number",
+                    "device_name" : "Instance ID",
+                    "creator_id": "Creator ID",
+                    "approver_id": "Approver ID",
+                })
+            )
+            # 4. Return Excel download
+            return await download_streaming_data(df, filename="itdgAlerts")
+        
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            print("error",str(e))
             return {"status": False, "message": str(e), "data": []}
 
     @staticmethod

@@ -242,12 +242,18 @@ async def get_lpg_levels(bu: str, violation_type: str, sap_id: str):
     if bu in lpg_mapping.keys() and violation_type in lpg_mapping[bu].keys():
         lpg_mapping = lpg_mapping[bu][violation_type]
         lpg_alert_count = await get_lpg_alerts_count(bu=bu, violation_type=violation_type, sap_id=sap_id)
+        previous_count = 0
         for key, value in lpg_mapping['escalations'].items():
-            if lpg_alert_count == int(value['value']):
-                print("-"*10)
-                print("Escalation Level :", key)
-                print("-"*10)
-                return key
+            if value['condition'] == "<":
+                if int(lpg_alert_count) <= int(value['value']):
+                    return key
+            if value['condition'] == "<>":
+                if int(previous_count) < lpg_alert_count <= int(value['value']):
+                    return key
+            if value['condition'] == ">":
+                if lpg_alert_count > int(value['value']):
+                    return key
+            previous_count = value['value']
     return ""
 
 async def is_alert_exists(alert_id: str):
