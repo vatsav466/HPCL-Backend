@@ -7,7 +7,7 @@ import time
 import requests
 import tempfile
 import jinja2
-import pandas as pd
+import polars as pl
 import hpcl_ceg_model
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -91,8 +91,8 @@ def generate_csv(all_incidents):
    temp = tempfile.NamedTemporaryFile(prefix="incident_result_", suffix=".csv", delete=False)
    CSV_PATH = temp.name
    temp.close()
-   df = pd.DataFrame(all_incidents)
-   df.to_csv(CSV_PATH, index=False, columns=header)
+   df = pl.DataFrame(all_incidents)
+   df.write_csv(CSV_PATH)
    return CSV_PATH
 
 
