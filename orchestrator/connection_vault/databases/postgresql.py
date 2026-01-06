@@ -474,6 +474,23 @@ class Postgresql(BaseAction):
         #         "data": []
         #     }
         data = helpers.get_user_details(where_clause)
+        if table_name in ['industry_performance','MOM_DAY_LEVEL_DATA','M60_LEVEL_METADATA']:
+        #for filter_key in access_filters:
+        #    print("filter_key",filter_key)
+        #    if filter_key.key =='SBU_Name':
+        #        access_filters[access_filters.index(filter_key)][filter_key.key] == 'sbu_name'
+            for f in data:
+                    
+                    if table_name == 'industry_performance':
+                        f.key = f['key'].strip().lower()
+                    
+                    if f['key'].strip().lower()== 'sbu_name':
+                        if f['value'] =='DS':
+                            f['value'] = 'I&C'
+                    #if f.key.strip().lower() == "sbu_name":
+                    #            f.key = "sbu_name"
+            if data and table_name == 'industry_performance':
+                data = [rec for rec in data if rec['key'] not in ['SalesArea_Name', 'Region_Name']]
         if data:
             where_clause = data
         try:
@@ -594,6 +611,21 @@ class Postgresql(BaseAction):
         #         "data": []
         #     }
         data = helpers.get_user_details(where_clause)
+        if table_name in ['industry_performance','MOM_DAY_LEVEL_DATA','M60_LEVEL_METADATA']:
+        #for filter_key in access_filters:
+        #    print("filter_key",filter_key)
+        #    if filter_key.key =='SBU_Name':
+        #        access_filters[access_filters.index(filter_key)][filter_key.key] == 'sbu_name'
+            for f in data:
+                    
+                    if table_name == 'industry_performance':
+                        f.key = f['key'].strip().lower()
+                    
+                    if f['key'].strip().lower()== 'sbu_name':
+                        if f['value'] =='DS':
+                            f['value'] = 'I&C'
+                    #if f.key.strip().lower() == "sbu_name":
+                    #            f.key = "sbu_name"
         if data:
             where_clause = data
         try:
