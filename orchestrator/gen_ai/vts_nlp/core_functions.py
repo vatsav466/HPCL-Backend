@@ -374,7 +374,7 @@ async def generate_comprehensive_vehicle_query(vehicle_id: str, engine=None, cro
                 WHEN 'HS' THEN 'Unauthorized stoppage at Hotspots'
                 WHEN 'RD' THEN 'Route deviation beyond 2 km'
                 WHEN 'TC' THEN 'Trip pending closure (2+ hrs)'
-                WHEN 'WR' THEN 'TT without VTS device'
+                WHEN 'WR' THEN 'TT without Route ID'
                 ELSE COALESCE(vot.violation_type, 'Ongoing Trip')
             END AS "Event Type",
             vot.created_at::TIMESTAMP AS "Event Time",
@@ -518,7 +518,7 @@ async def process_vts_query(vehicle_number: str, question: str = None, context: 
                             
                             violation_mapping = {
                                 "HS": "Unauthorized stoppage at Hotspots", "RD": "Route deviation beyond 2 km",
-                                "TC": "Trip pending closure (2+ hrs)", "WR": "TT without VTS device"
+                                "TC": "Trip pending closure (2+ hrs)", "WR": "TT without Route ID"
                             }
                             for record in records:
                                 if record.get("Data Table") == "VTS Live" and record.get("Event Type") in violation_mapping:
