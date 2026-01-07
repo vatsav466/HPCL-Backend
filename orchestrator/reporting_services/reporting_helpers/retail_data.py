@@ -650,18 +650,18 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
 
     # Summary row values (example values, modify if needed) Day wise No. of Dryout ROs
     default_ro_values_base = {
-        'CZ': 2454,
-        'ECZ': 1844,
-        'EZ': 1151,
-        'NCZ': 2912,
-        'NFZ': 1522,
-        'NWFZ': 1863,
-        'NWZ': 1355,
-        'NZ': 1419,
-        'SCZ': 2800,
-        'SWZ': 2487,
-        'SZ': 1899,
-        'WZ': 2628
+        'CZ': 2474,
+        'ECZ': 1867,
+        'EZ': 1171,
+        'NCZ': 2949,
+        'NFZ': 1531,
+        'NWFZ': 1879,
+        'NWZ': 1373,
+        'NZ': 1430,
+        'SCZ': 2816,
+        'SWZ': 2518,
+        'SZ': 1913,
+        'WZ': 2651
     }
 
     default_ro_values = {
