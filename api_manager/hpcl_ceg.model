@@ -113,6 +113,7 @@ Enum AlertActionType str {
     AcceptViolation='AcceptViolation'
     BlockFailed='BlockFailed'
     UnblockFailed='UnblockFailed'
+    OngoingTrip='OngoingTrip'
 }
 
 Enum IndentStatus str {
@@ -895,6 +896,7 @@ Model Alerts {
         bu BusinessUnit
         truck_number str
         blocking_days int
+        reason optional str
         remarks optional str
     }
 
@@ -954,13 +956,14 @@ Model TasAnalytics crud_disable {
         location_name   optional str
         interlock_name  optional str
         alert_status    optional str
-        alert_severity  optional str
+        alert_severity  optional list str
         zone            optional str
         start_date      str
         end_date        str
         equipment_type  optional str
         equipment_name  optional str
         download        optional str
+        top_n      optional int
     }
 
 }
@@ -1651,12 +1654,7 @@ Model VtsAlertHistory {
     tt_type optional str
     violation_type optional list str
     destination_code optional str
-
-    Action=> vts_alerts_analytics{
-        alert_id str
-        interlock_name optional str
-    }
-
+    
     Config=> {
         crud_operations='read'
         access_key_mapping='location_id:sap_id'
@@ -3840,6 +3838,39 @@ Model CrisDryOutSync {
     power100_dryouts optional int
     dry_out_in_days str
     file_path optional str
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model HyperLocalZoneSummary internal {
+    zone str
+    rating int
+}
+
+Model ReviewsSentiment internal {
+    zone str
+    sales_area str
+    region str
+    store_code str
+    store_name str
+    reviewer_name str
+    rating int
+    review_comment str
+    tone_type str
+    review_date datetime
+    rank int
+}
+
+Model HyperLocal {
+    report_date index_field date
+    total_reviews int
+    positive_reviews int
+    negative_reviews int
+    neutral_reviews int
+    zone_summary list HyperLocalZoneSummary
+    sentiment_of_reviews list ReviewsSentiment
 
     Config=> {
         crud_operations='read'

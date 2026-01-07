@@ -5,8 +5,9 @@ import csv
 import json
 import time 
 import requests
+import tempfile
 import jinja2
-from collections import Counter
+import polars as pl
 import hpcl_ceg_model
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -14,49 +15,50 @@ from openpyxl import Workbook
 import orchestrator.notification_manager.notification_factory
 
 
-CAMUNDA_INSTANCES = [
-    # LPG PQ Rejections
-    {"server_type": "LPG", "host": "10.90.38.219", "port": 8080},
-    # RO (Retail Automation)
-    {"server_type": "RO", "host": "10.90.38.224", "port": 8080},
-    # VTS
-    {"server_type": "VTS-TAS", "host": "10.90.38.218", "port": 9092},
-    {"server_type": "VTS-LPG", "host": "10.90.38.218", "port": 9093},
-    # TAS
-    {"server_type": "VTS-TAS", "host": "10.90.38.218", "port": 9094},
-    {"server_type": "VTS-LPG", "host": "10.90.38.218", "port": 9095},
-    # VA
-    {"server_type": "VA-TAS", "host": "10.90.38.219", "port": 9091},
-    {"server_type": "VA-RO",  "host": "10.90.38.219", "port": 9090},
-    # DryOut
-    {"server_type": "DryOut", "host": "10.90.38.217", "port": 9080},
-    {"server_type": "DryOut", "host": "10.90.38.217", "port": 9081},
-    {"server_type": "DryOut", "host": "10.90.38.217", "port": 9082},
-    {"server_type": "DryOut", "host": "10.90.38.217", "port": 9083},
-    {"server_type": "DryOut", "host": "10.90.38.217", "port": 9084},
-    {"server_type": "DryOut", "host": "10.90.38.217", "port": 9085},
-    {"server_type": "DryOut", "host": "10.90.38.217", "port": 9086},
-    {"server_type": "DryOut", "host": "10.90.38.217", "port": 9087},
-    {"server_type": "DryOut", "host": "10.90.38.217", "port": 9088},
-    {"server_type": "DryOut", "host": "10.90.38.217", "port": 9089}
-]
-
+CAMUNDA_INSTANCES = urdhva_base.settings.camunda_configuration
+CAMUNDA_DRYOUT_INSTANCES = urdhva_base.settings.camunda_url_config
 
 header = ["id", "processDefinitionId", "processInstanceId", "executionId", "incidentTimestamp", "incidentType", 
               "activityId", "failedActivityId", "causeIncidentId", "rootCauseIncidentId", "configuration", "incidentMessage",
               "tenantId", "jobDefinitionId", "annotation", "server_type", "host", "port"]
 
 
+def fetching_incidnets_from_server():
+    server_instances = []
+
+    # Handling CAMUNDA_INSTANCES (TAS,RO,LPG)
+    for group, configs in CAMUNDA_INSTANCES.items():
+        for con in configs:
+            name= con.get("alert_section")    
+            url = con.get("url")
+            replace_http = url.replace("http://", "")
+            split_url = replace_http.split(":")
+            server_instances.append({
+                "server_type": group+"-"+name,
+                "host": split_url[0],
+                "port": int(split_url[1])
+            })
+
+    # Handling CAMUNDA_DRYOUT_INSTANCES
+    for name, config in CAMUNDA_DRYOUT_INSTANCES.items():
+        server_instances.append({
+            "server_type": "DRYOUT",
+            "host": config["host"],
+            "port": config["port"]
+        })
+    return server_instances
+
+
 def fetch_incidents():
     """fetching all Camunda incidents from all configured camunda instances"""
     all_incidents = []
-    for instance in CAMUNDA_INSTANCES:
+    camunda_instances = fetching_incidnets_from_server()
+    for instance in camunda_instances:
         url= f"http://{instance['host']}:{instance['port']}/engine-rest/incident"
         try:
             response = requests.get(url, timeout=5)
             response.raise_for_status()
             incidents = response.json()
-            print("incidents----->", len(incidents) , "\n\n")
             for inc in incidents:
                 inc["server_type"] = instance["server_type"]
                 inc["host"] = instance["host"]
@@ -70,7 +72,9 @@ def fetch_incidents():
 
 
 def generate_excel(all_incidents):
-    EXCEL_PATH = "/tmp/incident_result.xlsx"
+    temp = tempfile.NamedTemporaryFile(prefix="incident_result_", suffix=".xlsx", delete=False)
+    EXCEL_PATH = temp.name
+    temp.close()
     wb = Workbook()
     ws = wb.active
     ws.title = "Camunda Incident"
@@ -84,28 +88,28 @@ def generate_excel(all_incidents):
 
 
 def generate_csv(all_incidents):
-    CSV_PATH = "/tmp/incident_result.csv"
-    with open(CSV_PATH, mode="w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
-
-        writer.writerow(header)
-        for row in all_incidents:
-            writer.writerow([row.get(h) for h in header])
-        return CSV_PATH
+   temp = tempfile.NamedTemporaryFile(prefix="incident_result_", suffix=".csv", delete=False)
+   CSV_PATH = temp.name
+   temp.close()
+   df = pl.DataFrame(all_incidents)
+   df.write_csv(CSV_PATH)
+   return CSV_PATH
 
 
 def incident_summary(incidents):
     """
     Creates count of incidents grouped by server_type, host, and port
     """
-    counter = Counter()
+    counter = {}
     summary= []
+    for server in fetching_incidnets_from_server():
+        counter[(server["server_type"], server["host"], server["port"])] = 0
+        
     for inc in incidents:
         inc["server_type"] = inc["server_type"]
         inc["host"] = inc["host"]
         inc["port"] = inc["port"]
         counter[(inc["server_type"], inc["host"], inc["port"])] += 1
-        print("counter count---->", counter)
 
     for (server_type, host, port), count in counter.items():
         summary.append({
@@ -146,8 +150,6 @@ async def send_email(template_name, to_recipients, subject, cc_recipients, bcc_r
         inline_images={},
         attachments=attachments or []
     )
-    print("Email sent successfully")
-
 
 
 async def main():
@@ -161,7 +163,7 @@ async def main():
     csv_path = generate_csv(result)
 
     summary = incident_summary(result)
-
+    summary = sorted(summary, key=lambda summary: summary['count'], reverse=True)
     email_data = {
         "generated_time": datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%d-%m-%Y %I:%M %p"),
         "summary": summary
@@ -178,10 +180,21 @@ async def main():
         final_data=email_data, 
         attachments=[csv_path, excel_path]
     )
-    
+    if csv_path and os.path.exists(csv_path):
+       try:
+            os.remove(csv_path)
+            print(f"Temporary CSV file '{csv_path}' deleted successfully.")
+       except Exception as e:
+            print(f"Error deleting temporary CSV file '{csv_path}': {e}")
+    if excel_path and os.path.exists(excel_path):
+        try:
+            os.remove(excel_path)
+            print(f"Temporary Excel file '{excel_path}' deleted successfully.")
+        except Exception as e:
+            print(f"Error deleting temporary Excel file '{excel_path}': {e}")
 
+    
 if __name__ == "__main__":
     while True:
         asyncio.run(main())
         time.sleep(3600)
-

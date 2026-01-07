@@ -40,6 +40,18 @@ async def top_repeat_alerts(data):
     if data.interlock_name:
         alert_query += f" AND interlock_name = '{data.interlock_name}'"
 
+    if data.alert_severity:
+        if isinstance(data.alert_severity, list):
+            clean_severity = [s for s in data.alert_severity if s]
+
+            if clean_severity:
+                severity_vals = ", ".join(f"'{s}'" for s in clean_severity)
+                alert_query += f" AND severity IN ({severity_vals})"
+        else:
+            if data.alert_severity.strip():
+                alert_query += f" AND severity = '{data.alert_severity}'"
+
+    print("FINAL alert_query >>>", alert_query)
 
     alert_params = urdhva_base.queryparams.QueryParams(
         q=alert_query,
@@ -50,6 +62,7 @@ async def top_repeat_alerts(data):
     alert_params.fields = [
         "unique_id",
         "alert_status",
+        "severity",
         "interlock_name",
         "location_name",
         "created_at"
@@ -86,7 +99,8 @@ async def top_repeat_alerts(data):
             ])
             .select([
                 "unique_id",
-                "alert_status",      
+                "alert_status",  
+                "severity",  
                 "interlock_name",
                 "location_name",
                 "created_at",
@@ -131,6 +145,7 @@ async def tas_severity_summary(data):
     if data.location_name:
         alert_query += f" AND location_name = '{data.location_name}'"
 
+    print("FINAL alert_query >>>", alert_query)
 
     alert_params = urdhva_base.queryparams.QueryParams(
         q=alert_query,
@@ -198,14 +213,9 @@ async def tas_severity_summary(data):
 
 async def location_alert_critical(data):
 
-    alert_query = """
-        alert_section = 'TAS'
-        AND severity = 'Critical'
-    """
-
-    alert_query += (
-        f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
-    )
+    # 1. BASE QUERY
+    alert_query = "alert_section = 'TAS'"
+    alert_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
 
     if data.zone:
         alert_query += f" AND zone = '{data.zone}'"
@@ -216,12 +226,17 @@ async def location_alert_critical(data):
     if data.location_name:
         alert_query += f" AND location_name = '{data.location_name}'"
 
-    # FETCH DATA
+    print("FINAL alert_query >>>", alert_query)
+
+    # =====================================================
+    # 2. FETCH DATA
+    # =====================================================
     params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
     params.fields = [
         "unique_id",
         "zone",
         "alert_status",
+        "severity",
         "interlock_name",
         "location_name",
         "created_at"
@@ -234,24 +249,27 @@ async def location_alert_critical(data):
         return []
 
     df = pl.DataFrame(rows)
-    # CASE 1
-    # No location
-    # → Top 5 locations (TOTAL critical count)
-    if not data.location_name and not data.alert_severity:
+    severity_filter = data.alert_severity
 
-        return (
-            df.group_by(["zone", "location_name"])
-              .agg(pl.len().alias("critical_count"))
-              .sort("critical_count", descending=True)
-              .head(5)
-              .to_dicts()
+    if isinstance(severity_filter, list):
+        severity_filter = [
+            s.strip().lower()
+            for s in severity_filter
+            if s and isinstance(s, str)
+        ]
+
+    if severity_filter:
+        df = df.filter(
+            pl.col("severity")
+            .str.to_lowercase()
+            .is_in(severity_filter)
         )
 
-    # CASE 2
-    # Location selected
-    # → ALL critical alerts with ageing
-    if data.location_name and not data.alert_severity:
-
+    
+    # =====================================================
+    # 5. TOP-N DECISION
+    # =====================================================
+    if data.location_name:
         now = datetime.utcnow()
 
         return (
@@ -268,6 +286,7 @@ async def location_alert_critical(data):
             .select([
                 "unique_id",
                 "zone",
+                "severity",
                 "alert_status",
                 "interlock_name",
                 "location_name",
@@ -278,31 +297,50 @@ async def location_alert_critical(data):
             .to_dicts()
         )
 
-    if not data.location_name and data.alert_severity == "Critical":
 
-        base_df = (
-            df.group_by(["zone", "location_name", "interlock_name"])
-            .agg(pl.len().alias("count"))
+    top_n = int(getattr(data, "top_n", 5) or 5)
+
+    # -------------------------
+    # TOP-5 → SIMPLE LOCATION COUNT
+    # -------------------------
+    if top_n == 5:
+        return (
+            df.filter(pl.col("severity") == "Critical")
+              .group_by(["zone", "location_name"])
+              .agg(pl.len().alias("count"))
+              .sort("count", descending=True)
+              .head(5)
+              .to_dicts()
         )
 
-        totals_df = (
-            base_df.group_by(["zone", "location_name"])
-                .agg(pl.sum("count").alias("total_critical"))
-                .sort("total_critical", descending=True)
-                .head(10)  
-        )
+    # -------------------------
+    # TOP-10 → INTERLOCK + SEVERITY
+    # -------------------------
+    base_df = (
+        df.group_by(["zone", "location_name", "interlock_name", "severity"])
+          .agg(pl.len().alias("count"))
+    )
 
-        result_df = (
-            totals_df.join(base_df, on=["zone", "location_name"])
-                    .group_by(["zone", "location_name"])
-                    .agg([
-                        pl.first("total_critical"),
-                        pl.struct(["interlock_name", "count"]).alias("interlocks")
-                    ])
-                    .sort("total_critical", descending=True)
-        )
+    totals_df = (
+        base_df.group_by(["zone", "location_name"])
+               .agg(pl.sum("count").alias("total_alerts"))
+               .sort("total_alerts", descending=True)
+               .head(top_n)
+    )
 
-        return result_df.to_dicts()
+    result_df = (
+        totals_df.join(base_df, on=["zone", "location_name"])
+                 .group_by(["zone", "location_name"])
+                 .agg([
+                     pl.first("total_alerts"),
+                     pl.struct(
+                         ["interlock_name", "severity", "count"]
+                     ).alias("interlocks")
+                 ])
+                 .sort("total_alerts", descending=True)
+    )
+
+    return result_df.to_dicts()
 
 async def critical_alerts_by_equipment(data):
     alert_query = """
@@ -327,8 +365,7 @@ async def critical_alerts_by_equipment(data):
         "equipment_type"
     ]
     
-    # Check if location_name is NOT "false" (string comparison)
-    if data.location_name and data.location_name.lower() != "false":
+    if data.location_name and data.location_name.lower() == "true":
         alert_params.fields.append("location_name")
 
     alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
@@ -341,16 +378,26 @@ async def critical_alerts_by_equipment(data):
     if alerts_df.is_empty():
         return []
     
-    # Check if location_name is provided and NOT "false"
-    if data.location_name and data.location_name.lower() != "false":
+    # Filter out rows where equipment_type is null or empty
+    alerts_df = alerts_df.filter(
+        (pl.col("equipment_type").is_not_null()) & 
+        (pl.col("equipment_type").str.strip_chars() != "")
+    )
+    
+    # Check again if dataframe is empty after filtering
+    if alerts_df.is_empty():
+        return []
+    
+    # Check if location_name is "true" - group by location only
+    if data.location_name and data.location_name.lower() == "true":
         critical_alerts_df = (
             alerts_df
-            .group_by(["location_name", "equipment_type"])
+            .group_by(["location_name"])
             .agg(pl.len().alias("critical_count"))
-            .sort(["location_name", "critical_count"], descending=[False, True])
+            .sort(["critical_count"], descending=[True])
         )
     else:
-        # location_name is "false" or not provided - group by equipment_type only
+        # location_name is not "true" - group by equipment_type only
         critical_alerts_df = (
             alerts_df
             .group_by(["equipment_type"])

@@ -68,7 +68,7 @@ if os.path.exists(EXCEL_PATH):
 
     SOP_ENABLED = True
 else:
-    print(f" SOP Excel not found at {EXCEL_PATH}. Running without SOP.")
+    
 
     _sop_df = pl.DataFrame({
         "event_name": [],

@@ -709,24 +709,6 @@ async def download_streaming_data(df: pl.DataFrame, filename='violations'):
         cs.datetime(time_zone="*").dt.replace_time_zone(None)
     )
 
-    # df = df.select(
-    #     [s.name for s in df if s.null_count() < df.height]
-    # )
-    # mask_df = df.select(
-    #     [
-    #         pl.col(c)
-    #         .cast(pl.String)
-    #         .fill_null("")  # null -> ""
-    #         .str.strip_chars()  # strip whitespace
-    #         .eq("")  # non-empty?
-    #         .any()  # any row is non-empty?
-    #         .alias(c)
-    #         for c in df.columns
-    #     ]
-    # )
-    # cols_to_keep = [c for c in df.columns if mask_df[c][0]]
-    # df = df.select(cols_to_keep)
-
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"{filename}_{timestamp}.xlsx"
 
@@ -967,13 +949,17 @@ class VTSAnalyticsActions:
             return conditions
             
         if alert_type.lower() == "blocked":
-            conditions.append("vehicle_unblocked_date is null")
+            conditions.append("alert_status = 'Open' and vehicle_unblocked_date is null") 
+        if alert_type.lower() == "acceptance_close":
+            conditions.append("alert_status = 'Close' and vehicle_unblocked_date is null")
         elif alert_type.lower() == "auto_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = false AND vehicle_unblocked_date is not null")
         elif alert_type.lower() == "manual_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = true and vehicle_unblocked_date is not null")
-        # 'all_alerts' -> no extra conditions
-        
+        else:
+        # all_alerts or unknown value → no extra condition
+           pass
+     
         return conditions
 
     @staticmethod
@@ -1025,14 +1011,10 @@ class VTSAnalyticsActions:
         try:
             # Get base query           
             card_query = vts_query.vts_query.get(drill_state.split(",")[0])
-            print("Base Query:", card_query)
 
             # Build and apply conditions (pass the query for key transformation)
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, card_query)
             final_query = VTSAnalyticsActions.apply_conditions_to_query(card_query, conditions)
-            
-            print("-" * 50)
-            print("Final card_query ---->", final_query)
 
             # Execute query
             df = await VTSAnalyticsActions.execute_query(final_query, engine='dict')
@@ -1041,6 +1023,72 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("Exception in BigNumber Chart:", str(e))
             print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+    
+    @staticmethod
+    async def vts_dashboard_card_download(filters, cross_filters, drill_state, payload):
+        """
+            Download VTS dashboard cards as an Excel file.
+
+            This function retrieves the required data from the database and generates
+            an Excel file containing the selected columns for download.
+
+            :param filters: Filters applied based on location, SAP ID, and BU for data filtering.
+            :param cross_filters: Additional filters, primarily used for date range selection.
+            :param drill_state: Used to map and select the appropriate query
+                                from the `vts_query` file in the same path.
+            :param payload: Additional parameters passed from the frontend
+                            for applying extra conditional checks if required.
+            :return: Excel file response as a downloadable stream.
+            :rtype: dict[str, Any] | StreamingResponse
+        """
+
+        try:
+            # 1. Build and execute query
+            download_card_query = vts_query.vts_query.get(drill_state.split(",")[0])
+            conditions = VTSAnalyticsActions.build_filter_conditions(
+                filters, cross_filters, download_card_query
+            )
+            final_query = VTSAnalyticsActions.apply_conditions_to_query(
+                download_card_query, conditions
+            )
+
+            df = await VTSAnalyticsActions.execute_query(final_query, engine="polars")
+
+            # 2. Extract creator_id and approver_id from alert_history (JSONB)
+            df = df.with_columns([
+                    # Creator ID → first employee_id where action_type == Justification
+                    pl.col("alert_history").list.eval(pl.element().struct.field("employee_id").filter(
+                            pl.element().struct.field("action_type") == "Justification")
+                    ).list.first().alias("creator_id"),
+
+                    # Approver ID → first employee_id where action_type == Approved
+                    pl.col("alert_history").list.eval(pl.element().struct.field("employee_id").filter(
+                            pl.element().struct.field("action_type") == "Approved")
+                    ).list.first().alias("approver_id"),
+                ])
+
+
+            # 3. Select required columns for Excel
+            df = (df.select(["zone", "sap_id", "location_name",  "vehicle_number", "violation_type",
+                            "unique_id", "alert_status", "device_name", "severity", "created_at", 
+                            "creator_id", "approver_id", "vehicle_unblocked_date", "vehicle_blocked_end_date" 
+                ])
+                .rename({
+                    "unique_id": "Alert ID",
+                    "sap_id" : "Location ID",
+                    "vehicle_number" : "Truck Number",
+                    "device_name" : "Instance ID",
+                    "creator_id": "Creator ID",
+                    "approver_id": "Approver ID",
+                })
+            )
+            # 4. Return Excel download
+            return await download_streaming_data(df, filename="itdgAlerts")
+        
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            print("error",str(e))
             return {"status": False, "message": str(e), "data": []}
 
     @staticmethod
@@ -2356,12 +2404,10 @@ class VTSAnalyticsActions:
             
             alerts_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
 
-            print(alerts_query)
-
             # Execute queries
-            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
+            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query, engine='polars')
             
-            if alerts_df.empty:
+            if alerts_df.is_empty():
                 return {"status": True, "message": "success", "data": [], "percentages": []}
 
             # Get group by column
@@ -2372,39 +2418,39 @@ class VTSAnalyticsActions:
             if 'violation_type' not in alerts_df.columns:
                 return {"status": False, "message": "violation_type column not found", "data": [], "percentages": []}
             
-            alerts_df = alerts_df[
-                  alerts_df[group_by_column].notnull() & 
-                 (alerts_df[group_by_column] != "")
-                ]
+            alerts_df = alerts_df.filter((pl.col(group_by_column).is_not_null()) & (pl.col(group_by_column) != ""))
+          
+            if alerts_df.is_empty():
+                return {"status": True, "message": "success", "data": [], "percentages": []}
             
-            if alerts_df.empty:
-                 return {"status": True, "message": "success", "data": [], "percentages": []}
+            grouped = (alerts_df.group_by([group_by_column, "violation_type"]).agg(pl.count().alias("count")))
             
-            grouped = alerts_df.groupby([group_by_column, 'violation_type']).size().reset_index(name='count')
-            
-            if grouped.empty:
+            if grouped.is_empty():
                  return {"status": True, "message": "success", "data": [], "percentages": []}
         
             # Prepare response data
             data_response = []
-            for group_value in grouped[group_by_column].unique():
-                group_data = grouped[grouped[group_by_column] == group_value]
+            for group_value in grouped[group_by_column].unique().to_list():
+                group_data = grouped.filter(pl.col(group_by_column) == group_value)
                 violations_list = [
                     {"violation_type": row['violation_type'], "count": int(row['count'])}
-                    for _, row in group_data.iterrows()
+                    for row in group_data.to_dicts()
                 ]
                 
                 if violations_list:
                     data_response.append({group_value: violations_list})
 
             # Calculate percentages
-            violation_totals = grouped.groupby('violation_type')['count'].sum().to_dict()
-            grand_total = sum(violation_totals.values())
+            violation_totals = (grouped.group_by('violation_type').agg(pl.sum("count")))
+            grand_total = violation_totals["count"].sum()
             percentages = []
             if grand_total > 0:
                 percentages = [
-                    {"violation_type": vtype, "percentage": round((count / grand_total) * 100, 2)}
-                    for vtype, count in violation_totals.items()
+                    {
+                    "violation_type": row["violation_type"],
+                    "percentage": round((row["count"] / grand_total) * 100, 2)
+                    }
+                     for row in violation_totals.iter_rows(named=True)
                 ]
 
             return {
@@ -2436,38 +2482,34 @@ class VTSAnalyticsActions:
             alerts_query = base_query.format(period_expr=period_expr)
             alerts_query = VTSAnalyticsActions.apply_conditions_to_query(alerts_query, conditions)
 
-            print(alerts_query)
-
             # Execute queries
-            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
+            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query,engine='polars')
             
-            if alerts_df.empty:
+            if alerts_df.height == 0:
                 return {"status": True, "message": "success", "data": []}
 
-            if 'violation_type' not in alerts_df.columns or 'period' not in alerts_df.columns:
+            if not {"violation_type", "period"}.issubset(alerts_df.columns):
                  return {"status": False, "message": "Required columns not found", "data": []}
             
-            alerts_df = alerts_df[
-                (alerts_df["period"].notna()) &                      
-                (alerts_df["period"].astype(str).str.strip() != "")
-            ]
-
-            if alerts_df.empty:
-                return {"status": True, "message": "success", "data": []}
+            alerts_df = alerts_df.filter(pl.col("period").is_not_null() & (pl.col("period").cast(pl.Utf8).str.strip_chars() != ""))
             
-            grouped = alerts_df.groupby(['period', 'violation_type']).size().reset_index(name='count')
+            if alerts_df.height == 0:
+                 return {"status": True, "message": "success", "data": []}
             
-            if grouped.empty:
+            
+            grouped = (alerts_df.group_by(['period', 'violation_type']).agg(pl.len().alias("count")))
+            
+            if grouped.height == 0:
                 return {"status": True, "message": "success", "data": []}
             
             result = []
-            for period in grouped['period'].unique():
-                period_data = grouped[grouped['period'] == period]
+            for period in grouped.select('period').unique().to_series():
+                period_data = grouped.filter(pl.col('period') == period)
                 formatted_date = VTSAnalyticsActions.format_date(period, drill_state)
                 
                 values = [
                     {"violation_type": row['violation_type'], "count": int(row['count'])}
-                    for _, row in period_data.iterrows()
+                    for row in period_data.iter_rows(named=True)
                 ]
                 
                 if values:
@@ -3012,9 +3054,8 @@ class VTSAnalyticsActions:
             # Cross filters
             _filters, daterange = await generate_cross_filter(cross_filters)
             current_date = datetime.now().strftime("%Y-%m-%d")
+
             closed_query = vts_query.vts_query.get("closed_alerts")
-            
-            # Updated shortage query - remove hardcoded conditions
             shortage_query = vts_query.vts_query.get("unblocked_tt_shortage")
 
             # Drill Down filters for closed_query
@@ -3024,33 +3065,51 @@ class VTSAnalyticsActions:
                 dashboard_studio_model.WidgetFiltersCreate(**rec)
                 for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)
             ]
+
             closed_query = await widget_actions.WidgetActions.apply_filter_drilldown(closed_query, access_filters, drill_state)
 
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
             shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
             shortage_query += " GROUP BY vehicle_id"
 
-            # Apply date condition to closed_query only (since shortage_query date is handled by build_filter_conditions)
+            # Date condition only for closed_query
             clause = "WHERE" if "where" not in closed_query.lower() else "AND"
             if daterange:
                 closed_query += f" {clause} created_at BETWEEN {daterange}"
             else:
                 closed_query += f" {clause} CAST(created_at AS DATE) = '{current_date}'"
-
             print("Final Shortage Query:", shortage_query)
-
+            # Execute queries
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=closed_query, limit=0)
             shortage_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=shortage_query, limit=0)
-            
+
+            # DataFrames
             df = pd.DataFrame(resp.get("data", []))
+            
+
             df = await filter_data(df, _filters)
+
             shortage = pd.DataFrame(shortage_resp.get("data", []))
 
+            # AVERAGE UNBLOCKING LOGIC (NEW)
+            # Use blocked → unblocked dates from query
             df["vehicle_blocked_end_date"] = pd.to_datetime(df["vehicle_blocked_end_date"]).dt.tz_localize(None)
             df["vehicle_blocked_start_date"] = pd.to_datetime(df["vehicle_blocked_start_date"]).dt.tz_localize(None)
+            
+            df["created_at"] = pd.to_datetime(
+                df["created_at"]
+            ).dt.tz_localize(None)
 
-            df["ageing"] = (df["vehicle_blocked_end_date"] - df["vehicle_blocked_start_date"]).dt.days + 1
-                        
+            # consider only unblocked records
+            df = df[df["vehicle_unblocked_date"].notna()]
+
+
+            # Average Unblocking duration (days)
+            df["unblocking_days"] = (
+                (df["vehicle_unblocked_date"] - df["created_at"])
+                .dt.total_seconds() / 86400
+            ).clip(lower=0)
+            # Violation counts
             violation_counts = (
                 df.pivot_table(
                     index=["sap_id", "zone", "tt_number"],
@@ -3060,49 +3119,105 @@ class VTSAnalyticsActions:
                     fill_value=0
                 )
             )
-            avg_ageing = (
-                df.groupby(["sap_id", "location_name", "transporter_code", "zone", "tt_number"])["ageing"]
-                .mean()
-                .reset_index()
+
+            # Average Unblocking (group level)
+            avg_unblocking = (
+                df.groupby(
+                    ["sap_id", "location_name", "transporter_code", "zone", "tt_number"],
+                    as_index=False
+                )
+                .agg(
+                    total_unblocking_days=("unblocking_days", "sum"),
+                    total_alerts=("unblocking_days", "count")
+                )
             )
-            df = (
-                avg_ageing.merge(violation_counts, on=["sap_id", "tt_number"], how="left")
+
+            avg_unblocking["average_unblocking"] = (
+                avg_unblocking["total_unblocking_days"]
+                / avg_unblocking["total_alerts"]
+            ).round(2)
+
+            df = avg_unblocking.merge(
+                violation_counts, on=["sap_id", "tt_number"], how="left"
             )
+
             df.columns.name = None
-            df["ageing"] = df["ageing"].round(2)
+
+            # Merge shortage
             df = pd.merge(df, shortage, on="tt_number", how="left")
             df = df.fillna(0)
 
+            # Ensure violation columns
             for col in [
-                "continuous_driving_count", "device_tamper_count", "main_supply_removal_count",
-                "night_driving_count", "route_deviation_count", "speed_violation_count",
+                "continuous_driving_count", "device_tamper_count",
+                "main_supply_removal_count", "night_driving_count",
+                "route_deviation_count", "speed_violation_count",
                 "stoppage_violations_count"
-                ]:
+            ]:
                 if col not in df.columns:
                     df[col] = 0
-            df.rename(
-                columns={"continuous_driving_count": "CD", "device_tamper_count": "DT",
-                        "main_supply_removal_count": "PD", "night_driving_count": "ND",
-                        "route_deviation_count": "RD", "speed_violation_count": "SV",
-                        "stoppage_violations_count": "US"}, inplace=True)            
 
+            df.rename(
+                columns={
+                    "continuous_driving_count": "CD",
+                    "device_tamper_count": "DT",
+                    "main_supply_removal_count": "PD",
+                    "night_driving_count": "ND",
+                    "route_deviation_count": "RD",
+                    "speed_violation_count": "SV",
+                    "stoppage_violations_count": "US"
+                },
+                inplace=True
+            )
+
+            # Drill-down aggregation
             if drill_state:
                 group_by_keys = [drill_state]
+
                 if filters:
                     filter_keys = [rec.key.strip('"') for rec in filters]
+
                     if "zone" in filter_keys and "location_name" not in filter_keys:
                         group_by_keys = ["zone", "location_name"]
-                    elif "zone" in filter_keys and "location_name" in filter_keys and "transporter_code" not in filter_keys:
+                    elif (
+                        "zone" in filter_keys and
+                        "location_name" in filter_keys and
+                        "transporter_code" not in filter_keys
+                    ):
                         group_by_keys = ["zone", "location_name", "transporter_code"]
-                    elif "zone" in filter_keys and "location_name" in filter_keys and "transporter_code" in filter_keys and "tt_number" not in filter_keys:
-                        group_by_keys = ["zone", "location_name", "transporter_code", "tt_number"]
+                    elif (
+                        "zone" in filter_keys and
+                        "location_name" in filter_keys and
+                        "transporter_code" in filter_keys and
+                        "tt_number" not in filter_keys
+                    ):
+                        group_by_keys = [
+                            "zone", "location_name", "transporter_code", "tt_number"
+                        ]
 
                 df = df.groupby(group_by_keys, as_index=False).agg({
-                                "CD": "sum", "DT": "sum", "PD": "sum",
-                                "ND": "sum", "RD": "sum", "SV": "sum",
-                                "US": "sum", "ageing": "mean", "shortage": "sum"})
+                    "CD": "sum",
+                    "DT": "sum",
+                    "PD": "sum",
+                    "ND": "sum",
+                    "RD": "sum",
+                    "SV": "sum",
+                    "US": "sum",
+                    "average_unblocking": "mean",
+                    "shortage": "sum"
+                })
+                closing_cols = ["CD", "DT", "PD", "ND", "RD", "SV", "US"]
 
-            return {"status": True, "message": "success", "data": df.to_dict(orient='records')}
+                df["average_closing"] = (
+                    df[closing_cols].sum(axis=1) / len(closing_cols)
+                ).round(2)
+
+            return {
+                "status": True,
+                "message": "success",
+                "data": df.to_dict(orient="records")
+            }
+
         except Exception as e:
             print("-- Exception in get unblock ageing widget --")
             print("traceback :", traceback.format_exc())

@@ -136,6 +136,24 @@ async def fetch_sales_data():
                 print("fiscal_year---------------->>>>>",dyn_fis_year)
                 filters['filters'].append({"key": "\"fiscal_year\"", "cond": "equals", "value": dyn_fis_year})
                 
+                # ---------------- YTDPM DATE FIX (ADD HERE) ----------------
+                today = datetime.date.today()
+
+                fy_start_year = today.year if today.month >= 4 else today.year - 1
+
+                current_start = datetime.date(fy_start_year, 4, 1)
+
+                # last day of current month
+                first_day_current_month = today.replace(day=1)
+                current_end = first_day_current_month - datetime.timedelta(days=1)
+
+                filters['filters'].append({
+                    "key": "\"DATE\"",
+                    "cond": "equals",
+                    "value": f"{current_start},{current_end}"
+                })
+                # ------------------------------------------------------------
+                
             if sbu_filter:
                 filters['filters'].append(sbu_filter)
             print("checking ytpm --------------------------->filters",filters)
