@@ -71,6 +71,7 @@ class TicketingSchema(UrdhvaPostgresBase):
     merge_status: Mapped[typing.Optional[str]] = mapped_column("merge_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     parent_id: Mapped[typing.Optional[str]] = mapped_column("parent_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     subtask_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("subtask_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    ticket_end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("ticket_end_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),)
 
@@ -112,6 +113,7 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     merge_status: typing.Optional[str] = pydantic.Field("", **{})
     parent_id: typing.Optional[str] = pydantic.Field("", **{})
     subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    ticket_end_date: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -158,6 +160,7 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     merge_status: typing.Optional[str] = pydantic.Field("", **{})
     parent_id: typing.Optional[str] = pydantic.Field("", **{})
     subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    ticket_end_date: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -203,6 +206,7 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     linked_alert_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     parent_id: typing.Optional[str] = pydantic.Field("", **{})
     subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    ticket_end_date: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

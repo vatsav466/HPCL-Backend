@@ -181,6 +181,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
             startdate = None  # or datetime.now() if you want a default
         # Defaults
         ticket_state_str = ticket_data.get('ticket_state')
+        ticket_end_date = ticket_data.get('ticket_end_date')
         for key, value in {
             'ticket_name': ticket_data['ticket_name'],
             'sop_id': ticket_data.get('sop_id', selected_alert.get('sop_id')),
@@ -199,6 +200,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
             'ticket_id': ticket_data['ticket_id'],
             'comment_text': '',
             'comment_id': '',
+            'ticket_end_date': ticket_end_date
         }.items():
             ticket_data[key] = value
         ticket_data['parent_id'] = tdata.get('parent_id')
@@ -309,6 +311,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
             "ticket_history": ticket_data['ticket_history'],
             "parent_id": parent_tid,
             "subtask_id": existing_subtasks if parent_tid else [],
+            "ticket_end_date":ticket_data['ticket_end_date'],
             "linked_alerts": [
                 {
                     "sap_id": lr.get("sap_id"),
