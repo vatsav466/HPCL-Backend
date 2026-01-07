@@ -10664,7 +10664,7 @@ class CrisDryOutSyncGetResp(pydantic.BaseModel):
 
 class HyperLocalZoneSummaryCreate(pydantic.BaseModel):
     zone: str
-    rating: int
+    rating: float
 
 
 class ReviewsSentimentCreate(pydantic.BaseModel):
@@ -10674,7 +10674,7 @@ class ReviewsSentimentCreate(pydantic.BaseModel):
     store_code: str
     store_name: str
     reviewer_name: str
-    rating: int
+    rating: float
     review_comment: str
     tone_type: str
     review_date: datetime.datetime
