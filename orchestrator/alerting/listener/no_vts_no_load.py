@@ -129,22 +129,39 @@ class VTSNoLoadAlert:
         columns = [column[0] for column in cursor.description]
         resp = [dict(zip(columns, row)) for row in data]
         df_vts = pl.DataFrame(resp)
-        if not alerts_df.is_empty():
-            existing_alert_vehicles = alerts_df['vehicle_number'].to_list()
-            unmatched_df = df_vts.filter(~pl.col('TRUCK_REGNO').is_in(existing_alert_vehicles))
-            alerts_to_create = unmatched_df.to_dicts()
-        else:
-            unmatched_df = df_vts
-            alerts_to_create = unmatched_df.to_dicts()
 
-        if alerts_to_create and len(alerts_to_create) > 0:
-            # print("*"*200)
-            # print('alerts_to_create',alerts_to_create)
-            # print('*'*200)
-            await self.create_alerts(alerts_to_create)
-            print(
-                'Total Alerts to create :', len(alerts_to_create)
-            )
+        business_units = ['TAS','LPG']
+
+        for bu in business_units:
+            if bu in ['TAS']:
+                df_filtered = df_vts.filter(pl.col("location_type") == "TAS")
+                continue
+
+            if bu in ['LPG']:
+                df_filtered = df_vts.filter(
+                    (pl.col("location_type") == "LPG") &
+                    (pl.col("location").cast(pl.Utf8).str.starts_with("2"))
+                )
+            
+            # If nothing to process, skip safely
+            if df_filtered.is_empty():
+                continue
+
+            if not alerts_df.is_empty():
+                existing_alert_vehicles = alerts_df['vehicle_number'].to_list()
+                unmatched_df = df_filtered.filter(~pl.col('TRUCK_REGNO').is_in(existing_alert_vehicles))
+                alerts_to_create = unmatched_df.to_dicts()
+            else:
+                unmatched_df = df_filtered
+                alerts_to_create = unmatched_df.to_dicts()
+                if alerts_to_create and len(alerts_to_create) > 0:
+                    # print("*"*200)
+                    # print('alerts_to_create',alerts_to_create)
+                    # print('*'*200)
+                    await self.create_alerts(alerts_to_create)
+                    print(
+                        'Total Alerts to create :', len(alerts_to_create)
+                    )
 
     async def close_nrd_alerts(self, alerts_df):
         """
