@@ -476,7 +476,7 @@ Model EMLockStatus crud_disable {
 
 Model HyperLocalZoneSummary internal {
     zone str
-    rating int
+    rating float
 }
 
 Model ReviewsSentiment internal {
@@ -486,7 +486,7 @@ Model ReviewsSentiment internal {
     store_code str
     store_name str
     reviewer_name str
-    rating int
+    rating float
     review_comment str
     tone_type str
     review_date datetime

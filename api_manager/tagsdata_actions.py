@@ -45,6 +45,16 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         if location_df.empty:
             return {"status": False, "message": "No TAS locations found."}
         
+        # Pre-fetch alerts to avoid N+1 queries inside the loop
+        sap_ids = location_df['sap_id'].unique().tolist()
+        alerts_df = pd.DataFrame()
+        if sap_ids:
+            sap_ids_str = "', '".join(str(x) for x in sap_ids)
+            alerts_query = f"SELECT sap_id, interlock_name, device_name FROM alerts WHERE alert_status='Open' AND sap_id IN ('{sap_ids_str}')"
+            alerts_res = await execute_query(query=alerts_query)
+            if alerts_res:
+                alerts_df = pd.DataFrame(alerts_res)
+        
         mfm_map = {}
         mfm_query = """
             SELECT sap_id, COUNT(DISTINCT mfm_number) AS mfm_count
@@ -226,16 +236,15 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                             # interlocks.append(fault_item["interlock_name"])
                     
                     if interlocks:
-                        # Create a proper SQL query with parameters
-                        in_clause = ", ".join(f"'{item}'" for item in interlocks)
-                        query = (f"SELECT COUNT(DISTINCT device_name) as count FROM alerts "
-                               f"WHERE interlock_name IN ({in_clause}) AND alert_status='Open' "
-                               f"AND sap_id='{sap_id}'")
-                        
-                        # Execute query and get results
-                        resp = await execute_query(query=query)
-                        if resp and len(resp) > 0:
-                            mf_count = resp[0]['count'] or 0
+                        if not alerts_df.empty:
+                            # Filter alerts for current sap_id and relevant interlocks
+                            relevant_alerts = alerts_df[
+                                (alerts_df['sap_id'].astype(str) == sap_id) & 
+                                (alerts_df['interlock_name'].isin(interlocks))
+                            ]
+                            mf_count = relevant_alerts['device_name'].nunique()
+                        else:
+                            mf_count = 0
                     
                     # Add mf_count to the record
                     record["mf_count"] = str(mf_count)
@@ -284,14 +293,14 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                         interlocks.append(fault_item["interlock_name"])
                 
                 if interlocks:
-                    in_clause = ", ".join(f"'{item}'" for item in interlocks)
-                    query = (f"SELECT COUNT(DISTINCT device_name) as count FROM alerts "
-                           f"WHERE interlock_name IN ({in_clause}) AND alert_status='Open' "
-                           f"AND sap_id='{sap_id}'")
-                    
-                    resp = await execute_query(query=query)
-                    if resp and len(resp) > 0:
-                        mfm_mf_count = resp[0]['count'] or 0
+                    if not alerts_df.empty:
+                        relevant_alerts = alerts_df[
+                            (alerts_df['sap_id'].astype(str) == sap_id) & 
+                            (alerts_df['interlock_name'].isin(interlocks))
+                        ]
+                        mfm_mf_count = relevant_alerts['device_name'].nunique()
+                    else:
+                        mfm_mf_count = 0
                 
                 # Add mf_count to the MFM record
                 mfm_record["mf_count"] = str(mfm_mf_count)
