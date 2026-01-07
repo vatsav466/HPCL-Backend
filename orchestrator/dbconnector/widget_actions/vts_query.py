@@ -619,7 +619,7 @@ vts_query = {
     
     "accept_and_block":"""
                 SELECT
-                    a.id AS alert_id, a.vehicle_number,
+                    a.id AS alert_id, a.vehicle_number,a.unique_id,
                     n.alert_id, n.notices
                 FROM alerts a, notices_vts n
                 WHERE a.alert_section = 'VTS' AND a.alert_status = 'Close'

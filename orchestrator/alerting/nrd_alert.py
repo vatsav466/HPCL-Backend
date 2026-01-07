@@ -5,6 +5,7 @@ import utilities.interlock_mapping
 import utilities.helpers as helpers
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
+import orchestrator.analytics.nrd_analysis as nrd_analysis
 
 logger = urdhva_base.logger.Logger.getInstance("nrd_alert_processing")
 
@@ -57,7 +58,7 @@ class NRDAlertManager(alert_factory.AlertFactory):
                                       "violation_type": "No VTS No Load",
                                       "vehicle_number": alert_data['vehicle_number']
                                     })
-            interlock_details["transporter_code"] = (trucK_master_data or {}).get("transporter_code", "")
+            interlock_details["transporter_code"] = await nrd_analysis.get_transporter_code(alert_data['vehicle_number'])
             interlock_details['equipment_name'] = "No VTS No Load"
             interlock_details['vehicle_blocked_start_date'] = (urdhva_base.utilities.get_present_time()).isoformat()
             interlock_details['vehicle_blocked_end_date'] = urdhva_base.utilities.get_present_time() + datetime.timedelta(days=1826)

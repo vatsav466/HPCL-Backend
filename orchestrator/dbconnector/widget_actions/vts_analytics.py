@@ -3592,6 +3592,15 @@ class VTSAnalyticsActions:
             else:
                 base_query = f'SELECT * FROM public."{table_name}"'
 
+            access_filters = [
+                dashboard_studio_model.WidgetFiltersCreate(**rec)
+                for rec in await hpcl_ceg_model.LpgOperationsSummary
+                .get_clause_conditions(formated=True)
+            ]
+            base_query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                base_query, access_filters, drill_state
+            )
+
             # Build and apply conditions
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
 
@@ -3797,14 +3806,15 @@ class VTSAnalyticsActions:
             both_df = ( merged_df.join(both_ids, on="alert_id", how="inner").unique(subset=["alert_id"]))
             
             system_only_df, both_df = (
-                    system_only_df.drop("file_path", strict=False) , both_df.drop("file_path", strict=False))
+                    system_only_df.drop("file_path","report_type", strict=False) , both_df.drop("file_path","report_type", strict=False))
             
-
             if payload.get("download") == "true":
-                return await download_streaming_data(system_only_df,filename='system_only') 
-            
-            if payload.get("download") == "system_and_user_generated":
-                return await download_streaming_data(both_df,filename='system_and_user_generated')   
+                s = system_only_df.with_columns(pl.lit("no").alias("Show_Cause_Notice"))
+                b = both_df.with_columns(pl.lit("yes").alias("Show_Cause_Notice"))
+                combined = pl.concat([s, b], how="vertical")
+                
+                return await download_streaming_data(combined, filename='Show_Cause_Notice')
+                
                         
             return {"status": True, "message": "success","data":{ "system_only" :system_only_df.height,"system_and_user":both_ids.height}}
         except Exception as e:
