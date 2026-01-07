@@ -3248,18 +3248,16 @@ class VTSAnalyticsActions:
                 query, access_filters, drill_state
             )
             clause = "WHERE" if "where" not in query.lower() else "AND"
-
-            if daterange:
-                query += f" {clause} createdat BETWEEN {daterange}"
-            else:
-                query += f" {clause} CAST(createdat AS DATE) = '{current_date}'"
+            query += (
+                f" {clause} createdat BETWEEN {daterange}" if daterange
+                else f" {clause} CAST(createdat AS DATE) = '{current_date}'"
+            )
 
             print("FINAL SQL QUERY (emlock open data):\n", query)
 
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(
                 query=query, limit=0
             )
-
             print("Raw DB response keys:", resp.keys())
             print("Total rows fetched from DB:", len(resp.get("data", [])))
 
@@ -3271,12 +3269,75 @@ class VTSAnalyticsActions:
                 return {"status": True, "message": "No data found", "data": []}
             
             df = await filter_data(df, _filters)
-            
             # Keep first occurrence of duplicates based on key columns
             dedup_cols = [col for col in ["invoice_number", "trucknumber", "zone", "location_name"] if col in df.columns]
             if dedup_cols:
                 df = df.drop_duplicates(subset=dedup_cols, keep='first')
                 print(f"After deduplication: {len(df)} rows")
+            
+            # Helper function to get completed invoices
+            async def get_completed_invoices(invoice_df):
+                invoice_list = invoice_df["invoice_number"].dropna().astype(str).unique().tolist()
+                if not invoice_list:
+                    return []
+                
+                invoices_str = "', '".join(invoice_list)
+                completed_query = f"""
+                    SELECT DISTINCT invoice_no
+                    FROM vts_completed_trip
+                    WHERE invoice_no IN ('{invoices_str}')
+                """
+                completed_df = await VTSAnalyticsActions.execute_query(
+                    completed_query, 
+                    engine='polars' if payload.get("download", "").lower() == "true" else None
+                )
+                
+                if payload.get("download", "").lower() == "true":
+                    return completed_df["invoice_no"].to_list() if not completed_df.is_empty() else []
+                else:
+                    return completed_df["invoice_no"].astype(str).tolist() if not completed_df.empty else []
+            
+            # Helper function to apply status filter
+            def apply_status_filter(data_df, status, completed_list):
+                if not status:
+                    return data_df
+                
+                status = status.lower().strip()
+                if status == "close":
+                    status = "closed"
+                
+                invoice_col = data_df["invoice_number"].astype(str)
+                
+                if status == "live":
+                    return data_df[~invoice_col.isin(completed_list)]
+                elif status == "closed":
+                    return data_df[invoice_col.isin(completed_list)]
+                
+                return data_df
+            
+            # Helper function to add swipe columns
+            def add_swipe_columns(data_df):
+                data_df["has_swipeoutl1"] = (
+                    data_df["swipeoutl1"].fillna("").astype(str).str.lower().eq("false")
+                )
+                data_df["has_swipeoutl2"] = (
+                    data_df["swipeoutl2"].fillna("").astype(str).str.lower().eq("false")
+                )
+                return data_df
+            
+            # Handle download mode
+            if payload.get("download", "").lower() == "true":
+                print("Download mode enabled. Preparing data for Excel export.")
+                
+                completed_invoices = await get_completed_invoices(df)
+                df = apply_status_filter(df, payload.get("status"), completed_invoices)
+                df = add_swipe_columns(df)
+                
+                download_df = df[df["has_swipeoutl1"] | df["has_swipeoutl2"]].copy()
+                download_df = download_df.drop(columns=['has_swipeoutl1', 'has_swipeoutl2'], errors='ignore')
+                
+                pl_df = pl.from_pandas(download_df)
+                return await download_streaming_data(pl_df, filename='emlock_open_data')
 
             if payload.get("search") == "true":
                 print("Search mode enabled. Returning raw filtered data.")
@@ -3289,148 +3350,50 @@ class VTSAnalyticsActions:
             if payload.get("table") == "true":
                 print("Table mode enabled. Returning table data with drill down filters.")
                 
-                # Get completed invoices for status filtering
-                invoice_list = df["invoice_number"].dropna().astype(str).unique().tolist()
-                completed_invoice_list = []
-                
-                if invoice_list:
-                    invoices_str = "', '".join(invoice_list)
-                    completed_query = f"""
-                        SELECT DISTINCT invoice_no
-                        FROM vts_completed_trip
-                        WHERE invoice_no IN ('{invoices_str}')
-                    """
-                    completed_df = await VTSAnalyticsActions.execute_query(completed_query)
-                    if not completed_df.empty:
-                        completed_invoice_list = completed_df["invoice_no"].astype(str).tolist()
-                
-                status_filter = payload.get("status")
-                if status_filter:
-                    status_filter = status_filter.lower().strip()
-                    if status_filter == "close":
-                        status_filter = "closed"
-                
-                if status_filter == "live":
-                    df = df[~df["invoice_number"].astype(str).isin(completed_invoice_list)]
-                elif status_filter == "closed":
-                    df = df[df["invoice_number"].astype(str).isin(completed_invoice_list)]
-                
-                df["has_swipeoutl1"] = (
-                    df["swipeoutl1"]
-                    .fillna("")
-                    .astype(str)
-                    .str.lower()
-                    .eq("false")
-                )
-                df["has_swipeoutl2"] = (
-                    df["swipeoutl2"]
-                    .fillna("")
-                    .astype(str)
-                    .str.lower()
-                    .eq("false")
-                )
-                
+                completed_invoices = await get_completed_invoices(df)
+                df = apply_status_filter(df, payload.get("status"), completed_invoices)
+                df = add_swipe_columns(df)
                 df = df[df["has_swipeoutl1"] | df["has_swipeoutl2"]]
+                
                 df_clean = df.replace([np.nan, np.inf, -np.inf], None)
+                
+                status_msg = payload.get("status", "").lower().strip()
+                if status_msg == "close":
+                    status_msg = "closed"
 
                 return {
                     "status": True,
-                    "message": f"success - {status_filter} data",
+                    "message": f"success - {status_msg} data" if status_msg else "success",
                     "data": df_clean.to_dict(orient="records"),
                     "total_records": len(df_clean)
                 }
             
-            invoice_list = df["invoice_number"].dropna().astype(str).unique().tolist()
-            completed_invoice_list = []
+            # Default aggregation mode
+            df = add_swipe_columns(df)
             
-            if invoice_list:
-                invoices_str = "', '".join(invoice_list)
-                completed_query = f"""
-                    SELECT DISTINCT invoice_no
-                    FROM vts_completed_trip
-                    WHERE invoice_no IN ('{invoices_str}')
-                """
-                completed_df = await VTSAnalyticsActions.execute_query(completed_query)
-                if not completed_df.empty:
-                    completed_invoice_list = completed_df["invoice_no"].astype(str).tolist()
-            status_filter = payload.get("status")
-            
-            if status_filter == "live":
-                df = df[~df["invoice_number"].astype(str).isin(completed_invoice_list)]
-            elif status_filter == "closed":
-                df = df[df["invoice_number"].astype(str).isin(completed_invoice_list)]
-            df["has_swipeoutl1"] = (
-                df["swipeoutl1"]
-                .fillna("")
-                .astype(str)
-                .str.lower()
-                .eq("false")
-            )
-            df["has_swipeoutl2"] = (
-                df["swipeoutl2"]
-                .fillna("")
-                .astype(str)
-                .str.lower()
-                .eq("false")
-            )
-
-            base_group_cols = [
-                "zone", "region", "location_name", "invoice_number", "trucknumber"
-            ]
+            # Group by base columns
+            base_group_cols = ["zone", "region", "location_name", "invoice_number", "trucknumber"]
             available_cols = [col for col in base_group_cols if col in df.columns]
             print("Grouping columns used:", available_cols)
 
-            base = (
-                df.groupby(available_cols, as_index=False)
-                .agg(
-                    has_swipeoutl1=("has_swipeoutl1", "any"),
-                    has_swipeoutl2=("has_swipeoutl2", "any"),
-                )
+            base = df.groupby(available_cols, as_index=False).agg(
+                has_swipeoutl1=("has_swipeoutl1", "any"),
+                has_swipeoutl2=("has_swipeoutl2", "any"),
             )
 
-            invoice_list = (
-                base["invoice_number"].dropna().astype(str).unique().tolist()
-            )
-            print("Invoice list count for status check:", len(invoice_list))
-
-            completed_invoice_list = []
-            if invoice_list:
-                invoices_str = "', '".join(invoice_list)
-                completed_query = f"""
-                    SELECT DISTINCT invoice_no
-                    FROM vts_completed_trip
-                    WHERE invoice_no IN ('{invoices_str}')
-                """
-
-                completed_df = await VTSAnalyticsActions.execute_query(
-                    completed_query
-                )
-                print("Completed trip rows fetched:", completed_df.shape[0])
-
-                if not completed_df.empty:
-                    completed_invoice_list = (
-                        completed_df["invoice_no"].astype(str).tolist()
-                    )
-
+            # Get completed invoices and apply status filter
+            completed_invoices = await get_completed_invoices(base)
+            print("Invoice list count for status check:", len(base["invoice_number"].dropna().unique()))
+            print("Completed trip rows fetched:", len(completed_invoices))
+            
+            base = apply_status_filter(base, payload.get("status"), completed_invoices)
+            
             status_filter = payload.get("status")
-
-            if status_filter == "live":
-                base = base[
-                    ~base["invoice_number"].astype(str).isin(
-                        completed_invoice_list
-                    )
-                ]
-            elif status_filter == "closed":
-                base = base[
-                    base["invoice_number"].astype(str).isin(
-                        completed_invoice_list
-                    )
-                ]
             if base.empty:
                 print("No data after applying status filter.")
                 return {
                     "status": True,
-                    "message": f"No {status_filter} data found",
+                    "message": f"No {status_filter} data found" if status_filter else "No data found",
                     "data": [],
                     "swipe_out_l1_count": 0,
                     "swipe_out_l2_count": 0,
@@ -3438,69 +3401,55 @@ class VTSAnalyticsActions:
                     "distinct_vehicle_count": 0,
                 }
             
+            # Calculate totals
             total_swipe_l1 = base[base["has_swipeoutl1"]]["invoice_number"].nunique()
             total_swipe_l2 = base[base["has_swipeoutl2"]]["invoice_number"].nunique()
 
-            filtered_base = base[
-                base["has_swipeoutl1"] | base["has_swipeoutl2"]
-            ]
-
+            filtered_base = base[base["has_swipeoutl1"] | base["has_swipeoutl2"]]
             total_invoice = filtered_base["invoice_number"].nunique()
             total_vehicle = filtered_base["trucknumber"].nunique()
 
+            # Determine grouping keys based on filters
             group_by_keys = ["zone"]
-
+            
             if filters:
                 filter_keys = [str(rec.key).lower() for rec in filters]
-
-                if "zone" in filter_keys and "region" not in filter_keys:
-                    group_by_keys = ["region"]
-                elif "zone" in filter_keys and "region" in filter_keys and "location_name" not in filter_keys:
-                    group_by_keys = ["location_name"]
-                elif (
-                    "zone" in filter_keys and
-                    "region" in filter_keys and
-                    "location_name" in filter_keys and
-                    "trucknumber" not in filter_keys
-                ):
-                    group_by_keys = ["trucknumber"]
-                elif (
-                    "zone" in filter_keys and
-                    "region" in filter_keys and
-                    "location_name" in filter_keys and
-                    "trucknumber" in filter_keys
-                ):
-                    group_by_keys = ["invoice_number"]
+                
+                if "zone" in filter_keys:
+                    if "region" not in filter_keys:
+                        group_by_keys = ["region"]
+                    elif "location_name" not in filter_keys:
+                        group_by_keys = ["location_name"]
+                    elif "trucknumber" not in filter_keys:
+                        group_by_keys = ["trucknumber"]
+                    else:
+                        group_by_keys = ["invoice_number"]
 
             group_by_keys = [col for col in group_by_keys if col in base.columns]
             print("Final group_by keys:", group_by_keys)
 
-            grouped_df = (
-                base.groupby(group_by_keys, as_index=False)
-                .agg(
-                    swipeoutl1_count=(
-                        "invoice_number",
-                        lambda x: x[base.loc[x.index, "has_swipeoutl1"]].nunique()
-                    ),
-                    swipeoutl2_count=(
-                        "invoice_number",
-                        lambda x: x[base.loc[x.index, "has_swipeoutl2"]].nunique()
-                    ),
-                    distinct_invoice_count=(
-                        "invoice_number",
-                        lambda x: x[
-                            base.loc[x.index, "has_swipeoutl1"] |
-                            base.loc[x.index, "has_swipeoutl2"]
-                        ].nunique()
-                    ),
-                    distinct_vehicle_count=(
-                        "trucknumber",
-                        lambda x: x[
-                            base.loc[x.index, "has_swipeoutl1"] |
-                            base.loc[x.index, "has_swipeoutl2"]
-                        ].nunique()
-                    ),
-                )
+            # Aggregate data
+            grouped_df = base.groupby(group_by_keys, as_index=False).agg(
+                swipeoutl1_count=(
+                    "invoice_number",
+                    lambda x: x[base.loc[x.index, "has_swipeoutl1"]].nunique()
+                ),
+                swipeoutl2_count=(
+                    "invoice_number",
+                    lambda x: x[base.loc[x.index, "has_swipeoutl2"]].nunique()
+                ),
+                distinct_invoice_count=(
+                    "invoice_number",
+                    lambda x: x[
+                        base.loc[x.index, "has_swipeoutl1"] | base.loc[x.index, "has_swipeoutl2"]
+                    ].nunique()
+                ),
+                distinct_vehicle_count=(
+                    "trucknumber",
+                    lambda x: x[
+                        base.loc[x.index, "has_swipeoutl1"] | base.loc[x.index, "has_swipeoutl2"]
+                    ].nunique()
+                ),
             )
 
             grouped_df = grouped_df.fillna(0)
