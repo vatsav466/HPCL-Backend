@@ -163,6 +163,7 @@ class AlertActionType(str, enum.Enum):
     AcceptViolation = 'AcceptViolation'
     BlockFailed = 'BlockFailed'
     UnblockFailed = 'UnblockFailed'
+    OngoingTrip = 'OngoingTrip'
 
 
 
