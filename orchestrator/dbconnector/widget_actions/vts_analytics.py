@@ -3592,6 +3592,15 @@ class VTSAnalyticsActions:
             else:
                 base_query = f'SELECT * FROM public."{table_name}"'
 
+            access_filters = [
+                dashboard_studio_model.WidgetFiltersCreate(**rec)
+                for rec in await hpcl_ceg_model.LpgOperationsSummary
+                .get_clause_conditions(formated=True)
+            ]
+            base_query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                base_query, access_filters, drill_state
+            )
+
             # Build and apply conditions
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
 
