@@ -4,6 +4,7 @@ import hpcl_ceg_model
 import requests
 import orchestrator.alerting.alert_manager as alert_manager
 from datetime import datetime, timedelta
+import pytz
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -44,8 +45,9 @@ class CheckCompletedTrip:
             logger.info(f"VTS truck status response: {response_data}")
 
             # Only when trip is still loaded
-            if response_data.get("action_typeTripStatus", "").lower() == "loaded":
+            if response_data.get("TripStatus", "").lower() == "loaded":
                 now_utc = urdhva_base.utilities.get_present_time(utc=True)
+                ist_time = now_utc.astimezone(pytz.timezone("Asia/Kolkata"))
                 last_ongoing = get_last_ongoing_trip(alert_history)
                 if last_ongoing and last_ongoing.get("processed_time"):
                     pt = last_ongoing["processed_time"]
@@ -58,9 +60,8 @@ class CheckCompletedTrip:
                         return True, {"tripCompleted": False}
 
                 # Update alert history
-                alert_data["process_time"] = now_utc
                 alert_data["action_msg"] = (
-                    f"Trip still ongoing to block the truck. Last checked at {now_utc.isoformat()} UTC"
+                    f"Block cannot be initiated because the trip is currently live. Last checked at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
                 )
                 alert_data["action_type"] = "OngoingTrip"
 
