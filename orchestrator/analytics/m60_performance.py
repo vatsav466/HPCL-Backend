@@ -615,10 +615,15 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         todays_date = str(datetime.date.today())
         if todays_date.split('-')[0] == fiscal_year_ui.split('-')[0]:
             if "YTD" in [x['key'].strip('"') for x in filters]:
-                print("YTD is present")
                 start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
                                                                                              todays_date,
                                                                                              same_year=True, key='YTD')
+            elif todays_date.split('-')[0] == fiscal_year_ui.split('-')[-1]:
+                start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
+                                                                                                 todays_date,
+                                                                                                 same_year=True,
+                                                                                                 key='YTD')
+            
             else:
                 end_date = fiscal_year.FiscalYear.current().fiscal_year_end_date
                 start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
@@ -787,11 +792,18 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                                                  todays_date,
                                                                                                  same_year=True,
                                                                                                  key='YTD')
+                elif todays_date.split('-')[0] == fiscal_year_ui.split('-')[-1]:
+                    start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
+                                                                                                 todays_date,
+                                                                                                 same_year=True,
+                                                                                                 key='YTD')
+                
                 else:
                     start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
                                                                                                  todays_date,
                                                                                                  same_year=False,
-                                                                                                 key='YTD')
+                                                                                                   key='YTD')
+
         elif condition['key'].strip('"') == "FYC":
             condition = [x for x in filters if x['key'] == '"DATE"']
             # Calculating start and end dates for YTD for both actual and history
@@ -817,6 +829,12 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                             "data": {'data': {'ACTUAL_TMT_SALES': {}, 'ACTUAL_HISTORY_TMT_SALES': {}, 'cumulative': {},
                                               'SBU_Name': {}}, 'level': {}, 'sales_unit': 'TMT'}}
                 if todays_date.split('-')[0] == fiscal_year_ui.split('-')[0]:
+                    start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
+                                                                                                 todays_date,
+                                                                                                 same_year=True,
+                                                                                                 key='YTDPM')
+
+                elif todays_date.split('-')[0] == fiscal_year_ui.split('-')[-1]:
                     start_date, end_date, start_date_history, end_date_history = get_fiscal_year(fiscal_year_ui,
                                                                                                  todays_date,
                                                                                                  same_year=True,
