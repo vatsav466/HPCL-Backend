@@ -709,24 +709,6 @@ async def download_streaming_data(df: pl.DataFrame, filename='violations'):
         cs.datetime(time_zone="*").dt.replace_time_zone(None)
     )
 
-    # df = df.select(
-    #     [s.name for s in df if s.null_count() < df.height]
-    # )
-    # mask_df = df.select(
-    #     [
-    #         pl.col(c)
-    #         .cast(pl.String)
-    #         .fill_null("")  # null -> ""
-    #         .str.strip_chars()  # strip whitespace
-    #         .eq("")  # non-empty?
-    #         .any()  # any row is non-empty?
-    #         .alias(c)
-    #         for c in df.columns
-    #     ]
-    # )
-    # cols_to_keep = [c for c in df.columns if mask_df[c][0]]
-    # df = df.select(cols_to_keep)
-
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"{filename}_{timestamp}.xlsx"
 
@@ -967,13 +949,17 @@ class VTSAnalyticsActions:
             return conditions
             
         if alert_type.lower() == "blocked":
-            conditions.append("vehicle_unblocked_date is null")
+            conditions.append("alert_status = 'Open' and vehicle_unblocked_date is null") 
+        if alert_type.lower() == "acceptance_close":
+            conditions.append("alert_status = 'Close' and vehicle_unblocked_date is null")
         elif alert_type.lower() == "auto_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = false AND vehicle_unblocked_date is not null")
         elif alert_type.lower() == "manual_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = true and vehicle_unblocked_date is not null")
-        # 'all_alerts' -> no extra conditions
-        
+        else:
+        # all_alerts or unknown value → no extra condition
+           pass
+     
         return conditions
 
     @staticmethod
@@ -1025,14 +1011,10 @@ class VTSAnalyticsActions:
         try:
             # Get base query           
             card_query = vts_query.vts_query.get(drill_state.split(",")[0])
-            print("Base Query:", card_query)
 
             # Build and apply conditions (pass the query for key transformation)
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, card_query)
             final_query = VTSAnalyticsActions.apply_conditions_to_query(card_query, conditions)
-            
-            print("-" * 50)
-            print("Final card_query ---->", final_query)
 
             # Execute query
             df = await VTSAnalyticsActions.execute_query(final_query, engine='dict')
@@ -1041,6 +1023,72 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("Exception in BigNumber Chart:", str(e))
             print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+    
+    @staticmethod
+    async def vts_dashboard_card_download(filters, cross_filters, drill_state, payload):
+        """
+            Download VTS dashboard cards as an Excel file.
+
+            This function retrieves the required data from the database and generates
+            an Excel file containing the selected columns for download.
+
+            :param filters: Filters applied based on location, SAP ID, and BU for data filtering.
+            :param cross_filters: Additional filters, primarily used for date range selection.
+            :param drill_state: Used to map and select the appropriate query
+                                from the `vts_query` file in the same path.
+            :param payload: Additional parameters passed from the frontend
+                            for applying extra conditional checks if required.
+            :return: Excel file response as a downloadable stream.
+            :rtype: dict[str, Any] | StreamingResponse
+        """
+
+        try:
+            # 1. Build and execute query
+            download_card_query = vts_query.vts_query.get(drill_state.split(",")[0])
+            conditions = VTSAnalyticsActions.build_filter_conditions(
+                filters, cross_filters, download_card_query
+            )
+            final_query = VTSAnalyticsActions.apply_conditions_to_query(
+                download_card_query, conditions
+            )
+
+            df = await VTSAnalyticsActions.execute_query(final_query, engine="polars")
+
+            # 2. Extract creator_id and approver_id from alert_history (JSONB)
+            df = df.with_columns([
+                    # Creator ID → first employee_id where action_type == Justification
+                    pl.col("alert_history").list.eval(pl.element().struct.field("employee_id").filter(
+                            pl.element().struct.field("action_type") == "Justification")
+                    ).list.first().alias("creator_id"),
+
+                    # Approver ID → first employee_id where action_type == Approved
+                    pl.col("alert_history").list.eval(pl.element().struct.field("employee_id").filter(
+                            pl.element().struct.field("action_type") == "Approved")
+                    ).list.first().alias("approver_id"),
+                ])
+
+
+            # 3. Select required columns for Excel
+            df = (df.select(["zone", "sap_id", "location_name",  "vehicle_number", "violation_type",
+                            "unique_id", "alert_status", "device_name", "severity", "created_at", 
+                            "creator_id", "approver_id", "vehicle_unblocked_date", "vehicle_blocked_end_date" 
+                ])
+                .rename({
+                    "unique_id": "Alert ID",
+                    "sap_id" : "Location ID",
+                    "vehicle_number" : "Truck Number",
+                    "device_name" : "Instance ID",
+                    "creator_id": "Creator ID",
+                    "approver_id": "Approver ID",
+                })
+            )
+            # 4. Return Excel download
+            return await download_streaming_data(df, filename="itdgAlerts")
+        
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            print("error",str(e))
             return {"status": False, "message": str(e), "data": []}
 
     @staticmethod
@@ -1400,7 +1448,7 @@ class VTSAnalyticsActions:
 
             # Step 2: Define violation columns
             violation_cols = [
-                "route_deviation_count",
+                "route_deviation_count_orig",
                 "stoppage_violations_count",
                 "device_tamper_count",
                 "speed_violation_count",
@@ -1633,7 +1681,7 @@ class VTSAnalyticsActions:
                         zone,
                         DATE(vts_end_datetime) AS created_at,
                         stoppage_violations_count,
-                        route_deviation_count,
+                        route_deviation_count_orig,
                         device_tamper_count,
                         main_supply_removal_count,
                         night_driving_count,
@@ -1643,7 +1691,7 @@ class VTSAnalyticsActions:
                     WHERE 
                         (
                             stoppage_violations_count > 0 OR
-                            route_deviation_count > 0 OR
+                            route_deviation_count_orig > 0 OR
                             device_tamper_count > 0 OR
                             main_supply_removal_count > 0 OR
                             night_driving_count > 0 OR
@@ -1675,7 +1723,7 @@ class VTSAnalyticsActions:
                 # Violation columns
                 violation_cols = [
                     "stoppage_violations_count",
-                    "route_deviation_count",
+                    "route_deviation_count_orig",
                     "device_tamper_count",
                     "main_supply_removal_count",
                     "night_driving_count",
@@ -2356,12 +2404,10 @@ class VTSAnalyticsActions:
             
             alerts_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
 
-            print(alerts_query)
-
             # Execute queries
-            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
+            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query, engine='polars')
             
-            if alerts_df.empty:
+            if alerts_df.is_empty():
                 return {"status": True, "message": "success", "data": [], "percentages": []}
 
             # Get group by column
@@ -2372,39 +2418,39 @@ class VTSAnalyticsActions:
             if 'violation_type' not in alerts_df.columns:
                 return {"status": False, "message": "violation_type column not found", "data": [], "percentages": []}
             
-            alerts_df = alerts_df[
-                  alerts_df[group_by_column].notnull() & 
-                 (alerts_df[group_by_column] != "")
-                ]
+            alerts_df = alerts_df.filter((pl.col(group_by_column).is_not_null()) & (pl.col(group_by_column) != ""))
+          
+            if alerts_df.is_empty():
+                return {"status": True, "message": "success", "data": [], "percentages": []}
             
-            if alerts_df.empty:
-                 return {"status": True, "message": "success", "data": [], "percentages": []}
+            grouped = (alerts_df.group_by([group_by_column, "violation_type"]).agg(pl.count().alias("count")))
             
-            grouped = alerts_df.groupby([group_by_column, 'violation_type']).size().reset_index(name='count')
-            
-            if grouped.empty:
+            if grouped.is_empty():
                  return {"status": True, "message": "success", "data": [], "percentages": []}
         
             # Prepare response data
             data_response = []
-            for group_value in grouped[group_by_column].unique():
-                group_data = grouped[grouped[group_by_column] == group_value]
+            for group_value in grouped[group_by_column].unique().to_list():
+                group_data = grouped.filter(pl.col(group_by_column) == group_value)
                 violations_list = [
                     {"violation_type": row['violation_type'], "count": int(row['count'])}
-                    for _, row in group_data.iterrows()
+                    for row in group_data.to_dicts()
                 ]
                 
                 if violations_list:
                     data_response.append({group_value: violations_list})
 
             # Calculate percentages
-            violation_totals = grouped.groupby('violation_type')['count'].sum().to_dict()
-            grand_total = sum(violation_totals.values())
+            violation_totals = (grouped.group_by('violation_type').agg(pl.sum("count")))
+            grand_total = violation_totals["count"].sum()
             percentages = []
             if grand_total > 0:
                 percentages = [
-                    {"violation_type": vtype, "percentage": round((count / grand_total) * 100, 2)}
-                    for vtype, count in violation_totals.items()
+                    {
+                    "violation_type": row["violation_type"],
+                    "percentage": round((row["count"] / grand_total) * 100, 2)
+                    }
+                     for row in violation_totals.iter_rows(named=True)
                 ]
 
             return {
@@ -2436,38 +2482,34 @@ class VTSAnalyticsActions:
             alerts_query = base_query.format(period_expr=period_expr)
             alerts_query = VTSAnalyticsActions.apply_conditions_to_query(alerts_query, conditions)
 
-            print(alerts_query)
-
             # Execute queries
-            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
+            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query,engine='polars')
             
-            if alerts_df.empty:
+            if alerts_df.height == 0:
                 return {"status": True, "message": "success", "data": []}
 
-            if 'violation_type' not in alerts_df.columns or 'period' not in alerts_df.columns:
+            if not {"violation_type", "period"}.issubset(alerts_df.columns):
                  return {"status": False, "message": "Required columns not found", "data": []}
             
-            alerts_df = alerts_df[
-                (alerts_df["period"].notna()) &                      
-                (alerts_df["period"].astype(str).str.strip() != "")
-            ]
-
-            if alerts_df.empty:
-                return {"status": True, "message": "success", "data": []}
+            alerts_df = alerts_df.filter(pl.col("period").is_not_null() & (pl.col("period").cast(pl.Utf8).str.strip_chars() != ""))
             
-            grouped = alerts_df.groupby(['period', 'violation_type']).size().reset_index(name='count')
+            if alerts_df.height == 0:
+                 return {"status": True, "message": "success", "data": []}
             
-            if grouped.empty:
+            
+            grouped = (alerts_df.group_by(['period', 'violation_type']).agg(pl.len().alias("count")))
+            
+            if grouped.height == 0:
                 return {"status": True, "message": "success", "data": []}
             
             result = []
-            for period in grouped['period'].unique():
-                period_data = grouped[grouped['period'] == period]
+            for period in grouped.select('period').unique().to_series():
+                period_data = grouped.filter(pl.col('period') == period)
                 formatted_date = VTSAnalyticsActions.format_date(period, drill_state)
                 
                 values = [
                     {"violation_type": row['violation_type'], "count": int(row['count'])}
-                    for _, row in period_data.iterrows()
+                    for row in period_data.iter_rows(named=True)
                 ]
                 
                 if values:
@@ -3206,18 +3248,16 @@ class VTSAnalyticsActions:
                 query, access_filters, drill_state
             )
             clause = "WHERE" if "where" not in query.lower() else "AND"
-
-            if daterange:
-                query += f" {clause} createdat BETWEEN {daterange}"
-            else:
-                query += f" {clause} CAST(createdat AS DATE) = '{current_date}'"
+            query += (
+                f" {clause} createdat BETWEEN {daterange}" if daterange
+                else f" {clause} CAST(createdat AS DATE) = '{current_date}'"
+            )
 
             print("FINAL SQL QUERY (emlock open data):\n", query)
 
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(
                 query=query, limit=0
             )
-
             print("Raw DB response keys:", resp.keys())
             print("Total rows fetched from DB:", len(resp.get("data", [])))
 
@@ -3229,12 +3269,75 @@ class VTSAnalyticsActions:
                 return {"status": True, "message": "No data found", "data": []}
             
             df = await filter_data(df, _filters)
-            
             # Keep first occurrence of duplicates based on key columns
             dedup_cols = [col for col in ["invoice_number", "trucknumber", "zone", "location_name"] if col in df.columns]
             if dedup_cols:
                 df = df.drop_duplicates(subset=dedup_cols, keep='first')
                 print(f"After deduplication: {len(df)} rows")
+            
+            # Helper function to get completed invoices
+            async def get_completed_invoices(invoice_df):
+                invoice_list = invoice_df["invoice_number"].dropna().astype(str).unique().tolist()
+                if not invoice_list:
+                    return []
+                
+                invoices_str = "', '".join(invoice_list)
+                completed_query = f"""
+                    SELECT DISTINCT invoice_no
+                    FROM vts_completed_trip
+                    WHERE invoice_no IN ('{invoices_str}')
+                """
+                completed_df = await VTSAnalyticsActions.execute_query(
+                    completed_query, 
+                    engine='polars' if payload.get("download", "").lower() == "true" else None
+                )
+                
+                if payload.get("download", "").lower() == "true":
+                    return completed_df["invoice_no"].to_list() if not completed_df.is_empty() else []
+                else:
+                    return completed_df["invoice_no"].astype(str).tolist() if not completed_df.empty else []
+            
+            # Helper function to apply status filter
+            def apply_status_filter(data_df, status, completed_list):
+                if not status:
+                    return data_df
+                
+                status = status.lower().strip()
+                if status == "close":
+                    status = "closed"
+                
+                invoice_col = data_df["invoice_number"].astype(str)
+                
+                if status == "live":
+                    return data_df[~invoice_col.isin(completed_list)]
+                elif status == "closed":
+                    return data_df[invoice_col.isin(completed_list)]
+                
+                return data_df
+            
+            # Helper function to add swipe columns
+            def add_swipe_columns(data_df):
+                data_df["has_swipeoutl1"] = (
+                    data_df["swipeoutl1"].fillna("").astype(str).str.lower().eq("false")
+                )
+                data_df["has_swipeoutl2"] = (
+                    data_df["swipeoutl2"].fillna("").astype(str).str.lower().eq("false")
+                )
+                return data_df
+            
+            # Handle download mode
+            if payload.get("download", "").lower() == "true":
+                print("Download mode enabled. Preparing data for Excel export.")
+                
+                completed_invoices = await get_completed_invoices(df)
+                df = apply_status_filter(df, payload.get("status"), completed_invoices)
+                df = add_swipe_columns(df)
+                
+                download_df = df[df["has_swipeoutl1"] | df["has_swipeoutl2"]].copy()
+                download_df = download_df.drop(columns=['has_swipeoutl1', 'has_swipeoutl2'], errors='ignore')
+                
+                pl_df = pl.from_pandas(download_df)
+                return await download_streaming_data(pl_df, filename='emlock_open_data')
 
             if payload.get("search") == "true":
                 print("Search mode enabled. Returning raw filtered data.")
@@ -3247,148 +3350,50 @@ class VTSAnalyticsActions:
             if payload.get("table") == "true":
                 print("Table mode enabled. Returning table data with drill down filters.")
                 
-                # Get completed invoices for status filtering
-                invoice_list = df["invoice_number"].dropna().astype(str).unique().tolist()
-                completed_invoice_list = []
-                
-                if invoice_list:
-                    invoices_str = "', '".join(invoice_list)
-                    completed_query = f"""
-                        SELECT DISTINCT invoice_no
-                        FROM vts_completed_trip
-                        WHERE invoice_no IN ('{invoices_str}')
-                    """
-                    completed_df = await VTSAnalyticsActions.execute_query(completed_query)
-                    if not completed_df.empty:
-                        completed_invoice_list = completed_df["invoice_no"].astype(str).tolist()
-                
-                status_filter = payload.get("status")
-                if status_filter:
-                    status_filter = status_filter.lower().strip()
-                    if status_filter == "close":
-                        status_filter = "closed"
-                
-                if status_filter == "live":
-                    df = df[~df["invoice_number"].astype(str).isin(completed_invoice_list)]
-                elif status_filter == "closed":
-                    df = df[df["invoice_number"].astype(str).isin(completed_invoice_list)]
-                
-                df["has_swipeoutl1"] = (
-                    df["swipeoutl1"]
-                    .fillna("")
-                    .astype(str)
-                    .str.lower()
-                    .eq("false")
-                )
-                df["has_swipeoutl2"] = (
-                    df["swipeoutl2"]
-                    .fillna("")
-                    .astype(str)
-                    .str.lower()
-                    .eq("false")
-                )
-                
+                completed_invoices = await get_completed_invoices(df)
+                df = apply_status_filter(df, payload.get("status"), completed_invoices)
+                df = add_swipe_columns(df)
                 df = df[df["has_swipeoutl1"] | df["has_swipeoutl2"]]
+                
                 df_clean = df.replace([np.nan, np.inf, -np.inf], None)
+                
+                status_msg = payload.get("status", "").lower().strip()
+                if status_msg == "close":
+                    status_msg = "closed"
 
                 return {
                     "status": True,
-                    "message": f"success - {status_filter} data",
+                    "message": f"success - {status_msg} data" if status_msg else "success",
                     "data": df_clean.to_dict(orient="records"),
                     "total_records": len(df_clean)
                 }
             
-            invoice_list = df["invoice_number"].dropna().astype(str).unique().tolist()
-            completed_invoice_list = []
+            # Default aggregation mode
+            df = add_swipe_columns(df)
             
-            if invoice_list:
-                invoices_str = "', '".join(invoice_list)
-                completed_query = f"""
-                    SELECT DISTINCT invoice_no
-                    FROM vts_completed_trip
-                    WHERE invoice_no IN ('{invoices_str}')
-                """
-                completed_df = await VTSAnalyticsActions.execute_query(completed_query)
-                if not completed_df.empty:
-                    completed_invoice_list = completed_df["invoice_no"].astype(str).tolist()
-            status_filter = payload.get("status")
-            
-            if status_filter == "live":
-                df = df[~df["invoice_number"].astype(str).isin(completed_invoice_list)]
-            elif status_filter == "closed":
-                df = df[df["invoice_number"].astype(str).isin(completed_invoice_list)]
-            df["has_swipeoutl1"] = (
-                df["swipeoutl1"]
-                .fillna("")
-                .astype(str)
-                .str.lower()
-                .eq("false")
-            )
-            df["has_swipeoutl2"] = (
-                df["swipeoutl2"]
-                .fillna("")
-                .astype(str)
-                .str.lower()
-                .eq("false")
-            )
-
-            base_group_cols = [
-                "zone", "region", "location_name", "invoice_number", "trucknumber"
-            ]
+            # Group by base columns
+            base_group_cols = ["zone", "region", "location_name", "invoice_number", "trucknumber"]
             available_cols = [col for col in base_group_cols if col in df.columns]
             print("Grouping columns used:", available_cols)
 
-            base = (
-                df.groupby(available_cols, as_index=False)
-                .agg(
-                    has_swipeoutl1=("has_swipeoutl1", "any"),
-                    has_swipeoutl2=("has_swipeoutl2", "any"),
-                )
+            base = df.groupby(available_cols, as_index=False).agg(
+                has_swipeoutl1=("has_swipeoutl1", "any"),
+                has_swipeoutl2=("has_swipeoutl2", "any"),
             )
 
-            invoice_list = (
-                base["invoice_number"].dropna().astype(str).unique().tolist()
-            )
-            print("Invoice list count for status check:", len(invoice_list))
-
-            completed_invoice_list = []
-            if invoice_list:
-                invoices_str = "', '".join(invoice_list)
-                completed_query = f"""
-                    SELECT DISTINCT invoice_no
-                    FROM vts_completed_trip
-                    WHERE invoice_no IN ('{invoices_str}')
-                """
-
-                completed_df = await VTSAnalyticsActions.execute_query(
-                    completed_query
-                )
-                print("Completed trip rows fetched:", completed_df.shape[0])
-
-                if not completed_df.empty:
-                    completed_invoice_list = (
-                        completed_df["invoice_no"].astype(str).tolist()
-                    )
-
+            # Get completed invoices and apply status filter
+            completed_invoices = await get_completed_invoices(base)
+            print("Invoice list count for status check:", len(base["invoice_number"].dropna().unique()))
+            print("Completed trip rows fetched:", len(completed_invoices))
+            
+            base = apply_status_filter(base, payload.get("status"), completed_invoices)
+            
             status_filter = payload.get("status")
-
-            if status_filter == "live":
-                base = base[
-                    ~base["invoice_number"].astype(str).isin(
-                        completed_invoice_list
-                    )
-                ]
-            elif status_filter == "closed":
-                base = base[
-                    base["invoice_number"].astype(str).isin(
-                        completed_invoice_list
-                    )
-                ]
             if base.empty:
                 print("No data after applying status filter.")
                 return {
                     "status": True,
-                    "message": f"No {status_filter} data found",
+                    "message": f"No {status_filter} data found" if status_filter else "No data found",
                     "data": [],
                     "swipe_out_l1_count": 0,
                     "swipe_out_l2_count": 0,
@@ -3396,69 +3401,55 @@ class VTSAnalyticsActions:
                     "distinct_vehicle_count": 0,
                 }
             
+            # Calculate totals
             total_swipe_l1 = base[base["has_swipeoutl1"]]["invoice_number"].nunique()
             total_swipe_l2 = base[base["has_swipeoutl2"]]["invoice_number"].nunique()
 
-            filtered_base = base[
-                base["has_swipeoutl1"] | base["has_swipeoutl2"]
-            ]
-
+            filtered_base = base[base["has_swipeoutl1"] | base["has_swipeoutl2"]]
             total_invoice = filtered_base["invoice_number"].nunique()
             total_vehicle = filtered_base["trucknumber"].nunique()
 
+            # Determine grouping keys based on filters
             group_by_keys = ["zone"]
-
+            
             if filters:
                 filter_keys = [str(rec.key).lower() for rec in filters]
-
-                if "zone" in filter_keys and "region" not in filter_keys:
-                    group_by_keys = ["region"]
-                elif "zone" in filter_keys and "region" in filter_keys and "location_name" not in filter_keys:
-                    group_by_keys = ["location_name"]
-                elif (
-                    "zone" in filter_keys and
-                    "region" in filter_keys and
-                    "location_name" in filter_keys and
-                    "trucknumber" not in filter_keys
-                ):
-                    group_by_keys = ["trucknumber"]
-                elif (
-                    "zone" in filter_keys and
-                    "region" in filter_keys and
-                    "location_name" in filter_keys and
-                    "trucknumber" in filter_keys
-                ):
-                    group_by_keys = ["invoice_number"]
+                
+                if "zone" in filter_keys:
+                    if "region" not in filter_keys:
+                        group_by_keys = ["region"]
+                    elif "location_name" not in filter_keys:
+                        group_by_keys = ["location_name"]
+                    elif "trucknumber" not in filter_keys:
+                        group_by_keys = ["trucknumber"]
+                    else:
+                        group_by_keys = ["invoice_number"]
 
             group_by_keys = [col for col in group_by_keys if col in base.columns]
             print("Final group_by keys:", group_by_keys)
 
-            grouped_df = (
-                base.groupby(group_by_keys, as_index=False)
-                .agg(
-                    swipeoutl1_count=(
-                        "invoice_number",
-                        lambda x: x[base.loc[x.index, "has_swipeoutl1"]].nunique()
-                    ),
-                    swipeoutl2_count=(
-                        "invoice_number",
-                        lambda x: x[base.loc[x.index, "has_swipeoutl2"]].nunique()
-                    ),
-                    distinct_invoice_count=(
-                        "invoice_number",
-                        lambda x: x[
-                            base.loc[x.index, "has_swipeoutl1"] |
-                            base.loc[x.index, "has_swipeoutl2"]
-                        ].nunique()
-                    ),
-                    distinct_vehicle_count=(
-                        "trucknumber",
-                        lambda x: x[
-                            base.loc[x.index, "has_swipeoutl1"] |
-                            base.loc[x.index, "has_swipeoutl2"]
-                        ].nunique()
-                    ),
-                )
+            # Aggregate data
+            grouped_df = base.groupby(group_by_keys, as_index=False).agg(
+                swipeoutl1_count=(
+                    "invoice_number",
+                    lambda x: x[base.loc[x.index, "has_swipeoutl1"]].nunique()
+                ),
+                swipeoutl2_count=(
+                    "invoice_number",
+                    lambda x: x[base.loc[x.index, "has_swipeoutl2"]].nunique()
+                ),
+                distinct_invoice_count=(
+                    "invoice_number",
+                    lambda x: x[
+                        base.loc[x.index, "has_swipeoutl1"] | base.loc[x.index, "has_swipeoutl2"]
+                    ].nunique()
+                ),
+                distinct_vehicle_count=(
+                    "trucknumber",
+                    lambda x: x[
+                        base.loc[x.index, "has_swipeoutl1"] | base.loc[x.index, "has_swipeoutl2"]
+                    ].nunique()
+                ),
             )
 
             grouped_df = grouped_df.fillna(0)
@@ -3600,6 +3591,15 @@ class VTSAnalyticsActions:
                 base_query = f'SELECT {select_columns} FROM public."{table_name}"'
             else:
                 base_query = f'SELECT * FROM public."{table_name}"'
+
+            access_filters = [
+                dashboard_studio_model.WidgetFiltersCreate(**rec)
+                for rec in await hpcl_ceg_model.LpgOperationsSummary
+                .get_clause_conditions(formated=True)
+            ]
+            base_query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                base_query, access_filters, drill_state
+            )
 
             # Build and apply conditions
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
@@ -3806,14 +3806,15 @@ class VTSAnalyticsActions:
             both_df = ( merged_df.join(both_ids, on="alert_id", how="inner").unique(subset=["alert_id"]))
             
             system_only_df, both_df = (
-                    system_only_df.drop("file_path", strict=False) , both_df.drop("file_path", strict=False))
+                    system_only_df.drop("file_path","report_type", strict=False) , both_df.drop("file_path","report_type", strict=False))
             
-
             if payload.get("download") == "true":
-                return await download_streaming_data(system_only_df,filename='system_only') 
-            
-            if payload.get("download") == "system_and_user_generated":
-                return await download_streaming_data(both_df,filename='system_and_user_generated')   
+                s = system_only_df.with_columns(pl.lit("no").alias("Show_Cause_Notice"))
+                b = both_df.with_columns(pl.lit("yes").alias("Show_Cause_Notice"))
+                combined = pl.concat([s, b], how="vertical")
+                
+                return await download_streaming_data(combined, filename='Show_Cause_Notice')
+                
                         
             return {"status": True, "message": "success","data":{ "system_only" :system_only_df.height,"system_and_user":both_ids.height}}
         except Exception as e:

@@ -41,7 +41,15 @@ async def top_repeat_alerts(data):
         alert_query += f" AND interlock_name = '{data.interlock_name}'"
 
     if data.alert_severity:
-        alert_query += f" AND severity = '{data.alert_severity}'"
+        if isinstance(data.alert_severity, list):
+            clean_severity = [s for s in data.alert_severity if s]
+
+            if clean_severity:
+                severity_vals = ", ".join(f"'{s}'" for s in clean_severity)
+                alert_query += f" AND severity IN ({severity_vals})"
+        else:
+            if data.alert_severity.strip():
+                alert_query += f" AND severity = '{data.alert_severity}'"
 
     print("FINAL alert_query >>>", alert_query)
 
@@ -205,7 +213,6 @@ async def tas_severity_summary(data):
 
 async def location_alert_critical(data):
 
-    
     # 1. BASE QUERY
     alert_query = "alert_section = 'TAS'"
     alert_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
@@ -242,57 +249,55 @@ async def location_alert_critical(data):
         return []
 
     df = pl.DataFrame(rows)
-    # CASE 1
-    # No location
-    # → Top 5 locations (TOTAL critical count)
-    if not data.location_name and not data.alert_severity:
+    severity_filter = data.alert_severity
 
-        # =====================================================
-        # 3. SEVERITY NORMALIZATION
-        # =====================================================
-        severity_filter = data.alert_severity
+    if isinstance(severity_filter, list):
+        severity_filter = [
+            s.strip().lower()
+            for s in severity_filter
+            if s and isinstance(s, str)
+        ]
 
-        if isinstance(severity_filter, list):
-            severity_filter = [s for s in severity_filter if s]
+    if severity_filter:
+        df = df.filter(
+            pl.col("severity")
+            .str.to_lowercase()
+            .is_in(severity_filter)
+        )
 
-        if severity_filter:
-            df = df.filter(pl.col("severity").is_in(severity_filter))
-
-        # =====================================================
-        # 4. DRILL-DOWN (LOCATION SELECTED)
-        # =====================================================
-        if data.location_name:
-            now = datetime.utcnow()
-
-            return (
-                df.filter(pl.col("severity") == "Critical")
-                .with_columns([
-                    pl.col("created_at")
-                        .dt.strftime("%Y-%m-%dT%H:%M:%S")
-                        .alias("created_at"),
-                    (
-                        (pl.lit(now) - pl.col("created_at"))
-                        .dt.total_days()
-                        .cast(pl.Int64)
-                    ).alias("ageing_days")
-                ])
-                .select([
-                    "unique_id",
-                    "zone",
-                    "severity",
-                    "alert_status",
-                    "interlock_name",
-                    "location_name",
-                    "created_at",
-                    "ageing_days"
-                ])
-                .sort("ageing_days", descending=True)
-                .to_dicts()
-            )
-
+    
     # =====================================================
     # 5. TOP-N DECISION
     # =====================================================
+    if data.location_name:
+        now = datetime.utcnow()
+
+        return (
+            df.with_columns([
+                pl.col("created_at")
+                  .dt.strftime("%Y-%m-%dT%H:%M:%S")
+                  .alias("created_at"),
+                (
+                    (pl.lit(now) - pl.col("created_at"))
+                    .dt.total_days()
+                    .cast(pl.Int64)
+                ).alias("ageing_days")
+            ])
+            .select([
+                "unique_id",
+                "zone",
+                "severity",
+                "alert_status",
+                "interlock_name",
+                "location_name",
+                "created_at",
+                "ageing_days"
+            ])
+            .sort("ageing_days", descending=True)
+            .to_dicts()
+        )
+
+
     top_n = int(getattr(data, "top_n", 5) or 5)
 
     # -------------------------

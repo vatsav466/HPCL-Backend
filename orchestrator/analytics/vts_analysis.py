@@ -873,9 +873,7 @@ async def create_vts_alerts(enriched_data):
                 count_value = list(route_deviation_resp.values())[0][0]
                 if int(count_value) > 0:
                     entry['route_deviation_count'] = int(count_value)
-                else:
-                    entry['route_deviation_count'] = 0
-
+                    
             entry['auto_unblock'] = True
             entry['violation_type'] = await get_vts_violation(entry)
             entry['vts_start_datetime'], entry['vts_end_datetime'] = map(

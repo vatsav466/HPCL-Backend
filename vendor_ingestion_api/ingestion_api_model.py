@@ -614,3 +614,36 @@ class Emlockstatus_Ingest_DataParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class HyperLocalZoneSummaryCreate(pydantic.BaseModel):
+    zone: str
+    rating: float
+
+
+class ReviewsSentimentCreate(pydantic.BaseModel):
+    zone: str
+    sales_area: str
+    region: str
+    store_code: str
+    store_name: str
+    reviewer_name: str
+    rating: float
+    review_comment: str
+    tone_type: str
+    review_date: datetime.datetime
+    rank: int
+
+
+class Hyperlocal_Ingest_DataParams(pydantic.BaseModel):
+    report_date: datetime.date
+    total_reviews: int
+    positive_reviews: int
+    negative_reviews: int
+    neutral_reviews: int
+    zone_summary: typing.List[HyperLocalZoneSummaryCreate]
+    sentiment_of_reviews: typing.List[ReviewsSentimentCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

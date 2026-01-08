@@ -161,6 +161,31 @@ vts_query = {
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id """,
     
+    "total_alerts_download" : """
+                                 SELECT * FROM alerts WHERE  alert_section = 'VTS' AND
+                                 device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
+                               """ ,
+
+    "blocked_alerts_download" : """
+                                   SELECT * FROM alerts  WHERE  alert_section = 'VTS'
+                                   AND vehicle_unblocked_date is null and
+                                   device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')	                                                                                          
+                                """,
+
+    "auto_unblock_download" : """
+                              SELECT * FROM alerts WHERE  alert_section = 'VTS'
+                              AND alert_status = 'Close' and mark_as_false = false and
+                              vehicle_unblocked_date is not null  AND 
+                              device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')                                                     
+                              """,
+                              
+    "manual_unblock_download" : """
+                                SELECT * FROM alerts
+                                WHERE  alert_section = 'VTS'
+                                AND alert_status = 'Close' AND mark_as_false = true and
+                                vehicle_unblocked_date is not null AND
+                                device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
+                                """,                          
     "safety_compliance" : """
                             SELECT 
                                 event_date, 
@@ -186,7 +211,7 @@ vts_query = {
                 SELECT 
                 (
                 COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END) +
-                COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END) +
+                COUNT(DISTINCT CASE WHEN route_deviation_count_orig != 0 THEN invoice_number END) +
                 COUNT(DISTINCT CASE WHEN device_tamper_count != 0 THEN invoice_number END) +
                 COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END)
                 ) AS count
@@ -211,7 +236,7 @@ vts_query = {
     "percentage_of_violations" : """
                                   SELECT
                                         distinct invoice_number, 
-                                        route_deviation_count,
+                                        route_deviation_count_orig,
                                         stoppage_violations_count,
                                         device_tamper_count,
                                         speed_violation_count,
@@ -227,7 +252,7 @@ vts_query = {
             SELECT
             location_id,
             COUNT(DISTINCT CASE WHEN stoppage_violations_count != 0 THEN invoice_number END) AS "Stoppage Violation",
-            COUNT(DISTINCT CASE WHEN route_deviation_count != 0 THEN invoice_number END) AS "Route Deviation",
+            COUNT(DISTINCT CASE WHEN route_deviation_count_orig != 0 THEN invoice_number END) AS "Route Deviation",
             COUNT(DISTINCT CASE WHEN device_tamper_count != 0 THEN invoice_number END) AS "Device Tampering",
             COUNT(DISTINCT CASE WHEN main_supply_removal_count != 0 THEN invoice_number END) AS "Power Disconnection"
             FROM vts_alert_history
@@ -339,7 +364,7 @@ vts_query = {
         "vts_history_query" : """   
                     SELECT DISTINCT invoice_number, 
                                     tl_number, 
-                                    route_deviation_count, 
+                                    route_deviation_count_orig, 
                                     stoppage_violations_count, 
                                     device_tamper_count, 
                                     main_supply_removal_count, 
@@ -433,7 +458,7 @@ vts_query = {
                                 location_name,
                                 zone,
                                 DATE(vts_end_datetime) as created_at,
-                                route_deviation_count,
+                                route_deviation_count_orig,
                                 stoppage_violations_count,
                                 device_tamper_count,
                                 main_supply_removal_count,
@@ -445,7 +470,7 @@ vts_query = {
     "shoratage_vts_history" : """
                               SELECT 
                                     invoice_number,
-                                    route_deviation_count,
+                                    route_deviation_count_orig,
                                     stoppage_violations_count,
                                     device_tamper_count,
                                     main_supply_removal_count,
@@ -495,7 +520,7 @@ vts_query = {
                                destination_code,
                                TO_CHAR(date_trunc('day', scheduled_trip_start_datetime), 'YYYYMMDD') AS created_at,
                                MAX(stoppage_violations_count) AS stoppage_violations_count,
-                               MAX(route_deviation_count) AS route_deviation_count,
+                               MAX(route_deviation_count_orig) AS route_deviation_count_orig,
                                MAX(device_tamper_count) AS device_tamper_count,
                                MAX(main_supply_removal_count) AS main_supply_removal_count,
                                MAX(night_driving_count) AS night_driving_count,
@@ -524,7 +549,7 @@ vts_query = {
                                     {select_clause}
                                 FROM (
                                     SELECT DISTINCT invoice_number, tl_number, scheduled_trip_start_datetime, location_name, zone,stoppage_violations_count, 
-                                    route_deviation_count, device_tamper_count, main_supply_removal_count, night_driving_count, 
+                                    route_deviation_count_orig, device_tamper_count, main_supply_removal_count, night_driving_count, 
                                     speed_violation_count, continuous_driving_count
                                     FROM vts_alert_history
                                     WHERE invoice_number IS NOT NULL
@@ -568,7 +593,7 @@ vts_query = {
                     WHERE 1=1
                     """,                    
     "all_violations" : [   
-                            "route_deviation_count",
+                            "route_deviation_count_orig",
                             "stoppage_violations_count",
                             "device_tamper_count",
                             "main_supply_removal_count",
@@ -594,7 +619,7 @@ vts_query = {
     
     "accept_and_block":"""
                 SELECT
-                    a.id AS alert_id, a.vehicle_number,
+                    a.id AS alert_id, a.vehicle_number,a.unique_id,
                     n.alert_id, n.notices
                 FROM alerts a, notices_vts n
                 WHERE a.alert_section = 'VTS' AND a.alert_status = 'Close'
