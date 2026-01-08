@@ -1,6 +1,7 @@
 import urdhva_base
 import datetime
 import traceback
+import hpcl_ceg_enum
 import utilities.interlock_mapping
 import utilities.helpers as helpers
 import orchestrator.alerting.alert_helper as alert_helper
@@ -63,6 +64,7 @@ class NRDAlertManager(alert_factory.AlertFactory):
             interlock_details['vehicle_blocked_start_date'] = (urdhva_base.utilities.get_present_time()).isoformat()
             interlock_details['vehicle_blocked_end_date'] = urdhva_base.utilities.get_present_time() + datetime.timedelta(days=1826)
             interlock_details['mark_as_false'] = False
+            interlock_details['vts_block_status'] = hpcl_ceg_enum.VtsBlockStatus.WaitingForBlocking
             
             camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'], alert_section="VTS")
             await cls.create_alert(interlock_details, camunda_url)
