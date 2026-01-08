@@ -200,7 +200,7 @@ class AlertFactory:
                                                         'workflow_url': alert_data.get('workflow_url', ''),
                                                         'workflow_port': alert_data.get('workflow_port', ''),
                                                         'vts_alert_history_ids': alert_data.get('vts_alert_history_ids',[]),
-                                                        'block_status': alert_data.get('block_status',''),
+                                                        'block_status': alert_data.get('block_status','WaitingForBlockAck'),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
