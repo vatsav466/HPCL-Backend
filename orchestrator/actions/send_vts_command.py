@@ -2,6 +2,7 @@ import urdhva_base
 import pytz
 import datetime
 import hpcl_ceg_model
+import hpcl_ceg_enum
 import orchestrator.analytics.vts_analysis as vts_analysis
 import orchestrator.alerting.alert_manager as alert_manager
 
@@ -116,6 +117,8 @@ class SendVtsCommand:
             alert_data["action_msg"] = alert_message
             alert_data["action_type"] = "VTS"
             await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+            await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                                           "block_status": hpcl_ceg_enum.BlockStatus.Blocked}).modify()
             return True, {"blocked": True}
 
         if params.get("interrupt").lower() == 'unblock':
@@ -220,7 +223,8 @@ class SendVtsCommand:
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
                                                "mark_as_false": True,
-                                               "vehicle_unblocked_date": vehicle_unblocked_date}).modify()
+                                               "vehicle_unblocked_date": vehicle_unblocked_date,
+                                               "block_status": hpcl_ceg_enum.BlockStatus.UnBlocked}).modify()
                 return True, {"unblocked": True}
             
             if params['auto_unblock']:
@@ -237,7 +241,8 @@ class SendVtsCommand:
                     await hpcl_ceg_model.VtsTruckDetails.update_by_query(unblock_query)
 
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
-                                               "vehicle_unblocked_date": vehicle_unblocked_date}).modify()
+                                               "vehicle_unblocked_date": vehicle_unblocked_date,
+                                               "block_status": hpcl_ceg_enum.BlockStatus.UnBlocked}).modify()
                 return True, {"unblocked": True}
             
         return False, {"sapcommandsent": False}

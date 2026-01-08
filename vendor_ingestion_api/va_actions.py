@@ -12,6 +12,7 @@ import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.analytics.ro_analysis as ro_analysis
 import utilities.connection_mapping as connection_mapping
 import orchestrator.alerting.alert_manager as alert_manager
+import orchestrator.alerting.ro_va_alert_handler as ro_va_alert_handler
 
 router = fastapi.APIRouter(prefix='/va')
 
@@ -150,6 +151,39 @@ async def va_ingest_data_close(data: Va_Ingest_Data_CloseParams):
         await ro_analysis.close_camunda_workflow(alert_data, camunda_url=camunda_url)
         return {"status": True, "message": "Success", "data": []}
 
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return {"status": False, "message": "Error", "data": []}
+
+
+# Action ro_no_video_upload_list
+@router.post('/ro_no_video_upload_list', tags=['VA'])
+async def va_ro_no_video_upload_list(data: Va_Ro_No_Video_Upload_ListParams):
+    try:
+        logger.info(f"Received No Video Upload data ingestion from vendor {data.model_dump()}")
+        print('*'*200)
+        ro_cleanliness_data = data.model_dump()
+        print('*'*200)
+        #await ro_va_alert_handler.ROVaAlertHandler().ro_cleanliness_master_data(ro_cleanliness_data.get('data',[]))
+        return {"status": True, "message": "Success", "data": []}
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return {"status": False, "message": "Error", "data": []}
+
+
+# Action ro_no_video_upload_list_status
+@router.post('/ro_no_video_upload_list_status', tags=['VA'])
+async def va_ro_no_video_upload_list_status(data: Va_Ro_No_Video_Upload_List_StatusParams):
+    try:
+        logger.info(f"Received No Video Upload Status data ingestion from vendor {data.model_dump()}")
+        ro_cleanliness_status_data = data.model_dump()
+        print('*'*200)
+        print(ro_cleanliness_status_data['data'])
+        print('*'*200)
+        #await ro_va_alert_handler.ROVaAlertHandler().ro_cleanliness_uploaded_master_data(ro_cleanliness_status_data.get('data',[]))
+        return {"status": True, "message": "Success", "data": []}
     except Exception as e:
         print(traceback.format_exc())
         logger.error(e)

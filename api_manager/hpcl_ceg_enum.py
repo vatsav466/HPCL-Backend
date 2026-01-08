@@ -19,6 +19,19 @@ class BusinessUnit(str, enum.Enum):
 
 
 
+class BlockStatus(str, enum.Enum):
+    Blocked = 'Blocked'
+    UnBlocked = 'UnBlocked'
+    WaitingForBlockAck = 'WaitingForBlockAck'
+    WaitingForUnBlockAck = 'WaitingForUnBlockAck'
+    OnGoingTrip = 'OnGoingTrip'
+
+
+
+
+
+
+
 class DeviceType(str, enum.Enum):
     Tank = 'Tank'
     DU = 'DU'
@@ -68,6 +81,7 @@ class AlertStatus(str, enum.Enum):
     InProgress = 'InProgress'
     Cancel = 'Cancel'
     OnHold = 'OnHold'
+    Resolved = 'Resolved'
 
 
 
