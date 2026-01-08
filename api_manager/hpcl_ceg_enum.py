@@ -19,6 +19,18 @@ class BusinessUnit(str, enum.Enum):
 
 
 
+class VtsBlockStatus(str, enum.Enum):
+    WaitingForBlocking = 'Waiting for blocking'
+    Blocked = 'Blocked'
+    Unblocked = 'Unblocked'
+    WaitingForAck = 'Waiting for ack'
+
+
+
+
+
+
+
 class DeviceType(str, enum.Enum):
     Tank = 'Tank'
     DU = 'DU'
