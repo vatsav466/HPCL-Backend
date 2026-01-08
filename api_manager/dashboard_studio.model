@@ -593,9 +593,54 @@ Model SolarPanelWetDryCleaning {
     cleaning_date str
     panel_status  optional panel_status
 
+    Action=> create_solar_panel_cleaning_record {
+        bu str
+        sap_id str
+        location str
+        zone str
+        cleaning_type str
+        cleaning_date str
+    }
+
+    Action=> get_last_cleaning_date {
+        bu str
+        sap_id str
+        location str
+        zone str
+        cleaning_type str
+    }
+
+    Action=> get_panel_status {
+        bu str
+        sap_id str
+        location str
+        zone str
+        cleaning_type str
+    }
+
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,zone,location,sap_id'
         search_fields='bu,sap_id,location,zone'
     }
+}
+
+
+Model HistoricSolarPanelWetDryCleaningCreate {
+    bu  str
+    sap_id  str
+    location  str
+    zone  str
+    cleaning_type  str
+    frequency  int
+    last_cleaning_date str
+    cleaning_date str
+    panel_status  optional panel_status
+
+    Config=> {
+        crud_operations='read'
+        access_key_mapping='bu,zone,location,sap_id'
+        search_fields='bu,sap_id,location,zone'
+    }
+
 }
