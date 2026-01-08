@@ -618,6 +618,15 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "create_solar_panel_cleaning_record"
+                },
+                {
+                    "name": "get_last_cleaning_date"
+                },
+                {
+                    "name": "get_panel_status"
                 }
             ]
         },
@@ -633,6 +642,12 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_last_cleaning_date"
+                },
+                {
+                    "name": "get_panel_status"
                 }
             ]
         },
@@ -644,6 +659,78 @@
             "attributes": {},
             "uris": [
                 "/api/solarpanelwetdrycleaning/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_solar_panel_cleaning_record"
+                },
+                {
+                    "name": "get_last_cleaning_date"
+                },
+                {
+                    "name": "get_panel_status"
+                }
+            ]
+        },
+        {
+            "name": "historicsolarpanelwetdrycleaningcreate",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricSolarPanelWetDryCleaningCreate",
+            "attributes": {},
+            "uris": [
+                "/api/historicsolarpanelwetdrycleaningcreate/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "historicsolarpanelwetdrycleaningcreate_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricSolarPanelWetDryCleaningCreate_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/historicsolarpanelwetdrycleaningcreate/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "historicsolarpanelwetdrycleaningcreate_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HistoricSolarPanelWetDryCleaningCreate_admin",
+            "attributes": {},
+            "uris": [
+                "/api/historicsolarpanelwetdrycleaningcreate/*"
             ],
             "scopes": [
                 {
@@ -852,6 +939,18 @@
         {
             "name": "get_solar_dashboard_summary",
             "displayName": "get_solar_dashboard_summary"
+        },
+        {
+            "name": "create_solar_panel_cleaning_record",
+            "displayName": "create_solar_panel_cleaning_record"
+        },
+        {
+            "name": "get_last_cleaning_date",
+            "displayName": "get_last_cleaning_date"
+        },
+        {
+            "name": "get_panel_status",
+            "displayName": "get_panel_status"
         }
     ]
 }
