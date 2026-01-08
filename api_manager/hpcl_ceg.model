@@ -9,11 +9,12 @@ Enum BusinessUnit str {
     DS='DS'
 }
 
-Enum VtsBlockStatus str {
-    WaitingForBlocking='Waiting for blocking'
+Enum BlockStatus str {
     Blocked='Blocked'
-    Unblocked='Unblocked'
-    WaitingForAck='Waiting for ack'
+    UnBlocked='UnBlocked'
+    WaitingForBlockAck='WaitingForBlockAck'
+    WaitingForUnBlockAck='WaitingForUnBlockAck'
+    OnGoingTrip='OnGoingTrip'
 }
 
 Enum DeviceType str {
@@ -45,6 +46,7 @@ Enum AlertStatus str {
     InProgress='InProgress'
     Cancel='Cancel'
     OnHold='OnHold'
+    Resolved='Resolved'
 }
 
 Enum AlertState str {
@@ -832,7 +834,7 @@ Model Alerts {
     action_on optional MakerChecker
     remarks_unblocked optional str
     file_uploaded_path optional str
-    vts_block_status optional VtsBlockStatus
+    block_status optional BlockStatus
 
     Action=> alert_action {
         bu optional str

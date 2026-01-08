@@ -19,11 +19,12 @@ class BusinessUnit(str, enum.Enum):
 
 
 
-class VtsBlockStatus(str, enum.Enum):
-    WaitingForBlocking = 'Waiting for blocking'
+class BlockStatus(str, enum.Enum):
     Blocked = 'Blocked'
-    Unblocked = 'Unblocked'
-    WaitingForAck = 'Waiting for ack'
+    UnBlocked = 'UnBlocked'
+    WaitingForBlockAck = 'WaitingForBlockAck'
+    WaitingForUnBlockAck = 'WaitingForUnBlockAck'
+    OnGoingTrip = 'OnGoingTrip'
 
 
 
@@ -80,6 +81,7 @@ class AlertStatus(str, enum.Enum):
     InProgress = 'InProgress'
     Cancel = 'Cancel'
     OnHold = 'OnHold'
+    Resolved = 'Resolved'
 
 
 
