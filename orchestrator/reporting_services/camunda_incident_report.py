@@ -122,7 +122,7 @@ def incident_summary(incidents):
     return summary
 
 
-async def send_email(template_name, to_recipients, subject, cc_recipients, bcc_recipients, final_data, attachments=None):
+async def send_email(template_name, to_recipients, subject, cc_recipients, final_data, attachments=None):
 
     ins = await orchestrator.notification_manager.notification_factory.get_notification_module("email")
 
@@ -143,7 +143,6 @@ async def send_email(template_name, to_recipients, subject, cc_recipients, bcc_r
         subject=subject,
         recipients=to_recipients,
         cc_recipients=cc_recipients,
-        bcc_recipients=bcc_recipients,
         html_content=True,
         body=html_body,
         force_send=True,
@@ -174,8 +173,8 @@ async def main():
         to_recipients=["sreedhar.maddipati@algofusiontech.com","bala@algofusiontech.com"],
         subject="Camunda Incident Alert (Critical)",
         cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", 
-                       "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
-        bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "mohith.p@algofusiontech.com", 
+                       "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com", "gayathri.m@algofusiontech.com",
+                        "jayaprakash.v@algofusiontech.com", "mohith.p@algofusiontech.com", 
                         "poojitha.gumma@algofusiontech.com", "pawann.k@algofusiontech.com"],
         final_data=email_data, 
         attachments=[csv_path, excel_path]
