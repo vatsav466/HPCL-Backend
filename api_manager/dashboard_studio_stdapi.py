@@ -141,3 +141,13 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await SolarPanelWetDryCleaning.get_all(params, skip_secrets=True)
 
+
+@router.get('/historicsolarpanelwetdrycleaningcreate/{id}', response_model=HistoricSolarPanelWetDryCleaningCreate, tags=['HistoricSolarPanelWetDryCleaningCreate'])
+async def get(id: str):
+    return await HistoricSolarPanelWetDryCleaningCreate.get(id, skip_secrets=True)
+
+
+@router.get('/historicsolarpanelwetdrycleaningcreate', response_model=HistoricSolarPanelWetDryCleaningCreateGetResp, tags=['HistoricSolarPanelWetDryCleaningCreate'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HistoricSolarPanelWetDryCleaningCreate.get_all(params, skip_secrets=True)
+
