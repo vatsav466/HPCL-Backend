@@ -1448,7 +1448,7 @@ class VTSAnalyticsActions:
 
             # Step 2: Define violation columns
             violation_cols = [
-                "route_deviation_count",
+                "route_deviation_count_orig",
                 "stoppage_violations_count",
                 "device_tamper_count",
                 "speed_violation_count",
@@ -1681,7 +1681,7 @@ class VTSAnalyticsActions:
                         zone,
                         DATE(vts_end_datetime) AS created_at,
                         stoppage_violations_count,
-                        route_deviation_count,
+                        route_deviation_count_orig,
                         device_tamper_count,
                         main_supply_removal_count,
                         night_driving_count,
@@ -1691,7 +1691,7 @@ class VTSAnalyticsActions:
                     WHERE 
                         (
                             stoppage_violations_count > 0 OR
-                            route_deviation_count > 0 OR
+                            route_deviation_count_orig > 0 OR
                             device_tamper_count > 0 OR
                             main_supply_removal_count > 0 OR
                             night_driving_count > 0 OR
@@ -1723,7 +1723,7 @@ class VTSAnalyticsActions:
                 # Violation columns
                 violation_cols = [
                     "stoppage_violations_count",
-                    "route_deviation_count",
+                    "route_deviation_count_orig",
                     "device_tamper_count",
                     "main_supply_removal_count",
                     "night_driving_count",
