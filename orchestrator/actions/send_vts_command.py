@@ -118,7 +118,7 @@ class SendVtsCommand:
             alert_data["action_type"] = "VTS"
             await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
             await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
-                                           "vts_block_status": hpcl_ceg_enum.VtsBlockStatus.Blocked}).modify()
+                                           "block_status": hpcl_ceg_enum.BlockStatus.Blocked}).modify()
             return True, {"blocked": True}
 
         if params.get("interrupt").lower() == 'unblock':
@@ -224,7 +224,7 @@ class SendVtsCommand:
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
                                                "mark_as_false": True,
                                                "vehicle_unblocked_date": vehicle_unblocked_date,
-                                               "vts_block_status": hpcl_ceg_enum.VtsBlockStatus.Unblocked}).modify()
+                                               "block_status": hpcl_ceg_enum.BlockStatus.UnBlocked}).modify()
                 return True, {"unblocked": True}
             
             if params['auto_unblock']:
@@ -242,7 +242,7 @@ class SendVtsCommand:
 
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
                                                "vehicle_unblocked_date": vehicle_unblocked_date,
-                                               "vts_block_status": hpcl_ceg_enum.VtsBlockStatus.Unblocked}).modify()
+                                               "block_status": hpcl_ceg_enum.BlockStatus.UnBlocked}).modify()
                 return True, {"unblocked": True}
             
         return False, {"sapcommandsent": False}
