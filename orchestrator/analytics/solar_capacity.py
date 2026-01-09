@@ -161,7 +161,7 @@ class SolarCapacity:
             )
 
             solar_master = solar_master.filter(
-                pl.col('Plant Capacity\r\n  KWp').is_not_null()
+                pl.col('Plant Capacity  KWp').is_not_null()
             )
 
             if solar_master.is_empty():
@@ -195,7 +195,7 @@ class SolarCapacity:
             estimated_energy = (
                 solar_master
                 .select(
-                    (pl.col('Plant Capacity\r\n  KWp')
+                    (pl.col('Plant Capacity  KWp')
                      .cast(pl.Float64, strict=False)
                      .fill_null(0)
                      * 4
@@ -360,7 +360,7 @@ class SolarCapacity:
                         solar_master
                         .select([
                             pl.col("BU Code").alias("PLANT_CD"),
-                            (pl.col('Plant Capacity\r\n  KWp').cast(pl.Float64, strict=False).fill_null(0) * 4 * days_for_estimated / 1000).alias("estimated_mwh")
+                            (pl.col('Plant Capacity  KWp').cast(pl.Float64, strict=False).fill_null(0) * 4 * days_for_estimated / 1000).alias("estimated_mwh")
                         ])
                     )
 
@@ -457,7 +457,7 @@ class SolarCapacity:
             solar_master = solar_master.filter(
                 pl.col('Monitoring').cast(pl.Utf8).str.strip_chars().str.to_lowercase() == 'yes'
             )
-            solar_master = solar_master.filter(pl.col('Plant Capacity\r\n  KWp').is_not_null())
+            solar_master = solar_master.filter(pl.col('Plant Capacity  KWp').is_not_null())
 
             if solar_master.is_empty():
                 return {
@@ -582,7 +582,7 @@ class SolarCapacity:
             plant_zones = {}
             for row in solar_master.iter_rows(named=True):
                 plant_cd = SolarHelpers._clean_plant_code(row.get("BU Code"))
-                capacity = row.get('Plant Capacity\r\n  KWp')
+                capacity = row.get('Plant Capacity  KWp')
                 name = row.get('name')
                 zone = row.get('zone')
                 if plant_cd:
@@ -865,7 +865,7 @@ class SolarCapacity:
             solar_master = solar_master.filter(
                 pl.col('Monitoring').cast(pl.Utf8).str.strip_chars().str.to_lowercase() == 'yes'
             )
-            solar_master = solar_master.filter(pl.col('Plant Capacity\r\n  KWp').is_not_null())
+            solar_master = solar_master.filter(pl.col('Plant Capacity  KWp').is_not_null())
 
             if solar_master.is_empty():
                 return {
@@ -877,7 +877,7 @@ class SolarCapacity:
             # Calculate total capacity for estimated energy calculation
             total_capacity_kw = (
                 solar_master
-                .select(pl.col('Plant Capacity\r\n  KWp').cast(pl.Float64, strict=False).sum())
+                .select(pl.col('Plant Capacity  KWp').cast(pl.Float64, strict=False).sum())
                 .item()
             )
 
