@@ -501,12 +501,14 @@ async def get_vts_lpg_blocked_counts():
                         COUNT(*) FILTER (
                             WHERE alert_section='VTS'
                             AND bu='LPG'
+                            AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
                             AND {date_filter}
                         ) AS "TTs_Blocked_by_Novex",
 
                         COUNT(*) FILTER (
                             WHERE alert_section='VTS'
                             AND bu='LPG'
+                            AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
                             AND {date_filter}
                             AND mark_as_false='true'
                             AND vehicle_unblocked_date IS NOT NULL
@@ -515,6 +517,7 @@ async def get_vts_lpg_blocked_counts():
                         COUNT(*) FILTER (
                             WHERE alert_section='VTS'
                             AND bu='LPG'
+                            AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
                             AND {date_filter}
                             AND mark_as_false='false'
                             AND vehicle_unblocked_date IS NOT NULL
@@ -523,6 +526,7 @@ async def get_vts_lpg_blocked_counts():
                         COUNT(*) FILTER (
                             WHERE alert_section='VTS'
                             AND bu='LPG'
+                            AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
                             AND {date_filter}
                             AND vehicle_unblocked_date IS NULL
                         ) AS "TTs_currently_under_Block"
@@ -530,6 +534,7 @@ async def get_vts_lpg_blocked_counts():
                     FROM alerts
                     WHERE alert_section='VTS'
                     AND bu='LPG'
+                    AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
                     AND {date_filter}
                     GROUP BY violation_type
 
