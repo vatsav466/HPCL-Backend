@@ -15,7 +15,7 @@ class InterlockTemplateMapping(str, Enum):
     BLACKLISTED = "vts_truck_blacklisted.html"
     SOD_SHOW_CAUSE_NOTICE = "sod_show_case_template.html"
     BLOCK_OUTLET = "block_outlet.html"
-    UNBLOCKOUTLET = "unblock_outlet.html"
+    UNBLOCK_OUTLET = "unblock_outlet.html"
 
 
 class TemplateMapping(str, Enum):
