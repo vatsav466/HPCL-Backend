@@ -81,7 +81,7 @@ class SolarCapacity:
             # Filter by monitoring status
             solar = solar.filter(pl.col('Monitoring').cast(pl.Utf8).str.strip_chars().str.to_lowercase() == 'yes')
 
-            total_kw = (solar.select(pl.col('Plant Capacity\r\n  KWp').cast(pl.Float64, strict=False).sum()).item())
+            total_kw = (solar.select(pl.col('Plant Capacity  KWp').cast(pl.Float64, strict=False).sum()).item())
             total_mw = (total_kw * 4) / 1000
 
             return {
