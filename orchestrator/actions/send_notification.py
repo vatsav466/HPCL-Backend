@@ -262,10 +262,10 @@ class SendNotification:
         
     async def get_subject_for_ro(self):
         if self.params.get('messagetype','') in ['notify'] and self.alert_data.get('interlock_name') in ['Restroom Cleaning Evidence Missing']:
-            subject_template = f"Outlet Blocked Due to Missed Restroom Cleanliness Image Upload"
+            subject_template = f"Outlet Blocked"
             return subject_template
         if self.params.get('messagetype','') in ['resolved'] and self.alert_data.get('interlock_name') in ['Restroom Cleaning Evidence Missing']:
-            subject_template = f"Outlet Unblocked After Verification of Restroom Cleanliness Proof"
+            subject_template = f"Outlet Unblocked"
             return subject_template
 
     async def _prepare_message_content(self, bu: str, message_type: str):
