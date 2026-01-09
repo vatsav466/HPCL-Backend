@@ -14,6 +14,8 @@ class InterlockTemplateMapping(str, Enum):
     VTS_ACCEPT = "vts_blocking_accepted.html"
     BLACKLISTED = "vts_truck_blacklisted.html"
     SOD_SHOW_CAUSE_NOTICE = "sod_show_case_template.html"
+    BLOCK_OUTLET = "block_outlet.html"
+    UNBLOCKOUTLET = "unblock_outlet.html"
 
 
 class TemplateMapping(str, Enum):
@@ -34,3 +36,5 @@ class TemplateMapping(str, Enum):
     ACCEPT="VTS_ACCEPT"
     BLACKLISTED="BLACKLISTED"
     SODSHOWCAUSENOTICE="SOD_SHOW_CAUSE_NOTICE"
+    BLOCKOUTLET="BLOCK_OUTLET"
+    UNBLOCKOUTLET="UNBLOCK_OUTLET"

@@ -259,7 +259,14 @@ class SendNotification:
         if self.params.get('messagetype','') in ['resolved']:
             subject_template = f"VTS Alert: Unblocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
             return subject_template
-
+        
+    async def get_subject_for_ro(self):
+        if self.params.get('messagetype','') in ['notify'] and self.alert_data.get('interlock_name') in ['Restroom Cleaning Evidence Missing']:
+            subject_template = f"Outlet Blocked"
+            return subject_template
+        if self.params.get('messagetype','') in ['resolved'] and self.alert_data.get('interlock_name') in ['Restroom Cleaning Evidence Missing']:
+            subject_template = f"Outlet Unblocked"
+            return subject_template
 
     async def _prepare_message_content(self, bu: str, message_type: str):
         """
@@ -298,6 +305,9 @@ class SendNotification:
 
         if self.alert_data["alert_section"] in ['VTS'] and self.params.get('messagetype','') in ['active','resolved']:
             subject_template = await self.get_subject_for_vts()
+        
+        if self.alert_data["interlock_name"] in ['Restroom Cleaning Evidence Missing'] and self.params.get('messagetype','') in ['notify','resolved']:
+            subject_template = await self.get_subject_for_ro()
 
         # Append alert_section only if it exists and is different from BU
         if alert_section and bu != alert_section:
@@ -319,6 +329,12 @@ class SendNotification:
         elif self.params.get('messagetype','') in ['resolved']:
             return 'VTSRESOLVED'
         
+    async def get_ro_messagetype(self):
+        if self.params.get('messagetype','') in ['notify']:
+            return 'BLOCKOUTLET'
+        elif self.params.get('messagetype','') in ['resolved']:
+            return 'UNBLOCKOUTLET'
+        
     async def _load_message_templates(self, template_name: str) -> Dict[str, str]:
         """
         Load message templates based on the provided template name.
@@ -337,6 +353,8 @@ class SendNotification:
         message_type = self.params.get("messagetype", "").upper()
         if self.alert_data.get("alert_section") in ["VTS"] and self.params.get('messagetype','') in ['active','resolved']:
             message_type = await self.get_vts_messagetype()
+        if self.alert_data.get("interlock_name") in ['Restroom Cleaning Evidence Missing'] and self.params.get('messagetype','') in ['notify','resolved']:
+            message_type = await self.get_ro_messagetype()
         template_value = getattr(TemplateMapping, message_type, None)
         template = template_value.value if template_value else ""
         interlock_value = getattr(InterlockTemplateMapping, template.upper(), None)
@@ -732,7 +750,6 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['default@example.com']
             if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['resolved'] and self.alert_data['bu'] in ['TAS']:
                 alert_history = list(reversed(self.alert_data.get('alert_history', [])))
                 if len(alert_history) >= 2:
@@ -750,6 +767,15 @@ class SendNotification:
                                                                     subject=self.subject, body=self.body, 
                                                                     force_send=True, html_content=True)
                     return res
+            if self.alert_data.get('interlock_name','') in ['Restroom Cleaning Evidence Missing']:
+                await self.update_notication_audit_log()
+                res = await notification_module.publish_message(recipients=self.mail_recipients,
+                                                                subject=self.subject, 
+                                                                body=self.body, 
+                                                                force_send=True,
+                                                                html_content=True)
+                return res
+            self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
             return res
@@ -793,6 +819,14 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
+            if self.alert_data.get('interlock_name','') in ['Restroom Cleaning Evidence Missing'] and self.params.get('messagetype','') in ['notify']:
+                await self.update_notication_audit_log()
+                res = await notification_module.publish_message(recipients=self.mail_recipients,
+                                                                subject=self.subject, 
+                                                                body=self.body, 
+                                                                force_send=True,
+                                                                html_content=True)
+                return res
             self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
