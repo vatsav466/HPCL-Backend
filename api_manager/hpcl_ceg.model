@@ -1292,6 +1292,16 @@ Model IndentDryOut {
         bu_type optional str
     }
 
+    Action=> block_outlet {
+        block_id str
+        remarks_blocked str
+    }
+
+    Action=> unblock_outlet {
+        unblock_id str
+        remarks_unblocked str
+    }
+
     Action=> get_dried_out_ro_data {
         filters list IndentDryOutDataFilters
     }

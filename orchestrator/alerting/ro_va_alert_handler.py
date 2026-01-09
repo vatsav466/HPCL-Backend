@@ -1,5 +1,10 @@
 import urdhva_base
 import hpcl_ceg_model
+import hpcl_ceg_enum
+import traceback
+import datetime
+import utilities.helpers as helpers
+import orchestrator.alerting.alert_factory as alert_factory
 
 InterlockName = 'Restroom Cleaning Evidence Missing'
 
@@ -21,7 +26,47 @@ class ROVaAlertHandler(object):
         """
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query,limit=0)
         return resp["data"]
+    
+    @classmethod
+    async def create_alert(cls,data):
+        try:
+            allocated_time = datetime.datetime.now(datetime.timezone.utc)
+            processed_time = datetime.datetime.now(datetime.timezone.utc)
+            alert_history = [{
+                "action_msg" : (
+                    f"Violation Type: Restroom Cleaning Evidence Missing \n"
+                    f"for Outlet: {data.get('ro_name','')}"
+                ),
+                "action_type": "Created",
+                "alert_status": "Open",
+                "allocated_time": allocated_time.isoformat(),
+                "processed_time": processed_time.isoformat()
+            }]
 
+            alert_data = {
+                "bu": "RO",
+                "severity": "High",
+                "sop_id": "SOP023",
+                "alert_history": alert_history,
+                "alert_section": "RO",
+                "violation_type": "Restroom Cleaning Evidence Missing",
+                "interlock_name": "Restroom Cleaning Evidence Missing",
+                "sap_id": data.get('ro_code',''),
+                "location_name": data.get('','ro_name'),
+                "zone": data.get('zone',''),
+                "region": data.get('region',''),
+                "sales_area": data.get('sales_area',''),
+                "block_status": None
+            }
+            # need to trigger camunda workflow 
+            camunda_url = await helpers.get_camunda_url("RO",data.get('ro_code'),alert_section='RO')
+            print('*'*200)
+            print('alert_data',alert_data)
+            print('*'*200)
+            await alert_factory.AlertFactory().create_alert(alert_data, camunda_url)
+        except Exception as e:
+            print(traceback.format_exc())
+    
     @classmethod
     async def ro_cleanliness_master_data(cls, data):
         """
@@ -46,6 +91,7 @@ class ROVaAlertHandler(object):
         # CREATE ALERTS
         for rec in alerts_to_create:
             print("Creating new alert {}".format(rec.get("sap_id","")))
+            await cls.create_alert(rec)
 
         # CLOSE / RESOLVE ALERTS
         for batch in chunked(alerts_to_update):
@@ -61,14 +107,14 @@ class ROVaAlertHandler(object):
             if close_ids:
                 ids = ",".join(f"'{i}'" for i in close_ids)
                 await hpcl_ceg_model.Alerts.update_by_query(
-                    f"UPDATE alerts SET alert_status='Close' WHERE id IN ({ids})"
+                    f"UPDATE alerts SET alert_status='Close', alert_state = 'Resolved' WHERE id IN ({ids})"
                 )
                 # To do, send it to camunda to close the alert
 
             if resolve_ids:
                 ids = ",".join(f"'{i}'" for i in resolve_ids)
                 await hpcl_ceg_model.Alerts.update_by_query(
-                    f"UPDATE alerts SET alert_status='Resolved' WHERE id IN ({ids})"
+                    f"UPDATE alerts SET alert_status='Close', alert_state = 'Resolved' WHERE id IN ({ids})"
                 )
 
     @classmethod
