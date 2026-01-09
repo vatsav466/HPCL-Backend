@@ -1,6 +1,7 @@
 import urdhva_base
 import hpcl_ceg_model
 import hpcl_ceg_enum
+import traceback
 import datetime
 import utilities.helpers as helpers
 import orchestrator.alerting.alert_factory as alert_factory
@@ -28,38 +29,43 @@ class ROVaAlertHandler(object):
     
     @classmethod
     async def create_alert(cls,data):
-        allocated_time = datetime.datetime.now(datetime.timezone.utc)
-        processed_time = datetime.datetime.now(datetime.timezone.utc)
-        alert_history = [{
-            "action_msg" : (
-                f"Violation Type: Restroom Cleaning Evidence Missing \n"
-                f"for Outlet: {data.get('ro_name','')}"
-            ),
-            "action_type": "Created",
-            "alert_status": "Open",
-            "allocated_time": allocated_time.isoformat(),
-            "processed_time": processed_time.isoformat()
-        }]
+        try:
+            allocated_time = datetime.datetime.now(datetime.timezone.utc)
+            processed_time = datetime.datetime.now(datetime.timezone.utc)
+            alert_history = [{
+                "action_msg" : (
+                    f"Violation Type: Restroom Cleaning Evidence Missing \n"
+                    f"for Outlet: {data.get('ro_name','')}"
+                ),
+                "action_type": "Created",
+                "alert_status": "Open",
+                "allocated_time": allocated_time.isoformat(),
+                "processed_time": processed_time.isoformat()
+            }]
 
-        alert_data = {
-            "bu": "RO",
-            "severity": "High",
-            "sop_id": "SOP023",
-            "alert_history": alert_history,
-            "alert_section": "RO",
-            "violation_type": "Restroom Cleaning Evidence Missing",
-            "interlock_name": "Restroom Cleaning Evidence Missing",
-            "sap_id": data.get('sap_id',''),
-            "location_name": data.get('','ro_name'),
-            "zone": data.get('zone',''),
-            "region": data.get('region',''),
-            "sales_area": data.get('sales_area',''),
-            "block_status": hpcl_ceg_enum.BlockStatus.WaitingForBlockAck
-        }
-        # need to trigger camunda workflow 
-        cls = alert_factory.AlertFactory()
-        camunda_url = await helpers.get_camunda_url("RO",data.get('sap_id'),alert_section='RO')
-        await cls.create_alert(alert_data, camunda_url)
+            alert_data = {
+                "bu": "RO",
+                "severity": "High",
+                "sop_id": "SOP023",
+                "alert_history": alert_history,
+                "alert_section": "RO",
+                "violation_type": "Restroom Cleaning Evidence Missing",
+                "interlock_name": "Restroom Cleaning Evidence Missing",
+                "sap_id": data.get('ro_code',''),
+                "location_name": data.get('','ro_name'),
+                "zone": data.get('zone',''),
+                "region": data.get('region',''),
+                "sales_area": data.get('sales_area',''),
+                "block_status": hpcl_ceg_enum.BlockStatus.WaitingForBlockAck
+            }
+            # need to trigger camunda workflow 
+            camunda_url = await helpers.get_camunda_url("RO",data.get('ro_code'),alert_section='RO')
+            print('*'*200)
+            print('alert_data',alert_data)
+            print('*'*200)
+            await alert_factory.AlertFactory().create_alert(alert_data, camunda_url)
+        except Exception as e:
+            print(traceback.format_exc())
     
     @classmethod
     async def ro_cleanliness_master_data(cls, data):
