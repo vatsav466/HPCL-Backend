@@ -56,7 +56,7 @@ class ROVaAlertHandler(object):
                 "zone": data.get('zone',''),
                 "region": data.get('region',''),
                 "sales_area": data.get('sales_area',''),
-                "block_status": hpcl_ceg_enum.BlockStatus.WaitingForBlockAck
+                "block_status": None
             }
             # need to trigger camunda workflow 
             camunda_url = await helpers.get_camunda_url("RO",data.get('ro_code'),alert_section='RO')
@@ -107,14 +107,14 @@ class ROVaAlertHandler(object):
             if close_ids:
                 ids = ",".join(f"'{i}'" for i in close_ids)
                 await hpcl_ceg_model.Alerts.update_by_query(
-                    f"UPDATE alerts SET alert_status='Close' WHERE id IN ({ids})"
+                    f"UPDATE alerts SET alert_status='Close', alert_state = 'Resolved' WHERE id IN ({ids})"
                 )
                 # To do, send it to camunda to close the alert
 
             if resolve_ids:
                 ids = ",".join(f"'{i}'" for i in resolve_ids)
                 await hpcl_ceg_model.Alerts.update_by_query(
-                    f"UPDATE alerts SET alert_status='Resolved' WHERE id IN ({ids})"
+                    f"UPDATE alerts SET alert_status='Close', alert_state = 'Resolved' WHERE id IN ({ids})"
                 )
 
     @classmethod
