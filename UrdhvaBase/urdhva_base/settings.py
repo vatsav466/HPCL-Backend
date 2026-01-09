@@ -89,7 +89,7 @@ class Settings(pydantic_settings.BaseSettings):
     # DB Multi-tenancy model
     db_multi_tenancy_model: MultiTenancyMode = MultiTenancyMode.SingleServerSingleDb
     login_count: int = 5
-    base_path: str = ""
+    base_path: str = "/opt/ceg/algo"
     mft_path: str = "/opt/ceg/mft_path/"
     ui_path: str = ""
     download_path: str = "/opt/ceg/algo/orchestrator/masters"
