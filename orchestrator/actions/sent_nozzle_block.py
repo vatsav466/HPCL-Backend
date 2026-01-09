@@ -32,7 +32,7 @@ class SendNozzleCommand:
         if params.get("interrupt").lower() == 'block':         
             # Blocking in IMS blockingFlag="Y"
             blocking_status = None
-            blocking_status,error_msg = await ro_interlock_handler.RoInterlockHandler().ro_blocking([alert_data.get('sap_id','')])
+            #blocking_status,error_msg = await ro_interlock_handler.RoInterlockHandler().ro_blocking([alert_data.get('sap_id','')])
             if not blocking_status:
                 alert_message = (
                     f"Failed to Block the Outlet {alert_data.get('location_name', '')}, status: Failed, RO: {alert_data.get('sap_id', '')}"
@@ -57,7 +57,7 @@ class SendNozzleCommand:
         if params.get("interrupt").lower() == 'unblock':
             # UnBlocking in IMS blockingFlag="N"
             unblocking_status = None
-            unblocking_status,error_msg = await ro_interlock_handler.RoInterlockHandler().ro_unblocking([alert_data.get('sap_id','')])
+            #unblocking_status,error_msg = await ro_interlock_handler.RoInterlockHandler().ro_unblocking([alert_data.get('sap_id','')])
             if not unblocking_status:
                 alert_message = (
                     f"Failed to Unblock the Outlet {alert_data.get('location_name', '')}, status: Failed, RO: {alert_data.get('sap_id', '')}"
