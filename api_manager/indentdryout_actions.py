@@ -1,6 +1,6 @@
+import urdhva_base
 import pandas as pd
 import hpcl_ceg_model
-import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import re
@@ -12,6 +12,7 @@ import datetime
 import api_helpers
 import polars as pl
 import requests
+import traceback
 import dateutil.parser as parser
 import orchestrator.alerting.alert_helper as alert_helper
 import utilities.connection_mapping as connection_mapping
@@ -1236,7 +1237,6 @@ async def indentdryout_block_outlet(
     upload_file: fastapi.UploadFile | None = fastapi.File(None)
 ):
     try:
-      
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
             return {"status": False, "message": "Session got expired, Please Re-Login"}
@@ -1312,11 +1312,11 @@ async def indentdryout_block_outlet(
         alert_history.append({
             "action_msg": (
                 f"Block Initiated For Outlet {alert_record.get('sap_id')} "
-                f"initiated by {rpt['username']} "
+                f"initiated by {rpt.get('username','')} "
                 f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
             ),
-            "action_type": "WaitingForBlockAck",
-            "action_by": rpt['username'],
+            "action_type": "Blocked",
+            "action_by": rpt.get('username',''),
             "processed_time": event_time_utc.isoformat()
         })
 
@@ -1330,6 +1330,7 @@ async def indentdryout_block_outlet(
         return {"status": True, "message": "Outlet has been successfully blocked"}
 
     except Exception:
+        print(traceback.format_exc())
         return {"status": False, "message": "Failed to block the Outlet"}
 
 # Action unblock_outlet
@@ -1417,11 +1418,11 @@ async def indentdryout_unblock_outlet(
         alert_history.append({
             "action_msg": (
                 f"Unblock for Outlet {alert_record.get('sap_id')} "
-                f"initiated by {rpt['username']} "
+                f"initiated by {rpt.get('username','')} "
                 f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
             ),
-            "action_type": "WaitingForUnBlockAck",
-            "action_by": rpt['username'],
+            "action_type": "UnBlocked",
+            "action_by": rpt.get('username',''),
             "processed_time": event_time_utc.isoformat()
         })
 
@@ -1435,5 +1436,6 @@ async def indentdryout_unblock_outlet(
         return {"status": True, "message": "Outlet has been successfully unblocked"}
 
     except Exception:
+        print(traceback.format_exc())
         logger.exception("Unhandled error during outlet unblock")
         return {"status": False, "message": "Failed to unblock the outlet"}
