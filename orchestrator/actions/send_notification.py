@@ -645,6 +645,20 @@ class SendNotification:
             await self._send_other_notification()
         else:
             await self._send_standard_notification()
+    
+    async def get_ro_recipients(self):
+        mail_recipients = []
+        query = f"""SELECT * FROM Users WHERE '{self.alert_data.get('sales_area')}' = ANY(sales_area)"""
+        ro_users_data = await hpcl_ceg_model.Users.get_aggr_data(query,limit=0)
+        if ro_users_data['data']:
+            for rec in ro_users_data['data']:
+                if rec.get('email'):
+                    mail_recipients.append(rec['email'])
+        
+        print('*'*200)
+        print(mail_recipients)
+        print('*'*200)
+        return mail_recipients
 
     async def get_vts_recipients(self):
         transporter_code = (
@@ -769,12 +783,14 @@ class SendNotification:
                     return res
             if self.alert_data.get('interlock_name','') in ['Restroom Cleaning Evidence Missing']:
                 await self.update_notication_audit_log()
-                res = await notification_module.publish_message(recipients=self.mail_recipients,
-                                                                subject=self.subject, 
-                                                                body=self.body, 
-                                                                force_send=True,
-                                                                html_content=True)
-                return res
+                self.mail_recipients = await self.get_ro_recipients()
+                if self.mail_recipients:
+                    res = await notification_module.publish_message(recipients=self.mail_recipients,
+                                                                    subject=self.subject, 
+                                                                    body=self.body, 
+                                                                    force_send=True,
+                                                                    html_content=True)
+                    return res
             self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
@@ -821,12 +837,14 @@ class SendNotification:
             print("self.mail_recipients: ", self.mail_recipients)
             if self.alert_data.get('interlock_name','') in ['Restroom Cleaning Evidence Missing'] and self.params.get('messagetype','') in ['notify']:
                 await self.update_notication_audit_log()
-                res = await notification_module.publish_message(recipients=self.mail_recipients,
-                                                                subject=self.subject, 
-                                                                body=self.body, 
-                                                                force_send=True,
-                                                                html_content=True)
-                return res
+                self.mail_recipients = await self.get_ro_recipients()
+                if self.mail_recipients:
+                    res = await notification_module.publish_message(recipients=self.mail_recipients,
+                                                                    subject=self.subject, 
+                                                                    body=self.body, 
+                                                                    force_send=True,
+                                                                    html_content=True)
+                    return res
             self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
