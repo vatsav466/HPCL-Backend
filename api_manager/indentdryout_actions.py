@@ -11,6 +11,7 @@ import fastapi
 import datetime
 import api_helpers
 import polars as pl
+import requests
 import dateutil.parser as parser
 import orchestrator.alerting.alert_helper as alert_helper
 import utilities.connection_mapping as connection_mapping
@@ -21,9 +22,11 @@ import orchestrator.direct_sales.indentwise_direct_sales as indentwise_direct_sa
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from orchestrator.actions.indent_dry_out import IndentDryOut as indent_dry_out
 import orchestrator.alerting.listener.sync_ro_daily_sales as sync_ro_daily_sales
+import utilities.minio_connector as minio_connector
 
 router = fastapi.APIRouter(prefix='/indentdryout')
 
+logger = urdhva_base.logger.Logger.getInstance("indentdryout")
 
 # Action sync_data_from_cris_to_ceg
 @router.post('/sync_data_from_cris_to_ceg', tags=['IndentDryOut'])
@@ -1223,3 +1226,214 @@ async def indentdryout_get_vts_direct_sales(data: Indentdryout_Get_Vts_Direct_Sa
 @router.post('/get_delivery_confirmation_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_delivery_confirmation_direct_sales(data: Indentdryout_Get_Delivery_Confirmation_Direct_SalesParams):
     return await indentwise_direct_sales.IndentDryOutDirectSales().get_delivery_confirmation_direct_sales(data)
+
+
+# Action block_outlet
+@router.post('/block_outlet', tags=['IndentDryOut'])
+async def indentdryout_block_outlet(
+    block_id: str = fastapi.Form(...),
+    remarks_blocked: str | None = fastapi.Form(None),
+    upload_file: fastapi.UploadFile | None = fastapi.File(None)
+):
+    try:
+      
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+
+        try:
+            block_id = int(block_id)
+        except Exception:
+            return {"status": False, "message": "Invalid block_id"}
+        
+        query = f"id = {block_id}"
+        alert_data = await Alerts.get_all(
+            urdhva_base.queryparams.QueryParams(q=query, limit=1),
+            resp_type="plain"
+        )
+
+        if not alert_data.get("data"):
+            return {"status": False, "message": "No active block found for the outlet"}
+
+        alert_record = alert_data["data"][0]
+     
+        minio_path = ""
+        file_path = ""
+
+        if upload_file:
+            UPLOAD_DIR = os.path.join(
+                urdhva_base.settings.uploads,
+                "ro_blocked"
+            )
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+            file_name = upload_file.filename
+            file_path = os.path.join(UPLOAD_DIR, file_name)
+
+            with open(file_path, "wb") as f:
+                f.write(await upload_file.read())
+
+            status, minio_path = minio_connector.upload_to_minio(
+                "alerts",         # bucket (same bucket)
+                "ro_blocked",    # section/folder
+                str(block_id),       # sub-folder
+                file_path         # local filepath
+            )
+
+            if not status:
+                return {
+                    "status": False,
+                    "message": "MinIO upload failed",
+                    "error": minio_path
+                }
+
+        payload = {
+            "messageName": "BlockNozzles",
+            "processInstanceId": alert_record.get("workflow_instance_id")
+        }
+
+        camunda_url = f"{alert_record.get('workflow_url')}/engine-rest/message"
+
+        response = requests.post(camunda_url, json=payload)
+
+        if response.status_code != 204:
+            logger.error(
+                f"Camunda block failed | "
+                f"alert_id={alert_record.get('id')} | "
+                f"status={response.status_code} | "
+                f"response={response.text}"
+            )
+            return {"status": False, "message": "Failed to block the ro via workflow"}
+        
+        event_time_utc = urdhva_base.utilities.get_present_time()
+        ist_time = event_time_utc.astimezone(pytz.timezone("Asia/Kolkata"))
+        alert_history = alert_record.get("alert_history", [])
+
+        alert_history.append({
+            "action_msg": (
+                f"Block Initiated For Outlet {alert_record.get('sap_id')} "
+                f"initiated by {rpt['username']} "
+                f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+            ),
+            "action_type": "WaitingForBlockAck",
+            "action_by": rpt['username'],
+            "processed_time": event_time_utc.isoformat()
+        })
+
+        await Alerts(**{
+            "id": alert_record.get("id"),
+            "alert_history": alert_history,
+            "remarks_unblocked": remarks_blocked,
+            "file_uploaded_path": minio_path or ""
+        }).modify()
+
+        return {"status": True, "message": "Outlet has been successfully blocked"}
+
+    except Exception:
+        return {"status": False, "message": "Failed to block the Outlet"}
+
+# Action unblock_outlet
+@router.post('/unblock_outlet', tags=['IndentDryOut'])
+async def indentdryout_unblock_outlet(
+    unblock_id: str = fastapi.Form(...),
+    remarks_unblocked: str | None = fastapi.Form(None),
+    upload_file: fastapi.UploadFile | None = fastapi.File(None)
+):
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+
+        try:
+            unblock_id = int(unblock_id)
+        except Exception:
+            logger.error(f"Invalid unblock_id value: {unblock_id}")
+            return {"status": False, "message": "Invalid unblock_id"}
+
+        query = f"id = {unblock_id}"
+        alert_data = await Alerts.get_all(
+            urdhva_base.queryparams.QueryParams(q=query, limit=1),
+            resp_type="plain"
+        )
+
+        if not alert_data.get("data"):
+            return {"status": False, "message": "No active block found for the outlet"}
+
+        alert_record = alert_data["data"][0]
+     
+        minio_path = ""
+        file_path = ""
+
+        if upload_file:
+            UPLOAD_DIR = os.path.join(
+                urdhva_base.settings.uploads,
+                "ro_unblocked"
+            )
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+            file_name = upload_file.filename
+            file_path = os.path.join(UPLOAD_DIR, file_name)
+
+            with open(file_path, "wb") as f:
+                f.write(await upload_file.read())
+
+            status, minio_path = minio_connector.upload_to_minio(
+                "alerts",         # bucket (same bucket)
+                "ro_unblocked",    # section/folder
+                str(unblock_id),       # sub-folder
+                file_path         # local filepath
+            )
+
+            if not status:
+                logger.error(f"MinIO upload failed: {minio_path}")
+                return {
+                    "status": False,
+                    "message": "MinIO upload failed",
+                    "error": minio_path
+                }
+
+        payload = {
+            "messageName": "UnblockNozzles",
+            "processInstanceId": alert_record.get("workflow_instance_id")
+        }
+
+        camunda_url = f"{alert_record.get('workflow_url')}/engine-rest/message"
+
+        response = requests.post(camunda_url, json=payload)
+
+        if response.status_code != 204:
+            logger.error(
+                f"Camunda unblock failed | "
+                f"alert_id={alert_record.get('id')} | "
+                f"status={response.status_code} | "
+                f"response={response.text}"
+            )
+            return {"status": False, "message": "Failed to unblock the outlet"}
+
+        event_time_utc = urdhva_base.utilities.get_present_time()
+        ist_time = event_time_utc.astimezone(pytz.timezone("Asia/Kolkata"))
+        alert_history = alert_record.get("alert_history", [])
+
+        alert_history.append({
+            "action_msg": (
+                f"Unblock for Outlet {alert_record.get('sap_id')} "
+                f"initiated by {rpt['username']} "
+                f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+            ),
+            "action_type": "WaitingForUnBlockAck",
+            "action_by": rpt['username'],
+            "processed_time": event_time_utc.isoformat()
+        })
+
+        await Alerts(**{
+            "id": alert_record.get("id"),
+            "alert_history": alert_history,
+            "remarks_unblocked": remarks_unblocked,
+            "file_uploaded_path": minio_path or ""
+        }).modify()
+
+        return {"status": True, "message": "Outlet has been successfully unblocked"}
+
+    except Exception:
+        logger.exception("Unhandled error during outlet unblock")
+        return {"status": False, "message": "Failed to unblock the outlet"}

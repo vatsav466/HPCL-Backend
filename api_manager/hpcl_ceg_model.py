@@ -2769,6 +2769,24 @@ class Indentdryout_Get_Delivery_Confirmation_Direct_SalesParams(pydantic.BaseMod
             extra = "forbid"  # Disallow extra fields
 
 
+class Indentdryout_Block_OutletParams(pydantic.BaseModel):
+    block_id: str
+    remarks_blocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Unblock_OutletParams(pydantic.BaseModel):
+    unblock_id: str
+    remarks_unblocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Indentdryout_Get_Dried_Out_Ro_DataParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
 

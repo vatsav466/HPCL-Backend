@@ -164,8 +164,9 @@ async def va_ro_no_video_upload_list(data: Va_Ro_No_Video_Upload_ListParams):
         logger.info(f"Received No Video Upload data ingestion from vendor {data.model_dump()}")
         print('*'*200)
         ro_cleanliness_data = data.model_dump()
+        print(ro_cleanliness_data)
         print('*'*200)
-        #await ro_va_alert_handler.ROVaAlertHandler().ro_cleanliness_master_data(ro_cleanliness_data.get('data',[]))
+        await ro_va_alert_handler.ROVaAlertHandler().ro_cleanliness_master_data(ro_cleanliness_data.get('data',[]))
         return {"status": True, "message": "Success", "data": []}
     except Exception as e:
         print(traceback.format_exc())
@@ -182,7 +183,7 @@ async def va_ro_no_video_upload_list_status(data: Va_Ro_No_Video_Upload_List_Sta
         print('*'*200)
         print(ro_cleanliness_status_data['data'])
         print('*'*200)
-        #await ro_va_alert_handler.ROVaAlertHandler().ro_cleanliness_uploaded_master_data(ro_cleanliness_status_data.get('data',[]))
+        await ro_va_alert_handler.ROVaAlertHandler().ro_cleanliness_uploaded_master_data(ro_cleanliness_status_data.get('data',[]))
         return {"status": True, "message": "Success", "data": []}
     except Exception as e:
         print(traceback.format_exc())
