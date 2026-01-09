@@ -507,7 +507,6 @@ class SolarHelpers:
                                 df = df.filter(date_col == pl.lit(current_date))
                         elif val == 't':
                             # User requested >= and 't' as current date (no time)
-                            print(f"DEBUG: applying date_filter 't', current_date={current_date}")
                             # For 'today', we want data exactly from today onwards (which usually means today)
                             # Or if it's strictly just 'today', it should probably be ==
                             # But usually 't' means 'today' filter.
@@ -521,7 +520,7 @@ class SolarHelpers:
                             df = df.filter(date_col == pl.lit(current_date))
                         elif val == '1d' or val == '1y':
                             yesterday = current_date - datetime.timedelta(days=1)
-                            df = df.filter(date_col >= pl.lit(yesterday))
+                            df = df.filter((date_col >= pl.lit(yesterday)) & (date_col < pl.lit(current_date)))
                         elif val == '1w':
                             week_ago = current_date - datetime.timedelta(days=7)
                             df = df.filter(date_col >= pl.lit(week_ago))
@@ -717,4 +716,3 @@ class SolarHelpers:
             return None
         cleaned = code_str.lstrip('0')
         return cleaned if cleaned else code_str
-

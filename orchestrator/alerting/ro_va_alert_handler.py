@@ -1,0 +1,108 @@
+import urdhva_base
+import hpcl_ceg_model
+
+InterlockName = 'Restroom Cleaning Evidence Missing'
+
+
+def chunked(iterable, size=50):
+    for i in range(0, len(iterable), size):
+        yield iterable[i:i + size]
+
+
+class ROVaAlertHandler(object):
+
+    @classmethod
+    async def get_existing_alerts(cls):
+        query = """
+        SELECT sap_id, id, block_status
+        FROM alerts
+        WHERE interlock_name = 'Restroom Cleaning Evidence Missing'
+          AND alert_status != 'Close'
+        """
+        resp = await hpcl_ceg_model.Alerts.get_aggr_data(query,limit=0)
+        return resp["data"]
+
+    @classmethod
+    async def ro_cleanliness_master_data(cls, data):
+        """
+        data → MasterList [{ ro_code: "xxxx" }]
+        """
+        pending_alerts = await cls.get_existing_alerts()
+        pending_map = {rec["sap_id"]: rec for rec in pending_alerts}
+
+        master_ro_codes = {rec["ro_code"] for rec in data}
+
+        # Alerts to Create
+        alerts_to_create = [
+            rec for rec in data if rec["ro_code"] not in pending_map
+        ]
+
+        # Alerts to Close / Resolve
+        alerts_to_update = [
+            rec for sap_id, rec in pending_map.items()
+            if sap_id not in master_ro_codes
+        ]
+
+        # CREATE ALERTS
+        for rec in alerts_to_create:
+            print("Creating new alert {}".format(rec.get("sap_id","")))
+
+        # CLOSE / RESOLVE ALERTS
+        for batch in chunked(alerts_to_update):
+            close_ids = []
+            resolve_ids = []
+
+            for rec in batch:
+                if not rec.get("block_status"):
+                    close_ids.append(rec["id"])
+                else:
+                    resolve_ids.append(rec["id"])
+
+            if close_ids:
+                ids = ",".join(f"'{i}'" for i in close_ids)
+                await hpcl_ceg_model.Alerts.update_by_query(
+                    f"UPDATE alerts SET alert_status='Close' WHERE id IN ({ids})"
+                )
+                # To do, send it to camunda to close the alert
+
+            if resolve_ids:
+                ids = ",".join(f"'{i}'" for i in resolve_ids)
+                await hpcl_ceg_model.Alerts.update_by_query(
+                    f"UPDATE alerts SET alert_status='Resolved' WHERE id IN ({ids})"
+                )
+
+    @classmethod
+    async def ro_cleanliness_uploaded_master_data(cls, data):
+        """
+        data → [{ ROCode, upload_done }]
+        """
+        pending_alerts = await cls.get_existing_alerts()
+        pending_map = {rec["sap_id"]: rec for rec in pending_alerts}
+
+        resolved = [
+            rec for rec in data
+            if rec["upload_done"] and rec["ro_code"] in pending_map
+        ]
+
+        for batch in chunked(resolved):
+            close_ids = []
+            resolve_ids = []
+
+            for rec in batch:
+                alert = pending_map[rec["ro_code"]]
+                if not alert.get("block_status"):
+                    close_ids.append(alert["id"])
+                else:
+                    resolve_ids.append(alert["id"])
+
+            if close_ids:
+                ids = ",".join(f"'{i}'" for i in close_ids)
+                await hpcl_ceg_model.Alerts.update_by_query(
+                    f"UPDATE alerts SET alert_status='Close' WHERE id IN ({ids})"
+                )
+
+            if resolve_ids:
+                ids = ",".join(f"'{i}'" for i in resolve_ids)
+                await hpcl_ceg_model.Alerts.update_by_query(
+                    f"UPDATE alerts SET alert_status='Resolved' WHERE id IN ({ids})"
+                )

@@ -482,7 +482,8 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
             "zone": zone,
             "transporter_code" : transporter_code,
             "region": region,
-            "auto_unblock": "true"
+            "auto_unblock": "true",
+            "block_status": BlockStatus.WaitingForBlockAck
         }
 
         # need to trigger camunda workflow 

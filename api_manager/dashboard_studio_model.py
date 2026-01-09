@@ -985,3 +985,106 @@ class SolarPanelWetDryCleaningGetResp(pydantic.BaseModel):
     data: typing.List[SolarPanelWetDryCleaning]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class Solarpanelwetdrycleaning_Create_Solar_Panel_Cleaning_RecordParams(pydantic.BaseModel):
+    bu: str
+    sap_id: str
+    location: str
+    zone: str
+    cleaning_type: str
+    cleaning_date: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Solarpanelwetdrycleaning_Get_Last_Cleaning_DateParams(pydantic.BaseModel):
+    bu: str
+    sap_id: str
+    location: str
+    zone: str
+    cleaning_type: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Solarpanelwetdrycleaning_Get_Panel_StatusParams(pydantic.BaseModel):
+    bu: str
+    sap_id: str
+    location: str
+    zone: str
+    cleaning_type: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class HistoricSolarPanelWetDryCleaningCreateSchema(UrdhvaPostgresBase):
+    __tablename__ = 'historic_solar_panel_wet_dry_cleaning_create'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location: Mapped[str] = mapped_column("location", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    cleaning_type: Mapped[str] = mapped_column("cleaning_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    frequency: Mapped[int] = mapped_column("frequency", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    last_cleaning_date: Mapped[str] = mapped_column("last_cleaning_date", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    cleaning_date: Mapped[str] = mapped_column("cleaning_date", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    panel_status: Mapped[typing.Optional[typing.Any]] = mapped_column("panel_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+
+class HistoricSolarPanelWetDryCleaningCreateCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'historic_solar_panel_wet_dry_cleaning_create'
+    
+    bu: str
+    sap_id: str
+    location: str
+    zone: str
+    cleaning_type: str
+    frequency: int
+    last_cleaning_date: str
+    cleaning_date: str
+    panel_status: typing.Optional[dashboard_studio_enum.panel_status] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HistoricSolarPanelWetDryCleaningCreateSchema
+        upsert_keys = []
+        search_fields = ['bu', 'sap_id', 'location', 'zone']
+        access_key_mapping = ['bu', 'zone', 'location', 'sap_id']
+
+
+class HistoricSolarPanelWetDryCleaningCreate(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'historic_solar_panel_wet_dry_cleaning_create'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    location: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    cleaning_type: typing.Optional[str] | None = None
+    frequency: typing.Optional[int] | None = None
+    last_cleaning_date: typing.Optional[str] | None = None
+    cleaning_date: typing.Optional[str] | None = None
+    panel_status: typing.Optional[dashboard_studio_enum.panel_status] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HistoricSolarPanelWetDryCleaningCreateSchema
+        upsert_keys = []
+        search_fields = ['bu', 'sap_id', 'location', 'zone']
+        access_key_mapping = ['bu', 'zone', 'location', 'sap_id']
+
+
+class HistoricSolarPanelWetDryCleaningCreateGetResp(pydantic.BaseModel):
+    data: typing.List[HistoricSolarPanelWetDryCleaningCreate]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

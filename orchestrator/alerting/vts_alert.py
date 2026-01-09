@@ -4,6 +4,7 @@ import copy
 import datetime
 import traceback
 import hpcl_ceg_model
+import hpcl_ceg_enum
 import utilities.interlock_mapping
 import utilities.helpers as helpers
 import dateutil.parser as dt_parser
@@ -96,6 +97,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
         vts_alert_data.update(interlock_details)
         vts_alert_data['location_data'] = location_details.__dict__ if not isinstance(location_details,dict) else location_details
         vts_alert_data['alert_section'] = 'VTS'
+        vts_alert_data['block_status'] = hpcl_ceg_enum.BlockStatus.WaitingForBlockAck
         vts_alert_data['alert_history'] = alert_history
         vts_alert_data['severity'] = instance_data['severity']
         vts_alert_data['vts_alert_history_ids'] = vts_alert_history_ids
