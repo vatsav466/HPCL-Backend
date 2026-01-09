@@ -14,7 +14,7 @@ class SendNozzleCommand:
     async def get_required_variables(self):
         return ["alert_id", "interrupt", "BU"]
     
-    async def sendcommand(self, params):
+    async def sendnozzlecommand(self, params):
         print("params --->", params)
 
         alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
