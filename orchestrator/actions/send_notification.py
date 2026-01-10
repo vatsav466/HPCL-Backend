@@ -785,8 +785,10 @@ class SendNotification:
             if self.alert_data.get('interlock_name','') in ['Restroom Cleaning Evidence Missing']:
                 await self.update_notication_audit_log()
                 self.mail_recipients = await self.get_ro_recipients()
+                self.cc_recipients = ["shubhra.Narayan@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in"]
                 if self.mail_recipients:
                     res = await notification_module.publish_message(recipients=self.mail_recipients,
+                                                                    cc_recipients=self.cc_recipients,
                                                                     subject=self.subject, 
                                                                     body=self.body, 
                                                                     force_send=True,
@@ -839,9 +841,11 @@ class SendNotification:
             if self.alert_data.get('interlock_name','') in ['Restroom Cleaning Evidence Missing'] and self.params.get('messagetype','') in ['notify']:
                 await self.update_notication_audit_log()
                 self.mail_recipients = await self.get_ro_recipients()
+                self.cc_recipients = ["shubhra.Narayan@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in"]
                 if self.mail_recipients:
                     res = await notification_module.publish_message(recipients=self.mail_recipients,
-                                                                    subject=self.subject, 
+                                                                    cc_recipients=self.cc_recipients,
+                                                                    subject=self.subject,
                                                                     body=self.body, 
                                                                     force_send=True,
                                                                     html_content=True)
