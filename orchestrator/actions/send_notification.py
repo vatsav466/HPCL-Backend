@@ -647,6 +647,7 @@ class SendNotification:
             await self._send_standard_notification()
     
     async def get_ro_recipients(self):
+        dealer_mail = f"{self.alert_data.get("sap_id")}@retail.co.in"
         mail_recipients = []
         query = f"""SELECT * FROM Users WHERE '{self.alert_data.get('sales_area')}' = ANY(sales_area)"""
         ro_users_data = await hpcl_ceg_model.Users.get_aggr_data(query,limit=0)
@@ -654,7 +655,7 @@ class SendNotification:
             for rec in ro_users_data['data']:
                 if rec.get('email'):
                     mail_recipients.append(rec['email'])
-        
+        mail_recipients.append(dealer_mail)
         print('*'*200)
         print(mail_recipients)
         print('*'*200)
