@@ -1754,6 +1754,9 @@
                     "name": "unblock_outlet"
                 },
                 {
+                    "name": "block_ro"
+                },
+                {
                     "name": "get_dried_out_ro_data"
                 },
                 {
@@ -1977,6 +1980,9 @@
                 },
                 {
                     "name": "unblock_outlet"
+                },
+                {
+                    "name": "block_ro"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -8171,6 +8177,10 @@
         {
             "name": "unblock_outlet",
             "displayName": "unblock_outlet"
+        },
+        {
+            "name": "block_ro",
+            "displayName": "block_ro"
         },
         {
             "name": "get_dried_out_ro_data",

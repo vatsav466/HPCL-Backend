@@ -2787,6 +2787,15 @@ class Indentdryout_Unblock_OutletParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Indentdryout_Block_RoParams(pydantic.BaseModel):
+    ro_code: str
+    remarks_blocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Indentdryout_Get_Dried_Out_Ro_DataParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
 
