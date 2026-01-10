@@ -1232,10 +1232,11 @@ async def indentdryout_get_delivery_confirmation_direct_sales(data: Indentdryout
 # Action block_outlet
 @router.post('/block_outlet', tags=['IndentDryOut'])
 async def indentdryout_block_outlet(
-    block_id: str = fastapi.Form(...),
-    remarks_blocked: str | None = fastapi.Form(None),
-    upload_file: fastapi.UploadFile | None = fastapi.File(None)
+    payload: Indentdryout_Block_OutletParams
 ):
+    block_id = payload.block_id
+    remarks_blocked = payload.remarks_blocked
+    upload_file = None
     try:
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
@@ -1335,11 +1336,10 @@ async def indentdryout_block_outlet(
 
 # Action unblock_outlet
 @router.post('/unblock_outlet', tags=['IndentDryOut'])
-async def indentdryout_unblock_outlet(
-    unblock_id: str = fastapi.Form(...),
-    remarks_unblocked: str | None = fastapi.Form(None),
-    upload_file: fastapi.UploadFile | None = fastapi.File(None)
-):
+async def indentdryout_unblock_outlet(payload: Indentdryout_Unblock_OutletParams):
+    unblock_id = payload.unblock_id
+    remarks_unblocked = payload.remarks_unblocked
+    upload_file = None
     try:
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
