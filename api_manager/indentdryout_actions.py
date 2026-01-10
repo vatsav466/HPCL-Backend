@@ -14,6 +14,8 @@ import polars as pl
 import requests
 import traceback
 import dateutil.parser as parser
+import utilities.helpers as helpers
+import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.alerting.alert_helper as alert_helper
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
@@ -1439,3 +1441,56 @@ async def indentdryout_unblock_outlet(payload: Indentdryout_Unblock_OutletParams
         print(traceback.format_exc())
         logger.exception("Unhandled error during outlet unblock")
         return {"status": False, "message": "Failed to unblock the outlet"}
+
+
+# Action block_ro
+@router.post('/block_ro', tags=['IndentDryOut'])
+async def indentdryout_block_ro(data: Indentdryout_Block_RoParams):
+    print('*'*200)
+    print(data.ro_code)
+    print(data.remarks_blocked)
+    print('*'*200)
+    query = f"""select * from location_master where sap_id='{data.ro_code}'"""
+    location_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+    if not location_data['data']:
+        return {"status": False, "message": "RO Not Available in Location Master"}
+    
+    try:
+        location_data_ = location_data['data'][0]
+        allocated_time = datetime.datetime.now(datetime.timezone.utc)
+        processed_time = datetime.datetime.now(datetime.timezone.utc)
+        alert_history = [{
+            "action_msg" : (
+                f"Violation Type: Restroom Cleaning Evidence Missing \n"
+                f"for Outlet: {location_data_.get('name','')}"
+            ),
+            "action_type": "Created",
+            "alert_status": "Open",
+            "allocated_time": allocated_time.isoformat(),
+            "processed_time": processed_time.isoformat()
+        }]
+        alert_data = {
+            "bu": "RO",
+            "severity": "High",
+            "sop_id": "SOP023",
+            "alert_history": alert_history,
+            "alert_section": "RO",
+            "violation_type": "Restroom Cleaning Evidence Missing",
+            "interlock_name": "Restroom Cleaning Evidence Missing",
+            "sap_id": location_data_.get('sap_id',''),
+            "location_name": location_data_.get('name',''),
+            "zone": location_data_.get('zone',''),
+            "region": location_data_.get('region',''),
+            "sales_area": location_data_.get('sales_area',''),
+            "block_status": None
+        }
+        # need to trigger camunda workflow 
+        camunda_url = await helpers.get_camunda_url("RO",location_data_.get('sap_id'),alert_section='RO')
+        print('*'*200)
+        print('alert_data',alert_data)
+        print('*'*200)
+        await alert_factory.AlertFactory().create_alert(alert_data, camunda_url)
+        return {"status": True, "message": "RO has been successfully blocked"}
+    except Exception as e:
+        print(traceback.format_exc())
+        return {"status": False, "message": "Failed To Block The RO"}
