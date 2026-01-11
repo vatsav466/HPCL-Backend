@@ -114,7 +114,7 @@ class ROVaAlertHandler(object):
             if resolve_ids:
                 ids = ",".join(f"'{i}'" for i in resolve_ids)
                 await hpcl_ceg_model.Alerts.update_by_query(
-                    f"UPDATE alerts SET alert_status='Close', alert_state = 'Resolved' WHERE id IN ({ids})"
+                    f"UPDATE alerts SET alert_state = 'Resolved' WHERE id IN ({ids})"
                 )
 
     @classmethod
@@ -150,5 +150,5 @@ class ROVaAlertHandler(object):
             if resolve_ids:
                 ids = ",".join(f"'{i}'" for i in resolve_ids)
                 await hpcl_ceg_model.Alerts.update_by_query(
-                    f"UPDATE alerts SET alert_status='Close', alert_state = 'Resolved' WHERE id IN ({ids})"
+                    f"UPDATE alerts SET alert_state = 'Resolved' WHERE id IN ({ids})"
                 )
