@@ -42,6 +42,7 @@ async def get_vts_tas_blocked_counts():
     tas_query = f"""SELECT
                         COUNT(*) FILTER (WHERE alert_section='VTS'
                                         AND bu='TAS'
+                                        AND interlock_name != 'Itdg Admin Blocked'
                                         AND {date_filter})
                             AS "TTs_Blocked_by_Novex_TAS",
 
@@ -49,12 +50,14 @@ async def get_vts_tas_blocked_counts():
                                         AND bu='TAS'
                                         AND {date_filter}
                                         AND mark_as_false = 'true'
+                                        AND interlock_name != 'Itdg Admin Blocked'
                                         AND vehicle_unblocked_date IS NOT NULL)
                             AS "TTs_Manually_Unblocked_TAS",
 
                         COUNT(*) FILTER (WHERE alert_section='VTS'
                                         AND bu='TAS'
                                         AND {date_filter}
+                                        AND interlock_name != 'Itdg Admin Blocked'
                                         AND vehicle_unblocked_date IS NULL)
                             AS "TTs_currently_under_Block_TAS",
 
@@ -62,6 +65,7 @@ async def get_vts_tas_blocked_counts():
                                         AND bu='TAS'
                                         AND {date_filter}
                                         AND mark_as_false = 'false'
+                                        AND interlock_name != 'Itdg Admin Blocked'
                                         AND vehicle_unblocked_date IS NOT NULL)
                             AS "TTs_Auto_Unblocked_TAS"
 

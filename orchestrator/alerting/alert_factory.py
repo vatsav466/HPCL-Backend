@@ -128,7 +128,7 @@ class AlertFactory:
             # assign roles for emlock and ro alerts
             if alert_data.get("alert_section", bu) == 'EMLock':
                 assigned_user_roles = ["Planning Officer SOD"]
-            elif alert_data.get("alert_section", bu) == 'RO' and interlock_name != 'Dry Out Each Indent Wise MainFlow':
+            elif alert_data.get("alert_section", bu) == 'RO' and interlock_name not in ['Dry Out Each Indent Wise MainFlow','Restroom Cleaning Evidence Missing']:
                 assigned_user_roles = ["RO Dealer"]
             else:
                 assigned_user_roles = []
@@ -200,7 +200,7 @@ class AlertFactory:
                                                         'workflow_url': alert_data.get('workflow_url', ''),
                                                         'workflow_port': alert_data.get('workflow_port', ''),
                                                         'vts_alert_history_ids': alert_data.get('vts_alert_history_ids',[]),
-                                                        'block_status': alert_data.get('block_status','WaitingForBlockAck'),
+                                                        'block_status': alert_data.get('block_status',None),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -214,7 +214,7 @@ class AlertFactory:
                 alert_level = await va_analysis.get_lpg_levels(
                     bu=base_data['bu'], violation_type=alert_data.get('violation_type',''), sap_id=str(base_data['sap_id'])
                 )
-            elif alert_data.get("alert_section", '') == "RO":
+            elif alert_data.get("alert_section", '') == "RO" and alert_data.get("interlock_name","") not in ["Restroom Cleaning Evidence Missing"]:
                 alert_level = await ro_analysis.get_ro_levels(
                     bu=base_data['bu'], violation_type=alert_data.get('violation_type', ''),
                     sap_id=str(base_data['sap_id'])
@@ -313,7 +313,7 @@ class AlertFactory:
 
                 if alert_data_dict.get("alert_section") in ["VA"] and alert_data_dict.get("bu") in ["RO"]:
                     return True, "alert created"
-                if alert_data_dict.get("alert_section") in ["RO"] and interlock_name.get("interlock_name") != 'Dry Out Each Indent Wise MainFlow':
+                if alert_data_dict.get("alert_section") in ["RO"] and interlock_name.get("interlock_name") not in ['Dry Out Each Indent Wise MainFlow','Restroom Cleaning Evidence Missing']:
                     # print(f"alert skipped: {alert_data_dict}")
                     if return_data:
                         return True, alert_data_dict

@@ -34,8 +34,9 @@ class RoInterlockHandler:
         auth_encoded = base64.b64encode(auth_string.encode()).decode()
 
         headers = {
-            "Authorization": f"Basic {auth_encoded}",
-            "Content-Type": "application/json"
+            "Authorization": f"{auth_encoded}",
+            "Content-Type": "application/json",
+            "Vendor": "Novex"
         }
 
         return base_url, headers
@@ -64,7 +65,7 @@ class RoInterlockHandler:
                 timeout=30
             )
 
-            if response.status_code != requests.codes.ok:
+            if int(response.status_code // 100) != 2:
                 logger.error(
                     "CRIS Interlock API failed. Status=%s Response=%s",
                     response.status_code,
@@ -74,8 +75,10 @@ class RoInterlockHandler:
                     f"Request failed with status {response.status_code}",
                     response.text
                 )
-
-            return True, response.json()
+            resp = response.json()
+            if not isinstance(resp, list):
+                return False, f"Request failed with message {resp}"
+            return True, resp
 
         except Exception as exc:
             logger.exception("Error calling CRIS Interlock API")

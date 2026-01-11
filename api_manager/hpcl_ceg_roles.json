@@ -1748,6 +1748,15 @@
                     "name": "get_delivery_confirmation_direct_sales"
                 },
                 {
+                    "name": "block_outlet"
+                },
+                {
+                    "name": "unblock_outlet"
+                },
+                {
+                    "name": "block_ro"
+                },
+                {
                     "name": "get_dried_out_ro_data"
                 },
                 {
@@ -1965,6 +1974,15 @@
                 },
                 {
                     "name": "get_delivery_confirmation_direct_sales"
+                },
+                {
+                    "name": "block_outlet"
+                },
+                {
+                    "name": "unblock_outlet"
+                },
+                {
+                    "name": "block_ro"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -8151,6 +8169,18 @@
         {
             "name": "get_delivery_confirmation_direct_sales",
             "displayName": "get_delivery_confirmation_direct_sales"
+        },
+        {
+            "name": "block_outlet",
+            "displayName": "block_outlet"
+        },
+        {
+            "name": "unblock_outlet",
+            "displayName": "unblock_outlet"
+        },
+        {
+            "name": "block_ro",
+            "displayName": "block_ro"
         },
         {
             "name": "get_dried_out_ro_data",
