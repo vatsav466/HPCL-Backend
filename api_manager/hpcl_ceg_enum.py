@@ -178,6 +178,7 @@ class AlertActionType(str, enum.Enum):
     BlockFailed = 'BlockFailed'
     UnblockFailed = 'UnblockFailed'
     OngoingTrip = 'OngoingTrip'
+    Remarks = 'Remarks'
 
 
 

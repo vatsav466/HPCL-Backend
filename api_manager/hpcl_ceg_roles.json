@@ -1061,6 +1061,9 @@
                     "name": "get_performance_index"
                 },
                 {
+                    "name": "get_rca_reason"
+                },
+                {
                     "name": "upload_document"
                 },
                 {
@@ -1130,6 +1133,9 @@
                     "name": "get_performance_index"
                 },
                 {
+                    "name": "get_rca_reason"
+                },
+                {
                     "name": "get_frequent_dryout_ro"
                 },
                 {
@@ -1176,6 +1182,9 @@
                 },
                 {
                     "name": "get_performance_index"
+                },
+                {
+                    "name": "get_rca_reason"
                 },
                 {
                     "name": "upload_document"
@@ -7969,6 +7978,10 @@
         {
             "name": "get_performance_index",
             "displayName": "get_performance_index"
+        },
+        {
+            "name": "get_rca_reason",
+            "displayName": "get_rca_reason"
         },
         {
             "name": "upload_document",

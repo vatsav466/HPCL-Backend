@@ -1145,3 +1145,54 @@ async def alerts_hqo_blocked_vehicles(data: Alerts_Hqo_Blocked_VehiclesParams):
         data.start_date,
         data.end_date
     )
+
+
+# Action get_rca_reason
+@router.post('/get_rca_reason', tags=['Alerts'])
+async def alerts_get_rca_reason(data: Alerts_Get_Rca_ReasonParams):
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        alert_id = data.alert_id
+        reason = data.reason
+        query = f"""select * from alerts where id='{alert_id}'"""
+        resp = await Alerts.get_aggr_data(query, limit=1)
+        if not resp['data']:
+            return {
+                "status": True,
+                "message": "Alert Not Found"
+            }
+        now_utc = urdhva_base.utilities.get_present_time(utc=True)
+        ist_time = now_utc.astimezone(pytz.timezone("Asia/Kolkata"))
+
+        alert = resp['data'][0]
+        existing_rca = alert['rca']
+
+        new_entry = (
+            f"{reason} initiated by {rpt.get('username','')} "
+            f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+        )
+
+        if existing_rca:
+            rca = f"{existing_rca}\n{new_entry}"
+        else:
+            rca = new_entry
+
+        alert["action_msg"] = new_entry
+        alert["action_type"] = "Remarks"
+        await alert_manager.AlertAction.update_alert_history(input_data=alert, alert_data=alert)
+
+        await Alerts(**{"id": alert_id,
+                        "rca": rca}).modify()
+        
+        return {
+            "status": True,
+            "message": "Remarks updated successfully"
+        }
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed to update remarks",
+            "error": str(e)
+        }

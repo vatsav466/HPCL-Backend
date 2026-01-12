@@ -1836,6 +1836,15 @@ class Alerts_Get_Performance_IndexParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Alerts_Get_Rca_ReasonParams(pydantic.BaseModel):
+    alert_id: str
+    reason: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Alerts_Upload_DocumentParams(pydantic.BaseModel):
     pass
 
