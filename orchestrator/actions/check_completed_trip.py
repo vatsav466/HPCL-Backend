@@ -42,7 +42,16 @@ class CheckCompletedTrip:
                 timeout=30,
             )
             response.raise_for_status()
-            response_data = response.json()
+            
+            try:
+              response_data = response.json()
+            except Exception:
+                logger.info(f"No trip for {truck_number}")
+                return True, {"tripCompleted": False}
+            
+            if not isinstance(response_data, dict):
+                logger.info(f"No trip for {truck_number}: {response_data}")
+                return True, {"tripCompleted": False}
 
             logger.info(f"VTS truck status response: {response_data}")
 
