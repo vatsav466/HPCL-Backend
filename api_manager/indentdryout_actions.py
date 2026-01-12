@@ -1,6 +1,6 @@
+import urdhva_base
 import pandas as pd
 import hpcl_ceg_model
-import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import re
@@ -12,7 +12,10 @@ import datetime
 import api_helpers
 import polars as pl
 import requests
+import traceback
 import dateutil.parser as parser
+import utilities.helpers as helpers
+import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.alerting.alert_helper as alert_helper
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
@@ -1231,12 +1234,12 @@ async def indentdryout_get_delivery_confirmation_direct_sales(data: Indentdryout
 # Action block_outlet
 @router.post('/block_outlet', tags=['IndentDryOut'])
 async def indentdryout_block_outlet(
-    block_id: str = fastapi.Form(...),
-    remarks_blocked: str | None = fastapi.Form(None),
-    upload_file: fastapi.UploadFile | None = fastapi.File(None)
+    payload: Indentdryout_Block_OutletParams
 ):
+    block_id = payload.block_id
+    remarks_blocked = payload.remarks_blocked
+    upload_file = None
     try:
-      
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
             return {"status": False, "message": "Session got expired, Please Re-Login"}
@@ -1312,11 +1315,11 @@ async def indentdryout_block_outlet(
         alert_history.append({
             "action_msg": (
                 f"Block Initiated For Outlet {alert_record.get('sap_id')} "
-                f"initiated by {rpt['username']} "
+                f"initiated by {rpt.get('username','')} "
                 f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
             ),
-            "action_type": "WaitingForBlockAck",
-            "action_by": rpt['username'],
+            "action_type": "Blocked",
+            "action_by": rpt.get('username',''),
             "processed_time": event_time_utc.isoformat()
         })
 
@@ -1330,15 +1333,15 @@ async def indentdryout_block_outlet(
         return {"status": True, "message": "Outlet has been successfully blocked"}
 
     except Exception:
+        print(traceback.format_exc())
         return {"status": False, "message": "Failed to block the Outlet"}
 
 # Action unblock_outlet
 @router.post('/unblock_outlet', tags=['IndentDryOut'])
-async def indentdryout_unblock_outlet(
-    unblock_id: str = fastapi.Form(...),
-    remarks_unblocked: str | None = fastapi.Form(None),
-    upload_file: fastapi.UploadFile | None = fastapi.File(None)
-):
+async def indentdryout_unblock_outlet(payload: Indentdryout_Unblock_OutletParams):
+    unblock_id = payload.unblock_id
+    remarks_unblocked = payload.remarks_unblocked
+    upload_file = None
     try:
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
@@ -1417,11 +1420,11 @@ async def indentdryout_unblock_outlet(
         alert_history.append({
             "action_msg": (
                 f"Unblock for Outlet {alert_record.get('sap_id')} "
-                f"initiated by {rpt['username']} "
+                f"initiated by {rpt.get('username','')} "
                 f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
             ),
-            "action_type": "WaitingForUnBlockAck",
-            "action_by": rpt['username'],
+            "action_type": "UnBlocked",
+            "action_by": rpt.get('username',''),
             "processed_time": event_time_utc.isoformat()
         })
 
@@ -1435,5 +1438,59 @@ async def indentdryout_unblock_outlet(
         return {"status": True, "message": "Outlet has been successfully unblocked"}
 
     except Exception:
+        print(traceback.format_exc())
         logger.exception("Unhandled error during outlet unblock")
         return {"status": False, "message": "Failed to unblock the outlet"}
+
+
+# Action block_ro
+@router.post('/block_ro', tags=['IndentDryOut'])
+async def indentdryout_block_ro(data: Indentdryout_Block_RoParams):
+    print('*'*200)
+    print(data.ro_code)
+    print(data.remarks_blocked)
+    print('*'*200)
+    query = f"""select * from location_master where sap_id='{data.ro_code}'"""
+    location_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+    if not location_data['data']:
+        return {"status": False, "message": "RO Not Available in Location Master"}
+    
+    try:
+        location_data_ = location_data['data'][0]
+        allocated_time = datetime.datetime.now(datetime.timezone.utc)
+        processed_time = datetime.datetime.now(datetime.timezone.utc)
+        alert_history = [{
+            "action_msg" : (
+                f"Violation Type: Restroom Cleaning Evidence Missing \n"
+                f"for Outlet: {location_data_.get('name','')}"
+            ),
+            "action_type": "Created",
+            "alert_status": "Open",
+            "allocated_time": allocated_time.isoformat(),
+            "processed_time": processed_time.isoformat()
+        }]
+        alert_data = {
+            "bu": "RO",
+            "severity": "High",
+            "sop_id": "SOP023",
+            "alert_history": alert_history,
+            "alert_section": "RO",
+            "violation_type": "Restroom Cleaning Evidence Missing",
+            "interlock_name": "Restroom Cleaning Evidence Missing",
+            "sap_id": location_data_.get('sap_id',''),
+            "location_name": location_data_.get('name',''),
+            "zone": location_data_.get('zone',''),
+            "region": location_data_.get('region',''),
+            "sales_area": location_data_.get('sales_area',''),
+            "block_status": None
+        }
+        # need to trigger camunda workflow 
+        camunda_url = await helpers.get_camunda_url("RO",location_data_.get('sap_id'),alert_section='RO')
+        print('*'*200)
+        print('alert_data',alert_data)
+        print('*'*200)
+        await alert_factory.AlertFactory().create_alert(alert_data, camunda_url)
+        return {"status": True, "message": "RO has been successfully blocked"}
+    except Exception as e:
+        print(traceback.format_exc())
+        return {"status": False, "message": "Failed To Block The RO"}

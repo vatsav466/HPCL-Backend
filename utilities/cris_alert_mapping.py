@@ -209,6 +209,41 @@ Cris_Alert_Mapping = {
                     "disabling_hrs": "144"
                 }
             }
+        },
+        "Restroom Cleaning Evidence Missing": {
+            "name": "Restroom Cleaning Evidence Missing",
+            "sop_id": "SOP023",
+            "severity": "High",
+            "period": "monthly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 3,
+                    "0": "Sales Officer RO",
+                    "1": "Sales Officer RO",
+                    "2": "Sales Officer RO",
+                    "escalation_time": "P2D",
+                    "disabling_hrs": "48"
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 7,
+                    "0": "Sales Officer RO",
+                    "1": "Sales Officer RO",
+                    "2": "Sales Officer RO",
+                    "escalation_time": "P2D",
+                    "disabling_hrs": "48"
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 7,
+                    "0": "Sales Officer RO",
+                    "1": "Sales Officer RO",
+                    "2": "Sales Officer RO",
+                    "escalation_time": "P6D",
+                    "disabling_hrs": "144"
+                }
+            }
         }
     }
 }

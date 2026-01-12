@@ -1302,6 +1302,11 @@ Model IndentDryOut {
         remarks_unblocked str
     }
 
+    Action=> block_ro {
+        ro_code str
+        remarks_blocked str
+    }
+
     Action=> get_dried_out_ro_data {
         filters list IndentDryOutDataFilters
     }
