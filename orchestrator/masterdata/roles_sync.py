@@ -723,7 +723,6 @@ async def sync_user_roles():
                     {
                         "title": "Video Analytics"
                     },
-                    ,
                     {
                         "title": "TAS Governance"
                     }
