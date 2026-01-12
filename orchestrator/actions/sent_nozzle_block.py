@@ -101,6 +101,7 @@ class SendNozzleCommand:
             alert_data["action_type"] = "UnBlocked"
             await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
             await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                                           "ro_offline": False,
                                            "block_status": hpcl_ceg_enum.BlockStatus.UnBlocked}).modify()
             return True, {"unblocked": True}
             
