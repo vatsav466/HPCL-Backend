@@ -181,6 +181,7 @@ class AlertActionType(str, enum.Enum):
     BlockInitiated = 'BlockInitiated'
     UnBlockInitiated = 'UnBlockInitiated'
     Remarks = 'Remarks'
+    Offline = 'Offline'
 
 
 

@@ -126,6 +126,7 @@ Enum AlertActionType str {
     BlockInitiated='BlockInitiated'
     UnBlockInitiated='UnBlockInitiated'
     Remarks='Remarks'
+    Offline='Offline'
 }
 
 Enum IndentStatus str {
