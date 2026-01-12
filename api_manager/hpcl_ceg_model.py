@@ -1845,6 +1845,14 @@ class Alerts_Add_Rca_ReasonParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Alerts_Day_End_ClosureParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Alerts_Upload_DocumentParams(pydantic.BaseModel):
     pass
 

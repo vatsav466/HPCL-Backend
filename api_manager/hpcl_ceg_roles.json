@@ -1064,6 +1064,9 @@
                     "name": "add_rca_reason"
                 },
                 {
+                    "name": "day_end_closure"
+                },
+                {
                     "name": "upload_document"
                 },
                 {
@@ -1182,6 +1185,9 @@
                 },
                 {
                     "name": "add_rca_reason"
+                },
+                {
+                    "name": "day_end_closure"
                 },
                 {
                     "name": "upload_document"
@@ -7979,6 +7985,10 @@
         {
             "name": "add_rca_reason",
             "displayName": "add_rca_reason"
+        },
+        {
+            "name": "day_end_closure",
+            "displayName": "day_end_closure"
         },
         {
             "name": "upload_document",
