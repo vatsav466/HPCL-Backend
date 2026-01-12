@@ -26,6 +26,7 @@ import orchestrator.actions.check_violation_count as check_violation_count
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
 from orchestrator.hqo_blocked import get_blocked_trucks_service
 from orchestrator.gen_ai.vts_nlp.core_functions import process_vts_query
+import orchestrator.analytics.ro_analysis as ro_analysis
 
 router = fastapi.APIRouter(prefix='/alerts')
 
@@ -1190,6 +1191,25 @@ async def alerts_add_rca_reason(data: Alerts_Add_Rca_ReasonParams):
             "status": True,
             "message": "Remarks updated successfully"
         }
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed to update remarks",
+            "error": str(e)
+        }
+
+
+# Action day_end_closure
+@router.post('/day_end_closure', tags=['Alerts'])
+async def alerts_day_end_closure(data: Alerts_Day_End_ClosureParams):
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        
+        await ro_analysis.close_ro_va_cleanliness_unblock_of_blocked()
+        await ro_analysis.close_ro_va_cleanliness_open_alerts()
+        
     except Exception as e:
         return {
             "status": False,
