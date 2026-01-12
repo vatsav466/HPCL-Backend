@@ -1,6 +1,7 @@
 import urdhva_base
 import traceback
 import hpcl_ceg_model
+import hpcl_ceg_enum
 import requests
 import orchestrator.alerting.alert_manager as alert_manager
 from datetime import datetime, timedelta
@@ -32,6 +33,7 @@ class CheckCompletedTrip:
 
             truck_number = alert_data.get("vehicle_number", "")
             alert_history = alert_data.get("alert_history", [])
+            id = alert_data.get("id", "")
 
             response = requests.post(
                 urdhva_base.settings.vts_truck_status_url,
@@ -65,6 +67,8 @@ class CheckCompletedTrip:
                 )
                 alert_data["action_type"] = "OngoingTrip"
 
+                await hpcl_ceg_model.Alerts(**{"id": id, 
+                                               "block_status":hpcl_ceg_enum.BlockStatus.OnGoingTrip}).modify()
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                 return True, {"tripCompleted": False}
             
