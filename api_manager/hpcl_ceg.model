@@ -124,6 +124,7 @@ Enum AlertActionType str {
     UnblockFailed='UnblockFailed'
     OngoingTrip='OngoingTrip'
     Remarks='Remarks'
+    Offline='Offline'
 }
 
 Enum IndentStatus str {
