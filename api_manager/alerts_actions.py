@@ -1216,3 +1216,55 @@ async def alerts_day_end_closure(data: Alerts_Day_End_ClosureParams):
             "message": "Failed to update remarks",
             "error": str(e)
         }
+
+
+# Action va_cleanliness_summary
+@router.post('/va_cleanliness_summary', tags=['Alerts'])
+async def alerts_va_cleanliness_summary(data: Alerts_Va_Cleanliness_SummaryParams):
+    query_extension = []
+    has_date = False
+    for extension in data.cross_filters:
+        query_extension.append(f"{extension.key}='{extension.value if extension.value else extension.val}'")
+        if extension.key == 'created_at':
+            has_date = True
+    if not has_date:
+        query_extension.append(f"created_at::DATE=CURRENT_DATE")
+    analytical_data = {
+          "total": 0,
+          "blocked": 0,
+          "unblocked": 0,
+          "waiting_block_confirmation": 0,
+          "waiting_sales_stop_confirmation": 0,
+          "waiting_unblock_confirmation": 0,
+          "waiting_sales_resume_confirmation": 0,
+          "manually_unblocked": 0,
+          "automatically_unblocked": 0
+    }
+
+    # Query to get all required for the requested time period
+    query = f"""select distinct block_status, alert_status, alert_state, COUNT(*) from alerts 
+    where interlock_name='Restroom Cleaning Evidence Missing' AND {' AND '.join(query_extension)} 
+    group by block_status, alert_status, alert_state
+"""
+    query_data = await Alerts.get_aggr_data(query)
+    """{'data': [{'block_status': None, 'alert_status': 'Close', 'alert_state': 'Resolved', 'count': 3}, 
+    {'block_status': None, 'alert_status': 'Open', 'alert_state': 'InProgress', 'count': 100}], 'count': 2, 'total': 2}"""
+    resp = query_data['data']
+    analytical_data['total'] = sum([rec['count'] for rec in resp])
+    analytical_data['blocked'] = sum([rec['count'] for rec in resp
+                                      if rec['block_status'] == 'Blocked'])
+    analytical_data['unblocked'] = sum([rec['count'] for rec in resp
+                                        if rec['block_status'] == 'UnBlocked'])
+    analytical_data['waiting_block_confirmation'] = 0
+    analytical_data['waiting_sales_stop_confirmation'] = sum([rec['count'] for rec in resp
+                                                              if rec['block_status'] == 'Blocked'])
+    analytical_data['waiting_unblock_confirmation'] = 0
+    analytical_data['waiting_sales_resume_confirmation'] = sum([rec['count'] for rec in resp
+                                                                if rec['block_status'] == 'UnBlocked'])
+    analytical_data['manually_unblocked'] = sum([rec['count'] for rec in resp
+                                                 if rec['block_status'] == 'UnBlocked' and
+                                                 rec['alert_state'] == 'Resolved'])
+    analytical_data['automatically_unblocked'] = sum([rec['count'] for rec in resp
+                                                      if rec['block_status'] == 'UnBlocked' and
+                                                      rec['alert_state'] != 'Resolved'])
+    return True, alerts_va_cleanliness_summary

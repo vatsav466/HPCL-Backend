@@ -220,6 +220,22 @@ class IndentStatus(str, enum.Enum):
 
 
 
+class AlertActionState(str, enum.Enum):
+    CreatedAt = 'CreatedAt'
+    ClosedAt = 'ClosedAt'
+    BlockInitiated = 'BlockInitiated'
+    UnBlockInitiated = 'UnBlockInitiated'
+    Blocked = 'Blocked'
+    UnBlocked = 'Unblocked'
+    BlockAck = 'BlockAck'
+    UnblockAck = 'UnblockAck'
+
+
+
+
+
+
+
 class TasLogAction(str, enum.Enum):
     GantryShutdown = 'GantryShutdown'
     ESDShutdown = 'ESDShutdown'

@@ -1116,6 +1116,9 @@
                 },
                 {
                     "name": "hqo_blocked_vehicles"
+                },
+                {
+                    "name": "va_cleanliness_summary"
                 }
             ]
         },
@@ -1239,6 +1242,9 @@
                 },
                 {
                     "name": "hqo_blocked_vehicles"
+                },
+                {
+                    "name": "va_cleanliness_summary"
                 }
             ]
         },
@@ -8057,6 +8063,10 @@
         {
             "name": "hqo_blocked_vehicles",
             "displayName": "hqo_blocked_vehicles"
+        },
+        {
+            "name": "va_cleanliness_summary",
+            "displayName": "va_cleanliness_summary"
         },
         {
             "name": "tas_analytics",
