@@ -445,12 +445,12 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
 
         alert_history = [{
             "action_msg" : (
-                f"Manual block for truck {data.truck_number} initiated by "
-                f"{rpt['username']} from "
+                f"Manual block for truck {data.truck_number} initiated by OCC Team "
+                f"({rpt['username']}) from "
                 f"{start_date_ist.strftime('%d-%m-%Y %I:%M:%S %p')} to "
                 f"{end_date_ist.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
             ),
-            "action_type": "Blocked",
+            "action_type": "BlockInitiated",
             "action_by" : rpt['username'],
             "processed_time" : start_date_utc.isoformat()
         }]
@@ -594,10 +594,10 @@ async def alerts_unblock_vts_truck(
         alert_history.append({
             "action_msg": (
                 f"Manual unblock for truck {alert_record.get('vehicle_number')} "
-                f"initiated by {rpt['username']} "
+                f"initiated by OCC Team ({rpt['username']}) "
                 f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
             ),
-            "action_type": "UnBlocked",
+            "action_type": "UnBlockInitiated",
             "action_by": rpt['username'],
             "processed_time": event_time_utc.isoformat()
         })
