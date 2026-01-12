@@ -1224,9 +1224,10 @@ async def alerts_va_cleanliness_summary(data: Alerts_Va_Cleanliness_SummaryParam
     query_extension = []
     has_date = False
     for extension in data.cross_filters:
-        query_extension.append(f"{extension.key}='{extension.value if extension.value else extension.val}'")
         if extension.key == 'created_at':
             has_date = True
+            extension.key = "created_at::DATE"
+        query_extension.append(f"{extension.key}='{extension.value if extension.value else extension.val}'")
     if not has_date:
         query_extension.append(f"created_at::DATE=CURRENT_DATE")
     analytical_data = {
@@ -1247,8 +1248,6 @@ async def alerts_va_cleanliness_summary(data: Alerts_Va_Cleanliness_SummaryParam
     group by block_status, alert_status, alert_state
 """
     query_data = await Alerts.get_aggr_data(query)
-    """{'data': [{'block_status': None, 'alert_status': 'Close', 'alert_state': 'Resolved', 'count': 3}, 
-    {'block_status': None, 'alert_status': 'Open', 'alert_state': 'InProgress', 'count': 100}], 'count': 2, 'total': 2}"""
     resp = query_data['data']
     analytical_data['total'] = sum([rec['count'] for rec in resp])
     analytical_data['blocked'] = sum([rec['count'] for rec in resp
@@ -1267,4 +1266,4 @@ async def alerts_va_cleanliness_summary(data: Alerts_Va_Cleanliness_SummaryParam
     analytical_data['automatically_unblocked'] = sum([rec['count'] for rec in resp
                                                       if rec['block_status'] == 'UnBlocked' and
                                                       rec['alert_state'] != 'Resolved'])
-    return True, alerts_va_cleanliness_summary
+    return True, analytical_data
