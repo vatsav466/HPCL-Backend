@@ -1836,7 +1836,7 @@ class Alerts_Get_Performance_IndexParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
-class Alerts_Get_Rca_ReasonParams(pydantic.BaseModel):
+class Alerts_Add_Rca_ReasonParams(pydantic.BaseModel):
     alert_id: str
     reason: str
 

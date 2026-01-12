@@ -1147,9 +1147,9 @@ async def alerts_hqo_blocked_vehicles(data: Alerts_Hqo_Blocked_VehiclesParams):
     )
 
 
-# Action get_rca_reason
-@router.post('/get_rca_reason', tags=['Alerts'])
-async def alerts_get_rca_reason(data: Alerts_Get_Rca_ReasonParams):
+# Action add_rca_reason
+@router.post('/add_rca_reason', tags=['Alerts'])
+async def alerts_add_rca_reason(data: Alerts_Add_Rca_ReasonParams):
     try:
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:

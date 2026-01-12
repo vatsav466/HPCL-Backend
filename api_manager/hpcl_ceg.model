@@ -872,6 +872,11 @@ Model Alerts {
         reason str
     }
 
+    Action=> add_rca_reason {
+        alert_id str
+        reason str
+    }
+
     Action=> upload_document {
     }
 
