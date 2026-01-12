@@ -1115,7 +1115,6 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     rca_reason: typing.Optional[str] = pydantic.Field("", **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
     employee_id: typing.Optional[str] = pydantic.Field("", **{})
-    employee_id: typing.Optional[str] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     doc_link: typing.Optional[str] = pydantic.Field("", **{})
     atr_uploaded: typing.Optional[bool] = pydantic.Field(False, )
@@ -1475,6 +1474,12 @@ class VtsManualBlockedGetResp(pydantic.BaseModel):
     data: typing.List[VtsManualBlocked]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class AlertStateTimingCreate(pydantic.BaseModel):
+    action: hpcl_ceg_enum.AlertActionState
+    action_by: typing.Optional[str] = pydantic.Field("", **{})
+    acted_at: datetime.datetime
 
 
 class AlertsSchema(UrdhvaPostgresBase):
@@ -2001,6 +2006,14 @@ class Alerts_Hqo_Blocked_VehiclesParams(pydantic.BaseModel):
     alert_status: str
     start_date: typing.Optional[str] = pydantic.Field("", **{})
     end_date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Va_Cleanliness_SummaryParams(pydantic.BaseModel):
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -10126,6 +10139,7 @@ class ViolationHistoryVtsSchema(UrdhvaPostgresBase):
     city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("alert_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    alert_state_timing: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("alert_state_timing", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
     last_sms_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_sms_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     last_mailed_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_mailed_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     last_escalated_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_escalated_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -10173,6 +10187,7 @@ class ViolationHistoryVtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     city: typing.Optional[str] = pydantic.Field("", **{})
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
     alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
+    alert_state_timing: typing.Optional[typing.List[AlertStateTimingCreate]] | None = None
     last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     last_escalated_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -10227,6 +10242,7 @@ class ViolationHistoryVts(urdhva_base.postgresmodel.PostgresModel):
     city: typing.Optional[str] = pydantic.Field("", **{})
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
     alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
+    alert_state_timing: typing.Optional[typing.List[AlertStateTimingCreate]] | None = None
     last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     last_escalated_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})

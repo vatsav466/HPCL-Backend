@@ -152,6 +152,22 @@ Enum IndentStatus str {
     NotAvailable='NotAvailable'
 }
 
+Enum AlertActionState str {
+    CreatedAt='CreatedAt'
+    ClosedAt='ClosedAt'
+
+    // FOR VTS and RO
+    BlockInitiated='BlockInitiated'
+    UnBlockInitiated='UnBlockInitiated'
+    Blocked='Blocked'
+    UnBlocked='Unblocked'
+    BlockAck='BlockAck'
+    UnblockAck='UnblockAck'
+
+    // FOR SupplyChain / DryOut
+
+}
+
 Model RoleMapper internal {
      menu_name str
      allowed_sub_menus optional list str
@@ -592,7 +608,7 @@ Model Alert_History internal {
     action_msg str
     rca_reason optional str
     category optional str
-    employee_id optional stremployee_id optional str
+    employee_id optional str
     remarks optional str
     doc_link optional str
     atr_uploaded optional bool
@@ -727,6 +743,12 @@ Model VtsManualBlocked {
     file_uploaded_path optional str   
 }
 
+Model AlertStateTiming internal {
+    action AlertActionState
+    action_by optional str
+    acted_at datetime
+}
+
 Model Alerts {
     bu optional index_field BusinessUnit
     sap_id index_field str
@@ -835,7 +857,7 @@ Model Alerts {
     action_on optional MakerChecker
     remarks_unblocked optional str
     file_uploaded_path optional str
-    block_status optional BlockStatus
+    block_status optional index_field BlockStatus
 
     Action=> alert_action {
         bu optional str
@@ -957,7 +979,11 @@ Model Alerts {
         start_date optional str
         end_date optional str
     }
-    
+
+    Action=> va_cleanliness_summary {
+        cross_filters optional list WidgetFilters
+    }
+
     Config=> {
         crud_operations='read'
         // Access Key Mapping for RBAC,
@@ -3679,6 +3705,7 @@ Model ViolationHistoryVts {
 
     // Notification Details
     alert_history optional list Alert_History
+    alert_state_timing optional list AlertStateTiming // All timings to be save here for UI user experience
     last_sms_to optional list str           // List of users to whom sms sent to
     last_mailed_to optional list str        // List of users to whom email sent to
     last_escalated_to optional list str     // List of users to whom alert escalated to
