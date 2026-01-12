@@ -866,12 +866,7 @@ Model Alerts {
         limit optional int
         filters optional list DataFilters
     }
-
-    Action=> get_rca_reason {
-        alert_id str
-        reason str
-    }
-
+    
     Action=> add_rca_reason {
         alert_id str
         reason str
