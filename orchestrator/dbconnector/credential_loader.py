@@ -59,3 +59,11 @@ def get_va_creds(db_name: str) -> dict:
         raise ValueError(f"Missing credentials for {db_name}")
 
     return credentials
+
+
+def load_credentials(credential_base: str) -> dict:
+    credentials = {}
+    for key, value in os.environ.items():
+        if key.upper().startswith(credential_base.upper()):
+            credentials[key] = value
+    return credentials

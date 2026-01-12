@@ -6452,10 +6452,10 @@
         },
         {
             "device_name": "TK-31_SWEET SKO@Bahadurgarh",
-            "device_id": "a541acb0-5263-11f0-97fb-991e1ee6bef3",
+            "device_id": "a541acb0-5263-11f0-97fb-991e1ee6bef3_1",
             "device_type": "Tank",
-            "device_key": "g7OAy3it9ADtYPGjIbcg",
-            "entity_id": "a43ff420-5263-11f0-97fb-991e1ee6bef3",
+            "device_key": "g7OAy3it9ADtYPGjIbcg_1",
+            "entity_id": "a43ff420-5263-11f0-97fb-991e1ee6bef3_1",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -6667,10 +6667,10 @@
         },
         {
             "device_name": "TK-32_SWEET SKO@Bahadurgarh",
-            "device_id": "a546b5c0-5263-11f0-97fb-991e1ee6bef3",
+            "device_id": "a546b5c0-5263-11f0-97fb-991e1ee6bef3_1",
             "device_type": "Tank",
-            "device_key": "NWHZknwHfaJ59hUCeCMn",
-            "entity_id": "a43ff420-5263-11f0-97fb-991e1ee6bef3",
+            "device_key": "NWHZknwHfaJ59hUCeCMn_1",
+            "entity_id": "a43ff420-5263-11f0-97fb-991e1ee6bef3_1",
             "sensors": [
                 {
                     "sensor_name": "ESD Active",
@@ -13197,10 +13197,10 @@
         },
         {
             "device_name": "TK-31_SWEET SKO@Bahadurgarh_M",
-            "device_id": "a691ac50-5263-11f0-97fb-991e1ee6bef3",
+            "device_id": "a691ac50-5263-11f0-97fb-991e1ee6bef3_1",
             "device_type": "Tank Maintenance",
-            "device_key": "e7ojccAAc99Yt3oVQiV3",
-            "entity_id": "a43ff420-5263-11f0-97fb-991e1ee6bef3",
+            "device_key": "e7ojccAAc99Yt3oVQiV3_1",
+            "entity_id": "a43ff420-5263-11f0-97fb-991e1ee6bef3_1",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
@@ -13300,10 +13300,10 @@
         },
         {
             "device_name": "TK-32_SWEET SKO@Bahadurgarh_M",
-            "device_id": "a6999b90-5263-11f0-97fb-991e1ee6bef3",
+            "device_id": "a6999b90-5263-11f0-97fb-991e1ee6bef3_1",
             "device_type": "Tank Maintenance",
-            "device_key": "dBefn80YKh8k9A0HDBx7",
-            "entity_id": "a43ff420-5263-11f0-97fb-991e1ee6bef3",
+            "device_key": "dBefn80YKh8k9A0HDBx7_1",
+            "entity_id": "a43ff420-5263-11f0-97fb-991e1ee6bef3_1",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",

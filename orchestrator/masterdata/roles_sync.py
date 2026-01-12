@@ -292,6 +292,14 @@ async def sync_user_roles():
                         "title": "VTS ITDG Alert Home"
                     }
                 ]
+            },
+            {
+                "menu_name": "LPG",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Pro Dash"
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -562,6 +570,12 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Terminal Automation"
+                    },
+                    {
+                        "title": "TAS Governance"
                     }
                 ]
             },
@@ -708,6 +722,10 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    ,
+                    {
+                        "title": "TAS Governance"
                     }
                 ]
             },
@@ -1049,6 +1067,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             }
@@ -1072,6 +1093,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             }
@@ -1095,6 +1119,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             }
@@ -1181,30 +1208,6 @@ async def sync_user_roles():
     "DS HQO Officer": {
         "allowed_pages": [
             {
-                "menu_name": "Performance",
-                "allowed_sub_menus": [
-                    {
-                        "title": "Industry",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Industry Performance"
-                            }
-                        ]
-                    },
-                    {
-                        "title": "Sales Performance",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Insights"
-                            },
-                            {
-                            "title": "I&C Campaign"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
                 "menu_name": "Direct Sales",
                 "allowed_sub_menus": [
                     {
@@ -1212,6 +1215,12 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Supply Chain"
+                    },
+                    {
+                        "title": "I&C Insights"
+                    },
+                    {
+                        "title": "I&C Campaign"
                     }
                 ]
             }
@@ -1222,27 +1231,6 @@ async def sync_user_roles():
     "DS Regional Manager": {
         "allowed_pages": [
             {
-                "menu_name": "Performance",
-                "allowed_sub_menus": [
-                    {
-                        "title": "Industry",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Industry Performance"
-                            }
-                        ]
-                    },
-                    {
-                        "title": "Sales Performance",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Insights"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
                 "menu_name": "Direct Sales",
                 "allowed_sub_menus": [
                     {
@@ -1250,6 +1238,12 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Supply Chain"
+                    },
+                    {
+                        "title": "I&C Insights"
+                    },
+                    {
+                        "title": "I&C Campaign"
                     }
                 ]
             }
@@ -1260,27 +1254,6 @@ async def sync_user_roles():
     "DS Sales Officer": {
         "allowed_pages": [
             {
-                "menu_name": "Performance",
-                "allowed_sub_menus": [
-                    {
-                        "title": "Industry",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Industry Performance"
-                            }
-                        ]
-                    },
-                    {
-                        "title": "Sales Performance",
-                        "allowed_sub_menus": [
-                            {
-                            "title": "I&C Insights"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
                 "menu_name": "Direct Sales",
                 "allowed_sub_menus": [
                     {
@@ -1288,6 +1261,12 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Supply Chain"
+                    },
+                    {
+                        "title": "I&C Insights"
+                    },
+                    {
+                        "title": "I&C Campaign"
                     }
                 ]
             }
@@ -1406,6 +1385,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "LPG Analytics"
+                    },
+                    {
+                        "title": "Pro Dash"
                     }
                 ]
             },
@@ -1913,6 +1895,98 @@ async def sync_user_roles():
             }
         ],
         "name": "RO",
+        "status": True
+    },
+    "VTS SOD": {
+        "allowed_pages": [
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Violation Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            },
+                            {
+                            "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Alert Manager"
+                    }
+                ]
+            }
+        ],
+        "name": "SOD",
+        "status": True
+    },
+    "VTS LPG": {
+        "allowed_pages": [
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Violation Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            },
+                            {
+                            "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Alert Manager"
+                    }
+                ]
+            }
+        ],
+        "name": "LPG",
         "status": True
     },
     "Zonal Officer RO": {

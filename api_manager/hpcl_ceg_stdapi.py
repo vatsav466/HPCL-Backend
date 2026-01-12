@@ -42,9 +42,9 @@ async def delete(id: str):
     return await UserLoginAudit.delete(id)
 
 
-@router.get('/users/{id}', response_model=Users, tags=['Users'])
-async def get(id: str):
-    return await Users.get(id, skip_secrets=True)
+# @router.get('/users/{id}', response_model=Users, tags=['Users'])
+# async def get(id: str):
+#     return await Users.get(id, skip_secrets=True)
 
 
 @router.get('/users', response_model=UsersGetResp, tags=['Users'])
@@ -2120,4 +2120,14 @@ async def get(id: str):
 @router.get('/crisdryoutsync', response_model=CrisDryOutSyncGetResp, tags=['CrisDryOutSync'])
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await CrisDryOutSync.get_all(params, skip_secrets=True)
+
+
+@router.get('/hyperlocal/{id}', response_model=HyperLocal, tags=['HyperLocal'])
+async def get(id: str):
+    return await HyperLocal.get(id, skip_secrets=True)
+
+
+@router.get('/hyperlocal', response_model=HyperLocalGetResp, tags=['HyperLocal'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HyperLocal.get_all(params, skip_secrets=True)
 

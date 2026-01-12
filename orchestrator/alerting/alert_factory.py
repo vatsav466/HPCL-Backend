@@ -128,7 +128,7 @@ class AlertFactory:
             # assign roles for emlock and ro alerts
             if alert_data.get("alert_section", bu) == 'EMLock':
                 assigned_user_roles = ["Planning Officer SOD"]
-            elif alert_data.get("alert_section", bu) == 'RO' and interlock_name != 'Dry Out Each Indent Wise MainFlow':
+            elif alert_data.get("alert_section", bu) == 'RO' and interlock_name not in ['Dry Out Each Indent Wise MainFlow','Restroom Cleaning Evidence Missing']:
                 assigned_user_roles = ["RO Dealer"]
             else:
                 assigned_user_roles = []
@@ -137,10 +137,14 @@ class AlertFactory:
                     alert_data['alert_timestamp'] = alert_data['alert_timestamp'].replace(tzinfo=None)
                 except:
                     ...
+
+            alert_status = hpcl_ceg_enum.AlertStatus.Open
+            if alert_data['interlock_name'] == 'Itdg Admin Blocked':
+                alert_status = hpcl_ceg_enum.AlertStatus.Close
             alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity').capitalize() if alert_data.get('severity') else "Medium",
                                                         'alert_category': alert_data.get('alert_category'),
-                                                        'alert_status': hpcl_ceg_enum.AlertStatus.Open,
+                                                        'alert_status': alert_status,
                                                         'alert_state': hpcl_ceg_enum.AlertState.InProgress,
                                                         'unique_id': unique_id, 'alert_section': alert_data.get("alert_section", bu),
                                                         'external_id': alert_data.get('vendor_alert_id', alert_data['alert_id']),
@@ -188,6 +192,7 @@ class AlertFactory:
                                                         'mark_as_false': alert_data.get('mark_as_false', False),
                                                         'temporary_close': alert_data.get('temporary_close', False),
                                                         'permanent_close': alert_data.get('permanent_close', False),
+                                                        'alert_message': alert_data.get('alert_message', ''),
                                                         'ro_offline': alert_data.get('ro_offline', False),
                                                         'external_timestamp': alert_data.get('alert_timestamp', urdhva_base.utilities.get_present_time().replace(tzinfo=None).isoformat()),
                                                         'tt_load_number': str(alert_data.get('tt_load_number', '')),
@@ -195,6 +200,7 @@ class AlertFactory:
                                                         'workflow_url': alert_data.get('workflow_url', ''),
                                                         'workflow_port': alert_data.get('workflow_port', ''),
                                                         'vts_alert_history_ids': alert_data.get('vts_alert_history_ids',[]),
+                                                        'block_status': alert_data.get('block_status',None),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -208,12 +214,12 @@ class AlertFactory:
                 alert_level = await va_analysis.get_lpg_levels(
                     bu=base_data['bu'], violation_type=alert_data.get('violation_type',''), sap_id=str(base_data['sap_id'])
                 )
-            elif alert_data.get("alert_section", '') == "RO":
+            elif alert_data.get("alert_section", '') == "RO" and alert_data.get("interlock_name","") not in ["Restroom Cleaning Evidence Missing"]:
                 alert_level = await ro_analysis.get_ro_levels(
                     bu=base_data['bu'], violation_type=alert_data.get('violation_type', ''),
                     sap_id=str(base_data['sap_id'])
                 )
-            elif alert_data.get("alert_section", '') in ["VTS"]:
+            elif alert_data.get("alert_section", '') in ["VTS"] and alert_data.get("interlock_name","") not in ["No VTS No Load"]:
                 alert_level = await vts_analysis.get_vts_levels(
                     bu=base_data['bu'], vehicle_number=alert_data.get('vehicle_number', ''),
                     sap_id=str(base_data['sap_id']),
@@ -251,6 +257,12 @@ class AlertFactory:
                                     "device_type": {"value": alert_data.get('device_type', ''), "type": "String"}, # Added for TAS use
                                     "tas_device_name": {"value": alert_data.get('tas_device_name', ''), "type": "String"}, # Added for TAS use
                                     }}
+            
+            if alert_data.get("interlock_name") == "Itdg Admin Blocked":
+                 payload['variables'].update({"waitTime": {"value": alert_data.get('waitTime', ''), "type": "String"},
+                                               "bu": {"value": alert_data.get('bu', ''), "type": "String"},
+                                               "auto_unblock": {"value": alert_data.get('auto_unblock', ''), "type": "String"},
+                                               "vehicle_number":{"value": alert_data.get('vehicle_number', ''), "type": "String"}})
 
             # Create Interlock
             # Start workflow after creating the interlock
@@ -288,7 +300,7 @@ class AlertFactory:
                 #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
 
                 # Updating for VTS Alert history with alert_id
-                if alert_data_dict.get("alert_section") == "VTS":
+                if alert_data_dict.get("alert_section") == "VTS" and alert_data_dict.get("interlock_name","") not in ["No VTS No Load"]:
                     await vts_analysis.update_alert_id_to_vts_history(alert_id=str(alert_resp['id']), vts_alert_id=alert_data_dict.get("vts_alert_history_ids", []))
                     blocked_tt_data = dict()
                     blocked_tt_data['TT_No'] = alert_data_dict.get('vehicle_number','')
@@ -301,7 +313,7 @@ class AlertFactory:
 
                 if alert_data_dict.get("alert_section") in ["VA"] and alert_data_dict.get("bu") in ["RO"]:
                     return True, "alert created"
-                if alert_data_dict.get("alert_section") in ["RO"] and interlock_name.get("interlock_name") != 'Dry Out Each Indent Wise MainFlow':
+                if alert_data_dict.get("alert_section") in ["RO"] and interlock_name.get("interlock_name") not in ['Dry Out Each Indent Wise MainFlow','Restroom Cleaning Evidence Missing']:
                     # print(f"alert skipped: {alert_data_dict}")
                     if return_data:
                         return True, alert_data_dict

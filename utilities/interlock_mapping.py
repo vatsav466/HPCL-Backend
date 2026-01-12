@@ -10,6 +10,8 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP001V", "interlock_name": "Speed Violation", "model": "VTS", "workflow_name": "TAS VTS Violation"},
                         {"sop_id": "SOP001V", "interlock_name": "Night Driving", "model": "VTS", "workflow_name": "TAS VTS Violation"},
                         {"sop_id": "SOP001V", "interlock_name": "Continuous Driving", "model": "VTS", "workflow_name": "TAS VTS Violation"},
+                        {"sop_id": "SOP001N", "interlock_name": "No VTS No Load", "model": "VTS", "workflow_name": "TAS No VTS No Load"},
+                        {"sop_id": "SOP009B", "interlock_name": "Itdg Admin Blocked", "model": "VTS", "workflow_name": "Itdg Manual Block"},
 
                         {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime","model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
                         {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation SecondTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
@@ -372,7 +374,9 @@ ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviati
                         
                         {"sop_id": "SOP020", "interlock_name": "TT outside RO radius", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
                         {"sop_id": "SOP021", "interlock_name": "Pre Decantation Request Exceed", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
-                        {"sop_id": "SOP022", "interlock_name": "Post Decantation Request Exceed", "model": "EMLock", "workflow_name": "TAS EMLOCK"}]
+                        {"sop_id": "SOP022", "interlock_name": "Post Decantation Request Exceed", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
+                        
+                        {"sop_id": "SOP023", "interlock_name": "Restroom Cleaning Evidence Missing", "model": "VA", "workflow_name": "Restroom Cleaning Evidence Missing"}]
 
 # Interlock name and sop mapping for LPG Alerts
 lpg_interlock_mapping = [
@@ -384,6 +388,8 @@ lpg_interlock_mapping = [
     {"sop_id": "SOP001V", "interlock_name": "Speed Violation", "model": "VTS", "workflow_name": "LPG VTS Violation"},
     {"sop_id": "SOP001V", "interlock_name": "Night Driving", "model": "VTS", "workflow_name": "LPG VTS Violation"},
     {"sop_id": "SOP001V", "interlock_name": "Continuous Driving", "model": "VTS", "workflow_name": "LPG VTS Violation"},
+    {"sop_id": "SOP001N", "interlock_name": "No VTS No Load", "model": "VTS", "workflow_name": "LPG No VTS No Load"},
+    {"sop_id": "SOP009B", "interlock_name": "Itdg Admin Blocked", "model": "VTS", "workflow_name": "Itdg Manual Block"},
 
     {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime","model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
     {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation SecondTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},

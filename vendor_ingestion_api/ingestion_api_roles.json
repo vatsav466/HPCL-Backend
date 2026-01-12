@@ -213,6 +213,12 @@
                 },
                 {
                     "name": "ingest_data_close"
+                },
+                {
+                    "name": "ro_no_video_upload_list"
+                },
+                {
+                    "name": "ro_no_video_upload_list_status"
                 }
             ]
         },
@@ -261,6 +267,12 @@
                 },
                 {
                     "name": "ingest_data_close"
+                },
+                {
+                    "name": "ro_no_video_upload_list"
+                },
+                {
+                    "name": "ro_no_video_upload_list_status"
                 }
             ]
         },
@@ -824,6 +836,75 @@
                     "name": "ingest_data"
                 }
             ]
+        },
+        {
+            "name": "hyperlocal",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HyperLocal",
+            "attributes": {},
+            "uris": [
+                "/api/hyperlocal/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
+        },
+        {
+            "name": "hyperlocal_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HyperLocal_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/hyperlocal/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "hyperlocal_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HyperLocal_admin",
+            "attributes": {},
+            "uris": [
+                "/api/hyperlocal/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
         }
     ],
     "policies": [
@@ -951,6 +1032,14 @@
             "displayName": "ingest_data_close"
         },
         {
+            "name": "ro_no_video_upload_list",
+            "displayName": "ro_no_video_upload_list"
+        },
+        {
+            "name": "ro_no_video_upload_list_status",
+            "displayName": "ro_no_video_upload_list_status"
+        },
+        {
             "name": "ingest_data",
             "displayName": "ingest_data"
         },
@@ -977,6 +1066,10 @@
         {
             "name": "get_agent_comm_status",
             "displayName": "get_agent_comm_status"
+        },
+        {
+            "name": "ingest_data",
+            "displayName": "ingest_data"
         },
         {
             "name": "ingest_data",

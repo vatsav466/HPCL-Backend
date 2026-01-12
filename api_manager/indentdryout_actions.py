@@ -1,6 +1,6 @@
+import urdhva_base
 import pandas as pd
 import hpcl_ceg_model
-import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import re
@@ -11,7 +11,11 @@ import fastapi
 import datetime
 import api_helpers
 import polars as pl
+import requests
+import traceback
 import dateutil.parser as parser
+import utilities.helpers as helpers
+import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.alerting.alert_helper as alert_helper
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
@@ -21,9 +25,11 @@ import orchestrator.direct_sales.indentwise_direct_sales as indentwise_direct_sa
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from orchestrator.actions.indent_dry_out import IndentDryOut as indent_dry_out
 import orchestrator.alerting.listener.sync_ro_daily_sales as sync_ro_daily_sales
+import utilities.minio_connector as minio_connector
 
 router = fastapi.APIRouter(prefix='/indentdryout')
 
+logger = urdhva_base.logger.Logger.getInstance("indentdryout")
 
 # Action sync_data_from_cris_to_ceg
 @router.post('/sync_data_from_cris_to_ceg', tags=['IndentDryOut'])
@@ -1211,3 +1217,280 @@ async def indentdryout_get_dried_out_ro_by_actions(data: Indentdryout_Get_Dried_
 @router.post('/get_cancelled_indent_direct_sales', tags=['IndentDryOut'])
 async def indentdryout_get_cancelled_indent_direct_sales(data: Indentdryout_Get_Cancelled_Indent_Direct_SalesParams):
     return await indentwise_direct_sales.IndentDryOutDirectSales().get_cancelled_indent_direct_sales(data)
+
+
+# Action get_vts_direct_sales
+@router.post('/get_vts_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_vts_direct_sales(data: Indentdryout_Get_Vts_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_vts_direct_sales(data)
+
+
+# Action get_delivery_confirmation_direct_sales
+@router.post('/get_delivery_confirmation_direct_sales', tags=['IndentDryOut'])
+async def indentdryout_get_delivery_confirmation_direct_sales(data: Indentdryout_Get_Delivery_Confirmation_Direct_SalesParams):
+    return await indentwise_direct_sales.IndentDryOutDirectSales().get_delivery_confirmation_direct_sales(data)
+
+
+# Action block_outlet
+@router.post('/block_outlet', tags=['IndentDryOut'])
+async def indentdryout_block_outlet(
+    payload: Indentdryout_Block_OutletParams
+):
+    block_id = payload.block_id
+    remarks_blocked = payload.remarks_blocked
+    upload_file = None
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+
+        try:
+            block_id = int(block_id)
+        except Exception:
+            return {"status": False, "message": "Invalid block_id"}
+        
+        query = f"id = {block_id}"
+        alert_data = await Alerts.get_all(
+            urdhva_base.queryparams.QueryParams(q=query, limit=1),
+            resp_type="plain"
+        )
+
+        if not alert_data.get("data"):
+            return {"status": False, "message": "No active block found for the outlet"}
+
+        alert_record = alert_data["data"][0]
+     
+        minio_path = ""
+        file_path = ""
+
+        if upload_file:
+            UPLOAD_DIR = os.path.join(
+                urdhva_base.settings.uploads,
+                "ro_blocked"
+            )
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+            file_name = upload_file.filename
+            file_path = os.path.join(UPLOAD_DIR, file_name)
+
+            with open(file_path, "wb") as f:
+                f.write(await upload_file.read())
+
+            status, minio_path = minio_connector.upload_to_minio(
+                "alerts",         # bucket (same bucket)
+                "ro_blocked",    # section/folder
+                str(block_id),       # sub-folder
+                file_path         # local filepath
+            )
+
+            if not status:
+                return {
+                    "status": False,
+                    "message": "MinIO upload failed",
+                    "error": minio_path
+                }
+
+        payload = {
+            "messageName": "BlockNozzles",
+            "processInstanceId": alert_record.get("workflow_instance_id")
+        }
+
+        camunda_url = f"{alert_record.get('workflow_url')}/engine-rest/message"
+
+        response = requests.post(camunda_url, json=payload)
+
+        if response.status_code != 204:
+            logger.error(
+                f"Camunda block failed | "
+                f"alert_id={alert_record.get('id')} | "
+                f"status={response.status_code} | "
+                f"response={response.text}"
+            )
+            return {"status": False, "message": "Failed to block the ro via workflow"}
+        
+        event_time_utc = urdhva_base.utilities.get_present_time()
+        ist_time = event_time_utc.astimezone(pytz.timezone("Asia/Kolkata"))
+        alert_history = alert_record.get("alert_history", [])
+
+        alert_history.append({
+            "action_msg": (
+                f"Block Initiated For Outlet {alert_record.get('sap_id')} "
+                f"initiated by {rpt.get('username','')} "
+                f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+            ),
+            "action_type": "Blocked",
+            "action_by": rpt.get('username',''),
+            "processed_time": event_time_utc.isoformat()
+        })
+
+        await Alerts(**{
+            "id": alert_record.get("id"),
+            "alert_history": alert_history,
+            "remarks_unblocked": remarks_blocked,
+            "file_uploaded_path": minio_path or ""
+        }).modify()
+
+        return {"status": True, "message": "Outlet has been successfully blocked"}
+
+    except Exception:
+        print(traceback.format_exc())
+        return {"status": False, "message": "Failed to block the Outlet"}
+
+# Action unblock_outlet
+@router.post('/unblock_outlet', tags=['IndentDryOut'])
+async def indentdryout_unblock_outlet(payload: Indentdryout_Unblock_OutletParams):
+    unblock_id = payload.unblock_id
+    remarks_unblocked = payload.remarks_unblocked
+    upload_file = None
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+
+        try:
+            unblock_id = int(unblock_id)
+        except Exception:
+            logger.error(f"Invalid unblock_id value: {unblock_id}")
+            return {"status": False, "message": "Invalid unblock_id"}
+
+        query = f"id = {unblock_id}"
+        alert_data = await Alerts.get_all(
+            urdhva_base.queryparams.QueryParams(q=query, limit=1),
+            resp_type="plain"
+        )
+
+        if not alert_data.get("data"):
+            return {"status": False, "message": "No active block found for the outlet"}
+
+        alert_record = alert_data["data"][0]
+     
+        minio_path = ""
+        file_path = ""
+
+        if upload_file:
+            UPLOAD_DIR = os.path.join(
+                urdhva_base.settings.uploads,
+                "ro_unblocked"
+            )
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+            file_name = upload_file.filename
+            file_path = os.path.join(UPLOAD_DIR, file_name)
+
+            with open(file_path, "wb") as f:
+                f.write(await upload_file.read())
+
+            status, minio_path = minio_connector.upload_to_minio(
+                "alerts",         # bucket (same bucket)
+                "ro_unblocked",    # section/folder
+                str(unblock_id),       # sub-folder
+                file_path         # local filepath
+            )
+
+            if not status:
+                logger.error(f"MinIO upload failed: {minio_path}")
+                return {
+                    "status": False,
+                    "message": "MinIO upload failed",
+                    "error": minio_path
+                }
+
+        payload = {
+            "messageName": "UnblockNozzles",
+            "processInstanceId": alert_record.get("workflow_instance_id")
+        }
+
+        camunda_url = f"{alert_record.get('workflow_url')}/engine-rest/message"
+
+        response = requests.post(camunda_url, json=payload)
+
+        if response.status_code != 204:
+            logger.error(
+                f"Camunda unblock failed | "
+                f"alert_id={alert_record.get('id')} | "
+                f"status={response.status_code} | "
+                f"response={response.text}"
+            )
+            return {"status": False, "message": "Failed to unblock the outlet"}
+
+        event_time_utc = urdhva_base.utilities.get_present_time()
+        ist_time = event_time_utc.astimezone(pytz.timezone("Asia/Kolkata"))
+        alert_history = alert_record.get("alert_history", [])
+
+        alert_history.append({
+            "action_msg": (
+                f"Unblock for Outlet {alert_record.get('sap_id')} "
+                f"initiated by {rpt.get('username','')} "
+                f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+            ),
+            "action_type": "UnBlocked",
+            "action_by": rpt.get('username',''),
+            "processed_time": event_time_utc.isoformat()
+        })
+
+        await Alerts(**{
+            "id": alert_record.get("id"),
+            "alert_history": alert_history,
+            "remarks_unblocked": remarks_unblocked,
+            "file_uploaded_path": minio_path or ""
+        }).modify()
+
+        return {"status": True, "message": "Outlet has been successfully unblocked"}
+
+    except Exception:
+        print(traceback.format_exc())
+        logger.exception("Unhandled error during outlet unblock")
+        return {"status": False, "message": "Failed to unblock the outlet"}
+
+
+# Action block_ro
+@router.post('/block_ro', tags=['IndentDryOut'])
+async def indentdryout_block_ro(data: Indentdryout_Block_RoParams):
+    print('*'*200)
+    print(data.ro_code)
+    print(data.remarks_blocked)
+    print('*'*200)
+    query = f"""select * from location_master where sap_id='{data.ro_code}'"""
+    location_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+    if not location_data['data']:
+        return {"status": False, "message": "RO Not Available in Location Master"}
+    
+    try:
+        location_data_ = location_data['data'][0]
+        allocated_time = datetime.datetime.now(datetime.timezone.utc)
+        processed_time = datetime.datetime.now(datetime.timezone.utc)
+        alert_history = [{
+            "action_msg" : (
+                f"Violation Type: Restroom Cleaning Evidence Missing \n"
+                f"for Outlet: {location_data_.get('name','')}"
+            ),
+            "action_type": "Created",
+            "alert_status": "Open",
+            "allocated_time": allocated_time.isoformat(),
+            "processed_time": processed_time.isoformat()
+        }]
+        alert_data = {
+            "bu": "RO",
+            "severity": "High",
+            "sop_id": "SOP023",
+            "alert_history": alert_history,
+            "alert_section": "RO",
+            "violation_type": "Restroom Cleaning Evidence Missing",
+            "interlock_name": "Restroom Cleaning Evidence Missing",
+            "sap_id": location_data_.get('sap_id',''),
+            "location_name": location_data_.get('name',''),
+            "zone": location_data_.get('zone',''),
+            "region": location_data_.get('region',''),
+            "sales_area": location_data_.get('sales_area',''),
+            "block_status": None
+        }
+        # need to trigger camunda workflow 
+        camunda_url = await helpers.get_camunda_url("RO",location_data_.get('sap_id'),alert_section='RO')
+        print('*'*200)
+        print('alert_data',alert_data)
+        print('*'*200)
+        await alert_factory.AlertFactory().create_alert(alert_data, camunda_url)
+        return {"status": True, "message": "RO has been successfully blocked"}
+    except Exception as e:
+        print(traceback.format_exc())
+        return {"status": False, "message": "Failed To Block The RO"}

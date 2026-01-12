@@ -103,6 +103,15 @@ def extract_invoice_number(invoice_str):
         return invoice_str.split('-')[0]
     return invoice_str
 
+
+async def get_location_master():
+    query = """
+        SELECT sap_id, name
+        FROM location_master
+    """
+    df = await VTSAnalyticsActions.execute_query(query, engine="polars")
+    return df
+
 async def get_shortage_data(filters, cross_filters, bu_ic, violation_types):
     """Fetch ALL shortage data from sales_trips_till_date"""
     shortage_query = """
@@ -111,6 +120,7 @@ async def get_shortage_data(filters, cross_filters, bu_ic, violation_types):
                             plant_nm, \
                             zone_nm, \
                             invoice_date, \
+                            destination_code as shortage_destination_code, \
                             COALESCE(NULLIF(TRIM(qty_shortage), 'NaN'), '0.0')::NUMERIC AS qty_shortage, \
                             material_group_nm
                      FROM sales_trips_till_date
@@ -123,7 +133,7 @@ async def get_shortage_data(filters, cross_filters, bu_ic, violation_types):
 
     if df_shortage.is_empty():
         return pl.DataFrame()
-
+    
     # Convert qty_shortage to numeric
     df_shortage = df_shortage.with_columns(
         pl.col('qty_shortage')
@@ -328,6 +338,7 @@ def merge_shortage_with_violations(
                 pl.col("zone_nm").first(),
                 pl.col("invoice_number").first(),
                 pl.col("invoice_date").first(),
+                pl.col("shortage_destination_code").first()
             )
         )
 
@@ -692,36 +703,19 @@ def merge_shortage_with_violations(
 
     return df_merged
 
-async def download_streaming_data(df: pl.DataFrame):
-    df = df.with_columns(
-        pl.col(cs.datetime(time_zone="*")).dt.replace_time_zone(None)
-    )
+async def download_streaming_data(df: pl.DataFrame, filename='violations'):
 
-    df = df.select(
-        [s.name for s in df if s.null_count() < df.height]
+    df = df.with_columns(
+        cs.datetime(time_zone="*").dt.replace_time_zone(None)
     )
-    mask_df = df.select(
-        [
-            pl.col(c)
-            .cast(pl.String)
-            .fill_null("")  # null -> ""
-            .str.strip_chars()  # strip whitespace
-            .neq("")  # non-empty?
-            .any()  # any row is non-empty?
-            .alias(c)
-            for c in df.columns
-        ]
-    )
-    cols_to_keep = [c for c in df.columns if mask_df[c][0]]
-    df = df.select(cols_to_keep)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"violations_{timestamp}.xlsx"
+    file_name = f"{filename}_{timestamp}.xlsx"
 
     output = io.BytesIO()
     df.write_excel(
         workbook=output,  # BytesIO
-        worksheet="violations",  # sheet name
+        worksheet=f"{filename}",  # sheet name
     )
     output.seek(0)
     headers = {
@@ -755,11 +749,14 @@ class VTSAnalyticsActions:
         #     return "location_type"
         # if query and "vts_alert_history" in query.lower() and key.lower() == "sap_id":
         #     return "location_id" 
-        if query and 'sales_trips_till_date' in query.lower() and key.lower() == 'bu':
+        if query and 'sales_trips_till_date' in query.lower() and key.lower() in ('transporter_code','bu'):
             return None
          
         if query and 'sales_trips_till_date' in query.lower() and key.lower() == 'zone':
             return 'zone_nm'
+        
+        if query and 'sales_trips_till_date' in query.lower() and key.lower() == 'location_name':
+            return 'plant_nm'
         
         return key
     
@@ -952,13 +949,17 @@ class VTSAnalyticsActions:
             return conditions
             
         if alert_type.lower() == "blocked":
-            conditions.append("vehicle_unblocked_date is null")
+            conditions.append("alert_status = 'Open' and vehicle_unblocked_date is null") 
+        if alert_type.lower() == "acceptance_close":
+            conditions.append("alert_status = 'Close' and vehicle_unblocked_date is null")
         elif alert_type.lower() == "auto_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = false AND vehicle_unblocked_date is not null")
         elif alert_type.lower() == "manual_unblock":
             conditions.append("alert_status = 'Close' AND mark_as_false = true and vehicle_unblocked_date is not null")
-        # 'all_alerts' -> no extra conditions
-        
+        else:
+        # all_alerts or unknown value → no extra condition
+           pass
+     
         return conditions
 
     @staticmethod
@@ -1010,14 +1011,10 @@ class VTSAnalyticsActions:
         try:
             # Get base query           
             card_query = vts_query.vts_query.get(drill_state.split(",")[0])
-            print("Base Query:", card_query)
 
             # Build and apply conditions (pass the query for key transformation)
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, card_query)
             final_query = VTSAnalyticsActions.apply_conditions_to_query(card_query, conditions)
-            
-            print("-" * 50)
-            print("Final card_query ---->", final_query)
 
             # Execute query
             df = await VTSAnalyticsActions.execute_query(final_query, engine='dict')
@@ -1026,6 +1023,72 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("Exception in BigNumber Chart:", str(e))
             print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+    
+    @staticmethod
+    async def vts_dashboard_card_download(filters, cross_filters, drill_state, payload):
+        """
+            Download VTS dashboard cards as an Excel file.
+
+            This function retrieves the required data from the database and generates
+            an Excel file containing the selected columns for download.
+
+            :param filters: Filters applied based on location, SAP ID, and BU for data filtering.
+            :param cross_filters: Additional filters, primarily used for date range selection.
+            :param drill_state: Used to map and select the appropriate query
+                                from the `vts_query` file in the same path.
+            :param payload: Additional parameters passed from the frontend
+                            for applying extra conditional checks if required.
+            :return: Excel file response as a downloadable stream.
+            :rtype: dict[str, Any] | StreamingResponse
+        """
+
+        try:
+            # 1. Build and execute query
+            download_card_query = vts_query.vts_query.get(drill_state.split(",")[0])
+            conditions = VTSAnalyticsActions.build_filter_conditions(
+                filters, cross_filters, download_card_query
+            )
+            final_query = VTSAnalyticsActions.apply_conditions_to_query(
+                download_card_query, conditions
+            )
+
+            df = await VTSAnalyticsActions.execute_query(final_query, engine="polars")
+
+            # 2. Extract creator_id and approver_id from alert_history (JSONB)
+            df = df.with_columns([
+                    # Creator ID → first employee_id where action_type == Justification
+                    pl.col("alert_history").list.eval(pl.element().struct.field("employee_id").filter(
+                            pl.element().struct.field("action_type") == "Justification")
+                    ).list.first().alias("creator_id"),
+
+                    # Approver ID → first employee_id where action_type == Approved
+                    pl.col("alert_history").list.eval(pl.element().struct.field("employee_id").filter(
+                            pl.element().struct.field("action_type") == "Approved")
+                    ).list.first().alias("approver_id"),
+                ])
+
+
+            # 3. Select required columns for Excel
+            df = (df.select(["zone", "sap_id", "location_name",  "vehicle_number", "violation_type",
+                            "unique_id", "alert_status", "device_name", "severity", "created_at", 
+                            "creator_id", "approver_id", "vehicle_unblocked_date", "vehicle_blocked_end_date" 
+                ])
+                .rename({
+                    "unique_id": "Alert ID",
+                    "sap_id" : "Location ID",
+                    "vehicle_number" : "Truck Number",
+                    "device_name" : "Instance ID",
+                    "creator_id": "Creator ID",
+                    "approver_id": "Approver ID",
+                })
+            )
+            # 4. Return Excel download
+            return await download_streaming_data(df, filename="itdgAlerts")
+        
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            print("error",str(e))
             return {"status": False, "message": str(e), "data": []}
 
     @staticmethod
@@ -1084,126 +1147,29 @@ class VTSAnalyticsActions:
         try:
             query = vts_query.vts_query.get(drill_state.split(",")[0])
             alert_type = payload.get("alert_type") if payload else None
-            all_violations = vts_query.vts_query.get("all_violations", [])
-            violation_types = payload.get("violation_type", [])
-            truck_number = payload.get("view", "")
-
-            if truck_number:
-                select_parts = []
-                for v_type in all_violations:
-                    select_parts.append(
-                        f"SUM(CASE WHEN violation_type = '{v_type}' THEN 1 ELSE 0 END) AS {v_type}"
-                    )
-                select_clause = ",\n                    ".join(select_parts)
-
-                view_query = f"""
-                    SELECT 
-                        sap_id,
-                        location_name,
-                        vehicle_number,
-                        zone,
-                        created_at,
-                        {select_clause}
-                    FROM alerts
-                    WHERE vehicle_number = '{truck_number}'
-                    AND alert_section = 'VTS'
-                    GROUP BY sap_id, location_name, vehicle_number, zone, created_at
-                """
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, view_query)
-                conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
-                view_query = VTSAnalyticsActions.apply_conditions_to_query(view_query, conditions)
-                print(view_query)
-
-                df_view = await VTSAnalyticsActions.execute_query(view_query, engine='polars')
-
-                if df_view.is_empty():
-                    return {"status": True, "message": "No data found for this truck", "data": []}
-
-               
-                truck_master_query = """SELECT distinct truck_no, transporter_name FROM vts_truck_master"""
-                df_truck_master = await VTSAnalyticsActions.execute_query(truck_master_query, engine='polars')
-
-                # Merge alerts.vehicle_number ↔ vts_truck_master.truck_number
-                merged_df = df_view.join(df_truck_master, left_on="vehicle_number", right_on="truck_no", how="left")
-                merged_df = merged_df.drop(["truck_no"], strict=False)
-
-                return {
-                    "status": True,
-                    "message": "success",
-                    "data": merged_df.fill_null(None).fill_nan(None).to_dicts()
-                }
-                # return {"status": True, "message": "success", "data": await safe_json(merged_df)}
-
-            
-            if violation_types:
-                violation_type_query = vts_query.vts_query.get("vts_insite_violation_type")
-                if not violation_type_query:
-                    return {"status": False, "message": "Query template not found", "data": []}
-
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, violation_type_query)
-                conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
-
-                select_parts = []
-                for v_type in all_violations:
-                    select_parts.append(f"SUM(CASE WHEN violation_type = '{v_type}' THEN 1 ELSE 0 END) AS {v_type}")
-                having_parts = []
-                for v_type in violation_types:
-                    having_parts.append(f"SUM(CASE WHEN violation_type = '{v_type}' THEN 1 ELSE 0 END) > 0")
-
-                select_clause = ",\n        ".join(select_parts)
-                having_clause = " AND ".join(having_parts)
-
-                final_query = violation_type_query.format(select_clause=select_clause, having_clause=having_clause)
-                final_query = VTSAnalyticsActions.apply_conditions_to_query(final_query, conditions)
-                print(final_query)
-
-                df_data = await VTSAnalyticsActions.execute_query(final_query)
-                                
-                truck_master_query = """SELECT truck_no, transporter_name FROM vts_truck_master"""
-                df_truck_master = await VTSAnalyticsActions.execute_query(truck_master_query)
-
-                merged_df = df_data.merge(df_truck_master, left_on="vehicle_number", right_on="truck_no", how="left")
-                merged_df.drop(columns=["truck_no"], inplace=True)
-
-                pagination_result = await VTSAnalyticsActions.pagination_df(merged_df, payload)
-                return pagination_result
-
+    
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             conditions = VTSAnalyticsActions.add_alert_type_conditions(conditions, alert_type)
             vts_insite_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
             print(vts_insite_query)
-            df1 = await VTSAnalyticsActions.execute_query(vts_insite_query)
+            df1 = await VTSAnalyticsActions.execute_query(vts_insite_query, engine='polars')
 
             truck_master_query = """SELECT truck_no, transporter_name FROM vts_truck_master"""
-            df_truck_master = await VTSAnalyticsActions.execute_query(truck_master_query)
+            df_truck_master = await VTSAnalyticsActions.execute_query(truck_master_query, engine='polars')
 
-            merged_df = df1.merge(df_truck_master, left_on="vehicle_number", right_on="truck_no", how="left")
-            merged_df.drop(columns=["truck_no"], inplace=True)
+            merged_df = df1.join(
+                    df_truck_master,
+                    left_on="vehicle_number",
+                    right_on="truck_no",
+                    how="left"
+                )
+            
+            merged_df = merged_df.drop(["truck_no"], strict=False)
 
             if payload.get("download") == "true":
-                for col in merged_df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
-                    merged_df[col] = merged_df[col].dt.tz_localize(None)
+                return await download_streaming_data(merged_df,filename='itdgAlerts')
 
-                merged_df = merged_df.dropna(axis=1, how="all")
-                merged_df = merged_df.loc[:, (merged_df.astype(str).apply(lambda x: x.str.strip() != "").any())]
-
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                file_name = f"itdg_{timestamp}.xlsx"
-
-                output = io.BytesIO()
-                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                    merged_df.to_excel(writer, index=False, sheet_name='itdg_alerts')
-
-                output.seek(0)
-                headers = {"Content-Disposition": f'attachment; filename="{file_name}"'}
-                return StreamingResponse(
-                    output,
-                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    headers=headers
-                )
-
-            pagination_result = await VTSAnalyticsActions.pagination_df(merged_df, payload)
-            return pagination_result
+            return await streaming_data(merged_df)
 
         except Exception as e:
             print("traceback:", traceback.format_exc())
@@ -1226,328 +1192,13 @@ class VTSAnalyticsActions:
             query = vts_query.vts_query.get(drill_state.split(",")[0])
             all_violations = vts_query.vts_query.get("all_violations", [])
             violation_types = payload.get("violation_type", []) if payload else []
-            truck_number = payload.get("view", "")
-
-            has_qty_shortage_filter = 'qty_shortage' in violation_types if violation_types else False
-            vts_violation_types = [v for v in violation_types if v != 'qty_shortage'] if violation_types else []
+          
 
             # Get truck master data (used across all flows)
             df_truck_master = await get_truck_master()
 
             # Get shortage data and filter for this truck
             df_shortage = await get_shortage_data(filters, cross_filters, bu_ic, violation_types)
-
-            # ==================== TRUCK NUMBER VIEW ====================
-            if truck_number:
-                view_query = f"""
-                    SELECT 
-                        tl_number,
-                        invoice_number,
-                        location_name,
-                        zone,
-                        DATE(vts_end_datetime) as violation_date,
-                        stoppage_violations_count,
-                        route_deviation_count,
-                        device_tamper_count,
-                        main_supply_removal_count,
-                        night_driving_count,
-                        speed_violation_count,
-                        continuous_driving_count
-                    FROM vts_alert_history
-                    WHERE tl_number = '{truck_number}'
-                    AND invoice_number IS NOT NULL
-                    ORDER BY violation_date DESC, invoice_number
-                """
-
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, view_query)
-                view_query = VTSAnalyticsActions.apply_conditions_to_query(view_query, conditions)
-                df_view = await VTSAnalyticsActions.execute_query(view_query, engine="polars")
-
-                if not df_view.is_empty():
-                    df_view = df_view.unique(subset=["invoice_number"], keep="first")
-
-                if not df_shortage.is_empty():
-                    df_shortage = df_shortage.filter(pl.col("tl_number") == truck_number)
-
-                # Check if we have any data
-                if df_view.is_empty() and df_shortage.is_empty():
-                    return {"status": True, "message": "No data found for this vehicle", "data": []}
-
-                # Merge
-                final_df = merge_shortage_with_violations(
-                    df_view, df_shortage, df_truck_master,
-                    violation_types, bu_ic, bu_tas, bu_lpg,
-                    all_violations, aggregate=False
-                )
-
-                if final_df.is_empty():
-                    return {"status": True, "message": "No data found for this vehicle", "data": []}
-
-                if 'qty_shortage_detail' not in final_df.columns:
-                    final_df = final_df.with_columns(
-                        qty_shortage_detail=pl.lit("")
-                    )
-
-                # Ensure created_at uses violation_date as fallback if needed
-                if 'violation_date' in final_df.columns:
-                    final_df = final_df.with_columns(
-                        pl.col("created_at").fill_null(pl.col("violation_date"))
-                    )
-
-                # Ensure transporter_name is filled
-                # if 'transporter_name' not in final_df.columns or final_df['transporter_name'].isna().any():
-                #     if not df_truck_master.empty:
-                #         truck_lookup = df_truck_master.set_index('truck_no')
-                #         final_df['transporter_name'] = final_df.get('transporter_name', pd.Series(index=final_df.index)).fillna(
-                #             final_df['tl_number'].map(truck_lookup['transporter_name'])
-                #         )
-
-                if "transporter_name" not in final_df.columns or final_df["transporter_name"].null_count() > 0:
-                    if df_truck_master.height > 0:
-                        truck_lookup = df_truck_master.rename({"truck_no": "tl_number"}).select(
-                            ["tl_number", "transporter_name"]
-                        )
-
-                        if "transporter_name" not in final_df.columns:
-                            final_df = final_df.with_columns(
-                                transporter_name=pl.lit(None, dtype=pl.String)
-                            )
-
-                        joined = final_df.join(
-                            truck_lookup,
-                            on="tl_number",
-                            how="left",
-                            suffix="_from_truck",
-                        )
-
-                        final_df = joined.with_columns(
-                            transporter_name=pl.coalesce(
-                                "transporter_name", "transporter_name_from_truck"
-                            )
-                        ).drop("transporter_name_from_truck")
-
-                if "violation_date" in final_df.columns:
-                    final_df = final_df.with_columns(
-                        violation_date=pl.col("violation_date").fill_null(
-                            pl.col("created_at")
-                            .str.to_datetime(strict=False)
-                            .dt.strftime("%Y-%m-%d")
-                        )
-                    )
-                return {"status": True, "message": "success", "data": final_df.fill_null().to_dicts()}
-
-            # ==================== QTY SHORTAGE ONLY FILTER ====================
-            if has_qty_shortage_filter and not vts_violation_types:
-                shortage_query = """
-                                 SELECT vehicle_id         AS tl_number, \
-                                        invoice_no         AS invoice_number, \
-                                        plant_nm           AS location_name, \
-                                        invoice_date, \
-                                        CASE \
-                                            WHEN qty_shortage = 'NaN' THEN '0.0' \
-                                            WHEN qty_shortage IS NULL THEN '0.0' \
-                                            ELSE qty_shortage \
-                                            END            AS qty_shortage, \
-                                        material_group_nm, \
-                                        zone_nm            AS zone, \
-                                        invoice_date::DATE AS created_at
-                                 FROM sales_trips_till_date
-                                 WHERE load_status = '6' \
-                                 """
-
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
-                shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
-                df_shortage_all = await VTSAnalyticsActions.execute_query(shortage_query)
-
-                if df_shortage_all.is_empty():
-                    return {"status": True, "message": "No shortage data found", "data": []}
-
-                df_shortage_all = df_shortage_all.with_columns(
-                    qty_shortage=pl.col("qty_shortage")
-                    .cast(pl.Float64, strict=False)
-                    .fill_null(0.0)
-                )
-                df_shortage_all = df_shortage_all.filter(pl.col("qty_shortage") > 0)
-
-                if df_shortage_all.is_empty():
-                    return {"status": True, "message": "No non-zero shortage data found", "data": []}
-
-                shortage_agg = (
-                    df_shortage_all
-                    .group_by("invoice_number")
-                    .agg(
-                        pl.col("qty_shortage").sum(),
-                        pl.col("zone").first(),
-                        pl.col("location_name").first(),
-                        pl.col("tl_number").first(),
-                        pl.col("material_group_nm").first(),
-                        pl.col("created_at").first(),
-                    )
-                )
-
-                tl_numbers_list = (shortage_agg.get_column("tl_number").unique().to_list())
-                tl_numbers_str = "', '".join(map(str, tl_numbers_list))
-
-                violation_columns = [
-                    f"COALESCE({v_type}, 0) AS {v_type}"
-                    for v_type in all_violations
-                ]
-                select_clause = ",\n       ".join(violation_columns)
-
-                history_query = f"""
-                    SELECT DISTINCT
-                        tl_number,
-                        invoice_number,
-                        {select_clause}
-                    FROM vts_alert_history
-                    WHERE tl_number IN ('{tl_numbers_str}')
-                """
-
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, history_query)
-                history_query = VTSAnalyticsActions.apply_conditions_to_query(history_query, conditions)
-                df_history = await VTSAnalyticsActions.execute_query(history_query, engine="polars")
-
-                if df_history.is_empty():
-                    df_history = pl.DataFrame(schema=["tl_number", "invoice_number", *all_violations])
-
-                # Strip invoice numbers to match format
-                df_history = df_history.with_columns(
-                    invoice_number=(
-                        pl.col("invoice_number")
-                        .cast(pl.String)
-                        .str.extract(r"^([^\-]+)", 1)
-                    )
-                )
-
-                # Drop duplicate invoice_numbers from vts_alert_history, keep first
-                df_history = df_history.unique(subset=["invoice_number"], keep="first")
-
-                truck_query = """
-                              SELECT DISTINCT truck_no, transporter_name
-                              FROM vts_truck_master \
-                              """
-                df_truck = await VTSAnalyticsActions.execute_query(truck_query, engine="polars")
-
-                # Merge with history (only violations, no zone/location_name to avoid conflicts)
-                merged_df = shortage_agg.join(
-                    df_history,
-                    on=["tl_number", "invoice_number"],
-                    how="left",
-                    coalesce=True
-                )
-
-                # Merge with truck master
-                merged_df = merged_df.join(df_truck, left_on="tl_number", right_on="truck_no", how="left",
-                                           coalesce=True)
-                if "truck_no" in merged_df.columns:
-                    merged_df = merged_df.drop("truck_no")
-
-                # Process violation columns
-                exprs = []
-                for col in all_violations:
-                    if col in merged_df.columns:
-                        exprs.append(pl.col(col).fill_null(0).cast(pl.Int64).alias(col))
-                    else:
-                        exprs.append(pl.lit(0).cast(pl.Int64).alias(col))
-
-                merged_df = merged_df.with_columns(*exprs)
-
-                # Since we already aggregated shortage by invoice, just take first values
-                aggs = [
-                    pl.col("qty_shortage").first(),
-                    pl.col("zone").first(),
-                    pl.col("location_name").first(),
-                    pl.col("tl_number").first(),
-                    pl.col("transporter_name").first(),
-                    pl.col("created_at").first(),
-                ]
-
-                for v_col in all_violations:
-                    aggs.append(pl.col(v_col).max())
-
-                agg_df = (
-                    merged_df
-                    .group_by("invoice_number")
-                    .agg(aggs)
-                )
-
-                final_cols = ["invoice_number", "created_at", "zone", "location_name", "tl_number", "qty_shortage",
-                              "transporter_name"] + all_violations
-                agg_df = agg_df.select(final_cols)
-
-                if str(payload.get("download", "")).lower() == "true":
-                    return await download_streaming_data(agg_df)
-                return await streaming_data(agg_df)
-
-            # ==================== SPECIFIC VIOLATION TYPES ====================
-            if violation_types:
-                select_parts = [
-                    f"MAX({v_type}) AS {v_type}"
-                    for v_type in all_violations
-                ]
-                select_clause = ",\n           ".join(select_parts)
-
-                if vts_violation_types:
-                    having_parts = [
-                        f"MAX({v_type}) > 0"
-                        for v_type in vts_violation_types
-                    ]
-                    having_clause = " AND ".join(having_parts)
-                else:
-                    having_clause = "1=1"
-
-                violation_query = vts_query.vts_query.get("vts_insite_history_type")
-                violation_query = violation_query.format(select_clause=select_clause, having_clause=having_clause)
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, violation_query)
-                violation_query = VTSAnalyticsActions.apply_conditions_to_query(violation_query, conditions)
-
-                df_history = await VTSAnalyticsActions.execute_query(violation_query, engine="polars")
-                if not df_history.is_empty():
-                    df_history = df_history.unique(subset=["invoice_number"], keep="first")
-
-                # Merge
-                final_df = merge_shortage_with_violations(
-                    df_history, df_shortage, df_truck_master,
-                    violation_types, bu_ic, bu_tas, bu_lpg,
-                    all_violations, aggregate=True
-                )
-
-                # Filter by qty_shortage if requested
-                if has_qty_shortage_filter and not final_df.is_empty():
-                    final_df = final_df.filter(pl.col("qty_shortage") > 0)
-
-                if final_df.is_empty():
-                    return {"status": True, "message": "No violations found", "data": []}
-
-                # Aggregate by invoice
-                violation_cols = [col for col in all_violations if col in final_df.columns]
-
-                aggs = [
-                    pl.col("qty_shortage").sum(),
-                    pl.col("zone").first(),
-                    pl.col("location_name").first(),
-                    pl.col("tl_number").first(),
-                    pl.col("transporter_name").first(),
-                    pl.col("created_at").first(),
-                ]
-
-                for col in violation_cols:
-                    aggs.append(pl.col(col).max())
-
-                final_df = (
-                    final_df
-                    .group_by("invoice_number")
-                    .agg(aggs)
-                )
-
-                for col in violation_cols:
-                    final_df = final_df.with_columns(
-                        pl.col(col).fill_null(0).cast(pl.Int64)
-                    )
-
-                if str(payload.get("download", "")).lower() == "true":
-                    return await download_streaming_data(final_df)
-                return await streaming_data(final_df)
 
             # ==================== DEFAULT CASE - ALL DATA ====================
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
@@ -1557,6 +1208,7 @@ class VTSAnalyticsActions:
             if not df_history.is_empty and 'invoice_number' in df_history.columns:
                 df_history = df_history.unique(subset=["invoice_number"], keep="first")
 
+            
             # Merge
             final_df = merge_shortage_with_violations(
                 df_history, df_shortage, df_truck_master,
@@ -1564,6 +1216,28 @@ class VTSAnalyticsActions:
                 all_violations, aggregate=True
             )
 
+            if "shortage_destination_code" in final_df.columns:
+                final_df = final_df.with_columns(
+                    destination_code=pl.coalesce([
+                        pl.col("shortage_destination_code"),  # Prefer shortage
+                        pl.col("destination_code")             # Fallback to violation
+                    ])
+                ).drop("shortage_destination_code")
+            
+            loc_df = await get_location_master()
+            final_df = final_df.join(
+                loc_df.select([
+                    pl.col("sap_id").alias("destination_code"),
+                    pl.col("name").alias("destination_name")
+                ]),
+                on="destination_code",
+                how="left"
+            )
+             
+            final_df = final_df.with_columns(
+              pl.col("destination_name").fill_null("N/A")
+            )
+            
             if final_df.is_empty():
                 return {"status": True, "message": "No data found", "data": []}
             # Ensure qty_shortage column exists
@@ -1744,752 +1418,14 @@ class VTSAnalyticsActions:
                     "data": agg_df.to_dicts()
                 }
             if str(payload.get("download", "")).lower() == "true":
-                return await download_streaming_data(final_df)
+                return await download_streaming_data(final_df, filename='violations')
             return await streaming_data(final_df)
 
         except Exception as e:
             print("ERROR:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
 
-    @staticmethod
-    async def vts_insite_violation_bkp(filters, cross_filters, drill_state, payload):
-        """
-        Main function to handle VTS violation queries with BU-specific merge logic:
-        - I&C: Default=Shortage LEFT Violations, Filtered=Shortage INNER Violations
-        - TAS/LPG: Default=Violations OUTER Shortage, Filtered=Violations LEFT Shortage
-        - Others: Violations LEFT Shortage (always)
-        """
-        try:
-            # Identify Business Unit
-            bu_ic = any(getattr(f, 'key') == 'bu' and getattr(f, 'value') == 'I&C' for f in filters)
-            bu_lpg = any(getattr(f, 'key') == 'bu' and getattr(f, 'value') == 'LPG' for f in filters)
-            bu_tas = any(getattr(f, 'key') == 'bu' and getattr(f, 'value') == 'TAS' for f in filters)
-            
-            query = vts_query.vts_query.get(drill_state.split(",")[0])
-            all_violations = vts_query.vts_query.get("all_violations", [])
-            violation_types = payload.get("violation_type", []) if payload else []
-            truck_number = payload.get("view", "")
 
-            def extract_invoice_number(invoice_str):
-                """Extract base invoice number: 9017293614-ZF23-1992 -> 9017293614"""
-                if pd.isna(invoice_str) or invoice_str is None:
-                    return None
-                invoice_str = str(invoice_str).strip()
-                if '-' in invoice_str:
-                    return invoice_str.split('-')[0]
-                return invoice_str
-
-            async def get_shortage_data():
-                """Fetch ALL shortage data from sales_trips_till_date"""
-                shortage_query = """
-                    SELECT
-                        vehicle_id,
-                        invoice_no,
-                        plant_nm,
-                        zone_nm,
-                        invoice_date,
-                        COALESCE(NULLIF(TRIM(qty_shortage), 'NaN'), '0.0')::NUMERIC AS qty_shortage,
-                        material_group_nm
-                    FROM sales_trips_till_date
-                    WHERE load_status = '6'
-                """
-                
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
-                shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
-                df_shortage = await VTSAnalyticsActions.execute_query(shortage_query)
-                
-                if df_shortage.empty:
-                    return pd.DataFrame()
-                
-                # Convert qty_shortage to numeric
-                df_shortage['qty_shortage'] = pd.to_numeric(df_shortage['qty_shortage'], errors='coerce').fillna(0.0)
-                
-                # Filter out zero shortages for non-I&C BUs when not in default mode
-                if not bu_ic and violation_types:
-                    df_shortage = df_shortage[df_shortage['qty_shortage'] != 0]
-                    if df_shortage.empty:
-                        return pd.DataFrame()
-                
-                # Create standardized column names for merging
-                df_shortage['invoice_match_key'] = df_shortage['invoice_no'].astype(str).str.strip()
-                df_shortage['tl_number'] = df_shortage['vehicle_id']
-                df_shortage['invoice_number'] = df_shortage['invoice_no']
-                
-                return df_shortage
-
-            async def get_truck_master():
-                """Get truck master data for all trucks"""
-                truck_query = """
-                    SELECT DISTINCT 
-                        truck_no, 
-                        transporter_name,
-                        location_name,
-                        zone
-                    FROM vts_truck_master
-                """
-                return await VTSAnalyticsActions.execute_query(truck_query)
-
-            def determine_merge_strategy():
-                """
-                Determine merge strategy based on BU and violation_types:
-                Returns: (merge_how, base_is_shortage)
-                """
-                has_violation_filter = bool(violation_types)
-                
-                if bu_ic:
-                    if has_violation_filter:
-                        return ('inner', True)  # Shortage INNER Violations
-                    else:
-                        return ('left', True)   # Shortage LEFT Violations
-                elif bu_tas or bu_lpg:
-                    if has_violation_filter:
-                        return ('left', False)  # Violations LEFT Shortage
-                    else:
-                        return ('outer', False) # Violations OUTER Shortage
-                else:
-                    # Default BU behavior
-                    return ('left', False)      # Violations LEFT Shortage
-
-            def merge_shortage_with_violations(df_violations, df_shortage, df_truck_master, aggregate=True):
-                """
-                Merge shortage and violations based on BU-specific logic
-                """
-                merge_how, base_is_shortage = determine_merge_strategy()
-                
-                if df_shortage.empty and df_violations.empty:
-                    return pd.DataFrame()
-                
-                if df_shortage.empty:
-                    if base_is_shortage:
-                        # If shortage is base and empty, return empty
-                        return pd.DataFrame()
-                    else:
-                        # If violations are base, add empty shortage column
-                        if aggregate:
-                            df_violations['qty_shortage'] = 0
-                        else:
-                            df_violations['qty_shortage_detail'] = ''
-                        
-                        # Map with truck master
-                        if not df_truck_master.empty and not df_violations.empty:
-                            truck_lookup = df_truck_master.set_index('truck_no')
-                            
-                            if 'transporter_name' not in df_violations.columns or df_violations['transporter_name'].isna().any():
-                                df_violations['transporter_name'] = df_violations.get('transporter_name', pd.Series(index=df_violations.index)).fillna(
-                                    df_violations['tl_number'].map(truck_lookup['transporter_name'])
-                                )
-                        
-                        return df_violations
-                
-                if df_violations.empty:
-                    if not base_is_shortage:
-                        # Violations are base but empty
-                        return pd.DataFrame()
-                
-                # Prepare match keys
-                if not df_violations.empty and 'invoice_number' in df_violations.columns:
-                    df_violations['invoice_match_key'] = df_violations['invoice_number'].apply(extract_invoice_number)
-                
-                df_shortage['invoice_match_key'] = df_shortage['invoice_no'].astype(str).str.strip()
-                
-                if aggregate:
-                    # Aggregate shortage by vehicle + invoice
-                    df_shortage_agg = df_shortage.groupby(
-                        ['tl_number', 'invoice_match_key'], 
-                        as_index=False
-                    ).agg({
-                        'qty_shortage': 'sum',
-                        'plant_nm': 'first',
-                        'zone_nm': 'first',
-                        'invoice_number': 'first',
-                        'invoice_date': 'first'
-                    })
-                    
-                    # Perform merge based on strategy
-                    if base_is_shortage:
-                        # Shortage is base (I&C)
-                        if df_violations.empty or 'invoice_number' not in df_violations.columns:
-                            df_merged = df_shortage_agg.copy()
-                        else:
-                            df_merged = df_shortage_agg.merge(
-                                df_violations,
-                                left_on=['tl_number', 'invoice_match_key'],
-                                right_on=['tl_number', 'invoice_match_key'],
-                                how=merge_how,
-                                suffixes=('_shortage', '')
-                            )
-                            # Use shortage invoice_number when violations invoice_number is null
-                            df_merged['invoice_number'] = df_merged['invoice_number'].fillna(df_merged.get('invoice_number_shortage', ''))
-                            df_merged['invoice_date'] = df_merged.get('invoice_date_shortage', df_merged.get('invoice_date', ''))
-                    else:
-                        # Violations are base (TAS/LPG/Others)
-                        if df_violations.empty:
-                            df_merged = df_shortage_agg.copy()
-                        else:
-                            df_merged = df_violations.merge(
-                                df_shortage_agg,
-                                left_on=['tl_number', 'invoice_match_key'],
-                                right_on=['tl_number', 'invoice_match_key'],
-                                how=merge_how,
-                                suffixes=('', '_shortage')
-                            )
-                    
-                    # Fill missing data from shortage for unmatched records
-                    if 'location_name' not in df_merged.columns:
-                        # Column missing → create using plant_nm or blank
-                        df_merged['location_name'] = df_merged['plant_nm'] if 'plant_nm' in df_merged.columns else ''
-                    else:
-                        # Column exists → fill NaN with plant_nm
-                        if 'plant_nm' in df_merged.columns:
-                            df_merged['location_name'] = df_merged['location_name'].fillna(df_merged['plant_nm'])
-                        else:
-                            df_merged['location_name'] = df_merged['location_name'].fillna('')
-
-                    if 'zone' not in df_merged.columns:
-                       df_merged['zone'] = df_merged['zone_nm'] if 'zone_nm' in df_merged.columns else ''
-                    else:
-                        if 'zone_nm' in df_merged.columns:
-                            df_merged['zone'] = df_merged['zone'].fillna(df_merged['zone_nm'])
-                        else:
-                            df_merged['zone'] = df_merged['zone'].fillna('')
-                    
-                    if 'invoice_number' not in df_merged.columns or df_merged['invoice_number'].isna().any():
-                        df_merged['invoice_number'] = df_merged.get('invoice_number', '').fillna(
-                            df_merged.get('invoice_match_key', '')
-                        )
-                    
-                    # Handle created_at/violation_date with fallback to invoice_date
-                    if 'created_at' not in df_merged.columns:
-                        if 'violation_date' in df_merged.columns:
-                            df_merged['created_at'] = df_merged['violation_date'].fillna(
-                                df_merged.get('invoice_date', '')
-                            )
-                        else:
-                            df_merged['created_at'] = df_merged.get('invoice_date', '')
-                    elif df_merged['created_at'].isna().any():
-                        df_merged['created_at'] = df_merged['created_at'].fillna(
-                            df_merged.get('violation_date', df_merged.get('invoice_date', ''))
-                        )
-
-                    df_merged['created_at'] = pd.to_datetime(df_merged['created_at'], format='%Y%m%d', errors='coerce').dt.strftime('%Y-%m-%d')
-                    df_merged['qty_shortage'] = pd.to_numeric(df_merged['qty_shortage'], errors='coerce').fillna(0)
-                    
-                else:
-                    # Detailed shortage with material groups
-                    def create_shortage_detail(group):
-                        """Create formatted shortage detail string"""
-                        details = []
-                        for _, row in group.iterrows():
-                            shortage = float(row['qty_shortage']) if pd.notna(row['qty_shortage']) else 0
-                            # For I&C default include zeros, for others only non-zero
-                            if bu_ic and not violation_types:
-                                mat_group = str(row['material_group_nm']).strip() if pd.notna(row['material_group_nm']) else '0'
-                                details.append(f"{mat_group}:{shortage}")
-                            elif shortage != 0:
-                                mat_group = str(row['material_group_nm']).strip() if pd.notna(row['material_group_nm']) else '0'
-                                details.append(f"{mat_group}:{shortage}")
-                        return ', '.join(details) if details else ''
-                    
-                    df_shortage_grouped = df_shortage.groupby(
-                        ['tl_number', 'invoice_match_key']
-                    ).apply(create_shortage_detail).reset_index(name='qty_shortage_detail')
-                    
-                    # Get metadata
-                    df_shortage_meta = df_shortage.groupby(
-                        ['tl_number', 'invoice_match_key']
-                    ).agg({
-                        'plant_nm': 'first',
-                        'zone_nm': 'first',
-                        'invoice_number': 'first',
-                        'invoice_date': 'first'
-                    }).reset_index()
-                    
-                    df_shortage_grouped = df_shortage_grouped.merge(
-                        df_shortage_meta,
-                        on=['tl_number', 'invoice_match_key'],
-                        how='left'
-                    )
-                    
-                    # Perform merge based on strategy
-                    if base_is_shortage:
-                        # Shortage is base (I&C)
-                        if df_violations.empty or 'invoice_number' not in df_violations.columns:
-                            df_merged = df_shortage_grouped.copy()
-                        else:
-                            df_merged = df_shortage_grouped.merge(
-                                df_violations,
-                                left_on=['tl_number', 'invoice_match_key'],
-                                right_on=['tl_number', 'invoice_match_key'],
-                                how=merge_how,
-                                suffixes=('_shortage', '')
-                            )
-                            df_merged['invoice_number'] = df_merged['invoice_number'].fillna(df_merged.get('invoice_number_shortage', ''))
-                            df_merged['invoice_date'] = df_merged.get('invoice_date_shortage', df_merged.get('invoice_date', ''))
-                    else:
-                        # Violations are base (TAS/LPG/Others)
-                        if df_violations.empty:
-                            df_merged = df_shortage_grouped.copy()
-                        else:
-                            df_merged = df_violations.merge(
-                                df_shortage_grouped,
-                                left_on=['tl_number', 'invoice_match_key'],
-                                right_on=['tl_number', 'invoice_match_key'],
-                                how=merge_how,
-                                suffixes=('', '_shortage')
-                            )
-                    
-                    # Fill missing data
-                    if 'location_name' not in df_merged.columns:
-                        # Column missing → create using plant_nm or blank
-                        df_merged['location_name'] = df_merged['plant_nm'] if 'plant_nm' in df_merged.columns else ''
-                    else:
-                        # Column exists → fill NaN with plant_nm
-                        if 'plant_nm' in df_merged.columns:
-                            df_merged['location_name'] = df_merged['location_name'].fillna(df_merged['plant_nm'])
-                        else:
-                            df_merged['location_name'] = df_merged['location_name'].fillna('')
-                  
-                    if 'zone' not in df_merged.columns:
-                       df_merged['zone'] = df_merged['zone_nm'] if 'zone_nm' in df_merged.columns else ''
-                    else:
-                        if 'zone_nm' in df_merged.columns:
-                            df_merged['zone'] = df_merged['zone'].fillna(df_merged['zone_nm'])
-                        else:
-                            df_merged['zone'] = df_merged['zone'].fillna('')
-
-                    if 'invoice_number' not in df_merged.columns or df_merged['invoice_number'].isna().any():
-                        df_merged['invoice_number'] = df_merged.get('invoice_number', '').fillna(
-                            df_merged.get('invoice_match_key', '')
-                        )
-                    
-                    # Handle created_at/violation_date with fallback to invoice_date
-                    if 'created_at' not in df_merged.columns:
-                        if 'violation_date' in df_merged.columns:
-                            df_merged['created_at'] = df_merged['violation_date'].fillna(
-                                df_merged.get('invoice_date', '')
-                            )
-                        else:
-                            df_merged['created_at'] = df_merged.get('invoice_date', '')
-                    elif df_merged['created_at'].isna().any():
-                        df_merged['created_at'] = df_merged['created_at'].fillna(
-                            df_merged.get('violation_date', df_merged.get('invoice_date', ''))
-                        )
-                    
-
-                    df_merged['created_at'] = pd.to_datetime(df_merged['created_at'], format='%Y%m%d', errors='coerce').dt.strftime('%Y-%m-%d')
-                    df_merged['qty_shortage_detail'] = df_merged['qty_shortage_detail'].fillna('')
-                
-                # Map with truck master for missing transporter_name, location_name, zone
-                if not df_truck_master.empty and not df_merged.empty:
-                    # Create truck lookup
-                    truck_lookup = df_truck_master.set_index('truck_no')
-                    
-                    # Fill transporter_name
-                    if 'transporter_name' not in df_merged.columns:
-                        df_merged['transporter_name'] = df_merged['tl_number'].map(truck_lookup['transporter_name'])
-                    elif df_merged['transporter_name'].isna().any():
-                        df_merged['transporter_name'] = df_merged['transporter_name'].fillna(
-                            df_merged['tl_number'].map(truck_lookup['transporter_name'])
-                        )
-                    
-                    # Fill location_name from truck master if still missing
-                    if df_merged['location_name'].isna().any():
-                        df_merged['location_name'] = df_merged['location_name'].fillna(
-                            df_merged['tl_number'].map(truck_lookup['location_name'])
-                        )
-                    
-                    # Fill zone from truck master if still missing
-                    if df_merged['zone'].isna().any():
-                        df_merged['zone'] = df_merged['zone'].fillna(
-                            df_merged['tl_number'].map(truck_lookup['zone'])
-                        )
-                
-                # Clean up temporary columns
-                df_merged.drop(columns=['invoice_match_key', 'plant_nm', 'zone_nm', 'invoice_number_shortage', 
-                                    'invoice_date', 'invoice_date_shortage'], 
-                            inplace=True, errors='ignore')
-                
-                # Add null violation to 0
-                for v in all_violations:
-                    if v in df_merged.columns:
-                        df_merged[v] = df_merged[v].fillna(0)
-                
-                return df_merged
-
-            has_qty_shortage_filter = 'qty_shortage' in violation_types if violation_types else False
-            vts_violation_types = [v for v in violation_types if v != 'qty_shortage'] if violation_types else []
-
-            # Get truck master data (used across all flows)
-            df_truck_master = await get_truck_master()
-
-            # ==================== TRUCK NUMBER VIEW ====================
-            if truck_number:
-                view_query = f"""
-                    SELECT 
-                        tl_number,
-                        invoice_number,
-                        location_name,
-                        zone,
-                        DATE(vts_end_datetime) as violation_date,
-                        stoppage_violations_count,
-                        route_deviation_count,
-                        device_tamper_count,
-                        main_supply_removal_count,
-                        night_driving_count,
-                        speed_violation_count,
-                        continuous_driving_count
-                    FROM vts_alert_history
-                    WHERE tl_number = '{truck_number}'
-                    AND invoice_number IS NOT NULL
-                    ORDER BY violation_date DESC, invoice_number
-                """
-                
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, view_query)
-                view_query = VTSAnalyticsActions.apply_conditions_to_query(view_query, conditions)
-                df_view = await VTSAnalyticsActions.execute_query(view_query)
-                
-                if not df_view.empty:
-                    df_view = df_view.drop_duplicates(subset=["invoice_number"], keep="first")
-                
-                # Get shortage data and filter for this truck
-                df_shortage = await get_shortage_data()
-                if not df_shortage.empty:
-                    df_shortage = df_shortage[df_shortage['tl_number'] == truck_number]
-                
-                # Check if we have any data
-                if df_view.empty and df_shortage.empty:
-                    return {"status": True, "message": "No data found for this vehicle", "data": []}
-                
-                # Merge
-                final_df = merge_shortage_with_violations(df_view, df_shortage, df_truck_master, aggregate=False)
-                
-                if final_df.empty:
-                    return {"status": True, "message": "No data found for this vehicle", "data": []}
-                
-                if 'qty_shortage_detail' not in final_df.columns:
-                    final_df['qty_shortage_detail'] = ''
-                
-                # Ensure created_at uses violation_date as fallback if needed
-                if 'violation_date' in final_df.columns:
-                    final_df['created_at'] = final_df.get('created_at', final_df['violation_date']).fillna(final_df['violation_date'])
-                
-                # Ensure transporter_name is filled
-                if 'transporter_name' not in final_df.columns or final_df['transporter_name'].isna().any():
-                    if not df_truck_master.empty:
-                        truck_lookup = df_truck_master.set_index('truck_no')
-                        final_df['transporter_name'] = final_df.get('transporter_name', pd.Series(index=final_df.index)).fillna(
-                            final_df['tl_number'].map(truck_lookup['transporter_name'])
-                        )
-                if 'violation_date' in final_df.columns:
-                    final_df['violation_date'] = final_df['violation_date'].fillna(
-                         pd.to_datetime(final_df['created_at'], errors='coerce').dt.strftime('%Y-%m-%d')
-                                    )
-                return {"status": True, "message": "success", "data": await safe_json(final_df)}
-            
-            # ==================== QTY SHORTAGE ONLY FILTER ====================
-            if has_qty_shortage_filter and not vts_violation_types:
-                shortage_query = """
-                    SELECT 
-                        vehicle_id AS tl_number, 
-                        invoice_no AS invoice_number,
-                        plant_nm AS location_name,
-                        invoice_date,
-                        CASE 
-                            WHEN qty_shortage = 'NaN' THEN '0.0'
-                            WHEN qty_shortage IS NULL THEN '0.0'
-                            ELSE qty_shortage 
-                        END AS qty_shortage,
-                        material_group_nm,
-                        zone_nm AS zone,
-                        invoice_date::DATE AS created_at
-                    FROM sales_trips_till_date
-                    WHERE 
-                        load_status = '6'
-                """
-
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
-                shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
-                df_shortage_all = await VTSAnalyticsActions.execute_query(shortage_query)
-
-                if df_shortage_all.empty:
-                    return {"status": True, "message": "No shortage data found", "data": []}
-
-                df_shortage_all["qty_shortage"] = pd.to_numeric(df_shortage_all["qty_shortage"], errors="coerce").fillna(0.0)
-                df_shortage_all = df_shortage_all[df_shortage_all["qty_shortage"] > 0]
-
-                if df_shortage_all.empty:
-                    return {"status": True, "message": "No non-zero shortage data found", "data": []}
-
-                shortage_agg = df_shortage_all.groupby("invoice_number", as_index=False).agg({
-                    "qty_shortage": "sum",
-                    "zone": "first",
-                    "location_name": "first",
-                    "tl_number": "first",
-                    "material_group_nm": "first",
-                    "created_at": "first",
-                })
-
-                tl_numbers_list = shortage_agg["tl_number"].unique().tolist()
-                tl_numbers_str = "', '".join(map(str, tl_numbers_list))
-
-                violation_columns = [
-                    f"COALESCE({v_type}, 0) AS {v_type}"
-                    for v_type in all_violations
-                ]
-                select_clause = ",\n       ".join(violation_columns)
-
-                history_query = f"""
-                    SELECT DISTINCT
-                        tl_number,
-                        invoice_number,
-                        {select_clause}
-                    FROM vts_alert_history
-                    WHERE tl_number IN ('{tl_numbers_str}')
-                """
-
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, history_query)
-                history_query = VTSAnalyticsActions.apply_conditions_to_query(history_query, conditions)
-                df_history = await VTSAnalyticsActions.execute_query(history_query)
-
-                if df_history.empty:
-                    df_history = pd.DataFrame(columns=["tl_number", "invoice_number"] + all_violations)
-
-                # Strip invoice numbers to match format
-                df_history["invoice_number"] = df_history["invoice_number"].astype(str).str.split("-").str[0]
-                
-                # Drop duplicate invoice_numbers from vts_alert_history, keep first
-                df_history = df_history.drop_duplicates(subset=["invoice_number"], keep="first")
-
-                truck_query = """
-                    SELECT DISTINCT truck_no, transporter_name
-                    FROM vts_truck_master
-                """
-                df_truck = await VTSAnalyticsActions.execute_query(truck_query)
-
-                # Merge with history (only violations, no zone/location_name to avoid conflicts)
-                merged_df = shortage_agg.merge(
-                    df_history, 
-                    on=["tl_number", "invoice_number"], 
-                    how="left"
-                )
-
-                # Merge with truck master
-                merged_df = merged_df.merge(df_truck, left_on="tl_number", right_on="truck_no", how="left")
-                merged_df.drop(columns=["truck_no"], inplace=True, errors="ignore")
-
-                # Process violation columns
-                for col in all_violations:
-                    if col in merged_df.columns:
-                        merged_df[col] = merged_df[col].fillna(0).astype(int) 
-                    else:
-                        merged_df[col] = 0
-
-                # Since we already aggregated shortage by invoice, just take first values
-                agg_dict = {
-                    "qty_shortage": "first",
-                    "zone": "first",
-                    "location_name": "first",
-                    "tl_number": "first",
-                    "transporter_name": "first",
-                    "created_at": "first",
-                }
-                for v_col in all_violations:
-                    agg_dict[v_col] = "max"  
-
-                agg_df = merged_df.groupby("invoice_number", as_index=False).agg(agg_dict)
-
-                final_cols = ["invoice_number", "created_at","zone", "location_name", "tl_number", "qty_shortage", "transporter_name"] + all_violations
-                agg_df = agg_df[final_cols]
-
-                pagination_result = await VTSAnalyticsActions.pagination_df(agg_df, payload)
-                return pagination_result
-
-            # ==================== SPECIFIC VIOLATION TYPES ====================
-            if violation_types:
-                select_parts = [
-                    f"MAX({v_type}) AS {v_type}"
-                    for v_type in all_violations
-                ]
-                select_clause = ",\n           ".join(select_parts)
-                
-                if vts_violation_types:
-                    having_parts = [
-                        f"MAX({v_type}) > 0"
-                        for v_type in vts_violation_types
-                    ]
-                    having_clause = " AND ".join(having_parts)
-                else:
-                    having_clause = "1=1"
-                
-                violation_query = vts_query.vts_query.get("vts_insite_history_type")
-                violation_query = violation_query.format(select_clause=select_clause, having_clause=having_clause)
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, violation_query)
-                violation_query = VTSAnalyticsActions.apply_conditions_to_query(violation_query, conditions)
-                
-                df_history = await VTSAnalyticsActions.execute_query(violation_query)
-                if not df_history.empty:
-                    df_history = df_history.drop_duplicates(subset=["invoice_number"], keep="first")
-
-                # Get shortage data
-                df_shortage = await get_shortage_data()
-                
-                # Merge
-                final_df = merge_shortage_with_violations(df_history, df_shortage, df_truck_master, aggregate=True)
-
-                # Filter by qty_shortage if requested
-                if has_qty_shortage_filter and not final_df.empty:
-                    final_df = final_df[final_df.get('qty_shortage', 0) > 0]
-
-                if final_df.empty:
-                    return {"status": True, "message": "No violations found", "data": []}
-
-                # Aggregate by invoice
-                violation_cols = [col for col in all_violations if col in final_df.columns]
-                agg_dict = {
-                    "qty_shortage": "sum",
-                    "zone": "first",
-                    "location_name": "first",
-                    "tl_number": "first",
-                    "transporter_name": "first",
-                    "created_at": "first",
-                }
-                for col in violation_cols:
-                    agg_dict[col] = "max"
-
-                final_df = final_df.groupby("invoice_number", as_index=False).agg(agg_dict)
-
-                for col in violation_cols:
-                    final_df[col] = final_df[col].fillna(0).astype(int)
-
-                pagination_result = await VTSAnalyticsActions.pagination_df(final_df, payload)
-                return pagination_result
-            
-            # ==================== DEFAULT CASE - ALL DATA ====================
-            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
-            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
-            df_history = await VTSAnalyticsActions.execute_query(query)
-            
-            if not df_history.empty and 'invoice_number' in df_history.columns:
-                df_history = df_history.drop_duplicates(subset=["invoice_number"], keep="first")
-
-            # Get shortage data
-            df_shortage = await get_shortage_data()
-            
-            # Merge
-            final_df = merge_shortage_with_violations(df_history, df_shortage, df_truck_master, aggregate=True)
-
-            if final_df.empty:
-                return {"status": True, "message": "No data found", "data": []}
-            # Ensure qty_shortage column exists
-            if 'qty_shortage' not in final_df.columns:
-                final_df['qty_shortage'] = 0
-            else:
-                final_df['qty_shortage'] = pd.to_numeric(final_df['qty_shortage'], errors='coerce').fillna(0)
-            
-            # Filter out rows with no violations at all
-            violation_cols = [v for v in all_violations if v in final_df.columns]
-            violation_cols.append('qty_shortage')
-            
-            final_df['total_violations'] = final_df[violation_cols].sum(axis=1)
-
-            if bu_ic and not violation_types:
-                # For I&C default, include all rows (including zero violations)
-                pass
-            else:   
-                final_df = final_df[final_df['total_violations'] > 0]
-
-            final_df.drop(columns=['total_violations'], inplace=True, errors='ignore')
-
-            if final_df.empty:
-                return {"status": True, "message": "No violation data found", "data": []}
-
-            # ==================== HANDLE GROUP_BY ====================
-            group_by_col = payload.get("group_by") if payload else None
-            if group_by_col and group_by_col in final_df.columns:
-                violation_cols = [v for v in all_violations if v in final_df.columns]
-                # violation_cols.append('qty_shortage') 
-                agg_df = final_df.groupby(group_by_col)[violation_cols].sum().reset_index()
-                agg_df['total_count'] = agg_df[violation_cols].sum(axis=1)
-                
-                return {"status": True, "message": "success", "data": agg_df.to_dict(orient='records')}
-
-            # ==================== HANDLE DRILL-DOWN ====================
-            qlick_view = payload.get("qlick_view") if payload else None
-            click_value = payload.get("click_value") if payload else None
-            location_name = payload.get("location_name") if payload else None
-            
-            violation_cols = [v for v in all_violations if v in final_df.columns]
-            violation_cols.append('qty_shortage')
-
-            # ZONE VIEW
-            if qlick_view == "zone" and not click_value:
-                final_df["zone"] = final_df["zone"].fillna("Unknown")
-                agg_df = final_df.groupby("zone")[violation_cols].sum().reset_index()
-                agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
-                return {"status": True, "message": "Zone-wise violations", "data": agg_df.to_dict(orient="records")}
-
-            # ZONE -> LOCATION DRILL
-            if qlick_view == "zone" and click_value:
-                zone_df = final_df[final_df["zone"] == click_value]
-                if zone_df.empty:
-                    return {"status": True, "message": f"No data found for zone {click_value}", "data": []}
-                
-                agg_df = zone_df.groupby("location_name")[violation_cols].sum().reset_index()
-                agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
-                
-                return {"status": True, "message": f"Violations for all plants in zone {click_value}", "data": agg_df.to_dict(orient="records")}
-
-            # LOCATION -> TRANSPORTER DRILL
-            elif qlick_view == "location_name" and click_value:
-                location_df = final_df[final_df["location_name"] == click_value]
-                if location_df.empty:
-                    return {"status": True, "message": f"No data found for location {click_value}", "data": []}
-                
-                agg_df = location_df.groupby("transporter_name")[violation_cols].sum().reset_index()
-                agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
-                
-                return {"status": True, "message": f"Violations for all transporters in location {click_value}", "data": agg_df.to_dict(orient="records")}
-
-            # TRANSPORTER -> VEHICLE DRILL
-            elif qlick_view == "transporter_name" and click_value and location_name:
-                transporter_df = final_df[
-                    (final_df["transporter_name"] == click_value) & 
-                    (final_df["location_name"] == location_name)
-                ]
-                if transporter_df.empty:
-                    return {"status": True, "message": f"No data found for transporter {click_value}", "data": []}
-                
-                agg_df = transporter_df.groupby("tl_number")[violation_cols].sum().reset_index()
-                agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
-                
-                return {"status": True, "message": f"Vehicle-wise violations for transporter {click_value}", "data": agg_df.to_dict(orient="records")}
-
-            # VEHICLE -> INVOICE DRILL
-            elif qlick_view == "tl_number" and click_value:
-                vehicle_df = final_df[final_df["tl_number"] == click_value]
-                if vehicle_df.empty:
-                    return {"status": True, "message": f"No data found for vehicle {click_value}", "data": []}
-                
-                if 'invoice_number' in vehicle_df.columns:
-                    group_cols = ["invoice_number"]
-                    if "created_at" in vehicle_df.columns:
-                        group_cols.append("created_at")
-                    
-                    agg_df = vehicle_df.groupby(group_cols)[violation_cols].sum().reset_index()
-                    agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
-                else:
-                    agg_df = vehicle_df.copy()
-                    agg_df["total_count"] = agg_df[violation_cols].sum(axis=1)
-                
-                return {"status": True, "message": f"Invoice-wise violations for vehicle {click_value}", "data": agg_df.to_dict(orient="records")}
-            
-            pagination_result = await VTSAnalyticsActions.pagination_df(final_df, payload)
-            return pagination_result
-        
-        except Exception as e:
-            print("ERROR:", traceback.format_exc())
-            return {"status": False, "message": str(e), "data": []}
-        
     @staticmethod
     async def violation_percentages(filters, cross_filters, drill_state, payload):
         try:
@@ -2500,6 +1436,7 @@ class VTSAnalyticsActions:
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
             df = await VTSAnalyticsActions.execute_query(query)
+            total_trip_count=len(df)          # Total vts_trip_count
 
             emlock_conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, emlock_open_query)
             emlock_query = VTSAnalyticsActions.apply_conditions_to_query(emlock_open_query, emlock_conditions)
@@ -2511,7 +1448,7 @@ class VTSAnalyticsActions:
 
             # Step 2: Define violation columns
             violation_cols = [
-                "route_deviation_count",
+                "route_deviation_count_orig",
                 "stoppage_violations_count",
                 "device_tamper_count",
                 "speed_violation_count",
@@ -2533,10 +1470,10 @@ class VTSAnalyticsActions:
                     df_viol[col] = df_viol[col].apply(lambda x: 1 if x and x != 0 else 0)
 
             # Step 4: Count each violation across all invoices
-            violation_counts = {col: df_viol[col].sum() for col in violation_cols}
+            violation_counts = {col: int(df_viol[col].sum()) for col in violation_cols}
 
             # Step 5: Add emlock_open
-            violation_counts["emlock_open"] = emlock_open
+            violation_counts["emlock_open"] = int(emlock_open)
 
             # Step 6: Get shortage count
             shortage_result = await VTSAnalyticsActions.total_count_shortage(filters, cross_filters, drill_state, payload)
@@ -2549,25 +1486,15 @@ class VTSAnalyticsActions:
                 print(f"{key}: {count}")
 
             # Step 7: Calculate total and percentages
-            total_all = sum(violation_counts.values())
             percentages = {}
             for key, count in violation_counts.items():
-                percentages[key] = round(100 * count / total_all, 2) if total_all > 0 else 0
+                percentages[key] = round(100 * count / total_trip_count, 2) if total_trip_count > 0 else 0
 
-            # Step 8: Adjust rounding so total = 100
-            total_percent = round(sum(percentages.values()), 2)
-            diff = round(100 - total_percent, 2)
-            if diff != 0:
-                largest_key = max(percentages, key=percentages.get)
-                percentages[largest_key] = round(percentages[largest_key] + diff, 2)
             
-
-
-            # Step 9: Return final response
             return {
-                "status": True,
-                "message": "Violation percentages calculated",
-                "data": percentages
+                "status": True,"message": "Violation percentages calculated",
+                "data": { "counts": violation_counts,"percentages": percentages,"total_trip":total_trip_count
+                }
             }
 
         except Exception as e:
@@ -2697,7 +1624,7 @@ class VTSAnalyticsActions:
                 invoice_df.rename(columns={
                     "invoice_number": "invoice_no",
                     "created_at": "created_at",
-                    violation_type: f"actual_{violation_type}"  
+                    violation_type: f"{violation_type}"  
                 }, inplace=True)
 
                 result = invoice_df.to_dict(orient="records")
@@ -2754,7 +1681,7 @@ class VTSAnalyticsActions:
                         zone,
                         DATE(vts_end_datetime) AS created_at,
                         stoppage_violations_count,
-                        route_deviation_count,
+                        route_deviation_count_orig,
                         device_tamper_count,
                         main_supply_removal_count,
                         night_driving_count,
@@ -2764,7 +1691,7 @@ class VTSAnalyticsActions:
                     WHERE 
                         (
                             stoppage_violations_count > 0 OR
-                            route_deviation_count > 0 OR
+                            route_deviation_count_orig > 0 OR
                             device_tamper_count > 0 OR
                             main_supply_removal_count > 0 OR
                             night_driving_count > 0 OR
@@ -2796,7 +1723,7 @@ class VTSAnalyticsActions:
                 # Violation columns
                 violation_cols = [
                     "stoppage_violations_count",
-                    "route_deviation_count",
+                    "route_deviation_count_orig",
                     "device_tamper_count",
                     "main_supply_removal_count",
                     "night_driving_count",
@@ -2851,6 +1778,7 @@ class VTSAnalyticsActions:
                     # 7) Write to Excel
                     if final_df_pending.empty:
                         pd.DataFrame([{"message": "No data found for emlock_open"}]).to_excel(
+                            
                             writer, index=False, sheet_name="emlock_open"
                         )
                     else:
@@ -3018,23 +1946,30 @@ class VTSAnalyticsActions:
 
             # Step 2: Execute base ongoing trips query
             df = await VTSAnalyticsActions.execute_query(query)
-            df.drop(columns=["zone"], inplace=True, errors="ignore")
 
+            for col in ["vehicle_latitude", "vehicle_longitude"]:
+                if col in df.columns:
+                    df[col] = df[col].astype(str)
+
+            df = pl.DataFrame(df) if isinstance(df, pd.DataFrame) else df
+            if df.is_empty():
+                return {"status": True, "message": "No data found", "data": []}
+            
             # Remove duplicate records
-            df = df.drop_duplicates(
+            df = df.unique(
                 subset=["event_start_datetime", "event_end_datetime", "tt_number", "invoice_no"],
                 keep="first"
             )
 
-            if df.empty:
-                return {"status": True, "message": "No data found", "data": []}
-
             # Step 3: Get location info
-            sap_id_list = df['sap_id'].dropna().astype(str).tolist()
+            sap_id_list = df.select("sap_id").drop_nulls().to_series().cast(str).to_list()
+            
             if not sap_id_list:
-                df["location_name"] = "Unknown"
-                df["zone"] = "Unknown"
-                merged_df = df.copy()
+                df = df.with_columns([
+                    pl.lit("Unknown").alias("location_name"),
+                    pl.lit("Unknown").alias("zone")
+                ])
+                merged_df = df.clone()
             else:
                 sap_id_str = "', '".join(map(str, sap_id_list))
                 location_query = f"""
@@ -3042,94 +1977,118 @@ class VTSAnalyticsActions:
                     FROM location_master 
                     WHERE sap_id IN ('{sap_id_str}')
                 """
-                loc_df = await VTSAnalyticsActions.execute_query(location_query)
-
+                loc_df = await VTSAnalyticsActions.execute_query(location_query, engine='polars')
                 # Step 4: Merge location info (keep all trips)
-                df["sap_id"] = df["sap_id"].astype(str).str.strip()
-                loc_df["sap_id"] = loc_df["sap_id"].astype(str).str.strip()
-                merged_df = df.merge(loc_df, on="sap_id", how="left")
+                df = df.with_columns(pl.col("sap_id").cast(str).str.strip_chars())
+                loc_df = loc_df.with_columns(pl.col("sap_id").cast(str).str.strip_chars())
+                
+                merged_df = df.join(loc_df, on="sap_id", how="left")
 
                 # Fill missing values — don't drop any record
-                merged_df["location_name"] = merged_df["location_name"].fillna("Unknown")
-                merged_df["zone"] = merged_df["zone"].fillna("Unknown")
+                merged_df = merged_df.with_columns([
+                    pl.col("location_name").fill_null("Unknown"),
+                    pl.col("zone").fill_null("Unknown")
+                ])
 
             # Step 5: Fetch alert history only for ongoing trips' invoices
-            invoice_list = merged_df["invoice_no"].dropna().astype(str).unique().tolist()
+            invoice_list = merged_df.select("invoice_no").drop_nulls().to_series().cast(str).unique().to_list()
+            
             if not invoice_list:
                 return {"status": True, "message": "No invoices found in trips", "data": []}
 
-            
-            # completed_trips_query = f"""
-            #     SELECT DISTINCT invoice_no
-            #     FROM vts_completed_trip
-            #     WHERE invoice_no IN ('{invoices_str}')
-            # """
-            # alert_df = await VTSAnalyticsActions.execute_query(completed_trips_query)
-            
             completed_invoice_set = set()
 
             conn = vts_ongoing_trips.get_db_connection()
             cursor = conn.cursor()
 
             CHUNK_SIZE = 1000  # Safe size to avoid 8623
+            try:
+                for i in range(0, len(invoice_list), CHUNK_SIZE):
+                    chunk = invoice_list[i:i + CHUNK_SIZE]
+                    invoices_str = "', '".join(chunk)
 
-            for i in range(0, len(invoice_list), CHUNK_SIZE):
-                chunk = invoice_list[i:i + CHUNK_SIZE]
-                invoices_str = "', '".join(chunk)
+                    completed_query = f"""
+                        SELECT DISTINCT CHALLAN_NO
+                        FROM COMPLETED_TRIP
+                        WHERE CHALLAN_NO IN ('{invoices_str}')
+                    """
 
-                completed_query = f"""
-                    SELECT DISTINCT CHALLAN_NO
-                    FROM COMPLETED_TRIP
-                    WHERE CHALLAN_NO IN ('{invoices_str}')
-                """
+                    cursor.execute(completed_query)
+                    rows = cursor.fetchall()
 
-                cursor.execute(completed_query)
-                rows = cursor.fetchall()
+                    # completed_query = f"""
+                    #             SELECT DISTINCT  invoice_no
+                    #             FROM vts_completed_trip
+                    #             WHERE invoice_no IN ('{invoices_str}')
+                    #         """
+                    # rows = await VTSAnalyticsActions.execute_query(completed_query, engine='polars')
 
-                completed_invoice_set.update(
-                    str(r[0]).strip()
-                    for r in rows
-                    if r[0] is not None
-                )
+                    completed_invoice_set.update(
+                        str(r[0]).strip()
+                        for r in rows
+                        if r[0] is not None
+                    )
+            except Exception as e:
+                print("Error fetching completed invoices:", str(e))
 
-            cursor.close()
-            conn.close()
+            finally:    
+                cursor.close()
+                conn.close()
 
-     
+            # Step 6: Filter by status
             status_filter = payload.get("status")
 
             if status_filter == "live":
-                merged_df = merged_df[
-                    ~merged_df["invoice_no"].isin(completed_invoice_set)
-                ]
+                merged_df = merged_df.filter(
+                    ~pl.col("invoice_no").is_in(list(completed_invoice_set))
+                )
             elif status_filter == "closed":
-                merged_df = merged_df[
-                    merged_df["invoice_no"].isin(completed_invoice_set)
-                ]
-     
-            if merged_df.empty:
+                merged_df = merged_df.filter(
+                    pl.col("invoice_no").is_in(list(completed_invoice_set))
+                )
+
+            if merged_df.height == 0:
                 return {"status": True, "message": f"No {status_filter} trips found", "data": []}
+            
+            if payload.get("table") == "true":
+                final_columns = [
+                            "event_start_datetime", "event_end_datetime", "sap_id", "region", 
+                            "zone", "location_type", "destination_code", "tt_number", "trip_id",
+                            "invoice_no", "load_no", 
+                            "vehicle_latitude", "vehicle_longitude", "vehicle_location", "transporter_name"
+                        ]
+                existing_columns = [col for col in final_columns if col in merged_df.columns]
+                table_df = merged_df.select(existing_columns)
+                result = table_df.to_dicts()
+                return {"status": True, "message": "Data found", "total_records": table_df.height, "data": result}
 
             # Step 7: TT-level drill-down
             selected_tt = payload.get("tt_number")
             if selected_tt:
-                merged_df = merged_df[merged_df["tt_number"] == selected_tt]
-                if merged_df.empty:
+                merged_df = merged_df.filter(pl.col("tt_number") == selected_tt)
+                
+                if merged_df.height == 0:
                     return {"status": True, "message": f"No trips found for vehicle {selected_tt}", "data": []}
 
-                merged_df["created_at"] = (
-                    pd.to_datetime(merged_df["event_start_datetime"].fillna(merged_df["event_end_datetime"]))
-                    .dt.date.astype(str)
-                )
-                trip_df = merged_df.sort_values(by="created_at", ascending=True)
-                trip_df = trip_df[["invoice_no", "created_at"]]
-                result = trip_df.to_dict(orient="records")
+                # Create created_at column
+                trip_df = merged_df.with_columns(
+                    pl.coalesce([
+                        pl.col("event_start_datetime"),
+                        pl.col("event_end_datetime")
+                    ]).cast(pl.Date).cast(str).alias("created_at")
+                ).sort("created_at")
+                
+                trip_df = trip_df.select(["invoice_no", "created_at"])
+                result = trip_df.to_dicts()
+                
                 return {"status": True, "message": f"Trip details for vehicle {selected_tt}", "data": result}
 
             # Step 8: Grouping logic (zone / location / transporter)
-            merged_df["zone"] = merged_df["zone"].fillna("Unknown")
-            merged_df["location_name"] = merged_df["location_name"].fillna("Unknown")
-            merged_df["transporter_name"] = merged_df["transporter_name"].fillna("Unknown")
+            merged_df = merged_df.with_columns([
+                pl.col("zone").fill_null("Unknown"),
+                pl.col("location_name").fill_null("Unknown"),
+                pl.col("transporter_name").fill_null("Unknown")
+            ])
 
             if payload.get("transporter_name"):
                 group_col = "tt_number"
@@ -3140,22 +2099,28 @@ class VTSAnalyticsActions:
             else:
                 group_col = "zone"
 
-            summary_df = (
-                merged_df.groupby(group_col, dropna=False)
-                .agg({"invoice_no": pd.Series.nunique})
-                .reset_index()
-            )
+            # Group by and aggregate
+            summary_df = merged_df.group_by(group_col).agg([
+                pl.col("invoice_no").n_unique().alias("invoice_count")
+            ])
 
             if group_col != "tt_number":
-                summary_df["vehicle_count"] = merged_df.groupby(group_col, dropna=False)["tt_number"].nunique().values
+                vehicle_counts = merged_df.group_by(group_col).agg([
+                    pl.col("tt_number").n_unique().alias("vehicle_count")
+                ])
+                summary_df = summary_df.join(vehicle_counts, on=group_col, how="left")
 
-            summary_df.rename(columns={"invoice_no": "invoice_count"}, inplace=True)
-            result = summary_df.to_dict(orient="records")
+            result = summary_df.to_dicts()
 
+        
             # Step 9: Handle Excel download
             if payload.get("download") == "true":
-                for col in merged_df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
-                    merged_df[col] = merged_df[col].dt.tz_localize(None)
+                # Remove timezone info from datetime columns
+                for col in merged_df.columns:
+                    if merged_df[col].dtype in [pl.Datetime, pl.Datetime("ms"), pl.Datetime("us"), pl.Datetime("ns")]:
+                        merged_df = merged_df.with_columns(
+                            pl.col(col).dt.replace_time_zone(None)
+                        )
 
                 violation_mapping = {
                     "HS": "Hotspot",
@@ -3163,14 +2128,22 @@ class VTSAnalyticsActions:
                     "RD": "Route Deviation > 2km",
                     "WR": "Trip without route"
                 }
+                
                 if "violation_type" in merged_df.columns:
-                    merged_df["violation_type"] = merged_df["violation_type"].replace(violation_mapping)
+                    merged_df = merged_df.with_columns(
+                        pl.col("violation_type").replace(violation_mapping, default=pl.col("violation_type"))
+                    )
 
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 file_name = f"{ongoing_trips_type}{status_filter}{timestamp}.xlsx"
                 output = io.BytesIO()
-                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                    merged_df.to_excel(writer, index=False, sheet_name='ongoing_trips')
+                
+                # Convert to pandas for Excel writing (xlsxwriter works with pandas)
+                merged_pd = merged_df.to_pandas()
+                with pl.Config() as cfg:
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                        merged_pd.to_excel(writer, index=False, sheet_name='ongoing_trips')
+               
                 output.seek(0)
                 headers = {"Content-Disposition": f'attachment; filename="{file_name}"'}
                 return StreamingResponse(
@@ -3311,8 +2284,16 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
     
+                
     @staticmethod
     async def safety_compliance_percentage(filters, cross_filters, drill_state, payload):
+                           
+            total_trips_count = vts_query.vts_query.get("total_trips")
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, total_trips_count)
+            total_trips_count = VTSAnalyticsActions.apply_conditions_to_query(total_trips_count, conditions)            
+            df_total = await VTSAnalyticsActions.execute_query(total_trips_count)            
+            total_length=int(df_total.iloc[0, 0])
+                                      
             try:
                 # Queries returning counts
                 query_keys = [
@@ -3320,9 +2301,8 @@ class VTSAnalyticsActions:
                     "vts_harsh_braking",
                     "vts_harsh_acceleration",
                     "vts_device_removed"
-                ]
-
-            
+                    
+                ]                                                            
                 counts = {}
                 for key in query_keys:
                     query = vts_query.vts_query.get(key)
@@ -3331,22 +2311,12 @@ class VTSAnalyticsActions:
                 
                     df = await VTSAnalyticsActions.execute_query(query)
                     counts[key] = int(df.iloc[0, 0]) if not df.empty else 0
-                  
-
+                    
+                                     
+                percentages = {k: round((v / total_length) * 100, 2) for k, v in counts.items()}
+                return {"status": True, "message": "Success", "data": { "percentages":
+                    percentages,"total_trip":total_length,"counts":counts}}
             
-                total = sum(counts.values())
-                if total == 0:
-                    return {"status": True, "message": "No data found", "data": []}
-
-                percentages = {k: round((v / total) * 100, 2) for k, v in counts.items()}
-
-            
-                diff = 100 - sum(percentages.values())
-                if abs(diff) > 0.01:
-                    max_key = max(percentages, key=percentages.get)
-                    percentages[max_key] = round(percentages[max_key] + diff, 2)
-
-                return {"status": True, "message": "Success", "data": percentages}
 
             except Exception as e:
                 print("traceback:", traceback.format_exc())
@@ -3434,12 +2404,10 @@ class VTSAnalyticsActions:
             
             alerts_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
 
-            print(alerts_query)
-
             # Execute queries
-            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
+            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query, engine='polars')
             
-            if alerts_df.empty:
+            if alerts_df.is_empty():
                 return {"status": True, "message": "success", "data": [], "percentages": []}
 
             # Get group by column
@@ -3450,39 +2418,39 @@ class VTSAnalyticsActions:
             if 'violation_type' not in alerts_df.columns:
                 return {"status": False, "message": "violation_type column not found", "data": [], "percentages": []}
             
-            alerts_df = alerts_df[
-                  alerts_df[group_by_column].notnull() & 
-                 (alerts_df[group_by_column] != "")
-                ]
+            alerts_df = alerts_df.filter((pl.col(group_by_column).is_not_null()) & (pl.col(group_by_column) != ""))
+          
+            if alerts_df.is_empty():
+                return {"status": True, "message": "success", "data": [], "percentages": []}
             
-            if alerts_df.empty:
-                 return {"status": True, "message": "success", "data": [], "percentages": []}
+            grouped = (alerts_df.group_by([group_by_column, "violation_type"]).agg(pl.count().alias("count")))
             
-            grouped = alerts_df.groupby([group_by_column, 'violation_type']).size().reset_index(name='count')
-            
-            if grouped.empty:
+            if grouped.is_empty():
                  return {"status": True, "message": "success", "data": [], "percentages": []}
         
             # Prepare response data
             data_response = []
-            for group_value in grouped[group_by_column].unique():
-                group_data = grouped[grouped[group_by_column] == group_value]
+            for group_value in grouped[group_by_column].unique().to_list():
+                group_data = grouped.filter(pl.col(group_by_column) == group_value)
                 violations_list = [
                     {"violation_type": row['violation_type'], "count": int(row['count'])}
-                    for _, row in group_data.iterrows()
+                    for row in group_data.to_dicts()
                 ]
                 
                 if violations_list:
                     data_response.append({group_value: violations_list})
 
             # Calculate percentages
-            violation_totals = grouped.groupby('violation_type')['count'].sum().to_dict()
-            grand_total = sum(violation_totals.values())
+            violation_totals = (grouped.group_by('violation_type').agg(pl.sum("count")))
+            grand_total = violation_totals["count"].sum()
             percentages = []
             if grand_total > 0:
                 percentages = [
-                    {"violation_type": vtype, "percentage": round((count / grand_total) * 100, 2)}
-                    for vtype, count in violation_totals.items()
+                    {
+                    "violation_type": row["violation_type"],
+                    "percentage": round((row["count"] / grand_total) * 100, 2)
+                    }
+                     for row in violation_totals.iter_rows(named=True)
                 ]
 
             return {
@@ -3514,38 +2482,34 @@ class VTSAnalyticsActions:
             alerts_query = base_query.format(period_expr=period_expr)
             alerts_query = VTSAnalyticsActions.apply_conditions_to_query(alerts_query, conditions)
 
-            print(alerts_query)
-
             # Execute queries
-            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query)
+            alerts_df = await VTSAnalyticsActions.execute_query(alerts_query,engine='polars')
             
-            if alerts_df.empty:
+            if alerts_df.height == 0:
                 return {"status": True, "message": "success", "data": []}
 
-            if 'violation_type' not in alerts_df.columns or 'period' not in alerts_df.columns:
+            if not {"violation_type", "period"}.issubset(alerts_df.columns):
                  return {"status": False, "message": "Required columns not found", "data": []}
             
-            alerts_df = alerts_df[
-                (alerts_df["period"].notna()) &                      
-                (alerts_df["period"].astype(str).str.strip() != "")
-            ]
-
-            if alerts_df.empty:
-                return {"status": True, "message": "success", "data": []}
+            alerts_df = alerts_df.filter(pl.col("period").is_not_null() & (pl.col("period").cast(pl.Utf8).str.strip_chars() != ""))
             
-            grouped = alerts_df.groupby(['period', 'violation_type']).size().reset_index(name='count')
+            if alerts_df.height == 0:
+                 return {"status": True, "message": "success", "data": []}
             
-            if grouped.empty:
+            
+            grouped = (alerts_df.group_by(['period', 'violation_type']).agg(pl.len().alias("count")))
+            
+            if grouped.height == 0:
                 return {"status": True, "message": "success", "data": []}
             
             result = []
-            for period in grouped['period'].unique():
-                period_data = grouped[grouped['period'] == period]
+            for period in grouped.select('period').unique().to_series():
+                period_data = grouped.filter(pl.col('period') == period)
                 formatted_date = VTSAnalyticsActions.format_date(period, drill_state)
                 
                 values = [
                     {"violation_type": row['violation_type'], "count": int(row['count'])}
-                    for _, row in period_data.iterrows()
+                    for row in period_data.iter_rows(named=True)
                 ]
                 
                 if values:
@@ -4090,9 +3054,8 @@ class VTSAnalyticsActions:
             # Cross filters
             _filters, daterange = await generate_cross_filter(cross_filters)
             current_date = datetime.now().strftime("%Y-%m-%d")
+
             closed_query = vts_query.vts_query.get("closed_alerts")
-            
-            # Updated shortage query - remove hardcoded conditions
             shortage_query = vts_query.vts_query.get("unblocked_tt_shortage")
 
             # Drill Down filters for closed_query
@@ -4102,33 +3065,51 @@ class VTSAnalyticsActions:
                 dashboard_studio_model.WidgetFiltersCreate(**rec)
                 for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)
             ]
+
             closed_query = await widget_actions.WidgetActions.apply_filter_drilldown(closed_query, access_filters, drill_state)
 
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
             shortage_query = VTSAnalyticsActions.apply_conditions_to_query(shortage_query, conditions)
             shortage_query += " GROUP BY vehicle_id"
 
-            # Apply date condition to closed_query only (since shortage_query date is handled by build_filter_conditions)
+            # Date condition only for closed_query
             clause = "WHERE" if "where" not in closed_query.lower() else "AND"
             if daterange:
                 closed_query += f" {clause} created_at BETWEEN {daterange}"
             else:
                 closed_query += f" {clause} CAST(created_at AS DATE) = '{current_date}'"
-
             print("Final Shortage Query:", shortage_query)
-
+            # Execute queries
             resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=closed_query, limit=0)
             shortage_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=shortage_query, limit=0)
-            
+
+            # DataFrames
             df = pd.DataFrame(resp.get("data", []))
+            
+
             df = await filter_data(df, _filters)
+
             shortage = pd.DataFrame(shortage_resp.get("data", []))
 
+            # AVERAGE UNBLOCKING LOGIC (NEW)
+            # Use blocked → unblocked dates from query
             df["vehicle_blocked_end_date"] = pd.to_datetime(df["vehicle_blocked_end_date"]).dt.tz_localize(None)
             df["vehicle_blocked_start_date"] = pd.to_datetime(df["vehicle_blocked_start_date"]).dt.tz_localize(None)
+            
+            df["created_at"] = pd.to_datetime(
+                df["created_at"]
+            ).dt.tz_localize(None)
 
-            df["ageing"] = (df["vehicle_blocked_end_date"] - df["vehicle_blocked_start_date"]).dt.days + 1
-                        
+            # consider only unblocked records
+            df = df[df["vehicle_unblocked_date"].notna()]
+
+
+            # Average Unblocking duration (days)
+            df["unblocking_days"] = (
+                (df["vehicle_unblocked_date"] - df["created_at"])
+                .dt.total_seconds() / 86400
+            ).clip(lower=0)
+            # Violation counts
             violation_counts = (
                 df.pivot_table(
                     index=["sap_id", "zone", "tt_number"],
@@ -4138,168 +3119,343 @@ class VTSAnalyticsActions:
                     fill_value=0
                 )
             )
-            avg_ageing = (
-                df.groupby(["sap_id", "location_name", "transporter_code", "zone", "tt_number"])["ageing"]
-                .mean()
-                .reset_index()
+
+            # Average Unblocking (group level)
+            avg_unblocking = (
+                df.groupby(
+                    ["sap_id", "location_name", "transporter_code", "zone", "tt_number"],
+                    as_index=False
+                )
+                .agg(
+                    total_unblocking_days=("unblocking_days", "sum"),
+                    total_alerts=("unblocking_days", "count")
+                )
             )
-            df = (
-                avg_ageing.merge(violation_counts, on=["sap_id", "tt_number"], how="left")
+
+            avg_unblocking["average_unblocking"] = (
+                avg_unblocking["total_unblocking_days"]
+                / avg_unblocking["total_alerts"]
+            ).round(2)
+
+            df = avg_unblocking.merge(
+                violation_counts, on=["sap_id", "tt_number"], how="left"
             )
+
             df.columns.name = None
-            df["ageing"] = df["ageing"].round(2)
+
+            # Merge shortage
             df = pd.merge(df, shortage, on="tt_number", how="left")
             df = df.fillna(0)
 
+            # Ensure violation columns
             for col in [
-                "continuous_driving_count", "device_tamper_count", "main_supply_removal_count",
-                "night_driving_count", "route_deviation_count", "speed_violation_count",
+                "continuous_driving_count", "device_tamper_count",
+                "main_supply_removal_count", "night_driving_count",
+                "route_deviation_count", "speed_violation_count",
                 "stoppage_violations_count"
-                ]:
+            ]:
                 if col not in df.columns:
                     df[col] = 0
-            df.rename(
-                columns={"continuous_driving_count": "CD", "device_tamper_count": "DT",
-                        "main_supply_removal_count": "PD", "night_driving_count": "ND",
-                        "route_deviation_count": "RD", "speed_violation_count": "SV",
-                        "stoppage_violations_count": "US"}, inplace=True)            
 
+            df.rename(
+                columns={
+                    "continuous_driving_count": "CD",
+                    "device_tamper_count": "DT",
+                    "main_supply_removal_count": "PD",
+                    "night_driving_count": "ND",
+                    "route_deviation_count": "RD",
+                    "speed_violation_count": "SV",
+                    "stoppage_violations_count": "US"
+                },
+                inplace=True
+            )
+
+            # Drill-down aggregation
             if drill_state:
                 group_by_keys = [drill_state]
+
                 if filters:
                     filter_keys = [rec.key.strip('"') for rec in filters]
+
                     if "zone" in filter_keys and "location_name" not in filter_keys:
                         group_by_keys = ["zone", "location_name"]
-                    elif "zone" in filter_keys and "location_name" in filter_keys and "transporter_code" not in filter_keys:
+                    elif (
+                        "zone" in filter_keys and
+                        "location_name" in filter_keys and
+                        "transporter_code" not in filter_keys
+                    ):
                         group_by_keys = ["zone", "location_name", "transporter_code"]
-                    elif "zone" in filter_keys and "location_name" in filter_keys and "transporter_code" in filter_keys and "tt_number" not in filter_keys:
-                        group_by_keys = ["zone", "location_name", "transporter_code", "tt_number"]
+                    elif (
+                        "zone" in filter_keys and
+                        "location_name" in filter_keys and
+                        "transporter_code" in filter_keys and
+                        "tt_number" not in filter_keys
+                    ):
+                        group_by_keys = [
+                            "zone", "location_name", "transporter_code", "tt_number"
+                        ]
 
                 df = df.groupby(group_by_keys, as_index=False).agg({
-                                "CD": "sum", "DT": "sum", "PD": "sum",
-                                "ND": "sum", "RD": "sum", "SV": "sum",
-                                "US": "sum", "ageing": "mean", "shortage": "sum"})
+                    "CD": "sum",
+                    "DT": "sum",
+                    "PD": "sum",
+                    "ND": "sum",
+                    "RD": "sum",
+                    "SV": "sum",
+                    "US": "sum",
+                    "average_unblocking": "mean",
+                    "shortage": "sum"
+                })
+                closing_cols = ["CD", "DT", "PD", "ND", "RD", "SV", "US"]
 
-            return {"status": True, "message": "success", "data": df.to_dict(orient='records')}
+                df["average_closing"] = (
+                    df[closing_cols].sum(axis=1) / len(closing_cols)
+                ).round(2)
+
+            return {
+                "status": True,
+                "message": "success",
+                "data": df.to_dict(orient="records")
+            }
+
         except Exception as e:
             print("-- Exception in get unblock ageing widget --")
             print("traceback :", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
     
     async def get_emlock_open_data(filters, cross_filters, drill_state, payload):
+        """
+        Retrieve and process emlock open data with filters and drill-down.
+        """
         try:
-            # ---------------------------------------------------
-            # CROSS FILTERS
-            # ---------------------------------------------------
             _filters, daterange = await generate_cross_filter(cross_filters)
             current_date = datetime.now().strftime("%Y-%m-%d")
 
             query = vts_query.vts_query.get("get_emlock_open_data")
+            print("Base query from config:\n", query)
 
-            # Drill Down filters
             query = await get_drill_down_filter(filters, query)
+            print("Query after drill-down filters:\n", query)
 
             access_filters = [
                 dashboard_studio_model.WidgetFiltersCreate(**rec)
-                for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)
+                for rec in await hpcl_ceg_model.LpgOperationsSummary
+                .get_clause_conditions(formated=True)
             ]
+            print("Access filters applied:", access_filters)
+
             query = await widget_actions.WidgetActions.apply_filter_drilldown(
                 query, access_filters, drill_state
             )
-
             clause = "WHERE" if "where" not in query.lower() else "AND"
+            query += (
+                f" {clause} createdat BETWEEN {daterange}" if daterange
+                else f" {clause} CAST(createdat AS DATE) = '{current_date}'"
+            )
 
-            if daterange:
-                query += f" {clause} createdat BETWEEN {daterange}"
-            else:
-                query += f" {clause} CAST(createdat AS DATE) = '{current_date}'"
+            print("FINAL SQL QUERY (emlock open data):\n", query)
 
-            print("Final Query for emlock open data:", query)
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+                query=query, limit=0
+            )
+            print("Raw DB response keys:", resp.keys())
+            print("Total rows fetched from DB:", len(resp.get("data", [])))
 
-            # ---------------------------------------------------
-            # FETCH DATA
-            # ---------------------------------------------------
-            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
             df = pd.DataFrame(resp.get("data", []))
+            print("DataFrame shape after fetch:", df.shape)
 
             if df.empty:
+                print("No data returned from DB.")
                 return {"status": True, "message": "No data found", "data": []}
-
-            # Apply frontend filters
+            
             df = await filter_data(df, _filters)
+            # Keep first occurrence of duplicates based on key columns
+            dedup_cols = [col for col in ["invoice_number", "trucknumber", "zone", "location_name"] if col in df.columns]
+            if dedup_cols:
+                df = df.drop_duplicates(subset=dedup_cols, keep='first')
+                print(f"After deduplication: {len(df)} rows")
+            
+            # Helper function to get completed invoices
+            async def get_completed_invoices(invoice_df):
+                invoice_list = invoice_df["invoice_number"].dropna().astype(str).unique().tolist()
+                if not invoice_list:
+                    return []
+                
+                invoices_str = "', '".join(invoice_list)
+                completed_query = f"""
+                    SELECT DISTINCT invoice_no
+                    FROM vts_completed_trip
+                    WHERE invoice_no IN ('{invoices_str}')
+                """
+                completed_df = await VTSAnalyticsActions.execute_query(
+                    completed_query, 
+                    engine='polars' if payload.get("download", "").lower() == "true" else None
+                )
+                
+                if payload.get("download", "").lower() == "true":
+                    return completed_df["invoice_no"].to_list() if not completed_df.is_empty() else []
+                else:
+                    return completed_df["invoice_no"].astype(str).tolist() if not completed_df.empty else []
+            
+            # Helper function to apply status filter
+            def apply_status_filter(data_df, status, completed_list):
+                if not status:
+                    return data_df
+                
+                status = status.lower().strip()
+                if status == "close":
+                    status = "closed"
+                
+                invoice_col = data_df["invoice_number"].astype(str)
+                
+                if status == "live":
+                    return data_df[~invoice_col.isin(completed_list)]
+                elif status == "closed":
+                    return data_df[invoice_col.isin(completed_list)]
+                
+                return data_df
+            
+            # Helper function to add swipe columns
+            def add_swipe_columns(data_df):
+                data_df["has_swipeoutl1"] = (
+                    data_df["swipeoutl1"].fillna("").astype(str).str.lower().eq("false")
+                )
+                data_df["has_swipeoutl2"] = (
+                    data_df["swipeoutl2"].fillna("").astype(str).str.lower().eq("false")
+                )
+                return data_df
+            
+            # Handle download mode
+            if payload.get("download", "").lower() == "true":
+                print("Download mode enabled. Preparing data for Excel export.")
+                
+                completed_invoices = await get_completed_invoices(df)
+                df = apply_status_filter(df, payload.get("status"), completed_invoices)
+                df = add_swipe_columns(df)
+                
+                download_df = df[df["has_swipeoutl1"] | df["has_swipeoutl2"]].copy()
+                download_df = download_df.drop(columns=['has_swipeoutl1', 'has_swipeoutl2'], errors='ignore')
+                
+                pl_df = pl.from_pandas(download_df)
+                return await download_streaming_data(pl_df, filename='emlock_open_data')
 
             if payload.get("search") == "true":
-                return {"status": True, "message": "success", "data": df.to_dict(orient="records")}
+                print("Search mode enabled. Returning raw filtered data.")
+                return {
+                    "status": True,
+                    "message": "success",
+                    "data": df.to_dict(orient="records")
+                }
+            
+            if payload.get("table") == "true":
+                print("Table mode enabled. Returning table data with drill down filters.")
+                
+                completed_invoices = await get_completed_invoices(df)
+                df = apply_status_filter(df, payload.get("status"), completed_invoices)
+                df = add_swipe_columns(df)
+                df = df[df["has_swipeoutl1"] | df["has_swipeoutl2"]]
+                
+                df_clean = df.replace([np.nan, np.inf, -np.inf], None)
+                
+                status_msg = payload.get("status", "").lower().strip()
+                if status_msg == "close":
+                    status_msg = "closed"
 
-            # ---------------------------------------------------
-            # NORMALIZE L1 & L2
-            # ---------------------------------------------------
-            df["swipeoutl1"] = df["swipeoutl1"].fillna("").astype(str).str.lower()
-            df["swipeoutl2"] = df["swipeoutl2"].fillna("").astype(str).str.lower()
+                return {
+                    "status": True,
+                    "message": f"success - {status_msg} data" if status_msg else "success",
+                    "data": df_clean.to_dict(orient="records"),
+                    "total_records": len(df_clean)
+                }
+            
+            # Default aggregation mode
+            df = add_swipe_columns(df)
+            
+            # Group by base columns
+            base_group_cols = ["zone", "region", "location_name", "invoice_number", "trucknumber"]
+            available_cols = [col for col in base_group_cols if col in df.columns]
+            print("Grouping columns used:", available_cols)
 
-            # Rows having either L1 or L2 false
-            df_false_any = df[(df["swipeoutl1"] == "false") | (df["swipeoutl2"] == "false")]
-            df_false_any['truck_no'] = df['trucknumber']
-            print("df_false_any",df_false_any.columns)
-            print("df_false_any tuck unkique",df_false_any['trucknumber'].unique())
-            # DISTINCT total summary
-            total_invoice = df_false_any["invoice_number"].nunique()
-            total_vehicle = df_false_any["trucknumber"].nunique()
+            base = df.groupby(available_cols, as_index=False).agg(
+                has_swipeoutl1=("has_swipeoutl1", "any"),
+                has_swipeoutl2=("has_swipeoutl2", "any"),
+            )
 
-            total_swipe_l1 = (df["swipeoutl1"] == "false").sum()
-            total_swipe_l2 = (df["swipeoutl2"] == "false").sum()
+            # Get completed invoices and apply status filter
+            completed_invoices = await get_completed_invoices(base)
+            print("Invoice list count for status check:", len(base["invoice_number"].dropna().unique()))
+            print("Completed trip rows fetched:", len(completed_invoices))
+            
+            base = apply_status_filter(base, payload.get("status"), completed_invoices)
+            
+            status_filter = payload.get("status")
+            if base.empty:
+                print("No data after applying status filter.")
+                return {
+                    "status": True,
+                    "message": f"No {status_filter} data found" if status_filter else "No data found",
+                    "data": [],
+                    "swipe_out_l1_count": 0,
+                    "swipe_out_l2_count": 0,
+                    "distinct_invoice_count": 0,
+                    "distinct_vehicle_count": 0,
+                }
+            
+            # Calculate totals
+            total_swipe_l1 = base[base["has_swipeoutl1"]]["invoice_number"].nunique()
+            total_swipe_l2 = base[base["has_swipeoutl2"]]["invoice_number"].nunique()
 
-            # ---------------------------------------------------
-            # HIERARCHY LOGIC (same as old)
-            # ---------------------------------------------------
+            filtered_base = base[base["has_swipeoutl1"] | base["has_swipeoutl2"]]
+            total_invoice = filtered_base["invoice_number"].nunique()
+            total_vehicle = filtered_base["trucknumber"].nunique()
+
+            # Determine grouping keys based on filters
             group_by_keys = ["zone"]
-
+            
             if filters:
                 filter_keys = [str(rec.key).lower() for rec in filters]
+                
+                if "zone" in filter_keys:
+                    if "region" not in filter_keys:
+                        group_by_keys = ["region"]
+                    elif "location_name" not in filter_keys:
+                        group_by_keys = ["location_name"]
+                    elif "trucknumber" not in filter_keys:
+                        group_by_keys = ["trucknumber"]
+                    else:
+                        group_by_keys = ["invoice_number"]
 
-                if "zone" in filter_keys and "region" not in filter_keys:
-                    group_by_keys = ["zone", "region"]
+            group_by_keys = [col for col in group_by_keys if col in base.columns]
+            print("Final group_by keys:", group_by_keys)
 
-                elif "zone" in filter_keys and "region" in filter_keys and "location_name" not in filter_keys:
-                    group_by_keys = ["zone", "region", "location_name",]
-
-                elif (
-                    "zone" in filter_keys
-                    and "region" in filter_keys
-                    and "location_name" in filter_keys
-                    and "trucknumber" not in filter_keys
-                ):
-                    group_by_keys = ["zone", "region", "location_name", "trucknumber",'truck_no']
-
-            # ---------------------------------------------------
-            # FINAL GROUPING WITH ALL COUNTS
-            # ---------------------------------------------------
-            
-            grouped_df = (
-                df_false_any.groupby(group_by_keys, as_index=False)
-                .agg({
-                    "swipeoutl1": lambda x: (x == "false").sum(),
-                    "swipeoutl2": lambda x: (x == "false").sum(),
-                    "invoice_number": "nunique",
-                    "trucknumber": "nunique",
-                })
+            # Aggregate data
+            grouped_df = base.groupby(group_by_keys, as_index=False).agg(
+                swipeoutl1_count=(
+                    "invoice_number",
+                    lambda x: x[base.loc[x.index, "has_swipeoutl1"]].nunique()
+                ),
+                swipeoutl2_count=(
+                    "invoice_number",
+                    lambda x: x[base.loc[x.index, "has_swipeoutl2"]].nunique()
+                ),
+                distinct_invoice_count=(
+                    "invoice_number",
+                    lambda x: x[
+                        base.loc[x.index, "has_swipeoutl1"] | base.loc[x.index, "has_swipeoutl2"]
+                    ].nunique()
+                ),
+                distinct_vehicle_count=(
+                    "trucknumber",
+                    lambda x: x[
+                        base.loc[x.index, "has_swipeoutl1"] | base.loc[x.index, "has_swipeoutl2"]
+                    ].nunique()
+                ),
             )
-            print("grouped_df cols",grouped_df.columns)
-            print("grouped_df uni",grouped_df['trucknumber'].unique())
-            grouped_df.rename(columns={
-                "invoice_number": "distinct_invoice_count",
-                "trucknumber": "distinct_vehicle_count",
-            }, inplace=True)
 
             grouped_df = grouped_df.fillna(0)
+            
+            grouped_df = grouped_df[grouped_df["distinct_invoice_count"] > 0]
 
-            # Convert numpy ints to normal ints
-            import numpy as np
-            grouped_df = grouped_df.astype(object).where(pd.notnull(grouped_df), None)
-            grouped_df = grouped_df.applymap(
-                lambda x: int(x) if isinstance(x, (np.integer,)) else x
-            )
-            print("grouped_df columns",grouped_df.columns)
             return {
                 "status": True,
                 "message": "success",
@@ -4310,9 +3466,9 @@ class VTSAnalyticsActions:
                 "data": grouped_df.to_dict(orient="records"),
             }
 
-        except Exception as e:
-            print("-- Exception in zone wise productivity widget --")
+        except Exception:
             print("traceback:", traceback.format_exc())
+            return {"status": False, "message": "Internal error", "data": []}
 
 
     @staticmethod
@@ -4436,6 +3592,15 @@ class VTSAnalyticsActions:
             else:
                 base_query = f'SELECT * FROM public."{table_name}"'
 
+            access_filters = [
+                dashboard_studio_model.WidgetFiltersCreate(**rec)
+                for rec in await hpcl_ceg_model.LpgOperationsSummary
+                .get_clause_conditions(formated=True)
+            ]
+            base_query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                base_query, access_filters, drill_state
+            )
+
             # Build and apply conditions
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
 
@@ -4516,6 +3681,20 @@ class VTSAnalyticsActions:
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers=headers
                 )
+
+            clicked_invoice_no = payload.get("clicked_invoice_no")
+            if table_name == "completed_trips_risk_score" and clicked_invoice_no:
+                safe_invoice = str(clicked_invoice_no).replace("'", "''")
+                combo_query = f"SELECT * FROM public.combo_alerts WHERE invoice_no = '{safe_invoice}'"
+                combo_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=combo_query, skip_total=True)
+                combo_alerts_data = combo_resp.get('data', [])
+                return {
+                    "status": True,
+                    "message": f"Combo alerts for invoice {clicked_invoice_no}",
+                    "data": combo_alerts_data,
+                    "total_records": len(combo_alerts_data)
+                }
+
             return {
                 "status": True,
                 "message": f"Successfully fetched {len(resp['data'])} records from {table_name}",
@@ -4589,6 +3768,59 @@ class VTSAnalyticsActions:
             return{"status" :True , "message":"success","data":df.to_dict(orient="records")}
         except Exception as e:
             return {"status": False, "message": str(e), "data": {}}
+    
+    @staticmethod
+    async def vts_accept_and_block(filters, cross_filters, drill_state, payload):
+        try:
+            base_query = vts_query.vts_query.get("accept_and_block")
+            condition = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
+            
+            if isinstance(condition, list):
+                condition = " AND ".join(condition)
+
+            final_condition = ""
+            if condition:
+                condition = (
+                    condition.replace("bu", "a.bu").replace("created_at", "a.created_at"))
+
+                final_condition = " AND " + condition
+
+            final_query = base_query.format(final_condition=final_condition)
+            print("Final Query: ", final_query)
+
+            merged_df = await VTSAnalyticsActions.execute_query(final_query, engine="polars")
+            merged_df = (merged_df.explode("notices").unnest("notices"))
+            
+            # Unique alert_id sets
+            system_ids = (
+                merged_df.filter(pl.col("doc_type") == "System Generated").select("alert_id").unique())
+                        
+            user_ids = (
+                merged_df.filter(pl.col("doc_type") == "User Created").select("alert_id").unique())
+
+            # Compare alert_id sets
+            system_only_ids = system_ids.join( user_ids, on = "alert_id", how = "anti")                                 
+            system_only_df = (merged_df.join(system_only_ids, on = "alert_id", how = "inner").unique(subset=["alert_id"]))
+            
+            both_ids = system_ids.join( user_ids, on="alert_id", how="inner")
+            both_df = ( merged_df.join(both_ids, on="alert_id", how="inner").unique(subset=["alert_id"]))
+            
+            system_only_df, both_df = (
+                    system_only_df.drop("file_path","report_type", strict=False) , both_df.drop("file_path","report_type", strict=False))
+            
+            if payload.get("download") == "true":
+                s = system_only_df.with_columns(pl.lit("no").alias("Show_Cause_Notice"))
+                b = both_df.with_columns(pl.lit("yes").alias("Show_Cause_Notice"))
+                combined = pl.concat([s, b], how="vertical")
+                
+                return await download_streaming_data(combined, filename='Show_Cause_Notice')
+                
+                        
+            return {"status": True, "message": "success","data":{ "system_only" :system_only_df.height,"system_and_user":both_ids.height}}
+        except Exception as e:
+            print("Exception in vts_accept_and_block:", str(e))
+            print("traceback:", traceback.format_exc())
+            return {"status": False,"message": str(e),"data": []}
 
     @staticmethod
     async def action_device_vts(filters, cross_filters, drill_state, payload):

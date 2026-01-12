@@ -130,3 +130,24 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/aitexts/{id}', tags=['AITexts'])
 async def delete(id: str):
     return await AITexts.delete(id)
+
+
+@router.get('/solarpanelwetdrycleaning/{id}', response_model=SolarPanelWetDryCleaning, tags=['SolarPanelWetDryCleaning'])
+async def get(id: str):
+    return await SolarPanelWetDryCleaning.get(id, skip_secrets=True)
+
+
+@router.get('/solarpanelwetdrycleaning', response_model=SolarPanelWetDryCleaningGetResp, tags=['SolarPanelWetDryCleaning'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await SolarPanelWetDryCleaning.get_all(params, skip_secrets=True)
+
+
+@router.get('/historicsolarpanelwetdrycleaningcreate/{id}', response_model=HistoricSolarPanelWetDryCleaningCreate, tags=['HistoricSolarPanelWetDryCleaningCreate'])
+async def get(id: str):
+    return await HistoricSolarPanelWetDryCleaningCreate.get(id, skip_secrets=True)
+
+
+@router.get('/historicsolarpanelwetdrycleaningcreate', response_model=HistoricSolarPanelWetDryCleaningCreateGetResp, tags=['HistoricSolarPanelWetDryCleaningCreate'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HistoricSolarPanelWetDryCleaningCreate.get_all(params, skip_secrets=True)
+

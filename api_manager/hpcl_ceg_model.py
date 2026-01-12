@@ -1403,6 +1403,8 @@ class VtsManualBlockedSchema(UrdhvaPostgresBase):
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    remarks_unblocked: Mapped[typing.Optional[str]] = mapped_column("remarks_unblocked", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    file_uploaded_path: Mapped[typing.Optional[str]] = mapped_column("file_uploaded_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(transaction_number, name="vts_manual_blocked_transaction_number"),)
 
@@ -1427,6 +1429,8 @@ class VtsManualBlockedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
+    remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
+    file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1456,6 +1460,8 @@ class VtsManualBlocked(urdhva_base.postgresmodel.PostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
+    remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
+    file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1563,6 +1569,9 @@ class AlertsSchema(UrdhvaPostgresBase):
     mark_as_false: Mapped[typing.Optional[bool]] = mapped_column("mark_as_false", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     vts_alert_history_ids: Mapped[typing.Optional[typing.List[str]]] = mapped_column("vts_alert_history_ids", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     action_on: Mapped[typing.Optional[typing.Any]] = mapped_column("action_on", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    remarks_unblocked: Mapped[typing.Optional[str]] = mapped_column("remarks_unblocked", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    file_uploaded_path: Mapped[typing.Optional[str]] = mapped_column("file_uploaded_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    block_status: Mapped[typing.Optional[typing.Any]] = mapped_column("block_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1657,6 +1666,9 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     mark_as_false: typing.Optional[bool] = pydantic.Field(False, )
     vts_alert_history_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     action_on: typing.Optional[hpcl_ceg_enum.MakerChecker] | None = None
+    remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
+    file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
+    block_status: typing.Optional[hpcl_ceg_enum.BlockStatus] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -1760,6 +1772,9 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     mark_as_false: typing.Optional[bool] = pydantic.Field(False, )
     vts_alert_history_ids: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     action_on: typing.Optional[hpcl_ceg_enum.MakerChecker] | None = None
+    remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
+    file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
+    block_status: typing.Optional[hpcl_ceg_enum.BlockStatus] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -1815,6 +1830,23 @@ class Alerts_Get_Performance_IndexParams(pydantic.BaseModel):
     skip: typing.Optional[int] = pydantic.Field(0, **{})
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     filters: typing.Optional[typing.List[DataFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Add_Rca_ReasonParams(pydantic.BaseModel):
+    alert_id: str
+    reason: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Day_End_ClosureParams(pydantic.BaseModel):
+    pass
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -1895,6 +1927,7 @@ class Alerts_Block_Vts_TruckParams(pydantic.BaseModel):
     bu: hpcl_ceg_enum.BusinessUnit
     truck_number: str
     blocking_days: int
+    reason: typing.Optional[str] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
@@ -1904,6 +1937,7 @@ class Alerts_Block_Vts_TruckParams(pydantic.BaseModel):
 
 class Alerts_Unblock_Vts_TruckParams(pydantic.BaseModel):
     unblock_id: str
+    remarks_unblocked: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -1912,6 +1946,7 @@ class Alerts_Unblock_Vts_TruckParams(pydantic.BaseModel):
 
 class Alerts_Unblock_Alert_TruckParams(pydantic.BaseModel):
     unique_id: str
+    remarks_unblocked: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -1938,6 +1973,53 @@ class Alerts_Get_Vts_Unblocked_TrucksParams(pydantic.BaseModel):
 class Alerts_Alerts_Get_Vts_QueryParams(pydantic.BaseModel):
     vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Attach_Alert_Blocked_FileParams(pydantic.BaseModel):
+    unique_id: str
+    remarks_unblocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Attach_Vts_Blocked_FileParams(pydantic.BaseModel):
+    unblock_id: str
+    remarks_unblocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Hqo_Blocked_VehiclesParams(pydantic.BaseModel):
+    alert_status: str
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    end_date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Tasanalytics_Tas_AnalyticsParams(pydantic.BaseModel):
+    analytical_model: str
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_name: typing.Optional[str] = pydantic.Field("", **{})
+    alert_status: typing.Optional[str] = pydantic.Field("", **{})
+    alert_severity: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    start_date: str
+    end_date: str
+    equipment_type: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+    download: typing.Optional[str] = pydantic.Field("", **{})
+    top_n: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2680,6 +2762,51 @@ class Indentdryout_Get_Is_Invoice_Created_Direct_SalesParams(pydantic.BaseModel)
 class Indentdryout_Get_R3_Swiped_Direct_SalesParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
     bu_type: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Get_Vts_Direct_SalesParams(pydantic.BaseModel):
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Get_Delivery_Confirmation_Direct_SalesParams(pydantic.BaseModel):
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    bu_type: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Block_OutletParams(pydantic.BaseModel):
+    block_id: str
+    remarks_blocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Unblock_OutletParams(pydantic.BaseModel):
+    unblock_id: str
+    remarks_unblocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Block_RoParams(pydantic.BaseModel):
+    ro_code: str
+    remarks_blocked: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -3790,6 +3917,7 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     invoice_number: Mapped[typing.Optional[str]] = mapped_column("invoice_number", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     violation_type: Mapped[typing.Optional[typing.List[str]]] = mapped_column("violation_type", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    destination_code: Mapped[typing.Optional[str]] = mapped_column("destination_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -3830,6 +3958,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     invoice_number: typing.Optional[str] = pydantic.Field("", **{})
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    destination_code: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -3878,6 +4007,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     invoice_number: typing.Optional[str] = pydantic.Field("", **{})
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    destination_code: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -3892,15 +4022,6 @@ class VtsAlertHistoryGetResp(pydantic.BaseModel):
     data: typing.List[VtsAlertHistory]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
-
-
-class Vtsalerthistory_Vts_Alerts_AnalyticsParams(pydantic.BaseModel):
-    alert_id: str
-    interlock_name: typing.Optional[str] = pydantic.Field("", **{})
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
 
 
 class EmLockAlertHistorySchema(UrdhvaPostgresBase):
@@ -10584,5 +10705,80 @@ class CrisDryOutSync(urdhva_base.postgresmodel.PostgresModel):
 
 class CrisDryOutSyncGetResp(pydantic.BaseModel):
     data: typing.List[CrisDryOutSync]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class HyperLocalZoneSummaryCreate(pydantic.BaseModel):
+    zone: str
+    rating: float
+
+
+class ReviewsSentimentCreate(pydantic.BaseModel):
+    zone: str
+    sales_area: str
+    region: str
+    store_code: str
+    store_name: str
+    reviewer_name: str
+    rating: float
+    review_comment: str
+    tone_type: str
+    review_date: datetime.datetime
+    rank: int
+
+
+class HyperLocalSchema(UrdhvaPostgresBase):
+    __tablename__ = 'hyper_local'
+    
+    report_date: Mapped[datetime.date] = mapped_column("report_date", DATE, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    total_reviews: Mapped[int] = mapped_column("total_reviews", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    positive_reviews: Mapped[int] = mapped_column("positive_reviews", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    negative_reviews: Mapped[int] = mapped_column("negative_reviews", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    neutral_reviews: Mapped[int] = mapped_column("neutral_reviews", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone_summary: Mapped[typing.List[typing.Any]] = mapped_column("zone_summary", JSONB, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sentiment_of_reviews: Mapped[typing.List[typing.Any]] = mapped_column("sentiment_of_reviews", JSONB, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class HyperLocalCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'hyper_local'
+    
+    report_date: datetime.date
+    total_reviews: int
+    positive_reviews: int
+    negative_reviews: int
+    neutral_reviews: int
+    zone_summary: typing.List[HyperLocalZoneSummaryCreate]
+    sentiment_of_reviews: typing.List[ReviewsSentimentCreate]
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HyperLocalSchema
+        upsert_keys = []
+
+
+class HyperLocal(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'hyper_local'
+    
+    report_date: typing.Optional[datetime.date] | None = None
+    total_reviews: typing.Optional[int] | None = None
+    positive_reviews: typing.Optional[int] | None = None
+    negative_reviews: typing.Optional[int] | None = None
+    neutral_reviews: typing.Optional[int] | None = None
+    zone_summary: typing.Optional[typing.List[HyperLocalZoneSummaryCreate]] | None = None
+    sentiment_of_reviews: typing.Optional[typing.List[ReviewsSentimentCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = HyperLocalSchema
+        upsert_keys = []
+
+
+class HyperLocalGetResp(pydantic.BaseModel):
+    data: typing.List[HyperLocal]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)

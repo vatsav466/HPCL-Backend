@@ -1061,6 +1061,12 @@
                     "name": "get_performance_index"
                 },
                 {
+                    "name": "add_rca_reason"
+                },
+                {
+                    "name": "day_end_closure"
+                },
+                {
                     "name": "upload_document"
                 },
                 {
@@ -1101,6 +1107,15 @@
                 },
                 {
                     "name": "alerts_get_vts_query"
+                },
+                {
+                    "name": "attach_alert_blocked_file"
+                },
+                {
+                    "name": "attach_vts_blocked_file"
+                },
+                {
+                    "name": "hqo_blocked_vehicles"
                 }
             ]
         },
@@ -1169,6 +1184,12 @@
                     "name": "get_performance_index"
                 },
                 {
+                    "name": "add_rca_reason"
+                },
+                {
+                    "name": "day_end_closure"
+                },
+                {
                     "name": "upload_document"
                 },
                 {
@@ -1209,6 +1230,84 @@
                 },
                 {
                     "name": "alerts_get_vts_query"
+                },
+                {
+                    "name": "attach_alert_blocked_file"
+                },
+                {
+                    "name": "attach_vts_blocked_file"
+                },
+                {
+                    "name": "hqo_blocked_vehicles"
+                }
+            ]
+        },
+        {
+            "name": "tasanalytics",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasAnalytics",
+            "attributes": {},
+            "uris": [
+                "/api/tasanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_analytics"
+                }
+            ]
+        },
+        {
+            "name": "tasanalytics_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasAnalytics_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tasanalytics_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasAnalytics_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasanalytics/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_analytics"
                 }
             ]
         },
@@ -1655,6 +1754,21 @@
                     "name": "get_r3_swiped_direct_sales"
                 },
                 {
+                    "name": "get_vts_direct_sales"
+                },
+                {
+                    "name": "get_delivery_confirmation_direct_sales"
+                },
+                {
+                    "name": "block_outlet"
+                },
+                {
+                    "name": "unblock_outlet"
+                },
+                {
+                    "name": "block_ro"
+                },
+                {
                     "name": "get_dried_out_ro_data"
                 },
                 {
@@ -1749,6 +1863,12 @@
                 },
                 {
                     "name": "get_r3_swiped_direct_sales"
+                },
+                {
+                    "name": "get_vts_direct_sales"
+                },
+                {
+                    "name": "get_delivery_confirmation_direct_sales"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -1860,6 +1980,21 @@
                 },
                 {
                     "name": "get_r3_swiped_direct_sales"
+                },
+                {
+                    "name": "get_vts_direct_sales"
+                },
+                {
+                    "name": "get_delivery_confirmation_direct_sales"
+                },
+                {
+                    "name": "block_outlet"
+                },
+                {
+                    "name": "unblock_outlet"
+                },
+                {
+                    "name": "block_ro"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -2589,9 +2724,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "vts_alerts_analytics"
                 }
             ]
         },
@@ -2631,9 +2763,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "vts_alerts_analytics"
                 }
             ]
         },
@@ -7568,6 +7697,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "hyperlocal",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HyperLocal",
+            "attributes": {},
+            "uris": [
+                "/api/hyperlocal/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hyperlocal_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HyperLocal_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/hyperlocal/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "hyperlocal_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HyperLocal_admin",
+            "attributes": {},
+            "uris": [
+                "/api/hyperlocal/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
@@ -7791,6 +7983,14 @@
             "displayName": "get_performance_index"
         },
         {
+            "name": "add_rca_reason",
+            "displayName": "add_rca_reason"
+        },
+        {
+            "name": "day_end_closure",
+            "displayName": "day_end_closure"
+        },
+        {
             "name": "upload_document",
             "displayName": "upload_document"
         },
@@ -7845,6 +8045,22 @@
         {
             "name": "alerts_get_vts_query",
             "displayName": "alerts_get_vts_query"
+        },
+        {
+            "name": "attach_alert_blocked_file",
+            "displayName": "attach_alert_blocked_file"
+        },
+        {
+            "name": "attach_vts_blocked_file",
+            "displayName": "attach_vts_blocked_file"
+        },
+        {
+            "name": "hqo_blocked_vehicles",
+            "displayName": "hqo_blocked_vehicles"
+        },
+        {
+            "name": "tas_analytics",
+            "displayName": "tas_analytics"
         },
         {
             "name": "upload_cems_location_master",
@@ -7967,6 +8183,26 @@
             "displayName": "get_r3_swiped_direct_sales"
         },
         {
+            "name": "get_vts_direct_sales",
+            "displayName": "get_vts_direct_sales"
+        },
+        {
+            "name": "get_delivery_confirmation_direct_sales",
+            "displayName": "get_delivery_confirmation_direct_sales"
+        },
+        {
+            "name": "block_outlet",
+            "displayName": "block_outlet"
+        },
+        {
+            "name": "unblock_outlet",
+            "displayName": "unblock_outlet"
+        },
+        {
+            "name": "block_ro",
+            "displayName": "block_ro"
+        },
+        {
             "name": "get_dried_out_ro_data",
             "displayName": "get_dried_out_ro_data"
         },
@@ -8013,10 +8249,6 @@
         {
             "name": "get_pt_rejections",
             "displayName": "get_pt_rejections"
-        },
-        {
-            "name": "vts_alerts_analytics",
-            "displayName": "vts_alerts_analytics"
         },
         {
             "name": "generate_ai_industry_performance",

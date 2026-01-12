@@ -11,6 +11,7 @@ from sqlalchemy import (
     MetaData, Table, Column, String, Boolean, DateTime, Date,
     text, insert, Numeric
 )
+import orchestrator.reporting_services.reporting_helpers.retail_data as retail_data
 import orchestrator.reporting_services.novex_daily_report_segregation as novex_daily_report_dryout
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -399,7 +400,6 @@ def update_product_name(product_no):
     return "", ""
 
 
-
 async def get_ro_count_less_50(report_date, df):
     query = (f"SELECT SUBSTRING(CUST_CD, 3) AS CUST_CD, SUM(QTY_KL) AS Total_Net_Weight "
              f"FROM PS.EDW_PRIMARY_SALES_FACT "
@@ -452,7 +452,7 @@ async def fetch_daily_report(report_date: str):
         df[['product_name', 'product_grp']] = df['product_code'].apply(lambda x: pd.Series(update_product_name(x)))
         df['indent_not_raised_days'] = df.apply(get_indent_not_raised_days, axis=1)
         df = await get_ro_count_less_50(report_date, df)
-        valid_indents_count = await novex_daily_report_dryout.supply_terminal_wise_counts(by_ro=True)
+        valid_indents_count = await retail_data.supply_terminal_wise_counts(by_ro=True)
         valid_indents_count = valid_indents_count[['sap_id',
                                                    'Count of DryOut Outlets with Valid indent',
                                                    'Avg. Pending Indents for last 3 days']]

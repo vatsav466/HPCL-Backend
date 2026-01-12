@@ -13,6 +13,7 @@ import polars as pl
 import hpcl_ceg_model
 import hpcl_ceg_enum
 import charts_actions
+import traceback
 from datetime import time
 import dashboard_studio_model
 from collections import Counter
@@ -265,6 +266,8 @@ async def post_blocked_tt_ims(input_data: typing.List[typing.Dict[str, typing.An
     """
     url = urdhva_base.settings.post_to_ims_url
     session = requests.Session()
+    ims_response = None
+    error_msg = None
     max_retries = 3
     try:
         for attempt in range(1, max_retries + 1):
@@ -273,9 +276,12 @@ async def post_blocked_tt_ims(input_data: typing.List[typing.Dict[str, typing.An
                 response = session.post(url, json=input_data, headers=default_headers)
                 if response.status_code // 100 == 2:
                     logger.info(f"Data successfully posted to IMS {response.json()}")
-                    return response.json()
+                    ims_response = response.json()
+                    return ims_response, error_msg
+                error_msg = f"IMS responded with {response.status_code}: {response.text}"
                 logger.error(f"IMS responded with {response.status_code}. Response: {response.text}")
             except requests.exceptions.RequestException as e:
+                error_msg = f"IMS Post failed {str(e)}"
                 logger.error(f"IMS Post failed (Attempt {attempt}/{max_retries}): {e}")
             # retry delay
             if attempt < max_retries:
@@ -283,7 +289,7 @@ async def post_blocked_tt_ims(input_data: typing.List[typing.Dict[str, typing.An
                 await asyncio.sleep(10)
         # after max retries
         logger.error(f"IMS post failed after 3 attempts for data: {input_data}")
-        return False
+        return ims_response, error_msg
     finally:
         session.close()
 
@@ -413,12 +419,6 @@ async def is_alert_exists(tl_number: str):
     vts_alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
     print("vts_alert_data: ", vts_alert_data)
     if vts_alert_data.get("data", []):
-        return True
-    query = f"blocking_status='blocked' and truck_number='{tl_number}'"
-    manual_blocked = await hpcl_ceg_model.VtsManualBlocked.get_all(
-        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
-    )
-    if manual_blocked["data"]:
         return True
     return False
 
@@ -610,6 +610,9 @@ async def update_vts_instance(alert_data):
         alert_data = alert_data.__dict__
     if "_sa_instance_state" in alert_data.keys():
         del alert_data["_sa_instance_state"]
+    
+    if alert_data.get('interlock_name') in ['Itdg Admin Block', 'No VTS No Load']:
+        return
 
     alert_message = (
         f"Instance Updated for this Vehicle Number: {alert_data['vehicle_number']} from {alert_data['device_id']} to {instance_data['instance']} with violation {violation_name}"
@@ -782,6 +785,66 @@ async def create_vts_violation_alerts(enriched_data):
             await trigger_vts_alarm_alert(entry)
     except Exception as e:
         logger.error(f"Error creating VTS Alert : {str(e)}")
+
+async def get_delivered_location(invoice_number,supply_location,vehicle_number):
+    MAX_RETRIES = 3
+    RETRY_DELAY = 10
+
+    delivery_location_resp = {}
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            # Fetching voilations from VTS DB
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            query = f"""
+                        SELECT DISTINCT CONSUMER_ERP_CODE FROM COMPLETED_TRIP 
+                            WHERE CHALLAN_NO = '{invoice_number}' 
+                            AND VEHICLE_RTO_NO = '{vehicle_number}' 
+                            AND DEPOT_ERP_CODE = '{supply_location}'
+                    """
+            
+            print('*'*100)
+            print('query',query)
+            print('*'*100)
+
+            delivery_location_resp = await function(query=query)
+            # Break retry loop if valid response received
+            if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
+                break
+            
+            invoice_no = invoice_number.split("-")[0]
+            # Fetching voilations from VTS DB
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            query = f"""SELECT DISTINCT CUSTOMER AS CONSUMER_ERP_CODE FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
+                        AND SUPPLY_LOC = '{supply_location}'"""
+
+            print('*'*100)
+            print('query',query)
+            print('*'*100)
+
+            delivery_location_resp = await function(query=query) 
+
+            if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
+                break
+
+        except Exception as e:
+            print(traceback.format_exc())
+            logger.error(f"Vehicle Track DB query failed for getting delivery_location : Traceback: {traceback.format_exc()}")
+            logger.error(
+                f"Vehicle Track DB query failed (attempt {attempt}/{MAX_RETRIES}) "
+                f"Invoice={invoice_number}, Location={supply_location}, Error={e}"
+                )
+            
+            if attempt < MAX_RETRIES:
+                await asyncio.sleep(RETRY_DELAY)
+    
+    ship_to_list = delivery_location_resp.get("CONSUMER_ERP_CODE") or []
+
+    return ship_to_list
     
 async def create_vts_alerts(enriched_data):
     try:
@@ -810,9 +873,7 @@ async def create_vts_alerts(enriched_data):
                 count_value = list(route_deviation_resp.values())[0][0]
                 if int(count_value) > 0:
                     entry['route_deviation_count'] = int(count_value)
-                else:
-                    entry['route_deviation_count'] = 0
-
+                    
             entry['auto_unblock'] = True
             entry['violation_type'] = await get_vts_violation(entry)
             entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
@@ -824,18 +885,12 @@ async def create_vts_alerts(enriched_data):
             if entry['location_type'] == 'TAS':
                 entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
 
-            if entry['location_type'] == 'LPG':
-                invoice_no = entry['invoice_number'].split("-")[0]
-                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
-                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-                function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-                query = f"""SELECT DISTINCT(SHIP_TO_PARTY) FROM ZSDCV_AY_INV3_STG WHERE INVOICE_NO = '{invoice_no}' 
-                            AND SUPPLY_LOC = '{entry['location_id']}'"""
-                lpg_delivery_location_resp = await function(query=query)
-                ship_to_list = lpg_delivery_location_resp.get("SHIP_TO_PARTY") or []
+            if entry['location_type'] in ['LPG','TAS']:
+                ship_to_list = await get_delivered_location(entry['invoice_number'],entry['location_id'],entry['tl_number'])
+                if len(ship_to_list) > 0 and entry['location_type'] in ['LPG']:
+                    entry["base_location_id"] = ship_to_list[0].lstrip("P").lstrip("00")
                 if len(ship_to_list) > 0:
-                    base_sap_id = ship_to_list[0].lstrip("P")
-                    entry["base_location_id"] = str(int(base_sap_id))
+                    entry['destination_code']  = ship_to_list[0].lstrip("P").lstrip("00")
 
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],
@@ -869,6 +924,10 @@ async def create_vts_alerts(enriched_data):
 
 
             await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
+
+            if entry['location_type'] in ['LUB']:
+                continue
+
             # Skipping if the truck is already blacklisted
             if await is_vehicle_blacklisted(entry['tl_number']):
                 black_list_query = f"select * from vts_truck_details where truck_regno = '{entry['tl_number']}'"
@@ -897,6 +956,8 @@ async def create_vts_alerts(enriched_data):
             else:
                 await update_vts_instance(entry)
     except Exception as e:
+        print(traceback.format_exc())
+        logger.error(f"Error creating VTS Alert : Traceback: {traceback.format_exc()}")
         logger.error(f"Error creating VTS Alert : {str(e)}")
 
 async def close_camunda_workflow(alert_id):
@@ -971,6 +1032,8 @@ async def fetch_access_token():
         "client_secret": urdhva_base.settings.lpg_vts_client_secret_key,
         "client_authentication": "send_as_basic_auth_header"
     }
+    token = None
+    error_msg = None
     max_retries = 3
     for attempt in range(1, max_retries + 1):
         try:
@@ -981,26 +1044,31 @@ async def fetch_access_token():
             token = token_data.get("access_token")
             if token:
                 logger.info(f"Token fetched successfully.")
-                return token
+                return token, error_msg
+            else:
+                error_msg = "Token API succeeded but access_token missing"
+                logger.error(error_msg)
         except requests.exceptions.RequestException as e:
+            error_msg = f"Token API failed: {str(e)}"
             logger.error(f"Token API failed (Attempt {attempt}/{max_retries}): {e}")
         
         if attempt < max_retries:
             logger.info(f"Retrying in 15 seconds...")
             await asyncio.sleep(15)
     logger.error(f"All attempts to fetch token failed.")
-    return None
+    return token, error_msg
 
 async def post_lpg_tt(payload):
-    access_token = await fetch_access_token()
+    access_token,error_msg = await fetch_access_token()
     if not access_token:
         logger.error(f"Failed to fetch token {payload}")
-        return None
+        return None, error_msg
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
+    sap_response = None
     max_retries = 3
     for attempt in range(1, max_retries + 1):
         try:
@@ -1018,7 +1086,8 @@ async def post_lpg_tt(payload):
             }
             await hpcl_ceg_model.LpgDataPostingAuditCreate(**post_sap_response).create()
             print("response->",response.json())
-            return response.json()
+            sap_response = response.json()
+            return sap_response, error_msg
         except requests.exceptions.RequestException as e:
             logger.error(f"Publish API failed (Attempt {attempt}/{max_retries}): {e}")
             if attempt < max_retries:
@@ -1035,8 +1104,9 @@ async def post_lpg_tt(payload):
                     "updated_time": now_ist.strftime("%H%M%S")
                 }
                 await hpcl_ceg_model.LpgDataPostingAuditCreate(**post_sap_response).create()
+                error_msg = f"Publish API failed {str(e)}"
                 logger.error(f"All retry attempts failed while posting block/unblock details to SAP {payload}")
-                return None
+                return sap_response, error_msg
 
 async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_section:str):
     vts_mapping = vts_role_mapping.vts_unblocking_matrix[alert_section]

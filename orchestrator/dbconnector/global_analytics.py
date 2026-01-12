@@ -5004,6 +5004,22 @@ class GlobalAnalytics:
             current_date = datetime.now().date()
             yesterday = current_date - timedelta(days=1)
 
+            # Default date range for monthly view (last 1 month from today)
+            if not cross_filters or (cross_filters and not any(hasattr(cf, 'value') and cf.value for cf in cross_filters)):
+                selected_start_date = current_date - timedelta(days=30)
+                start_date = selected_start_date.strftime('%Y-%m-%d 00:00:00')
+                end = current_date.strftime('%Y-%m-%d')
+                end_date = f'{end} 23:59:59'
+            else:
+                for date_range in cross_filters:
+                    value = date_range.value if hasattr(date_range, 'value') else None
+                
+                start_date = value.split(',')[0]
+                end = value.split(',')[1]
+                end_date = f'{end} 23:59:59'
+                selected_start_date = datetime.strptime(start_date.split()[0], '%Y-%m-%d').date()
+
+
             # Simplified SQL Query for day-wise alert counts
             query = f"""
                 SELECT 
@@ -5026,6 +5042,7 @@ class GlobalAnalytics:
                 {f"AND sap_id IN ('{plant_filter}')" if plant_filter else ''}
                 {f"AND sensor_id IN ('{sensor_id_filter}')" if sensor_id_filter else ''}
                 {f"AND equipment_name ILIKE ('%{equipment_name_filter}%')" if equipment_name_filter else ''}
+                AND (created_at <= '{end_date}' AND (closed_at IS NULL OR closed_at >= '{start_date}'))
                 ORDER BY created_at ASC
             """
 
@@ -5078,24 +5095,38 @@ class GlobalAnalytics:
             all_dates = set()
             
             # Add created dates
-            created_dates = df.select(pl.col("created_date")).filter(pl.col("created_date").is_not_null()).to_series().to_list()
+            # Add created dates within selected range
+            created_dates = df.select(pl.col("created_date")).filter(
+                (pl.col("created_date").is_not_null()) &
+                (pl.col("created_date") >= selected_start_date)
+            ).to_series().to_list()     
             all_dates.update(created_dates)
-            
-            # Add closed dates  
-            closed_dates = df.select(pl.col("closed_date")).filter(pl.col("closed_date").is_not_null()).to_series().to_list()
+
+            # Add closed dates within selected range
+            end_date_parsed = datetime.strptime(end.split()[0], '%Y-%m-%d').date()
+            closed_dates = df.select(pl.col("closed_date")).filter(
+                (pl.col("closed_date").is_not_null()) &
+                (pl.col("closed_date") >= selected_start_date) &
+                (pl.col("closed_date") <= end_date_parsed)
+            ).to_series().to_list()
             all_dates.update(closed_dates)
-            
-            # Add last 7 days to ensure we show open alerts even if no activity
-            for i in range(7):
-                date_to_add = current_date - timedelta(days=i)
-                all_dates.add(date_to_add)
+
+            # Add all dates in the selected range
+            date_cursor = selected_start_date
+            end_date_parsed = datetime.strptime(end.split()[0], '%Y-%m-%d').date()
+            while date_cursor <= end_date_parsed:
+                all_dates.add(date_cursor)
+                date_cursor += timedelta(days=1)
 
             # Process each date
             for date in sorted(all_dates):
                 date_key = str(date)
                 
                 # Get alerts closed on this date
-                closed_today = df.filter(pl.col("closed_date") == date)
+                if date == selected_start_date:
+                    closed_today = df.filter(pl.col("created_date") == date)
+                else:
+                    closed_today = pl.DataFrame()
                 
                 # Get all alerts that are open on this date:
                 # 1. Created on or before this date AND (status is Open OR closed_date is null OR closed after this date)
@@ -5167,15 +5198,16 @@ class GlobalAnalytics:
                         for row in open_grouped.iter_rows(named=True):
                             cat = row["alert_category"].lower()
                             alert_type = row["alert_type"]
-                            total_open_count = row["unique_device_count"]
                             
-                            # Calculate carry forward count for this specific category
-                            cat_carry_forward = carry_forward_alerts.filter(pl.col("alert_category") == row["alert_category"])
-                            carry_count = len(cat_carry_forward.select(pl.col("device_name")).unique()) if len(cat_carry_forward) > 0 else 0
-                            
-                            # Calculate current day open count for this specific category
+                            # Get carry forward count from alerts created BEFORE this date
+                            cat_carry_forward_alerts = carry_forward_alerts.filter(pl.col("alert_category") == row["alert_category"])
                             cat_current_day_alerts = current_day_alerts.filter(pl.col("alert_category") == row["alert_category"])
+                            
+                            # Count unique devices for carry forward (created before this date)
+                            carry_count = len(cat_carry_forward_alerts.select(pl.col("device_name")).unique()) if len(cat_carry_forward_alerts) > 0 else 0
+                            # Count unique devices created on this date
                             current_day_count = len(cat_current_day_alerts.select(pl.col("device_name")).unique()) if len(cat_current_day_alerts) > 0 else 0
+                            
 
                             # Create details for all open alerts (both carry forward and current day)
                             details = []

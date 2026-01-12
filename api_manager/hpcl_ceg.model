@@ -9,6 +9,14 @@ Enum BusinessUnit str {
     DS='DS'
 }
 
+Enum BlockStatus str {
+    Blocked='Blocked'
+    UnBlocked='UnBlocked'
+    WaitingForBlockAck='WaitingForBlockAck'
+    WaitingForUnBlockAck='WaitingForUnBlockAck'
+    OnGoingTrip='OnGoingTrip'
+}
+
 Enum DeviceType str {
     Tank='Tank'
     DU='DU'
@@ -38,6 +46,7 @@ Enum AlertStatus str {
     InProgress='InProgress'
     Cancel='Cancel'
     OnHold='OnHold'
+    Resolved='Resolved'
 }
 
 Enum AlertState str {
@@ -111,6 +120,12 @@ Enum AlertActionType str {
     SendItBack='SendItBack'
     FalseViolation='FalseViolation'
     AcceptViolation='AcceptViolation'
+    BlockFailed='BlockFailed'
+    UnblockFailed='UnblockFailed'
+    OngoingTrip='OngoingTrip'
+    BlockInitiated='BlockInitiated'
+    UnBlockInitiated='UnBlockInitiated'
+    Remarks='Remarks'
 }
 
 Enum IndentStatus str {
@@ -709,7 +724,9 @@ Model VtsManualBlocked {
     sap_id optional str
     zone optional str
     region optional str
-    location_name optional str    
+    location_name optional str
+    remarks_unblocked optional str
+    file_uploaded_path optional str   
 }
 
 Model Alerts {
@@ -818,6 +835,9 @@ Model Alerts {
     mark_as_false optional bool
     vts_alert_history_ids optional list str
     action_on optional MakerChecker
+    remarks_unblocked optional str
+    file_uploaded_path optional str
+    block_status optional BlockStatus
 
     Action=> alert_action {
         bu optional str
@@ -847,6 +867,14 @@ Model Alerts {
         skip optional int
         limit optional int
         filters optional list DataFilters
+    }
+
+    Action=> add_rca_reason {
+        alert_id str
+        reason str
+    }
+
+    Action=> day_end_closure {
     }
 
     Action=> upload_document {
@@ -889,16 +917,18 @@ Model Alerts {
         bu BusinessUnit
         truck_number str
         blocking_days int
+        reason optional str
         remarks optional str
     }
 
     Action=> unblock_vts_truck {
         unblock_id str
+        remarks_unblocked str
     }
 
     Action=> unblock_alert_truck {
         unique_id str
-
+        remarks_unblocked str
     }
 
     Action=> get_vts_blocked_trucks {
@@ -914,6 +944,21 @@ Model Alerts {
         vehicle_number optional str
         cross_filters optional list WidgetFilters
     }
+
+    Action=> attach_alert_blocked_file {
+        unique_id str
+        remarks_unblocked str
+    }
+
+    Action=> attach_vts_blocked_file {
+        unblock_id str
+        remarks_unblocked str
+    }
+    Action=> hqo_blocked_vehicles {
+        alert_status str
+        start_date optional str
+        end_date optional str
+    }
     
     Config=> {
         crud_operations='read'
@@ -925,6 +970,25 @@ Model Alerts {
         search_fields='bu,sap_id,sop_id,location_name,alert_section,alert_status,interlock_name,vehicle_number,device_name,device_id,device_msg,device_type,violation_type,rca_type,assigned_to,region,zone,indent_status'
     }
 }
+
+Model TasAnalytics crud_disable {
+    Action=> tas_analytics {
+        analytical_model      str    
+        location_name   optional str
+        interlock_name  optional str
+        alert_status    optional str
+        alert_severity  optional list str
+        zone            optional str
+        start_date      str
+        end_date        str
+        equipment_type  optional str
+        equipment_name  optional str
+        download        optional str
+        top_n      optional int
+    }
+
+}
+
 
 Model CEMSLocationMaster {
     bu_id str
@@ -1227,6 +1291,31 @@ Model IndentDryOut {
     Action=> get_r3_swiped_direct_sales {
         filters list IndentDryOutDataFilters
         bu_type optional str
+    }
+
+    Action=> get_vts_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> get_delivery_confirmation_direct_sales {
+        filters list IndentDryOutDataFilters
+        bu_type optional str
+    }
+
+    Action=> block_outlet {
+        block_id str
+        remarks_blocked str
+    }
+
+    Action=> unblock_outlet {
+        unblock_id str
+        remarks_unblocked str
+    }
+
+    Action=> block_ro {
+        ro_code str
+        remarks_blocked str
     }
 
     Action=> get_dried_out_ro_data {
@@ -1600,12 +1689,8 @@ Model VtsAlertHistory {
     invoice_number optional index_field str
     tt_type optional str
     violation_type optional list str
-
-    Action=> vts_alerts_analytics{
-        alert_id str
-        interlock_name optional str
-    }
-
+    destination_code optional str
+    
     Config=> {
         crud_operations='read'
         access_key_mapping='location_id:sap_id'
@@ -3789,6 +3874,39 @@ Model CrisDryOutSync {
     power100_dryouts optional int
     dry_out_in_days str
     file_path optional str
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model HyperLocalZoneSummary internal {
+    zone str
+    rating float
+}
+
+Model ReviewsSentiment internal {
+    zone str
+    sales_area str
+    region str
+    store_code str
+    store_name str
+    reviewer_name str
+    rating float
+    review_comment str
+    tone_type str
+    review_date datetime
+    rank int
+}
+
+Model HyperLocal {
+    report_date index_field date
+    total_reviews int
+    positive_reviews int
+    negative_reviews int
+    neutral_reviews int
+    zone_summary list HyperLocalZoneSummary
+    sentiment_of_reviews list ReviewsSentiment
 
     Config=> {
         crud_operations='read'

@@ -16,6 +16,7 @@ import utilities.helpers as helpers
 from fastapi.responses import FileResponse
 import utilities.vts_mapping as vts_mapping
 from dateutil.relativedelta import relativedelta
+import utilities.minio_connector as minio_connector
 import utilities.connection_mapping as connection_mapping
 import orchestrator.analytics.vts_analysis as vts_analysis
 from utilities.helpers import generate_filter_query, get_location_details
@@ -23,11 +24,50 @@ import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.actions.check_violation_count as check_violation_count
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
+from orchestrator.hqo_blocked import get_blocked_trucks_service
 from orchestrator.gen_ai.vts_nlp.core_functions import process_vts_query
+import orchestrator.analytics.ro_analysis as ro_analysis
 
 router = fastapi.APIRouter(prefix='/alerts')
 
 logger = urdhva_base.logger.Logger.getInstance("api_manager")
+
+
+
+
+async def get_truck_location_data(truck_number):
+    transporter_code = ""
+    sap_id = None
+
+    query = f"select * from vts_truck_master where truck_no='{truck_number}'"
+    res = await urdhva_base.BasePostgresModel.get_aggr_data(query)
+    
+    if res.get("data"):
+        row = res["data"][0]
+        sap_id = row.get("sap_id")
+        transporter_code = row.get("transporter_code", "")
+    else:
+        res = await VtsAlertHistory.get_all(
+            urdhva_base.queryparams.QueryParams(q=f"tl_number='{truck_number}'", limit=1),
+            resp_type="plain"
+        )
+        if not res.get("data"):
+            return None
+
+        row = res["data"][0]
+        sap_id = row.get("sap_id")
+        transporter_code = row.get("vendor_id", "")
+
+    if not sap_id:
+        return None
+
+    query =f"select * from location_master where sap_id='{sap_id}'"
+    loc = await urdhva_base.BasePostgresModel.get_aggr_data(query)
+    location = loc["data"][0] if loc.get("data") else {"name": "", "zone": "", "region": ""}
+    location["sap_id"] = sap_id
+    location["transporter_code"] = transporter_code
+
+    return location
 
 
 # Action alert_action
@@ -369,115 +409,6 @@ async def alerts_bulk_send_to_approve(data: Alerts_Bulk_Send_To_ApproveParams):
 # Action block_vts_truck
 @router.post('/block_vts_truck', tags=['Alerts'])
 async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
-    rpt = urdhva_base.context.context.get('rpt', {})
-    if not rpt:
-        return {"status": False, "message": "Session got expired, Please Re-Login"}
-    
-    if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
-        return {"status": False, "message": "Not Allowed To Perform This Action"}
-
-    query = (f"""vehicle_unblocked_date is null and alert_section='VTS' and bu='{data.bu.value}' and vehicle_number='{data.truck_number}' """)
-    print("-"*10)
-    print("query :", query)
-    print("-"*10)    
-
-    alert_data = await Alerts.get_all(
-        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
-        )
-    
-    query = f"blocking_status='blocked' and truck_number='{data.truck_number}'"
-    manual_blocked = await VtsManualBlocked.get_all(
-        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
-        )
-    if alert_data["data"] or manual_blocked["data"]:
-        return {"status": False, "message": "Truck has already been blocked"}
-    
-    headers = {
-        "Content-Type": "application/json"
-        }
-    payload = {
-        "VehicleRtoNo": data.truck_number
-        }
-    response = requests.post(
-        urdhva_base.settings.vts_truck_status_url,
-        json=payload,
-        headers=headers,
-        timeout=30
-        )
-    response = json.dumps(response.json(), indent=4)
-    response = eval(response)
-
-    print("-"*20)
-    print("vts_truck_status :", response)
-    print("-"*20)
-
-    if isinstance(response, dict) and response.get("TripStatus", "").lower() == "loaded":
-        return {"status": False, "message": "Cannot block as the truck is in a trip"}
-    
-    start_date = urdhva_base.utilities.get_present_time()
-    end_date = start_date + relativedelta(days=data.blocking_days)
-
-    transaction_number = str(int(time.time() * 1000))[-7:] + "1"
-
-    if data.bu in ['TAS']:
-        payload = [
-            {
-                "transactNo": transaction_number,
-                "truckRegNo": data.truck_number,
-                "blockingFlag": "Y",
-                "blockingFrom": start_date.strftime("%Y%m%d"),
-                "blockingTo": end_date.strftime("%Y%m%d")
-            }
-        ]
-        print("-"*20)
-        print("payload :", payload)
-        print("-"*20)
-        await vts_analysis.post_blocked_tt_ims(payload)
-    
-    if data.bu in ['LPG']:
-        payload = {
-                    "Request":{
-                        "Request_ID": transaction_number,
-                        "Vehicle_ID": data.truck_number,
-                        "Status": "B",
-                        "User_ID": "NOVEX_SYSTEM",
-                        "IP_Address": urdhva_base.settings.server_ip
-                    }
-        }
-        await vts_analysis.post_lpg_tt(payload)
-
-    truck_details = {
-        "bu": data.bu.value,
-        "blocked_by": rpt["username"],
-        "blocked_date": start_date,
-        "truck_number": data.truck_number,
-        "transaction_number": transaction_number,
-        "blocking_status": "blocked",
-        "blocking_flag": "Y",
-        "blocking_days": data.blocking_days,
-        "blocking_from": start_date,
-        "blocking_to": end_date,
-        "remarks": data.remarks
-    }
-    query = f"select * from vts_truck_master where truck_no='{data.truck_number}'"
-    location_data = await urdhva_base.BasePostgresModel.get_aggr_data(query)
-    if location_data["data"]:
-        location_data = location_data["data"][0]
-        truck_details.update(
-            {   
-                "location_name": location_data.get("name", ""),
-                "zone": location_data.get("zone", ""),
-                "region": location_data.get("region", "")
-            }
-        )
-
-    await VtsManualBlockedCreate(**truck_details).create()
-    return {"status": True, "message": "Truck has been blocked successfully"}
-
-
-# Action unblock_vts_truck
-@router.post('/unblock_vts_truck', tags=['Alerts'])
-async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
     try:
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
@@ -485,53 +416,206 @@ async def alerts_unblock_vts_truck(data: Alerts_Unblock_Vts_TruckParams):
         
         if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
             return {"status": False, "message": "Not Allowed To Perform This Action"}
-
-        alert_data = await VtsManualBlocked.get(int(data.unblock_id))
-        if not isinstance(alert_data, dict):
-            alert_data = alert_data.__dict__
-        _date = urdhva_base.utilities.get_present_time()
         
-        if alert_data['bu'] in ['TAS']:
-            payload = [
-                {
-                    "transactNo": str(alert_data["transaction_number"]) + "0",
-                    "truckRegNo": alert_data["truck_number"],
-                    "blockingFlag": "N",
-                    "blockingFrom": (alert_data['blocking_from'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
-                    "blockingTo": (alert_data['blocking_to'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
+        query = (f"""vehicle_unblocked_date is null and alert_section='VTS' and vehicle_number='{data.truck_number}' """)
+        alert_data = await Alerts.get_all(
+            urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
+            )
+        
+        if alert_data["data"]:
+            return {"status": False, "message": "Truck has already been blocked"}
+        
+        location_data = await get_truck_location_data(data.truck_number)
+        if not location_data:
+                location_data = {}
+        location_name = location_data.get('name', '')
+        zone = location_data.get('zone', '') 
+        sap_id = location_data.get('sap_id', '') 
+        region = location_data.get('region', '') 
+        transporter_code = location_data.get('transporter_code', '')
+        
+        start_date_utc = urdhva_base.utilities.get_present_time(utc=True)
+        end_date_utc = start_date_utc + relativedelta(days=data.blocking_days)
+        
+        start_date_ist = start_date_utc.astimezone(pytz.timezone('Asia/Kolkata'))
+        end_date_ist = end_date_utc.astimezone(pytz.timezone("Asia/Kolkata"))
+
+        total_wait_time_minutes = int((end_date_utc - start_date_utc).total_seconds() / 60)
+        totalWaitTime = "PT" + str(total_wait_time_minutes) + "M"
+        transaction_number = str(int(time.time() * 1000))[-7:] + "1"
+
+        alert_history = [{
+            "action_msg" : (
+                f"Manual block for truck {data.truck_number} initiated by OCC Team "
+                f"({rpt['username']}) from "
+                f"{start_date_ist.strftime('%d-%m-%Y %I:%M:%S %p')} to "
+                f"{end_date_ist.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+            ),
+            "action_type": "BlockInitiated",
+            "action_by" : rpt['username'],
+            "processed_time" : start_date_utc.isoformat()
+        }]
+
+        alert_data = {
+            "vehicle_number": data.truck_number,
+            "bu": data.bu.value,
+            "severity": "High",
+            "sop_id": "SOP009B",
+            "alert_history": alert_history,
+            "vehicle_blocked_start_date": start_date_utc,
+            "vehicle_blocked_end_date": end_date_utc,
+            "alert_section": "VTS",
+            "violation_type": data.reason,
+            "interlock_name": "Itdg Admin Blocked",
+            "sap_id": sap_id,
+            "blocking_days": data.blocking_days,
+            "blocked_by": rpt["username"],
+            "remarks": data.remarks,
+            "blocked_date": start_date_utc,
+            "blocking_status": "blocked",
+            "blocking_flag": "Y",
+            "transaction_number": transaction_number,
+            "blocking_from": start_date_utc,
+            "blocking_to": end_date_utc,
+            "waitTime": totalWaitTime,
+            "alert_message" : data.remarks,
+            "location_name": location_name,
+            "zone": zone,
+            "transporter_code" : transporter_code,
+            "region": region,
+            "auto_unblock": "true",
+            "block_status": BlockStatus.WaitingForBlockAck
+        }
+
+        # need to trigger camunda workflow 
+        cls = alert_factory.AlertFactory()
+        camunda_url = await helpers.get_camunda_url(data.bu.value,sap_id,alert_section='VTS')
+        await cls.create_alert(alert_data, camunda_url)
+        return {"status": True, "message": "Truck has been moved check to completed trip or not"}
+    except Exception as e:
+        logger.exception(f"Unhandled error during VTS block {str(e)}")
+        return {"status": False, "message": "Failed to block the truck"}
+
+# Action unblock_vts_truck
+@router.post('/unblock_vts_truck', tags=['Alerts'])
+async def alerts_unblock_vts_truck(
+    unblock_id: str = fastapi.Form(...),
+    remarks_unblocked: str | None = fastapi.Form(None),
+    upload_file: fastapi.UploadFile | None = fastapi.File(None)
+):
+    try:
+      
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+
+        if ("HQO HSE SOD" not in rpt.get('novex_role', []) and "HQO LPG" not in rpt.get('novex_role', [])):
+            return {"status": False, "message": "Not Allowed To Perform This Action"}
+
+        try:
+            unblock_id = int(unblock_id)
+        except Exception:
+            logger.error(f"Invalid unblock_id value: {unblock_id}")
+            return {"status": False, "message": "Invalid unblock_id"}
+
+        query = f"id = {unblock_id}"
+        alert_data = await Alerts.get_all(
+            urdhva_base.queryparams.QueryParams(q=query, limit=1),
+            resp_type="plain"
+        )
+
+        if not alert_data.get("data"):
+            return {"status": False, "message": "No active block found for the truck"}
+
+        alert_record = alert_data["data"][0]
+
+        if alert_record.get("vehicle_unblocked_date") is not None:
+            return {"status": False, "message": "Truck is already unblocked"}
+
+     
+        minio_path = ""
+        file_path = ""
+
+        if upload_file:
+            UPLOAD_DIR = os.path.join(
+                urdhva_base.settings.uploads,
+                "vts_blocked"
+            )
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+            file_name = upload_file.filename
+            file_path = os.path.join(UPLOAD_DIR, file_name)
+
+            with open(file_path, "wb") as f:
+                f.write(await upload_file.read())
+
+            status, minio_path = minio_connector.upload_to_minio(
+                "alerts",         # bucket (same bucket)
+                "vts_blocked",    # section/folder
+                str(unblock_id),       # sub-folder
+                file_path         # local filepath
+            )
+
+            if not status:
+                logger.error(f"MinIO upload failed: {minio_path}")
+                return {
+                    "status": False,
+                    "message": "MinIO upload failed",
+                    "error": minio_path
                 }
-            ]
-            print("-"*20)
-            print("payload :", payload)
-            print("-"*20)
-            await vts_analysis.post_blocked_tt_ims(payload)
-        
-        if alert_data['bu'] in ['LPG']:
-            payload = {
-                    "Request":{
-                        "Request_ID": str(alert_data["transaction_number"]) + "0",
-                        "Vehicle_ID": alert_data["truck_number"],
-                        "Status": "U",
-                        "User_ID": "NOVEX_SYSTEM",
-                        "IP_Address": urdhva_base.settings.server_ip
-                    }
-            }
-            print("-"*20)
-            print("payload :", payload)
-            print("-"*20)
-            await vts_analysis.post_lpg_tt(payload)
 
-        await VtsManualBlocked(**{
-            "id": int(data.unblock_id),
-            "unblocked_by": rpt["username"],
-            "blocking_status": "unblocked",
-            "blocking_flag": "N",
-            "unblocked_date": _date
+        payload = {
+            "messageName": "Unblock",
+            "processInstanceId": alert_record.get("workflow_instance_id"),
+            "processVariables": {
+                "auto_unblock": {
+                    "value": "false",
+                    "type": "String"
+                }
+            }
+        }
+
+        camunda_url = f"{alert_record.get('workflow_url')}/engine-rest/message"
+
+        response = requests.post(camunda_url, json=payload)
+
+        if response.status_code != 204:
+            logger.error(
+                f"Camunda unblock failed | "
+                f"alert_id={alert_record.get('id')} | "
+                f"status={response.status_code} | "
+                f"response={response.text}"
+            )
+            return {"status": False, "message": "Failed to unblock the truck via workflow"}
+
+        event_time_utc = urdhva_base.utilities.get_present_time()
+        ist_time = event_time_utc.astimezone(pytz.timezone("Asia/Kolkata"))
+        alert_history = alert_record.get("alert_history", [])
+
+        alert_history.append({
+            "action_msg": (
+                f"Manual unblock for truck {alert_record.get('vehicle_number')} "
+                f"initiated by OCC Team ({rpt['username']}) "
+                f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+            ),
+            "action_type": "UnBlockInitiated",
+            "action_by": rpt['username'],
+            "processed_time": event_time_utc.isoformat()
+        })
+
+        await Alerts(**{
+            "id": alert_record.get("id"),
+            "alert_history": alert_history,
+            "remarks_unblocked": remarks_unblocked,
+            "file_uploaded_path": minio_path or ""
         }).modify()
 
-        return {"status": True, "message": "Truck has been unblocked successfully"}
+        return {"status": True, "message": "Truck has been successfully unblocked"}
+
     except Exception:
+        logger.exception("Unhandled error during VTS unblock")
         return {"status": False, "message": "Failed to unblock the truck"}
+
 
 
 # Action get_vts_blocked_trucks
@@ -544,12 +628,12 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
     # TAB 1: VTS BLOCKED LIST  (NO FILTERS SHOULD APPLY HERE)
     # ============================================================
     if tab == "vts":
-        query = "blocking_status='blocked'"
+        query =  (f"vehicle_unblocked_date is null and alert_section='VTS'"
+                f"and interlock_name = 'Itdg Admin Blocked' ")
 
-       
-        vts_params = urdhva_base.queryparams.QueryParams(q=query)
+        vts_params = urdhva_base.queryparams.QueryParams(q=query, limit=0)
 
-        alert_data = await VtsManualBlocked.get_all(vts_params, resp_type='plain')
+        alert_data = await Alerts.get_all(vts_params, resp_type='plain')
         vts_blocked_data = alert_data.get("data", [])
 
         return {
@@ -560,40 +644,28 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
             }
         }
 
-
-    # ============================================================
-    # TAB 2: ALERT BLOCKED LIST (ONLY THIS NEEDS FILTERS)
-    # ============================================================
     if tab == "alerts":
-
-        # -------------------------
-        # Extract BU from filters
-        # -------------------------
+        # Extract BU filter only
         bu_value = None
+
         if data.cross_filters:
             for f in data.cross_filters:
-                if getattr(f, "key", None) == "bu" and getattr(f, "value", None):
+                if f.key == "bu" and f.value:
                     bu_value = f.value
-                    break
-
-        # -------------------------
         # Build alert query
-        # -------------------------
-        # alert_query = "alert_status='Open' AND alert_section='VTS'"
         alert_query = """
-        alert_section='VTS'
-        AND vehicle_unblocked_date IS NULL
-        AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
-        AND mark_as_false = TRUE
+            alert_section = 'VTS'
+            AND vehicle_unblocked_date IS NULL
+            AND alert_status = 'Close'
+            AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
         """
 
         if bu_value:
-            alert_query += f" AND bu='{bu_value}'"
+            alert_query += f" AND bu = '{bu_value}'"
 
-        # -------------------------
-        # Prepare params
-        # -------------------------
+        print("FINAL alert_query >>>", alert_query)
         alert_params = urdhva_base.queryparams.QueryParams(q=alert_query , limit=0)
+
         alert_params.fields = [
             "bu",
             "zone",
@@ -607,6 +679,7 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
             "transporter_code",
             "unique_id",
             "device_id"
+            
         ]
 
         alerts_resp = await Alerts.get_all(alert_params, resp_type='plain')
@@ -620,10 +693,8 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
             }
         }
 
-
-    # ============================================================
+   
     # INVALID TAB HANDLING
-    # ============================================================
     return {
         "status": False,
         "message": "Invalid tab. Valid values: 'vts', 'alerts'",
@@ -633,18 +704,19 @@ async def alerts_get_vts_blocked_trucks(data: Alerts_Get_Vts_Blocked_TrucksParam
 # Action get_vts_unblocked_trucks
 @router.post('/get_vts_unblocked_trucks', tags=['Alerts'])
 async def alerts_get_vts_unblocked_trucks(data: Alerts_Get_Vts_Unblocked_TrucksParams):
-    query = "blocking_status='unblocked'"
-    query = await generate_filter_query(data.cross_filters, query)
-    alert_data = await VtsManualBlocked.get_all(
-        urdhva_base.queryparams.QueryParams(q=query),resp_type='plain'
+    query = (f"vehicle_unblocked_date is not null and alert_section='VTS'"
+                f"and interlock_name = 'Itdg Admin Blocked'")
+    
+    alert_data = await Alerts.get_all(
+        urdhva_base.queryparams.QueryParams(q=query,limit=0),resp_type='plain'
         )
+    
     if alert_data["data"]:
         return {
             "status": True, 
             "message": "success", 
             "data": alert_data["data"]
             }
-    
     return {
         "status": True, 
         "message": "No data found",
@@ -682,16 +754,28 @@ async def alerts_alerts_get_vts_query(data: Alerts_Alerts_Get_Vts_QueryParams):
             "generated_sql": None
         }
 
+
 # Action unblock_alert_truck
 @router.post('/unblock_alert_truck', tags=['Alerts'])
-async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
+async def alerts_unblock_alert_truck(
+    unique_id: str = fastapi.Form(...),
+    remarks_unblocked: str | None = fastapi.Form(None),
+    upload_file: fastapi.UploadFile | None = fastapi.File(None)
+    ):
     try:
         rpt = urdhva_base.context.context.get("rpt", {})
+
         if not rpt:
-            return {"status": False, "message": "Session expired, please login again"}
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+         
+        if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
+            return {"status": False, "message": "Not Allowed To Perform This Action"}
+
+        if unique_id is None:
+            logger.error("unblock_id missing in request payload")
+            return { "status": False, "message": "unblock_id is required"}
 
         username = rpt.get("username")
-        unique_id = data.unique_id
 
         # ----------------------------
         # FETCH ALERT BY unique_id
@@ -699,44 +783,436 @@ async def alerts_unblock_alert_truck(data: Alerts_Unblock_Alert_TruckParams):
         params = urdhva_base.queryparams.QueryParams(
             q=f"unique_id='{unique_id}'", limit=1
         )
-        params.fields = ["id", "alert_history", "alert_state", "alert_status"]
-
+        
         alert_resp = await Alerts.get_all(params, resp_type="plain")
 
         if not alert_resp or not alert_resp.get("data"):
             return {"status": False, "message": "Alert not found"}
-
+        
         alert = alert_resp["data"][0]
+
+        if alert.get("vehicle_unblocked_date") is not None:
+            return {"status": False,"message": "Truck is already unblocked"}
+        
+        minio_path = ""
+        file_path = ""
+
+        if upload_file:
+            UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, "vts_blocked")
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+            file_name = upload_file.filename
+            file_path = os.path.join(UPLOAD_DIR, file_name)
+            with open(file_path, "wb") as f:
+                f.write(await upload_file.read())
+            
+        status, minio_path = minio_connector.upload_to_minio(
+            "alerts",         # bucket (same bucket)
+            "vts_blocked",    # section/folder
+            str(unique_id),       # sub-folder
+            file_path         # local filepath
+        )
+
+        if not status:
+            return {"status": False,"message": "MinIO upload failed", "error": minio_path}
+        
         alert_id = alert["id"]
-        history = alert.get("alert_history", []) or []
+        #history = alert.get("alert_history", []) or []
+        transaction_id = f"{alert['id']}0"
+        closed_at = alert.get('closed_at')
+        process_instance_id = alert['workflow_instance_id']
+        camunda_url = alert['workflow_url']
+        for key in ['created_at', 'updated_at', '_sa_instance_state', '']:
+            if key in alert:
+                del alert[key]
+        vehicle_number = alert['vehicle_number']
+        if alert["bu"] in ["TAS"]:
+            try:
+                payload = [{
+                    "blockingFlag": "N", 
+                    "transactNo": transaction_id,
+                    "truckRegNo": alert['vehicle_number'],
+                    "blockingFrom": alert['vehicle_blocked_start_date'].strftime("%Y%m%d"),
+                    "blockingTo": alert['vehicle_blocked_end_date'].strftime("%Y%m%d")
+                }]
 
-        # ----------------------------
-        # ADD NEW HISTORY DICT ONLY
-        # ----------------------------
-        new_history = {
-            "action_msg": "Alert unblocked",
-            "action_type": "UnBlocked",
-            "allocated_time": urdhva_base.utilities.get_present_time().isoformat(),
-            "processed_time": urdhva_base.utilities.get_present_time().isoformat(),
-            "action_by": username
-        }
+                unblocking_status,error_msg = await vts_analysis.post_blocked_tt_ims(payload)
+                
+                unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED', blacklist='false' where truck_regno = '{vehicle_number}'"
+                await VtsTruckDetails.update_by_query(unblock_query)
+                vehicle_unblocked_date = datetime.datetime.now(tz=datetime.timezone.utc)
+                
+                if closed_at:
+                    await Alerts(**{"id": alert_id,
+                                    "vehicle_unblocked_date": vehicle_unblocked_date,
+                                    "remarks_unblocked": remarks_unblocked,
+                                    "file_uploaded_path": minio_path if minio_path else "",
+                                    "mark_as_false": True}).modify()
+                else:
+                    if not username:
+                        username = "Approver SOD"
+                    alert["action_msg"] = f"Vehicle unblocked by {username}"
+                    alert["action_type"] = "Approved"
+                    await alert_manager.AlertAction.update_alert_history(input_data=alert, alert_data=alert)
+                    await Alerts(**{"id": alert_id,
+                                    "vehicle_unblocked_date": vehicle_unblocked_date,
+                                    "closed_at": vehicle_unblocked_date,
+                                    "alert_status": "Close",
+                                    "alert_state": "Resolved",
+                                    "device_msg": "unblocked_by_hqo_officer",
+                                    "remarks_unblocked": remarks_unblocked,
+                                    "file_uploaded_path": minio_path if minio_path else "",
+                                    "mark_as_false": True}).modify()
 
-        history.append(new_history)
-
-        # ----------------------------
-        # UPDATE MAIN ALERT
-        # ----------------------------
-        update_payload = {
-            "id": alert_id,
-            "alert_status": "Close",
-            "alert_state": "Resolved",
-            "alert_history": history
-        }
-
-        await Alerts(**update_payload).modify()
+                print("Status:", unblocking_status)
+                print("Response JSON:", unblocking_status)
+                delete_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}"
+                delete_response = requests.delete(delete_url)
+                print("workflow_deletion Status code:", delete_response.status_code)
+                print("workflow_deletion Response body:", delete_response.text)
+            except requests.exceptions.HTTPError as e:
+                print("HTTP error:", e, "Body:", getattr(e.response, "text", None))
+            except requests.exceptions.RequestException as e:
+                print("Request failed:", e)
+        elif alert["bu"] in ["LPG"]:
+            try:
+                payload = {
+                    "Request":{
+                        "Request_ID": transaction_id,
+                        "Vehicle_ID": alert['vehicle_number'],
+                        "Status": "U",
+                        "User_ID": "NOVEX_SYSTEM",
+                        "IP_Address": "10.90.38.218"
+                    }
+                }
+                
+                unblocking_status,error_msg = await vts_analysis.post_lpg_tt(payload)
+            
+                unblock_query = f"update vts_truck_details set truck_status = 'UNBLOCKED', blacklist='false' where truck_regno = '{vehicle_number}'"
+                await VtsTruckDetails.update_by_query(unblock_query)
+                vehicle_unblocked_date = datetime.datetime.now(tz=datetime.timezone.utc)
+                if closed_at:
+                    await Alerts(**{"id": alert_id,
+                                    "vehicle_unblocked_date": vehicle_unblocked_date,
+                                    "remarks_unblocked": remarks_unblocked,
+                                    "file_uploaded_path": minio_path if minio_path else "",
+                                    "mark_as_false": True}).modify()
+                else:
+                    if not username:
+                        username = "Approver LPG"
+                    alert["action_msg"] = f"Vehicle unblocked by {username}"
+                    alert["action_type"] = "Approved"
+                    await alert_manager.AlertAction.update_alert_history(input_data=alert, alert_data=alert)
+                    await Alerts(**{"id": alert_id,
+                                    "vehicle_unblocked_date": vehicle_unblocked_date,
+                                    "closed_at": vehicle_unblocked_date,
+                                    "alert_status": "Close",
+                                    "alert_state": "Resolved",
+                                    "remarks_unblocked": remarks_unblocked,
+                                    "file_uploaded_path": minio_path if minio_path else "",
+                                    "device_msg": "unblocked_by_hqo_officer",
+                                    "mark_as_false": True}).modify()
+                
+                print("Status:", unblocking_status)
+                print("Response JSON:", unblocking_status)
+                delete_url = f"{camunda_url}/engine-rest/process-instance/{process_instance_id}"
+                delete_response = requests.delete(delete_url)
+                print("workflow_deletion Status code:", delete_response.status_code)
+                print("workflow_deletion Response body:", delete_response.text)
+            except requests.exceptions.HTTPError as e:
+                print("HTTP error:", e, "Body:", getattr(e.response, "text", None))
+            except requests.exceptions.RequestException as e:
+                print("Request failed:", e)
 
         return {"status": True, "message": "Alert unblocked successfully"}
 
     except Exception as e:
         print("Error:", e)
         return {"status": False, "message": "Failed to unblock alert"}
+
+
+# Action attach_alert_blocked_file
+@router.post('/attach_alert_blocked_file', tags=['Alerts'])
+async def alerts_attach_alert_blocked_file(
+    unique_id: str = fastapi.Form(...),
+    remarks_unblocked: str = fastapi.Form(None),
+    upload_file: fastapi.UploadFile = fastapi.File(...)
+):
+    try:
+        # -----------------------------------
+        # 1. Fetch alert record
+        # -----------------------------------
+        params = urdhva_base.queryparams.QueryParams(
+            q=f"unique_id='{unique_id}'", limit=1
+        )
+        record_resp = await Alerts.get_all(params, resp_type="plain")
+
+        if not record_resp.get("data"):
+            return {
+                "status": False,
+                "message": "Record not found for given unique_id"
+            }
+
+        record = record_resp["data"][0]
+        row_id = record["id"]
+
+        # -----------------------------------
+        # 2. TEMP FILE SAVE (LIKE NOTICE API)
+        # -----------------------------------
+        UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, "alerts")
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+        file_name = upload_file.filename
+        file_path = os.path.join(UPLOAD_DIR, file_name)
+
+        with open(file_path, "wb") as f:
+            f.write(await upload_file.read())
+
+        # -----------------------------------
+        # 3. MINIO UPLOAD (PATH BASED)
+        # -----------------------------------
+        status, minio_path = minio_connector.upload_to_minio(
+            "alerts",        # bucket
+            "blocked_files", # section
+            unique_id,       # folder
+            file_path        # filepath
+        )
+
+        if not status:
+            return {
+                "status": False,
+                "message": "MinIO upload failed",
+                "error": minio_path
+            }
+
+        # -----------------------------------
+        # 4. UPDATE SAME COLUMN
+        # -----------------------------------
+        update_data = {
+            "id": row_id,
+            "file_uploaded_path": minio_path
+        }
+
+        if remarks_unblocked:
+            update_data["remarks_unblocked"] = remarks_unblocked
+
+        await Alerts(**update_data).modify()
+
+        return {
+            "status": True,
+            "message": "Attachment uploaded successfully",
+            "file_uploaded_path": minio_path,
+            "remarks_unblocked": remarks_unblocked
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed to upload file",
+            "error": str(e)
+        }
+
+
+# Action attach_vts_blocked_file
+@router.post('/attach_vts_blocked_file', tags=['Alerts'])
+async def alerts_attach_vts_blocked_file(
+    unblock_id: str = fastapi.Form(...),
+    remarks_unblocked: str = fastapi.Form(None),
+    upload_file: fastapi.UploadFile | None = fastapi.File(None)
+):
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        
+        if ("HQO HSE SOD" not in rpt.get('novex_role',[])) and ("HQO LPG" not in rpt.get('novex_role',[])):
+            return {"status": False, "message": "Not Allowed To Perform This Action"}
+        
+        # -----------------------------------
+        # 1. Fetch VTS blocked record
+        # -----------------------------------
+        params = urdhva_base.queryparams.QueryParams(
+            q=f"id='{unblock_id}'", limit=1
+        )
+        record_resp = await VtsManualBlocked.get_all(params, resp_type="plain")
+
+        if not record_resp.get("data"):
+            return {
+                "status": False,
+                "message": "Record not found for given unblock_id"
+            }
+
+        record = record_resp["data"][0]
+        row_id = record["id"]
+
+        # -----------------------------------
+        # 2. TEMP FILE SAVE (SAME AS ALERT API)
+        # -----------------------------------
+        minio_path = ""
+        if upload_file:
+            UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, "vts_blocked")
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+            file_name = upload_file.filename
+            file_path = os.path.join(UPLOAD_DIR, file_name)
+
+            with open(file_path, "wb") as f:
+                f.write(await upload_file.read())
+
+            # -----------------------------------
+            # 3. MINIO UPLOAD (PATH BASED)
+            # -----------------------------------
+            status, minio_path = minio_connector.upload_to_minio(
+                "alerts",         # bucket (same bucket)
+                "vts_blocked",    # section/folder
+                unblock_id,       # sub-folder
+                file_path         # local filepath
+            )
+
+            if not status:
+                return {
+                    "status": False,
+                    "message": "MinIO upload failed",
+                    "error": minio_path
+                }
+
+        # -----------------------------------
+        # 4. UPDATE DB (SAME COLUMN)
+        # -----------------------------------
+        _date = urdhva_base.utilities.get_present_time()
+        if record['bu'] in ['TAS']:
+            payload = [
+                {
+                    "transactNo": str(record["transaction_number"]) + "0",
+                    "truckRegNo": record["truck_number"],
+                    "blockingFlag": "N",
+                    "blockingFrom": (record['blocking_from'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d"),
+                    "blockingTo": (record['blocking_to'] + datetime.timedelta(hours=5, minutes=30)).strftime("%Y%m%d")
+                }
+            ]
+            print("-"*20)
+            print("payload :", payload)
+            print("-"*20)
+            await vts_analysis.post_blocked_tt_ims(payload)
+        
+        if record['bu'] in ['LPG']:
+            payload = {
+                    "Request":{
+                        "Request_ID": str(record["transaction_number"]) + "0",
+                        "Vehicle_ID": record["truck_number"],
+                        "Status": "U",
+                        "User_ID": "NOVEX_SYSTEM",
+                        "IP_Address": urdhva_base.settings.server_ip
+                    }
+            }
+            print("-"*20)
+            print("payload :", payload)
+            print("-"*20)
+            await vts_analysis.post_lpg_tt(payload)
+
+        update_data = {
+            "id": int(row_id),
+            "unblocked_by": rpt["username"],
+            "blocking_status": "unblocked",
+            "blocking_flag": "N",
+            "unblocked_date": _date,
+            "file_uploaded_path": minio_path
+        }
+
+        if remarks_unblocked:
+            update_data["remarks_unblocked"] = remarks_unblocked
+
+        await VtsManualBlocked(**update_data).modify()
+
+        return {
+            "status": True,
+            "message": "Attachment Uploaded to Minio And TT Unblocked successfully",
+            "file_uploaded_path": minio_path,
+            "remarks_unblocked": remarks_unblocked
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed to upload file",
+            "error": str(e)
+        }
+
+
+# Action hqo_blocked_vehicles
+@router.post('/hqo_blocked_vehicles', tags=['Alerts'])
+async def alerts_hqo_blocked_vehicles(data: Alerts_Hqo_Blocked_VehiclesParams):
+    return await get_blocked_trucks_service(
+        data.alert_status,
+        data.start_date,
+        data.end_date
+    )
+
+
+# Action add_rca_reason
+@router.post('/add_rca_reason', tags=['Alerts'])
+async def alerts_add_rca_reason(data: Alerts_Add_Rca_ReasonParams):
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        alert_id = data.alert_id
+        reason = data.reason
+        query = f"""select * from alerts where id='{alert_id}'"""
+        resp = await Alerts.get_aggr_data(query, limit=1)
+        if not resp['data']:
+            return {
+                "status": True,
+                "message": "Alert Not Found"
+            }
+        now_utc = urdhva_base.utilities.get_present_time(utc=True)
+        ist_time = now_utc.astimezone(pytz.timezone("Asia/Kolkata"))
+
+        alert = resp['data'][0]
+        existing_rca = alert['rca']
+
+        new_entry = (
+            f"{reason} initiated by {rpt.get('username','')} "
+            f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+        )
+
+        if existing_rca:
+            rca = f"{existing_rca}\n{new_entry}"
+        else:
+            rca = new_entry
+
+        alert["action_msg"] = new_entry
+        alert["action_type"] = "Remarks"
+        await alert_manager.AlertAction.update_alert_history(input_data=alert, alert_data=alert)
+
+        await Alerts(**{"id": alert_id,
+                        "rca": rca}).modify()
+        
+        return {
+            "status": True,
+            "message": "Remarks updated successfully"
+        }
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed to update remarks",
+            "error": str(e)
+        }
+
+
+# Action day_end_closure
+@router.post('/day_end_closure', tags=['Alerts'])
+async def alerts_day_end_closure(data: Alerts_Day_End_ClosureParams):
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        
+        await ro_analysis.close_ro_va_cleanliness_unblock_of_blocked()
+        await ro_analysis.close_ro_va_cleanliness_open_alerts()
+        
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed to update remarks",
+            "error": str(e)
+        }

@@ -298,6 +298,23 @@ Model vaScore internal {
     overall_score optional str
 }
 
+Model VA_RO_Cleanliness_Master internal {
+    ROCode str
+    ROName optional str
+    Zone optional str
+    Region optional str
+    SalesArea optional str
+}
+
+Model VA_RO_Cleanliness_Master_Status internal {
+    ROCode str
+    ROName optional str
+    Zone optional str
+    Region optional str
+    SalesArea optional str
+    UploadDone bool
+}
+
 Model VA crud_disable {
     Action=> ingest_data {
         vendor_id str
@@ -322,6 +339,14 @@ Model VA crud_disable {
         action_code optional str
         action_reason optional str
         action_category optional str
+    }
+
+    Action=> ro_no_video_upload_list {
+        data list VA_RO_Cleanliness_Master
+    }
+
+    Action=> ro_no_video_upload_list_status {
+        data list VA_RO_Cleanliness_Master_Status
     }
 }
 
@@ -471,5 +496,36 @@ Model EMLockStatus crud_disable {
         vendor_id str
         event_id str
         data optional list emlockStatusData
+    }
+}
+
+Model HyperLocalZoneSummary internal {
+    zone str
+    rating float
+}
+
+Model ReviewsSentiment internal {
+    zone str
+    sales_area str
+    region str
+    store_code str
+    store_name str
+    reviewer_name str
+    rating float
+    review_comment str
+    tone_type str
+    review_date datetime
+    rank int
+}
+
+Model HyperLocal crud_disable {
+    Action=> ingest_data {
+        report_date date
+        total_reviews int
+        positive_reviews int
+        negative_reviews int
+        neutral_reviews int
+        zone_summary list HyperLocalZoneSummary
+        sentiment_of_reviews list ReviewsSentiment
     }
 }

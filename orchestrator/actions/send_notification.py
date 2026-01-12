@@ -77,6 +77,13 @@ class SendNotification:
             "msg_subject", "mqofrole", "location_type", "location_device_id", "va_level",
             "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail"
         ]
+    
+    async def check_sap_id_empty(self):
+        if self.alert_data.get('interlock_name') in ['Itdg Admin Blocked']:
+            if not self.alert_data.get('bu') or not self.alert_data.get('sap_id'):
+                return True
+            return False
+        return False
 
     async def process(self, params: typing.Dict):
         """
@@ -99,9 +106,13 @@ class SendNotification:
         try:
             if not await self._load_and_validate_alert():
                 return await self._handle_invalid_alert()
-
+            
+            check_status = await self.check_sap_id_empty()
+            if check_status:
+                return True, {"empty_sap_id": "Notification skipped Because Of Admin Module"}
+            
             await self._prepare_base_alert_data()
-            if self.base_alert_data['interlock_name'] == 'Dry Out Each Indent Wise MainFlow':
+            if self.base_alert_data['interlock_name'] in ['Dry Out Each Indent Wise MainFlow']:
                 return True, {"msg": "Notification skipped"}
             await self._process_roles_and_users()
             await self._process_message_type()
@@ -248,7 +259,14 @@ class SendNotification:
         if self.params.get('messagetype','') in ['resolved']:
             subject_template = f"VTS Alert: Unblocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
             return subject_template
-
+        
+    async def get_subject_for_ro(self):
+        if self.params.get('messagetype','') in ['notify'] and self.alert_data.get('interlock_name') in ['Restroom Cleaning Evidence Missing']:
+            subject_template = f"Outlet Blocked"
+            return subject_template
+        if self.params.get('messagetype','') in ['resolved'] and self.alert_data.get('interlock_name') in ['Restroom Cleaning Evidence Missing']:
+            subject_template = f"Outlet Unblocked"
+            return subject_template
 
     async def _prepare_message_content(self, bu: str, message_type: str):
         """
@@ -287,6 +305,9 @@ class SendNotification:
 
         if self.alert_data["alert_section"] in ['VTS'] and self.params.get('messagetype','') in ['active','resolved']:
             subject_template = await self.get_subject_for_vts()
+        
+        if self.alert_data["interlock_name"] in ['Restroom Cleaning Evidence Missing'] and self.params.get('messagetype','') in ['notify','resolved']:
+            subject_template = await self.get_subject_for_ro()
 
         # Append alert_section only if it exists and is different from BU
         if alert_section and bu != alert_section:
@@ -308,6 +329,12 @@ class SendNotification:
         elif self.params.get('messagetype','') in ['resolved']:
             return 'VTSRESOLVED'
         
+    async def get_ro_messagetype(self):
+        if self.params.get('messagetype','') in ['notify']:
+            return 'BLOCKOUTLET'
+        elif self.params.get('messagetype','') in ['resolved']:
+            return 'UNBLOCKOUTLET'
+        
     async def _load_message_templates(self, template_name: str) -> Dict[str, str]:
         """
         Load message templates based on the provided template name.
@@ -326,6 +353,8 @@ class SendNotification:
         message_type = self.params.get("messagetype", "").upper()
         if self.alert_data.get("alert_section") in ["VTS"] and self.params.get('messagetype','') in ['active','resolved']:
             message_type = await self.get_vts_messagetype()
+        if self.alert_data.get("interlock_name") in ['Restroom Cleaning Evidence Missing'] and self.params.get('messagetype','') in ['notify','resolved']:
+            message_type = await self.get_ro_messagetype()
         template_value = getattr(TemplateMapping, message_type, None)
         template = template_value.value if template_value else ""
         interlock_value = getattr(InterlockTemplateMapping, template.upper(), None)
@@ -378,7 +407,9 @@ class SendNotification:
         """
         # logger.info(f"self.alert_data: {self.alert_data}") 
         if self.alert_data["alert_section"] in ['VTS'] and self.alert_data["bu"] in ['TAS']:
-            self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
+            self.interlock_name = self.alert_data.get('interlock_name', '')
+            if self.alert_data['interlock_name'] not in ['No VTS No Load', 'Itdg Admin Blocked']:
+                self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
             self.vts_assigned_role = "Location In-Charge SOD" if self.alert_data.get('violation_type','') not in ['device_tamper_count','main_supply_removal_count'] else (await self._role_configuration_mqofrole() or "")
             if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
                 self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
@@ -614,9 +645,31 @@ class SendNotification:
             await self._send_other_notification()
         else:
             await self._send_standard_notification()
+    
+    async def get_ro_recipients(self):
+        dealer_mail = f"{self.alert_data.get("sap_id")}@retail.co.in"
+        mail_recipients = []
+        query = f"""SELECT *
+                        FROM users
+                        WHERE '{self.alert_data.get('sales_area')}' = ANY(sales_area)
+                        AND 'Sales Officer RO' = ANY(novex_role)"""
+        ro_users_data = await hpcl_ceg_model.Users.get_aggr_data(query,limit=0)
+        if ro_users_data['data']:
+            for rec in ro_users_data['data']:
+                if rec.get('email'):
+                    mail_recipients.append(rec['email'])
+        #mail_recipients.append(dealer_mail)
+        print('*'*200)
+        print(mail_recipients)
+        print('*'*200)
+        return mail_recipients
 
     async def get_vts_recipients(self):
-        transporter_code = str(int(self.alert_data['transporter_code']))
+        transporter_code = (
+            str(int(self.alert_data['transporter_code']))
+            if str(self.alert_data.get('transporter_code', '')).strip().isdigit()
+            else "0"
+        )
         query = (f"transporter_code='{transporter_code}'")
         transporter_details_data = await hpcl_ceg_model.EmailMaster.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                                     resp_type='plain')
@@ -715,7 +768,6 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['default@example.com']
             if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['resolved'] and self.alert_data['bu'] in ['TAS']:
                 alert_history = list(reversed(self.alert_data.get('alert_history', [])))
                 if len(alert_history) >= 2:
@@ -733,6 +785,19 @@ class SendNotification:
                                                                     subject=self.subject, body=self.body, 
                                                                     force_send=True, html_content=True)
                     return res
+            if self.alert_data.get('interlock_name','') in ['Restroom Cleaning Evidence Missing']:
+                await self.update_notication_audit_log()
+                self.mail_recipients = await self.get_ro_recipients()
+                self.cc_recipients = ["shubhra.Narayan@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in"]
+                if self.mail_recipients:
+                    res = await notification_module.publish_message(recipients=self.mail_recipients,
+                                                                    cc_recipients=self.cc_recipients,
+                                                                    subject=self.subject, 
+                                                                    body=self.body, 
+                                                                    force_send=True,
+                                                                    html_content=True)
+                    return res
+            self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
             return res
@@ -776,6 +841,18 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
+            if self.alert_data.get('interlock_name','') in ['Restroom Cleaning Evidence Missing'] and self.params.get('messagetype','') in ['notify']:
+                await self.update_notication_audit_log()
+                self.mail_recipients = await self.get_ro_recipients()
+                self.cc_recipients = ["shubhra.Narayan@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in"]
+                if self.mail_recipients:
+                    res = await notification_module.publish_message(recipients=self.mail_recipients,
+                                                                    cc_recipients=self.cc_recipients,
+                                                                    subject=self.subject,
+                                                                    body=self.body, 
+                                                                    force_send=True,
+                                                                    html_content=True)
+                    return res
             self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
@@ -934,7 +1011,8 @@ class SendNotification:
             del alert_data["_sa_instance_state"]
 
         # Update the database
-        await hpcl_ceg_model.Alerts(**alert_data).modify()
+        if alert_data.get('interlock_name') not in ['No VTS No Load', 'Itdg Admin Blocked']:
+            await hpcl_ceg_model.Alerts(**alert_data).modify()
 
 
     async def read_template(self, filename: str) -> str:

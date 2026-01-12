@@ -327,6 +327,23 @@ class vaScoreCreate(pydantic.BaseModel):
     overall_score: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class VA_RO_Cleanliness_MasterCreate(pydantic.BaseModel):
+    ro_code: str
+    ro_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class VA_RO_Cleanliness_Master_StatusCreate(pydantic.BaseModel):
+    ro_code: str
+    ro_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    upload_done: bool
+
+
 class Va_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
     location_id: str
@@ -358,6 +375,22 @@ class Va_Ingest_Data_CloseParams(pydantic.BaseModel):
     action_code: typing.Optional[str] = pydantic.Field("", **{})
     action_reason: typing.Optional[str] = pydantic.Field("", **{})
     action_category: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Va_Ro_No_Video_Upload_ListParams(pydantic.BaseModel):
+    data: typing.List[VA_RO_Cleanliness_MasterCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Va_Ro_No_Video_Upload_List_StatusParams(pydantic.BaseModel):
+    data: typing.List[VA_RO_Cleanliness_Master_StatusCreate]
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -610,6 +643,39 @@ class Emlockstatus_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
     event_id: str
     data: typing.Optional[typing.List[emlockStatusDataCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class HyperLocalZoneSummaryCreate(pydantic.BaseModel):
+    zone: str
+    rating: float
+
+
+class ReviewsSentimentCreate(pydantic.BaseModel):
+    zone: str
+    sales_area: str
+    region: str
+    store_code: str
+    store_name: str
+    reviewer_name: str
+    rating: float
+    review_comment: str
+    tone_type: str
+    review_date: datetime.datetime
+    rank: int
+
+
+class Hyperlocal_Ingest_DataParams(pydantic.BaseModel):
+    report_date: datetime.date
+    total_reviews: int
+    positive_reviews: int
+    negative_reviews: int
+    neutral_reviews: int
+    zone_summary: typing.List[HyperLocalZoneSummaryCreate]
+    sentiment_of_reviews: typing.List[ReviewsSentimentCreate]
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

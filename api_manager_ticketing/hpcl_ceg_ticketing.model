@@ -105,6 +105,7 @@ Model Ticketing {
     merge_status optional str
     parent_id optional str
     subtask_id optional list str
+    ticket_end_date optional datetime
     
 
 
@@ -134,6 +135,7 @@ Model Ticketing {
         linked_alert_id optional list str
         parent_id optional str
         subtask_id optional list str
+        ticket_end_date optional datetime
       
 
     }

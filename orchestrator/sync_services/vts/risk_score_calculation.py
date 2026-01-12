@@ -1168,6 +1168,7 @@ final_merged_df['atomic_risk'].fillna(0, inplace=True)
 final_merged_df['combo_risk'].fillna(0, inplace=True)
 final_merged_df['location_sensitivity'].fillna(0, inplace=True)
 final_merged_df['entity_risk'].fillna(0, inplace=True)
+final_merged_df['Total_Combo_Count'].fillna(0, inplace=True)
 
 
 # ==========================================
