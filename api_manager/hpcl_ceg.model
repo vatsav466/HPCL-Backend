@@ -123,6 +123,8 @@ Enum AlertActionType str {
     BlockFailed='BlockFailed'
     UnblockFailed='UnblockFailed'
     OngoingTrip='OngoingTrip'
+    BlockInitiated='BlockInitiated'
+    UnBlockInitiated='UnBlockInitiated'
     Remarks='Remarks'
     Offline='Offline'
 }
