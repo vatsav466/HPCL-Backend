@@ -1061,6 +1061,9 @@
                     "name": "get_performance_index"
                 },
                 {
+                    "name": "add_rca_reason"
+                },
+                {
                     "name": "upload_document"
                 },
                 {
@@ -1176,6 +1179,9 @@
                 },
                 {
                     "name": "get_performance_index"
+                },
+                {
+                    "name": "add_rca_reason"
                 },
                 {
                     "name": "upload_document"
@@ -7969,6 +7975,10 @@
         {
             "name": "get_performance_index",
             "displayName": "get_performance_index"
+        },
+        {
+            "name": "add_rca_reason",
+            "displayName": "add_rca_reason"
         },
         {
             "name": "upload_document",
