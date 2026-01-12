@@ -658,7 +658,7 @@ class SendNotification:
             for rec in ro_users_data['data']:
                 if rec.get('email'):
                     mail_recipients.append(rec['email'])
-        mail_recipients.append(dealer_mail)
+        #mail_recipients.append(dealer_mail)
         print('*'*200)
         print(mail_recipients)
         print('*'*200)
