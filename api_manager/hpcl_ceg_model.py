@@ -1571,6 +1571,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     action_on: Mapped[typing.Optional[typing.Any]] = mapped_column("action_on", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     remarks_unblocked: Mapped[typing.Optional[str]] = mapped_column("remarks_unblocked", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     file_uploaded_path: Mapped[typing.Optional[str]] = mapped_column("file_uploaded_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    block_status: Mapped[typing.Optional[typing.Any]] = mapped_column("block_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1667,6 +1668,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     action_on: typing.Optional[hpcl_ceg_enum.MakerChecker] | None = None
     remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
     file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
+    block_status: typing.Optional[hpcl_ceg_enum.BlockStatus] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -1772,6 +1774,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     action_on: typing.Optional[hpcl_ceg_enum.MakerChecker] | None = None
     remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
     file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
+    block_status: typing.Optional[hpcl_ceg_enum.BlockStatus] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -2760,6 +2763,33 @@ class Indentdryout_Get_Vts_Direct_SalesParams(pydantic.BaseModel):
 class Indentdryout_Get_Delivery_Confirmation_Direct_SalesParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
     bu_type: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Block_OutletParams(pydantic.BaseModel):
+    block_id: str
+    remarks_blocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Unblock_OutletParams(pydantic.BaseModel):
+    unblock_id: str
+    remarks_unblocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Block_RoParams(pydantic.BaseModel):
+    ro_code: str
+    remarks_blocked: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

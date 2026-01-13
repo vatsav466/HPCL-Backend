@@ -81,7 +81,7 @@ class SolarCapacity:
             # Filter by monitoring status
             solar = solar.filter(pl.col('Monitoring').cast(pl.Utf8).str.strip_chars().str.to_lowercase() == 'yes')
 
-            total_kw = (solar.select(pl.col('Plant Capacity\r\n  KWp').cast(pl.Float64, strict=False).sum()).item())
+            total_kw = (solar.select(pl.col('Plant Capacity').cast(pl.Float64, strict=False).sum()).item())
             total_mw = (total_kw * 4) / 1000
 
             return {
@@ -133,7 +133,7 @@ class SolarCapacity:
             # Extract date range from filters
             # -------------------------------
             filter_start_date, filter_end_date = SolarHelpers.extract_date_range_from_filters(filters)
-            
+
             # If start date is provided but end date is missing, assume up to today
             if filter_start_date and not filter_end_date:
                 filter_end_date = datetime.date.today()
@@ -161,7 +161,7 @@ class SolarCapacity:
             )
 
             solar_master = solar_master.filter(
-                pl.col('Plant Capacity\r\n  KWp').is_not_null()
+                pl.col('Plant Capacity').is_not_null()
             )
 
             if solar_master.is_empty():
@@ -195,7 +195,7 @@ class SolarCapacity:
             estimated_energy = (
                 solar_master
                 .select(
-                    (pl.col('Plant Capacity\r\n  KWp')
+                    (pl.col('Plant Capacity')
                      .cast(pl.Float64, strict=False)
                      .fill_null(0)
                      * 4
@@ -205,7 +205,6 @@ class SolarCapacity:
             )
 
             estimated_energy_str = f"{estimated_energy:.2f}" if estimated_energy else "0.00"
-            print(f"ESTIMATED_ENERGY: Days used = {days_for_estimated}, Energy = {estimated_energy_str} MWh")
 
             # ============================================================
             # ACTUAL ENERGY (DB)
@@ -328,7 +327,6 @@ class SolarCapacity:
                                 days_for_actual = default_days
 
                     # -------------------------------
-                    print(f"ACTUAL_ENERGY: Days used = {days_for_actual}")
                     # Final SUM after filters
                     # -------------------------------
                     if not result_df.is_empty():
@@ -344,9 +342,8 @@ class SolarCapacity:
                             .item()
                         )
                         actual_energy_str = f"{actual_energy:.2f}" if actual_energy else "0.00"
-                        print(f"ACTUAL_ENERGY: Energy = {actual_energy_str} MWh")
                     else:
-                        print(f"ACTUAL_ENERGY: Energy = 0.00 MWh (no data)")
+                        pass
 
             # -------------------------------
             # Calculate Plant Efficiency Percentage
@@ -363,7 +360,7 @@ class SolarCapacity:
                         solar_master
                         .select([
                             pl.col("BU Code").alias("PLANT_CD"),
-                            (pl.col('Plant Capacity\r\n  KWp').cast(pl.Float64, strict=False).fill_null(0) * 4 * days_for_estimated / 1000).alias("estimated_mwh")
+                            (pl.col('Plant Capacity').cast(pl.Float64, strict=False).fill_null(0) * 4 * days_for_estimated / 1000).alias("estimated_mwh")
                         ])
                     )
 
@@ -447,7 +444,7 @@ class SolarCapacity:
             drill_state = getattr(data, 'drill_state', '') or ''
             
             filter_start_date, filter_end_date = SolarHelpers.extract_date_range_from_filters(filters)
-            
+
             now = datetime.datetime.now()
             year = getattr(data, 'year', None) or now.year
             month = getattr(data, 'month', None) or now.month
@@ -460,7 +457,7 @@ class SolarCapacity:
             solar_master = solar_master.filter(
                 pl.col('Monitoring').cast(pl.Utf8).str.strip_chars().str.to_lowercase() == 'yes'
             )
-            solar_master = solar_master.filter(pl.col('Plant Capacity\r\n  KWp').is_not_null())
+            solar_master = solar_master.filter(pl.col('Plant Capacity').is_not_null())
 
             if solar_master.is_empty():
                 return {
@@ -468,24 +465,23 @@ class SolarCapacity:
                     "message": "No valid plant capacity data found"
                 }
 
-            # Calculate days for estimated energy
+            # Determine date range for query and estimation
             if filter_start_date and filter_end_date:
-                start_year = filter_start_date.year
-                start_month = filter_start_date.month
-                end_year = filter_end_date.year
-                end_month = filter_end_date.month
-                days_for_estimated = 0
-                current_year = start_year
-                current_month = start_month
-                while (current_year < end_year) or (current_year == end_year and current_month <= end_month):
-                    _, days_in_month = calendar.monthrange(current_year, current_month)
-                    days_for_estimated += days_in_month
-                    current_month += 1
-                    if current_month > 12:
-                        current_month = 1
-                        current_year += 1
+                query_start_date = filter_start_date
+                query_end_date = filter_end_date
+                # Ensure they are date objects
+                if isinstance(query_start_date, datetime.datetime):
+                    query_start_date = query_start_date.date()
+                if isinstance(query_end_date, datetime.datetime):
+                    query_end_date = query_end_date.date()
             else:
-                _, days_for_estimated = calendar.monthrange(int(year), int(month))
+                # Default to the specific month requested
+                query_start_date = datetime.date(int(year), int(month), 1)
+                _, last_day = calendar.monthrange(int(year), int(month))
+                query_end_date = datetime.date(int(year), int(month), last_day)
+
+            # Calculate days for estimated energy
+            days_for_estimated = (query_end_date - query_start_date).days + 1
 
             # Get BU codes for database query
             bu_codes = (
@@ -532,6 +528,8 @@ class SolarCapacity:
                     FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
                     WHERE QuantityID = '129'
                       AND PLANT_CD IN ('{bu_codes_sql}')
+                      AND CAST(TimestampUTC AS DATE) >= '{query_start_date}'
+                      AND CAST(TimestampUTC AS DATE) <= '{query_end_date}'
                     GROUP BY
                         CAST(TimestampUTC AS DATE),
                         PLANT_CD,
@@ -584,7 +582,7 @@ class SolarCapacity:
             plant_zones = {}
             for row in solar_master.iter_rows(named=True):
                 plant_cd = SolarHelpers._clean_plant_code(row.get("BU Code"))
-                capacity = row.get('Plant Capacity\r\n  KWp')
+                capacity = row.get('Plant Capacity')
                 name = row.get('name')
                 zone = row.get('zone')
                 if plant_cd:
@@ -614,7 +612,9 @@ class SolarCapacity:
                         if generated:
                             try:
                                 generated_float = float(generated) if generated else 0.0
-                                actual = (generated_float * 4 * days_for_actual / 1000)
+                                # Actual energy per plant in MWh (same logic as get_energy_generated):
+                                # sum of generated_solar_value (kWh) converted to MWh
+                                actual = generated_float / 1000.0
                                 if plant_cd in actual_per_plant:
                                     actual_per_plant[plant_cd] += actual
                                 else:
@@ -628,7 +628,7 @@ class SolarCapacity:
             underperforming = 0
             critical = 0
             
-            exceptional_data = []
+            exceptional_data = [] 
             normal_data = []
             underperforming_data = []
             critical_data = []
@@ -636,8 +636,8 @@ class SolarCapacity:
             # Data structures for zone-wise aggregation
             zone_aggregation = {}  # {zone: {category: [efficiencies]}}
 
-            # Get all unique plants (from both estimated and actual)
-            all_plants = set(estimated_per_plant.keys()) | set(actual_per_plant.keys())
+            # Get plants that exist in both Excel (estimated) and DB (actual) - intersection
+            all_plants = set(estimated_per_plant.keys()) & set(actual_per_plant.keys())
 
             for plant_cd in all_plants:
                 estimated = estimated_per_plant.get(plant_cd, 0.0)
@@ -650,7 +650,7 @@ class SolarCapacity:
                     efficiency = (actual / estimated) * 100
                 else:
                     efficiency = 0.0
-                
+
                 plant_detail = {
                     "LocationName": name,
                     "Plant_cd": plant_cd,
@@ -665,11 +665,11 @@ class SolarCapacity:
                     exceptional += 1
                     exceptional_data.append(plant_detail)
                     current_category = "exceptional"
-                elif efficiency >= 90:
+                elif efficiency >= 95 and efficiency <= 100:
                     normal += 1
                     normal_data.append(plant_detail)
                     current_category = "normal"
-                elif efficiency >= 50:
+                elif efficiency > 50 and efficiency < 90:
                     underperforming += 1
                     underperforming_data.append(plant_detail)
                     current_category = "underperforming"
@@ -682,29 +682,42 @@ class SolarCapacity:
                     if zone not in zone_aggregation:
                         zone_aggregation[zone] = {
                             "exceptional": [],
+                            "exceptional_data": [],
                             "normal": [],
+                            "normal_data": [],
                             "underperforming": [],
-                            "critical": []
+                            "underperforming_data": [],
+                            "critical": [],
+                            "critical_data": []
                         }
                     zone_aggregation[zone][current_category].append(efficiency)
+                    zone_aggregation[zone][f"{current_category}_data"].append(plant_detail)
 
             if category and category.lower() == 'zone':
                 heatmap_data = []
-                # Process zone aggregation to calculate averages
+                # Process zone aggregation to count plants and calculate percentages in each category
                 for zone_name, categories in zone_aggregation.items():
                     zone_data = {"zone": zone_name}
-                    for cat_name, efficiencies in categories.items():
-                        if efficiencies:
-                            avg_eff = sum(efficiencies) / len(efficiencies)
-                            # Format as integer with % to match screenshot
-                            zone_data[cat_name] = f"{int(round(avg_eff))}%"
-                        else:
-                            zone_data[cat_name] = "0"
+                    
+                    # Calculate total plants in this zone (only counting the efficiency lists, not the data lists)
+
+                    for cat_name in ["exceptional", "normal", "underperforming", "critical"]:
+                        efficiencies = categories.get(cat_name, [])
+                        data_list = categories.get(f"{cat_name}_data", [])
+                        
+                        # Count the number of plants for each efficiency category
+                        count = len(efficiencies)
+                        
+                        zone_data[cat_name] = {
+                            "count": count
+                        }
+                        zone_data[f"{cat_name}_data"] = data_list
+                        
                     heatmap_data.append(zone_data)
-                
+
                 # Sort by zone name for consistent display
                 heatmap_data.sort(key=lambda x: x['zone'])
-                
+
                 return {
                     "status": "success",
                     "heatmap_data": heatmap_data
@@ -714,48 +727,59 @@ class SolarCapacity:
                 heatmap_data = []
                 # For plant category, we list each plant individually
                 # We reuse the detailed data lists we populated
-                
+
                 # Combine all plant details
                 all_plant_details = exceptional_data + normal_data + underperforming_data + critical_data
-                
+
                 for plant in all_plant_details:
                     plant_name = plant.get("LocationName")
                     efficiency_val = plant.get("efficiency")
-                    
+
                     # Determine category again or map efficiency to columns
                     # Actually we can just reconstruct the row based on the efficiency value
                     try:
                         eff_float = float(efficiency_val)
                     except (ValueError, TypeError):
                         eff_float = 0.0
-                        
+
                     row = {
                         "plant": plant_name,
-                        "exceptional": "0",
-                        "normal": "0",
-                        "underperforming": "0",
-                        "critical": "0"
+                        "exceptional": {"count": 0},
+                        "exceptional_data": [],
+                        "normal": {"count": 0},
+                        "normal_data": [],
+                        "underperforming": {"count": 0},
+                        "underperforming_data": [],
+                        "critical": {"count": 0},
+                        "critical_data": []
                     }
-                    
-                    eff_str = f"{int(round(eff_float))}%"
-                    
+
+                    # Set count to 1 for the appropriate category
                     if eff_float > 100:
-                        row["exceptional"] = eff_str
-                    elif eff_float >= 90:
-                        row["normal"] = eff_str
-                    elif eff_float >= 50:
-                        row["underperforming"] = eff_str
+                        row["exceptional"] = {"count": 1}
+                        row["exceptional_data"] = [plant]
+                    elif eff_float >= 95 and eff_float <= 100:
+                        row["normal"] = {"count": 1}
+                        row["normal_data"] = [plant]
+                    elif eff_float > 50 and eff_float < 90:
+                        row["underperforming"] = {"count": 1}
+                        row["underperforming_data"] = [plant]
                     else:
-                        row["critical"] = eff_str
-                        
+                        row["critical"] = {"count": 1}
+                        row["critical_data"] = [plant]
+
                     heatmap_data.append(row)
-                    
+
                 # Sort by plant name
                 heatmap_data.sort(key=lambda x: x['plant'] if x['plant'] else "")
-                
+
                 return {
                     "status": "success",
-                    "heatmap_data": heatmap_data
+                    "heatmap_data": heatmap_data,
+                    "exceptional_data": exceptional_data,
+                    "normal_data": normal_data,
+                    "underperforming_data": underperforming_data,
+                    "critical_data": critical_data
                 }
 
             return {
@@ -841,7 +865,7 @@ class SolarCapacity:
             solar_master = solar_master.filter(
                 pl.col('Monitoring').cast(pl.Utf8).str.strip_chars().str.to_lowercase() == 'yes'
             )
-            solar_master = solar_master.filter(pl.col('Plant Capacity\r\n  KWp').is_not_null())
+            solar_master = solar_master.filter(pl.col('Plant Capacity').is_not_null())
 
             if solar_master.is_empty():
                 return {
@@ -853,7 +877,7 @@ class SolarCapacity:
             # Calculate total capacity for estimated energy calculation
             total_capacity_kw = (
                 solar_master
-                .select(pl.col('Plant Capacity\r\n  KWp').cast(pl.Float64, strict=False).sum())
+                .select(pl.col('Plant Capacity').cast(pl.Float64, strict=False).sum())
                 .item()
             )
 
@@ -1154,4 +1178,3 @@ class SolarCapacity:
                 "actual_active_plants": 0,
                 "error": str(e)
             }
-

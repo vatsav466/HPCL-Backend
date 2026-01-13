@@ -213,6 +213,12 @@
                 },
                 {
                     "name": "ingest_data_close"
+                },
+                {
+                    "name": "ro_no_video_upload_list"
+                },
+                {
+                    "name": "ro_no_video_upload_list_status"
                 }
             ]
         },
@@ -261,6 +267,12 @@
                 },
                 {
                     "name": "ingest_data_close"
+                },
+                {
+                    "name": "ro_no_video_upload_list"
+                },
+                {
+                    "name": "ro_no_video_upload_list_status"
                 }
             ]
         },
@@ -1018,6 +1030,14 @@
         {
             "name": "ingest_data_close",
             "displayName": "ingest_data_close"
+        },
+        {
+            "name": "ro_no_video_upload_list",
+            "displayName": "ro_no_video_upload_list"
+        },
+        {
+            "name": "ro_no_video_upload_list_status",
+            "displayName": "ro_no_video_upload_list_status"
         },
         {
             "name": "ingest_data",

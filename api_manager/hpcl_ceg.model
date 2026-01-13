@@ -9,6 +9,14 @@ Enum BusinessUnit str {
     DS='DS'
 }
 
+Enum BlockStatus str {
+    Blocked='Blocked'
+    UnBlocked='UnBlocked'
+    WaitingForBlockAck='WaitingForBlockAck'
+    WaitingForUnBlockAck='WaitingForUnBlockAck'
+    OnGoingTrip='OnGoingTrip'
+}
+
 Enum DeviceType str {
     Tank='Tank'
     DU='DU'
@@ -38,6 +46,7 @@ Enum AlertStatus str {
     InProgress='InProgress'
     Cancel='Cancel'
     OnHold='OnHold'
+    Resolved='Resolved'
 }
 
 Enum AlertState str {
@@ -825,6 +834,7 @@ Model Alerts {
     action_on optional MakerChecker
     remarks_unblocked optional str
     file_uploaded_path optional str
+    block_status optional BlockStatus
 
     Action=> alert_action {
         bu optional str
@@ -1280,6 +1290,21 @@ Model IndentDryOut {
     Action=> get_delivery_confirmation_direct_sales {
         filters list IndentDryOutDataFilters
         bu_type optional str
+    }
+
+    Action=> block_outlet {
+        block_id str
+        remarks_blocked str
+    }
+
+    Action=> unblock_outlet {
+        unblock_id str
+        remarks_unblocked str
+    }
+
+    Action=> block_ro {
+        ro_code str
+        remarks_blocked str
     }
 
     Action=> get_dried_out_ro_data {

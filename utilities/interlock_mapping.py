@@ -374,7 +374,9 @@ ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviati
                         
                         {"sop_id": "SOP020", "interlock_name": "TT outside RO radius", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
                         {"sop_id": "SOP021", "interlock_name": "Pre Decantation Request Exceed", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
-                        {"sop_id": "SOP022", "interlock_name": "Post Decantation Request Exceed", "model": "EMLock", "workflow_name": "TAS EMLOCK"}]
+                        {"sop_id": "SOP022", "interlock_name": "Post Decantation Request Exceed", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
+                        
+                        {"sop_id": "SOP023", "interlock_name": "Restroom Cleaning Evidence Missing", "model": "VA", "workflow_name": "Restroom Cleaning Evidence Missing"}]
 
 # Interlock name and sop mapping for LPG Alerts
 lpg_interlock_mapping = [

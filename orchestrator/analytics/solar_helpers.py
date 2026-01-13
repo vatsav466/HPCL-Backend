@@ -2,6 +2,7 @@ import urdhva_base
 import hpcl_ceg_model
 import dashboard_studio_model
 import pyodbc
+import os
 import datetime
 import calendar
 import psycopg2
@@ -174,8 +175,11 @@ class SolarHelpers:
             Exception: If file cannot be read or doesn't exist
         """
         try:
-            excel_path: str = '/home/novex/Solar_installation.xlsx'
-            solar = pl.read_excel(excel_path)
+            base_path = os.path.join(urdhva_base.settings.base_path, 'orchestrator', 'masters',
+                                     'Solar_installation.xlsx')
+            if not os.path.exists(base_path):
+                return {'status': False, 'message': 'File not found', 'data': []}
+            solar = pl.read_excel(base_path)
 
             # Enrich with location_master data (vlookup to get bu, sap_id, name, zone)
             solar = await cls.enrich_with_location_master(solar, join_column="BU Code", filters=filters, drill_state=drill_state)
@@ -507,7 +511,6 @@ class SolarHelpers:
                                 df = df.filter(date_col == pl.lit(current_date))
                         elif val == 't':
                             # User requested >= and 't' as current date (no time)
-                            print(f"DEBUG: applying date_filter 't', current_date={current_date}")
                             # For 'today', we want data exactly from today onwards (which usually means today)
                             # Or if it's strictly just 'today', it should probably be ==
                             # But usually 't' means 'today' filter.
@@ -521,7 +524,7 @@ class SolarHelpers:
                             df = df.filter(date_col == pl.lit(current_date))
                         elif val == '1d' or val == '1y':
                             yesterday = current_date - datetime.timedelta(days=1)
-                            df = df.filter(date_col >= pl.lit(yesterday))
+                            df = df.filter((date_col >= pl.lit(yesterday)) & (date_col < pl.lit(current_date)))
                         elif val == '1w':
                             week_ago = current_date - datetime.timedelta(days=7)
                             df = df.filter(date_col >= pl.lit(week_ago))
@@ -717,4 +720,3 @@ class SolarHelpers:
             return None
         cleaned = code_str.lstrip('0')
         return cleaned if cleaned else code_str
-

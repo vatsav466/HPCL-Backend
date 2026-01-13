@@ -298,6 +298,23 @@ Model vaScore internal {
     overall_score optional str
 }
 
+Model VA_RO_Cleanliness_Master internal {
+    ROCode str
+    ROName optional str
+    Zone optional str
+    Region optional str
+    SalesArea optional str
+}
+
+Model VA_RO_Cleanliness_Master_Status internal {
+    ROCode str
+    ROName optional str
+    Zone optional str
+    Region optional str
+    SalesArea optional str
+    UploadDone bool
+}
+
 Model VA crud_disable {
     Action=> ingest_data {
         vendor_id str
@@ -322,6 +339,14 @@ Model VA crud_disable {
         action_code optional str
         action_reason optional str
         action_category optional str
+    }
+
+    Action=> ro_no_video_upload_list {
+        data list VA_RO_Cleanliness_Master
+    }
+
+    Action=> ro_no_video_upload_list_status {
+        data list VA_RO_Cleanliness_Master_Status
     }
 }
 
