@@ -42,6 +42,11 @@ ESD_CATEGORIES = {
     "All ROSOVs Closed": r"(?i)All ROSOVs Closed"
 }
 
+ESD_DEVICE_ANALYSIS_CONFIG = {
+    "time_window_minutes": 3,  # Time window to check alerts after ESD activation
+    "enabled": True
+}
+
 # ============================================================================
 # VFT EQUIPMENT QUERIES AND CONFIGURATIONS
 # ============================================================================
@@ -211,6 +216,70 @@ DEFAULT_EQUIPMENT_TYPES = ['ESD', 'VFT', 'RADAR', 'BCU', 'FIRE EFFECT']
 # ============================================================================
 
 FAIL_PATTERNS = ['Fail', '_Fail', 'fail']
+
+# ============================================================================
+# HOST LOCAL LOADED TTS QUERIES AND CONFIGURATIONS
+# ============================================================================
+
+HOST_LOCAL_LOADED_TTS_QUERIES = {
+    "location_wise_total": """
+        sap_id IS NOT NULL 
+        AND sap_id != ''
+        AND location_name IS NOT NULL 
+        AND location_name != ''
+    """
+}
+
+HOST_LOCAL_LOADED_TTS_FIELDS = [
+    "sap_id",
+    "location_name",
+    "loaded_qty",
+    "truck_number",
+    "created_at",
+    "recipe_name"
+]
+
+# Truck type categorization patterns
+TRUCK_TYPE_PATTERNS = {
+    "prover": {
+        "starts_with": "P",
+        "contains_digit": False,
+        "description": "Starts with 'P' and contains only letters (e.g., PROVER, PROVERUGTA, PT, P)"
+    },
+    "dg": {
+        "contains": "DG",
+        "description": "Contains 'DG' anywhere in truck number"
+    },
+    "tank_truck": {
+        "pattern": r"[A-Z]+\d+[A-Z]*\d*",
+        "description": "Mix of letters and numbers - vehicle registration format (e.g., AP26BH4005, RJ32GE0644, HR61D3331)"
+    }
+}
+
+# Pattern analysis thresholds
+PATTERN_ANALYSIS_CONFIG = {
+    "local_loading_repeated": {
+        "min_trucks_per_hour": 4,
+        "description": "4+ trucks within one hour window"
+    },
+    "particular_time_of_day": {
+        "min_days_for_pattern": 2,
+        "min_occurrence_ratio": 0.5,
+        "description": "Same hour across multiple days (at least 50% of days or 2+ times)"
+    },
+    "particular_product": {
+        "unique_count": 1,
+        "description": "Only one unique product type loaded"
+    }
+}
+
+# Bay re-assignment configuration
+BAY_REASSIGNMENT_CONFIG = {
+    "fields": ["truck_number", "assigned_bay", "reassigned_bay", "reassign_loaded_qty", "created_at"],
+    "match_on": ["truck_number", "created_at"],  # Both must match
+    "description": "Match truck_number AND created_at (date) between host_local_loaded_tts and host_bay_re_assignment"
+}
+
 
 # ============================================================================
 # HELPER FUNCTIONS

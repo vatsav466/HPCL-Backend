@@ -33,6 +33,72 @@ def get_db_connection():
     return connection
 
 
+
+def fetch_data_from_db(cursor, query, getData=False, params=None):
+    """
+    Fetch data from database using a SQL query with proper result set handling
+    Args:
+        cursor (pyodbc cursor): Database cursor
+        query (str): SQL query to execute
+        getData (bool): Whether to fetch and return data
+        params (dict): PostgreSQL connection parameters if needed
+    Returns:
+        polars DataFrame or None
+    """
+    if params:
+        pg_conn = psycopg2.connect(
+                host=params["host"],
+                database=params["database"],
+                user=params["user"],
+                password=params["password"],
+                port=params["port"]
+            )
+        cursor = pg_conn.cursor()
+        
+    print("-" * 50)
+    print("query -->", query)
+    print("-" * 50)
+    print("Running Query ...")
+    
+    try:
+        cursor.execute(query)
+        
+        if getData:
+            # Fetch all data from the result set
+            columns = [column[0] for column in cursor.description]
+            data = cursor.fetchall()
+            print('Total Records Fetched:', len(data))
+            
+            # Consume any additional result sets
+            while cursor.nextset():
+                pass
+            
+            # Convert to polars DataFrame
+            data = pd.DataFrame.from_records(data, columns=columns)
+            data = pl.from_pandas(data)
+            return data
+        else:
+            # For non-SELECT queries, consume all result sets
+            # This is critical for queries that don't return data
+            while True:
+                try:
+                    if not cursor.nextset():
+                        break
+                except Exception:
+                    break
+            
+            if params:
+                pg_conn.commit()
+                cursor.close()
+                pg_conn.close()
+            
+            return None
+            
+    except Exception as e:
+        print(f"Error executing query: {e}")
+        raise
+
+
 def fetch_data(cursor, query, getData=False, params=None):
     """
     Fetch data from database using a SQL query
@@ -184,332 +250,6 @@ def calculate_ageing(df):
     return df
 
 
-def _get_pending_vs_delivered_data():
-    creds = credential_loader.get_credentials('APP_DB')
-    params={
-            "host": creds["host"],
-            "database": creds["database"],
-            "user": creds["user"],
-            "password": creds["password"],
-            "port": creds["port"]
-            }
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    query = """ IF OBJECT_ID('TEMPDB..#Group', 'U') is not null DROP table #Group """
-    fetch_data(cursor, query)
-    query = """ IF OBJECT_ID('TEMPDB..#Order', 'U') is not null DROP table #Order """
-    fetch_data(cursor, query)
-    query = """ SELECT DISTINCT DG.GroupCode INTO #Group						
-                FROM DCMs.tblDistributorMaster DM WITH(NOLOCK)						
-                    INNER JOIN DCMs.tblDistributorGroupDetails DG WITH(NOLOCK) ON DM.DistributorId=DG.DistributorId;
-            """
-    fetch_data(cursor, query)
-    query = """ CREATE TABLE #Order (
-                OrderRefNo	numeric(17,0),
-                OrderQuantity	int,
-                Distributorid int,
-                OrderDate	datetime,
-                OrderStatusCode	varchar(5),
-                OrderSourceCode	varchar(5),
-                ConsumerType	varchar(5),
-                Pricecode	varchar(5),
-                IsPrepaid char(1),
-                CylType varchar(4),
-                ActualDeliveryDate DATE
-            ); """
-    fetch_data(cursor, query)
-    query = """ DECLARE	@vGroupCode VARCHAR(2),  				
-			    @vCmd NVARCHAR(4000)
-
-                WHILE EXISTS (SELECT TOP 1 1 FROM #Group)						
-                BEGIN
-                    SELECT TOP 1 @vGroupCode=GroupCode FROM #Group
-                    SET @vCmd = NULL
-                                        
-                    SET @vCmd = 'SELECT  ROD.OrderRefNo,ROD.OrderQuantity,ROD.Distributorid,
-                    ROD.OrderDate,ROD.OrderStatusCode,ROD.OrderSourceCode,
-                    CASE WHEN ROD.Naturecode=''16'' THEN ''PMUY'' ELSE ''NPMUY'' END,
-                    ROD.Pricecode,
-                    CASE WHEN RPD.TransactionReferenceNumber IS NOT NULL THEN ''Y'' ELSE ''N'' END,
-                    CASE WHEN ROD.Pricecode IN (''22'',''24'') THEN ''C142'' ELSE ''C5'' END,
-                    ROD.ActualDeliveryDate
-                    FROM DCMs.tblRefillOrderDtls$'+@vGroupCode+' ROD WITH(NOLOCK)
-                    LEFT OUTER JOIN esv.tblRefillPaymentDtls RPD  with(nolock)
-                    ON RPD.OrderRefNo = ROD.OrderRefNo AND RPD.PaymentStatus=''SUCCESS''
-                    WHERE ROD.Naturecode NOT IN (''3'',''4'')
-                    AND ROD.OrderStatusCode !=''CNCL''
-                    AND (ROD.ActualDeliveryDate IS NULL
-                    OR 	 CONVERT(DATE,ROD.OrderDate,120) >= CONVERT(DATE,GETDATE()-1,120)
-                    OR 	ROD.ActualDeliveryDate >= CONVERT(DATE,GETDATE()-1,120))
-                    AND ROD.Pricecode IN (''22'',''24'',''163'',''162'')'
-                                        
-                    INSERT INTO #Order
-                    (OrderRefNo,OrderQuantity,Distributorid,OrderDate,OrderStatusCode,
-                    OrderSourceCode,ConsumerType,Pricecode,IsPrepaid,CylType,ActualDeliveryDate)
-                    EXEC sp_executesql @vCmd
-                                        
-                    DELETE FROM #Group WHERE GroupCode=@vGroupCode
-                    --SELECT COUNT(1) PendingGroups FROM #Group
-                END
-            """
-    fetch_data(cursor, query)
-    query = """ INSERT INTO #Order
-                    (OrderRefNo,OrderQuantity,Distributorid,OrderDate,OrderStatusCode,
-                    OrderSourceCode,ConsumerType,Pricecode,IsPrepaid,CylType,ActualDeliveryDate)
-                SELECT  ROD.OrderRefNo,ROD.OrderQuantity,ROD.Distributorid,
-                    ROD.OrderDate,ROD.OrderStatusCode,ROD.OrderSourceCode,
-                    CASE WHEN ROD.Naturecode='16' THEN 'PMUY' ELSE 'NPMUY' END,
-                    ROD.Pricecode,
-                    CASE WHEN RPD.TransactionReferenceNumber IS NOT NULL THEN 'Y' ELSE 'N' END,
-                    CASE WHEN ROD.Pricecode IN ('22','24') THEN 'C142' ELSE 'C5' END,
-                    ROD.ActualDeliveryDate
-                    FROM DCMs.tblRefillOrderDtls ROD WITH(NOLOCK)
-                    LEFT OUTER JOIN esv.tblRefillPaymentDtls RPD  with(nolock)
-                    ON RPD.OrderRefNo = ROD.OrderRefNo AND RPD.PaymentStatus='SUCCESS'
-                    WHERE ROD.Naturecode NOT IN ('3','4')
-                    AND ROD.OrderStatusCode !='CNCL'
-                    AND (ROD.ActualDeliveryDate IS NULL
-                    OR 	 CONVERT(DATE,ROD.OrderDate,120) >= CONVERT(DATE,GETDATE()-1,120)
-                    OR 	ROD.ActualDeliveryDate >= CONVERT(DATE,GETDATE()-1,120))
-                    AND ROD.Pricecode IN ('22','24','163','162')
-            """
-    fetch_data(cursor, query)    
-    query = """
-            SELECT DM.JDEDistributorCode,						
-            O.ConsumerType	,O.IsPrepaid,O.CylType,O.OrderSourceCode,					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=0 THEN O.OrderQuantity ELSE 0 END) [Pending_0D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=1 THEN O.OrderQuantity ELSE 0 END) [Pending_1D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=2 THEN O.OrderQuantity ELSE 0 END) [Pending_2D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=3 THEN O.OrderQuantity ELSE 0 END) [Pending_3D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=4 THEN O.OrderQuantity ELSE 0 END) [Pending_4D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=5 THEN O.OrderQuantity ELSE 0 END) [Pending_5D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=6 THEN O.OrderQuantity ELSE 0 END) [Pending_6D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=7 THEN O.OrderQuantity ELSE 0 END) [Pending_7D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=8 THEN O.OrderQuantity ELSE 0 END) [Pending_8D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=9 THEN O.OrderQuantity ELSE 0 END) [Pending_9D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=10 THEN O.OrderQuantity ELSE 0 END) [Pending_10D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=11 THEN O.OrderQuantity ELSE 0 END) [Pending_11D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=12 THEN O.OrderQuantity ELSE 0 END) [Pending_12D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=13 THEN O.OrderQuantity ELSE 0 END) [Pending_13D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=14 THEN O.OrderQuantity ELSE 0 END) [Pending_14D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=15 THEN O.OrderQuantity ELSE 0 END) [Pending_15D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())>15 THEN O.OrderQuantity ELSE 0 END) [Pending_Beyond15D],					
-                SUM(CASE WHEN CONVERT(DATE,O.OrderDate,120) = CONVERT(DATE,GETDATE()-1,120) THEN O.OrderQuantity ELSE 0 END) BookingReceivedYesterday,					
-                SUM(CASE WHEN O.ActualDeliveryDate = CONVERT(DATE,GETDATE()-1,120) THEN O.OrderQuantity ELSE 0 END) TotalSalesYesterday,					
-                SUM(CASE WHEN CONVERT(DATE,O.OrderDate,120) = CONVERT(DATE,GETDATE(),120) THEN O.OrderQuantity ELSE 0 END) BookingReceivedToday,					
-                SUM(CASE WHEN O.ActualDeliveryDate = CONVERT(DATE,GETDATE(),120) THEN O.OrderQuantity ELSE 0 END) TotalSalesToday					
-                FROM #Order O WITH(NOLOCK)					
-                INNER JOIN DCMs.tblDistributorMaster DM WITH(NOLOCK) ON O.Distributorid=DM.DistributorId					
-            GROUP BY DM.JDEDistributorCode,O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode
-            Order BY DM.JDEDistributorCode,O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode
-            """
-    data = fetch_data(cursor, query, getData=True)
-        
-    query = """ DROP TABLE #Order; """
-    fetch_data(cursor, query)
-    query = """ DROP TABLE #Group; """
-    fetch_data(cursor, query)
-    
-    data = data.with_columns(System_Idx=pl.lit(""))
-    data = data.with_columns(pl.col('System_Idx').map_elements(lambda x: str(uuid.uuid4().hex)))
-        
-    tblDistributorMaster = """ SELECT * FROM DCMs.tblDistributorMaster; """
-    tblDistributorMaster = fetch_data(cursor, tblDistributorMaster, getData=True)
-    
-    tblDistributorMaster = tblDistributorMaster.with_columns(pl.col("JDEDistributorCode").fill_null(0).cast(pl.Int64).alias("JDEDistributorCode"))
-    data = data.with_columns(pl.col("JDEDistributorCode").fill_null(0).cast(pl.Int64).alias("JDEDistributorCode"))
-    # Getting SACode
-    data = _merge_data(
-        left_df=data, 
-        right_df=tblDistributorMaster.select(["JDEDistributorCode", "DistributorName", "SACode", "StateCode", "DistrictCode", "TalukaCode", "CityCode"]), 
-        left_on=["JDEDistributorCode"], 
-        right_on=["JDEDistributorCode"], 
-        how="left", 
-        suffixes="_y",
-        indicator=False
-    )
-    for col in data.columns:
-        if col.endswith("_y"):
-            data = data.drop(col)
-    
-    tblSAMaster = """ SELECT * FROM DCMs.tblSAMaster; """
-    tblSAMaster = fetch_data(cursor, tblSAMaster, getData=True)
-    
-    # Getting SAName
-    data = _merge_data(
-        left_df=data, 
-        right_df=tblSAMaster.select(["SACode", "ROCode", "SAName"]),
-        left_on=["SACode"], 
-        right_on=["SACode"], 
-        how="left", 
-        suffixes="_y",
-        indicator=False
-    )
-    for col in data.columns:
-        if col.endswith("_y"):
-            data = data.drop(col)
-        
-    tblROMaster =  """ SELECT * FROM DCMs.tblROMaster; """
-    tblROMaster = fetch_data(cursor, tblROMaster, getData=True)
-    
-    # Getting ROName
-    data = _merge_data(
-        left_df=data, 
-        right_df=tblROMaster.select(["ROCode", "ZOCode", "ROName"]),
-        left_on=["ROCode"], 
-        right_on=["ROCode"],
-        how="left", 
-        suffixes="_y",
-        indicator=False
-    )
-    for col in data.columns:
-        if col.endswith("_y"):
-            data = data.drop(col)
-    
-    tblZOMaster =  """ SELECT * FROM DCMs.tblZOMaster; """
-    tblZOMaster = fetch_data(cursor, tblZOMaster, getData=True)
-    
-    # Getting ZOName
-    data = _merge_data(
-        left_df=data, 
-        right_df=tblZOMaster.select(["ZOCode", "ZOName"]),
-        left_on=["ZOCode"], 
-        right_on=["ZOCode"], 
-        how="left", 
-        suffixes="_y",
-        indicator=False
-    )
-        
-    query = """ SELECT LookupCode,LookupValue FROM  dcms.tbllookupmaster WITH (nolock) WHERE LookupTypeCode='RefillOrderSourceCode' """
-    get_source_details = fetch_data(cursor, query, getData=True)
-    data = _merge_data(
-        left_df=data,
-        right_df=get_source_details,
-        left_on=["OrderSourceCode"],
-        right_on=["LookupCode"],
-        how="left",
-        suffixes="_y",
-        indicator=False
-    ).rename({"LookupValue": "OrderSourceName"})
-    data = data.drop("LookupCode")
-    
-    for col in data.columns:
-        if col.endswith("_y"):
-            data = data.drop(col)
-                
-    connection.close()
-    data = calculate_ageing(data)
-    
-    zoneMap = {
-            "LPG - NORTH WEST ZONE": "NWZ",
-            "LPG - NORTH ZONE": "NZ",
-            "LPG - WEST ZONE": "WZ",
-            "LPG - SOUTH CENTRAL ZONE": "SCZ",
-            "LPG - SOUTH ZONE": "SZ",
-            "LPG - NORTH CENTRAL ZONE": "NCZ",
-            "LPG - EAST ZONE": "EZ"
-            }
-    
-    data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))
-    data = data.with_columns(pl.lit(datetime.datetime.now() - relativedelta(days=1)).alias("Execution_Date"))
-    data = data.with_columns(pl.col("Execution_Date").dt.strftime("%B").alias("Execution_Month"))
-    data = data.with_columns(pl.col("Execution_Date").dt.strftime("%Y").alias("Execution_Year"))
-    data = data.with_columns(pl.col("Execution_Date").dt.strftime("%b-%Y").alias("Month-Year"))
-
-    print("-"*25)
-    print("Length of data Before Drop :", len(data))
-    data = data.unique("System_Idx")
-    data = data.drop("System_Idx")
-    print("Length of data After Drop :", len(data))
-    print("-"*25)
-    # insertToDB(data, "LPG_SALES_SUMMARY_DATA", indexing_col=("JDEDistributorCode", "ConsumerType", "IsPrepaid", "CylType"))
-    
-    data = data.with_columns(
-        pl.when(
-            pl.col("CylType").fill_null("") == "C142"
-            ).then(pl.col("TotalSalesYesterday") * 14.2
-        ).when(
-            pl.col("CylType").fill_null("") == "C5"
-            ).then(pl.col("TotalSalesYesterday") * 5).alias("sales_volume"))
-    
-    data = data.with_columns(
-        pl.when(
-            pl.col("CylType").fill_null("") == "C142"
-            ).then(pl.col("BookingReceivedYesterday") * 14.2
-        ).when(
-            pl.col("CylType").fill_null("") == "C5"
-            ).then(pl.col("BookingReceivedYesterday") * 5).alias("bookings_volume"))
-    
-    data = data.with_columns(
-        pl.when(
-            pl.col("CylType").fill_null("") == "C142"
-            ).then(pl.col("Total_Pending") * 14.2
-        ).when(
-            pl.col("CylType").fill_null("") == "C5"
-            ).then(pl.col("Total_Pending") * 5).alias("pendings_volume"))
-    
-    # New Changes
-    month_map = {
-                "April": 1,
-                "May": 2,
-                "June": 3,
-                "July": 4,
-                "August": 5,
-                "September": 6,
-                "October": 7,
-                "November": 8,
-                "December": 9,
-                "January": 10,
-                "February": 11,
-                "March": 12
-            }
-    data = data.with_columns(pl.col("Execution_Month").replace(month_map).alias("Month_Number"))
-    data = data.with_columns([
-                        pl.when(pl.col("Execution_Date").dt.month() >= 4)
-                        .then(pl.format("{}-{}",
-                            pl.col("Execution_Date").dt.year(),
-                            pl.col("Execution_Date").dt.year() + 1))
-                        .otherwise(pl.format("{}-{}",
-                            pl.col("Execution_Date").dt.year() - 1,
-                            pl.col("Execution_Date").dt.year()))
-                        .alias("Financial_Year")
-                    ])
-    for col in data.columns:
-        data = data.rename({col: col.replace("-","_")})
-    data = data.rename({"Execution_Month": "Month"})
-    insertToDB(data, "lpg_cdcms_sales_summary", indexing_col=["ZOName", "Financial_Year", "Month", "Execution_Date"])
-    
-    # Inserting fresh data to today's table
-    trunc_query = """ TRUNCATE lpg_todays_cdcms_sales_summary; """
-    fetch_data(cursor, trunc_query, getData=False, params=params)
-    insertToDB(data, "lpg_todays_cdcms_sales_summary", indexing_col=["ZOName"])
-    
-    # Updating monthly summary to monthly table
-    monthly_query = """ 
-                    SELECT 
-                        "DistributorName", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "Month", "Execution_Year", "Month_Number", "Financial_Year",
-                        SUM("TotalSalesYesterday") AS "TotalSalesYesterday", SUM("BookingReceivedYesterday") AS "BookingReceivedYesterday", 
-                        SUM("sales_volume") AS "sales_volume", SUM("bookings_volume") AS "bookings_volume"
-                    FROM
-                        "lpg_cdcms_sales_summary"
-                    GROUP BY
-                        "DistributorName", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "Month", "Execution_Year", "Month_Number", "Financial_Year"
-                    """
-    trunc_query = """ TRUNCATE lpg_monthly_cdcms_sales_summary; """
-    fetch_data(cursor, trunc_query, getData=False, params=params)
-    monthly_data = fetch_data(cursor, monthly_query, getData=True, params=params)
-    
-    month_to_quarter = {
-                    'April': 'Quarter-1', 'May': 'Quarter-1', 'June': 'Quarter-1',
-                    'July': 'Quarter-2', 'August': 'Quarter-2', 'September': 'Quarter-2',
-                    'October': 'Quarter-3', 'November': 'Quarter-3', 'December': 'Quarter-3',
-                    'January': 'Quarter-4', 'February': 'Quarter-4', 'March': 'Quarter-4'
-                }
-    monthly_data = monthly_data.with_columns(pl.col("Month").replace(month_to_quarter).alias("Quarter"))
-    
-    insertToDB(monthly_data, "lpg_monthly_cdcms_sales_summary", indexing_col=["Month", "ZOName"])
-    return data
-
 
 def get_pending_vs_delivered_data():
     creds = credential_loader.get_credentials('APP_DB')
@@ -522,38 +262,37 @@ def get_pending_vs_delivered_data():
             }
     connection = get_db_connection()
     cursor = connection.cursor()
-    query = """ IF OBJECT_ID('TEMPDB..#Group', 'U') is not null DROP table #Group """
-    fetch_data(cursor, query)
-    query = """ IF OBJECT_ID('TEMPDB..#Order', 'U') is not null DROP table #Order """
-    fetch_data(cursor, query)
-    query = """ SELECT DISTINCT DG.GroupCode INTO #Group						
-                FROM DCMs.tblDistributorMaster DM WITH(NOLOCK)						
-                    INNER JOIN DCMs.tblDistributorGroupDetails DG WITH(NOLOCK) ON DM.DistributorId=DG.DistributorId;
-            """
-    fetch_data(cursor, query)
-    query = """ CREATE TABLE #Order (
-                OrderRefNo	numeric(17,0),
-                OrderQuantity	int,
-                Distributorid int,
-                OrderDate	datetime,
-                OrderStatusCode	varchar(5),
-                OrderSourceCode	varchar(5),
-                ConsumerType	varchar(5),
-                Pricecode	varchar(5),
-                IsPrepaid char(1),
-                CylType varchar(4),
-                ActualDeliveryDate DATE
-            ); """
-    fetch_data(cursor, query)
-    query = """ DECLARE	@vGroupCode VARCHAR(2),  				
-			    @vCmd NVARCHAR(4000)
+    queries = {
+        "query_1": """IF OBJECT_ID('TEMPDB..#Group', 'U') is not null DROP table #Group""",
+        
+        "query_2": """IF OBJECT_ID('TEMPDB..#Order', 'U') is not null DROP table #Order""",
+        
+        "query_3": """SELECT DISTINCT DG.GroupCode INTO #Group						
+            FROM DCMs.tblDistributorMaster DM WITH(NOLOCK)						
+                INNER JOIN DCMs.tblDistributorGroupDetails DG WITH(NOLOCK) ON DM.DistributorId=DG.DistributorId""",
+        
+        "query_4": """CREATE TABLE #Order (
+            OrderRefNo numeric(17,0),
+            OrderQuantity int,
+            Distributorid int,
+            OrderDate datetime,
+            OrderStatusCode varchar(5),
+            OrderSourceCode varchar(5),
+            ConsumerType varchar(5),
+            Pricecode varchar(5),
+            IsPrepaid char(1),
+            CylType varchar(4),
+            ActualDeliveryDate DATE)""",
+        
+        "query_5": """DECLARE @vGroupCode VARCHAR(2),  				
+            @vCmd NVARCHAR(4000)
 
-                WHILE EXISTS (SELECT TOP 1 1 FROM #Group)
-                BEGIN
+            WHILE EXISTS (SELECT TOP 1 1 FROM #Group)
+            BEGIN
                 SELECT TOP 1 @vGroupCode=GroupCode FROM #Group
                 SET @vCmd = NULL
                                     
-                SET @vCmd = 'SELECT  ROD.OrderRefNo,ROD.OrderQuantity,ROD.Distributorid,
+                SET @vCmd = 'SELECT ROD.OrderRefNo,ROD.OrderQuantity,ROD.Distributorid,
                 CASE WHEN qr.OrderDate is not null then qr.OrderDate else ROD.OrderDate end OrderDate,ROD.OrderStatusCode,CASE WHEN qr.OrderSource is not null then qr.OrderSource else ROD.OrderSourceCode end OrderSourceCode,
                 CASE WHEN ROD.Naturecode=''16'' THEN ''PMUY'' ELSE ''NPMUY'' END,
                 ROD.Pricecode,
@@ -561,15 +300,15 @@ def get_pending_vs_delivered_data():
                 CASE WHEN ROD.Pricecode IN (''22'',''24'') THEN ''C142'' ELSE ''C5'' END,
                 ROD.ActualDeliveryDate
                 FROM DCMs.tblRefillOrderDtls$'+@vGroupCode+' ROD WITH(NOLOCK)
-                LEFT OUTER JOIN esv.tblRefillPaymentDtls RPD  with(nolock)
+                LEFT OUTER JOIN esv.tblRefillPaymentDtls RPD with(nolock)
                 ON RPD.OrderRefNo = ROD.OrderRefNo AND RPD.PaymentStatus=''SUCCESS''
                 LEFT OUTER JOIN DCMS.tblCancelledOrdersForQR qr WITH(NOLOCK)
                 ON qr.NewOrderRefno = ROD.OrderRefNo
                 WHERE ROD.Naturecode NOT IN (''3'',''4'')
                 AND ROD.OrderStatusCode !=''CNCL''
                 AND (ROD.ActualDeliveryDate IS NULL
-                OR 	 CONVERT(DATE,ROD.OrderDate,120) >= CONVERT(DATE,GETDATE()-1,120)
-                OR 	ROD.ActualDeliveryDate >= CONVERT(DATE,GETDATE()-1,120))
+                OR CONVERT(DATE,ROD.OrderDate,120) >= CONVERT(DATE,GETDATE()-1,120)
+                OR ROD.ActualDeliveryDate >= CONVERT(DATE,GETDATE()-1,120))
                 AND ROD.Pricecode IN (''22'',''24'',''163'',''162'')'
                                     
                 INSERT INTO #Order
@@ -578,69 +317,76 @@ def get_pending_vs_delivered_data():
                 EXEC sp_executesql @vCmd
                                     
                 DELETE FROM #Group WHERE GroupCode=@vGroupCode
-                --SELECT COUNT(1) PendingGroups FROM #Group
-            END
-            """
-    fetch_data(cursor, query)
-    query = """ INSERT INTO #Order
-                    (OrderRefNo,OrderQuantity,Distributorid,OrderDate,OrderStatusCode,
-                    OrderSourceCode,ConsumerType,Pricecode,IsPrepaid,CylType,ActualDeliveryDate)
-                SELECT  ROD.OrderRefNo,ROD.OrderQuantity,ROD.Distributorid,
-                    --ROD.OrderDate,ROD.OrderStatusCode,ROD.OrderSourceCode,
-                    CASE WHEN qr.OrderDate is not null then qr.OrderDate else ROD.OrderDate end OrderDate,ROD.OrderStatusCode,CASE WHEN qr.OrderSource is not null then qr.OrderSource else ROD.OrderSourceCode end OrderSourceCode,
-                    CASE WHEN ROD.Naturecode='16' THEN 'PMUY' ELSE 'NPMUY' END,
-                    ROD.Pricecode,
-                    CASE WHEN RPD.TransactionReferenceNumber IS NOT NULL THEN 'Y' ELSE 'N' END,
-                    CASE WHEN ROD.Pricecode IN ('22','24') THEN 'C142' ELSE 'C5' END,
-                    ROD.ActualDeliveryDate
-                    FROM DCMs.tblRefillOrderDtls ROD WITH(NOLOCK)
-                    LEFT OUTER JOIN esv.tblRefillPaymentDtls RPD  with(nolock)
-                    ON RPD.OrderRefNo = ROD.OrderRefNo AND RPD.PaymentStatus='SUCCESS'
-                    LEFT OUTER JOIN DCMS.tblCancelledOrdersForQR qr WITH(NOLOCK)
-                    ON qr.NewOrderRefno = ROD.OrderRefNo
-                    WHERE ROD.Naturecode NOT IN ('3','4')
-                    AND ROD.OrderStatusCode !='CNCL'
-                    AND (ROD.ActualDeliveryDate IS NULL
-                    OR 	 CONVERT(DATE,ROD.OrderDate,120) >= CONVERT(DATE,GETDATE()-1,120)
-                    OR 	ROD.ActualDeliveryDate >= CONVERT(DATE,GETDATE()-1,120))
-                    AND ROD.Pricecode IN ('22','24','163','162')
-            """
-    fetch_data(cursor, query)    
-    query = """
-            SELECT DM.JDEDistributorCode,						
-            O.ConsumerType	,O.IsPrepaid,O.CylType,O.OrderSourceCode,					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=0 THEN O.OrderQuantity ELSE 0 END) [Pending_0D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=1 THEN O.OrderQuantity ELSE 0 END) [Pending_1D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=2 THEN O.OrderQuantity ELSE 0 END) [Pending_2D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=3 THEN O.OrderQuantity ELSE 0 END) [Pending_3D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=4 THEN O.OrderQuantity ELSE 0 END) [Pending_4D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=5 THEN O.OrderQuantity ELSE 0 END) [Pending_5D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=6 THEN O.OrderQuantity ELSE 0 END) [Pending_6D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=7 THEN O.OrderQuantity ELSE 0 END) [Pending_7D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=8 THEN O.OrderQuantity ELSE 0 END) [Pending_8D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=9 THEN O.OrderQuantity ELSE 0 END) [Pending_9D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=10 THEN O.OrderQuantity ELSE 0 END) [Pending_10D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=11 THEN O.OrderQuantity ELSE 0 END) [Pending_11D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=12 THEN O.OrderQuantity ELSE 0 END) [Pending_12D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=13 THEN O.OrderQuantity ELSE 0 END) [Pending_13D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=14 THEN O.OrderQuantity ELSE 0 END) [Pending_14D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=15 THEN O.OrderQuantity ELSE 0 END) [Pending_15D],					
-                SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())>15 THEN O.OrderQuantity ELSE 0 END) [Pending_Beyond15D],					
-                SUM(CASE WHEN CONVERT(DATE,O.OrderDate,120) = CONVERT(DATE,GETDATE()-1,120) THEN O.OrderQuantity ELSE 0 END) BookingReceivedYesterday,					
-                SUM(CASE WHEN O.ActualDeliveryDate = CONVERT(DATE,GETDATE()-1,120) THEN O.OrderQuantity ELSE 0 END) TotalSalesYesterday,					
-                SUM(CASE WHEN CONVERT(DATE,O.OrderDate,120) = CONVERT(DATE,GETDATE(),120) THEN O.OrderQuantity ELSE 0 END) BookingReceivedToday,					
-                SUM(CASE WHEN O.ActualDeliveryDate = CONVERT(DATE,GETDATE(),120) THEN O.OrderQuantity ELSE 0 END) TotalSalesToday					
-                FROM #Order O WITH(NOLOCK)					
-                INNER JOIN DCMs.tblDistributorMaster DM WITH(NOLOCK) ON O.Distributorid=DM.DistributorId					
-            GROUP BY DM.JDEDistributorCode,O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode
-            Order BY DM.JDEDistributorCode,O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode
-            """
-    data = fetch_data(cursor, query, getData=True)
+            END""",
         
-    query = """ DROP TABLE #Order; """
-    fetch_data(cursor, query)
-    query = """ DROP TABLE #Group; """
-    fetch_data(cursor, query)
+        "query_6": """INSERT INTO #Order
+            (OrderRefNo,OrderQuantity,Distributorid,OrderDate,OrderStatusCode,
+            OrderSourceCode,ConsumerType,Pricecode,IsPrepaid,CylType,ActualDeliveryDate)
+            SELECT ROD.OrderRefNo,ROD.OrderQuantity,ROD.Distributorid,
+                CASE WHEN qr.OrderDate is not null then qr.OrderDate else ROD.OrderDate end OrderDate,ROD.OrderStatusCode,CASE WHEN qr.OrderSource is not null then qr.OrderSource else ROD.OrderSourceCode end OrderSourceCode,
+                CASE WHEN ROD.Naturecode='16' THEN 'PMUY' ELSE 'NPMUY' END,
+                ROD.Pricecode,
+                CASE WHEN RPD.TransactionReferenceNumber IS NOT NULL THEN 'Y' ELSE 'N' END,
+                CASE WHEN ROD.Pricecode IN ('22','24') THEN 'C142' ELSE 'C5' END,
+                ROD.ActualDeliveryDate
+            FROM DCMs.tblRefillOrderDtls ROD WITH(NOLOCK)
+            LEFT OUTER JOIN esv.tblRefillPaymentDtls RPD with(nolock)
+            ON RPD.OrderRefNo = ROD.OrderRefNo AND RPD.PaymentStatus='SUCCESS'
+            LEFT OUTER JOIN DCMS.tblCancelledOrdersForQR qr WITH(NOLOCK)
+            ON qr.NewOrderRefno = ROD.OrderRefNo
+            WHERE ROD.Naturecode NOT IN ('3','4')
+            AND ROD.OrderStatusCode !='CNCL'
+            AND (ROD.ActualDeliveryDate IS NULL
+            OR CONVERT(DATE,ROD.OrderDate,120) >= CONVERT(DATE,GETDATE()-1,120)
+            OR ROD.ActualDeliveryDate >= CONVERT(DATE,GETDATE()-1,120))
+            AND ROD.Pricecode IN ('22','24','163','162')""",
+        
+        
+        "query_7": """SELECT DM.JDEDistributorCode,						
+            O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode,					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=0 THEN O.OrderQuantity ELSE 0 END) [Pending_0D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=1 THEN O.OrderQuantity ELSE 0 END) [Pending_1D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=2 THEN O.OrderQuantity ELSE 0 END) [Pending_2D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=3 THEN O.OrderQuantity ELSE 0 END) [Pending_3D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=4 THEN O.OrderQuantity ELSE 0 END) [Pending_4D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=5 THEN O.OrderQuantity ELSE 0 END) [Pending_5D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=6 THEN O.OrderQuantity ELSE 0 END) [Pending_6D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=7 THEN O.OrderQuantity ELSE 0 END) [Pending_7D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=8 THEN O.OrderQuantity ELSE 0 END) [Pending_8D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=9 THEN O.OrderQuantity ELSE 0 END) [Pending_9D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=10 THEN O.OrderQuantity ELSE 0 END) [Pending_10D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=11 THEN O.OrderQuantity ELSE 0 END) [Pending_11D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=12 THEN O.OrderQuantity ELSE 0 END) [Pending_12D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=13 THEN O.OrderQuantity ELSE 0 END) [Pending_13D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=14 THEN O.OrderQuantity ELSE 0 END) [Pending_14D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=15 THEN O.OrderQuantity ELSE 0 END) [Pending_15D],					
+            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())>15 THEN O.OrderQuantity ELSE 0 END) [Pending_Beyond15D],					
+            SUM(CASE WHEN CONVERT(DATE,O.OrderDate,120) = CONVERT(DATE,GETDATE()-1,120) THEN O.OrderQuantity ELSE 0 END) BookingReceivedYesterday,					
+            SUM(CASE WHEN O.ActualDeliveryDate = CONVERT(DATE,GETDATE()-1,120) THEN O.OrderQuantity ELSE 0 END) TotalSalesYesterday,					
+            SUM(CASE WHEN CONVERT(DATE,O.OrderDate,120) = CONVERT(DATE,GETDATE(),120) THEN O.OrderQuantity ELSE 0 END) BookingReceivedToday,					
+            SUM(CASE WHEN O.ActualDeliveryDate = CONVERT(DATE,GETDATE(),120) THEN O.OrderQuantity ELSE 0 END) TotalSalesToday					
+            FROM #Order O WITH(NOLOCK)					
+            INNER JOIN DCMs.tblDistributorMaster DM WITH(NOLOCK) ON O.Distributorid=DM.DistributorId					
+            GROUP BY DM.JDEDistributorCode,O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode
+            ORDER BY DM.JDEDistributorCode,O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode"""
+    }
+
+    data = None
+    for key, query in queries.items():
+        print(f"\n{'='*50}")
+        print(f"Executing: {key}")
+        print(f"{'='*50}")
+        
+        if key == 'query_7':
+            # Fetch final aggregated data
+            data = fetch_data_from_db(cursor, query, getData=True)
+            print(f"\n*** FINAL RESULT SET: {len(data)} records ***\n")
+            
+        else:
+            # Execute non-SELECT queries
+            fetch_data_from_db(cursor, query, getData=False)
+    data.write_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/data.csv")
+
     
     data = data.with_columns(System_Idx=pl.lit(""))
     data = data.with_columns(pl.col('System_Idx').map_elements(lambda x: str(uuid.uuid4().hex)))
@@ -650,7 +396,7 @@ def get_pending_vs_delivered_data():
     
     tblDistributorMaster = tblDistributorMaster.with_columns(pl.col("JDEDistributorCode").fill_null(0).cast(pl.Int64).alias("JDEDistributorCode"))
     data = data.with_columns(pl.col("JDEDistributorCode").fill_null(0).cast(pl.Int64).alias("JDEDistributorCode"))
-    # Getting SACode
+
     data = _merge_data(
         left_df=data, 
         right_df=tblDistributorMaster.select(["JDEDistributorCode", "DistributorName", "SACode", "StateCode", "DistrictCode", "TalukaCode", "CityCode"]), 

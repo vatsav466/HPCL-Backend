@@ -178,6 +178,10 @@ class AlertActionType(str, enum.Enum):
     BlockFailed = 'BlockFailed'
     UnblockFailed = 'UnblockFailed'
     OngoingTrip = 'OngoingTrip'
+    BlockInitiated = 'BlockInitiated'
+    UnBlockInitiated = 'UnBlockInitiated'
+    Remarks = 'Remarks'
+    Offline = 'Offline'
 
 
 
@@ -209,6 +213,22 @@ class IndentStatus(str, enum.Enum):
     ProductLowLevel = 'ProductLowLevel'
     OfflineOrFalseAlarm = 'OfflineOrFalseAlarm'
     NotAvailable = 'NotAvailable'
+
+
+
+
+
+
+
+class AlertActionState(str, enum.Enum):
+    CreatedAt = 'CreatedAt'
+    ClosedAt = 'ClosedAt'
+    BlockInitiated = 'BlockInitiated'
+    UnBlockInitiated = 'UnBlockInitiated'
+    Blocked = 'Blocked'
+    UnBlocked = 'Unblocked'
+    BlockAck = 'BlockAck'
+    UnblockAck = 'UnblockAck'
 
 
 

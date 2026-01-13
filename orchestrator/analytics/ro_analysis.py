@@ -1,6 +1,7 @@
 import urdhva_base
 import json
 import time
+import pytz
 import requests
 import traceback
 import charts_actions
@@ -9,6 +10,7 @@ import dashboard_studio_model
 import orchestrator.analytics.va_analysis as va_analysis
 import utilities.cris_alert_mapping as cris_alert_mapping
 
+logger = urdhva_base.logger.Logger.getInstance('ro_alert_log')
 
 async def interlock_disable(params: dict):
     """
@@ -198,3 +200,102 @@ async def get_ro_approved_count(bu: str, violation_type: str, sap_id: str):
             resp = resp[0]
             return resp.get("count", 0)
     return 0
+
+async def get_ro_va_cleanliness_total_count():
+    query = f"""select * from alerts where interlock_name='Restroom Cleaning Evidence Missing'
+                    and created_at::date = current_date"""
+    resp = await hpcl_ceg_model.Alerts.get_aggr_data(query,limit=0)
+    resp = resp.get('data',[])
+    if not resp:
+        return 0
+    
+    return len(resp)
+
+async def close_ro_va_cleanliness_unblock_of_blocked():
+    rpt = urdhva_base.context.context.get('rpt', {})
+    query = f"""select * from alerts where interlock_name='Restroom Cleaning Evidence Missing'
+                    and created_at::date = current_date and block_status = 'Blocked' and alert_status!='Close'"""
+    resp = await hpcl_ceg_model.Alerts.get_aggr_data(query,limit=0)
+    resp = resp.get('data',[])
+    if not resp:
+        return 0
+    
+    for data in resp:
+        payload = {
+            "messageName": "UnblockNozzles",
+            "processInstanceId": data.get("workflow_instance_id")
+        }
+
+        camunda_url = f"{data.get('workflow_url')}/engine-rest/message"
+
+        response = requests.post(camunda_url, json=payload)
+
+        if response.status_code != 204:
+            logger.error(
+                f"Camunda unblock failed | "
+                f"alert_id={data.get('id')} | "
+                f"status={response.status_code} | "
+                f"response={response.text}"
+            )
+        event_time_utc = urdhva_base.utilities.get_present_time()
+        ist_time = event_time_utc.astimezone(pytz.timezone("Asia/Kolkata"))
+        alert_history = data.get("alert_history", [])
+
+        alert_history.append({
+            "action_msg": (
+                f"Day End Closure Unblock of {data.get('sap_id')} "
+                f"initiated by {rpt.get('username','SYSTEM')} "
+                f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+            ),
+            "action_type": "UnBlocked",
+            "action_by": rpt.get('username','SYSTEM'),
+            "processed_time": event_time_utc.isoformat()
+        })
+        await hpcl_ceg_model.Alerts(**{
+            "id": data.get("id"),
+            "alert_history": alert_history
+            }).modify()
+    return len(resp)
+
+async def close_ro_va_cleanliness_open_alerts():
+    rpt = urdhva_base.context.context.get('rpt', {})
+    query = f"""
+                SELECT *
+                FROM alerts
+                WHERE interlock_name = 'Restroom Cleaning Evidence Missing'
+                AND alert_status = 'Open'
+                AND (
+                        block_status is null
+                        OR block_status = 'WaitingForBlockAck'
+                    )
+                """
+    resp = await hpcl_ceg_model.Alerts.get_aggr_data(query,limit=0)
+    resp = resp.get('data',[])
+    if not resp:
+        return 0
+    
+    for data in resp:
+        delete_url = f"{data.get('workflow_url')}/engine-rest/process-instance/{data.get("workflow_instance_id")}"
+        delete_response = requests.delete(delete_url)
+        print("workflow_deletion Status code:", delete_response.status_code)
+        print("workflow_deletion Response body:", delete_response.text)
+        event_time_utc = urdhva_base.utilities.get_present_time()
+        ist_time = event_time_utc.astimezone(pytz.timezone("Asia/Kolkata"))
+        alert_history = data.get("alert_history", [])
+        alert_history.append({
+            "action_msg": (
+                f"Day End Closure of {data.get('sap_id')} "
+                f"initiated by {rpt.get('username','SYSTEM')} "
+                f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+            ),
+            "action_type": "Message",
+            "action_by": rpt.get('username','SYSTEM'),
+            "processed_time": event_time_utc.isoformat()
+        })
+        await hpcl_ceg_model.Alerts(**{
+            "id": data.get("id"),
+            "alert_history": alert_history,
+            "alert_status": "Close",
+            "alert_state": "Resolved"
+        }).modify()
+    return len(resp)

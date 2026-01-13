@@ -1061,6 +1061,12 @@
                     "name": "get_performance_index"
                 },
                 {
+                    "name": "add_rca_reason"
+                },
+                {
+                    "name": "day_end_closure"
+                },
+                {
                     "name": "upload_document"
                 },
                 {
@@ -1110,6 +1116,9 @@
                 },
                 {
                     "name": "hqo_blocked_vehicles"
+                },
+                {
+                    "name": "va_cleanliness_summary"
                 }
             ]
         },
@@ -1178,6 +1187,12 @@
                     "name": "get_performance_index"
                 },
                 {
+                    "name": "add_rca_reason"
+                },
+                {
+                    "name": "day_end_closure"
+                },
+                {
                     "name": "upload_document"
                 },
                 {
@@ -1227,6 +1242,9 @@
                 },
                 {
                     "name": "hqo_blocked_vehicles"
+                },
+                {
+                    "name": "va_cleanliness_summary"
                 }
             ]
         },
@@ -7971,6 +7989,14 @@
             "displayName": "get_performance_index"
         },
         {
+            "name": "add_rca_reason",
+            "displayName": "add_rca_reason"
+        },
+        {
+            "name": "day_end_closure",
+            "displayName": "day_end_closure"
+        },
+        {
             "name": "upload_document",
             "displayName": "upload_document"
         },
@@ -8037,6 +8063,10 @@
         {
             "name": "hqo_blocked_vehicles",
             "displayName": "hqo_blocked_vehicles"
+        },
+        {
+            "name": "va_cleanliness_summary",
+            "displayName": "va_cleanliness_summary"
         },
         {
             "name": "tas_analytics",

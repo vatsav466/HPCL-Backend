@@ -26,6 +26,7 @@ import orchestrator.actions.check_violation_count as check_violation_count
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
 from orchestrator.hqo_blocked import get_blocked_trucks_service
 from orchestrator.gen_ai.vts_nlp.core_functions import process_vts_query
+import orchestrator.analytics.ro_analysis as ro_analysis
 
 router = fastapi.APIRouter(prefix='/alerts')
 
@@ -445,12 +446,12 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
 
         alert_history = [{
             "action_msg" : (
-                f"Manual block for truck {data.truck_number} initiated by "
-                f"{rpt['username']} from "
+                f"Manual block for truck {data.truck_number} initiated by OCC Team "
+                f"({rpt['username']}) from "
                 f"{start_date_ist.strftime('%d-%m-%Y %I:%M:%S %p')} to "
                 f"{end_date_ist.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
             ),
-            "action_type": "Blocked",
+            "action_type": "BlockInitiated",
             "action_by" : rpt['username'],
             "processed_time" : start_date_utc.isoformat()
         }]
@@ -594,10 +595,10 @@ async def alerts_unblock_vts_truck(
         alert_history.append({
             "action_msg": (
                 f"Manual unblock for truck {alert_record.get('vehicle_number')} "
-                f"initiated by {rpt['username']} "
+                f"initiated by OCC Team ({rpt['username']}) "
                 f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
             ),
-            "action_type": "UnBlocked",
+            "action_type": "UnBlockInitiated",
             "action_by": rpt['username'],
             "processed_time": event_time_utc.isoformat()
         })
@@ -1145,3 +1146,124 @@ async def alerts_hqo_blocked_vehicles(data: Alerts_Hqo_Blocked_VehiclesParams):
         data.start_date,
         data.end_date
     )
+
+
+# Action add_rca_reason
+@router.post('/add_rca_reason', tags=['Alerts'])
+async def alerts_add_rca_reason(data: Alerts_Add_Rca_ReasonParams):
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        alert_id = data.alert_id
+        reason = data.reason
+        query = f"""select * from alerts where id='{alert_id}'"""
+        resp = await Alerts.get_aggr_data(query, limit=1)
+        if not resp['data']:
+            return {
+                "status": True,
+                "message": "Alert Not Found"
+            }
+        now_utc = urdhva_base.utilities.get_present_time(utc=True)
+        ist_time = now_utc.astimezone(pytz.timezone("Asia/Kolkata"))
+
+        alert = resp['data'][0]
+        existing_rca = alert['rca']
+
+        new_entry = (
+            f"{reason} initiated by {rpt.get('username','')} "
+            f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+        )
+
+        if existing_rca:
+            rca = f"{existing_rca}\n{new_entry}"
+        else:
+            rca = new_entry
+
+        alert["action_msg"] = new_entry
+        alert["action_type"] = "Remarks"
+        await alert_manager.AlertAction.update_alert_history(input_data=alert, alert_data=alert)
+
+        await Alerts(**{"id": alert_id,
+                        "rca": rca}).modify()
+        
+        return {
+            "status": True,
+            "message": "Remarks updated successfully"
+        }
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed to update remarks",
+            "error": str(e)
+        }
+
+
+# Action day_end_closure
+@router.post('/day_end_closure', tags=['Alerts'])
+async def alerts_day_end_closure(data: Alerts_Day_End_ClosureParams):
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        
+        await ro_analysis.close_ro_va_cleanliness_unblock_of_blocked()
+        await ro_analysis.close_ro_va_cleanliness_open_alerts()
+        return {"status": True, "message": "Successfully Closed All Alerts"}
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed to update remarks",
+            "error": str(e)
+        }
+
+
+# Action va_cleanliness_summary
+@router.post('/va_cleanliness_summary', tags=['Alerts'])
+async def alerts_va_cleanliness_summary(data: Alerts_Va_Cleanliness_SummaryParams):
+    query_extension = []
+    has_date = False
+    for extension in data.cross_filters:
+        if extension.key == 'created_at':
+            has_date = True
+            extension.key = "created_at::DATE"
+        query_extension.append(f"{extension.key}='{extension.value if extension.value else extension.val}'")
+    if not has_date:
+        query_extension.append(f"created_at::DATE=CURRENT_DATE")
+    analytical_data = {
+          "total": 0,
+          "blocked": 0,
+          "unblocked": 0,
+          "waiting_block_confirmation": 0,
+          "waiting_sales_stop_confirmation": 0,
+          "waiting_unblock_confirmation": 0,
+          "waiting_sales_resume_confirmation": 0,
+          "manually_unblocked": 0,
+          "automatically_unblocked": 0
+    }
+
+    # Query to get all required for the requested time period
+    query = f"""select distinct block_status, alert_status, alert_state, COUNT(*) from alerts 
+    where interlock_name='Restroom Cleaning Evidence Missing' AND {' AND '.join(query_extension)} 
+    group by block_status, alert_status, alert_state
+"""
+    query_data = await Alerts.get_aggr_data(query)
+    resp = query_data['data']
+    analytical_data['total'] = sum([rec['count'] for rec in resp])
+    analytical_data['blocked'] = sum([rec['count'] for rec in resp
+                                      if rec['block_status'] == 'Blocked'])
+    analytical_data['unblocked'] = sum([rec['count'] for rec in resp
+                                        if rec['block_status'] == 'UnBlocked'])
+    analytical_data['waiting_block_confirmation'] = 0
+    analytical_data['waiting_sales_stop_confirmation'] = sum([rec['count'] for rec in resp
+                                                              if rec['block_status'] == 'Blocked'])
+    analytical_data['waiting_unblock_confirmation'] = 0
+    analytical_data['waiting_sales_resume_confirmation'] = sum([rec['count'] for rec in resp
+                                                                if rec['block_status'] == 'UnBlocked'])
+    analytical_data['manually_unblocked'] = sum([rec['count'] for rec in resp
+                                                 if rec['block_status'] == 'UnBlocked' and
+                                                 rec['alert_state'] == 'Resolved'])
+    analytical_data['automatically_unblocked'] = sum([rec['count'] for rec in resp
+                                                      if rec['block_status'] == 'UnBlocked' and
+                                                      rec['alert_state'] != 'Resolved'])
+    return True, analytical_data
