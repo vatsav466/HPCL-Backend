@@ -34,7 +34,12 @@ class SendNozzleCommand:
             blocking_status = None
             blocking_status,error_msg = await ro_interlock_handler.RoInterlockHandler().ro_blocking([alert_data.get('sap_id','')])
             success_resp, failed_resp = error_msg
-            if blocking_status and isinstance(failed_resp,list) and failed_resp[0].get('RoCode','') in ['Outlet Not Communicating']:
+            if (
+                blocking_status 
+                and isinstance(failed_resp,list) 
+                and failed_resp
+                and failed_resp[0].get('RoCode','') in ['Outlet Not Communicating']
+                ):
                 alert_message = (
                     f"Outlet Not Communicating"
                 )
@@ -72,7 +77,12 @@ class SendNozzleCommand:
             unblocking_status = None
             unblocking_status,error_msg = await ro_interlock_handler.RoInterlockHandler().ro_unblocking([alert_data.get('sap_id','')])
             success_resp, failed_resp = error_msg
-            if unblocking_status and isinstance(failed_resp,list) and failed_resp[0].get('RoCode','') in ['Outlet Not Communicating']:
+            if (
+                unblocking_status 
+                and isinstance(failed_resp,list) 
+                and failed_resp
+                and failed_resp[0].get('RoCode','') in ['Outlet Not Communicating']
+                ):
                 alert_message = (
                     f"Outlet Not Communicating"
                 )

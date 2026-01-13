@@ -740,13 +740,21 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['default@example.com']
+           
             if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['active'] and self.alert_data['bu'] in ['TAS']:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
                 if self.mail_recipients:
                     res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
                     return res
+                
+            if self.alert_data.get('alert_section','') in ['TAS'] and self.alert_data.get('bu','') in ['TAS'] and self.alert_data.get('severity', '').lower() in ['critical']:
+                await self.update_notication_audit_log()
+                if self.mail_recipients:
+                    res = await notification_module.publish_message(recipients=self.mail_recipients,  subject=self.subject, body=self.body, force_send=True, html_content=True)
+                    return res
+            
+            self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
             return res
@@ -797,11 +805,18 @@ class SendNotification:
                                                                     force_send=True,
                                                                     html_content=True)
                     return res
+                
+            if self.alert_data.get('alert_section','') in ['TAS'] and self.alert_data.get('bu','') in ['TAS'] and self.alert_data.get('severity', '').lower() in ['critical']:
+                await self.update_notication_audit_log()
+                if self.mail_recipients:
+                    res = await notification_module.publish_message(recipients=self.mail_recipients,  subject=self.subject, body=self.body, force_send=True, html_content=True)
+                    return res
+                
             self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
             return res
-
+         
     async def _send_other_notification(self):
         """
         Send notifications for other LPG/TAS messages.
