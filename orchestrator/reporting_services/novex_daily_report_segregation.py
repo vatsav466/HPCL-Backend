@@ -72,7 +72,8 @@ async def publish_daily_novex_status_email():
     #status_data.update(await get_vts_route_deviation())
     status_data.update(await lpg_data.lpg_top_bottom_score_plants())
     status_data.update(await lpg_data.get_vts_lpg_blocked_counts())
-    status_data.update(await sod_data.get_vts_tas_blocked_counts())
+    status_data.update(await sod_data.get_vts_sod_blocked_counts())
+    #status_data.update(await sod_data.get_vts_tas_blocked_counts())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data.get_alert_data(alert_section))
