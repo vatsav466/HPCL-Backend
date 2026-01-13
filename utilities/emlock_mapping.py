@@ -33,7 +33,7 @@ emlock_vehicle_mapping = {
         "TToutsideTerminalRadius": {
             "interlock_name": "TT outside Terminal Radius",
             "sop_id": "SOP057",
-            "severity": "HIGH",
+            "severity": "Critical",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
@@ -63,7 +63,7 @@ emlock_vehicle_mapping = {
         "InvoiceNotGenerated": {
             "interlock_name": "Invoice Not Generated",
             "sop_id": "SOP059",
-            "severity": "HIGH",
+            "severity": "Low",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
@@ -78,7 +78,7 @@ emlock_vehicle_mapping = {
         "ShipmentNumberNotGenerated": {
             "interlock_name": "Shipment Number Not Generated",
             "sop_id": "SOP060",
-            "severity": "HIGH",
+            "severity": "Low",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
@@ -93,7 +93,7 @@ emlock_vehicle_mapping = {
         "TToutsideRoRadius": {
             "interlock_name": "TT outside RO radius",
             "sop_id": "SOP061",
-            "severity": "HIGH",
+            "severity": "Critical",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
@@ -123,7 +123,7 @@ emlock_vehicle_mapping = {
         "PostDecantationRequestExceeded": {
             "interlock_name": "Post Decantation Request Exceed",
             "sop_id": "SOP063",
-            "severity": "HIGH",
+            "severity": "Medium",
             "period": "weekly",
             "escalations": {
                 "level - 1": {
@@ -137,8 +137,8 @@ emlock_vehicle_mapping = {
         }
     },
     "RO": {
-        "TToutsideRoRadius": {"interlock_name": "TT outside RO radius","sop_id": "SOP020","severity": "HIGH"},
+        "TToutsideRoRadius": {"interlock_name": "TT outside RO radius","sop_id": "SOP020","severity": "Critical"},
         "PreDecantationRequestExceeded": {"interlock_name": "Pre Decantation Request Exceed","sop_id": "SOP021","severity": "HIGH"},
-        "PostDecantationRequestExceeded": {"interlock_name": "Post Decantation Request Exceed","sop_id": "SOP022","severity": "HIGH"}
+        "PostDecantationRequestExceeded": {"interlock_name": "Post Decantation Request Exceed","sop_id": "SOP022","severity": "Medium"}
     }
 }

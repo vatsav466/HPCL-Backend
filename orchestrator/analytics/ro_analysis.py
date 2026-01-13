@@ -263,10 +263,9 @@ async def close_ro_va_cleanliness_open_alerts():
                 SELECT *
                 FROM alerts
                 WHERE interlock_name = 'Restroom Cleaning Evidence Missing'
-                AND created_at::date = CURRENT_DATE
-                AND alert_status != 'Close'
+                AND alert_status = 'Open'
                 AND (
-                        block_status = ''
+                        block_status is null
                         OR block_status = 'WaitingForBlockAck'
                     )
                 """
