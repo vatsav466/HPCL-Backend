@@ -347,30 +347,46 @@ async def critical_alerts_by_equipment(data):
     alert_query = """
         alert_section = 'TAS'
         AND severity = 'Critical'
-    """    
-    
+    """
+
+    # Add alert_status filter based on payload
+    if data.alert_status and data.alert_status.strip():
+        alert_query += f" AND alert_status = '{data.alert_status}'"
+
     # Add date filter only if both dates are provided, not empty, and not "string"
-    if (data.start_date and data.end_date and 
-        data.start_date.strip() and data.end_date.strip() and
-        data.start_date.lower() != "string" and data.end_date.lower() != "string"):
-        alert_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
-    
+    if (
+        data.start_date and data.end_date
+        and data.start_date.strip() and data.end_date.strip()
+        and data.start_date.lower() != "string"
+        and data.end_date.lower() != "string"
+    ):
+        alert_query += (
+            f" AND created_at::date BETWEEN "
+            f"'{data.start_date}' AND '{data.end_date}'"
+        )
+
+    # Add location_name filter if provided (and not empty/not "true")
+    if data.location_name and data.location_name.strip() and data.location_name.lower() != "true":
+        alert_query += f" AND location_name = '{data.location_name}'"
+
+    # Add equipment_type filter if provided
     if data.equipment_type:
         alert_query += f" AND equipment_type = '{data.equipment_type}'"
 
-    alert_params = urdhva_base.queryparams.QueryParams(
-        q=alert_query
-    )
+    alert_params = urdhva_base.queryparams.QueryParams(q=alert_query)
     alert_params.limit = 0
-    alert_params.fields = [
-        "equipment_type"
-    ]
-    
-    if data.location_name and data.location_name.lower() == "true":
+
+    alert_params.fields = ["equipment_type"]
+
+    if (
+        (data.location_name and data.location_name.lower() == "true")
+        or data.equipment_type
+    ):
         alert_params.fields.append("location_name")
 
     alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
+
     if not alert_data:
         return []
 
@@ -384,29 +400,37 @@ async def critical_alerts_by_equipment(data):
         (pl.col("equipment_type").is_not_null()) & 
         (pl.col("equipment_type").str.strip_chars() != "")
     )
-    
-    # Check again if dataframe is empty after filtering
+
     if alerts_df.is_empty():
         return []
-    
-    # Check if location_name is "true" - group by location only
+    if data.equipment_type and (
+        not data.location_name or data.location_name.lower() != "true"
+    ):
+        critical_alerts_df = (
+            alerts_df
+            .group_by("location_name")
+            .agg(pl.len().alias("critical_count"))
+            .sort("critical_count", descending=True)
+        )
+        return critical_alerts_df.to_dicts()
     if data.location_name and data.location_name.lower() == "true":
         critical_alerts_df = (
             alerts_df
-            .group_by(["location_name"])
+            .group_by("location_name")
             .agg(pl.len().alias("critical_count"))
-            .sort(["critical_count"], descending=[True])
+            .sort("critical_count", descending=True)
         )
     else:
-        # location_name is not "true" - group by equipment_type only
         critical_alerts_df = (
             alerts_df
-            .group_by(["equipment_type"])
+            .group_by("equipment_type")
             .agg(pl.len().alias("critical_count"))
-            .sort(["critical_count"], descending=[True])
+            .sort("critical_count", descending=True)
         )
-    
+
     return critical_alerts_df.to_dicts()
+
+
 
 async def tas_alerts_exception_report(data):
     alert_query = "alert_section = 'TAS'"
