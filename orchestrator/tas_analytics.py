@@ -14,7 +14,8 @@ from orchestrator.tas_queries import (
     RADAR_QUERIES, RADAR_FIELDS, RADAR_CATEGORIES,
     BCU_QUERIES, BCU_FIELDS, BCU_INTERLOCKS, BCU_ALARM_DETAILS_LIMIT,
     FIRE_EFFECT_QUERIES, FIRE_EFFECT_FIELDS, FIRE_EFFECT_INTERLOCKS,
-    FAIL_PATTERNS,
+    FAIL_PATTERNS,ESD_DEVICE_ANALYSIS_CONFIG,HOST_LOCAL_LOADED_TTS_QUERIES,
+    HOST_LOCAL_LOADED_TTS_FIELDS,TRUCK_TYPE_PATTERNS,PATTERN_ANALYSIS_CONFIG,BAY_REASSIGNMENT_CONFIG,
     build_complete_query, format_sap_ids_for_query, format_interlocks_for_query)
 
 
@@ -346,30 +347,46 @@ async def critical_alerts_by_equipment(data):
     alert_query = """
         alert_section = 'TAS'
         AND severity = 'Critical'
-    """    
-    
+    """
+
+    # Add alert_status filter based on payload
+    if data.alert_status and data.alert_status.strip():
+        alert_query += f" AND alert_status = '{data.alert_status}'"
+
     # Add date filter only if both dates are provided, not empty, and not "string"
-    if (data.start_date and data.end_date and 
-        data.start_date.strip() and data.end_date.strip() and
-        data.start_date.lower() != "string" and data.end_date.lower() != "string"):
-        alert_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
-    
+    if (
+        data.start_date and data.end_date
+        and data.start_date.strip() and data.end_date.strip()
+        and data.start_date.lower() != "string"
+        and data.end_date.lower() != "string"
+    ):
+        alert_query += (
+            f" AND created_at::date BETWEEN "
+            f"'{data.start_date}' AND '{data.end_date}'"
+        )
+
+    # Add location_name filter if provided (and not empty/not "true")
+    if data.location_name and data.location_name.strip() and data.location_name.lower() != "true":
+        alert_query += f" AND location_name = '{data.location_name}'"
+
+    # Add equipment_type filter if provided
     if data.equipment_type:
         alert_query += f" AND equipment_type = '{data.equipment_type}'"
 
-    alert_params = urdhva_base.queryparams.QueryParams(
-        q=alert_query
-    )
+    alert_params = urdhva_base.queryparams.QueryParams(q=alert_query)
     alert_params.limit = 0
-    alert_params.fields = [
-        "equipment_type"
-    ]
-    
-    if data.location_name and data.location_name.lower() == "true":
+
+    alert_params.fields = ["equipment_type"]
+
+    if (
+        (data.location_name and data.location_name.lower() == "true")
+        or data.equipment_type
+    ):
         alert_params.fields.append("location_name")
 
     alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
+
     if not alert_data:
         return []
 
@@ -383,29 +400,37 @@ async def critical_alerts_by_equipment(data):
         (pl.col("equipment_type").is_not_null()) & 
         (pl.col("equipment_type").str.strip_chars() != "")
     )
-    
-    # Check again if dataframe is empty after filtering
+
     if alerts_df.is_empty():
         return []
-    
-    # Check if location_name is "true" - group by location only
+    if data.equipment_type and (
+        not data.location_name or data.location_name.lower() != "true"
+    ):
+        critical_alerts_df = (
+            alerts_df
+            .group_by("location_name")
+            .agg(pl.len().alias("critical_count"))
+            .sort("critical_count", descending=True)
+        )
+        return critical_alerts_df.to_dicts()
     if data.location_name and data.location_name.lower() == "true":
         critical_alerts_df = (
             alerts_df
-            .group_by(["location_name"])
+            .group_by("location_name")
             .agg(pl.len().alias("critical_count"))
-            .sort(["critical_count"], descending=[True])
+            .sort("critical_count", descending=True)
         )
     else:
-        # location_name is not "true" - group by equipment_type only
         critical_alerts_df = (
             alerts_df
-            .group_by(["equipment_type"])
+            .group_by("equipment_type")
             .agg(pl.len().alias("critical_count"))
-            .sort(["critical_count"], descending=[True])
+            .sort("critical_count", descending=True)
         )
-    
+
     return critical_alerts_df.to_dicts()
+
+
 
 async def tas_alerts_exception_report(data):
     alert_query = "alert_section = 'TAS'"
@@ -603,8 +628,10 @@ async def process_esd_data(data):
 
     esd_pushbutton_resp = await Alerts.get_all(esd_pushbutton_params, resp_type="plain")
     esd_pushbutton_data = esd_pushbutton_resp.get("data", [])
+
     # Process ESD Pushbutton data with details
     esd_activated_details = {}
+    esd_device_activations = {}  # Track activation times per device
     if len(esd_pushbutton_data) > 0:
         esd_pushbutton_df = pl.DataFrame(esd_pushbutton_data)
         
@@ -614,12 +641,34 @@ async def process_esd_data(data):
         
         for row in esd_pushbutton_df.to_dicts():
             key = (row["sap_id"], row["location_name"])
+            device_name = row.get("device_name", "")
+            created_at_str = row["created_at"]
+
             if key not in esd_activated_details:
                 esd_activated_details[key] = []
+                esd_device_activations[key] = {}
+
             esd_activated_details[key].append({
-                "created_at": row["created_at"],
-                "device_name": row.get("device_name", "")
+                "created_at": created_at_str,
+                "device_name": device_name
             })
+
+            # Parse activation time for device tracking
+            try:
+                if isinstance(row["created_at"], str):
+                    activation_time = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+                else:
+                    activation_time = row["created_at"]
+
+                if device_name not in esd_device_activations[key]:
+                    esd_device_activations[key][device_name] = []
+
+                esd_device_activations[key][device_name].append({
+                    'time': activation_time,
+                    'created_at_str': created_at_str
+                })
+            except Exception as e:
+                print(f"Error parsing activation time: {e}")
 
     # Get unique locations from pushbutton data
     if not esd_pushbutton_data:
@@ -636,7 +685,6 @@ async def process_esd_data(data):
     
     sap_ids = list(set(loc['sap_id'] for loc in unique_locations.values()))
     
-    
     # Build batch query for all interlocks using template
     sap_ids_str = format_sap_ids_for_query(sap_ids)
     
@@ -652,15 +700,11 @@ async def process_esd_data(data):
     if data.location_name and data.location_name.strip():
         all_interlocks_query += f" AND location_name = '{data.location_name}'"
     
-
-    
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
-    interlock_params.fields = ESD_FIELDS["interlocks"]
-    
+    interlock_params.fields = ESD_FIELDS["interlocks"] + ["device_name"]  # Add device_name
+
     interlock_resp = await Alerts.get_all(interlock_params, resp_type="plain")
-    all_interlock_alerts = interlock_resp.get("data", [])
-    
-    
+    all_interlock_alerts = interlock_resp.get("data", [])   
     if not all_interlock_alerts:
         result = []
         for key, details in esd_activated_details.items():
@@ -669,17 +713,19 @@ async def process_esd_data(data):
                 "location_name": key[1],
                 "equipment_type": "ESD",
                 "no_of_esd_activated": len(details),
-                "esd_activated_details": details
+                "esd_activated_details": details[:10]
             }
             
             # Initialize categories from configuration
             for category in ESD_CATEGORIES.keys():
                 result_item[category] = [{"success": 0, "failed": 0}]
-            
             result.append(result_item)
         return result
-    
-    # Organize alerts by unique_id and category
+
+    # Get time window from config
+    time_window_minutes = ESD_DEVICE_ANALYSIS_CONFIG.get("time_window_minutes", 3)
+
+    # Organize alerts by unique_id and category (keeping original logic)
     alerts_by_unique_id = {}
     
     for alert in all_interlock_alerts:
@@ -687,7 +733,8 @@ async def process_esd_data(data):
         sap_id = alert['sap_id']
         location_name = alert.get('location_name', '')
         interlock_name = alert.get('interlock_name', '')
-        
+        device_name = alert.get('device_name', '')
+
         # Determine category
         category = None
         for cat, pattern in ESD_CATEGORIES.items():
@@ -709,7 +756,7 @@ async def process_esd_data(data):
                 alert_time = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
             else:
                 alert_time = created_at
-            
+                   
             # Check if this is a Fail alert
             is_fail = any(pattern in interlock_name for pattern in FAIL_PATTERNS)
             
@@ -717,7 +764,8 @@ async def process_esd_data(data):
                 'id': alert.get('id'),
                 'time': alert_time,
                 'is_fail': is_fail,
-                'interlock_name': interlock_name
+                'interlock_name': interlock_name,
+                'device_name': device_name
             })
         except Exception as e:
             print(f"Error parsing ESD alert time: {e}")
@@ -740,19 +788,20 @@ async def process_esd_data(data):
             "location_name": location_name,
             "equipment_type": "ESD",
             "no_of_esd_activated": len(alarm_details),
-            "esd_activated_details": alarm_details
+            "esd_activated_details": alarm_details,
+            "device_activations": esd_device_activations.get(key, {})
         }
         
         # Initialize categories from configuration
         for category in ESD_CATEGORIES.keys():
             location_results[key][category] = {"success": 0, "failed": 0}
-    
-    # Process alerts with 1-minute window logic AND unique_id matching
-    processed_count = 0
-    success_count = 0
-    failed_count = 0
+
+    # Process alerts with original logic (1-minute window + unique_id matching)
     processed_base_ids = set()
-    
+
+    # Also track per-device category counts
+    device_category_counts = {}  # {(loc_key, device_name, created_at_str): {category: {success, failed}}}
+
     for key, alerts in alerts_by_unique_id.items():
         unique_id, sap_id, location_name, category = key
         
@@ -770,12 +819,12 @@ async def process_esd_data(data):
         fail_alerts = [a for a in alerts if a['is_fail']]
         
         # For each base alert, check if there's a corresponding fail alert within 1 minute
-        # WITH THE SAME unique_id (already grouped by unique_id)
         for base_alert in base_alerts:
             if base_alert['id'] in processed_base_ids:
                 continue
             
             base_time = base_alert['time']
+            base_device = base_alert.get('device_name', '')
             time_start = base_time
             time_end = base_time + timedelta(minutes=1)
             
@@ -789,59 +838,126 @@ async def process_esd_data(data):
                     continue
                 
                 if time_start <= fail_time <= time_end:
-                    # Found matching fail alert with same unique_id within 1 minute
                     found_fail = True
                     processed_base_ids.add(base_alert['id'])
                     processed_base_ids.add(fail_alert['id'])
-                    print(f"  ✓ Matched: unique_id={unique_id}, category={category}, "
-                          f"base_time={base_time.strftime('%H:%M:%S')}, "
-                          f"fail_time={fail_time.strftime('%H:%M:%S')}")
                     break
                 elif fail_time > time_end:
                     break
-            
+
+            # Update location-level counts
             if found_fail:
                 location_results[matching_key][category]["failed"] += 1
-                failed_count += 1
             else:
                 location_results[matching_key][category]["success"] += 1
-                success_count += 1
-            
+
+            # Track device-level counts within time window
+            device_activations = location_results[matching_key]["device_activations"].get(base_device, [])
+            for activation in device_activations:
+                activation_time = activation['time']
+                created_at_str = activation['created_at_str']
+
+                # Check if this alert falls within the configured time window of this device activation
+                if activation_time <= base_time <= activation_time + timedelta(minutes=time_window_minutes):
+                    device_key = (matching_key, base_device, created_at_str)
+
+                    if device_key not in device_category_counts:
+                        device_category_counts[device_key] = {}
+                        for cat in ESD_CATEGORIES.keys():
+                            device_category_counts[device_key][cat] = {"success": 0, "failed": 0}
+
+                    if found_fail:
+                        device_category_counts[device_key][category]["failed"] += 1
+                    else:
+                        device_category_counts[device_key][category]["success"] += 1
+
             if base_alert['id'] not in processed_base_ids:
                 processed_base_ids.add(base_alert['id'])
-            
-            processed_count += 1
-            
-            if processed_count % 100 == 0:
-                print(f"  Processed {processed_count} alerts... (Success: {success_count}, Failed: {failed_count})")
-        
+
         # Process any unmatched fail alerts as failures
         for fail_alert in fail_alerts:
             if fail_alert['id'] not in processed_base_ids:
                 location_results[matching_key][category]["failed"] += 1
-                failed_count += 1
+
+                # Also add to device-level counts if within time window
+                fail_time = fail_alert['time']
+                fail_device = fail_alert.get('device_name', '')
+
+                device_activations = location_results[matching_key]["device_activations"].get(fail_device, [])
+                for activation in device_activations:
+                    activation_time = activation['time']
+                    created_at_str = activation['created_at_str']
+
+                    if activation_time <= fail_time <= activation_time + timedelta(minutes=time_window_minutes):
+                        device_key = (matching_key, fail_device, created_at_str)
+
+                        if device_key not in device_category_counts:
+                            device_category_counts[device_key] = {}
+                            for cat in ESD_CATEGORIES.keys():
+                                device_category_counts[device_key][cat] = {"success": 0, "failed": 0}
+
+                        device_category_counts[device_key][category]["failed"] += 1
+
                 processed_base_ids.add(fail_alert['id'])
-                processed_count += 1
-    
-    # Convert to list format
+
+    # Build final result with enriched device details
     final_result = []
+
     for key, value in location_results.items():
+        # Enrich device details with category counts
+        enriched_details = []
+        for detail in value["esd_activated_details"][:10]:  # Limit to 10
+            device_name = detail["device_name"]
+            created_at_str = detail["created_at"]
+
+            device_key = (key, device_name, created_at_str)
+
+            enriched_detail = {
+                "created_at": created_at_str,
+                "device_name": device_name
+            }
+
+            # Calculate total count and add category counts
+            total_count = 0
+            if device_key in device_category_counts:
+                for category in ESD_CATEGORIES.keys():
+                    counts = device_category_counts[device_key][category]
+                    enriched_detail[category] = [counts]
+                    total_count += counts["success"] + counts["failed"]
+            else:
+                # No alerts found for this device activation
+                for category in ESD_CATEGORIES.keys():
+                    enriched_detail[category] = [{"success": 0, "failed": 0}]
+
+            # Add count after device_name, before categories
+            enriched_detail_ordered = {
+                "created_at": created_at_str,
+                "device_name": device_name,
+                "count": total_count
+            }
+            # Add all category counts
+            for category in ESD_CATEGORIES.keys():
+                enriched_detail_ordered[category] = enriched_detail[category]
+
+            enriched_detail = enriched_detail_ordered
+
+            enriched_details.append(enriched_detail)
+
         result_item = {
             "sap_id": value["sap_id"],
             "location_name": value["location_name"],
             "equipment_type": value["equipment_type"],
             "no_of_esd_activated": value["no_of_esd_activated"],
-            "esd_activated_details": value["esd_activated_details"]
+            "esd_activated_details": enriched_details
         }
-        
+
+        # Add location-level category counts
         for category in ESD_CATEGORIES.keys():
             result_item[category] = [value[category]]
         
         final_result.append(result_item)
     
     final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))
-    
-    
     return final_result
 
 async def process_vft_data(data):
@@ -1809,13 +1925,359 @@ async def process_fire_effect_data(data):
     
     return final_result
 
+async def location_wise_total_loaded_qty(data):
+    """
+    Get location-wise total loaded quantity from host_local_loaded_tts
+    Filters out records where sap_id or location_name is null/empty
+    Categorizes loaded_qty by truck type: DG, PROVER, and TANK_TRUCK
+    Analyzes loading patterns:
+    - local_loading_repeated: 4+ trucks within one hour for same sap_id
+    - particular_time_of_day: trucks sent at same hour across multiple days
+    - particular_product: only one product type loaded
+    - assigned_at_particular_bay: bay assignment details from host_bay_re_assignment
+
+    Returns:
+        List of dicts with sap_id, location_name, categorized totals, pattern flags, and bay info
+    """
+
+    # Build query using the helper function
+    query = build_complete_query(
+        HOST_LOCAL_LOADED_TTS_QUERIES["location_wise_total"],
+        data.start_date,
+        data.end_date,
+        getattr(data, 'location_name', None)
+    )
+
+    # Add optional sap_id filter if provided
+    sap_id = getattr(data, 'sap_id', None)
+    if sap_id and sap_id.strip():
+        query += f" AND sap_id = '{sap_id}'"
+
+    try:
+        from hpcl_ceg_model import HostLocalLoadedTts, HostBayReAssignment
+
+        params = urdhva_base.queryparams.QueryParams(q=query, limit=0)
+
+        # Use fields from config
+        fields_to_fetch = HOST_LOCAL_LOADED_TTS_FIELDS.copy() if isinstance(HOST_LOCAL_LOADED_TTS_FIELDS,
+                                                                            list) else list(
+            HOST_LOCAL_LOADED_TTS_FIELDS)
+        params.fields = fields_to_fetch
+
+        resp = await HostLocalLoadedTts.get_all(params, resp_type="plain")
+        result_data = resp.get("data", [])
+
+        if not result_data:
+            return []
+
+        # Convert to polars DataFrame
+        df = pl.DataFrame(result_data)
+
+        # Filter out rows where sap_id or location_name is null/empty
+        df = df.filter(
+            (pl.col("sap_id").is_not_null()) &
+            (pl.col("sap_id").str.strip_chars() != "") &
+            (pl.col("location_name").is_not_null()) &
+            (pl.col("location_name").str.strip_chars() != "")
+        )
+
+        if df.is_empty():
+            return []
+
+        # Parse created_at to datetime if it's not already
+        if "created_at" in df.columns:
+            df = df.with_columns([
+                pl.col("created_at").cast(pl.Datetime).alias("created_at_dt")
+            ])
+        else:
+            df = df.with_columns([
+                pl.lit(None).cast(pl.Datetime).alias("created_at_dt")
+            ])
+
+        # Clean truck_number - REMOVE ALL WHITESPACES AND CONVERT TO UPPERCASE
+        if "truck_number" in df.columns:
+            df = df.with_columns([
+                pl.when(pl.col("truck_number").is_not_null())
+                .then(
+                    pl.col("truck_number")
+                    .cast(pl.Utf8)
+                    .str.replace_all(r"\s+", "")  # Remove ALL whitespaces (spaces, tabs, newlines)
+                    .str.to_uppercase()
+                )
+                .otherwise(pl.lit(""))
+                .alias("truck_number_clean")
+            ])
+        else:
+            df = df.with_columns([
+                pl.lit("").alias("truck_number_clean")
+            ])
+
+        # Categorize truck types using config patterns
+        prover_pattern = TRUCK_TYPE_PATTERNS["prover"]
+        dg_pattern = TRUCK_TYPE_PATTERNS["dg"]
+
+        df = df.with_columns([
+            # PROVER: starts with 'P' and contains only letters
+            pl.when(
+                (pl.col("truck_number_clean") != "") &
+                pl.col("truck_number_clean").str.starts_with(prover_pattern["starts_with"]) &
+                ~pl.col("truck_number_clean").str.contains(r"\d")
+            )
+            .then(pl.col("loaded_qty"))
+            .otherwise(0)
+            .alias("prover_qty"),
+
+            # DG: contains "DG"
+            pl.when(
+                (pl.col("truck_number_clean") != "") &
+                pl.col("truck_number_clean").str.contains(dg_pattern["contains"])
+            )
+            .then(pl.col("loaded_qty"))
+            .otherwise(0)
+            .alias("dg_qty"),
+
+            # TANK_TRUCK: not empty and not PROVER and not DG
+            pl.when(
+                (pl.col("truck_number_clean") != "") &
+                ~(
+                        pl.col("truck_number_clean").str.starts_with(prover_pattern["starts_with"]) &
+                        ~pl.col("truck_number_clean").str.contains(r"\d")
+                ) &
+                ~pl.col("truck_number_clean").str.contains(dg_pattern["contains"])
+            )
+            .then(pl.col("loaded_qty"))
+            .otherwise(0)
+            .alias("tank_truck_qty")
+        ])
+
+        # Add date and hour columns for pattern analysis
+        df = df.with_columns([
+            pl.col("created_at_dt").dt.date().alias("load_date"),
+            pl.col("created_at_dt").dt.hour().alias("load_hour"),
+            pl.col("created_at_dt").dt.strftime("%Y-%m-%d %H:00:00").alias("hour_window")
+        ])
+
+        # ============================================================================
+        # BAY RE-ASSIGNMENT DATA LOOKUP
+        # ============================================================================
+
+        # Fetch bay re-assignment data for matching truck numbers
+        # Get unique truck numbers from the filtered data (already cleaned - no spaces)
+        unique_trucks = df.filter(pl.col("truck_number_clean") != "").select(
+            "truck_number_clean").unique().to_series().to_list()
+
+        # Fetch bay assignment data
+        bay_data = {}  # Format: {(truck_number, created_at_date): [bay_info]}
+        if unique_trucks:
+            try:
+                # Build query for bay re-assignment table
+                # Escape single quotes in truck numbers for SQL safety
+                truck_list_str = "', '".join([t.replace("'", "''") for t in unique_trucks])
+                bay_query = f"truck_number IN ('{truck_list_str}')"
+
+                # Add date range filter with validation
+                start_date = getattr(data, 'start_date', None)
+                end_date = getattr(data, 'end_date', None)
+
+                # Only add date filter if valid dates are provided
+                if (start_date and end_date and
+                        start_date != 'string' and end_date != 'string' and
+                        str(start_date).strip() and str(end_date).strip()):
+                    bay_query += f" AND created_at >= '{start_date}' AND created_at <= '{end_date}'"
+
+                bay_params = urdhva_base.queryparams.QueryParams(q=bay_query, limit=0)
+                # Use fields from config
+                bay_params.fields = BAY_REASSIGNMENT_CONFIG["fields"]
+
+                bay_resp = await HostBayReAssignment.get_all(bay_params, resp_type="plain")
+                bay_result_data = bay_resp.get("data", [])
+
+                # Create a dictionary for quick lookup: (truck_number, created_at_date) -> bay info
+                # IMPORTANT: Clean truck numbers from bay table the same way
+                for bay_record in bay_result_data:
+                    truck_num_raw = bay_record.get("truck_number", "")
+                    created_at_raw = bay_record.get("created_at")
+
+                    if truck_num_raw and created_at_raw:
+                        # Apply same cleaning: remove all whitespaces and uppercase
+                        truck_num_clean = str(truck_num_raw).strip()
+                        # Remove all types of whitespace
+                        import re
+                        truck_num_clean = re.sub(r'\s+', '', truck_num_clean).upper()
+
+                        # Parse created_at to date only (ignore time for matching)
+                        try:
+                            if isinstance(created_at_raw, str):
+                                created_at_dt = pl.Series([created_at_raw]).str.to_datetime().to_list()[0]
+                            else:
+                                created_at_dt = created_at_raw
+
+                            created_at_date = created_at_dt.date() if hasattr(created_at_dt, 'date') else created_at_dt
+
+                            if truck_num_clean:
+                                # Use tuple of (truck_number, date) as key
+                                key = (truck_num_clean, str(created_at_date))
+                                if key not in bay_data:
+                                    bay_data[key] = []
+                                bay_data[key].append({
+                                    "assigned_bay": bay_record.get("assigned_bay"),
+                                    "reassigned_bay": bay_record.get("reassigned_bay"),
+                                    "reassign_loaded_qty": bay_record.get("reassign_loaded_qty")
+                                })
+                        except Exception as date_err:
+                            continue
+
+            except Exception as bay_err:
+                import traceback
+                traceback.print_exc()
+
+        # ============================================================================
+        # END BAY RE-ASSIGNMENT DATA LOOKUP
+        # ============================================================================
+
+        # Group by sap_id and location_name for aggregations
+        result_df = (
+            df.group_by(["sap_id", "location_name"])
+            .agg([
+                pl.sum("dg_qty").alias("dg"),
+                pl.sum("tank_truck_qty").alias("tank_truck"),
+                pl.sum("prover_qty").alias("prover"),
+                pl.sum("loaded_qty").alias("total_loaded_qty")
+            ])
+            .sort(["sap_id", "location_name"])
+        )
+
+        # Get pattern analysis thresholds from config
+        min_trucks_per_hour = PATTERN_ANALYSIS_CONFIG["local_loading_repeated"]["min_trucks_per_hour"]
+        min_days_for_pattern = PATTERN_ANALYSIS_CONFIG["particular_time_of_day"]["min_days_for_pattern"]
+        min_occurrence_ratio = PATTERN_ANALYSIS_CONFIG["particular_time_of_day"]["min_occurrence_ratio"]
+        unique_product_count = PATTERN_ANALYSIS_CONFIG["particular_product"]["unique_count"]
+
+        # Analyze patterns for each sap_id
+        pattern_analysis = []
+
+        for row in result_df.iter_rows(named=True):
+            sap_id_val = row.get("sap_id")
+            location_name_val = row.get("location_name")
+
+            # Filter data for this specific sap_id and location
+            location_df = df.filter(
+                (pl.col("sap_id") == sap_id_val) &
+                (pl.col("location_name") == location_name_val)
+            )
+
+            # 1. Check for repeated loading (configurable threshold)
+            local_loading_repeated = False
+            if "hour_window" in location_df.columns:
+                trucks_per_hour = (
+                    location_df.group_by("hour_window")
+                    .agg(pl.count().alias("truck_count"))
+                )
+                if not trucks_per_hour.is_empty():
+                    max_trucks_in_hour = trucks_per_hour.select(pl.max("truck_count")).item()
+                    local_loading_repeated = max_trucks_in_hour >= min_trucks_per_hour
+
+            # 2. Check for particular time of day (configurable thresholds)
+            particular_time_of_day = False
+            if "load_hour" in location_df.columns and "load_date" in location_df.columns:
+                # Get unique dates
+                unique_dates = location_df.select(pl.col("load_date").unique()).to_series().to_list()
+
+                if len(unique_dates) >= min_days_for_pattern:
+                    # Count trucks per hour
+                    hour_frequency = (
+                        location_df.group_by("load_hour")
+                        .agg(pl.count().alias("hour_count"))
+                        .sort("hour_count", descending=True)
+                    )
+
+                    if not hour_frequency.is_empty():
+                        # Get most frequent hour and its count
+                        most_frequent_hour_count = hour_frequency.select(pl.first("hour_count")).item()
+
+                        # If the most frequent hour appears on multiple days, it's a pattern
+                        if most_frequent_hour_count >= max(min_days_for_pattern,
+                                                           len(unique_dates) * min_occurrence_ratio):
+                            particular_time_of_day = True
+
+            # 3. Check for particular product (configurable unique count)
+            particular_product = False
+            if "recipe_name" in location_df.columns:
+                # Get unique non-null recipe names
+                unique_recipes = (
+                    location_df.filter(pl.col("recipe_name").is_not_null())
+                    .select(pl.col("recipe_name").unique())
+                    .to_series()
+                    .to_list()
+                )
+
+                # Filter out empty strings
+                unique_recipes = [r for r in unique_recipes if r and str(r).strip() != ""]
+
+                # Check against configured unique count
+                particular_product = len(unique_recipes) == unique_product_count
+
+            # 4. Check for bay assignments
+            # Get all trucks for this location from host_local_loaded_tts (already cleaned - no spaces)
+            location_trucks_df = location_df.select(["truck_number_clean", "load_date"]).unique()
+
+            assigned_at_particular_bay = False  # Default to False if no match found
+
+            # Search for truck + date match in host_bay_re_assignment
+            for truck_row in location_trucks_df.iter_rows(named=True):
+                truck = truck_row.get("truck_number_clean")
+                load_date = truck_row.get("load_date")
+
+                if not truck:
+                    continue
+
+                # Create key to lookup in bay_data (truck_number, date)
+                key = (truck, str(load_date))
+
+                if key in bay_data:
+                    # Found matching truck_number AND created_at (date)
+                    bay_info = bay_data[key][0]  # Take first record if multiple
+
+                    assigned_at_particular_bay = {
+                        "truck_number": truck,
+                        "assigned_bay": bay_info.get("assigned_bay"),
+                        "reassigned_bay": bay_info.get("reassigned_bay"),
+                        "reassign_loaded_qty": bay_info.get("reassign_loaded_qty")
+                    }
+
+                    break  # Stop after finding first match
+
+            pattern_analysis.append({
+                "sap_id": sap_id_val,
+                "location_name": location_name_val,
+                "total_loaded_qty": row.get("total_loaded_qty", 0),
+                "breakdown": {
+                    "dg": row.get("dg", 0),
+                    "tank_truck": row.get("tank_truck", 0),
+                    "prover": row.get("prover", 0)
+                },
+                "local_loading_repeated": local_loading_repeated,
+                "particular_time_of_day": particular_time_of_day,
+                "particular_product": particular_product,
+                "assigned_at_particular_bay": assigned_at_particular_bay
+            })
+
+        return pattern_analysis
+
+    except Exception as e:
+        print(f"Error fetching location-wise total loaded qty: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
+
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
     "Location Alert Critical": location_alert_critical,
     "Critical Alerts By Equipment":critical_alerts_by_equipment,
     "Tas Alerts Exception Report" :tas_alerts_exception_report,
-    "Equipment Location Wise Count": equipment_location_wise_count
+    "Equipment Location Wise Count": equipment_location_wise_count,
+    "Location Wise Total Loaded Qty": location_wise_total_loaded_qty
 
 }
 
