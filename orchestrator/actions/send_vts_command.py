@@ -101,15 +101,15 @@ class SendVtsCommand:
                     alert_data["action_type"] = "BlockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"blocked": False}
-                # if blocking_status and blocking_status.get("Response", {}).get("Status") not in ['S']:
-                #     logger.error(f"Blocking Payload Not posted to SAP {alert_data}")
-                #     alert_message = (
-                #         f"{blocking_status.get("Response", {}).get("Remark")}"
-                #     )
-                #     alert_data["action_msg"] = alert_message
-                #     alert_data["action_type"] = "BlockFailed"
-                #     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
-                #     return True, {"blocked": False}
+                if blocking_status and blocking_status.get("Response", {}).get("Status") not in ['S']:
+                    logger.error(f"Blocking Payload Not posted to SAP {alert_data}")
+                    alert_message = (
+                        f"{blocking_status.get("Response", {}).get("Remark")}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "BlockFailed"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"blocked": False}
 
             alert_message = (
                 f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Block, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to block the Vehicle "
@@ -189,15 +189,15 @@ class SendVtsCommand:
                     alert_data["action_type"] = "UnblockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
-                # if unblocking_status and unblocking_status.get("Response", {}).get("Status") not in ['S']:
-                #     logger.error(f"UnBlocking Payload Not posted to SAP {alert_data}")
-                #     alert_message = (
-                #         f"{unblocking_status.get("Response", {}).get("Remark")}"
-                #     )
-                #     alert_data["action_msg"] = alert_message
-                #     alert_data["action_type"] = "UnblockFailed"
-                #     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
-                #     return True, {"unblocked": False}
+                if unblocking_status and unblocking_status.get("Response", {}).get("Status") not in ['S']:
+                    logger.error(f"UnBlocking Payload Not posted to SAP {alert_data}")
+                    alert_message = (
+                        f"{unblocking_status.get("Response", {}).get("Remark")}"
+                    )
+                    alert_data["action_msg"] = alert_message
+                    alert_data["action_type"] = "UnblockFailed"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    return True, {"unblocked": False}
                         
             if not params['auto_unblock']:
                 if alert_data['interlock_name'] not in ['No VTS No Load', 'Itdg Admin Blocked']:
