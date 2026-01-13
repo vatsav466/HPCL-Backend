@@ -48,7 +48,7 @@ async def get_vts_sod_blocked_counts():
     sod_query = f"""SELECT
                         CASE violation_type
                             WHEN 'route_deviation_count'      THEN 'Route Deviation'
-                            WHEN 'power_disconnection_count'  THEN 'Power Disconnection'
+                            WHEN 'main_supply_removal_count'  THEN 'Power Disconnection'
                             WHEN 'device_tamper_count'        THEN 'Device Tampering'
                             WHEN 'stoppage_violations_count'  THEN 'Stoppage Violation'
                             WHEN 'night_driving_count'        THEN 'Night Driving Violation'
@@ -99,7 +99,7 @@ async def get_vts_sod_blocked_counts():
                     ORDER BY
                         CASE violation_type
                             WHEN 'route_deviation_count'      THEN 1
-                            WHEN 'power_disconnection_count'  THEN 2
+                            WHEN 'main_supply_removal_count'  THEN 2
                             WHEN 'device_tamper_count'        THEN 3
                             WHEN 'stoppage_violations_count'  THEN 4
                             WHEN 'night_driving_count'        THEN 5
@@ -421,7 +421,7 @@ async def sod_percentage():
         date = urdhva_base.utilities.get_present_time()
         date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False, date_time_format=None)
         month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True, date_time_format="%Y-%m-%d")
-        date_filter = f"timestamp::DATE >= '{month_start}' AND timestamp::DATE <= '{date_yes.strftime('%Y-%m-%d')}'" # As per HPCL request changed the date to be in the present month
+        date_filter = f"timestamp::DATE >= '{month_start}' AND timestamp::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"""
         query = f"""bu='TAS' AND {date_filter}"""
 
         print("*" * 200)
@@ -474,7 +474,6 @@ async def sod_percentage():
         print("FINAL DATAFRAME")
         print("*" * 200)
         print(final_df)
-        previous_date = date.today() - timedelta(days=1)
         avg_scores_df = (
             final_df
             .group_by(["sap_id", "name"])
@@ -488,11 +487,14 @@ async def sod_percentage():
             ]).with_columns(pl.col(pl.Float64).round(2))
         )
         print("avg_scores_df---->", avg_scores_df)
+        previous_date = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).date()
 
         prev_day_score_df = (
             final_df
-            .with_columns(pl.col("timestamp").cast(pl.Date))
-            .filter(pl.col("timestamp") == pl.lit(previous_date))
+            .with_columns(
+                pl.col("timestamp").dt.date().alias("ts_date")
+            )
+            .filter(pl.col("ts_date") == pl.lit(previous_date))
             .group_by(["sap_id", "zone"])
             .agg(
                 pl.mean("score").round(2).alias("previous_day_score")
@@ -523,7 +525,7 @@ async def sod_percentage():
         top_3_df = (
             avg_scores_df
             .sort("Average Score from Month start", descending=True)
-            .head(10).with_columns(pl.arange(1, pl.len() + 1).alias("SI No"))
+            .head(3).with_columns(pl.arange(1, pl.len() + 1).alias("SI No"))
         )
 
         bottom_3_df = (
