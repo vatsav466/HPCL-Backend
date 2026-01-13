@@ -48,7 +48,7 @@ async def get_vts_sod_blocked_counts():
     sod_query = f"""SELECT
                         CASE violation_type
                             WHEN 'route_deviation_count'      THEN 'Route Deviation'
-                            WHEN 'power_disconnection_count'  THEN 'Power Disconnection'
+                            WHEN 'main_supply_removal_count'  THEN 'Power Disconnection'
                             WHEN 'device_tamper_count'        THEN 'Device Tampering'
                             WHEN 'stoppage_violations_count'  THEN 'Stoppage Violation'
                             WHEN 'night_driving_count'        THEN 'Night Driving Violation'
@@ -99,7 +99,7 @@ async def get_vts_sod_blocked_counts():
                     ORDER BY
                         CASE violation_type
                             WHEN 'route_deviation_count'      THEN 1
-                            WHEN 'power_disconnection_count'  THEN 2
+                            WHEN 'main_supply_removal_count'  THEN 2
                             WHEN 'device_tamper_count'        THEN 3
                             WHEN 'stoppage_violations_count'  THEN 4
                             WHEN 'night_driving_count'        THEN 5
