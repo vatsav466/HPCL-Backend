@@ -417,11 +417,12 @@ async def get_sod_day_wise_trends(by_plant=False, by_day=True, by_month=False, t
 
 async def sod_percentage():
     try:
-        query = (
-            "bu = 'TAS' "
-            "AND timestamp::date >= date_trunc('month', current_date) "
-            "AND timestamp::date < current_date"
-        )
+        # Making sure alerts considering only after May 31st in prod
+        date = urdhva_base.utilities.get_present_time()
+        date_yes = helpers.get_time_stamp_by_delta(date, days=1, with_month_start_day=False, date_time_format=None)
+        month_start = helpers.get_time_stamp_by_delta(date_yes, days=0, with_month_start_day=True, date_time_format="%Y-%m-%d")
+        date_filter = f"timestamp::DATE >= '{month_start}' AND timestamp::DATE <= '{date_yes.strftime('%Y-%m-%d')}'" # As per HPCL request changed the date to be in the present month
+        query = f"""bu='TAS' AND {date_filter}"""
 
         print("*" * 200)
         print(query)
