@@ -123,6 +123,9 @@ Enum AlertActionType str {
     BlockFailed='BlockFailed'
     UnblockFailed='UnblockFailed'
     OngoingTrip='OngoingTrip'
+    BlockInitiated='BlockInitiated'
+    UnBlockInitiated='UnBlockInitiated'
+    Remarks='Remarks'
 }
 
 Enum IndentStatus str {
@@ -864,6 +867,14 @@ Model Alerts {
         skip optional int
         limit optional int
         filters optional list DataFilters
+    }
+
+    Action=> add_rca_reason {
+        alert_id str
+        reason str
+    }
+
+    Action=> day_end_closure {
     }
 
     Action=> upload_document {
