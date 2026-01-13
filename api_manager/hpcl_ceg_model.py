@@ -1576,7 +1576,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     action_on: Mapped[typing.Optional[typing.Any]] = mapped_column("action_on", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     remarks_unblocked: Mapped[typing.Optional[str]] = mapped_column("remarks_unblocked", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     file_uploaded_path: Mapped[typing.Optional[str]] = mapped_column("file_uploaded_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    block_status: Mapped[typing.Optional[typing.Any]] = mapped_column("block_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    block_status: Mapped[typing.Optional[typing.Any]] = mapped_column("block_status", String, index=True, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -2820,6 +2820,24 @@ class Indentdryout_Unblock_OutletParams(pydantic.BaseModel):
 class Indentdryout_Block_RoParams(pydantic.BaseModel):
     ro_code: str
     remarks_blocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Bulk_Outlet_BlockParams(pydantic.BaseModel):
+    alert_id: typing.List[str]
+    reason: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Bulk_Outlet_UnblockParams(pydantic.BaseModel):
+    alert_id: typing.List[str]
+    reason: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

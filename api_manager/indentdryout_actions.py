@@ -1494,3 +1494,45 @@ async def indentdryout_block_ro(data: Indentdryout_Block_RoParams):
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": "Failed To Block The RO"}
+
+
+# Action bulk_outlet_block
+@router.post('/bulk_outlet_block', tags=['IndentDryOut'])
+async def indentdryout_bulk_outlet_block(data: Indentdryout_Bulk_Outlet_BlockParams):
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        alert_data = {}
+        alert_data["task_type"] = "block outlets"
+        alert_data["alert_ids"] = data.alert_id
+        alert_data['reason'] = data.reason
+        alert_data['username'] = rpt.get('username')
+
+        redis_queue = urdhva_base.redispool.RedisQueue('ro_blocking_queue')
+        await redis_queue.put(json.dumps(alert_data))
+        return {"status": True, "message": "Outlet has been successfully blocked"}
+    except Exception:
+        print(traceback.format_exc())
+        return {"status": False, "message": "Failed to block the Outlet"}
+
+
+# Action bulk_outlet_unblock
+@router.post('/bulk_outlet_unblock', tags=['IndentDryOut'])
+async def indentdryout_bulk_outlet_unblock(data: Indentdryout_Bulk_Outlet_UnblockParams):
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {"status": False, "message": "Session got expired, Please Re-Login"}
+        alert_data = {}
+        alert_data["task_type"] = "unblock outlets"
+        alert_data["alert_ids"] = data.alert_id
+        alert_data['reason'] = data.reason
+        alert_data['username'] = rpt.get('username')
+
+        redis_queue = urdhva_base.redispool.RedisQueue('ro_blocking_queue')
+        await redis_queue.put(json.dumps(alert_data))
+        return {"status": True, "message": "Outlet has been successfully unblocked"}
+    except Exception:
+        print(traceback.format_exc())
+        return {"status": False, "message": "Failed to unblock the Outlet"}

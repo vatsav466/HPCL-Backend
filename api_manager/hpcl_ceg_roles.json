@@ -1775,6 +1775,12 @@
                     "name": "block_ro"
                 },
                 {
+                    "name": "bulk_outlet_block"
+                },
+                {
+                    "name": "bulk_outlet_unblock"
+                },
+                {
                     "name": "get_dried_out_ro_data"
                 },
                 {
@@ -2001,6 +2007,12 @@
                 },
                 {
                     "name": "block_ro"
+                },
+                {
+                    "name": "bulk_outlet_block"
+                },
+                {
+                    "name": "bulk_outlet_unblock"
                 },
                 {
                     "name": "get_dried_out_ro_data"
@@ -8211,6 +8223,14 @@
         {
             "name": "block_ro",
             "displayName": "block_ro"
+        },
+        {
+            "name": "bulk_outlet_block",
+            "displayName": "bulk_outlet_block"
+        },
+        {
+            "name": "bulk_outlet_unblock",
+            "displayName": "bulk_outlet_unblock"
         },
         {
             "name": "get_dried_out_ro_data",
