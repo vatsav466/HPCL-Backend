@@ -1491,6 +1491,13 @@ async def indentdryout_block_ro(data: Indentdryout_Block_RoParams):
         print('alert_data',alert_data)
         print('*'*200)
         await alert_factory.AlertFactory().create_alert(alert_data, camunda_url)
+        query = ("select sap_id, id from alerts where sap_id='{alert_data.sap_id}' "
+                 "AND interlock_name='Restroom Cleaning Evidence Missing' "
+                 "AND alert_status='Open' order by created_at desc limit 1")
+        resp = await Alerts.get_aggr_data(query)
+        if resp['data']:
+            payload = Indentdryout_Block_OutletParams(block_id=resp['data'][0]['id'], remarks_blocked=data.remarks_blocked)
+            await indentdryout_block_outlet(payload)
         return {"status": True, "message": "RO has been successfully blocked"}
     except Exception as e:
         print(traceback.format_exc())
