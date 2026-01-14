@@ -1206,11 +1206,13 @@ async def alerts_day_end_closure(data: Alerts_Day_End_ClosureParams):
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
             return {"status": False, "message": "Session got expired, Please Re-Login"}
-        
+        print("Unblocking all blocked alerts")
         await ro_analysis.close_ro_va_cleanliness_unblock_of_blocked(day_end=True)
+        print("Closing all pending non blocked alerts")
         await ro_analysis.close_ro_va_cleanliness_open_alerts(day_end=True)
         return {"status": True, "message": "Successfully Closed All Alerts"}
     except Exception as e:
+        print(traceback.format_exc())
         return {
             "status": False,
             "message": "Failed at day end closure",

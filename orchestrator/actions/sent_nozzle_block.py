@@ -95,7 +95,7 @@ class SendNozzleCommand:
                                                "block_status": hpcl_ceg_enum.BlockStatus.UnBlocked,
                                                "alert_closure_reason": "UNBLOCK_NO_CONNECTIVITY",
                                                "ro_offline": True}).modify()
-                return True, {"unblocked": False, "offline": True}
+                return True, {"unblocked": True, "offline": True}
             if not unblocking_status:
                 alert_message = (
                     f"Failed to Unblock the Outlet {alert_data.get('location_name', '')}, status: Failed, RO: {alert_data.get('sap_id', '')}"

@@ -212,7 +212,10 @@ async def get_ro_va_cleanliness_total_count():
     return len(resp)
 
 async def close_ro_va_cleanliness_unblock_of_blocked(day_end=False):
-    rpt = urdhva_base.context.context.get('rpt', {})
+    if urdhva_base.ctx.exists():
+        rpt = urdhva_base.context.context.get('rpt', {})
+    else:
+        rpt = {}
     query = f"""select * from alerts where interlock_name='Restroom Cleaning Evidence Missing'
                     and created_at::date = current_date and block_status = 'Blocked' and alert_status!='Close'"""
     resp = await hpcl_ceg_model.Alerts.get_aggr_data(query,limit=0)
@@ -261,7 +264,10 @@ async def close_ro_va_cleanliness_unblock_of_blocked(day_end=False):
     return len(resp)
 
 async def close_ro_va_cleanliness_open_alerts(day_end=False):
-    rpt = urdhva_base.context.context.get('rpt', {})
+    if urdhva_base.ctx.exists():
+        rpt = urdhva_base.context.context.get('rpt', {})
+    else:
+        rpt = {}
     query = f"""
                 SELECT *
                 FROM alerts
