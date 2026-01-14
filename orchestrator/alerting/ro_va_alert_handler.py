@@ -94,8 +94,8 @@ class ROVaAlertHandler(object):
         # CREATE ALERTS
         for rec in alerts_to_create:
             print("Creating new alert {}".format(rec.get("sap_id","")))
-            await redis_queue.put(json.dumps(rec))
-            #await cls.create_alert(rec)
+            # await redis_queue.put(json.dumps(rec))
+            await cls.create_alert(rec)
 
         # CLOSE / RESOLVE ALERTS
         for batch in chunked(alerts_to_update):
@@ -149,7 +149,7 @@ class ROVaAlertHandler(object):
                 ids = ",".join(f"'{i}'" for i in close_ids)
                 await hpcl_ceg_model.Alerts.update_by_query(
                     f"UPDATE alerts SET alert_status='Close', "
-                    f"alert_state = 'Resolved' "
+                    f"alert_state = 'Resolved', "
                     f"image_uploaded = true, "
                     f"alert_closure_reason = 'AUTO_CLOSE' WHERE id IN ({ids})"
                 )
