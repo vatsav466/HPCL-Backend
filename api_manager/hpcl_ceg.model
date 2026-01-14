@@ -1349,6 +1349,16 @@ Model IndentDryOut {
         remarks_blocked str
     }
 
+    Action=> bulk_outlet_block {
+        alert_id list str
+        reason str
+    }
+
+    Action=> bulk_outlet_unblock {
+        alert_id list str
+        reason str
+    }
+
     Action=> get_dried_out_ro_data {
         filters list IndentDryOutDataFilters
     }

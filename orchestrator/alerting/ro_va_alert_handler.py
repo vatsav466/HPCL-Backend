@@ -3,6 +3,8 @@ import hpcl_ceg_model
 import hpcl_ceg_enum
 import traceback
 import datetime
+import json
+import urdhva_base.redispool
 import utilities.helpers as helpers
 import orchestrator.alerting.alert_factory as alert_factory
 
@@ -72,6 +74,7 @@ class ROVaAlertHandler(object):
         """
         data → MasterList [{ ro_code: "xxxx" }]
         """
+        redis_queue = urdhva_base.redispool.RedisQueue('ro_va_listener')
         pending_alerts = await cls.get_existing_alerts()
         pending_map = {rec["sap_id"]: rec for rec in pending_alerts}
 
@@ -91,7 +94,8 @@ class ROVaAlertHandler(object):
         # CREATE ALERTS
         for rec in alerts_to_create:
             print("Creating new alert {}".format(rec.get("sap_id","")))
-            await cls.create_alert(rec)
+            await redis_queue.put(json.dumps(rec))
+            #await cls.create_alert(rec)
 
         # CLOSE / RESOLVE ALERTS
         for batch in chunked(alerts_to_update):
