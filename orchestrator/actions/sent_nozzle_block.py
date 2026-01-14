@@ -47,6 +47,7 @@ class SendNozzleCommand:
                 alert_data["action_type"] = "Offline"
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                                               "block_status": None,
                                                "ro_offline": True}).modify()
                 return True, {"blocked": False, "offline": True}
             if not blocking_status:
@@ -90,6 +91,7 @@ class SendNozzleCommand:
                 alert_data["action_type"] = "Offline"
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                                               "block_status": hpcl_ceg_enum.BlockStatus.Blocked,
                                                "ro_offline": True}).modify()
                 return True, {"unblocked": False, "offline": True}
             if not unblocking_status:
