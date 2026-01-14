@@ -1576,7 +1576,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     action_on: Mapped[typing.Optional[typing.Any]] = mapped_column("action_on", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     remarks_unblocked: Mapped[typing.Optional[str]] = mapped_column("remarks_unblocked", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     file_uploaded_path: Mapped[typing.Optional[str]] = mapped_column("file_uploaded_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    block_status: Mapped[typing.Optional[typing.Any]] = mapped_column("block_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    block_status: Mapped[typing.Optional[typing.Any]] = mapped_column("block_status", String, index=True, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -7250,6 +7250,18 @@ class Performancescore_Download_Performance_ScoreParams(pydantic.BaseModel):
     strategy: str
     filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
     is_plant: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Performancescore_Performance_Score_BreakdownParams(pydantic.BaseModel):
+    bu: str
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    end_date: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
