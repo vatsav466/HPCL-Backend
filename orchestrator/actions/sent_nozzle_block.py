@@ -38,7 +38,7 @@ class SendNozzleCommand:
                 blocking_status 
                 and isinstance(failed_resp,list) 
                 and failed_resp
-                and failed_resp[0].get('RoCode','') in ['Outlet Not Communicating']
+                and failed_resp[0].get(alert_data.get('sap_id','')) in ['Outlet Not Communicating']
                 ):
                 alert_message = (
                     f"Outlet Not Communicating"
@@ -81,7 +81,7 @@ class SendNozzleCommand:
                 unblocking_status 
                 and isinstance(failed_resp,list) 
                 and failed_resp
-                and failed_resp[0].get('RoCode','') in ['Outlet Not Communicating']
+                and failed_resp[0].get(alert_data.get('sap_id','')) in ['Outlet Not Communicating']
                 ):
                 alert_message = (
                     f"Outlet Not Communicating"
