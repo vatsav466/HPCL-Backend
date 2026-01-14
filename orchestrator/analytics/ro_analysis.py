@@ -211,7 +211,7 @@ async def get_ro_va_cleanliness_total_count():
     
     return len(resp)
 
-async def close_ro_va_cleanliness_unblock_of_blocked():
+async def close_ro_va_cleanliness_unblock_of_blocked(day_end=False):
     rpt = urdhva_base.context.context.get('rpt', {})
     query = f"""select * from alerts where interlock_name='Restroom Cleaning Evidence Missing'
                     and created_at::date = current_date and block_status = 'Blocked' and alert_status!='Close'"""
@@ -251,13 +251,16 @@ async def close_ro_va_cleanliness_unblock_of_blocked():
             "action_by": rpt.get('username','SYSTEM'),
             "processed_time": event_time_utc.isoformat()
         })
-        await hpcl_ceg_model.Alerts(**{
+        alert_data = {
             "id": data.get("id"),
             "alert_history": alert_history
-            }).modify()
+            }
+        if day_end:
+            alert_data["alert_closure_reason"] = "DAY_END"
+        await hpcl_ceg_model.Alerts(**alert_data).modify()
     return len(resp)
 
-async def close_ro_va_cleanliness_open_alerts():
+async def close_ro_va_cleanliness_open_alerts(day_end=False):
     rpt = urdhva_base.context.context.get('rpt', {})
     query = f"""
                 SELECT *
@@ -292,18 +295,21 @@ async def close_ro_va_cleanliness_open_alerts():
             "action_by": rpt.get('username','SYSTEM'),
             "processed_time": event_time_utc.isoformat()
         })
-        await hpcl_ceg_model.Alerts(**{
+        alert_data = {
             "id": data.get("id"),
             "alert_history": alert_history,
             "alert_status": "Close",
             "alert_state": "Resolved"
-        }).modify()
+        }
+        if day_end:
+            alert_data["alert_closure_reason"] = "DAY_END"
+        await hpcl_ceg_model.Alerts(**alert_data).modify()
     return len(resp)
 
 async def ro_va_day_end_closure():
     try:
         await close_ro_va_cleanliness_unblock_of_blocked()
-        await close_ro_va_cleanliness_open_alerts()
+        await close_ro_va_cleanliness_open_alerts(day_end=True)
         return {"status": True, "message": "Successfully Closed All Alerts"}
     except Exception as e:
         return {
