@@ -247,10 +247,16 @@ async def locationmaster_location_command_control(data: Locationmaster_Location_
     location_name = location_data.get('name', '')
     return await tas_command_control.publish_command(data.sap_id, data.action, bu,
                                                      location_name, user_name, employee_id, "1")
-
-
+    
+    
 # Action get_dist_loc_details
 @router.post('/get_dist_loc_details', tags=['LocationMaster'])
 async def locationmaster_get_dist_loc_details(data: Locationmaster_Get_Dist_Loc_DetailsParams):
     return await sod_location_stats.get_filtered_location_data(bu=data.bu, location_onboard=data.location_onboard, 
                                                                 specific_zone=data.zone, specific_sap_id=data.plant)
+
+
+# Action get_pipeline_locations
+@router.post('/get_pipeline_locations', tags=['LocationMaster'])
+async def locationmaster_get_pipeline_locations():
+     return await pipeline_details.get_pipeline_locations()

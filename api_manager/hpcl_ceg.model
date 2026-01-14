@@ -447,6 +447,10 @@ Model LocationMaster {
         location_onboard optional bool
     }
 
+    Action=> get_pipeline_locations {
+
+    }
+
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,zone,region,sales_area,sap_id'
