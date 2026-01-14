@@ -299,3 +299,15 @@ async def close_ro_va_cleanliness_open_alerts():
             "alert_state": "Resolved"
         }).modify()
     return len(resp)
+
+async def ro_va_day_end_closure():
+    try:
+        await close_ro_va_cleanliness_unblock_of_blocked()
+        await close_ro_va_cleanliness_open_alerts()
+        return {"status": True, "message": "Successfully Closed All Alerts"}
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed at day end closure",
+            "error": str(e)
+        }
