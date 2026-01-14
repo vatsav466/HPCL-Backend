@@ -74,7 +74,7 @@ class ROVaAlertHandler(object):
         """
         data → MasterList [{ ro_code: "xxxx" }]
         """
-        redis_queue = urdhva_base.redispool.RedisQueue('ro_va_listener')
+        redis_queue = urdhva_base.redispool.RedisQueue('ro_va_queue')
         pending_alerts = await cls.get_existing_alerts()
         pending_map = {rec["sap_id"]: rec for rec in pending_alerts}
 
