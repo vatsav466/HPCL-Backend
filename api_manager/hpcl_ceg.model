@@ -865,6 +865,7 @@ Model Alerts {
     remarks_unblocked optional str
     file_uploaded_path optional str
     block_status optional index_field BlockStatus
+    image_uploaded optional bool
 
     Action=> alert_action {
         bu optional str

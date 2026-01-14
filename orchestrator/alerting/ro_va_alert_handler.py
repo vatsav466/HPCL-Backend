@@ -74,7 +74,7 @@ class ROVaAlertHandler(object):
         """
         data → MasterList [{ ro_code: "xxxx" }]
         """
-        redis_queue = urdhva_base.redispool.RedisQueue('ro_va_listener')
+        redis_queue = urdhva_base.redispool.RedisQueue('ro_va_queue')
         pending_alerts = await cls.get_existing_alerts()
         pending_map = {rec["sap_id"]: rec for rec in pending_alerts}
 
@@ -148,7 +148,7 @@ class ROVaAlertHandler(object):
             if close_ids:
                 ids = ",".join(f"'{i}'" for i in close_ids)
                 await hpcl_ceg_model.Alerts.update_by_query(
-                    f"UPDATE alerts SET alert_status='Close', alert_state = 'Resolved' WHERE id IN ({ids})"
+                    f"UPDATE alerts SET alert_status='Close', alert_state='Resolved', image_uploaded='true' WHERE id IN ({ids})"
                 )
 
             if resolve_ids:

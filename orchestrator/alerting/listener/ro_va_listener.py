@@ -90,4 +90,4 @@ if __name__ == "__main__":
         print("Invalid arguments")
         usage()
         sys.exit(-1)
-    asyncio.run(ROVAListener(sys.argv[1], "ro_va_listener").listener())
+    asyncio.run(ROVAListener(sys.argv[1], "ro_va_queue").listener())
