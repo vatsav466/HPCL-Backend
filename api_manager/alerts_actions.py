@@ -1207,8 +1207,8 @@ async def alerts_day_end_closure(data: Alerts_Day_End_ClosureParams):
         if not rpt:
             return {"status": False, "message": "Session got expired, Please Re-Login"}
         
-        await ro_analysis.close_ro_va_cleanliness_unblock_of_blocked()
-        await ro_analysis.close_ro_va_cleanliness_open_alerts()
+        await ro_analysis.close_ro_va_cleanliness_unblock_of_blocked(day_end=True)
+        await ro_analysis.close_ro_va_cleanliness_open_alerts(day_end=True)
         return {"status": True, "message": "Successfully Closed All Alerts"}
     except Exception as e:
         return {

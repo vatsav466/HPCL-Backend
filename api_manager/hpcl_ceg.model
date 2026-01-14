@@ -785,6 +785,7 @@ Model Alerts {
     maintenance_time optional str
     closed_at optional datetime
     cause_effect optional str
+    alert_closure_reason optional str
 
     //tas keys
     tt_load_number optional str
