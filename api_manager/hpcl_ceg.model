@@ -447,6 +447,10 @@ Model LocationMaster {
         location_onboard optional bool
     }
 
+    Action=> get_pipeline_locations {
+
+    }
+
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,zone,region,sales_area,sap_id'
@@ -2657,6 +2661,13 @@ Model PerformanceScore {
         strategy str
         filters optional list WidgetFilters
         is_plant optional bool
+    }
+    Action=> performance_score_breakdown {
+        bu str
+        name optional str
+        zone optional str  
+        start_date optional str
+        end_date optional str     
     }
 
     Config=> {

@@ -7274,6 +7274,18 @@ class Performancescore_Download_Performance_ScoreParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Performancescore_Performance_Score_BreakdownParams(pydantic.BaseModel):
+    bu: str
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    end_date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class PerformanceScoreHistorySchema(UrdhvaPostgresBase):
     __tablename__ = 'performance_score_history'
     

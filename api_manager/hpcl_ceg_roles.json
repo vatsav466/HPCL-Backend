@@ -5109,6 +5109,9 @@
                 },
                 {
                     "name": "download_performance_score"
+                },
+                {
+                    "name": "performance_score_breakdown"
                 }
             ]
         },
@@ -5157,6 +5160,9 @@
                 },
                 {
                     "name": "download_performance_score"
+                },
+                {
+                    "name": "performance_score_breakdown"
                 }
             ]
         },
@@ -8343,6 +8349,10 @@
         {
             "name": "download_performance_score",
             "displayName": "download_performance_score"
+        },
+        {
+            "name": "performance_score_breakdown",
+            "displayName": "performance_score_breakdown"
         },
         {
             "name": "update_ro_master_data",

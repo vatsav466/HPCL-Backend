@@ -1213,7 +1213,7 @@ async def alerts_day_end_closure(data: Alerts_Day_End_ClosureParams):
     except Exception as e:
         return {
             "status": False,
-            "message": "Failed to update remarks",
+            "message": "Failed at day end closure",
             "error": str(e)
         }
 

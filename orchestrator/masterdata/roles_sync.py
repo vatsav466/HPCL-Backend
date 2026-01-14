@@ -226,6 +226,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Terminal Automation"
                     }
                 ]
             },
@@ -254,6 +257,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Terminal Automation"
                     }
                 ]
             },
@@ -282,6 +288,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Terminal Automation"
                     }
                 ]
             },
@@ -318,6 +327,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Terminal Automation"
                     }
                 ]
             },
@@ -346,6 +358,9 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Terminal Automation"
                     }
                 ]
             },

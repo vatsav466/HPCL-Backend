@@ -38,7 +38,7 @@ class SendNozzleCommand:
                 blocking_status 
                 and isinstance(failed_resp,list) 
                 and failed_resp
-                and failed_resp[0].get('RoCode','') in ['Outlet Not Communicating']
+                and failed_resp[0].get(alert_data.get('sap_id','')) in ['Outlet Not Communicating']
                 ):
                 alert_message = (
                     f"Outlet Not Communicating"
@@ -47,6 +47,7 @@ class SendNozzleCommand:
                 alert_data["action_type"] = "Offline"
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                                               "block_status": None,
                                                "ro_offline": True}).modify()
                 return True, {"blocked": False, "offline": True}
             if not blocking_status:
@@ -81,7 +82,7 @@ class SendNozzleCommand:
                 unblocking_status 
                 and isinstance(failed_resp,list) 
                 and failed_resp
-                and failed_resp[0].get('RoCode','') in ['Outlet Not Communicating']
+                and failed_resp[0].get(alert_data.get('sap_id','')) in ['Outlet Not Communicating']
                 ):
                 alert_message = (
                     f"Outlet Not Communicating"
@@ -90,6 +91,7 @@ class SendNozzleCommand:
                 alert_data["action_type"] = "Offline"
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                                               "block_status": hpcl_ceg_enum.BlockStatus.Blocked,
                                                "ro_offline": True}).modify()
                 return True, {"unblocked": False, "offline": True}
             if not unblocking_status:
