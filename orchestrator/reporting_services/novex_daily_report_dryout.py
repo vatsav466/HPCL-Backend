@@ -75,7 +75,9 @@ async def publish_daily_novex_status_email():
     #status_data.update(await get_vts_route_deviation())
     status_data.update(await lpg_data.lpg_top_bottom_score_plants())
     status_data.update(await lpg_data.get_vts_lpg_blocked_counts())
-    status_data.update(await sod_data.get_vts_tas_blocked_counts())
+    status_data.update(await sod_data.get_vts_sod_blocked_counts())
+    #status_data.update(await sod_data.get_vts_tas_blocked_counts())
+    status_data.update(await sod_data.sod_percentage())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data.get_alert_data(alert_section))
@@ -129,6 +131,10 @@ async def publish_daily_novex_status_email():
         cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
         bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com"],
         notification_data=status_data,
+        inline_images={
+            "monthly_score_path": f"{status_data.get('sod_monthly_score_path')}",
+            "plant_wise_score_path": f"{status_data.get('sod_plant_wise_score_df_path')}"
+        },
         attachments = [status_data.get('zone_wise_pdf_path')]
     )
     await send_notification(

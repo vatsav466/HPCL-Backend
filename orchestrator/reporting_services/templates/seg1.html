@@ -306,37 +306,24 @@
             </tbody>
         </table>
     </div>
-<h5>4.2. SOD VTS Governance ({{present_month}})</h5>
+<h4>4.2 SOD VTS Governance ({{present_month}})</h4>
 <table>
-    <tr>
-        <th>
-            TTs Blocked by Novex
-        </th>
-        <th>
-            TTs Manually Unblocked
-        </th>
-        <th>
-            TTs unblocked as per ITDG
-        </th>
-        <th>
-            TTs currently under Block
-        </th>
-    </tr>
-
-    <tr>
-        <td>
-            {{TTs_Blocked_by_Novex_TAS}}
-        </td>
-        <td>
-            {{TTs_Manually_Unblocked_TAS}}
-        </td>
-        <td>
-            {{TTs_Auto_Unblocked_TAS}}
-        </td>
-        <td>
-            {{TTs_currently_under_Block_TAS}}
-        </td>
-    </tr>
+    <thead>
+        <tr>
+            <th>TTs Blocked by Novex</th>
+            <th>TTs Manually Unblocked</th>
+            <th>TTs unblocked as per ITDG</th>
+            <th>TTs currently under Block</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ sod_blocked_data_resp.TTs_Blocked_by_Novex_SOD }}</td>
+            <td>{{ sod_blocked_data_resp.TTs_Manually_Unblocked_SOD }}</td>
+            <td>{{ sod_blocked_data_resp.TTs_Auto_Unblocked_SOD }}</td>
+            <td>{{ sod_blocked_data_resp.TTs_currently_under_Block_SOD }}</td>
+        </tr>
+    </tbody>
 </table>
 <script>
     window.onload = function () {
