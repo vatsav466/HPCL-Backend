@@ -114,7 +114,7 @@ async def get_vts_sod_blocked_counts():
     sod_blocked_data_resp = await function(query=sod_query)
     sod_blocked_data_resp = pd.DataFrame(sod_blocked_data_resp)
     
-    sod_blocked_data_resp = sod_blocked_data_resp.head(-1)
+    # sod_blocked_data_resp = sod_blocked_data_resp.head(-1)
     # Extract values from the first (and only) row safely
 
     if not sod_blocked_data_resp.empty:

@@ -802,7 +802,7 @@ class SendNotification:
                                                                     cc_recipients=self.cc_recipients,
                                                                     subject=self.subject, 
                                                                     body=self.body, 
-                                                                    force_send=True,
+                                                                    force_send=False,
                                                                     html_content=True)
                     return res
                 
@@ -865,7 +865,7 @@ class SendNotification:
                                                                     cc_recipients=self.cc_recipients,
                                                                     subject=self.subject,
                                                                     body=self.body, 
-                                                                    force_send=True,
+                                                                    force_send=False,
                                                                     html_content=True)
                     return res
             self.mail_recipients = ['default@example.com']
