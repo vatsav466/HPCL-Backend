@@ -94,8 +94,8 @@ class ROVaAlertHandler(object):
         # CREATE ALERTS
         for rec in alerts_to_create:
             print("Creating new alert {}".format(rec.get("sap_id","")))
-            # await redis_queue.put(json.dumps(rec))
-            await cls.create_alert(rec)
+            await redis_queue.put(json.dumps(rec))
+            #await cls.create_alert(rec)
 
         # CLOSE / RESOLVE ALERTS
         for batch in chunked(alerts_to_update):
