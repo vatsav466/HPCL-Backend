@@ -3203,13 +3203,13 @@ class VTSAnalyticsActions:
                     "RD": "sum",
                     "SV": "sum",
                     "US": "sum",
+                    "total_alerts": "sum",
+                    "total_unblocking_days": "sum",
                     "average_unblocking": "mean",
                     "shortage": "sum"
                 })
-                closing_cols = ["CD", "DT", "PD", "ND", "RD", "SV", "US"]
-
                 df["average_closing"] = (
-                    df[closing_cols].sum(axis=1) / len(closing_cols)
+                    df["total_alerts"] / df["total_unblocking_days"]
                 ).round(2)
 
             return {
