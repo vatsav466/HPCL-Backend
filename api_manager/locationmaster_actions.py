@@ -11,6 +11,7 @@ import urdhva_base.redispool
 import utilities.helpers as helpers
 from fastapi.responses import FileResponse
 import orchestrator.alerting.alert_helper as alert_helper
+import orchestrator.analytics.pipeline_details as pipeline_details
 import orchestrator.analytics.sod_location_stats as sod_location_stats
 import orchestrator.tas_operations.command_control as tas_command_control
 import orchestrator.masterdata.location_master_upload as location_master_upload
