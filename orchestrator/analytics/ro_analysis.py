@@ -410,6 +410,7 @@ async def generate_va_download_excel_report(data: hpcl_ceg_model.Alerts_Download
         {"alert_closure_reason": "Alert Closure Reason"},
         {"sap_id": "RO ID"},
         {"rca": "Comments"},
+        {"alert_status": "Alert Status"},
         {"block_status": "Block Status"},
         {"image_uploaded": "Image Uploaded"},
         {"created_at": "Alert Created Date"}
