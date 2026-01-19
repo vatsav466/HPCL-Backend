@@ -376,4 +376,6 @@ async def create_va_cleanliness_summary(data: hpcl_ceg_model.Alerts_Va_Cleanline
                                                  rec['alert_closure_reason'] == 'DNC_UNBLOCKED'])
     analytical_data['automatically_unblocked'] = sum([rec['count'] for rec in resp
                                                       if rec['alert_closure_reason'] == 'PICTURE_UPLOADED'])
+    analytical_data['no_connectivity'] = sum([rec['count'] for rec in resp
+                                                      if rec['alert_status'] == 'Open' and rec['ro_offline']])
     return True, analytical_data
