@@ -993,6 +993,13 @@ Model Alerts {
         cross_filters optional list WidgetFilters
     }
 
+    Action=> download_excel_report {
+        // Report model will help for data customization like for VA Cleanlines / TAS MFM / TAS ..
+        report_model str
+        // For Additional filters
+        cross_filters optional list WidgetFilters
+    }
+
     Config=> {
         crud_operations='read'
         // Access Key Mapping for RBAC,

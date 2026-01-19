@@ -309,6 +309,8 @@ async def close_ro_va_cleanliness_open_alerts(day_end=False):
         }
         if day_end:
             alert_data["alert_closure_reason"] = "DAY_END"
+        if alert_data['block_status'] == 'WaitingForBlockAck':
+            alert_data["block_status"] = None
         await hpcl_ceg_model.Alerts(**alert_data).modify()
     return len(resp)
 
@@ -323,3 +325,55 @@ async def ro_va_day_end_closure():
             "message": "Failed at day end closure",
             "error": str(e)
         }
+
+
+async def create_va_cleanliness_summary(data: hpcl_ceg_model.Alerts_Va_Cleanliness_SummaryParams):
+    query_extension = []
+    has_date = False
+    for extension in data.cross_filters:
+        if extension.key == 'created_at':
+            has_date = True
+            extension.key = "created_at::DATE"
+        query_extension.append(
+            f"{extension.key}='{extension.value if extension.value else extension.val}'")
+    if not has_date:
+        query_extension.append(f"created_at::DATE=CURRENT_DATE")
+    analytical_data = {
+        "total": 0,
+        "blocked": 0,
+        "unblocked": 0,
+        "waiting_block_confirmation": 0,
+        "waiting_sales_stop_confirmation": 0,
+        "waiting_unblock_confirmation": 0,
+        "waiting_sales_resume_confirmation": 0,
+        "manually_unblocked": 0,
+        "automatically_unblocked": 0,
+        "no_connectivity": 0,
+        "pending_unblocks": 0
+    }
+
+    # Query to get all required for the requested time period
+    query = f"""select distinct block_status, alert_status, alert_state, ro_offline, alert_closure_reason, COUNT(*) from alerts 
+        where interlock_name='Restroom Cleaning Evidence Missing' AND {' AND '.join(query_extension)} 
+        group by block_status, alert_status, alert_state, ro_offline,alert_closure_reason
+    """
+    query_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+    resp = query_data['data']
+    analytical_data['total'] = sum([rec['count'] for rec in resp])
+    analytical_data['blocked'] = sum([rec['count'] for rec in resp
+                                      if rec['block_status'] == 'Blocked'])
+    analytical_data['unblocked'] = sum([rec['count'] for rec in resp
+                                        if rec['block_status'] == 'UnBlocked'])
+    analytical_data['waiting_block_confirmation'] = 0
+    analytical_data['waiting_sales_stop_confirmation'] = sum([rec['count'] for rec in resp
+                                                              if rec['block_status'] == 'Blocked'])
+    analytical_data['waiting_unblock_confirmation'] = 0
+    analytical_data['waiting_sales_resume_confirmation'] = sum([rec['count'] for rec in resp
+                                                                if
+                                                                rec['block_status'] == 'UnBlocked'])
+    analytical_data['manually_unblocked'] = sum([rec['count'] for rec in resp
+                                                 if rec['block_status'] == 'UnBlocked' and
+                                                 rec['alert_closure_reason'] == 'DNC_UNBLOCKED'])
+    analytical_data['automatically_unblocked'] = sum([rec['count'] for rec in resp
+                                                      if rec['alert_closure_reason'] == 'PICTURE_UPLOADED'])
+    return True, analytical_data
