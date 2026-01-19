@@ -2,11 +2,15 @@ import urdhva_base
 import json
 import time
 import pytz
+import tempfile
 import requests
 import traceback
+import polars as pl
 import charts_actions
 import hpcl_ceg_model
+from pathlib import Path
 import dashboard_studio_model
+from fastapi.responses import FileResponse
 import orchestrator.analytics.va_analysis as va_analysis
 import utilities.cris_alert_mapping as cris_alert_mapping
 
@@ -355,7 +359,7 @@ async def create_va_cleanliness_summary(data: hpcl_ceg_model.Alerts_Va_Cleanline
     # Query to get all required for the requested time period
     query = f"""select distinct block_status, alert_status, alert_state, ro_offline, alert_closure_reason, COUNT(*) from alerts 
         where interlock_name='Restroom Cleaning Evidence Missing' AND {' AND '.join(query_extension)} 
-        group by block_status, alert_status, alert_state, ro_offline,alert_closure_reason
+        group by block_status, alert_status, alert_state, ro_offline, alert_closure_reason
     """
     query_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
     resp = query_data['data']
@@ -378,4 +382,68 @@ async def create_va_cleanliness_summary(data: hpcl_ceg_model.Alerts_Va_Cleanline
                                                       if rec['alert_closure_reason'] == 'PICTURE_UPLOADED'])
     analytical_data['no_connectivity'] = sum([rec['count'] for rec in resp
                                                       if rec['alert_status'] == 'Open' and rec['ro_offline']])
+
+
     return True, analytical_data
+
+
+async def generate_va_download_excel_report(data: hpcl_ceg_model.Alerts_Download_Excel_ReportParams):
+    query_extension = ["bu='RO'"]
+    has_date = False
+    for extension in data.cross_filters:
+        if extension.key == 'created_at':
+            has_date = True
+            extension.key = "created_at::DATE"
+        else:
+            continue
+        query_extension.append(
+            f"{extension.key}='{extension.value if extension.value else extension.val}'")
+    if not has_date:
+        query_extension.append(f"created_at::DATE=CURRENT_DATE")
+
+    key_mapping = [
+        {"location_name": "RO Name"},
+        {"zone": "Zone"},
+        {"region": "Region"},
+        {"sales_area": "Sales Area"},
+        {"ro_offline": "RO Offline"},
+        {"alert_closure_reason": "Alert Closure Reason"},
+        {"sap_id": "RO ID"},
+        {"rca": "Comments"},
+        {"block_status": "Block Status"},
+        {"image_uploaded": "Image Uploaded"},
+        {"created_at": "Alert Created Date"}
+    ]
+    keys_required = ", ".join(list(rec.keys())[0] for rec in key_mapping)
+    query = (f"SELECT {keys_required} from alerts where "
+             f"interlock_name='Restroom Cleaning Evidence Missing' AND {' AND '.join(query_extension)} ")
+    resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+    if not resp['data']:
+        return False, "No Data Found"
+    # Convert mapping to dict (old -> new)
+    rename_map = {
+        old: new
+        for item in key_mapping
+        for old, new in item.items()
+    }
+
+    # Extract column order (after rename)
+    ordered_columns = list(rename_map.values())
+
+    # Create Polars DataFrame
+    df = pl.DataFrame(resp['data'], infer_schema_length=100000)
+
+    # Rename columns
+    df = df.rename(rename_map)
+
+    # Reorder columns (only those that exist)
+    df = df.select([col for col in ordered_columns if col in df.columns])
+
+    # Write to Excel
+    with tempfile.NamedTemporaryFile(
+            suffix=".xlsx", delete=False
+    ) as tmp:
+        temp_path = Path(tmp.name)
+
+    df.write_excel(temp_path)
+    return True, FileResponse(temp_path, filename="VA_Cleanliness_Alerts.xlsx")

@@ -1224,3 +1224,12 @@ async def alerts_day_end_closure(data: Alerts_Day_End_ClosureParams):
 @router.post('/va_cleanliness_summary', tags=['Alerts'])
 async def alerts_va_cleanliness_summary(data: Alerts_Va_Cleanliness_SummaryParams):
     return await ro_analysis.create_va_cleanliness_summary(data)
+
+
+# Action download_excel_report
+@router.post('/download_excel_report', tags=['Alerts'])
+async def alerts_download_excel_report(data: Alerts_Download_Excel_ReportParams):
+    # Create Download models as per the report_model key
+    if data.report_model == "VA_Cleanliness_Alerts":
+        return await ro_analysis.generate_va_download_excel_report(data)
+    return False, "Not Implemented"

@@ -1128,6 +1128,9 @@
                 },
                 {
                     "name": "va_cleanliness_summary"
+                },
+                {
+                    "name": "download_excel_report"
                 }
             ]
         },
@@ -1254,6 +1257,9 @@
                 },
                 {
                     "name": "va_cleanliness_summary"
+                },
+                {
+                    "name": "download_excel_report"
                 }
             ]
         },
@@ -8098,6 +8104,10 @@
         {
             "name": "va_cleanliness_summary",
             "displayName": "va_cleanliness_summary"
+        },
+        {
+            "name": "download_excel_report",
+            "displayName": "download_excel_report"
         },
         {
             "name": "tas_analytics",
