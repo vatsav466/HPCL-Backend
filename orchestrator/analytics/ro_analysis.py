@@ -417,7 +417,7 @@ async def generate_va_download_excel_report(data: hpcl_ceg_model.Alerts_Download
     keys_required = ", ".join(list(rec.keys())[0] for rec in key_mapping)
     query = (f"SELECT {keys_required} from alerts where "
              f"interlock_name='Restroom Cleaning Evidence Missing' AND {' AND '.join(query_extension)} ")
-    resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+    resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
     if not resp['data']:
         return "No Data Found"
     # Convert mapping to dict (old -> new)
