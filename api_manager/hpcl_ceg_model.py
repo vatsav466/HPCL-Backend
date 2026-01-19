@@ -7307,6 +7307,7 @@ class Performancescore_Download_Performance_ScoreParams(pydantic.BaseModel):
 
 class Performancescore_Performance_Score_BreakdownParams(pydantic.BaseModel):
     bu: str
+    score_type: typing.Optional[str] = pydantic.Field("", **{})
     name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     start_date: typing.Optional[str] = pydantic.Field("", **{})
