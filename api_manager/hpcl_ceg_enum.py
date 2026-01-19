@@ -180,6 +180,8 @@ class AlertActionType(str, enum.Enum):
     OngoingTrip = 'OngoingTrip'
     BlockInitiated = 'BlockInitiated'
     UnBlockInitiated = 'UnBlockInitiated'
+    OccBlockingRemarks = 'OccBlockingRemarks'
+    OccUnblockingRemarks = 'OccUnblockingRemarks'
     Remarks = 'Remarks'
     Offline = 'Offline'
 

@@ -456,7 +456,14 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
             "action_type": "BlockInitiated",
             "action_by" : rpt['username'],
             "processed_time" : start_date_utc.isoformat()
-        }]
+        },
+        {
+            "action_msg" : (f"{data.remarks}"),
+            "action_type": "OccBlockingRemarks",
+            "action_by" : rpt['username'],
+            "processed_time" : start_date_utc.isoformat()
+        }
+        ]
 
         alert_data = {
             "vehicle_number": data.truck_number,
@@ -467,7 +474,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
             "vehicle_blocked_start_date": start_date_utc,
             "vehicle_blocked_end_date": end_date_utc,
             "alert_section": "VTS",
-            "violation_type": data.reason,
+            "violation_type": data.remarks,
             "interlock_name": "Itdg Admin Blocked",
             "sap_id": sap_id,
             "blocking_days": data.blocking_days,
@@ -480,7 +487,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
             "blocking_from": start_date_utc,
             "blocking_to": end_date_utc,
             "waitTime": totalWaitTime,
-            "alert_message" : data.remarks,
+            "alert_message" : data.reason,
             "location_name": location_name,
             "zone": zone,
             "transporter_code" : transporter_code,
@@ -502,11 +509,12 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
 @router.post('/unblock_vts_truck', tags=['Alerts'])
 async def alerts_unblock_vts_truck(
     unblock_id: str = fastapi.Form(...),
-    remarks_unblocked: str | None = fastapi.Form(None),
+    remarks: str | None = fastapi.Form(None),
     upload_file: fastapi.UploadFile | None = fastapi.File(None)
 ):
-    try:
-      
+    try: 
+        remarks_unblocked = remarks.strip() if remarks_unblocked else None
+
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
             return {"status": False, "message": "Session got expired, Please Re-Login"}
@@ -592,18 +600,26 @@ async def alerts_unblock_vts_truck(
 
         event_time_utc = urdhva_base.utilities.get_present_time()
         ist_time = event_time_utc.astimezone(pytz.timezone("Asia/Kolkata"))
-        alert_history = alert_record.get("alert_history", [])
+       
+        alert_history = alert_record.get("alert_history", []) 
 
-        alert_history.append({
-            "action_msg": (
-                f"Manual unblock for truck {alert_record.get('vehicle_number')} "
-                f"initiated by OCC Team ({rpt['username']}) "
-                f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
-            ),
+        alert_history.extend([
+            {
+                "action_msg": (
+                    f"Manual unblock for truck {alert_record.get('vehicle_number')} "
+                    f"initiated by OCC Team ({rpt['username']}) "
+                    f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+                ),
             "action_type": "UnBlockInitiated",
             "action_by": rpt['username'],
             "processed_time": event_time_utc.isoformat()
-        })
+        },
+        {
+            "action_msg": remarks_unblocked,
+            "action_type": "OccUnblockingRemarks",
+            "action_by": rpt['username'],
+            "processed_time": event_time_utc.isoformat()
+        }])
 
         await Alerts(**{
             "id": alert_record.get("id"),

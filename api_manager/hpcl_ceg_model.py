@@ -689,6 +689,14 @@ class Locationmaster_Get_Dist_Loc_DetailsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Locationmaster_Get_Pipeline_LocationsParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
@@ -1948,7 +1956,7 @@ class Alerts_Block_Vts_TruckParams(pydantic.BaseModel):
 
 class Alerts_Unblock_Vts_TruckParams(pydantic.BaseModel):
     unblock_id: str
-    remarks_unblocked: str
+    remarks: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

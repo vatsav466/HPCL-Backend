@@ -125,6 +125,8 @@ Enum AlertActionType str {
     OngoingTrip='OngoingTrip'
     BlockInitiated='BlockInitiated'
     UnBlockInitiated='UnBlockInitiated'
+    OccBlockingRemarks='OccBlockingRemarks'
+    OccUnblockingRemarks='OccUnblockingRemarks'
     Remarks='Remarks'
     Offline='Offline'
 }
@@ -952,7 +954,7 @@ Model Alerts {
 
     Action=> unblock_vts_truck {
         unblock_id str
-        remarks_unblocked str
+        remarks str
     }
 
     Action=> unblock_alert_truck {
