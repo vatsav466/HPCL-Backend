@@ -419,7 +419,7 @@ async def generate_va_download_excel_report(data: hpcl_ceg_model.Alerts_Download
              f"interlock_name='Restroom Cleaning Evidence Missing' AND {' AND '.join(query_extension)} ")
     resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
     if not resp['data']:
-        return False, "No Data Found"
+        return "No Data Found"
     # Convert mapping to dict (old -> new)
     rename_map = {
         old: new
@@ -446,4 +446,4 @@ async def generate_va_download_excel_report(data: hpcl_ceg_model.Alerts_Download
         temp_path = Path(tmp.name)
 
     df.write_excel(temp_path)
-    return True, FileResponse(temp_path, filename="VA_Cleanliness_Alerts.xlsx")
+    return FileResponse(temp_path, filename="VA_Cleanliness_Alerts.xlsx")
