@@ -61,7 +61,7 @@ class SendNozzleCommand:
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
                                                "ro_offline": False,
-                                               "block_status": hpcl_ceg_enum.BlockStatus.WaitingForBlockAck}).modify()
+                                               "block_status": None}).modify()
                 return True, {"blocked": False, "offline": False}
                 
             alert_message = (
@@ -105,9 +105,9 @@ class SendNozzleCommand:
                 alert_data["action_msg"] = alert_message
                 alert_data["action_type"] = "UnblockFailed"
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
-                await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
-                                               "ro_offline": False,
-                                               "block_status": hpcl_ceg_enum.BlockStatus.WaitingForUnBlockAck}).modify()
+                # await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                #                                "ro_offline": False,
+                #                                "block_status": hpcl_ceg_enum.BlockStatus.WaitingForUnBlockAck}).modify()
                 return True, {"unblocked": False, "offline": False}
                 
             alert_message = (
