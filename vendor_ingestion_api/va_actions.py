@@ -7,6 +7,8 @@ import pytz
 import traceback
 import polars as pl
 import hpcl_ceg_model
+import urdhva_base.utilities
+import urdhva_base.redispool
 import utilities.helpers as helpers
 import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.analytics.ro_analysis as ro_analysis
@@ -189,3 +191,12 @@ async def va_ro_no_video_upload_list_status(data: Va_Ro_No_Video_Upload_List_Sta
         print(traceback.format_exc())
         logger.error(e)
         return {"status": False, "message": "Error", "data": []}
+    finally:
+        try:
+            redis_ins = await urdhva_base.redispool.get_redis_connection()
+            await redis_ins.set("va_cleanliness_last_sync",
+                                 urdhva_base.utilities.get_present_time().strftime("%Y/%m/%d %-I:%M %p"))
+            await redis_ins.close()
+        except Exception as e:
+            print(traceback.format_exc())
+            print(e)

@@ -2035,6 +2035,14 @@ class Alerts_Download_Excel_ReportParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Alerts_Get_Va_Cleanliness_Last_Synced_TimeParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Tasanalytics_Tas_AnalyticsParams(pydantic.BaseModel):
     analytical_model: str
     location_name: typing.Optional[str] = pydantic.Field("", **{})

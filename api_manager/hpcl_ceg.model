@@ -1000,6 +1000,9 @@ Model Alerts {
         cross_filters optional list WidgetFilters
     }
 
+    Action=> get_va_cleanliness_last_synced_time {
+    }
+
     Config=> {
         crud_operations='read'
         // Access Key Mapping for RBAC,

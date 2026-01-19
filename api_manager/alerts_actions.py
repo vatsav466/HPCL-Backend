@@ -12,6 +12,8 @@ import traceback
 import utilities
 import polars as pl
 from pathlib import Path
+import urdhva_base.redispool
+import urdhva_base.utilities
 import utilities.helpers as helpers
 from fastapi.responses import FileResponse
 import utilities.vts_mapping as vts_mapping
@@ -1233,3 +1235,17 @@ async def alerts_download_excel_report(data: Alerts_Download_Excel_ReportParams)
     if data.report_model == "VA_Cleanliness_Alerts":
         return await ro_analysis.generate_va_download_excel_report(data)
     return False, "Not Implemented"
+
+
+# Action get_va_cleanliness_last_synced_time
+@router.post('/get_va_cleanliness_last_synced_time', tags=['Alerts'])
+async def alerts_get_va_cleanliness_last_synced_time(data: Alerts_Get_Va_Cleanliness_Last_Synced_TimeParams):
+    last_synced_time = "-"
+    try:
+        redis_ins = await urdhva_base.redispool.get_redis_connection()
+        last_synced_time = await redis_ins.get("va_cleanliness_last_sync")
+        await redis_ins.close()
+    except Exception as e:
+        print(traceback.format_exc())
+        print(e)
+    return last_synced_time
