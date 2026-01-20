@@ -369,6 +369,9 @@ async def critical_alerts_by_equipment(data):
     if data.location_name and data.location_name.strip() and data.location_name.lower() != "true":
         alert_query += f" AND location_name = '{data.location_name}'"
 
+    if data.zone and data.zone.strip():
+        alert_query += f" AND zone = '{data.zone}'"
+
     # Add equipment_type filter if provided
     if data.equipment_type:
         alert_query += f" AND equipment_type = '{data.equipment_type}'"
@@ -376,7 +379,7 @@ async def critical_alerts_by_equipment(data):
     alert_params = urdhva_base.queryparams.QueryParams(q=alert_query)
     alert_params.limit = 0
 
-    alert_params.fields = ["equipment_type"]
+    alert_params.fields = ["equipment_type","alert_status", "zone"]
 
     if (
         (data.location_name and data.location_name.lower() == "true")
@@ -403,6 +406,16 @@ async def critical_alerts_by_equipment(data):
 
     if alerts_df.is_empty():
         return []
+    if not data.alert_status or not data.alert_status.strip():
+        critical_alerts_df = (
+            alerts_df
+            .group_by("location_name")
+            .agg([pl.when(pl.col("alert_status") == "Open")
+                  .then(1).otherwise(0).sum().alias("open_critical_count"),
+                pl.when(pl.col("alert_status") == "Close").then(1).otherwise(0).sum().alias("close_critical_count"),])
+            .sort("open_critical_count", descending=True))
+
+        return critical_alerts_df.to_dicts()
     if data.equipment_type and (
         not data.location_name or data.location_name.lower() != "true"
     ):
