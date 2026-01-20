@@ -3695,6 +3695,18 @@ class VTSAnalyticsActions:
                     "total_records": len(combo_alerts_data)
                 }
 
+            clicked_cluster_id = payload.get("clicked_cluster_id")
+            if table_name == "cluster_master" and clicked_cluster_id:
+                safe_cluster_id = str(clicked_cluster_id).replace("'", "''")
+                cluster_query = f"SELECT * FROM public.clusterwise_event WHERE cluster_id = '{safe_cluster_id}'"
+                cluster_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cluster_query, skip_total=True)
+                cluster_events_data = cluster_resp.get('data', [])
+                return {
+                    "status": True,
+                    "message": f"Cluster events for cluster_id {clicked_cluster_id}",
+                    "data": cluster_events_data,
+                    "total_records": len(cluster_events_data)
+                }
             return {
                 "status": True,
                 "message": f"Successfully fetched {len(resp['data'])} records from {table_name}",

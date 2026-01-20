@@ -1029,7 +1029,7 @@ Model TasAnalytics crud_disable {
         equipment_type  optional str
         equipment_name  optional str
         download        optional str
-        top_n      optional int
+        
     }
 
 }

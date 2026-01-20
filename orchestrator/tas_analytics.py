@@ -6,6 +6,7 @@ import decimal
 from orchestrator.dbconnector.widget_actions.vts_analytics import  download_streaming_data
 from datetime import datetime, timedelta
 import re
+from utilities.analog_data_mapping import Maintenance, Fault, Normal
 
 
 from orchestrator.tas_queries import (
@@ -126,22 +127,17 @@ async def top_repeat_alerts(data):
 
 async def tas_severity_summary(data):
 
-    alert_query = """
-        alert_section = 'TAS'
-        AND severity = 'Critical'
-    """
+    # -----------------------------
+    # Build alert query
+    # -----------------------------
+    alert_query = "alert_section = 'TAS'"
 
     alert_query += (
         f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
     )
 
-    if data.alert_status:
-        alert_query += f" AND alert_status = '{data.alert_status}'"
-
-
     if data.zone:
         alert_query += f" AND zone = '{data.zone}'"
-
 
     if data.location_name:
         alert_query += f" AND location_name = '{data.location_name}'"
@@ -154,13 +150,8 @@ async def tas_severity_summary(data):
     )
 
     alert_params.fields = [
-        "zone",
-        "location_name",
-        "severity",
-        "interlock_name",
-        "equipment_name",
-        "created_at"
-    ]
+        "zone", "location_name",
+        "severity", "interlock_name", "equipment_name", "created_at" ]
 
     alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
@@ -171,7 +162,6 @@ async def tas_severity_summary(data):
     df = pl.DataFrame(alert_data)
 
     # CASE 2: location_name specified → DETAIL VIEW
-    
     if data.location_name:
         detail_df = (
             df
@@ -190,48 +180,74 @@ async def tas_severity_summary(data):
 
         return detail_df.to_dicts()
 
-    # CASE 1: SUMMARY VIEW
+    # Extract interlock names
+    maintenance_terms = [
+        i["interlock_name"].lower() for i in Maintenance if i.get("interlock_name")]
 
+    fault_terms = [
+        i["interlock_name"].lower() for i in Fault if i.get("interlock_name")]
+
+    normal_terms = [
+        i["interlock_name"].lower() for i in Normal if i.get("interlock_name")]
+
+
+    # Categorize each alert
+    df = df.with_columns(pl
+        .when(
+            pl.any_horizontal([ pl.col("interlock_name").str.to_lowercase().str.contains(t)
+                for t in maintenance_terms])) .then(pl.lit("maintenance"))
+
+        .when(
+            pl.any_horizontal([
+                pl.col("interlock_name").str.to_lowercase().str.contains(t)
+                for t in fault_terms])) .then(pl.lit("fault"))
+        
+        .when(
+            pl.any_horizontal([
+                pl.col("interlock_name").str.to_lowercase().str.contains(t)
+                for t in normal_terms])) .then(pl.lit("normal")) 
+
+        .otherwise(pl.lit("other")) .alias("interlock_category"))
+    
+    # Aggregate summary counts
     summary_df = (
-        df.group_by(["zone", "location_name"])
-        .agg([
-            pl.len().alias("critical_count"),
-            (
-                pl.when(
-                    pl.col("interlock_name")
-                      .str.contains("(?i)under maintenance")
-                )
-                .then(1)
-                .otherwise(0)
-                .sum()
-                .alias("equipment_under_maintenance_count")
-            )
-        ])
-        .sort("critical_count", descending=True)
-    )
+        df.group_by(["zone", "location_name"]) .agg([
+            (pl.col("interlock_category") == "maintenance"). cast(pl.Int64).sum().alias("under_maintenance_count"),
+            (pl.col("interlock_category") == "fault").cast(pl.Int64).sum().alias("fault_count")
+
+        ]))
 
     return summary_df.to_dicts()
 
 async def location_alert_critical(data):
 
-    # 1. BASE QUERY
+    zone = data.zone or None
+    location_name = data.location_name or None
+    alert_status = data.alert_status or None
+    severity_filter = data.alert_severity or []
+
+    is_download = str(getattr(data, "download", "")).lower() == "true"
+
+    
+    # 2. BASE QUERY
     alert_query = "alert_section = 'TAS'"
-    alert_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
+    alert_query += (
+        f" AND created_at::date BETWEEN "
+        f"'{data.start_date}' AND '{data.end_date}'"
+    )
 
-    if data.zone:
-        alert_query += f" AND zone = '{data.zone}'"
+    if zone:
+        alert_query += f" AND zone = '{zone}'"
+        
 
-    if data.alert_status:
-        alert_query += f" AND alert_status = '{data.alert_status}'"
+    if alert_status:
+        alert_query += f" AND alert_status = '{alert_status}'"
 
-    if data.location_name:
-        alert_query += f" AND location_name = '{data.location_name}'"
+    if location_name:
+        alert_query += f" AND location_name = '{location_name}'"
 
     print("FINAL alert_query >>>", alert_query)
-
-    # =====================================================
-    # 2. FETCH DATA
-    # =====================================================
+    #FETCH DATA
     params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
     params.fields = [
         "unique_id",
@@ -248,10 +264,9 @@ async def location_alert_critical(data):
 
     if not rows:
         return []
-
     df = pl.DataFrame(rows)
-    severity_filter = data.alert_severity
 
+    # 4. SEVERITY FILTER
     if isinstance(severity_filter, list):
         severity_filter = [
             s.strip().lower()
@@ -266,14 +281,12 @@ async def location_alert_critical(data):
             .is_in(severity_filter)
         )
 
-    
-    # =====================================================
-    # 5. TOP-N DECISION
-    # =====================================================
-    if data.location_name:
+
+    # 5. DOWNLOAD MODE → RAW ALERTS (ALL OR ONE LOCATION)
+    if is_download:
         now = datetime.utcnow()
 
-        return (
+        download_df = (
             df.with_columns([
                 pl.col("created_at")
                   .dt.strftime("%Y-%m-%dT%H:%M:%S")
@@ -295,53 +308,88 @@ async def location_alert_critical(data):
                 "ageing_days"
             ])
             .sort("ageing_days", descending=True)
-            .to_dicts()
         )
 
+        print("DOWNLOAD RAW ROW COUNT >>>", download_df.height)
 
-    top_n = int(getattr(data, "top_n", 5) or 5)
+        return {
+            "download": True,
+            "download_type": "raw_alerts",
+            "data": download_df.to_dicts()
+        }
 
-    # -------------------------
-    # TOP-5 → SIMPLE LOCATION COUNT
-    # -------------------------
-    if top_n == 5:
-        return (
-            df.filter(pl.col("severity") == "Critical")
-              .group_by(["zone", "location_name"])
-              .agg(pl.len().alias("count"))
-              .sort("count", descending=True)
-              .head(5)
-              .to_dicts()
+    # 6. DRILL-DOWN (LOCATION SELECTED, NON-DOWNLOAD)
+    if location_name:
+        now = datetime.utcnow()
+
+        result = (
+            df.with_columns([
+                pl.col("created_at")
+                  .dt.strftime("%Y-%m-%dT%H:%M:%S")
+                  .alias("created_at"),
+                (
+                    (pl.lit(now) - pl.col("created_at"))
+                    .dt.total_days()
+                    .cast(pl.Int64)
+                ).alias("ageing_days")
+            ])
+            .select([
+                "unique_id",
+                "zone",
+                "severity",
+                "alert_status",
+                "interlock_name",
+                "location_name",
+                "created_at",
+                "ageing_days"
+            ])
+            .sort("ageing_days", descending=True)
         )
 
-    # -------------------------
-    # TOP-10 → INTERLOCK + SEVERITY
-    # -------------------------
-    base_df = (
-        df.group_by(["zone", "location_name", "interlock_name", "severity"])
-          .agg(pl.len().alias("count"))
+        print("DETAIL VIEW ROW COUNT >>>", result.height)
+        return result.to_dicts()
+
+    # 7. CLEAN INVALID LOCATIONS
+    df = df.filter(
+        (pl.col("location_name").is_not_null()) &
+        (pl.col("location_name").str.strip_chars() != "")
     )
 
+    # 8. INTERLOCK + SEVERITY COUNTS
+    base_df = (
+        df.group_by([
+            "zone",
+            "location_name",
+            "interlock_name",
+            "severity"
+        ])
+        .agg(pl.len().alias("count"))
+    )
+
+    # 9. TOTAL ALERTS PER LOCATION
     totals_df = (
         base_df.group_by(["zone", "location_name"])
-               .agg(pl.sum("count").alias("total_alerts"))
-               .sort("total_alerts", descending=True)
-               .head(top_n)
+        .agg(pl.sum("count").alias("total_alerts"))
     )
 
+    # 10. NORMAL SUMMARY RESPONSE (DASHBOARD)
     result_df = (
-        totals_df.join(base_df, on=["zone", "location_name"])
-                 .group_by(["zone", "location_name"])
-                 .agg([
-                     pl.first("total_alerts"),
-                     pl.struct(
-                         ["interlock_name", "severity", "count"]
-                     ).alias("interlocks")
-                 ])
-                 .sort("total_alerts", descending=True)
+        totals_df
+        .join(base_df, on=["zone", "location_name"])
+        .group_by(["zone", "location_name"])
+        .agg([
+            pl.first("total_alerts").alias("total_alerts"),
+            pl.struct(
+                ["interlock_name", "severity", "count"]
+            ).alias("interlocks")
+        ])
+        .sort("total_alerts", descending=True)
     )
+
+    print("TOTAL LOCATIONS RETURNED >>>", result_df.height)
 
     return result_df.to_dicts()
+
 
 async def critical_alerts_by_equipment(data):
     alert_query = """
@@ -2282,6 +2330,56 @@ async def location_wise_total_loaded_qty(data):
         import traceback
         traceback.print_exc()
         return []
+async def top_five_alerts(data):
+    
+    # 1. BASE QUERY
+    alert_query = "alert_section = 'TAS'"
+
+    alert_query += (
+        f" AND created_at::date BETWEEN "
+        f"'{data.start_date}' AND '{data.end_date}'"
+    )
+
+    if data.alert_status:
+        alert_query += f" AND alert_status = '{data.alert_status}'"
+
+    if data.location_name:
+        alert_query += f" AND location_name = '{data.location_name}'"
+
+    if data.interlock_name:
+        alert_query += f" AND interlock_name = '{data.interlock_name}'"
+
+    if data.alert_severity:
+        if isinstance(data.alert_severity, list):
+            clean_severity = [s for s in data.alert_severity if s]
+            if clean_severity:
+                vals = ", ".join(f"'{s}'" for s in clean_severity)
+                alert_query += f" AND severity IN ({vals})"
+        else:
+            alert_query += f" AND severity = '{data.alert_severity}'"
+
+    print("FINAL alert_query >>>",alert_query)
+    
+
+    # 2. FETCH DATA
+    params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
+    params.fields = [
+        "unique_id",
+        "zone",
+        "alert_status",
+        "severity",
+        "interlock_name",
+        "location_name",
+        "created_at"
+    ]
+
+    resp = await Alerts.get_all(params, resp_type="plain")
+    rows = resp.get("data", [])
+
+    if not rows:
+        return []
+
+    df = pl.DataFrame(rows)
 
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
@@ -2290,7 +2388,8 @@ AnalyticsModelMapping = {
     "Critical Alerts By Equipment":critical_alerts_by_equipment,
     "Tas Alerts Exception Report" :tas_alerts_exception_report,
     "Equipment Location Wise Count": equipment_location_wise_count,
-    "Location Wise Total Loaded Qty": location_wise_total_loaded_qty
+    "Location Wise Total Loaded Qty": location_wise_total_loaded_qty,
+    "Top five Alerts": top_five_alerts
 
 }
 
