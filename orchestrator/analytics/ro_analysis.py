@@ -309,7 +309,8 @@ async def close_ro_va_cleanliness_open_alerts(day_end=False):
             "id": data.get("id"),
             "alert_history": alert_history,
             "alert_status": "Close",
-            "alert_state": "Resolved"
+            "alert_state": "Resolved",
+            "block_status": data.get("block_status")
         }
         if day_end:
             alert_data["alert_closure_reason"] = "DAY_END"
