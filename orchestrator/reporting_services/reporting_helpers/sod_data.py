@@ -20,6 +20,7 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 tas_va_path = ""
 tas_emlock_path = ""
 tas_tas_path = ""
+tas_day_wise_trend_exl_path = ""
 async def get_tas_alerts():
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -178,7 +179,7 @@ async def get_vts_sod_blocked_counts():
         sheet_name="Day Wise Trend"
     )
 
-    start_date = "2025-06-01"
+    start_date = "2025-12-01"
     end_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     time_range = f"{start_date},{end_date}"
 
@@ -554,7 +555,40 @@ async def sod_percentage():
         print('top_3_df',top_3_df)
         print('bottom_3_df',bottom_3_df)
         print('*'*200)
-        return {"sod_top_data": top_3_df, "sod_bottom_data": bottom_3_df, "tas_avg_score_resp": tas_avg_score_value} 
+
+        sod_day_wise_trend = await get_sod_day_wise_trends(by_day=True, by_plant=True)
+        sod_day_wise_trend_df = pd.DataFrame(sod_day_wise_trend)
+        # Ensure correct types
+        sod_day_wise_trend_df["timestamp"] = pd.to_datetime(
+            sod_day_wise_trend_df["timestamp"]
+        )
+        # Pivot: Date vs Plant (SAP ID)
+        excel_df = sod_day_wise_trend_df.pivot_table(
+            index="timestamp",
+            columns="name",
+            values="score",
+            aggfunc="mean"   # safe if duplicates exist
+        )
+
+        # Sort by date
+        excel_df = excel_df.sort_index()
+
+        # FORMAT DATE AS "Dec 1", "Dec 2"
+        excel_df.index = excel_df.index.strftime("%b %d")
+
+        excel_df.index.name = "Day Wise Score"
+
+        # Write to Exce
+        global tas_day_wise_trend_exl_path
+        output_file = "/tmp/SOD Plant Day Wise Trend.xlsx"
+        tas_day_wise_trend_exl_path = output_file
+        excel_df.to_excel(
+            output_file,
+            sheet_name="Day Wise Trend"
+        )
+        return {"sod_top_data": top_3_df, "sod_bottom_data": bottom_3_df,
+                "tas_avg_score_resp": tas_avg_score_value,
+                "tas_day_wise_trend_exl_path": tas_day_wise_trend_exl_path} 
 
     except Exception as exc:
         print("\nERROR OCCURRED:")
