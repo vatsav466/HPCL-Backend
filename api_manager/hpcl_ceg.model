@@ -125,6 +125,8 @@ Enum AlertActionType str {
     OngoingTrip='OngoingTrip'
     BlockInitiated='BlockInitiated'
     UnBlockInitiated='UnBlockInitiated'
+    OccBlockingRemarks='OccBlockingRemarks'
+    OccUnblockingRemarks='OccUnblockingRemarks'
     Remarks='Remarks'
     Offline='Offline'
 }
@@ -445,6 +447,10 @@ Model LocationMaster {
         zone optional str
         plant optional str
         location_onboard optional bool
+    }
+
+    Action=> get_pipeline_locations {
+
     }
 
     Config=> {
@@ -781,6 +787,7 @@ Model Alerts {
     maintenance_time optional str
     closed_at optional datetime
     cause_effect optional str
+    alert_closure_reason optional str
 
     //tas keys
     tt_load_number optional str
@@ -861,6 +868,7 @@ Model Alerts {
     remarks_unblocked optional str
     file_uploaded_path optional str
     block_status optional index_field BlockStatus
+    image_uploaded optional bool
 
     Action=> alert_action {
         bu optional str
@@ -946,7 +954,7 @@ Model Alerts {
 
     Action=> unblock_vts_truck {
         unblock_id str
-        remarks_unblocked str
+        remarks str
     }
 
     Action=> unblock_alert_truck {
@@ -985,6 +993,16 @@ Model Alerts {
 
     Action=> va_cleanliness_summary {
         cross_filters optional list WidgetFilters
+    }
+
+    Action=> download_excel_report {
+        // Report model will help for data customization like for VA Cleanlines / TAS MFM / TAS ..
+        report_model str
+        // For Additional filters
+        cross_filters optional list WidgetFilters
+    }
+
+    Action=> get_va_cleanliness_last_synced_time {
     }
 
     Config=> {
@@ -1343,6 +1361,16 @@ Model IndentDryOut {
     Action=> block_ro {
         ro_code str
         remarks_blocked str
+    }
+
+    Action=> bulk_outlet_block {
+        alert_id list str
+        reason str
+    }
+
+    Action=> bulk_outlet_unblock {
+        alert_id list str
+        reason str
     }
 
     Action=> get_dried_out_ro_data {
@@ -2647,6 +2675,14 @@ Model PerformanceScore {
         strategy str
         filters optional list WidgetFilters
         is_plant optional bool
+    }
+    Action=> performance_score_breakdown {
+        bu str
+        score_type optional str
+        name optional str
+        zone optional str  
+        start_date optional str
+        end_date optional str     
     }
 
     Config=> {

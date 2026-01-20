@@ -2,11 +2,15 @@ import urdhva_base
 import json
 import time
 import pytz
+import tempfile
 import requests
 import traceback
+import polars as pl
 import charts_actions
 import hpcl_ceg_model
+from pathlib import Path
 import dashboard_studio_model
+from fastapi.responses import FileResponse
 import orchestrator.analytics.va_analysis as va_analysis
 import utilities.cris_alert_mapping as cris_alert_mapping
 
@@ -211,8 +215,11 @@ async def get_ro_va_cleanliness_total_count():
     
     return len(resp)
 
-async def close_ro_va_cleanliness_unblock_of_blocked():
-    rpt = urdhva_base.context.context.get('rpt', {})
+async def close_ro_va_cleanliness_unblock_of_blocked(day_end=False):
+    if urdhva_base.ctx.exists():
+        rpt = urdhva_base.context.context.get('rpt', {})
+    else:
+        rpt = {}
     query = f"""select * from alerts where interlock_name='Restroom Cleaning Evidence Missing'
                     and created_at::date = current_date and block_status = 'Blocked' and alert_status!='Close'"""
     resp = await hpcl_ceg_model.Alerts.get_aggr_data(query,limit=0)
@@ -251,14 +258,20 @@ async def close_ro_va_cleanliness_unblock_of_blocked():
             "action_by": rpt.get('username','SYSTEM'),
             "processed_time": event_time_utc.isoformat()
         })
-        await hpcl_ceg_model.Alerts(**{
+        alert_data = {
             "id": data.get("id"),
             "alert_history": alert_history
-            }).modify()
+            }
+        if day_end:
+            alert_data["alert_closure_reason"] = "DAY_END"
+        await hpcl_ceg_model.Alerts(**alert_data).modify()
     return len(resp)
 
-async def close_ro_va_cleanliness_open_alerts():
-    rpt = urdhva_base.context.context.get('rpt', {})
+async def close_ro_va_cleanliness_open_alerts(day_end=False):
+    if urdhva_base.ctx.exists():
+        rpt = urdhva_base.context.context.get('rpt', {})
+    else:
+        rpt = {}
     query = f"""
                 SELECT *
                 FROM alerts
@@ -292,10 +305,146 @@ async def close_ro_va_cleanliness_open_alerts():
             "action_by": rpt.get('username','SYSTEM'),
             "processed_time": event_time_utc.isoformat()
         })
-        await hpcl_ceg_model.Alerts(**{
+        alert_data = {
             "id": data.get("id"),
             "alert_history": alert_history,
             "alert_status": "Close",
             "alert_state": "Resolved"
-        }).modify()
+        }
+        if day_end:
+            alert_data["alert_closure_reason"] = "DAY_END"
+        if alert_data['block_status'] == 'WaitingForBlockAck':
+            alert_data["block_status"] = None
+        await hpcl_ceg_model.Alerts(**alert_data).modify()
     return len(resp)
+
+async def ro_va_day_end_closure():
+    try:
+        await close_ro_va_cleanliness_unblock_of_blocked()
+        await close_ro_va_cleanliness_open_alerts(day_end=True)
+        return {"status": True, "message": "Successfully Closed All Alerts"}
+    except Exception as e:
+        return {
+            "status": False,
+            "message": "Failed at day end closure",
+            "error": str(e)
+        }
+
+
+async def create_va_cleanliness_summary(data: hpcl_ceg_model.Alerts_Va_Cleanliness_SummaryParams):
+    query_extension = []
+    has_date = False
+    for extension in data.cross_filters:
+        if extension.key == 'created_at':
+            has_date = True
+            extension.key = "created_at::DATE"
+        query_extension.append(
+            f"{extension.key}='{extension.value if extension.value else extension.val}'")
+    if not has_date:
+        query_extension.append(f"created_at::DATE=CURRENT_DATE")
+    analytical_data = {
+        "total": 0,
+        "blocked": 0,
+        "unblocked": 0,
+        "waiting_block_confirmation": 0,
+        "waiting_sales_stop_confirmation": 0,
+        "waiting_unblock_confirmation": 0,
+        "waiting_sales_resume_confirmation": 0,
+        "manually_unblocked": 0,
+        "automatically_unblocked": 0,
+        "no_connectivity": 0,
+        "pending_unblocks": 0
+    }
+
+    # Query to get all required for the requested time period
+    query = f"""select distinct block_status, alert_status, alert_state, ro_offline, alert_closure_reason, COUNT(*) from alerts 
+        where interlock_name='Restroom Cleaning Evidence Missing' AND {' AND '.join(query_extension)} 
+        group by block_status, alert_status, alert_state, ro_offline, alert_closure_reason
+    """
+    query_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+    resp = query_data['data']
+    analytical_data['total'] = sum([rec['count'] for rec in resp])
+    analytical_data['blocked'] = sum([rec['count'] for rec in resp
+                                      if rec['block_status'] == 'Blocked'])
+    analytical_data['unblocked'] = sum([rec['count'] for rec in resp
+                                        if rec['block_status'] == 'UnBlocked'])
+    analytical_data['waiting_block_confirmation'] = 0
+    analytical_data['waiting_sales_stop_confirmation'] = sum([rec['count'] for rec in resp
+                                                              if rec['block_status'] == 'Blocked'])
+    analytical_data['waiting_unblock_confirmation'] = 0
+    analytical_data['waiting_sales_resume_confirmation'] = sum([rec['count'] for rec in resp
+                                                                if
+                                                                rec['block_status'] == 'UnBlocked'])
+    analytical_data['manually_unblocked'] = sum([rec['count'] for rec in resp
+                                                 if rec['block_status'] == 'UnBlocked' and
+                                                 rec['alert_closure_reason'] == 'DNC_UNBLOCKED'])
+    analytical_data['automatically_unblocked'] = sum([rec['count'] for rec in resp
+                                                      if rec['alert_closure_reason'] == 'PICTURE_UPLOADED'])
+    analytical_data['no_connectivity'] = sum([rec['count'] for rec in resp
+                                                      if rec['alert_status'] == 'Open' and rec['ro_offline']])
+
+
+    return True, analytical_data
+
+
+async def generate_va_download_excel_report(data: hpcl_ceg_model.Alerts_Download_Excel_ReportParams):
+    query_extension = ["bu='RO'"]
+    has_date = False
+    for extension in data.cross_filters:
+        if extension.key == 'created_at':
+            has_date = True
+            extension.key = "created_at::DATE"
+        else:
+            continue
+        query_extension.append(
+            f"{extension.key}='{extension.value if extension.value else extension.val}'")
+    if not has_date:
+        query_extension.append(f"created_at::DATE=CURRENT_DATE")
+
+    key_mapping = [
+        {"location_name": "RO Name"},
+        {"zone": "Zone"},
+        {"region": "Region"},
+        {"sales_area": "Sales Area"},
+        {"ro_offline": "RO Offline"},
+        {"alert_closure_reason": "Alert Closure Reason"},
+        {"sap_id": "RO ID"},
+        {"rca": "Comments"},
+        {"alert_status": "Alert Status"},
+        {"block_status": "Block Status"},
+        {"image_uploaded": "Image Uploaded"},
+        {"created_at": "Alert Created Date"}
+    ]
+    keys_required = ", ".join(list(rec.keys())[0] for rec in key_mapping)
+    query = (f"SELECT {keys_required} from alerts where "
+             f"interlock_name='Restroom Cleaning Evidence Missing' AND {' AND '.join(query_extension)} ")
+    resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+    if not resp['data']:
+        return "No Data Found"
+    # Convert mapping to dict (old -> new)
+    rename_map = {
+        old: new
+        for item in key_mapping
+        for old, new in item.items()
+    }
+
+    # Extract column order (after rename)
+    ordered_columns = list(rename_map.values())
+
+    # Create Polars DataFrame
+    df = pl.DataFrame(resp['data'], infer_schema_length=100000)
+
+    # Rename columns
+    df = df.rename(rename_map)
+
+    # Reorder columns (only those that exist)
+    df = df.select([col for col in ordered_columns if col in df.columns])
+
+    # Write to Excel
+    with tempfile.NamedTemporaryFile(
+            suffix=".xlsx", delete=False
+    ) as tmp:
+        temp_path = Path(tmp.name)
+
+    df.write_excel(temp_path)
+    return FileResponse(temp_path, filename="VA_Cleanliness_Alerts.xlsx")

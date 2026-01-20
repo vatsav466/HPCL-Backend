@@ -12,6 +12,8 @@ import traceback
 import utilities
 import polars as pl
 from pathlib import Path
+import urdhva_base.redispool
+import urdhva_base.utilities
 import utilities.helpers as helpers
 from fastapi.responses import FileResponse
 import utilities.vts_mapping as vts_mapping
@@ -454,7 +456,14 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
             "action_type": "BlockInitiated",
             "action_by" : rpt['username'],
             "processed_time" : start_date_utc.isoformat()
-        }]
+        },
+        {
+            "action_msg" : (f"{data.remarks}"),
+            "action_type": "OccBlockingRemarks",
+            "action_by" : rpt['username'],
+            "processed_time" : start_date_utc.isoformat()
+        }
+        ]
 
         alert_data = {
             "vehicle_number": data.truck_number,
@@ -465,7 +474,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
             "vehicle_blocked_start_date": start_date_utc,
             "vehicle_blocked_end_date": end_date_utc,
             "alert_section": "VTS",
-            "violation_type": data.reason,
+            "violation_type": data.remarks,
             "interlock_name": "Itdg Admin Blocked",
             "sap_id": sap_id,
             "blocking_days": data.blocking_days,
@@ -478,7 +487,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
             "blocking_from": start_date_utc,
             "blocking_to": end_date_utc,
             "waitTime": totalWaitTime,
-            "alert_message" : data.remarks,
+            "alert_message" : data.reason,
             "location_name": location_name,
             "zone": zone,
             "transporter_code" : transporter_code,
@@ -500,11 +509,12 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
 @router.post('/unblock_vts_truck', tags=['Alerts'])
 async def alerts_unblock_vts_truck(
     unblock_id: str = fastapi.Form(...),
-    remarks_unblocked: str | None = fastapi.Form(None),
+    remarks: str | None = fastapi.Form(None),
     upload_file: fastapi.UploadFile | None = fastapi.File(None)
 ):
-    try:
-      
+    try: 
+        remarks_unblocked = remarks.strip() if remarks_unblocked else None
+
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
             return {"status": False, "message": "Session got expired, Please Re-Login"}
@@ -590,18 +600,26 @@ async def alerts_unblock_vts_truck(
 
         event_time_utc = urdhva_base.utilities.get_present_time()
         ist_time = event_time_utc.astimezone(pytz.timezone("Asia/Kolkata"))
-        alert_history = alert_record.get("alert_history", [])
+       
+        alert_history = alert_record.get("alert_history", []) 
 
-        alert_history.append({
-            "action_msg": (
-                f"Manual unblock for truck {alert_record.get('vehicle_number')} "
-                f"initiated by OCC Team ({rpt['username']}) "
-                f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
-            ),
+        alert_history.extend([
+            {
+                "action_msg": (
+                    f"Manual unblock for truck {alert_record.get('vehicle_number')} "
+                    f"initiated by OCC Team ({rpt['username']}) "
+                    f"at {ist_time.strftime('%d-%m-%Y %I:%M:%S %p')} IST"
+                ),
             "action_type": "UnBlockInitiated",
             "action_by": rpt['username'],
             "processed_time": event_time_utc.isoformat()
-        })
+        },
+        {
+            "action_msg": remarks_unblocked,
+            "action_type": "OccUnblockingRemarks",
+            "action_by": rpt['username'],
+            "processed_time": event_time_utc.isoformat()
+        }])
 
         await Alerts(**{
             "id": alert_record.get("id"),
@@ -1206,14 +1224,16 @@ async def alerts_day_end_closure(data: Alerts_Day_End_ClosureParams):
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
             return {"status": False, "message": "Session got expired, Please Re-Login"}
-        
-        await ro_analysis.close_ro_va_cleanliness_unblock_of_blocked()
-        await ro_analysis.close_ro_va_cleanliness_open_alerts()
+        print("Unblocking all blocked alerts")
+        await ro_analysis.close_ro_va_cleanliness_unblock_of_blocked(day_end=True)
+        print("Closing all pending non blocked alerts")
+        await ro_analysis.close_ro_va_cleanliness_open_alerts(day_end=True)
         return {"status": True, "message": "Successfully Closed All Alerts"}
     except Exception as e:
+        print(traceback.format_exc())
         return {
             "status": False,
-            "message": "Failed to update remarks",
+            "message": "Failed at day end closure",
             "error": str(e)
         }
 
@@ -1221,49 +1241,27 @@ async def alerts_day_end_closure(data: Alerts_Day_End_ClosureParams):
 # Action va_cleanliness_summary
 @router.post('/va_cleanliness_summary', tags=['Alerts'])
 async def alerts_va_cleanliness_summary(data: Alerts_Va_Cleanliness_SummaryParams):
-    query_extension = []
-    has_date = False
-    for extension in data.cross_filters:
-        if extension.key == 'created_at':
-            has_date = True
-            extension.key = "created_at::DATE"
-        query_extension.append(f"{extension.key}='{extension.value if extension.value else extension.val}'")
-    if not has_date:
-        query_extension.append(f"created_at::DATE=CURRENT_DATE")
-    analytical_data = {
-          "total": 0,
-          "blocked": 0,
-          "unblocked": 0,
-          "waiting_block_confirmation": 0,
-          "waiting_sales_stop_confirmation": 0,
-          "waiting_unblock_confirmation": 0,
-          "waiting_sales_resume_confirmation": 0,
-          "manually_unblocked": 0,
-          "automatically_unblocked": 0
-    }
+    return await ro_analysis.create_va_cleanliness_summary(data)
 
-    # Query to get all required for the requested time period
-    query = f"""select distinct block_status, alert_status, alert_state, COUNT(*) from alerts 
-    where interlock_name='Restroom Cleaning Evidence Missing' AND {' AND '.join(query_extension)} 
-    group by block_status, alert_status, alert_state
-"""
-    query_data = await Alerts.get_aggr_data(query)
-    resp = query_data['data']
-    analytical_data['total'] = sum([rec['count'] for rec in resp])
-    analytical_data['blocked'] = sum([rec['count'] for rec in resp
-                                      if rec['block_status'] == 'Blocked'])
-    analytical_data['unblocked'] = sum([rec['count'] for rec in resp
-                                        if rec['block_status'] == 'UnBlocked'])
-    analytical_data['waiting_block_confirmation'] = 0
-    analytical_data['waiting_sales_stop_confirmation'] = sum([rec['count'] for rec in resp
-                                                              if rec['block_status'] == 'Blocked'])
-    analytical_data['waiting_unblock_confirmation'] = 0
-    analytical_data['waiting_sales_resume_confirmation'] = sum([rec['count'] for rec in resp
-                                                                if rec['block_status'] == 'UnBlocked'])
-    analytical_data['manually_unblocked'] = sum([rec['count'] for rec in resp
-                                                 if rec['block_status'] == 'UnBlocked' and
-                                                 rec['alert_state'] == 'Resolved'])
-    analytical_data['automatically_unblocked'] = sum([rec['count'] for rec in resp
-                                                      if rec['block_status'] == 'UnBlocked' and
-                                                      rec['alert_state'] != 'Resolved'])
-    return True, analytical_data
+
+# Action download_excel_report
+@router.post('/download_excel_report', tags=['Alerts'])
+async def alerts_download_excel_report(data: Alerts_Download_Excel_ReportParams):
+    # Create Download models as per the report_model key
+    if data.report_model == "VA_Cleanliness_Alerts":
+        return await ro_analysis.generate_va_download_excel_report(data)
+    return False, "Not Implemented"
+
+
+# Action get_va_cleanliness_last_synced_time
+@router.post('/get_va_cleanliness_last_synced_time', tags=['Alerts'])
+async def alerts_get_va_cleanliness_last_synced_time(data: Alerts_Get_Va_Cleanliness_Last_Synced_TimeParams):
+    last_synced_time = "-"
+    try:
+        redis_ins = await urdhva_base.redispool.get_redis_connection()
+        last_synced_time = await redis_ins.get("va_cleanliness_last_sync")
+        await redis_ins.close()
+    except Exception as e:
+        print(traceback.format_exc())
+        print(e)
+    return last_synced_time

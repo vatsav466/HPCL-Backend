@@ -720,6 +720,64 @@ class SendNotification:
         await hpcl_ceg_model.NotificationAuditLogCreate(**notification_record).create()
 
 
+    async def get_tas_recipients(self):
+        try:
+            sap_id = self.alert_data.get("sap_id")
+            zone = self.alert_data.get("zone")
+            bu = self.alert_data.get("bu")
+
+            mailto = self.params.get("rolemailto", "")
+            interlock_name = self.alert_data.get("interlock_name", "")
+
+            tas_mapping = tas_role_configuration.tas_role_mapping.get("TAS", {}).get(interlock_name, {})
+
+            if mailto in ["0", "1", "2", "3", "4", "5"]:
+                role_string = tas_mapping.get("rolemailto", {}).get(mailto, "")
+            else:
+                role_string = mailto
+
+            if not role_string:
+                return []
+
+            roles = [r.strip() for r in role_string.split(",") if r.strip()]
+            roles_array = "{" + ",".join(f'"{r}"' for r in roles) + "}"
+
+            recipients = []
+            users_data = None
+
+            query = f"""
+            SELECT email, username
+            FROM users
+            WHERE '{sap_id}' = ANY(sap_id)
+            AND novex_role && '{roles_array}'::varchar[]
+            AND email IS NOT NULL
+            """
+
+            users_data = await hpcl_ceg_model.Users.get_aggr_data(query, limit=0)
+
+            if not users_data or not users_data.get("data"):
+                query = f"""
+                SELECT email, username
+                FROM users
+                WHERE '{zone}' = ANY(zone)
+                AND '{bu}' = ANY(bu)   
+                AND novex_role && '{roles_array}'::varchar[]
+                AND email IS NOT NULL
+                """
+
+                users_data = await hpcl_ceg_model.Users.get_aggr_data(query, limit=0)
+
+            if users_data and users_data.get("data"):
+                for user in users_data["data"]:
+                    if user.get("email"):
+                        recipients.append(user["email"])
+                        self.usernames.add(user.get("username", ""))
+
+            return recipients
+        
+        except Exception as e:
+            logger.error(f"TAS recipient error: {e}")
+            return []
 
     async def _send_active_notification(self):
         """
@@ -740,13 +798,23 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['default@example.com']
+           
             if self.alert_data['alert_section'] in ['VTS'] and self.params.get('messagetype','') in ['active'] and self.alert_data['bu'] in ['TAS']:
                 self.mail_recipients, self.cc_recipients, self.from_url = await self.get_vts_recipients()
                 await self.update_notication_audit_log()
                 if self.mail_recipients:
                     res = await notification_module.publish_message(from_url=self.from_url, recipients=self.mail_recipients, cc_recipients=self.cc_recipients, subject=self.subject, body=self.body, force_send=True, html_content=True)
                     return res
+                
+            if self.alert_data.get('alert_section','') in ['TAS'] and self.alert_data.get('bu','') in ['TAS'] and self.alert_data.get('severity', '').lower() in ['critical']:
+                await self.update_notication_audit_log()
+                tas_recipients = await self.get_tas_recipients()
+                if tas_recipients:
+                    self.mail_recipients = tas_recipients
+                    res = await notification_module.publish_message(recipients=self.mail_recipients,  subject=self.subject, body=self.body, force_send=True, html_content=True)
+                    return res
+            
+            self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
             return res
@@ -794,14 +862,23 @@ class SendNotification:
                                                                     cc_recipients=self.cc_recipients,
                                                                     subject=self.subject, 
                                                                     body=self.body, 
-                                                                    force_send=True,
+                                                                    force_send=False,
                                                                     html_content=True)
                     return res
+                
+            if self.alert_data.get('alert_section','') in ['TAS'] and self.alert_data.get('bu','') in ['TAS'] and self.alert_data.get('severity', '').lower() in ['critical']:
+                await self.update_notication_audit_log()
+                tas_recipients = await self.get_tas_recipients()
+                if tas_recipients:
+                    self.mail_recipients = tas_recipients
+                    res = await notification_module.publish_message(recipients=self.mail_recipients,  subject=self.subject, body=self.body, force_send=True, html_content=True)
+                    return res
+                
             self.mail_recipients = ['default@example.com']
             await self.update_notication_audit_log()
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
             return res
-
+         
     async def _send_other_notification(self):
         """
         Send notifications for other LPG/TAS messages.
@@ -850,7 +927,7 @@ class SendNotification:
                                                                     cc_recipients=self.cc_recipients,
                                                                     subject=self.subject,
                                                                     body=self.body, 
-                                                                    force_send=True,
+                                                                    force_send=False,
                                                                     html_content=True)
                     return res
             self.mail_recipients = ['default@example.com']

@@ -14,6 +14,9 @@ import pandas as pd
 import os
 import fastapi
 from starlette.responses import FileResponse
+from orchestrator.analytics.performance_score.performance_score_daywise import performance_score_daywise_action
+
+
 import xlsxwriter # Required for manual formatting
 # Assuming PerformanceScore, PerformanceScoreHistory, and widget_actions are imported elsewhere.
 # NOTE: Ensure these imports are available in your environment for the code to run
@@ -322,3 +325,9 @@ async def performancescore_download_performance_score(data: Performancescore_Dow
         import traceback
         print(traceback.format_exc())
         return {"status": "error", "message": str(e)}
+
+
+# Action performance_score_breakdown
+@router.post('/performance_score_breakdown', tags=['PerformanceScore'])
+async def performancescore_performance_score_breakdown(data: Performancescore_Performance_Score_BreakdownParams):
+    return await performance_score_daywise_action(data)

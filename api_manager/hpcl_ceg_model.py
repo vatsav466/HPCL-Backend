@@ -689,6 +689,14 @@ class Locationmaster_Get_Dist_Loc_DetailsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Locationmaster_Get_Pipeline_LocationsParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
@@ -1513,6 +1521,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     maintenance_time: Mapped[typing.Optional[str]] = mapped_column("maintenance_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     closed_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closed_at", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     cause_effect: Mapped[typing.Optional[str]] = mapped_column("cause_effect", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_closure_reason: Mapped[typing.Optional[str]] = mapped_column("alert_closure_reason", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tt_load_number: Mapped[typing.Optional[str]] = mapped_column("tt_load_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     is_flagged_false: Mapped[typing.Optional[bool]] = mapped_column("is_flagged_false", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     rca: Mapped[typing.Optional[str]] = mapped_column("rca", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -1576,7 +1585,8 @@ class AlertsSchema(UrdhvaPostgresBase):
     action_on: Mapped[typing.Optional[typing.Any]] = mapped_column("action_on", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     remarks_unblocked: Mapped[typing.Optional[str]] = mapped_column("remarks_unblocked", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     file_uploaded_path: Mapped[typing.Optional[str]] = mapped_column("file_uploaded_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    block_status: Mapped[typing.Optional[typing.Any]] = mapped_column("block_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    block_status: Mapped[typing.Optional[typing.Any]] = mapped_column("block_status", String, index=True, nullable=True, default=None, primary_key=False, unique=False)
+    image_uploaded: Mapped[typing.Optional[bool]] = mapped_column("image_uploaded", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1610,6 +1620,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     maintenance_time: typing.Optional[str] = pydantic.Field("", **{})
     closed_at: typing.Optional[datetime.datetime] | None = None
     cause_effect: typing.Optional[str] = pydantic.Field("", **{})
+    alert_closure_reason: typing.Optional[str] = pydantic.Field("", **{})
     tt_load_number: typing.Optional[str] = pydantic.Field("", **{})
     is_flagged_false: typing.Optional[bool] = pydantic.Field(False, )
     rca: typing.Optional[str] = pydantic.Field("", **{})
@@ -1674,6 +1685,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
     file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
     block_status: typing.Optional[hpcl_ceg_enum.BlockStatus] | None = None
+    image_uploaded: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -1716,6 +1728,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     maintenance_time: typing.Optional[str] = pydantic.Field("", **{})
     closed_at: typing.Optional[datetime.datetime] | None = None
     cause_effect: typing.Optional[str] = pydantic.Field("", **{})
+    alert_closure_reason: typing.Optional[str] = pydantic.Field("", **{})
     tt_load_number: typing.Optional[str] = pydantic.Field("", **{})
     is_flagged_false: typing.Optional[bool] = pydantic.Field(False, )
     rca: typing.Optional[str] = pydantic.Field("", **{})
@@ -1780,6 +1793,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     remarks_unblocked: typing.Optional[str] = pydantic.Field("", **{})
     file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
     block_status: typing.Optional[hpcl_ceg_enum.BlockStatus] | None = None
+    image_uploaded: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -1942,7 +1956,7 @@ class Alerts_Block_Vts_TruckParams(pydantic.BaseModel):
 
 class Alerts_Unblock_Vts_TruckParams(pydantic.BaseModel):
     unblock_id: str
-    remarks_unblocked: str
+    remarks: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2014,6 +2028,23 @@ class Alerts_Hqo_Blocked_VehiclesParams(pydantic.BaseModel):
 
 class Alerts_Va_Cleanliness_SummaryParams(pydantic.BaseModel):
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Download_Excel_ReportParams(pydantic.BaseModel):
+    report_model: str
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Get_Va_Cleanliness_Last_Synced_TimeParams(pydantic.BaseModel):
+    pass
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2820,6 +2851,24 @@ class Indentdryout_Unblock_OutletParams(pydantic.BaseModel):
 class Indentdryout_Block_RoParams(pydantic.BaseModel):
     ro_code: str
     remarks_blocked: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Bulk_Outlet_BlockParams(pydantic.BaseModel):
+    alert_id: typing.List[str]
+    reason: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Indentdryout_Bulk_Outlet_UnblockParams(pydantic.BaseModel):
+    alert_id: typing.List[str]
+    reason: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -7250,6 +7299,19 @@ class Performancescore_Download_Performance_ScoreParams(pydantic.BaseModel):
     strategy: str
     filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
     is_plant: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Performancescore_Performance_Score_BreakdownParams(pydantic.BaseModel):
+    bu: str
+    score_type: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    end_date: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
