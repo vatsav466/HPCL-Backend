@@ -538,6 +538,10 @@ async def sod_percentage():
             .head(3).with_columns(pl.arange(1, pl.len() + 1).alias("SI No"))
         )
 
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
         tas_avg_score_query = f"""SELECT
                                     ROUND(AVG(score)::numeric, 2) AS tas_average_score
                                     FROM public.performance_score_history
@@ -686,7 +690,7 @@ async def get_va_path():
             worksheet.write(0, col_num, col_name, header_format)
             worksheet.set_column(col_num, col_num, 30)
 
-    return tas_va_path
+    return {"tas_va_path":tas_va_path}
 
 async def get_emlock_path():
     date = urdhva_base.utilities.get_present_time()
@@ -776,15 +780,24 @@ async def get_emlock_path():
             worksheet.write(0, col_num, col_name, header_format)
             worksheet.set_column(col_num, col_num, 30)
 
-    return tas_emlock_path
+    return {"tas_emlock_path":tas_emlock_path}
 
 async def get_tas_path():
-    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-    
-    date_filter = (
-        f"created_at::DATE >= '{today}'"
+    date = urdhva_base.utilities.get_present_time()
+
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
     )
 
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format=None
+    )
+
+    date_filter = (
+        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+    
     query = f"""
         SELECT
             location_name AS "Plant Wise SOD Alerts",
@@ -857,4 +870,4 @@ async def get_tas_path():
             worksheet.write(0, col_num, col_name, header_format)
             worksheet.set_column(col_num, col_num, 30)
 
-    return tas_tas_path
+    return {"tas_tas_path":tas_tas_path}
