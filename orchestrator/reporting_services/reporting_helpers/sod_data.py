@@ -17,6 +17,9 @@ from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
 
+tas_va_path = ""
+tas_emlock_path = ""
+tas_tas_path = ""
 async def get_tas_alerts():
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -512,35 +515,46 @@ async def sod_percentage():
         avg_scores_df = avg_scores_df.rename({
             "name": "Plant Name", "zone": "Zone", "avg_va_score": "VA", "avg_vts_score": "VTS", "avg_tas_score": "TAS",
             "avg_emlock_score": "EMLOCKS", "avg_dryouts_score": "DRYOUTS & CARRY FORWARD",
-            "avg_overall_score": "Average Score from Month start", "previous_day_score": "Previous days score"
+            "avg_overall_score": "Average Performance Index from Month start", "previous_day_score": "Previous days Performance Index"
         }).drop(["sap_id", "avg_dryouts_score"], strict=False).with_columns(pl.arange(1, pl.len()+ 1).alias("SI No"))
 
         avg_scores_df = avg_scores_df.select([
             "SI No", "Plant Name", "Zone", "VA", "VTS", "TAS", "EMLOCKS", "DRYOUTS & CARRY FORWARD",
-            "Average Score from Month start", "Previous days score"
+            "Average Performance Index from Month start", "Previous days Performance Index"
         ])
         
         avg_scores_df = avg_scores_df.drop("DRYOUTS & CARRY FORWARD")
 
         top_3_df = (
             avg_scores_df
-            .sort("Average Score from Month start", descending=True)
+            .sort("Average Performance Index from Month start", descending=True)
             .head(3).with_columns(pl.arange(1, pl.len() + 1).alias("SI No"))
         )
 
         bottom_3_df = (
             avg_scores_df
-            .sort("Average Score from Month start")
+            .sort("Average Performance Index from Month start")
             .head(3).with_columns(pl.arange(1, pl.len() + 1).alias("SI No"))
         )
 
+        tas_avg_score_query = f"""SELECT
+                                    ROUND(AVG(score)::numeric, 2) AS tas_average_score
+                                    FROM public.performance_score_history
+                                    WHERE bu = 'TAS'
+                                    AND timestamp::DATE = CURRENT_DATE - INTERVAL '1 day'"""
+        tas_avg_score_resp = await function(query=tas_avg_score_query)
+        tas_avg_score_resp = pd.DataFrame(tas_avg_score_resp)
+        if not tas_avg_score_resp.empty:
+            tas_avg_score_value = tas_avg_score_resp['tas_average_score'].iloc[0]
+        else:
+            tas_avg_score_value = None  # or 0 or 'N/A'
 
         print('*'*200)
         print(prev_day_score_df.sort("sap_id"))
         print('top_3_df',top_3_df)
         print('bottom_3_df',bottom_3_df)
         print('*'*200)
-        return {"sod_top_data": top_3_df, "sod_bottom_data": bottom_3_df} 
+        return {"sod_top_data": top_3_df, "sod_bottom_data": bottom_3_df, "tas_avg_score_resp": tas_avg_score_value} 
 
     except Exception as exc:
         print("\nERROR OCCURRED:")
@@ -550,3 +564,263 @@ async def sod_percentage():
         )
         return None
 
+async def get_va_path():
+    date = urdhva_base.utilities.get_present_time()
+
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format=None
+    )
+
+    date_filter = (
+        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
+    query = f"""
+        SELECT
+            location_name AS "Plant Wise VA Alerts",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            1 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'VA'
+        AND {date_filter}
+        AND bu = 'TAS'
+        AND location_name != ''
+        GROUP BY location_name
+
+        UNION ALL
+
+        SELECT
+            'Total',
+            COUNT(*) FILTER (WHERE severity = 'Critical'),
+            COUNT(*) FILTER (WHERE severity = 'High'),
+            2 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'VA'
+        AND bu = 'TAS'
+        AND location_name != ''
+        AND {date_filter}
+        ORDER BY sort_order
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
+    resp = await function(query=query)
+
+    df = pd.DataFrame(resp)
+
+    # Remove helper column
+    df = df.drop(columns=["sort_order"])
+
+    global tas_va_path
+    tas_va_path = "/tmp/SOD Plant Wise VA Alerts.xlsx"
+
+    with pd.ExcelWriter(tas_va_path, engine="xlsxwriter") as writer:
+        df.to_excel(
+            writer,
+            sheet_name="Plant Wise VA Alerts",
+            index=False,
+            startrow=1,
+            header=False   #important
+        )
+
+        workbook = writer.book
+        worksheet = writer.sheets["Plant Wise VA Alerts"]
+
+        header_format = workbook.add_format({
+            "bold": True,
+            "align": "center",
+            "valign": "middle",
+            "border": 1
+        })
+
+        # Write header ONCE
+        for col_num, col_name in enumerate(df.columns):
+            worksheet.write(0, col_num, col_name, header_format)
+            worksheet.set_column(col_num, col_num, 30)
+
+    return tas_va_path
+
+async def get_emlock_path():
+    date = urdhva_base.utilities.get_present_time()
+
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format=None
+    )
+
+    date_filter = (
+        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
+    query = f"""
+        SELECT
+            location_name AS "Plant Wise EMLock Alerts",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            1 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'EMLock'
+        AND {date_filter}
+        AND bu = 'TAS'
+        AND location_name != ''
+        GROUP BY location_name
+
+        UNION ALL
+
+        SELECT
+            'Total',
+            COUNT(*) FILTER (WHERE severity = 'Critical'),
+            COUNT(*) FILTER (WHERE severity = 'High'),
+            2 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'EMLock'
+        AND bu = 'TAS'
+        AND location_name != ''
+        AND {date_filter}
+        ORDER BY sort_order
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
+    resp = await function(query=query)
+
+    df = pd.DataFrame(resp)
+
+    # Remove helper column
+    df = df.drop(columns=["sort_order"])
+
+    global tas_emlock_path
+    tas_emlock_path = "/tmp/SOD Plant Wise EMLock Alerts.xlsx"
+
+    with pd.ExcelWriter(tas_emlock_path, engine="xlsxwriter") as writer:
+        df.to_excel(
+            writer,
+            sheet_name="Plant Wise EMLock Alerts",
+            index=False,
+            startrow=1,
+            header=False   #important
+        )
+
+        workbook = writer.book
+        worksheet = writer.sheets["Plant Wise EMLock Alerts"]
+
+        header_format = workbook.add_format({
+            "bold": True,
+            "align": "center",
+            "valign": "middle",
+            "border": 1
+        })
+
+        # Write header ONCE
+        for col_num, col_name in enumerate(df.columns):
+            worksheet.write(0, col_num, col_name, header_format)
+            worksheet.set_column(col_num, col_num, 30)
+
+    return tas_emlock_path
+
+async def get_tas_path():
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    
+    date_filter = (
+        f"created_at::DATE >= '{today}'"
+    )
+
+    query = f"""
+        SELECT
+            location_name AS "Plant Wise SOD Alerts",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            1 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'TAS'
+        AND {date_filter}
+        AND bu = 'TAS'
+        AND location_name != ''
+        GROUP BY location_name
+
+        UNION ALL
+
+        SELECT
+            'Total',
+            COUNT(*) FILTER (WHERE severity = 'Critical'),
+            COUNT(*) FILTER (WHERE severity = 'High'),
+            2 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'TAS'
+        AND bu = 'TAS'
+        AND location_name != ''
+        AND {date_filter}
+        ORDER BY sort_order
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
+    resp = await function(query=query)
+
+    df = pd.DataFrame(resp)
+
+    # Remove helper column
+    df = df.drop(columns=["sort_order"])
+
+    global tas_tas_path
+    tas_tas_path = "/tmp/Plant Wise SOD Alerts.xlsx"
+
+    with pd.ExcelWriter(tas_tas_path, engine="xlsxwriter") as writer:
+        df.to_excel(
+            writer,
+            sheet_name="Plant Wise SOD Alerts",
+            index=False,
+            startrow=1,
+            header=False   #important
+        )
+
+        workbook = writer.book
+        worksheet = writer.sheets["Plant Wise SOD Alerts"]
+
+        header_format = workbook.add_format({
+            "bold": True,
+            "align": "center",
+            "valign": "middle",
+            "border": 1
+        })
+
+        # Write header ONCE
+        for col_num, col_name in enumerate(df.columns):
+            worksheet.write(0, col_num, col_name, header_format)
+            worksheet.set_column(col_num, col_num, 30)
+
+    return tas_tas_path
