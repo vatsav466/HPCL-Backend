@@ -21,6 +21,7 @@ tas_va_path = ""
 tas_emlock_path = ""
 tas_tas_path = ""
 tas_day_wise_trend_exl_path = ""
+
 async def get_tas_alerts():
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -478,6 +479,55 @@ async def sod_percentage():
         print("FINAL DATAFRAME")
         print("*" * 200)
         print(final_df)
+
+        sap_id_list = [
+            "1919", "1128", "1216", "1334", "1155",
+            "1221", "1259", "1412", "1146", "1509",
+            "1424", "1892", "1588", "1856", "1845"
+        ]
+
+        tas_score_location_wise = (
+            final_df
+            # filter only required SAP IDs
+            .filter(pl.col("sap_id").is_in(sap_id_list))
+
+            .group_by(["sap_id", "name"])
+            .agg(
+                pl.mean("TAS").alias("avg_tas_score")
+            )
+            .with_columns(
+                pl.col("avg_tas_score").round(2)
+            )
+            # highest score first
+            .sort("avg_tas_score", descending=True)
+            # top 15
+            .head(15)
+            # create numeric rank first
+            .with_row_count("rank_num", offset=1)
+            # convert to "Rank 1", "Rank 2", ...
+            .with_columns(
+                pl.concat_str([
+                    pl.lit("Rank "),
+                    pl.col("rank_num").cast(pl.Utf8)
+                ]).alias("Rank")
+            )
+            # final column order
+            .select(["Rank", "sap_id", "name", "avg_tas_score"])
+        )
+
+        tas_score_location_wise = (
+            tas_score_location_wise
+            .drop("sap_id")
+            .rename({
+                "name": "Location",
+                "avg_tas_score": "TAS Score"
+            })
+        )
+
+        print('*'*200)
+        print('tas_score_location_wise',tas_score_location_wise)
+        print('*'*200)
+
         avg_scores_df = (
             final_df
             .group_by(["sap_id", "name"])
@@ -592,7 +642,8 @@ async def sod_percentage():
         )
         return {"sod_top_data": top_3_df, "sod_bottom_data": bottom_3_df,
                 "tas_avg_score_resp": tas_avg_score_value,
-                "tas_day_wise_trend_exl_path": tas_day_wise_trend_exl_path} 
+                "tas_day_wise_trend_exl_path": tas_day_wise_trend_exl_path,
+                "tas_score_location_wise": tas_score_location_wise} 
 
     except Exception as exc:
         print("\nERROR OCCURRED:")
@@ -797,7 +848,7 @@ async def get_tas_path():
         f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
         f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     )
-    
+
     query = f"""
         SELECT
             location_name AS "Plant Wise SOD Alerts",
@@ -871,3 +922,235 @@ async def get_tas_path():
             worksheet.set_column(col_num, col_num, 30)
 
     return {"tas_tas_path":tas_tas_path}
+
+async def get_fault_and_maintenance():
+    date = urdhva_base.utilities.get_present_time()
+
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format=None
+    )
+
+    date_filter = (
+        f"a.created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND a.created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
+    query = f"""
+                SELECT *
+                    FROM (
+                        SELECT
+                            lm.name AS "Location Name",
+
+                            COUNT(
+                                CASE
+                                    WHEN a.interlock_name IN (
+                                        'Rim Seal system_Fault activated',
+                                        'HCD_Fault activated',
+                                        'AirCompressor_Fault activated',
+                                        'ROSOV_FailtoClose',
+                                        'Fire engine_ FailtoStart',
+                                        'Fireengine_LLOP',
+                                        'FireEngine_HWOT',
+                                        'FireEngine_Tripped',
+                                        'Jockeypump_ FailtoStart'
+                                    )
+                                    THEN a.id
+                                END
+                            ) AS "Fault",
+
+                            COUNT(
+                                CASE
+                                    WHEN a.interlock_name IN (
+                                        'ESD Push button_Under Maintenance',
+                                        'Rim Seal system_Under Maintenance',
+                                        'Tank_Under Maintenance',
+                                        'ROSOV_Under Maintenance',
+                                        'MOV_Under Maintenance',
+                                        'VFT_Under Maintenance',
+                                        'Secondary Radar_Under Maintenance',
+                                        'Fire engine_Under Maintenance',
+                                        'JockeyPump_Under Maintenance',
+                                        'HydrantPT_Under Maintenance',
+                                        'HCD_Under Maintenance'
+                                    )
+                                    THEN a.id
+                                END
+                            ) AS "Maintenance"
+
+                        FROM location_master lm
+                        LEFT JOIN alerts a
+                            ON a.sap_id = lm.sap_id
+                            AND a.alert_status <> 'Close'
+                            AND {date_filter}
+                        WHERE lm.location_onboard = TRUE
+                        GROUP BY lm.name
+                    ) t
+                    ORDER BY ("Fault" + "Maintenance") DESC
+                    LIMIT 15;
+                """
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    tas_fault_maintenance_resp = await function(query=query)
+
+    tas_fault_maintenance_resp = pd.DataFrame(tas_fault_maintenance_resp)
+
+    df = tas_fault_maintenance_resp.copy()
+
+    df.insert(0, "S.no", range(1, len(df) + 1))
+    total_fault = df["Fault"].sum()
+    total_maintenance = df["Maintenance"].sum()
+    total_row = pd.DataFrame([{
+        "S.no": "Total",
+        "Location Name": "",
+        "Fault": total_fault,
+        "Maintenance": total_maintenance
+    }])
+    df = pd.concat([df, total_row], ignore_index=True)
+    print('*'*200)
+    print('tas_fault_maintenance_resp',df)
+    print('*'*200)
+    return {
+        "tas_fault_maintenance_resp": df.to_dict(orient="records"),
+        "tas_fault_maintenance_columns": df.columns.tolist()
+    }
+
+async def get_parameters_summary():
+    date = urdhva_base.utilities.get_present_time()
+
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format=None
+    )
+
+    date_filter = (
+        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
+    query = f"""SELECT
+                    'SOD' AS "SBU",
+
+                    COUNT(CASE
+                        WHEN interlock_name = 'SickTT Reported'
+                        THEN 1
+                    END) AS "Sick TT",
+
+                    COUNT(CASE
+                        WHEN interlock_name = 'BCU Local Loading'
+                        THEN 1
+                    END) AS "Local Loaded TT",
+
+                    COUNT(CASE
+                        WHEN interlock_name = 'K Factor Change_BCU'
+                        THEN 1
+                    END) AS "K Factor Changes",
+
+                    COUNT(CASE
+                        WHEN interlock_name = 'MFM K Factor Change'
+                        THEN 1
+                    END) AS "MFM Factor Changes"
+
+                FROM alerts
+                WHERE 
+                interlock_name IN (
+                'SickTT Reported',
+                'BCU Local Loading',
+                'K Factor Change_BCU',
+                'MFM K Factor Change'
+                ) AND {date_filter}
+                """
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    tas_parameters_summary = await function(query=query)
+
+    tas_parameters_summary = pd.DataFrame(tas_parameters_summary)
+
+    tas_parameters_query = f"""SELECT
+                                    lm.name AS "Location Name",
+
+                                    COUNT(CASE
+                                        WHEN a.interlock_name = 'SickTT Reported'
+                                        THEN 1
+                                    END) AS "Sick TT",
+
+                                    COUNT(CASE
+                                        WHEN a.interlock_name = 'BCU Local Loading'
+                                        THEN 1
+                                    END) AS "Local Loaded TT",
+
+                                    COUNT(CASE
+                                        WHEN a.interlock_name = 'K Factor Change_BCU'
+                                        THEN 1
+                                    END) AS "K Factor Changes",
+
+                                    COUNT(CASE
+                                        WHEN a.interlock_name = 'MFM K Factor Change'
+                                        THEN 1
+                                    END) AS "MFM Factor Changes"
+
+                                FROM location_master lm
+                                LEFT JOIN alerts a
+                                    ON a.sap_id = lm.sap_id
+                                    AND a.interlock_name IN (
+                                        'SickTT Reported',
+                                        'BCU Local Loading',
+                                        'K Factor Change_BCU',
+                                        'MFM K Factor Change'
+                                    )
+                                    AND a.created_at::DATE >= '2026-01-01'
+                                    AND a.created_at::DATE <= '2026-01-19'
+
+                                WHERE lm.location_onboard = TRUE
+
+                                GROUP BY lm.name
+
+                                ORDER BY
+                                    (
+                                        COUNT(CASE WHEN a.interlock_name = 'SickTT Reported' THEN 1 END) +
+                                        COUNT(CASE WHEN a.interlock_name = 'BCU Local Loading' THEN 1 END) +
+                                        COUNT(CASE WHEN a.interlock_name = 'K Factor Change_BCU' THEN 1 END) +
+                                        COUNT(CASE WHEN a.interlock_name = 'MFM K Factor Change' THEN 1 END)
+                                    ) DESC
+
+                                LIMIT 15"""
+    
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    tas_parameters_query_resp = await function(query=tas_parameters_query)
+
+    tas_parameters_query_resp = pd.DataFrame(tas_parameters_query_resp)
+
+    df = tas_parameters_query_resp.copy()
+
+    df.insert(0, "S.NO", range(1, len(df) + 1))
+    total_sick_tt = df["Sick TT"].sum()
+    total_loaded_tt = df["Local Loaded TT"].sum()
+    total_kfactor_tt = df["K Factor Changes"].sum()
+    total_mfm_factor_tt = df["MFM Factor Changes"].sum()
+    total_row = pd.DataFrame([{
+        "S.NO": "Total",
+        "Location Name": "",
+        "Sick TT": total_sick_tt,
+        "Local Loaded TT": total_loaded_tt,
+        "K Factor Changes": total_kfactor_tt,
+        "MFM Factor Changes": total_mfm_factor_tt
+    }])
+    df = pd.concat([df, total_row], ignore_index=True)
+    print('*'*200)
+    print('tas_parameters_query_resp',df)
+    print('*'*200)
+    return {
+        "tas_parameters_query_resp": df.to_dict(orient="records"),
+        "tas_parameters_query_resp_columns": df.columns.tolist(),
+        "tas_parameters_summary": tas_parameters_summary
+    }
