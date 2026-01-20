@@ -54,12 +54,14 @@ class SendNozzleCommand:
                 alert_message = (
                     f"Failed to Block the Outlet {alert_data.get('location_name', '')}, status: Failed, RO: {alert_data.get('sap_id', '')}"
                 )
+                if failed_resp:
+                    alert_message += f"{failed_resp}"
                 alert_data["action_msg"] = alert_message
                 alert_data["action_type"] = "BlockFailed"
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                 await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
                                                "ro_offline": False,
-                                               "block_status": hpcl_ceg_enum.BlockStatus.WaitingForBlockAck}).modify()
+                                               "block_status": None}).modify()
                 return True, {"blocked": False, "offline": False}
                 
             alert_message = (
@@ -76,7 +78,7 @@ class SendNozzleCommand:
         if params.get("interrupt").lower() == 'unblock':
             # UnBlocking in IMS blockingFlag="N"
             unblocking_status = None
-            closure_reason = "AUTO_UNBLOCK" if alert_data.get("image_uploaded") else "DNC_UNBLOCKED"
+            closure_reason = "PICTURE_UPLOADED" if alert_data.get("image_uploaded") else "DNC_UNBLOCKED"
             unblocking_status,error_msg = await ro_interlock_handler.RoInterlockHandler().ro_unblocking([alert_data.get('sap_id','')])
             success_resp, failed_resp = error_msg
             if (
@@ -103,9 +105,9 @@ class SendNozzleCommand:
                 alert_data["action_msg"] = alert_message
                 alert_data["action_type"] = "UnblockFailed"
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
-                await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
-                                               "ro_offline": False,
-                                               "block_status": hpcl_ceg_enum.BlockStatus.WaitingForUnBlockAck}).modify()
+                # await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                #                                "ro_offline": False,
+                #                                "block_status": hpcl_ceg_enum.BlockStatus.WaitingForUnBlockAck}).modify()
                 return True, {"unblocked": False, "offline": False}
                 
             alert_message = (

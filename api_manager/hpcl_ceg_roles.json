@@ -1128,6 +1128,12 @@
                 },
                 {
                     "name": "va_cleanliness_summary"
+                },
+                {
+                    "name": "download_excel_report"
+                },
+                {
+                    "name": "get_va_cleanliness_last_synced_time"
                 }
             ]
         },
@@ -1161,6 +1167,9 @@
                 },
                 {
                     "name": "get_vts_unblocked_trucks"
+                },
+                {
+                    "name": "get_va_cleanliness_last_synced_time"
                 }
             ]
         },
@@ -1254,6 +1263,12 @@
                 },
                 {
                     "name": "va_cleanliness_summary"
+                },
+                {
+                    "name": "download_excel_report"
+                },
+                {
+                    "name": "get_va_cleanliness_last_synced_time"
                 }
             ]
         },
@@ -8098,6 +8113,14 @@
         {
             "name": "va_cleanliness_summary",
             "displayName": "va_cleanliness_summary"
+        },
+        {
+            "name": "download_excel_report",
+            "displayName": "download_excel_report"
+        },
+        {
+            "name": "get_va_cleanliness_last_synced_time",
+            "displayName": "get_va_cleanliness_last_synced_time"
         },
         {
             "name": "tas_analytics",

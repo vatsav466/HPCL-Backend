@@ -689,6 +689,14 @@ class Locationmaster_Get_Dist_Loc_DetailsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Locationmaster_Get_Pipeline_LocationsParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
@@ -1948,7 +1956,7 @@ class Alerts_Block_Vts_TruckParams(pydantic.BaseModel):
 
 class Alerts_Unblock_Vts_TruckParams(pydantic.BaseModel):
     unblock_id: str
-    remarks_unblocked: str
+    remarks: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -2020,6 +2028,23 @@ class Alerts_Hqo_Blocked_VehiclesParams(pydantic.BaseModel):
 
 class Alerts_Va_Cleanliness_SummaryParams(pydantic.BaseModel):
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Download_Excel_ReportParams(pydantic.BaseModel):
+    report_model: str
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alerts_Get_Va_Cleanliness_Last_Synced_TimeParams(pydantic.BaseModel):
+    pass
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -7282,6 +7307,7 @@ class Performancescore_Download_Performance_ScoreParams(pydantic.BaseModel):
 
 class Performancescore_Performance_Score_BreakdownParams(pydantic.BaseModel):
     bu: str
+    score_type: typing.Optional[str] = pydantic.Field("", **{})
     name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     start_date: typing.Optional[str] = pydantic.Field("", **{})
