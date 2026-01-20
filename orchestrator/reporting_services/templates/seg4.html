@@ -173,6 +173,98 @@
             {% endfor %}
         </tbody>
     </table>
+    <h4>3. SOD TAS Analytics ({{present_month}})</h4>
+    <h5>3.1 TAS score Location wise</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in tas_score_location_wise.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in tas_score_location_wise.to_dicts() %}
+            <tr>
+                {% for col in tas_score_location_wise.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h5>3.2 TAS Equipment Healthiness Report</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in tas_fault_maintenance_columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in tas_fault_maintenance_resp %}
+            <tr>
+                {% for col in tas_fault_maintenance_columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h5>3.3 TAS Parameters Summary</h5>
+    <h6>TAS-NOVEX Integrated Locations: 15</h6>
+    <table>
+        <thead>
+            <tr>
+                <th>SBU</th>
+                <th>Sick TT</th>
+                <th>Local Loaded TT</th>
+                <th>K Factor Changes</th>
+                <th>MFM Factor Changes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in tas_parameters_summary.to_dict(orient='records') %}
+            <tr>
+                <td>
+                    {{ row['SBU'] }}
+                </td>
+                <td>
+                    {{ row['Sick TT'] }}
+                </td>
+                <td>
+                    {{ row['Local Loaded TT'] }}
+                </td>
+                <td>
+                    {{ row['K Factor Changes'] }}
+                </td>
+                <td>
+                    {{ row['MFM Factor Changes'] }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <table>
+        <thead>
+            <tr>
+                {% for col in tas_parameters_query_resp_columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in tas_parameters_query_resp %}
+            <tr>
+                {% for col in tas_parameters_query_resp_columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 <script>
     window.onload = function () {
         document.querySelectorAll(".growth").forEach(td => {
