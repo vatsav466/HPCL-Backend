@@ -6,6 +6,7 @@ import decimal
 from orchestrator.dbconnector.widget_actions.vts_analytics import  download_streaming_data
 from datetime import datetime, timedelta
 import re
+from utilities.analog_data_mapping import Maintenance, Fault, Normal
 
 
 from orchestrator.tas_queries import (
@@ -126,22 +127,17 @@ async def top_repeat_alerts(data):
 
 async def tas_severity_summary(data):
 
-    alert_query = """
-        alert_section = 'TAS'
-        AND severity = 'Critical'
-    """
+    # -----------------------------
+    # Build alert query
+    # -----------------------------
+    alert_query = "alert_section = 'TAS'"
 
     alert_query += (
         f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
     )
 
-    if data.alert_status:
-        alert_query += f" AND alert_status = '{data.alert_status}'"
-
-
     if data.zone:
         alert_query += f" AND zone = '{data.zone}'"
-
 
     if data.location_name:
         alert_query += f" AND location_name = '{data.location_name}'"
@@ -154,13 +150,8 @@ async def tas_severity_summary(data):
     )
 
     alert_params.fields = [
-        "zone",
-        "location_name",
-        "severity",
-        "interlock_name",
-        "equipment_name",
-        "created_at"
-    ]
+        "zone", "location_name",
+        "severity", "interlock_name", "equipment_name", "created_at" ]
 
     alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
@@ -171,7 +162,6 @@ async def tas_severity_summary(data):
     df = pl.DataFrame(alert_data)
 
     # CASE 2: location_name specified → DETAIL VIEW
-    
     if data.location_name:
         detail_df = (
             df
@@ -190,25 +180,42 @@ async def tas_severity_summary(data):
 
         return detail_df.to_dicts()
 
-    # CASE 1: SUMMARY VIEW
+    # Extract interlock names
+    maintenance_terms = [
+        i["interlock_name"].lower() for i in Maintenance if i.get("interlock_name")]
 
+    fault_terms = [
+        i["interlock_name"].lower() for i in Fault if i.get("interlock_name")]
+
+    normal_terms = [
+        i["interlock_name"].lower() for i in Normal if i.get("interlock_name")]
+
+
+    # Categorize each alert
+    df = df.with_columns(pl
+        .when(
+            pl.any_horizontal([ pl.col("interlock_name").str.to_lowercase().str.contains(t)
+                for t in maintenance_terms])) .then(pl.lit("maintenance"))
+
+        .when(
+            pl.any_horizontal([
+                pl.col("interlock_name").str.to_lowercase().str.contains(t)
+                for t in fault_terms])) .then(pl.lit("fault"))
+        
+        .when(
+            pl.any_horizontal([
+                pl.col("interlock_name").str.to_lowercase().str.contains(t)
+                for t in normal_terms])) .then(pl.lit("normal")) 
+
+        .otherwise(pl.lit("other")) .alias("interlock_category"))
+    
+    # Aggregate summary counts
     summary_df = (
-        df.group_by(["zone", "location_name"])
-        .agg([
-            pl.len().alias("critical_count"),
-            (
-                pl.when(
-                    pl.col("interlock_name")
-                      .str.contains("(?i)under maintenance")
-                )
-                .then(1)
-                .otherwise(0)
-                .sum()
-                .alias("equipment_under_maintenance_count")
-            )
-        ])
-        .sort("critical_count", descending=True)
-    )
+        df.group_by(["zone", "location_name"]) .agg([
+            (pl.col("interlock_category") == "maintenance"). cast(pl.Int64).sum().alias("under_maintenance_count"),
+            (pl.col("interlock_category") == "fault").cast(pl.Int64).sum().alias("fault_count")
+
+        ]))
 
     return summary_df.to_dicts()
 
