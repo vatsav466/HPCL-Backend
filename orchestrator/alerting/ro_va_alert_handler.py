@@ -95,7 +95,7 @@ class ROVaAlertHandler(object):
         for rec in alerts_to_create:
             print("Creating new alert {}".format(rec.get("sap_id","")))
             await redis_queue.put(json.dumps(rec))
-            #await cls.create_alert(rec)
+            # await cls.create_alert(rec)
 
         # CLOSE / RESOLVE ALERTS
         for batch in chunked(alerts_to_update):
@@ -133,6 +133,7 @@ class ROVaAlertHandler(object):
             rec for rec in data
             if rec["upload_done"] and rec["ro_code"] in pending_map
         ]
+        redis_queue = urdhva_base.redispool.RedisQueue('ro_blocking_queue')
 
         for batch in chunked(resolved):
             close_ids = []
@@ -148,11 +149,17 @@ class ROVaAlertHandler(object):
             if close_ids:
                 ids = ",".join(f"'{i}'" for i in close_ids)
                 await hpcl_ceg_model.Alerts.update_by_query(
-                    f"UPDATE alerts SET alert_status='Close', "
-                    f"alert_state = 'Resolved', "
-                    f"image_uploaded = true, "
-                    f"alert_closure_reason = 'AUTO_CLOSE' WHERE id IN ({ids})"
+                    f"UPDATE alerts SET alert_state = 'Resolved', "
+                    f"image_uploaded = true WHERE id IN ({ids})"
                 )
+
+                # Closing and deleting workflows
+                alert_data = {}
+                alert_data["task_type"] = "close alerts"
+                alert_data["alert_ids"] = close_ids
+                alert_data['reason'] = "Toilet Image Uploaded, Auto Closing"
+                alert_data['username'] = "System"
+                await redis_queue.put(json.dumps(alert_data))
 
             if resolve_ids:
                 ids = ",".join(f"'{i}'" for i in resolve_ids)
@@ -160,3 +167,10 @@ class ROVaAlertHandler(object):
                     f"UPDATE alerts SET alert_state = 'Resolved', "
                     f"image_uploaded = true WHERE id IN ({ids})"
                 )
+                # Auto unblocking of alerts
+                alert_data = {}
+                alert_data["task_type"] = "unblock outlets"
+                alert_data["alert_ids"] = resolve_ids
+                alert_data['reason'] = "Toilet Image Uploaded, Auto Closing"
+                alert_data['username'] = "System"
+                await redis_queue.put(json.dumps(alert_data))

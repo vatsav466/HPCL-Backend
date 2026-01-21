@@ -179,6 +179,28 @@ class ROBlockListener:
                     "alert_history": alert_history,
                     "remarks_unblocked": task.get('reason','')
                 }).modify()
+        elif task.get('task_type') in ['close alerts']:
+            ids = ",".join(f"'{i}'" for i in task['alert_ids'])
+            await Alerts.update_by_query(
+                f"UPDATE alerts SET alert_status='Close', "
+                f"alert_state = 'Resolved', "
+                f"block_status = NULL, "
+                f"alert_closure_reason = 'AUTO_CLOSE' WHERE id IN ({ids})"
+            )
+            for alert_id in task['alert_ids']:
+                query = f"id='{alert_id}'"
+                alert_data = await Alerts.get_all(
+                    urdhva_base.queryparams.QueryParams(q=query, limit=1),
+                    resp_type="plain"
+                )
+                if not alert_data.get("data"):
+                    continue
+                data = alert_data["data"][0]
+                delete_url = f"{data.get('workflow_url')}/engine-rest/process-instance/{data.get("workflow_instance_id")}"
+                try:
+                    delete_response = requests.delete(delete_url)
+                except Exception as e:
+                    print(f"Exception while deleting workflow for id {id}: {e}")
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
