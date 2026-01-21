@@ -1082,6 +1082,11 @@ async def get_parameters_summary():
 
     tas_parameters_summary = pd.DataFrame(tas_parameters_summary)
 
+    date_filter = (
+        f"a.created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND a.created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
     tas_parameters_query = f"""SELECT
                                     lm.name AS "Location Name",
 
@@ -1115,7 +1120,7 @@ async def get_parameters_summary():
                                         'MFM K Factor Change'
                                     )
                                     AND {date_filter}
-                                    
+
                                 WHERE lm.location_onboard = TRUE
 
                                 GROUP BY lm.name
