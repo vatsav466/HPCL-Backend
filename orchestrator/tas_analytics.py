@@ -2,13 +2,13 @@ import polars as pl
 import urdhva_base
 from datetime import datetime
 from hpcl_ceg_model import Alerts, HostMFMFactor 
+from hpcl_ceg_model import HostBayReAssignment, HostLocalLoadedTts, HostCancelledTts
+import json 
 import decimal
 from orchestrator.dbconnector.widget_actions.vts_analytics import  download_streaming_data
 from datetime import datetime, timedelta
 import re
 from utilities.analog_data_mapping import Maintenance, Fault, Normal
-
-
 from orchestrator.tas_queries import (
     ESD_QUERIES, ESD_FIELDS, ESD_CATEGORIES,
     VFT_QUERIES, VFT_FIELDS, VFT_CATEGORIES,
@@ -491,133 +491,242 @@ async def critical_alerts_by_equipment(data):
 
     return critical_alerts_df.to_dicts()
 
-
-
 async def tas_alerts_exception_report(data):
-    alert_query = "alert_section = 'TAS'"
-    
-    # Add date filter if provided
-    if (data.start_date and data.end_date and 
-        data.start_date.strip() and data.end_date.strip() and
-        data.start_date.lower() != "string" and data.end_date.lower() != "string"):
-        alert_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
 
-    alert_params = urdhva_base.queryparams.QueryParams(q=alert_query)
-    alert_params.limit = 0
-
-    alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
-    alert_data = alerts_resp.get("data", [])
-
-    if not alert_data:
-        return []
-
-    df = pl.DataFrame(alert_data)
-
-    # Fetch host_mfm_factor data
-    mfm_params = urdhva_base.queryparams.QueryParams()
-    mfm_params.limit = 0
-    mfm_resp = await HostMFMFactor.get_all(mfm_params, resp_type="plain")
-    mfm_data = mfm_resp.get("data", [])
-    
-    # Convert any Decimal types to float before creating DataFrame
-    if mfm_data:
-        for row in mfm_data:
-            for key, value in row.items():
-                if isinstance(value, decimal.Decimal):
-                    row[key] = float(value)
-    
-    # Handle empty data case
-    if not mfm_data:
-        mfm_df = pl.DataFrame()
-        valid_sap_ids = set()
-    else:
-        mfm_df = pl.DataFrame(mfm_data)
-        
-        # Get sap_ids where last_k_factor IS NOT NULL
-        valid_sap_ids = set()
-        if not mfm_df.is_empty() and "sap_id" in mfm_df.columns and "last_k_factor" in mfm_df.columns:
-            valid_sap_ids = set(
-                mfm_df.filter(pl.col("last_k_factor").is_not_null())
-                .select("sap_id")
-                .to_series()
-                .to_list()
-            )
-
-    # Filter out MFM K Factor Change alerts where sap_id doesn't have last_k_factor
-    df = df.with_columns(
-        pl.when(
-            (pl.col("interlock_name").str.to_lowercase().str.replace_all(" ", "") == "mfmkfactorchange") &
-            (~pl.col("sap_id").is_in(valid_sap_ids))
+    q = "alert_section = 'TAS'"
+    if data.start_date and data.end_date and data.start_date.lower() != "string":
+        q += (
+            f" AND created_at >= '{data.start_date} 00:00:00'"
+            f" AND created_at <  '{data.end_date} 23:59:59'"
         )
-        .then(pl.lit(True))
-        .otherwise(pl.lit(False))
-        .alias("exclude_from_count")
+
+    params = urdhva_base.queryparams.QueryParams(q=q, fields=json.dumps(["location_name", "sap_id", "interlock_name","created_at", "vehicle_number", "device_name"]))
+    params.limit = 0
+
+    alerts = (await Alerts.get_all(params, resp_type="plain")).get("data", [])
+    if not alerts:
+        return []
+    df = (pl.DataFrame(alerts)
+        .with_columns([
+            pl.col("vehicle_number").str.strip_chars(),
+            pl.col("interlock_name")
+                .str.to_lowercase()
+                .str.replace_all(" ", "")
+                .alias("interlock_norm"),
+            pl.col("created_at").dt.date().alias("created_date")
+        ])
+    )
+    mfm = await HostMFMFactor.get_all(
+        urdhva_base.queryparams.QueryParams(limit=0),
+        resp_type="plain"
     )
 
-    # Filter out excluded rows
-    df = df.filter(~pl.col("exclude_from_count"))
-
-    # Normalize interlock_name: convert to lowercase and remove spaces for matching
-    df = df.with_columns(
-        pl.col("interlock_name").str.to_lowercase().str.replace_all(" ", "").alias("interlock_name_normalized")
-    )
-
-    # Define the interlock names you want as columns (original format)
-    interlock_columns = [
-        "Bay reassignment",
-        "Unauthorized flow_BCU",
-        "BCU vs MFM totalizer mismatch alarm",
-        "Cancel TT Reported",
-        "Unauthorized Flow Alarm Blend_BCU",
-        "MFM K Factor Change",
-        "Sick TT Reported",
-        "BCU Local Loading",
-        "K Factor Change_BCU",
-        "K Factor Change Blend_BCU"
-    ]
-
-    # Create normalized versions for matching
-    interlock_normalized = {
-        col.lower().replace(" ", ""): col for col in interlock_columns
+    valid_sap_ids = {
+        r["sap_id"] for r in mfm.get("data", [])
+        if r.get("last_k_factor") is not None
     }
 
-    # Map the normalized names back to original names
-    df = df.with_columns(
-        pl.col("interlock_name_normalized").replace(interlock_normalized, default=pl.col("interlock_name")).alias(
-            "interlock_name_mapped")
+    df = df.filter(~((pl.col("interlock_norm") == "mfmkfactorchange")& (~pl.col("sap_id").is_in(valid_sap_ids))))
+    INTERLOCK_MAP = {
+        "bayreassignment": "Bay reassignment",
+        "unauthorizedflow_bcu": "Unauthorized flow_BCU",
+        "bcuvsmfmtotalizermismatchalarm": "BCU vs MFM totalizer mismatch alarm",
+        "cancelttreported": "Cancel TT Reported",
+        "unauthorizedflowalarmblend_bcu": "Unauthorized Flow Alarm Blend_BCU",
+        "mfmkfactorchange": "MFM K Factor Change",
+        "sickttreported": "Sick TT Reported",
+        "bculocalloading": "BCU Local Loading",
+        "kfactorchange_bcu": "K Factor Change_BCU",
+        "kfactorchangeblend_bcu": "K Factor Change Blend_BCU",
+    }
+
+    DEVICE_INTERLOCKS = {
+        "MFM K Factor Change",
+        "Sick TT Reported",
+        "K Factor Change_BCU",
+        "K Factor Change Blend_BCU",
+        "Unauthorized Flow Alarm Blend_BCU",
+        "Unauthorized flow_BCU",
+        "BCU vs MFM totalizer mismatch alarm"
+    }
+
+    df = (df.filter(pl.col("interlock_norm").is_in(list(INTERLOCK_MAP.keys()))).with_columns(pl.col("interlock_norm").replace(INTERLOCK_MAP).alias("interlock")))
+    date_q = (
+        f"created_at >= '{data.start_date} 00:00:00'"
+        f" AND created_at < '{data.end_date} 23:59:59'"
     )
-    # Create a pivot table counting occurrences of each interlock_name per location_name
-    pivot_df = df.group_by(["location_name", "interlock_name_mapped"]).agg(
-        pl.len().alias("count")
-    ).pivot(
-        values="count",
-        index="location_name",
-        columns="interlock_name_mapped",
-        aggregate_function="sum"
+
+    # ---- Bay reassignment
+    bay_df = (
+        pl.DataFrame(
+            (await HostBayReAssignment.get_all(
+                urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
+                resp_type="plain"
+            )).get("data", [])
+        )
+        .with_columns(pl.col("created_at").dt.date().alias("created_date"))
+        .group_by(["truck_number", "created_date"])
+        .agg([
+            pl.col("load_number").drop_nulls().first(),
+            pl.col("assigned_bay").drop_nulls().first(),
+            pl.col("reassigned_bay").drop_nulls().first(),
+        ])
     )
 
-    # Ensure all required columns exist, fill missing ones with 0
-    for col in interlock_columns:
-        if col not in pivot_df.columns:
-            pivot_df = pivot_df.with_columns(pl.lit(0).alias(col))
+    # ---- Local loading
+    local_df = (
+        pl.DataFrame(
+            (await HostLocalLoadedTts.get_all(
+                urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
+                resp_type="plain"
+            )).get("data", [])
+        )
+        .with_columns(pl.col("created_at").dt.date().alias("created_date"))
+        .group_by(["truck_number", "created_date"])
+        .agg([
+            pl.col("bcu_number").drop_nulls().first(),
+            pl.col("loaded_qty").drop_nulls().first(),
+            pl.col("recipe_name").drop_nulls().first(),
+        ])
+    )
 
-    # Reorder columns to match the desired order
-    column_order = ["location_name"] + interlock_columns
-    pivot_df = pivot_df.select([col for col in column_order if col in pivot_df.columns])
+    # ---- Cancel TT
+    cancel_df = (
+        pl.DataFrame(
+            (await HostCancelledTts.get_all(
+                urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
+                resp_type="plain"
+            )).get("data", [])
+        )
+        .with_columns(pl.col("created_at").dt.date().alias("created_date"))
+        .group_by(["truck_number", "created_date"])
+        .agg([
+            pl.col("load_number").drop_nulls().first(),
+            pl.col("required_qty").drop_nulls().first(),
+            pl.col("product_name").drop_nulls().first(),
+        ])
+    )
+    result = []
 
-    # Fill null values with 0
-    pivot_df = pivot_df.fill_null(0)
+    for loc in df.select("location_name").unique().to_series():
+        loc_df = df.filter(pl.col("location_name") == loc)
+        row = {"Location": loc}
 
-    # Rename location_name to Location for final output
-    pivot_df = pivot_df.rename({"location_name": "Location"})
-    pivot_df = pivot_df.filter(pl.col("Location").is_not_null() & (pl.col("Location") != ""))
-    pivot_df = pivot_df.sort("Location")
-    
-    # Check if download is requested (handle both string "true" and boolean True)
-    if data.download and str(data.download).lower() == "true":
-        return await download_streaming_data(pivot_df, filename="exception_report")
+        for interlock in INTERLOCK_MAP.values():
+            i_df = loc_df.filter(pl.col("interlock") == interlock)
+            row[interlock] = i_df.height
+            details = []
 
-    return pivot_df.to_dicts()
+            if i_df.is_empty():
+                row[f"{interlock}_detail"] = []
+                continue
+
+            details = []
+
+            # Interlock-specific details
+            if interlock == "Bay reassignment":
+                details.extend(
+                    i_df.select(["vehicle_number", "created_date"])
+                        .unique()
+                        .join(
+                            bay_df,
+                            left_on=["vehicle_number", "created_date"],
+                            right_on=["truck_number", "created_date"],
+                            how="left"
+                        )
+                        .filter(
+                            (pl.col("load_number").is_not_null()) |
+                            (pl.col("assigned_bay").is_not_null()) |
+                            (pl.col("reassigned_bay").is_not_null())
+                        )
+                        .select([
+                            "vehicle_number", "created_date",
+                            "load_number", "assigned_bay", "reassigned_bay"
+                        ])
+                        .to_dicts()
+                )
+
+            elif interlock == "BCU Local Loading":
+                joined_data = (
+                    i_df.select(["vehicle_number", "created_date"])
+                        .unique()
+                        .join(
+                            local_df,
+                            left_on=["vehicle_number", "created_date"],
+                            right_on=["truck_number", "created_date"],
+                            how="left"
+                        )
+                        .select([
+                            "vehicle_number", "created_date",
+                            "bcu_number", "loaded_qty", "recipe_name"
+                        ])
+                )
+                
+                # Add records with at least one non-null value
+                non_null_records = joined_data.filter(
+                    (pl.col("bcu_number").is_not_null()) |
+                    (pl.col("loaded_qty").is_not_null()) |
+                    (pl.col("recipe_name").is_not_null())
+                ).to_dicts()
+                
+                if non_null_records:
+                    details.extend(non_null_records)
+                else:
+                    # If all joined records are null, add vehicle count summary with null fields
+                    vehicle_counts = (
+                        i_df.group_by(["vehicle_number", "created_date"])
+                            .agg(pl.count().alias("count"))
+                            .to_dicts()
+                    )
+                    for vc in vehicle_counts:
+                        vc["bcu_number"] = None
+                        vc["loaded_qty"] = None
+                        vc["recipe_name"] = None
+                    details.extend(vehicle_counts)
+
+            elif interlock == "Cancel TT Reported":
+                details.extend(
+                    i_df.select(["vehicle_number", "created_date"])
+                        .unique()
+                        .join(
+                            cancel_df,
+                            left_on=["vehicle_number", "created_date"],
+                            right_on=["truck_number", "created_date"],
+                            how="left"
+                        )
+                        .filter(
+                            (pl.col("load_number").is_not_null()) |
+                            (pl.col("required_qty").is_not_null()) |
+                            (pl.col("product_name").is_not_null())
+                        )
+                        .select([
+                            "vehicle_number", "created_date",
+                            "load_number", "required_qty", "product_name"
+                        ])
+                        .to_dicts()
+                )
+
+            else:
+                group_cols = ["vehicle_number", "created_date"]
+                if interlock in DEVICE_INTERLOCKS:
+                    group_cols.append("device_name")
+
+                details.extend(
+                    i_df.group_by(group_cols)
+                        .agg(pl.count().alias("count"))
+                        .to_dicts()
+                )
+
+            row[f"{interlock}_detail"] = details
+
+        result.append(row)
+
+    if str(data.download).lower() == "true":
+        return await download_streaming_data(
+            pl.DataFrame(result), "exception_report"
+        )
+
+    return result
 
 async def equipment_location_wise_count(data):
     """
@@ -2330,6 +2439,7 @@ async def location_wise_total_loaded_qty(data):
         import traceback
         traceback.print_exc()
         return []
+
 async def top_five_alerts(data):
     
     # 1. BASE QUERY

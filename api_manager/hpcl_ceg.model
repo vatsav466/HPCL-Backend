@@ -3976,3 +3976,19 @@ Model HyperLocal {
         crud_operations='read'
     }
 }
+
+Model NozzleSales {
+    transaction_date unique_field index_field datetime
+    site_id str
+    sap_id unique_field str
+    location_name optional str
+    zone optional str
+    region optional str
+    sales_area optional str
+    product_grp unique_field index_field str
+    sales_volume index_field float
+
+    Config=> {
+        crud_operations='read'
+    }
+}

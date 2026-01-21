@@ -7808,6 +7808,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "nozzlesales",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "NozzleSales",
+            "attributes": {},
+            "uris": [
+                "/api/nozzlesales/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "nozzlesales_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "NozzleSales_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/nozzlesales/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "nozzlesales_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "NozzleSales_admin",
+            "attributes": {},
+            "uris": [
+                "/api/nozzlesales/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
