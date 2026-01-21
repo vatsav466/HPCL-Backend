@@ -29,6 +29,7 @@ class SolarCapacity:
             "get_total_installed_capacity": cls.get_total_installed_capacity,
             "get_energy_generated": cls.get_energy_generated,
             "get_active_total_plants": cls.get_active_total_plants,
+            "get_solar_summary": cls.get_solar_summary,
             "get_efficiency": cls.get_efficiency,
             "get_efficiency_last_30_days": cls.get_efficiency_last_30_days
         }
@@ -53,7 +54,8 @@ class SolarCapacity:
             }
 
     @classmethod
-    async def get_total_installed_capacity(cls, data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
+    async def get_total_installed_capacity(cls,
+                                           data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
         Class method to get solar dashboard summary.
         Reads solar installation data from Excel, enriches with location_master (bu, sap_id, name, zone),
@@ -82,7 +84,7 @@ class SolarCapacity:
             solar = solar.filter(pl.col('Monitoring').cast(pl.Utf8).str.strip_chars().str.to_lowercase() == 'yes')
 
             total_kw = (solar.select(pl.col('Plant Capacity').cast(pl.Float64, strict=False).sum()).item())
-            total_mw = (total_kw * 4) / 1000
+            total_mw = total_kw / 1000
 
             return {
                 "status": "success",
@@ -102,7 +104,7 @@ class SolarCapacity:
                                    data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
         Calculate estimated energy from Excel data.
-        Enriches Excel with location_master, then calculates estimated_energy = Plant Capacity * 4 * days_in_month.
+        Enriches Excel with location_master, then calculates estimated_energy = Plant Capacity * 4 * number_of_days.
 
         Parameters:
         data (Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
@@ -137,7 +139,7 @@ class SolarCapacity:
             # If start date is provided but end date is missing, assume up to today
             if filter_start_date and not filter_end_date:
                 filter_end_date = datetime.date.today()
-            
+
             # -------------------------------
             # Year / Month (for default/fallback)
             # -------------------------------
@@ -146,7 +148,7 @@ class SolarCapacity:
             month = getattr(data, 'month', None) or now.month
 
             # ============================================================
-            # ESTIMATED ENERGY (Excel)
+            # ESTIMATED ENERGY (Excel) - Part 1: Get Excel Data
             # ============================================================
             solar_master = await SolarHelpers.get_solar_master_data(filters=filters, drill_state=drill_state)
 
@@ -170,42 +172,6 @@ class SolarCapacity:
                     "message": "No valid plant capacity data found"
                 }
 
-            # Calculate days for estimated_energy
-            # For estimated_energy: Calculate total days of all months touched by the date range
-            # As per user requirement: if range is Dec 3 to Jan 3, it involves Dec and Jan, so days = 31 + 31 = 62
-            if filter_start_date and filter_end_date:
-                days_for_estimated = 0
-                # Iterate from start month to end month
-                current_calc_date = filter_start_date.replace(day=1)
-                end_calc_date = filter_end_date.replace(day=1)
-                
-                while current_calc_date <= end_calc_date:
-                    _, days_in_month = calendar.monthrange(current_calc_date.year, current_calc_date.month)
-                    days_for_estimated += days_in_month
-                    # Move to next month
-                    # Move to next month manually without relativedelta
-                    if current_calc_date.month == 12:
-                        current_calc_date = current_calc_date.replace(year=current_calc_date.year + 1, month=1)
-                    else:
-                        current_calc_date = current_calc_date.replace(month=current_calc_date.month + 1)
-            else:
-                # Default to current month
-                _, days_for_estimated = calendar.monthrange(int(year), int(month))
-
-            estimated_energy = (
-                solar_master
-                .select(
-                    (pl.col('Plant Capacity')
-                     .cast(pl.Float64, strict=False)
-                     .fill_null(0)
-                     * 4
-                     * days_for_estimated / 1000).sum()
-                )
-                .item()
-            )
-
-            estimated_energy_str = f"{estimated_energy:.2f}" if estimated_energy else "0.00"
-
             # ============================================================
             # ACTUAL ENERGY (DB)
             # ============================================================
@@ -220,8 +186,7 @@ class SolarCapacity:
                 .to_list()
             )
 
-            actual_energy_str = "0.00"
-
+            result_df = None
             if bu_codes:
                 conn = SolarHelpers.get_db_connection(bu=bu_code)
                 cursor = conn.cursor()
@@ -266,134 +231,117 @@ class SolarCapacity:
                 conn.close()
 
                 if result_df is not None and not result_df.is_empty():
-
-                    # -------------------------------
                     # VLOOKUP with location_master
-                    # -------------------------------
                     result_df = await SolarHelpers.enrich_with_location_master(
                         result_df,
                         join_column="PLANT_CD",
                         filters=filters,
                         drill_state=drill_state
                     )
-
-                    # -------------------------------
                     # Apply drilldown filters
-                    # -------------------------------
                     if filters:
                         result_df = SolarHelpers.apply_filters_to_dataframe(result_df, filters)
 
-                    # -------------------------------
-                    # Calculate number of days for actual_energy
-                    # -------------------------------
-                    # Default fallback: use current month days
-                    _, default_days = calendar.monthrange(int(year), int(month))
-                    days_for_actual = default_days
-                    
-                    if not result_df.is_empty() and "TimestampUTC" in result_df.columns:
-                        if filter_start_date and filter_end_date:
-                            # Use date range from filters
-                            days_for_actual = (filter_end_date - filter_start_date).days + 1
-                        else:
-                            # Count unique dates in the filtered data (latest date range)
-                            try:
-                                # Extract dates from TimestampUTC column and get unique dates
-                                dates_df = result_df.select(
-                                    pl.col("TimestampUTC").cast(pl.Date).alias("date")
-                                ).drop_nulls()
-                                
-                                if not dates_df.is_empty():
-                                    # Get min and max dates
-                                    min_date = dates_df.select(pl.col("date").min()).item()
-                                    max_date = dates_df.select(pl.col("date").max()).item()
-                                    
-                                    if min_date and max_date:
-                                        # Convert to date objects if needed
-                                        if isinstance(min_date, datetime.datetime):
-                                            min_date = min_date.date()
-                                        if isinstance(max_date, datetime.datetime):
-                                            max_date = max_date.date()
-                                        
-                                        # Calculate days between min and max date
-                                        days_for_actual = (max_date - min_date).days + 1
-                                    else:
-                                        # Fallback: count unique dates
-                                        unique_dates = dates_df.select(pl.col("date").unique())
-                                        days_for_actual = unique_dates.height if not unique_dates.is_empty() else default_days
-                                else:
-                                    # No dates found, use default
-                                    days_for_actual = default_days
-                            except Exception:
-                                days_for_actual = default_days
+            # -------------------------------
+            # Calculate number of days for BOTH Estimated and Actual
+            # -------------------------------
+            # Default fallback: use current month days
+            _, default_days = calendar.monthrange(int(year), int(month))
+            days_count = default_days
 
-                    # -------------------------------
-                    # Final SUM after filters
-                    # -------------------------------
-                    if not result_df.is_empty():
-                        # Calculate actual energy (sum of generated_solar_value in MWh)
-                        # generated_solar_value is already the total energy in kWh for the period
-                        actual_energy = (
-                            result_df
-                            .select(
-                                (pl.col("generated_solar_value")
-                                 .sum()
-                                 / 1000)
-                            )
-                            .item()
-                        )
-                        actual_energy_str = f"{actual_energy:.2f}" if actual_energy else "0.00"
-                    else:
-                        pass
+            if filter_start_date and filter_end_date:
+                # Use date range from filters
+                days_count = (filter_end_date - filter_start_date).days + 1
+            elif result_df is not None and not result_df.is_empty() and "TimestampUTC" in result_df.columns:
+                # Calculate from DB timestamps if filters are missing
+                try:
+                    dates_df = result_df.select(
+                        pl.col("TimestampUTC").cast(pl.Date).alias("date")
+                    ).drop_nulls()
+
+                    if not dates_df.is_empty():
+                        min_date = dates_df.select(pl.col("date").min()).item()
+                        max_date = dates_df.select(pl.col("date").max()).item()
+
+                        if min_date and max_date:
+                            if isinstance(min_date, datetime.datetime):
+                                min_date = min_date.date()
+                            if isinstance(max_date, datetime.datetime):
+                                max_date = max_date.date()
+                            days_count = (max_date - min_date).days + 1
+                        else:
+                            unique_dates = dates_df.select(pl.col("date").unique())
+                            days_count = unique_dates.height if not unique_dates.is_empty() else default_days
+                except Exception as e:
+                    print(f"Error calculating days from DB: {e}")
+                    pass
+
+            # ============================================================
+            # Calculate Estimated Energy (using days_count)
+            # ============================================================
+            total_plant_capacity = (
+                solar_master
+                .select(
+                    pl.col('Plant Capacity')
+                    .cast(pl.Float64, strict=False)
+                    .fill_null(0)
+                    .sum()
+                )
+                .item()
+            )
+
+            estimated_energy = (
+                solar_master
+                .select(
+                    (pl.col('Plant Capacity')
+                    .cast(pl.Float64, strict=False)
+                    .fill_null(0)
+                    * 4
+                    * days_count / 1000).sum()
+                )
+                .item()
+            )
+
+            estimated_energy_str = f"{estimated_energy:.2f}" if estimated_energy else "0.00"
+            print(f"Estimated Energy Calculation: Plant Capacity={total_plant_capacity}, Days={days_count}, Energy={estimated_energy_str}")
+
+            # ============================================================
+            # Calculate Actual Energy
+            # ============================================================
+            actual_energy_str = "0.00"
+            actual_energy = 0.0
+
+            if result_df is not None and not result_df.is_empty():
+                # Filter by date if needed (though already filtered implicitly by logic above or no filters)
+                if filter_start_date and filter_end_date:
+                    # Just to be safe, filter the DF again if needed, but fetch logic didn't filter by date in SQL unless added
+                    # Wait, SQL didn't filter by date.
+                    # But we are using result_df to calculate days_count.
+                    pass
+
+                # Calculate actual energy (sum of generated_solar_value in MWh)
+                actual_energy = (
+                    result_df
+                    .select(
+                        (pl.col("generated_solar_value")
+                         .sum()
+                         / 1000)
+                    )
+                    .item()
+                )
+                actual_energy_str = f"{actual_energy:.2f}" if actual_energy else "0.00"
+                print(f"Actual Energy Calculation: Days={days_count}, Energy={actual_energy_str}")
 
             # -------------------------------
             # Calculate Plant Efficiency Percentage
             # -------------------------------
-            # User requested Average Efficiency (Mean of individual plant efficiencies)
+            # User requested Overall Efficiency (Total Actual / Total Estimated * 100)
             efficiency_percentage = 0.0
-            efficiency_percentage_str = "0.00"
+
+            if estimated_energy and estimated_energy > 0:
+                efficiency_percentage = (actual_energy / estimated_energy) * 100
             
-            try:
-                if not solar_master.is_empty():
-                    # 1. Prepare Estimates per Plant
-                    # Estimated = Capacity * 4 * days_for_estimated / 1000
-                    estimated_per_plant = (
-                        solar_master
-                        .select([
-                            pl.col("BU Code").alias("PLANT_CD"),
-                            (pl.col('Plant Capacity').cast(pl.Float64, strict=False).fill_null(0) * 4 * days_for_estimated / 1000).alias("estimated_mwh")
-                        ])
-                    )
-
-                    # 2. Aggregate Actuals per Plant
-                    if not result_df.is_empty():
-                         actual_per_plant = (
-                             result_df
-                             .group_by("PLANT_CD")
-                             .agg(pl.col("generated_solar_value").sum().alias("actual_kwh"))
-                         )
-                    else:
-                         # Create empty dataframe with correct schema if no actual data
-                         actual_per_plant = pl.DataFrame({"PLANT_CD": [], "actual_kwh": []}, schema={"PLANT_CD": pl.Utf8, "actual_kwh": pl.Float64})
-
-                    # 3. Join
-                    merged = estimated_per_plant.join(actual_per_plant, on="PLANT_CD", how="left").fill_null(0)
-                    
-                    # 4. Calculate Efficiency per plant
-                    # Efficiency = (Actual_kWh / 1000) / Estimated_MWh * 100
-                    efficiencies = merged.select(
-                        pl.when(pl.col("estimated_mwh") > 0)
-                        .then(pl.col("actual_kwh") / 1000 / pl.col("estimated_mwh") * 100)
-                        .otherwise(0.0)
-                        .alias("eff")
-                    )
-                    
-                    # 5. Average Efficiency
-                    efficiency_percentage = efficiencies.select(pl.col("eff").mean()).item()
-                    efficiency_percentage_str = f"{efficiency_percentage:.2f}" if efficiency_percentage is not None else "0.00"
-                    
-            except Exception as e:
-                print(f"Error calculating average efficiency: {e}")
-                efficiency_percentage_str = "0.00"
+            efficiency_percentage_str = f"{efficiency_percentage:.2f}"
 
             return {
                 "status": "success",
@@ -415,11 +363,11 @@ class SolarCapacity:
     async def get_efficiency(cls, data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
         Calculate efficiency per plant and categorize into efficiency classifications.
-        
+
         Categories:
-        - Exceptional (>100%): Green
-        - Normal (90-100%): Blue
-        - Underperforming (50-90%): Orange
+        - Exceptional (>95%): Green
+        - Normal (85-95%): Blue
+        - Underperforming (50-85%): Orange
         - Critical (<50%): Red
 
         Parameters:
@@ -442,8 +390,12 @@ class SolarCapacity:
             category = getattr(data, 'category', None)
             filters = getattr(data, 'filters', None)
             drill_state = getattr(data, 'drill_state', '') or ''
-            
+
             filter_start_date, filter_end_date = SolarHelpers.extract_date_range_from_filters(filters)
+
+            # If start date is provided but end date is missing, assume up to today
+            if filter_start_date and not filter_end_date:
+                filter_end_date = datetime.date.today()
 
             now = datetime.datetime.now()
             year = getattr(data, 'year', None) or now.year
@@ -479,9 +431,6 @@ class SolarCapacity:
                 query_start_date = datetime.date(int(year), int(month), 1)
                 _, last_day = calendar.monthrange(int(year), int(month))
                 query_end_date = datetime.date(int(year), int(month), last_day)
-
-            # Calculate days for estimated energy
-            days_for_estimated = (query_end_date - query_start_date).days + 1
 
             # Get BU codes for database query
             bu_codes = (
@@ -546,10 +495,10 @@ class SolarCapacity:
             cursor.close()
             conn.close()
 
-            # Calculate days for actual energy
+            # Calculate days for estimated energy AND actual energy (Consistent Logic)
             _, default_days = calendar.monthrange(int(year), int(month))
-            days_for_actual = default_days
-            
+            days_count = default_days
+
             if result_df is not None and not result_df.is_empty():
                 result_df = await SolarHelpers.enrich_with_location_master(
                     result_df, join_column="PLANT_CD", filters=filters, drill_state=drill_state
@@ -557,23 +506,26 @@ class SolarCapacity:
                 if filters:
                     result_df = SolarHelpers.apply_filters_to_dataframe(result_df, filters)
 
-                if not result_df.is_empty() and "TimestampUTC" in result_df.columns:
-                    if filter_start_date and filter_end_date:
-                        days_for_actual = (filter_end_date - filter_start_date).days + 1
-                    else:
-                        try:
-                            dates_df = result_df.select(pl.col("TimestampUTC").cast(pl.Date).alias("date")).drop_nulls()
-                            if not dates_df.is_empty():
-                                min_date = dates_df.select(pl.col("date").min()).item()
-                                max_date = dates_df.select(pl.col("date").max()).item()
-                                if min_date and max_date:
-                                    if isinstance(min_date, datetime.datetime):
-                                        min_date = min_date.date()
-                                    if isinstance(max_date, datetime.datetime):
-                                        max_date = max_date.date()
-                                    days_for_actual = (max_date - min_date).days + 1
-                        except Exception:
-                            pass
+            if filter_start_date and filter_end_date:
+                days_count = (filter_end_date - filter_start_date).days + 1
+            elif result_df is not None and not result_df.is_empty() and "TimestampUTC" in result_df.columns:
+                try:
+                    dates_df = result_df.select(pl.col("TimestampUTC").cast(pl.Date).alias("date")).drop_nulls()
+                    if not dates_df.is_empty():
+                        min_date = dates_df.select(pl.col("date").min()).item()
+                        max_date = dates_df.select(pl.col("date").max()).item()
+                        if min_date and max_date:
+                            if isinstance(min_date, datetime.datetime):
+                                min_date = min_date.date()
+                            if isinstance(max_date, datetime.datetime):
+                                max_date = max_date.date()
+                            days_count = (max_date - min_date).days + 1
+                        else:
+                            unique_dates = dates_df.select(pl.col("date").unique())
+                            days_count = unique_dates.height if not unique_dates.is_empty() else default_days
+                except Exception as e:
+                    print(f"Error calculating days from DB: {e}")
+                    pass
 
             # Calculate efficiency per plant
             # Create a mapping of PLANT_CD to estimated energy from Excel
@@ -591,7 +543,7 @@ class SolarCapacity:
                     if capacity:
                         try:
                             capacity_float = float(capacity) if capacity else 0.0
-                            estimated = (capacity_float * 4 * days_for_estimated / 1000)
+                            estimated = (capacity_float * 4 * days_count / 1000)
                             estimated_per_plant[plant_cd] = estimated
                         except (ValueError, TypeError):
                             pass
@@ -604,11 +556,11 @@ class SolarCapacity:
                     plant_cd = SolarHelpers._clean_plant_code(row.get("PLANT_CD"))
                     generated = row.get("generated_solar_value")
                     db_name = row.get("LocationName")
-                    
+
                     if plant_cd:
                         if db_name:
                             db_plant_names[plant_cd] = db_name
-                            
+
                         if generated:
                             try:
                                 generated_float = float(generated) if generated else 0.0
@@ -627,12 +579,12 @@ class SolarCapacity:
             normal = 0
             underperforming = 0
             critical = 0
-            
-            exceptional_data = [] 
+
+            exceptional_data = []
             normal_data = []
             underperforming_data = []
             critical_data = []
-            
+
             # Data structures for zone-wise aggregation
             zone_aggregation = {}  # {zone: {category: [efficiencies]}}
 
@@ -645,7 +597,7 @@ class SolarCapacity:
                 # Prioritize solar_master name (from location_master), fallback to DB name, then Unknown
                 name = plant_names.get(plant_cd) or db_plant_names.get(plant_cd) or "Unknown"
                 zone = plant_zones.get(plant_cd) or "Unknown"
-                
+
                 if estimated > 0:
                     efficiency = (actual / estimated) * 100
                 else:
@@ -657,19 +609,19 @@ class SolarCapacity:
                     "energy_generated": f"{actual:.2f}",
                     "efficiency": f"{efficiency:.2f}"
                 }
-                
+
                 current_category = ""
 
                 # Categorize
-                if efficiency > 100:
+                if efficiency > 95:
                     exceptional += 1
                     exceptional_data.append(plant_detail)
                     current_category = "exceptional"
-                elif efficiency >= 95 and efficiency <= 100:
+                elif efficiency >= 85 and efficiency <= 95:
                     normal += 1
                     normal_data.append(plant_detail)
                     current_category = "normal"
-                elif efficiency > 50 and efficiency < 90:
+                elif efficiency >= 50 and efficiency < 85:
                     underperforming += 1
                     underperforming_data.append(plant_detail)
                     current_category = "underperforming"
@@ -677,7 +629,7 @@ class SolarCapacity:
                     critical += 1
                     critical_data.append(plant_detail)
                     current_category = "critical"
-                
+
                 if category and category.lower() == 'zone':
                     if zone not in zone_aggregation:
                         zone_aggregation[zone] = {
@@ -698,21 +650,21 @@ class SolarCapacity:
                 # Process zone aggregation to count plants and calculate percentages in each category
                 for zone_name, categories in zone_aggregation.items():
                     zone_data = {"zone": zone_name}
-                    
+
                     # Calculate total plants in this zone (only counting the efficiency lists, not the data lists)
 
                     for cat_name in ["exceptional", "normal", "underperforming", "critical"]:
                         efficiencies = categories.get(cat_name, [])
                         data_list = categories.get(f"{cat_name}_data", [])
-                        
+
                         # Count the number of plants for each efficiency category
                         count = len(efficiencies)
-                        
+
                         zone_data[cat_name] = {
                             "count": count
                         }
                         zone_data[f"{cat_name}_data"] = data_list
-                        
+
                     heatmap_data.append(zone_data)
 
                 # Sort by zone name for consistent display
@@ -722,7 +674,7 @@ class SolarCapacity:
                     "status": "success",
                     "heatmap_data": heatmap_data
                 }
-            
+
             elif category and category.lower() == 'plant':
                 heatmap_data = []
                 # For plant category, we list each plant individually
@@ -755,13 +707,13 @@ class SolarCapacity:
                     }
 
                     # Set count to 1 for the appropriate category
-                    if eff_float > 100:
+                    if eff_float > 95:
                         row["exceptional"] = {"count": 1}
                         row["exceptional_data"] = [plant]
-                    elif eff_float >= 95 and eff_float <= 100:
+                    elif eff_float >= 85 and eff_float <= 95:
                         row["normal"] = {"count": 1}
                         row["normal_data"] = [plant]
-                    elif eff_float > 50 and eff_float < 90:
+                    elif eff_float >= 50 and eff_float < 85:
                         row["underperforming"] = {"count": 1}
                         row["underperforming_data"] = [plant]
                     else:
@@ -807,18 +759,19 @@ class SolarCapacity:
             }
 
     @classmethod
-    async def get_efficiency_last_30_days(cls, data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
+    async def get_efficiency_last_30_days(cls,
+                                          data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
         Calculate daily efficiency and generation data for a date range.
         By default returns last 30 days, but uses date range from filters if provided.
         Returns data suitable for dual-axis charting (Generation & Efficiency Trend).
-        
+
         Parameters:
         data (Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
             Parameters for the efficiency query.
             - bu (str, required): Business unit code
             - filters (list, optional): Filters containing date_filter or date_range to override default 30 days
-            
+
         Returns:
         dict: Response containing daily data with:
             - date: Date string (YYYY-MM-DD)
@@ -836,10 +789,10 @@ class SolarCapacity:
 
             filters = getattr(data, 'filters', None)
             drill_state = getattr(data, 'drill_state', '') or ''
-            
+
             # Extract date range from filters if provided
             filter_start_date, filter_end_date = SolarHelpers.extract_date_range_from_filters(filters)
-            
+
             # Use filter date range if available, otherwise default to last 30 days
             if filter_start_date and filter_end_date:
                 start_date = filter_start_date
@@ -856,7 +809,7 @@ class SolarCapacity:
                 # Default to last 30 days
                 end_date = datetime.date.today()
                 start_date = end_date - datetime.timedelta(days=29)  # 30 days including today
-            
+
             # Get solar master data with filters
             solar_master = await SolarHelpers.get_solar_master_data(filters=filters, drill_state=drill_state)
             if filters:
@@ -946,7 +899,7 @@ class SolarCapacity:
                 )
                 if filters:
                     result_df = SolarHelpers.apply_filters_to_dataframe(result_df, filters)
-                
+
                 # Aggregate by date after filtering
                 if not result_df.is_empty() and "reading_date" in result_df.columns:
                     result_df = (
@@ -961,14 +914,14 @@ class SolarCapacity:
 
             # Prepare daily data
             daily_data = []
-            
+
             # Create a mapping of date to generation from result_df
             date_to_generation = {}
             if result_df is not None and not result_df.is_empty():
                 for row in result_df.iter_rows(named=True):
                     reading_date = row.get("reading_date")
                     generated_value = row.get("generated_solar_value")
-                    
+
                     # Convert reading_date to date object if needed
                     if isinstance(reading_date, datetime.datetime):
                         reading_date = reading_date.date()
@@ -977,7 +930,7 @@ class SolarCapacity:
                             reading_date = datetime.datetime.strptime(reading_date, "%Y-%m-%d").date()
                         except ValueError:
                             continue
-                    
+
                     if reading_date and generated_value:
                         try:
                             # Convert kWh to MWh
@@ -988,29 +941,29 @@ class SolarCapacity:
                                 date_to_generation[reading_date] = generation_mwh
                         except (ValueError, TypeError):
                             pass
-            
+
             # Create a date range for all days in the selected period
             current_date = start_date
             while current_date <= end_date:
                 # Get generation for this date
                 generation_mwh = date_to_generation.get(current_date, 0.0)
-                
+
                 # Calculate estimated energy for this day
                 # Estimated = Capacity (KW) * 4 (kWh per KW per day) / 1000 (to MWh)
                 estimated_mwh = (total_capacity_kw * 4) / 1000.0 if total_capacity_kw else 0.0
-                
+
                 # Calculate efficiency percentage
                 if estimated_mwh > 0:
                     efficiency_pct = (generation_mwh / estimated_mwh) * 100.0
                 else:
                     efficiency_pct = 0.0
-                
+
                 daily_data.append({
                     "date": current_date.strftime("%Y-%m-%d"),
                     "generation": round(generation_mwh, 2),
                     "efficiency": round(efficiency_pct, 2)
                 })
-                
+
                 current_date += datetime.timedelta(days=1)
 
             return {
@@ -1069,11 +1022,34 @@ class SolarCapacity:
                 }
 
             # Get and clean unique sap_ids from Excel
-            sap_id_list = [
-                SolarHelpers._clean_plant_code(code)
-                for code in solar.select(pl.col(bu_code_column)).unique().drop_nulls()[bu_code_column].to_list()
-                if SolarHelpers._clean_plant_code(code) is not None
-            ]
+            sap_id_list = []
+            total_plants_list = []
+            plant_capacity_map = {}
+
+            # Use unique based on BU Code to ensure distinct plants
+            if bu_code_column in solar.columns:
+                unique_solar = solar.unique(subset=[bu_code_column])
+
+                for row in unique_solar.iter_rows(named=True):
+                    code = row.get(bu_code_column)
+                    cleaned_cd = SolarHelpers._clean_plant_code(code)
+                    if cleaned_cd:
+                        sap_id_list.append(cleaned_cd)
+
+                        # Get capacity
+                        capacity = row.get('Plant Capacity')
+                        try:
+                            capacity_val = float(capacity) if capacity is not None else 0.0
+                        except (ValueError, TypeError):
+                            capacity_val = 0.0
+
+                        plant_capacity_map[cleaned_cd] = capacity_val
+
+                        total_plants_list.append({
+                            "PLANT_CD": cleaned_cd,
+                            "LocationName": row.get("name") or "",
+                            "Plant_Capacity": capacity_val
+                        })
 
             if not sap_id_list:
                 return {
@@ -1111,13 +1087,16 @@ class SolarCapacity:
 
             # Process database results
             if result_df is None or result_df.is_empty():
+                for plant in total_plants_list:
+                    plant["status"] = "inactive"
                 return {
                     "status": "success",
                     "bu": bu_code,
                     "total_plants": total_plants,
                     "active_plants": 0,
                     "actual_active_plants": 0,
-                    "active_plants_list": []
+                    "active_plants_list": [],
+                    "total_plants_list": total_plants_list
                 }
 
             # Enrich and filter
@@ -1126,15 +1105,17 @@ class SolarCapacity:
             )
             if filters:
                 result_df = SolarHelpers.apply_filters_to_dataframe(result_df, filters)
+            print("result_df: ", result_df.columns)
 
             # Filter active plants (generated_solar_value > 0) and get distinct PLANT_CD + LocationName
             active_plants_df = (
                 result_df
                 .filter((pl.col("generated_solar_value") > 0) & (pl.col("generated_solar_value").is_not_null()))
-                .select([pl.col("PLANT_CD"), pl.col("LocationName")])
+                .select([pl.col("PLANT_CD"), pl.col("name")])
                 .unique()
                 .drop_nulls(subset=["PLANT_CD"])
             )
+            print("active_plants_df: ", active_plants_df)
 
             # Build active plants list with cleaned PLANT_CD
             active_plants_list = []
@@ -1143,7 +1124,9 @@ class SolarCapacity:
                 if cleaned_cd:
                     active_plants_list.append({
                         "PLANT_CD": cleaned_cd,
-                        "LocationName": row.get("LocationName") or ""
+                        "LocationName": row.get("name") or "",
+                        "Plant_Capacity": plant_capacity_map.get(cleaned_cd, 0.0),
+                        "status": "active"
                     })
 
             # Calculate counts
@@ -1153,11 +1136,22 @@ class SolarCapacity:
             matched_plants_set = excel_sap_ids_set.intersection(db_plant_cds_set)
             actual_active_plants = len(matched_plants_set)
 
+            # Update total_plants_list status
+            inactive_plants_list = []
+            for plant in total_plants_list:
+                if plant["PLANT_CD"] in matched_plants_set:
+                    plant["status"] = "active"
+                else:
+                    plant["status"] = "inactive"
+                    inactive_plants_list.append(plant)
+
             # Filter to matched plants only
             matched_plant_cds = [
                 plant for plant in active_plants_list
                 if plant["PLANT_CD"] in matched_plants_set
             ]
+            
+            inactive_plants_count = len(inactive_plants_list)
 
             return {
                 "status": "success",
@@ -1165,7 +1159,10 @@ class SolarCapacity:
                 "total_plants": total_plants,
                 "active_plants": active_plants,
                 "actual_active_plants": actual_active_plants,
-                "active_plants_list": matched_plant_cds
+                "inactive_plants": inactive_plants_count,
+                "active_plants_list": matched_plant_cds,
+                "inactive_plants_list": inactive_plants_list,
+                "total_plants_list": total_plants_list
             }
 
         except Exception as e:
@@ -1176,5 +1173,206 @@ class SolarCapacity:
                 "total_plants": 0,
                 "active_plants": 0,
                 "actual_active_plants": 0,
+                "active_plants_list": [],
+                "total_plants_list": [],
+                "error": str(e)
+            }
+
+    @classmethod
+    async def get_solar_summary(cls, data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
+        """
+        Get solar summary including bu, zone, sap_id, name, Plant capacity, estimated energy, actual energy, efficiency, status.
+        """
+        try:
+            bu_code = getattr(data, 'bu', None)
+            if not bu_code:
+                return {
+                    "status": "error",
+                    "message": "BU code is required",
+                    "error": "BU parameter is missing"
+                }
+
+            filters = getattr(data, 'filters', None)
+            drill_state = getattr(data, 'drill_state', '') or ''
+
+            # Date range logic
+            filter_start_date, filter_end_date = SolarHelpers.extract_date_range_from_filters(filters)
+            # If start date is provided but end date is missing, assume up to today
+            if filter_start_date and not filter_end_date:
+                filter_end_date = datetime.date.today()
+
+            now = datetime.datetime.now()
+            year = getattr(data, 'year', None) or now.year
+            month = getattr(data, 'month', None) or now.month
+
+            # Get Excel data
+            solar = await SolarHelpers.get_solar_master_data(filters=filters, drill_state=drill_state)
+            if filters:
+                solar = SolarHelpers.apply_filters_to_dataframe(solar, filters)
+
+            bu_code_column = 'BU Code'
+            if bu_code_column not in solar.columns:
+                return {"status": "error", "message": "BU Code column not found"}
+
+            sap_ids = []
+
+            # Use unique based on BU Code
+            if not solar.is_empty():
+                unique_solar = solar.unique(subset=[bu_code_column])
+                for row in unique_solar.iter_rows(named=True):
+                    sap_id = SolarHelpers._clean_plant_code(row.get(bu_code_column))
+                    if sap_id:
+                        sap_ids.append(sap_id)
+
+            if not sap_ids:
+                return {"status": "success", "summary": []}
+
+            # Fetch Actual Energy from DB
+            conn = SolarHelpers.get_db_connection(bu=bu_code)
+            cursor = conn.cursor()
+
+            sap_ids_sql = "', '".join(sap_ids)
+            query = f"""
+                SELECT
+                    PLANT_CD,
+                    MIN(day_start_ts) AS TimestampUTC, 
+                    SUM(generated_solar_value) AS generated_solar_value
+                FROM (
+                    SELECT
+                        CAST(TimestampUTC AS DATE) AS reading_date,
+                        MIN(TimestampUTC) AS day_start_ts,
+                        PLANT_CD,
+                        SourceID,
+                        MAX(value) - MIN(value) AS generated_solar_value
+                    FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
+                    WHERE QuantityID = '129' 
+                      AND PLANT_CD IN ('{sap_ids_sql}')
+                    GROUP BY
+                        CAST(TimestampUTC AS DATE),
+                        PLANT_CD,
+                        SourceID
+                ) t
+                GROUP BY
+                    reading_date,
+                    PLANT_CD
+            """
+
+            result_df = await SolarHelpers.fetch_data(cursor, query, getData=True, enrich_with_location=False)
+            cursor.close()
+            conn.close()
+
+            # Calculate days for estimated energy AND actual energy (Consistent Logic)
+            _, default_days = calendar.monthrange(int(year), int(month))
+            days_count = default_days  # Default fallback
+
+            if filter_start_date and filter_end_date:
+                days_count = (filter_end_date - filter_start_date).days + 1
+            elif result_df is not None and not result_df.is_empty() and "TimestampUTC" in result_df.columns:
+                try:
+                    dates_df = result_df.select(pl.col("TimestampUTC").cast(pl.Date).alias("date")).drop_nulls()
+                    if not dates_df.is_empty():
+                        min_date = dates_df.select(pl.col("date").min()).item()
+                        max_date = dates_df.select(pl.col("date").max()).item()
+                        if min_date and max_date:
+                            if isinstance(min_date, datetime.datetime):
+                                min_date = min_date.date()
+                            if isinstance(max_date, datetime.datetime):
+                                max_date = max_date.date()
+                            days_count = (max_date - min_date).days + 1
+                        else:
+                            unique_dates = dates_df.select(pl.col("date").unique())
+                            days_count = unique_dates.height if not unique_dates.is_empty() else default_days
+                except Exception as e:
+                    print(f"Error calculating days from DB: {e}")
+                    pass
+
+            actual_map = {}  # sap_id -> actual_mwh
+
+            if result_df is not None and not result_df.is_empty():
+                # Enrich and apply filters to match get_energy_generated logic
+                result_df = await SolarHelpers.enrich_with_location_master(
+                    result_df,
+                    join_column="PLANT_CD",
+                    filters=filters,
+                    drill_state=drill_state
+                )
+                if filters:
+                    result_df = SolarHelpers.apply_filters_to_dataframe(result_df, filters)
+
+                if not result_df.is_empty():
+                    grouped = result_df.group_by("PLANT_CD").agg(pl.col("generated_solar_value").sum())
+
+                    for row in grouped.iter_rows(named=True):
+                        p_cd = SolarHelpers._clean_plant_code(row["PLANT_CD"])
+                        val = row["generated_solar_value"]
+                        if p_cd:
+                            if p_cd in actual_map:
+                                actual_map[p_cd] += val / 1000.0
+                            else:
+                                actual_map[p_cd] = val / 1000.0
+
+            # Build Summary List
+            summary_list = []
+            total_estimated_energy = 0.0
+            total_actual_energy = 0.0
+
+            # Use unique based on BU Code
+            if not solar.is_empty():
+                unique_solar = solar.unique(subset=[bu_code_column])
+
+                for row in unique_solar.iter_rows(named=True):
+                    sap_id = SolarHelpers._clean_plant_code(row.get(bu_code_column))
+                    if sap_id:
+                        capacity = row.get('Plant Capacity')
+                        try:
+                            capacity_val = float(capacity) if capacity is not None else 0.0
+                        except (ValueError, TypeError):
+                            capacity_val = 0.0
+
+                        # Estimated Energy Calculation: Capacity * 4 * days_count / 1000 (MWh)
+                        estimated_val = capacity_val * 4 * days_count / 1000
+                        actual = actual_map.get(sap_id, 0.0)
+
+                        total_estimated_energy += estimated_val
+                        total_actual_energy += actual
+
+                        efficiency = 0.0
+                        if estimated_val > 0:
+                            efficiency = (actual / estimated_val) * 100
+
+                        status = "inactive"
+                        if actual > 0:
+                            status = "active"
+
+                        print(
+                            f"Plant {sap_id}: Days={days_count}, Actual={actual}, Estimated={estimated_val}, Efficiency={efficiency}")
+
+                        summary_list.append({
+                            "bu": row.get("BU") or bu_code,
+                            "zone": row.get("Zone") or row.get("zone") or "",
+                            "sap_id": sap_id,
+                            "name": row.get("name") or "",
+                            "Plant_Capacity": round(capacity_val, 2),
+                            "estimated_energy": round(estimated_val, 2),
+                            "actual_energy": round(actual, 2),
+                            "efficiency": round(efficiency, 2),
+                            "status": status
+                        })
+
+            total_efficiency_percentage = 0.0
+            if total_estimated_energy > 0:
+                total_efficiency_percentage = (total_actual_energy / total_estimated_energy) * 100
+
+            return {
+                "status": "success",
+                "summary": summary_list,
+            }
+
+        except Exception as e:
+            print(f"Error in SolarCapacity.get_solar_summary: {e}")
+            traceback.print_exc()
+            return {
+                "status": "error",
+                "summary": [],
                 "error": str(e)
             }

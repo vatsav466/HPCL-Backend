@@ -7,6 +7,7 @@ from dateutil import parser as date_parser
 import urdhva_base
 import json
 from datetime import datetime, date
+from orchestrator.dbconnector.widget_actions import widget_actions
 
 router = fastapi.APIRouter(prefix='/solarpanelwetdrycleaning')
 
@@ -371,5 +372,103 @@ async def solarpanelwetdrycleaning_get_panel_status(data: Solarpanelwetdrycleani
             "data": {
                 "panel_status": "",
                 "record_created": False
+            }
+        }
+
+
+# Action get_pending_completed_counts
+@router.post('/get_pending_completed_counts', tags=['SolarPanelWetDryCleaning'])
+async def solarpanelwetdrycleaning_get_pending_completed_counts(data: Solarpanelwetdrycleaning_Get_Pending_Completed_CountsParams):
+    try:
+        filters = (data.filters or []) + (data.cross_filters or [])
+        drill_state = getattr(data, "drill_state", "") or ""
+        cleaning_type = (data.cleaning_type or "").replace("'", "''")
+
+        async def fetch_records(query: str, limit: int):
+            if filters:
+                query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)
+            result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=limit, skip=0)
+            return result.get("data", []) if isinstance(result, dict) else []
+
+        pending_count_query = f"""
+            SELECT COUNT(*) AS count
+            FROM public.solar_panel_wet_dry_cleaning
+            WHERE "cleaning_type" = '{cleaning_type}'
+              AND "panel_status" = 'Pending'
+        """
+        pending_details_query = f"""
+            SELECT *
+            FROM public.solar_panel_wet_dry_cleaning
+            WHERE "cleaning_type" = '{cleaning_type}'
+              AND "panel_status" = 'Pending'
+        """
+
+        completed_count_current_query = f"""
+            SELECT COUNT(*) AS count
+            FROM public.solar_panel_wet_dry_cleaning
+            WHERE "cleaning_type" = '{cleaning_type}'
+              AND "panel_status" = 'Completed'
+        """
+        completed_details_current_query = f"""
+            SELECT *
+            FROM public.solar_panel_wet_dry_cleaning
+            WHERE "cleaning_type" = '{cleaning_type}'
+              AND "panel_status" = 'Completed'
+        """
+
+        completed_count_historic_query = f"""
+            SELECT COUNT(*) AS count
+            FROM public.historic_solar_panel_wet_dry_cleaning_create
+            WHERE "cleaning_type" = '{cleaning_type}'
+              AND "panel_status" = 'Completed'
+        """
+        completed_details_historic_query = f"""
+            SELECT *
+            FROM public.historic_solar_panel_wet_dry_cleaning_create
+            WHERE "cleaning_type" = '{cleaning_type}'
+              AND "panel_status" = 'Completed'
+        """
+
+        pending_count_rows = await fetch_records(pending_count_query, limit=0)
+        pending_count = int((pending_count_rows[0] or {}).get("count", 0)) if pending_count_rows else 0
+
+        completed_count_current_rows = await fetch_records(completed_count_current_query, limit=0)
+        completed_count_current = int((completed_count_current_rows[0] or {}).get("count", 0)) if completed_count_current_rows else 0
+
+        completed_count_historic_rows = await fetch_records(completed_count_historic_query, limit=0)
+        completed_count_historic = int((completed_count_historic_rows[0] or {}).get("count", 0)) if completed_count_historic_rows else 0
+
+        details_limit = getattr(data, "limit", 0) or 0
+
+        pending_details = await fetch_records(pending_details_query, limit=details_limit)
+
+        completed_details_current = await fetch_records(completed_details_current_query, limit=details_limit)
+
+        completed_details_historic = await fetch_records(completed_details_historic_query, limit=details_limit)
+
+        completed_details = completed_details_current + completed_details_historic
+        completed_count = completed_count_current + completed_count_historic
+
+        return {
+            "status": True,
+            "message": "success",
+            "data": {
+                "pending": {
+                    "count": pending_count,
+                    "details": pending_details
+                },
+                "completed": {
+                    "count": completed_count,
+                    "details": completed_details
+                }
+            }
+        }
+    except Exception as e:
+        return {
+            "status": False,
+            "message": f"Error fetching pending/completed counts: {str(e)}",
+            "data": {
+                "pending": {"count": 0, "details": []},
+                "completed": {"count": 0, "details": []}
             }
         }

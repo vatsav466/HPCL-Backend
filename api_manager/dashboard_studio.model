@@ -618,6 +618,15 @@ Model SolarPanelWetDryCleaning {
         cleaning_type str
     }
 
+    Action=> get_pending_completed_counts {
+        cleaning_type str
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+    }
+
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,zone,location,sap_id'

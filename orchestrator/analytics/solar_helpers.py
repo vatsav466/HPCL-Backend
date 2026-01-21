@@ -136,9 +136,9 @@ class SolarHelpers:
 
                 # Join on sap_id
                 df = df.join(
-                    location_df.select(["bu", "sap_id", "name", "zone"]).unique(subset=["sap_id"]),
+                    location_df.select(["bu", "sap_id", "name", "zone"]).unique(subset=["sap_id"]).with_columns(pl.col("sap_id").alias("sap_id_join")),
                     left_on="sap_id_clean",
-                    right_on="sap_id",
+                    right_on="sap_id_join",
                     how="left"
                 )
 
@@ -281,7 +281,6 @@ class SolarHelpers:
             cursor.close()
             pg_conn.close()
 
-
     @classmethod
     def extract_date_range_from_filters(cls, filters):
         """
@@ -315,7 +314,7 @@ class SolarHelpers:
             col = filter_dict.get("key") or filter_dict.get("columns") or filter_dict.get("column") or filter_dict.get("field") or filter_dict.get("col")
             op = (filter_dict.get("cond") or filter_dict.get("operator") or filter_dict.get("op") or "").strip().lower()
             val = filter_dict.get("value") or filter_dict.get("val")
-            
+
             # Check if this is a date-related filter on TimestampUTC or similar date columns
             if col and col.lower() in ['timestamputc', 'date', 'reading_date']:
                 # Handle comparison operators
@@ -328,7 +327,7 @@ class SolarHelpers:
                                 parsed_date = datetime.datetime.strptime(val[:10], "%Y-%m-%d").date()
                             except ValueError:
                                 pass
-                            
+
                             if parsed_date:
                                 start_date = parsed_date
                     except Exception:
@@ -342,7 +341,7 @@ class SolarHelpers:
                                 parsed_date = datetime.datetime.strptime(val[:10], "%Y-%m-%d").date()
                             except ValueError:
                                 pass
-                            
+
                             if parsed_date:
                                 end_date = parsed_date
                     except Exception:
@@ -363,7 +362,7 @@ class SolarHelpers:
                     elif op == 'date_filter':
                         # Handle date_filter special values
                         current_date = datetime.date.today()
-                        
+
                         if isinstance(val, str) and ',' in val:
                             # Date range in date_filter (e.g., "2025-01-01,2025-01-15")
                             date_range = val.split(",")
@@ -414,7 +413,7 @@ class SolarHelpers:
                                     month_ago = month_ago.replace(day=last_day)
                                 start_date = month_ago
                                 end_date = current_date
-                                
+
                                 # If start_date is in the future relative to current_date (which shouldn't happen with this logic),
                                 # or if the month subtraction results in same month next year (not possible here),
                                 # Ensure we have correct range.
@@ -437,9 +436,8 @@ class SolarHelpers:
                             elif val == '24h':
                                 start_date = current_date
                                 end_date = current_date
-        
-        return start_date, end_date
 
+        return start_date, end_date
 
     @classmethod
     def apply_filters_to_dataframe(cls, df: pl.DataFrame, filters):
@@ -458,7 +456,7 @@ class SolarHelpers:
 
         try:
             df_columns = df.columns
-            
+
             filter_list = []
 
             # Convert filters to a list of dicts
@@ -485,7 +483,7 @@ class SolarHelpers:
 
                 # Normalize column name
                 col = str(col).strip() if col else ""
-                
+
                 if not col or col not in df_columns:
                     continue
 
@@ -500,10 +498,10 @@ class SolarHelpers:
                             date_col = pl.col(col).str.strptime(pl.Date, format="%Y-%m-%d", strict=False)
                         elif df[col].dtype not in [pl.Date, pl.Datetime]:
                             date_col = pl.col(col).cast(pl.Date, strict=False)
-                        
+
                         current_date = datetime.date.today()
                         current_datetime = datetime.datetime.now()
-                        
+
                         if val == '24h':
                             if df[col].dtype == pl.Datetime:
                                 df = df.filter(pl.col(col) >= current_datetime - datetime.timedelta(hours=24))
@@ -516,11 +514,11 @@ class SolarHelpers:
                             # But usually 't' means 'today' filter.
                             # The issue might be string comparison vs date comparison.
                             # Let's ensure strict date comparison
-                            
+
                             # If the intention is "Today", it should be == current_date
                             # If the intention is "Today onwards", it should be >= current_date
                             # Given standard analytics filters, 't' usually means "Today" (this specific day)
-                            
+
                             df = df.filter(date_col == pl.lit(current_date))
                         elif val == '1d' or val == '1y':
                             yesterday = current_date - datetime.timedelta(days=1)
@@ -671,7 +669,7 @@ class SolarHelpers:
                                     else:
                                         # Date type
                                         parsed_val = datetime.datetime.strptime(val, "%Y-%m-%d").date()
-                                    
+
                                     if op_lower == ">":
                                         df = df.filter(expr > pl.lit(parsed_val))
                                     elif op_lower == "<":

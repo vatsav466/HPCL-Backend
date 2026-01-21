@@ -1024,6 +1024,19 @@ class Solarpanelwetdrycleaning_Get_Panel_StatusParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Solarpanelwetdrycleaning_Get_Pending_Completed_CountsParams(pydantic.BaseModel):
+    cleaning_type: str
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class HistoricSolarPanelWetDryCleaningCreateSchema(UrdhvaPostgresBase):
     __tablename__ = 'historic_solar_panel_wet_dry_cleaning_create'
     
