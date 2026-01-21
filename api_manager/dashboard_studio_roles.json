@@ -627,6 +627,9 @@
                 },
                 {
                     "name": "get_panel_status"
+                },
+                {
+                    "name": "get_pending_completed_counts"
                 }
             ]
         },
@@ -648,6 +651,9 @@
                 },
                 {
                     "name": "get_panel_status"
+                },
+                {
+                    "name": "get_pending_completed_counts"
                 }
             ]
         },
@@ -681,6 +687,9 @@
                 },
                 {
                     "name": "get_panel_status"
+                },
+                {
+                    "name": "get_pending_completed_counts"
                 }
             ]
         },
@@ -951,6 +960,10 @@
         {
             "name": "get_panel_status",
             "displayName": "get_panel_status"
+        },
+        {
+            "name": "get_pending_completed_counts",
+            "displayName": "get_pending_completed_counts"
         }
     ]
 }
