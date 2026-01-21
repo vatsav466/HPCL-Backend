@@ -1035,6 +1035,13 @@ async def get_parameters_summary():
         f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     )
 
+    sap_ids_tas = [
+        "1919", "1128", "1216", "1334", "1155",
+        "1221", "1259", "1412", "1146", "1509",
+        "1424", "1892", "1588", "1856", "1845"
+    ]
+    sap_ids_str = ", ".join([f"'{sid}'" for sid in sap_ids_tas])
+
     query = f"""SELECT
                     'SOD' AS "SBU",
 
@@ -1066,6 +1073,7 @@ async def get_parameters_summary():
                 'K Factor Change_BCU',
                 'MFM K Factor Change'
                 ) AND {date_filter}
+                AND sap_id IN ({sap_ids_str})
                 """
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
