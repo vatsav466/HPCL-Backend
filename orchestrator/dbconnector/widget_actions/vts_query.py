@@ -136,28 +136,30 @@ vts_query = {
 
     "total_alerts" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
-                                                              AND
-                                                              device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
+                                                              AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
+                                                              AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id""",
 
     "blocked_alerts" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
+                                                              AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
                                                               AND vehicle_unblocked_date is null and
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id""",
 
     "auto_unblock" : """SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
-                                                              AND alert_status = 'Close' and mark_as_false = false and
-                                                              vehicle_unblocked_date is not null 
-                                                              and
-                                                              device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
+                                                              AND alert_status = 'Close' and mark_as_false = false 
+                                                              and vehicle_unblocked_date is not null  and
+                                                              interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
+                                                              and device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id """,
 
     "manual_unblock" : """ SELECT device_id AS instance_level, COUNT(*) AS count FROM alerts
                                                               WHERE  alert_section = 'VTS'
                                                               AND alert_status = 'Close' and mark_as_false = true and
-                                                              vehicle_unblocked_date is not null and
+                                                              interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load') 
+                                                              and vehicle_unblocked_date is not null and
                                                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
 	                                                          GROUP BY device_id """,
     
