@@ -1114,9 +1114,8 @@ async def get_parameters_summary():
                                         'K Factor Change_BCU',
                                         'MFM K Factor Change'
                                     )
-                                    AND a.created_at::DATE >= '2026-01-01'
-                                    AND a.created_at::DATE <= '2026-01-19'
-
+                                    AND {date_filter}
+                                    
                                 WHERE lm.location_onboard = TRUE
 
                                 GROUP BY lm.name
