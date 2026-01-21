@@ -564,17 +564,17 @@ async def sod_percentage():
         )
 
         avg_scores_df = avg_scores_df.rename({
-            "name": "Plant Name", "zone": "Zone", "avg_va_score": "VA", "avg_vts_score": "VTS", "avg_tas_score": "TAS",
-            "avg_emlock_score": "EMLOCKS", "avg_dryouts_score": "DRYOUTS & CARRY FORWARD",
+            "name": "Plant Name", "zone": "Zone", "avg_va_score": "VA%", "avg_vts_score": "VTS%", "avg_tas_score": "TAS%",
+            "avg_emlock_score": "EMLOCKS%", "avg_dryouts_score": "DRYOUTS & CARRY FORWARD%",
             "avg_overall_score": "Average Performance Index from Month start", "previous_day_score": "Previous days Performance Index"
         }).drop(["sap_id", "avg_dryouts_score"], strict=False).with_columns(pl.arange(1, pl.len()+ 1).alias("SI No"))
 
         avg_scores_df = avg_scores_df.select([
-            "SI No", "Plant Name", "Zone", "VA", "VTS", "TAS", "EMLOCKS", "DRYOUTS & CARRY FORWARD",
+            "SI No", "Plant Name", "Zone", "VA%", "VTS%", "TAS%", "EMLOCKS%", "DRYOUTS & CARRY FORWARD%",
             "Average Performance Index from Month start", "Previous days Performance Index"
         ])
         
-        avg_scores_df = avg_scores_df.drop("DRYOUTS & CARRY FORWARD")
+        avg_scores_df = avg_scores_df.drop("DRYOUTS & CARRY FORWARD%")
 
         top_3_df = (
             avg_scores_df
