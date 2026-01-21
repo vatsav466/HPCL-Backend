@@ -165,12 +165,14 @@ vts_query = {
     
     "total_alerts_download" : """
                                  SELECT * FROM alerts WHERE  alert_section = 'VTS' AND
-                                 device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
+                                 interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load')
+                                 AND device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
                                """ ,
 
     "blocked_alerts_download" : """
                                    SELECT * FROM alerts  WHERE  alert_section = 'VTS'
                                    AND vehicle_unblocked_date is null and
+                                   AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load') AND
                                    device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')	                                                                                          
                                 """,
 
@@ -178,6 +180,7 @@ vts_query = {
                               SELECT * FROM alerts WHERE  alert_section = 'VTS'
                               AND alert_status = 'Close' and mark_as_false = false and
                               vehicle_unblocked_date is not null  AND 
+                              AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load') AND
                               device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')                                                     
                               """,
                               
@@ -186,6 +189,7 @@ vts_query = {
                                 WHERE  alert_section = 'VTS'
                                 AND alert_status = 'Close' AND mark_as_false = true and
                                 vehicle_unblocked_date is not null AND
+                                AND interlock_name NOT IN ('Itdg Admin Blocked','No VTS No Load') AND
                                 device_id IN ('Instance - 1', 'Instance - 2', 'Instance - 3')
                                 """,                          
     "safety_compliance" : """
