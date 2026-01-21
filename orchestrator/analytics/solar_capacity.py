@@ -279,20 +279,31 @@ class SolarCapacity:
             # ============================================================
             # Calculate Estimated Energy (using days_count)
             # ============================================================
+            total_plant_capacity = (
+                solar_master
+                .select(
+                    pl.col('Plant Capacity')
+                    .cast(pl.Float64, strict=False)
+                    .fill_null(0)
+                    .sum()
+                )
+                .item()
+            )
+
             estimated_energy = (
                 solar_master
                 .select(
                     (pl.col('Plant Capacity')
-                     .cast(pl.Float64, strict=False)
-                     .fill_null(0)
-                     * 4
-                     * days_count / 1000).sum()
+                    .cast(pl.Float64, strict=False)
+                    .fill_null(0)
+                    * 4
+                    * days_count / 1000).sum()
                 )
                 .item()
             )
 
             estimated_energy_str = f"{estimated_energy:.2f}" if estimated_energy else "0.00"
-            print(f"Estimated Energy Calculation: Days={days_count}, Energy={estimated_energy_str}")
+            print(f"Estimated Energy Calculation: Plant Capacity={total_plant_capacity}, Days={days_count}, Energy={estimated_energy_str}")
 
             # ============================================================
             # Calculate Actual Energy
@@ -324,54 +335,13 @@ class SolarCapacity:
             # -------------------------------
             # Calculate Plant Efficiency Percentage
             # -------------------------------
-            # User requested Average Efficiency (Mean of individual plant efficiencies)
+            # User requested Overall Efficiency (Total Actual / Total Estimated * 100)
             efficiency_percentage = 0.0
-            efficiency_percentage_str = "0.00"
 
-            try:
-                if not solar_master.is_empty():
-                    # 1. Prepare Estimates per Plant
-                    # Estimated = Capacity * 4 * days_count / 1000
-                    estimated_per_plant = (
-                        solar_master
-                        .select([
-                            pl.col("BU Code").alias("PLANT_CD"),
-                            (pl.col('Plant Capacity').cast(pl.Float64, strict=False).fill_null(
-                                0) * 4 * days_count / 1000).alias("estimated_mwh")
-                        ])
-                    )
-
-                    # 2. Aggregate Actuals per Plant
-                    if result_df is not None and not result_df.is_empty():
-                        actual_per_plant = (
-                            result_df
-                            .group_by("PLANT_CD")
-                            .agg(pl.col("generated_solar_value").sum().alias("actual_kwh"))
-                        )
-                    else:
-                        # Create empty dataframe with correct schema if no actual data
-                        actual_per_plant = pl.DataFrame({"PLANT_CD": [], "actual_kwh": []},
-                                                        schema={"PLANT_CD": pl.Utf8, "actual_kwh": pl.Float64})
-
-                    # 3. Join
-                    merged = estimated_per_plant.join(actual_per_plant, on="PLANT_CD", how="left").fill_null(0)
-
-                    # 4. Calculate Efficiency per plant
-                    # Efficiency = (Actual_kWh / 1000) / Estimated_MWh * 100
-                    efficiencies = merged.select(
-                        pl.when(pl.col("estimated_mwh") > 0)
-                        .then(pl.col("actual_kwh") / 1000 / pl.col("estimated_mwh") * 100)
-                        .otherwise(0.0)
-                        .alias("eff")
-                    )
-
-                    # 5. Average Efficiency
-                    efficiency_percentage = efficiencies.select(pl.col("eff").mean()).item()
-                    efficiency_percentage_str = f"{efficiency_percentage:.2f}" if efficiency_percentage is not None else "0.00"
-
-            except Exception as e:
-                print(f"Error calculating average efficiency: {e}")
-                efficiency_percentage_str = "0.00"
+            if estimated_energy and estimated_energy > 0:
+                efficiency_percentage = (actual_energy / estimated_energy) * 100
+            
+            efficiency_percentage_str = f"{efficiency_percentage:.2f}"
 
             return {
                 "status": "success",
@@ -1167,17 +1137,21 @@ class SolarCapacity:
             actual_active_plants = len(matched_plants_set)
 
             # Update total_plants_list status
+            inactive_plants_list = []
             for plant in total_plants_list:
                 if plant["PLANT_CD"] in matched_plants_set:
                     plant["status"] = "active"
                 else:
                     plant["status"] = "inactive"
+                    inactive_plants_list.append(plant)
 
             # Filter to matched plants only
             matched_plant_cds = [
                 plant for plant in active_plants_list
                 if plant["PLANT_CD"] in matched_plants_set
             ]
+            
+            inactive_plants_count = len(inactive_plants_list)
 
             return {
                 "status": "success",
@@ -1185,7 +1159,9 @@ class SolarCapacity:
                 "total_plants": total_plants,
                 "active_plants": active_plants,
                 "actual_active_plants": actual_active_plants,
+                "inactive_plants": inactive_plants_count,
                 "active_plants_list": matched_plant_cds,
+                "inactive_plants_list": inactive_plants_list,
                 "total_plants_list": total_plants_list
             }
 
@@ -1258,17 +1234,27 @@ class SolarCapacity:
             sap_ids_sql = "', '".join(sap_ids)
             query = f"""
                 SELECT
-                    CAST(TimestampUTC AS DATE) AS reading_date,
-                    MIN(TimestampUTC) AS TimestampUTC,
                     PLANT_CD,
-                    MAX(value) - MIN(value) AS generated_solar_value
-                FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
-                WHERE QuantityID = '129' 
-                  AND PLANT_CD IN ('{sap_ids_sql}')
+                    MIN(day_start_ts) AS TimestampUTC, 
+                    SUM(generated_solar_value) AS generated_solar_value
+                FROM (
+                    SELECT
+                        CAST(TimestampUTC AS DATE) AS reading_date,
+                        MIN(TimestampUTC) AS day_start_ts,
+                        PLANT_CD,
+                        SourceID,
+                        MAX(value) - MIN(value) AS generated_solar_value
+                    FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
+                    WHERE QuantityID = '129' 
+                      AND PLANT_CD IN ('{sap_ids_sql}')
+                    GROUP BY
+                        CAST(TimestampUTC AS DATE),
+                        PLANT_CD,
+                        SourceID
+                ) t
                 GROUP BY
-                    CAST(TimestampUTC AS DATE),
-                    PLANT_CD,
-                    SourceID
+                    reading_date,
+                    PLANT_CD
             """
 
             result_df = await SolarHelpers.fetch_data(cursor, query, getData=True, enrich_with_location=False)
@@ -1303,17 +1289,15 @@ class SolarCapacity:
             actual_map = {}  # sap_id -> actual_mwh
 
             if result_df is not None and not result_df.is_empty():
-                # Filter by date
-                if filter_start_date and filter_end_date:
-                    result_df = result_df.filter(
-                        pl.col("reading_date").cast(pl.Date).is_between(filter_start_date, filter_end_date)
-                    )
-                else:
-                    # Filter by year/month if no specific date range provided
-                    result_df = result_df.filter(
-                        (pl.col("reading_date").dt.year() == int(year)) &
-                        (pl.col("reading_date").dt.month() == int(month))
-                    )
+                # Enrich and apply filters to match get_energy_generated logic
+                result_df = await SolarHelpers.enrich_with_location_master(
+                    result_df,
+                    join_column="PLANT_CD",
+                    filters=filters,
+                    drill_state=drill_state
+                )
+                if filters:
+                    result_df = SolarHelpers.apply_filters_to_dataframe(result_df, filters)
 
                 if not result_df.is_empty():
                     grouped = result_df.group_by("PLANT_CD").agg(pl.col("generated_solar_value").sum())
@@ -1329,6 +1313,8 @@ class SolarCapacity:
 
             # Build Summary List
             summary_list = []
+            total_estimated_energy = 0.0
+            total_actual_energy = 0.0
 
             # Use unique based on BU Code
             if not solar.is_empty():
@@ -1345,8 +1331,10 @@ class SolarCapacity:
 
                         # Estimated Energy Calculation: Capacity * 4 * days_count / 1000 (MWh)
                         estimated_val = capacity_val * 4 * days_count / 1000
-
                         actual = actual_map.get(sap_id, 0.0)
+
+                        total_estimated_energy += estimated_val
+                        total_actual_energy += actual
 
                         efficiency = 0.0
                         if estimated_val > 0:
@@ -1371,9 +1359,13 @@ class SolarCapacity:
                             "status": status
                         })
 
+            total_efficiency_percentage = 0.0
+            if total_estimated_energy > 0:
+                total_efficiency_percentage = (total_actual_energy / total_estimated_energy) * 100
+
             return {
                 "status": "success",
-                "summary": summary_list
+                "summary": summary_list,
             }
 
         except Exception as e:
