@@ -2131,3 +2131,13 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await HyperLocal.get_all(params, skip_secrets=True)
 
+
+@router.get('/nozzlesales/{id}', response_model=NozzleSales, tags=['NozzleSales'])
+async def get(id: str):
+    return await NozzleSales.get(id, skip_secrets=True)
+
+
+@router.get('/nozzlesales', response_model=NozzleSalesGetResp, tags=['NozzleSales'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await NozzleSales.get_all(params, skip_secrets=True)
+
