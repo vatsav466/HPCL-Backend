@@ -1,6 +1,7 @@
 import urdhva_base
 import json
 import aio_pika
+from datetime import datetime
 import asyncio
 import traceback
 import numpy as np
@@ -94,7 +95,9 @@ class RabbitMQConsumer:
                         df["zone"] = df["sap_id"].map(lambda sap_id: location_mapping.get(sap_id, [None, {}])[1].get("zone", ""))
                     # Convert back to list of dictionaries
                     cleaned_records = df.to_dict(orient="records")
-                    # for record in cleaned_records:
+                    for record in cleaned_records:
+                        if 'sick_date' in record and isinstance(record['sick_date'], str):
+                           record['sick_date'] = datetime.strptime(record['sick_date'], '%Y-%m-%d %H:%M:%S')
                     #     for key, value in record.items():
                     #         if isinstance(value, pd.Timestamp):
                     #             record[key] = value.to_pydatetime() if not pd.isna(value) else None
