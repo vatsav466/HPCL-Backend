@@ -124,7 +124,12 @@
             {% endfor %}
         </tbody>
     </table>
-    <h4>2.1. Retail Outlet Partial Dryout (MS/HSD):</h4>
+    <h5>2.1. Last 30 days trend of Nozzle Sales (MS/HSD) of connected outlets in TMT</h5>
+    <h6>Connected Sites on {{yesterday_date}}- { {{nozzel_previous_day[0]['count']}} }</h6>
+    <div class="logo">
+        <img src="cid:nozzel_sales_chart", alt="Daily Product Wise Nozzle Sales (in TMT)" width="1000" height="auto">
+    </div>
+    <h4>2.2. Retail Outlet Partial Dryout (MS/HSD):</h4>
     <table>
         <tbody><tr>
             <th>Date</th>
@@ -139,7 +144,7 @@
             <td>{{dry_out['indent_raised']}}</td>
         </tr>
     </tbody></table>
-    <h5>2.2. Indent Not Raised - Breakup By Sales (MS/HSD):</h5>
+    <h5>2.3. Indent Not Raised - Breakup By Sales (MS/HSD):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
@@ -152,7 +157,7 @@
             <td>{{dry_out_details['Low Volume(<50KLPM)']}}</td>
         </tr>
     </tbody></table>
-    <h5>2.3. Indent Not Raised - Breakup By Dryout Days (MS/HSD):</h5>
+    <h5>2.4. Indent Not Raised - Breakup By Dryout Days (MS/HSD):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
@@ -169,7 +174,7 @@
             <td>{{dry_out_details['> 15 Days']}}</td>
         </tr>
     </tbody></table>
-    <h5>2.4. Indent Not Raised - TAR Analysis (MS/HSD):</h5>
+    <h5>2.5. Indent Not Raised - TAR Analysis (MS/HSD):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
@@ -186,11 +191,11 @@
             <td>{{dry_out_details['> 75 Rs Lakhs']}}</td>
         </tr>
     </tbody></table>
-    <h5>2.5 Last 30 days trend of Partial Dryout (MS/HSD)</h5>
+    <h5>2.6 Last 30 days trend of Partial Dryout (MS/HSD)</h5>
     <div class="logo">
         <img src="cid:last_30_days_dry_out_trends" alt="Last 30 Days Dry Out Trends" width="1000" height="auto">
     </div>
-    <h5>2.6. Zone wise Date wise Listing of Partial Dry outs</h5>
+    <h5>2.7. Zone wise Date wise Listing of Partial Dry outs</h5>
     <table>
         <thead>
             <tr>
@@ -209,11 +214,11 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>2.7 Monthly Loss of Sales due to Partial Dry-outs</h5>
+    <h5>2.8 Monthly Loss of Sales due to Partial Dry-outs</h5>
     <div class="logo">
         <img src="cid:dry_out_lost" alt="HP Pay Logo" width="1000" height="auto">
     </div>
-    <h5>2.8 Location/Depo wise dry out details</h5>
+    <h5>2.9 Location/Depo wise dry out details</h5>
     <table>
         <thead>
             <tr>
@@ -343,55 +348,214 @@
             {% endfor %}
         </tbody>
     </table>
-<h4>4. SOD Operations Summary</h4>
-<h5>4.1. Open Alert Summary ({{present_month}})</h5>
-    <div class="openAlert">
-        <table>
+    <h4>4 SOD Operations Summary</h4>
+    <h5>4.1 Average Performance Index for all SOD Plants – { {{tas_avg_score_resp}} }, (Refer attachment for Day wise trend)</h5>
+    <h5>4.2 Open Alert Summary ({{present_month}})</h5>
+        <div class="openAlert">
+            <table>
+                <tbody>
+                <tr>
+                    <th>SBU</th>
+                    <th>Alert Category</th>
+                    <th>OPEN ALERTS: Critical</th>
+                    <th>OPEN ALERTS: High</th>
+                </tr>
+                <tr>
+                    <td rowspan="3">SOD</td>
+                    <td>Video Analytics</td>
+                    <td>{{va_critical_tas}}</td>
+                    <td>{{va_high_tas}}</td>
+                </tr>
+                <tr>
+                    <td>EMLock</td>
+                    <td>{{emlock_critical_tas}}</td>
+                    <td>{{emlock_high_tas}}</td>
+                </tr>
+                <tr>
+                    <td>TAS</td>
+                    <td>{{tas_critical_tas}}</td>
+                    <td>{{tas_high_tas}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    <h5>4.3 Monthly Average of Performance Index</h5>
+    <div class="logo">
+        <img src="cid:monthly_score_path" alt="Monthly Average of Plant Score" width="1000" height="auto">
+    </div>
+    <h5>4.4 Top 3 SOD plants based on performance Index ({{present_month}})</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in sod_top_data.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in sod_top_data.to_dicts() %}
+            <tr>
+                {% for col in sod_top_data.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h5>4.5 Bottom 3 SOD plants based on performance Index ({{present_month}})</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in sod_bottom_data.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in sod_bottom_data.to_dicts() %}
+            <tr>
+                {% for col in sod_bottom_data.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h5>4.6 Location wise Average Performance Index from Month start</h5>
+    <div class="logo">
+        <img src="cid:plant_wise_score_path" alt="Monthly Average of Plant Score" width="1000" height="auto">
+    </div>
+    <h4>4.7 SOD VTS Governance ({{present_month}})</h4>
+    <h5>4.7.1 ITDG Blocking</h5>
+    <table>
+            <thead>
+                <tr>
+                    <th>TTs Blocked by Novex</th>
+                    <th>TTs Manually Unblocked</th>
+                    <th>TTs unblocked as per ITDG</th>
+                    <th>TTs currently under Block</th>
+                </tr>
+            </thead>
             <tbody>
-            <tr>
-                <th>SBU</th>
-                <th>Alert Category</th>
-                <th>Critical</th>
-                <th>High</th>
-            </tr>
-            <tr>
-                <td rowspan="3">SOD</td>
-                <td>Video Analytics</td>
-                <td>{{va_critical_tas}}</td>
-                <td>{{va_high_tas}}</td>
-            </tr>
-            <tr>
-                <td>EMLock</td>
-                <td>{{emlock_critical_tas}}</td>
-                <td>{{emlock_high_tas}}</td>
-            </tr>
-            <tr>
-                <td>TAS</td>
-                <td>{{tas_critical_tas}}</td>
-                <td>{{tas_high_tas}}</td>
-            </tr>
+                <tr>
+                    <td>{{ sod_blocked_data_resp.TTs_Blocked_by_Novex_SOD }}</td>
+                    <td>{{ sod_blocked_data_resp.TTs_Manually_Unblocked_SOD }}</td>
+                    <td>{{ sod_blocked_data_resp.TTs_Auto_Unblocked_SOD }}</td>
+                    <td>{{ sod_blocked_data_resp.TTs_currently_under_Block_SOD }}</td>
+                </tr>
             </tbody>
         </table>
-    </div>
-<h4>4.2 SOD VTS Governance ({{present_month}})</h4>
-<table>
-    <thead>
-        <tr>
-            <th>TTs Blocked by Novex</th>
-            <th>TTs Manually Unblocked</th>
-            <th>TTs unblocked as per ITDG</th>
-            <th>TTs currently under Block</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>{{ sod_blocked_data_resp.TTs_Blocked_by_Novex_SOD }}</td>
-            <td>{{ sod_blocked_data_resp.TTs_Manually_Unblocked_SOD }}</td>
-            <td>{{ sod_blocked_data_resp.TTs_Auto_Unblocked_SOD }}</td>
-            <td>{{ sod_blocked_data_resp.TTs_currently_under_Block_SOD }}</td>
-        </tr>
-    </tbody>
-</table>
+    <h5>4.7.2 ITDG Alert Break Up</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in sod_blocked_data_resp_violation.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in sod_blocked_data_resp_violation.to_dict(orient='records') %}
+            <tr>
+                {% for col in sod_blocked_data_resp_violation.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h4>4.8 SOD TAS Analytics ({{present_month}})</h4>
+    <h5>4.8.1 TAS-NOVEX Integrated Locations: 15</h5>
+    <h5>4.8.2 TAS score Location wise</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in tas_score_location_wise.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in tas_score_location_wise.to_dicts() %}
+            <tr>
+                {% for col in tas_score_location_wise.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h5>4.8.3 TAS Equipment Healthiness Report</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in tas_fault_maintenance_columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in tas_fault_maintenance_resp %}
+            <tr>
+                {% for col in tas_fault_maintenance_columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h5>4.8.4 TAS Parameters Summary</h5>
+    <table>
+        <thead>
+            <tr>
+                <th>SBU</th>
+                <th>Sick TT</th>
+                <th>Local Loaded TT</th>
+                <th>K Factor Changes</th>
+                <th>MFM Factor Changes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in tas_parameters_summary.to_dict(orient='records') %}
+            <tr>
+                <td>
+                    {{ row['SBU'] }}
+                </td>
+                <td>
+                    {{ row['Sick TT'] }}
+                </td>
+                <td>
+                    {{ row['Local Loaded TT'] }}
+                </td>
+                <td>
+                    {{ row['K Factor Changes'] }}
+                </td>
+                <td>
+                    {{ row['MFM Factor Changes'] }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <table>
+        <thead>
+            <tr>
+                {% for col in tas_parameters_query_resp_columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in tas_parameters_query_resp %}
+            <tr>
+                {% for col in tas_parameters_query_resp_columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 <script>
     window.onload = function () {
         document.querySelectorAll(".growth").forEach(td => {
