@@ -159,7 +159,7 @@ async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
     return out_path
 
 
-def generate_nozzel_sales_chart(nozzel_sales_df, out_path="/tmp/grouped_nozzel_sales_chart.png"):
+async def generate_nozzel_sales_chart(nozzel_sales_df, out_path="/tmp/grouped_nozzel_sales_chart.png"):
     global chart_path
     chart_path = out_path
 
