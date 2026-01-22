@@ -17,6 +17,11 @@ from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
 
+tas_va_path = ""
+tas_emlock_path = ""
+tas_tas_path = ""
+tas_day_wise_trend_exl_path = ""
+
 async def get_tas_alerts():
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -175,7 +180,7 @@ async def get_vts_sod_blocked_counts():
         sheet_name="Day Wise Trend"
     )
 
-    start_date = "2025-06-01"
+    start_date = "2025-12-01"
     end_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     time_range = f"{start_date},{end_date}"
 
@@ -474,6 +479,55 @@ async def sod_percentage():
         print("FINAL DATAFRAME")
         print("*" * 200)
         print(final_df)
+
+        sap_id_list = [
+            "1919", "1128", "1216", "1334", "1155",
+            "1221", "1259", "1412", "1146", "1509",
+            "1424", "1892", "1588", "1856", "1845"
+        ]
+
+        tas_score_location_wise = (
+            final_df
+            # filter only required SAP IDs
+            .filter(pl.col("sap_id").is_in(sap_id_list))
+
+            .group_by(["sap_id", "name"])
+            .agg(
+                pl.mean("TAS").alias("avg_tas_score")
+            )
+            .with_columns(
+                pl.col("avg_tas_score").round(2)
+            )
+            # highest score first
+            .sort("avg_tas_score", descending=True)
+            # top 15
+            .head(15)
+            # create numeric rank first
+            .with_row_count("rank_num", offset=1)
+            # convert to "Rank 1", "Rank 2", ...
+            .with_columns(
+                pl.concat_str([
+                    pl.lit("Rank "),
+                    pl.col("rank_num").cast(pl.Utf8)
+                ]).alias("Rank")
+            )
+            # final column order
+            .select(["Rank", "sap_id", "name", "avg_tas_score"])
+        )
+
+        tas_score_location_wise = (
+            tas_score_location_wise
+            .drop("sap_id")
+            .rename({
+                "name": "Location",
+                "avg_tas_score": "TAS Score"
+            })
+        )
+
+        print('*'*200)
+        print('tas_score_location_wise',tas_score_location_wise)
+        print('*'*200)
+
         avg_scores_df = (
             final_df
             .group_by(["sap_id", "name"])
@@ -510,37 +564,86 @@ async def sod_percentage():
         )
 
         avg_scores_df = avg_scores_df.rename({
-            "name": "Plant Name", "zone": "Zone", "avg_va_score": "VA", "avg_vts_score": "VTS", "avg_tas_score": "TAS",
-            "avg_emlock_score": "EMLOCKS", "avg_dryouts_score": "DRYOUTS & CARRY FORWARD",
-            "avg_overall_score": "Average Score from Month start", "previous_day_score": "Previous days score"
+            "name": "Plant Name", "zone": "Zone", "avg_va_score": "VA%", "avg_vts_score": "VTS%", "avg_tas_score": "TAS%",
+            "avg_emlock_score": "EMLOCKS%", "avg_dryouts_score": "DRYOUTS & CARRY FORWARD%",
+            "avg_overall_score": "Average Performance Index from Month start", "previous_day_score": "Previous days Performance Index"
         }).drop(["sap_id", "avg_dryouts_score"], strict=False).with_columns(pl.arange(1, pl.len()+ 1).alias("SI No"))
 
         avg_scores_df = avg_scores_df.select([
-            "SI No", "Plant Name", "Zone", "VA", "VTS", "TAS", "EMLOCKS", "DRYOUTS & CARRY FORWARD",
-            "Average Score from Month start", "Previous days score"
+            "SI No", "Plant Name", "Zone", "VA%", "VTS%", "TAS%", "EMLOCKS%", "DRYOUTS & CARRY FORWARD%",
+            "Average Performance Index from Month start", "Previous days Performance Index"
         ])
         
-        avg_scores_df = avg_scores_df.drop("DRYOUTS & CARRY FORWARD")
+        avg_scores_df = avg_scores_df.drop("DRYOUTS & CARRY FORWARD%")
 
         top_3_df = (
             avg_scores_df
-            .sort("Average Score from Month start", descending=True)
+            .sort("Average Performance Index from Month start", descending=True)
             .head(3).with_columns(pl.arange(1, pl.len() + 1).alias("SI No"))
         )
 
         bottom_3_df = (
             avg_scores_df
-            .sort("Average Score from Month start")
+            .sort("Average Performance Index from Month start")
             .head(3).with_columns(pl.arange(1, pl.len() + 1).alias("SI No"))
         )
 
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+        tas_avg_score_query = f"""SELECT
+                                    ROUND(AVG(score)::numeric, 2) AS tas_average_score
+                                    FROM public.performance_score_history
+                                    WHERE bu = 'TAS'
+                                    AND timestamp::DATE = CURRENT_DATE - INTERVAL '1 day'"""
+        tas_avg_score_resp = await function(query=tas_avg_score_query)
+        tas_avg_score_resp = pd.DataFrame(tas_avg_score_resp)
+        if not tas_avg_score_resp.empty:
+            tas_avg_score_value = tas_avg_score_resp['tas_average_score'].iloc[0]
+        else:
+            tas_avg_score_value = None  # or 0 or 'N/A'
 
         print('*'*200)
         print(prev_day_score_df.sort("sap_id"))
         print('top_3_df',top_3_df)
         print('bottom_3_df',bottom_3_df)
         print('*'*200)
-        return {"sod_top_data": top_3_df, "sod_bottom_data": bottom_3_df} 
+
+        sod_day_wise_trend = await get_sod_day_wise_trends(by_day=True, by_plant=True)
+        sod_day_wise_trend_df = pd.DataFrame(sod_day_wise_trend)
+        # Ensure correct types
+        sod_day_wise_trend_df["timestamp"] = pd.to_datetime(
+            sod_day_wise_trend_df["timestamp"]
+        )
+        # Pivot: Date vs Plant (SAP ID)
+        excel_df = sod_day_wise_trend_df.pivot_table(
+            index="timestamp",
+            columns="name",
+            values="score",
+            aggfunc="mean"   # safe if duplicates exist
+        )
+
+        # Sort by date
+        excel_df = excel_df.sort_index()
+
+        # FORMAT DATE AS "Dec 1", "Dec 2"
+        excel_df.index = excel_df.index.strftime("%b %d")
+
+        excel_df.index.name = "Day Wise Score"
+
+        # Write to Exce
+        global tas_day_wise_trend_exl_path
+        output_file = "/tmp/SOD Plant Day Wise Trend.xlsx"
+        tas_day_wise_trend_exl_path = output_file
+        excel_df.to_excel(
+            output_file,
+            sheet_name="Day Wise Trend"
+        )
+        return {"sod_top_data": top_3_df, "sod_bottom_data": bottom_3_df,
+                "tas_avg_score_resp": tas_avg_score_value,
+                "tas_day_wise_trend_exl_path": tas_day_wise_trend_exl_path,
+                "tas_score_location_wise": tas_score_location_wise} 
 
     except Exception as exc:
         print("\nERROR OCCURRED:")
@@ -550,3 +653,516 @@ async def sod_percentage():
         )
         return None
 
+async def get_va_path():
+    date = urdhva_base.utilities.get_present_time()
+
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format=None
+    )
+
+    date_filter = (
+        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
+    query = f"""
+        SELECT
+            location_name AS "Plant Wise VA Alerts",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            1 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'VA'
+        AND {date_filter}
+        AND bu = 'TAS'
+        AND location_name != ''
+        GROUP BY location_name
+
+        UNION ALL
+
+        SELECT
+            'Total',
+            COUNT(*) FILTER (WHERE severity = 'Critical'),
+            COUNT(*) FILTER (WHERE severity = 'High'),
+            2 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'VA'
+        AND bu = 'TAS'
+        AND location_name != ''
+        AND {date_filter}
+        ORDER BY sort_order
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
+    resp = await function(query=query)
+
+    df = pd.DataFrame(resp)
+
+    # Remove helper column
+    df = df.drop(columns=["sort_order"])
+
+    global tas_va_path
+    tas_va_path = "/tmp/SOD Plant Wise VA Alerts.xlsx"
+
+    with pd.ExcelWriter(tas_va_path, engine="xlsxwriter") as writer:
+        df.to_excel(
+            writer,
+            sheet_name="Plant Wise VA Alerts",
+            index=False,
+            startrow=1,
+            header=False   #important
+        )
+
+        workbook = writer.book
+        worksheet = writer.sheets["Plant Wise VA Alerts"]
+
+        header_format = workbook.add_format({
+            "bold": True,
+            "align": "center",
+            "valign": "middle",
+            "border": 1
+        })
+
+        # Write header ONCE
+        for col_num, col_name in enumerate(df.columns):
+            worksheet.write(0, col_num, col_name, header_format)
+            worksheet.set_column(col_num, col_num, 30)
+
+    return {"tas_va_path":tas_va_path}
+
+async def get_emlock_path():
+    date = urdhva_base.utilities.get_present_time()
+
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format=None
+    )
+
+    date_filter = (
+        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
+    query = f"""
+        SELECT
+            location_name AS "Plant Wise EMLock Alerts",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            1 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'EMLock'
+        AND {date_filter}
+        AND bu = 'TAS'
+        AND location_name != ''
+        GROUP BY location_name
+
+        UNION ALL
+
+        SELECT
+            'Total',
+            COUNT(*) FILTER (WHERE severity = 'Critical'),
+            COUNT(*) FILTER (WHERE severity = 'High'),
+            2 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'EMLock'
+        AND bu = 'TAS'
+        AND location_name != ''
+        AND {date_filter}
+        ORDER BY sort_order
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
+    resp = await function(query=query)
+
+    df = pd.DataFrame(resp)
+
+    # Remove helper column
+    df = df.drop(columns=["sort_order"])
+
+    global tas_emlock_path
+    tas_emlock_path = "/tmp/SOD Plant Wise EMLock Alerts.xlsx"
+
+    with pd.ExcelWriter(tas_emlock_path, engine="xlsxwriter") as writer:
+        df.to_excel(
+            writer,
+            sheet_name="Plant Wise EMLock Alerts",
+            index=False,
+            startrow=1,
+            header=False   #important
+        )
+
+        workbook = writer.book
+        worksheet = writer.sheets["Plant Wise EMLock Alerts"]
+
+        header_format = workbook.add_format({
+            "bold": True,
+            "align": "center",
+            "valign": "middle",
+            "border": 1
+        })
+
+        # Write header ONCE
+        for col_num, col_name in enumerate(df.columns):
+            worksheet.write(0, col_num, col_name, header_format)
+            worksheet.set_column(col_num, col_num, 30)
+
+    return {"tas_emlock_path":tas_emlock_path}
+
+async def get_tas_path():
+    date = urdhva_base.utilities.get_present_time()
+
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format=None
+    )
+
+    date_filter = (
+        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
+    query = f"""
+        SELECT
+            location_name AS "Plant Wise SOD Alerts",
+            COUNT(*) FILTER (WHERE severity = 'Critical') AS "Critical",
+            COUNT(*) FILTER (WHERE severity = 'High') AS "High",
+            1 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'TAS'
+        AND {date_filter}
+        AND bu = 'TAS'
+        AND location_name != ''
+        GROUP BY location_name
+
+        UNION ALL
+
+        SELECT
+            'Total',
+            COUNT(*) FILTER (WHERE severity = 'Critical'),
+            COUNT(*) FILTER (WHERE severity = 'High'),
+            2 AS sort_order
+        FROM alerts
+        WHERE alert_status = 'Open'
+        AND alert_section = 'TAS'
+        AND bu = 'TAS'
+        AND location_name != ''
+        AND {date_filter}
+        ORDER BY sort_order
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = (
+        connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    )
+    Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_connection_vault_routing(
+        Charts_Connection_Vault_RoutingParams
+    )
+    resp = await function(query=query)
+
+    df = pd.DataFrame(resp)
+
+    # Remove helper column
+    df = df.drop(columns=["sort_order"])
+
+    global tas_tas_path
+    tas_tas_path = "/tmp/Plant Wise SOD Alerts.xlsx"
+
+    with pd.ExcelWriter(tas_tas_path, engine="xlsxwriter") as writer:
+        df.to_excel(
+            writer,
+            sheet_name="Plant Wise SOD Alerts",
+            index=False,
+            startrow=1,
+            header=False   #important
+        )
+
+        workbook = writer.book
+        worksheet = writer.sheets["Plant Wise SOD Alerts"]
+
+        header_format = workbook.add_format({
+            "bold": True,
+            "align": "center",
+            "valign": "middle",
+            "border": 1
+        })
+
+        # Write header ONCE
+        for col_num, col_name in enumerate(df.columns):
+            worksheet.write(0, col_num, col_name, header_format)
+            worksheet.set_column(col_num, col_num, 30)
+
+    return {"tas_tas_path":tas_tas_path}
+
+async def get_fault_and_maintenance():
+    date = urdhva_base.utilities.get_present_time()
+
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format=None
+    )
+
+    date_filter = (
+        f"a.created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND a.created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
+    query = f"""
+                SELECT *
+                    FROM (
+                        SELECT
+                            lm.name AS "Location Name",
+
+                            COUNT(
+                                CASE
+                                    WHEN a.interlock_name IN (
+                                        'Rim Seal system_Fault activated',
+                                        'HCD_Fault activated',
+                                        'AirCompressor_Fault activated',
+                                        'ROSOV_FailtoClose',
+                                        'Fire engine_ FailtoStart',
+                                        'Fireengine_LLOP',
+                                        'FireEngine_HWOT',
+                                        'FireEngine_Tripped',
+                                        'Jockeypump_ FailtoStart'
+                                    )
+                                    THEN a.id
+                                END
+                            ) AS "Fault",
+
+                            COUNT(
+                                CASE
+                                    WHEN a.interlock_name IN (
+                                        'ESD Push button_Under Maintenance',
+                                        'Rim Seal system_Under Maintenance',
+                                        'Tank_Under Maintenance',
+                                        'ROSOV_Under Maintenance',
+                                        'MOV_Under Maintenance',
+                                        'VFT_Under Maintenance',
+                                        'Secondary Radar_Under Maintenance',
+                                        'Fire engine_Under Maintenance',
+                                        'JockeyPump_Under Maintenance',
+                                        'HydrantPT_Under Maintenance',
+                                        'HCD_Under Maintenance'
+                                    )
+                                    THEN a.id
+                                END
+                            ) AS "Maintenance"
+
+                        FROM location_master lm
+                        LEFT JOIN alerts a
+                            ON a.sap_id = lm.sap_id
+                            AND a.alert_status <> 'Close'
+                            AND {date_filter}
+                        WHERE lm.location_onboard = TRUE
+                        GROUP BY lm.name
+                    ) t
+                    ORDER BY ("Fault" + "Maintenance") DESC
+                    LIMIT 15;
+                """
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    tas_fault_maintenance_resp = await function(query=query)
+
+    tas_fault_maintenance_resp = pd.DataFrame(tas_fault_maintenance_resp)
+
+    df = tas_fault_maintenance_resp.copy()
+
+    df.insert(0, "S.no", range(1, len(df) + 1))
+    total_fault = df["Fault"].sum()
+    total_maintenance = df["Maintenance"].sum()
+    total_row = pd.DataFrame([{
+        "S.no": "Total",
+        "Location Name": "",
+        "Fault": total_fault,
+        "Maintenance": total_maintenance
+    }])
+    df = pd.concat([df, total_row], ignore_index=True)
+    print('*'*200)
+    print('tas_fault_maintenance_resp',df)
+    print('*'*200)
+    return {
+        "tas_fault_maintenance_resp": df.to_dict(orient="records"),
+        "tas_fault_maintenance_columns": df.columns.tolist()
+    }
+
+async def get_parameters_summary():
+    date = urdhva_base.utilities.get_present_time()
+
+    date_yes = helpers.get_time_stamp_by_delta(
+        date, days=1, with_month_start_day=False, date_time_format=None
+    )
+
+    month_start = helpers.get_time_stamp_by_delta(
+        date_yes, days=0, with_month_start_day=True, date_time_format=None
+    )
+
+    date_filter = (
+        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
+    sap_ids_tas = [
+        "1919", "1128", "1216", "1334", "1155",
+        "1221", "1259", "1412", "1146", "1509",
+        "1424", "1892", "1588", "1856", "1845"
+    ]
+    sap_ids_str = ", ".join([f"'{sid}'" for sid in sap_ids_tas])
+
+    query = f"""SELECT
+                    'SOD' AS "SBU",
+
+                    COUNT(CASE
+                        WHEN interlock_name = 'SickTT Reported'
+                        THEN 1
+                    END) AS "Sick TT",
+
+                    COUNT(CASE
+                        WHEN interlock_name = 'BCU Local Loading'
+                        THEN 1
+                    END) AS "Local Loaded TT",
+
+                    COUNT(CASE
+                        WHEN interlock_name = 'K Factor Change_BCU'
+                        THEN 1
+                    END) AS "K Factor Changes",
+
+                    COUNT(CASE
+                        WHEN interlock_name = 'MFM K Factor Change'
+                        THEN 1
+                    END) AS "MFM Factor Changes"
+
+                FROM alerts
+                WHERE 
+                interlock_name IN (
+                'SickTT Reported',
+                'BCU Local Loading',
+                'K Factor Change_BCU',
+                'MFM K Factor Change'
+                ) AND {date_filter}
+                AND sap_id IN ({sap_ids_str})
+                """
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    tas_parameters_summary = await function(query=query)
+
+    tas_parameters_summary = pd.DataFrame(tas_parameters_summary)
+
+    date_filter = (
+        f"a.created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND a.created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
+    tas_parameters_query = f"""SELECT
+                                    lm.name AS "Location Name",
+
+                                    COUNT(CASE
+                                        WHEN a.interlock_name = 'SickTT Reported'
+                                        THEN 1
+                                    END) AS "Sick TT",
+
+                                    COUNT(CASE
+                                        WHEN a.interlock_name = 'BCU Local Loading'
+                                        THEN 1
+                                    END) AS "Local Loaded TT",
+
+                                    COUNT(CASE
+                                        WHEN a.interlock_name = 'K Factor Change_BCU'
+                                        THEN 1
+                                    END) AS "K Factor Changes",
+
+                                    COUNT(CASE
+                                        WHEN a.interlock_name = 'MFM K Factor Change'
+                                        THEN 1
+                                    END) AS "MFM Factor Changes"
+
+                                FROM location_master lm
+                                LEFT JOIN alerts a
+                                    ON a.sap_id = lm.sap_id
+                                    AND a.interlock_name IN (
+                                        'SickTT Reported',
+                                        'BCU Local Loading',
+                                        'K Factor Change_BCU',
+                                        'MFM K Factor Change'
+                                    )
+                                    AND {date_filter}
+
+                                WHERE lm.location_onboard = TRUE
+
+                                GROUP BY lm.name
+
+                                ORDER BY
+                                    (
+                                        COUNT(CASE WHEN a.interlock_name = 'SickTT Reported' THEN 1 END) +
+                                        COUNT(CASE WHEN a.interlock_name = 'BCU Local Loading' THEN 1 END) +
+                                        COUNT(CASE WHEN a.interlock_name = 'K Factor Change_BCU' THEN 1 END) +
+                                        COUNT(CASE WHEN a.interlock_name = 'MFM K Factor Change' THEN 1 END)
+                                    ) DESC
+
+                                LIMIT 15"""
+    
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    tas_parameters_query_resp = await function(query=tas_parameters_query)
+
+    tas_parameters_query_resp = pd.DataFrame(tas_parameters_query_resp)
+
+    df = tas_parameters_query_resp.copy()
+
+    df.insert(0, "S.NO", range(1, len(df) + 1))
+    total_sick_tt = df["Sick TT"].sum()
+    total_loaded_tt = df["Local Loaded TT"].sum()
+    total_kfactor_tt = df["K Factor Changes"].sum()
+    total_mfm_factor_tt = df["MFM Factor Changes"].sum()
+    total_row = pd.DataFrame([{
+        "S.NO": "Total",
+        "Location Name": "",
+        "Sick TT": total_sick_tt,
+        "Local Loaded TT": total_loaded_tt,
+        "K Factor Changes": total_kfactor_tt,
+        "MFM Factor Changes": total_mfm_factor_tt
+    }])
+    df = pd.concat([df, total_row], ignore_index=True)
+    print('*'*200)
+    print('tas_parameters_query_resp',df)
+    print('*'*200)
+    return {
+        "tas_parameters_query_resp": df.to_dict(orient="records"),
+        "tas_parameters_query_resp_columns": df.columns.tolist(),
+        "tas_parameters_summary": tas_parameters_summary
+    }

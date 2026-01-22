@@ -78,6 +78,11 @@ async def publish_daily_novex_status_email():
     status_data.update(await sod_data.get_vts_sod_blocked_counts())
     #status_data.update(await sod_data.get_vts_tas_blocked_counts())
     status_data.update(await sod_data.sod_percentage())
+    status_data.update(await sod_data.get_va_path())
+    status_data.update(await sod_data.get_emlock_path())
+    status_data.update(await sod_data.get_tas_path())
+    status_data.update(await sod_data.get_fault_and_maintenance())
+    status_data.update(await sod_data.get_parameters_summary())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data.get_alert_data(alert_section))
@@ -135,7 +140,8 @@ async def publish_daily_novex_status_email():
             "monthly_score_path": f"{status_data.get('sod_monthly_score_path')}",
             "plant_wise_score_path": f"{status_data.get('sod_plant_wise_score_df_path')}"
         },
-        attachments = [status_data.get('zone_wise_pdf_path')]
+        attachments = [status_data.get('zone_wise_pdf_path'),status_data.get('tas_day_wise_trend_exl_path'),
+                       status_data.get('tas_va_path'),status_data.get('tas_emlock_path'),status_data.get('tas_tas_path')]
     )
     await send_notification(
         template_name="seg5.html",
