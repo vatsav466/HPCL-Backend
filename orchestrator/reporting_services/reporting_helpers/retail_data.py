@@ -313,7 +313,7 @@ async def supply_terminal_wise_counts(by_ro=False):
         df for df in carry_forward_bacthes
         if not df.empty and "SAP_ID" in df.columns
     ]
-    
+
     if valid_carry_dfs:
         carry_forward_final_df = pd.concat(valid_carry_dfs, ignore_index=True)
         carry_forward_final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
@@ -838,6 +838,12 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     print("nozzel_sales_df = pd.DataFrame(nozzel_sales) ---->\n", nozzel_sales_df)
     nozzel_previous_day = await function(query= nozzel_previous_day_query)
     print("nozzel_previous_day ---->\n", nozzel_previous_day)
+
+    nozzle_sales_percentage = round(
+        (nozzel_previous_day[0]['count'] / 24572) * 100,
+        1
+    )
+    print("nozzle_sales_percentage ---->\n", nozzle_sales_percentage)
     
     zone_wise_chart = await dry_out_trends_chart(last_30_days_trends_df)
     chart_path = await generate_chart(zone_fuel_df)
@@ -947,7 +953,7 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
             'dry_out_trends': summary_df.to_dict(orient='records'),
             'zone_wise_summary': pivot, 'zone_fuel_df':zone_fuel_df, 'supply_terminal_query_ro_count_df': bottom_3_per_zone_sorted, "retail_sales": retail_sales,
             'zone_wise_chart': zone_wise_chart, 'chart_path': chart_path, 'zone_wise_pdf_path': zone_wise_pdf_path, 'nozzel_sales_chart': nozzel_sales_chart,
-            'nozzel_previous_day': nozzel_previous_day}
+            'nozzel_previous_day': nozzel_previous_day, 'nozzle_sales_percentage': nozzle_sales_percentage}
 
 
 async def get_ro_alerts():
