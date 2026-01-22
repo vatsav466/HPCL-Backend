@@ -96,7 +96,12 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>1.1. Retail Outlet Partial Dryout (MS/HSD):</h5>
+    <h5>1.1. Last 30 days trend of Nozzle Sales (MS/HSD) of connected outlets in TMT</h5>
+    <h6>Connected Sites on {{yesterday_date}}- { {{nozzel_previous_day[0]['count']}} }</h6>
+    <div class="logo">
+        <img src="cid:nozzel_sales_chart", alt="Daily Product Wise Nozzle Sales (in TMT)" width="1000" height="auto">
+    </div>
+    <h5>1.2. Retail Outlet Partial Dryout (MS/HSD):</h5>
     <table>
         <tbody><tr>
             <th>Date</th>
@@ -111,7 +116,7 @@
             <td>{{dry_out['indent_raised']}}</td>
         </tr>
     </tbody></table>
-    <h5>1.2. Indent Not Raised - Breakup By Sales (MS/HSD):</h5>
+    <h5>1.3. Indent Not Raised - Breakup By Sales (MS/HSD):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
@@ -124,7 +129,7 @@
             <td>{{dry_out_details['Low Volume(<50KLPM)']}}</td>
         </tr>
     </tbody></table>
-    <h5>1.3. Indent Not Raised - Breakup By Dryout Days (MS/HSD):</h5>
+    <h5>1.4. Indent Not Raised - Breakup By Dryout Days (MS/HSD):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
@@ -141,7 +146,7 @@
             <td>{{dry_out_details['> 15 Days']}}</td>
         </tr>
     </tbody></table>
-    <h5>1.4. Indent Not Raised - TAR Analysis (MS/HSD):</h5>
+    <h5>1.5. Indent Not Raised - TAR Analysis (MS/HSD):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
@@ -158,11 +163,11 @@
             <td>{{dry_out_details['> 75 Rs Lakhs']}}</td>
         </tr>
     </tbody></table>
-    <h5>1.5 Last 30 days trend of Partial Dryout (MS/HSD)</h5>
+    <h5>1.6. Last 30 days trend of Partial Dryout (MS/HSD)</h5>
     <div class="logo">
         <img src="cid:last_30_days_dry_out_trends" alt="Last 30 Days Dry Out Trends" width="1000" height="auto">
     </div>
-    <h5>1.6. Zone wise Date wise Listing of Partial Dry outs</h5>
+    <h5>1.7. Zone wise Date wise Listing of Partial Dry outs</h5>
     <table>
         <thead>
             <tr>
@@ -181,11 +186,11 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>1.7 Monthly Loss of Sales due to Partial Dry-outs</h5>
+    <h5>1.8. Monthly Loss of Sales due to Partial Dry-outs</h5>
     <div class="logo">
         <img src="cid:dry_out_lost" alt="HP Pay Logo" width="1000" height="auto">
     </div>
-    <h5>1.8 Location/Depo wise dry out details</h5>
+    <h5>1.9. Location/Depo wise dry out details</h5>
     <table>
         <thead>
             <tr>

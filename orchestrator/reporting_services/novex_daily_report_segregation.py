@@ -96,7 +96,8 @@ async def publish_daily_novex_status_email():
         notification_data=status_data,
         inline_images={
             "dry_out_lost": f"{status_data.get('chart_path')}",
-            "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}"
+            "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
+            "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}"
         },
         attachments = [status_data.get('zone_wise_pdf_path')]
     )
@@ -109,7 +110,8 @@ async def publish_daily_novex_status_email():
         notification_data=status_data,
         inline_images={
             "dry_out_lost": f"{status_data.get('chart_path')}",
-            "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}"
+            "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
+            "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}"
         },
         attachments = [status_data.get('zone_wise_pdf_path')]
     )
