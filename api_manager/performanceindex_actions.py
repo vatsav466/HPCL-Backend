@@ -57,6 +57,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                         sap_scores[sid] = {
                             'total_scores': [],
                             'categories': {},
+                            'category_details': {},
                             'name': rec.get('name') or None,
                             'region': rec.get('region') or None,
                             'zone': rec.get('zone') or None
@@ -77,6 +78,30 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                             'score': safe_float(category_.get('score', 0)),
                             'weightage': safe_float(category_.get('weightage', 0))
                         })
+
+                        # Detailed aggregation
+                        cat_det = sap_scores[sid]['category_details'].setdefault(cat_name, {
+                            'score_sum': 0.0, 'weight_sum': 0.0, 'count': 0, 'results': {}, 'extra': {}
+                        })
+                        cat_det['score_sum'] += safe_float(category_.get('score', 0))
+                        cat_det['weight_sum'] += safe_float(category_.get('weightage', 0))
+                        cat_det['count'] += 1
+                        for k, v in category_.items():
+                            if k not in ['name', 'score', 'weightage', 'results']:
+                                cat_det['extra'][k] = v
+                        
+                        for res in category_.get('results', []):
+                            res_name = res.get('name')
+                            if not res_name: continue
+                            res_det = cat_det['results'].setdefault(res_name, {
+                                'score_sum': 0.0, 'weight_sum': 0.0, 'count': 0, 'extra': {}
+                            })
+                            res_det['score_sum'] += safe_float(res.get('score', 0))
+                            res_det['weight_sum'] += safe_float(res.get('weightage', 0))
+                            res_det['count'] += 1
+                            for k, v in res.items():
+                                if k not in ['name', 'score', 'weightage']:
+                                    res_det['extra'][k] = v
 
                 # Detect date range and whether to show msg
                 has_date_range = False
@@ -115,18 +140,30 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
                     if total_scores:
                         overall = round(sum(total_scores) / len(total_scores), 2)
 
-                        full_category = None
-                        for rec in score_data['data']:
-                            if rec.get('sap_id') == sid and 'category' in rec:
-                                full_category = rec.get('category')
-                                break
-
-                        # Remove "msg" only if date range exists AND today is not exactly the range
-                        if has_date_range and not show_msg and full_category:
-                            for cat in full_category:
-                                if 'results' in cat:
-                                    for res in cat['results']:
-                                        res.pop('msg', None)
+                        full_category = []
+                        for cat_name, cat_det in details.get('category_details', {}).items():
+                            c_count = cat_det['count']
+                            c_obj = {
+                                'name': cat_name,
+                                'score': round(cat_det['score_sum'] / c_count, 2) if c_count else 0,
+                                'weightage': round(cat_det['weight_sum'] / c_count, 2) if c_count else 0,
+                                'results': []
+                            }
+                            c_obj.update(cat_det['extra'])
+                            
+                            for res_name, res_det in cat_det['results'].items():
+                                r_count = res_det['count']
+                                r_obj = {
+                                    'name': res_name,
+                                    'score': round(res_det['score_sum'] / r_count, 2) if r_count else 0,
+                                    'weightage': round(res_det['weight_sum'] / r_count, 2) if r_count else 0
+                                }
+                                r_obj.update(res_det['extra'])
+                                if has_date_range and not show_msg:
+                                    r_obj.pop('msg', None)
+                                c_obj['results'].append(r_obj)
+                            
+                            full_category.append(c_obj)
 
                         temp_result.append({
                             'sap_id': sid,
