@@ -159,6 +159,61 @@ async def generate_chart(zone_fuel_df, out_path='/tmp/monthly_loss_chart.png'):
     return out_path
 
 
+def generate_nozzel_sales_chart(nozzel_sales_df, out_path="/tmp/grouped_nozzel_sales_chart.png"):
+    global chart_path
+    chart_path = out_path
+
+    df = nozzel_sales_df.copy()
+
+    df["transaction_date"] = pd.to_datetime(df["transaction_date"]).dt.tz_localize(None)
+    df = df.sort_values("transaction_date")
+
+
+    days = df["transaction_date"].dt.strftime("%b-%d").tolist()
+    ms_vals = df["MS_TMT"].tolist()
+    hsd_vals = df["HSD_TMT"].tolist()
+
+
+    x = np.arange(len(days))       
+    width = 0.35                    
+
+    fig, ax = plt.subplots(figsize=(12, 5))
+    ms_color = '#ff0000'
+    hsd_color = '#00008B'
+
+    ms_bars = ax.bar(x - width/2,ms_vals,width,label="MS",color=ms_color)
+
+    hsd_bars = ax.bar(x + width/2,hsd_vals,width,label="HSD",color=hsd_color)
+
+    for bars in (ms_bars, hsd_bars):
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                height + 0.5,
+                f"{int(height)}",
+                ha="center",
+                va="bottom",
+                fontsize=8
+            )
+
+
+    ax.set_title("Daily Product Wise Nozzle Sales (in TMT)", fontsize=14)
+    ax.set_xticks(x)
+    ax.set_xticklabels(days, rotation=45, ha="right")
+    ax.yaxis.grid(True, alpha=0.35)
+    ax.set_axisbelow(True)
+
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15),ncol=2,frameon=False)
+
+    fig.tight_layout()
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    # print(f"Grouped bar chart saved at: {os.path.abspath(out_path)}")
+    return out_path
+
+
 async def supply_terminal_wise_counts(by_ro=False):
     query = f"""SELECT DISTINCT
                     CASE 
@@ -733,17 +788,49 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     last_30_days_dry_out_trends_query = f"""SELECT dry_out_date, dry_out_count
                                             FROM dry_out_daily_report Where created_at::DATE > CURRENT_DATE - INTERVAL '30 days'
                                         """
+    nozzle_sales_query = f"""SELECT
+            "transaction_date",
+            (
+                (
+                    SUM("sales_volume") FILTER (WHERE product_grp ILIKE '%MS%') / 1411.0
+                ) / 1000.0
+            )::BIGINT AS "MS_TMT",
+
+            (
+                (
+                    SUM("sales_volume") FILTER (WHERE product_grp ILIKE '%HSD%') / 1210.0
+                ) / 1000.0
+            )::BIGINT AS "HSD_TMT"
+
+        FROM "public".nozzle_sales
+        WHERE "transaction_date" >= CURRENT_DATE - INTERVAL '30 days'
+        GROUP BY "transaction_date"
+        ORDER BY "transaction_date";
+        """
+    
+    nozzel_previous_day_query = f"""select count(distinct(site_id)) from nozzle_sales where transaction_date::DATE=CURRENT_DATE - INTERVAL '1 day' """
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     zone_data = await function(query=loss_query)
-    last_30_days_trends = await function(query=last_30_days_dry_out_trends_query)
     zone_fuel_df = pd.DataFrame(zone_data)
+
+
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    last_30_days_trends = await function(query=last_30_days_dry_out_trends_query)
     last_30_days_trends_df = pd.DataFrame(last_30_days_trends)
 
-
+    nozzel_sales= await function(query= nozzle_sales_query)
+    nozzel_sales_df = pd.DataFrame(nozzel_sales)
+    print("nozzel_sales_df = pd.DataFrame(nozzel_sales) ---->\n", nozzel_sales_df)
+    nozzel_previous_day = await function(query= nozzel_previous_day_query)
+    print("nozzel_previous_day ---->\n", nozzel_previous_day)
+    
     zone_wise_chart = await dry_out_trends_chart(last_30_days_trends_df)
     chart_path = await generate_chart(zone_fuel_df)
+    nozzel_sales_chart = await generate_nozzel_sales_chart(nozzel_sales_df)
 
     supply_terminal_query_ro_count_df = await supply_terminal_wise_counts()
 
@@ -848,7 +935,8 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     return {"dry_out_cf": dry_out_cf, "dry_out": dry_out, 'dry_out_details': dry_out_details, 
             'dry_out_trends': summary_df.to_dict(orient='records'),
             'zone_wise_summary': pivot, 'zone_fuel_df':zone_fuel_df, 'supply_terminal_query_ro_count_df': bottom_3_per_zone_sorted, "retail_sales": retail_sales,
-            'zone_wise_chart': zone_wise_chart, 'chart_path': chart_path, 'zone_wise_pdf_path': zone_wise_pdf_path}
+            'zone_wise_chart': zone_wise_chart, 'chart_path': chart_path, 'zone_wise_pdf_path': zone_wise_pdf_path, 'nozzel_sales_chart': nozzel_sales_chart,
+            'nozzel_previous_day': nozzel_previous_day}
 
 
 async def get_ro_alerts():
