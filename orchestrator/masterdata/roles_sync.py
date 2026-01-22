@@ -2052,6 +2052,16 @@ async def sync_user_roles():
         ],
         "name": "RO",
         "status": True
+    },
+    "Pipeline HQO Officer": {
+        "allowed_pages": [
+            {
+                "menu_name": "Pipeline",
+                "allowed_sub_menus": []
+            }
+        ],
+        "name": "Pipeline",
+        "status": True
     }
 }
     await hpcl_ceg_model.Roles.bulk_update([{"name": key, "status": True, "allowed_pages": value["allowed_pages"]}
