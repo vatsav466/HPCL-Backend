@@ -49,12 +49,14 @@ class CheckCompletedTrip:
                 logger.info(f"No trip for {truck_number}")
                 return True, {"tripCompleted": False}
             
-            if not isinstance(response_data, dict):
-                logger.info(f"No trip for {truck_number}: {response_data}")
-                return True, {"tripCompleted": False}
-
             logger.info(f"VTS truck status response: {response_data}")
 
+            if isinstance(response_data, str) and 'no trip' in response_data.lower():
+                return True, {"tripCompleted": True}
+
+            if not isinstance(response_data, dict):
+                return True, {"tripCompleted": False}
+            
             # Only when trip is still loaded
             if response_data.get("TripStatus", "").lower() == "loaded":
                 now_utc = urdhva_base.utilities.get_present_time(utc=True)
