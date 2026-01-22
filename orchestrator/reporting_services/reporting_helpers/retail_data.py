@@ -296,15 +296,26 @@ async def supply_terminal_wise_counts(by_ro=False):
     # final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
     # final_df["SAP_ID"] = final_df["SAP_ID"].astype(str).str.lstrip("0")
     # Handle empty IMS batches safely
-    if all_batches:
-        final_df = pd.concat(all_batches, ignore_index=True)
+
+    valid_ims_dfs = [
+        df for df in all_batches
+        if not df.empty and "SAP_ID" in df.columns
+    ]
+
+    if valid_ims_dfs:
+        final_df = pd.concat(valid_ims_dfs, ignore_index=True)
         final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
         final_df["SAP_ID"] = final_df["SAP_ID"].astype(str).str.lstrip("0")
     else:
         final_df = pd.DataFrame(columns=["SAP_ID", "VALID_COUNT"])
     
-    if carry_forward_bacthes:
-        carry_forward_final_df = pd.concat(carry_forward_bacthes, ignore_index=True)
+    valid_carry_dfs = [
+        df for df in carry_forward_bacthes
+        if not df.empty and "SAP_ID" in df.columns
+    ]
+    
+    if valid_carry_dfs:
+        carry_forward_final_df = pd.concat(valid_carry_dfs, ignore_index=True)
         carry_forward_final_df.drop_duplicates(subset=["SAP_ID"], inplace=True)
         carry_forward_final_df["SAP_ID"] = carry_forward_final_df["SAP_ID"].astype(str).str.lstrip("0")
     else:
