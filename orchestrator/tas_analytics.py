@@ -1,7 +1,7 @@
 import polars as pl
 import urdhva_base
 from datetime import datetime
-from hpcl_ceg_model import Alerts, HostMFMFactor 
+from hpcl_ceg_model import Alerts, HostMFMFactor ,HostDayEndDetails
 from hpcl_ceg_model import HostBayReAssignment, HostLocalLoadedTts, HostCancelledTts
 import json 
 import decimal
@@ -2490,6 +2490,266 @@ async def top_five_alerts(data):
         return []
 
     df = pl.DataFrame(rows)
+    
+    # 3. DRILL-DOWN (INTERLOCK CLICK)
+    if data.interlock_name:
+        now = datetime.utcnow()
+
+        detail_df = (
+            df
+            .with_columns([
+                pl.col("created_at")
+                  .dt.strftime("%Y-%m-%dT%H:%M:%S")
+                  .alias("created_at"),
+                (
+                    (pl.lit(now) - pl.col("created_at"))
+                    .dt.total_days()
+                    .cast(pl.Int64)
+                ).alias("ageing_days")
+            ])
+            .select([
+                "unique_id",
+                "zone",
+                "location_name",
+                "interlock_name",
+                "severity",
+                "alert_status",
+                "created_at",
+                "ageing_days"
+            ])
+            .sort("ageing_days", descending=True)
+        )
+
+        print("DETAIL VIEW ROW COUNT >>>", detail_df.height)
+        return detail_df.to_dicts()
+
+    # 4. TOP 5 ALERTS (NORMAL)
+    top_5_df = (
+        df
+        .group_by("interlock_name")
+        .agg(pl.len().alias("count"))
+        .sort("count", descending=True)
+        .head(5)
+    )
+
+    return top_5_df.to_dicts()
+
+async def bcu_totalizer_diff_alert(data):
+
+    # 1. BUILD QUERY
+    conditions = []
+
+    if data.start_date and data.end_date:
+        conditions.append(
+            f"date BETWEEN '{data.start_date}' AND '{data.end_date}'"
+        )
+
+    if data.location_name:
+        conditions.append(
+            f"location_name = '{data.location_name}'"
+        )
+
+    if data.zone:
+        conditions.append(
+            f"zone = '{data.zone}'"
+        )
+
+    query = " AND ".join(conditions) if conditions else ""
+
+    # 2. QUERY PARAMS
+    params = urdhva_base.queryparams.QueryParams(
+        q=query,
+        limit=0
+    )
+
+    params.fields = [
+        "sap_id",
+        "bcu_number",
+        "location_name",
+        "zone",
+        "date",
+        "bcu_mfm_net_totalizer_diff",
+        "bcu_net_totalizer",
+        "invoiced_total_tl_qty_diff"  
+    ]
+
+    # 3. FETCH DATA
+    resp = await HostDayEndDetails.get_all(params, resp_type="plain")
+    records = resp.get("data", [])
+
+    if not records:
+        return []
+
+    # 4. POLARS DATAFRAME
+    df = pl.from_dicts(
+        records,
+        schema={
+            "sap_id": pl.Utf8,
+            "bcu_number": pl.Utf8,
+            "location_name": pl.Utf8,
+            "zone": pl.Utf8,
+            "date": pl.Date,
+            "bcu_mfm_net_totalizer_diff": pl.Int64,
+            "bcu_net_totalizer": pl.Int64,
+            "invoiced_total_tl_qty_diff": pl.Int64,  
+        },
+        strict=False
+    )
+
+    # 5. CALCULATIONS (TWO FORMULAS)
+    df = df.with_columns([
+        # Formula 1
+        pl.when(pl.col("bcu_net_totalizer") > 0)
+        .then(
+            (pl.col("bcu_mfm_net_totalizer_diff") /
+             pl.col("bcu_net_totalizer")).round(3)
+        )
+        .otherwise(None)
+        .alias("percentage_diff"),
+
+        # Formula 2
+        pl.when(pl.col("bcu_net_totalizer") > 0)
+        .then(
+            (pl.col("invoiced_total_tl_qty_diff") /
+             pl.col("bcu_net_totalizer")).round(3)
+        )
+        .otherwise(None)
+        .alias("invoice_percentage_diff"),
+    ])
+
+    # 6. THRESHOLD FILTER (EITHER CONDITION)
+    df = df.filter(
+        (pl.col("percentage_diff") > 0.05) |
+        (pl.col("invoice_percentage_diff") > 0.05)
+    )
+
+    if df.is_empty():
+        return []
+
+    # 7. FINAL RESPONSE
+    return df.select([
+        "sap_id",
+        "bcu_number",
+        "location_name",
+        "zone",
+        "date",
+        "bcu_mfm_net_totalizer_diff",
+        "invoiced_total_tl_qty_diff",
+        "bcu_net_totalizer",
+        "percentage_diff",
+        "invoice_percentage_diff",
+    ]).to_dicts()
+
+
+async def unauthorized_flow_dashboard(data):
+
+    # BASE QUERY (RAW ALERTS)
+    alert_query = """
+        alert_section = 'TAS'
+        AND interlock_name = 'Unauthorized Flow Alarm_BCU'
+    """
+
+    # Date range (mandatory)
+    alert_query += (
+        f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
+    )
+
+    # Optional filters
+    if data.location_name:
+        alert_query += f" AND location_name = '{data.location_name}'"
+
+    if data.alert_status:
+        alert_query += f" AND alert_status = '{data.alert_status}'"
+
+    if data.alert_severity:
+        if isinstance(data.alert_severity, list):
+            clean_severity = [s for s in data.alert_severity if s]
+            if clean_severity:
+                severity_vals = ", ".join(f"'{s}'" for s in clean_severity)
+                alert_query += f" AND severity IN ({severity_vals})"
+        else:
+            if data.alert_severity.strip():
+                alert_query += f" AND severity = '{data.alert_severity}'"
+
+    print("FINAL alert_query >>>", alert_query)
+
+    alert_params = urdhva_base.queryparams.QueryParams(
+        q=alert_query,
+        limit=0
+    )
+
+    alert_params.fields = [
+        "location_name",
+        "device_name",
+        "created_at"
+    ]
+
+    alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
+    alert_data = alerts_resp.get("data", [])
+
+    if not alert_data:
+        return {
+            "repeated_unauthorized_flow_count": 0,
+            "top_10_locations": []
+        }
+
+    df = pl.DataFrame(alert_data)
+
+    # REPEATED UNAUTHORIZED FLOW COUNT
+    # (>2 alarms of same bay in period)
+    repeated_df = (
+        df
+        .with_columns(pl.col("created_at").dt.date().alias("date"))
+        .group_by(["location_name", "device_name", "date"])
+        .agg(pl.count().alias("cnt"))
+        .filter(pl.col("cnt") > 2)
+    )
+
+    repeated_unauthorized_flow_count = repeated_df.height
+
+    # TOP 10 LOCATIONS
+    top_locations_df = (
+        repeated_df
+        .group_by("location_name")
+        .agg(pl.sum("cnt").alias("count"))
+        .sort("count", descending=True)
+        .head(10)
+    )
+    top_10_locations = []
+
+    for loc in top_locations_df.to_dicts():
+        location = loc["location_name"]
+
+        devices = (
+            repeated_df
+            .filter(pl.col("location_name") == location)
+            .select(["device_name", "date", "cnt"])
+            .sort(["device_name", "date"])
+            .to_dicts()
+        )
+
+        formatted_devices = [
+            {
+                "device_name": d["device_name"],
+                "cnt": d["cnt"],
+                "dates": [str(d["date"])]
+            }
+            for d in devices
+        ]
+
+        top_10_locations.append({
+            "location_name": location,
+            "count": loc["count"],
+            "devices": formatted_devices
+        })
+
+    # RESPONSE
+    return {
+        "repeated_unauthorized_flow_count": repeated_unauthorized_flow_count,
+        "top_10_locations": top_10_locations
+    }
+
+
 
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
@@ -2499,7 +2759,9 @@ AnalyticsModelMapping = {
     "Tas Alerts Exception Report" :tas_alerts_exception_report,
     "Equipment Location Wise Count": equipment_location_wise_count,
     "Location Wise Total Loaded Qty": location_wise_total_loaded_qty,
-    "Top five Alerts": top_five_alerts
+    "Top five Alerts": top_five_alerts,
+    "BCU DIff Alerts":bcu_totalizer_diff_alert,
+    "Unauthorized Alerts":unauthorized_flow_dashboard
 
 }
 
