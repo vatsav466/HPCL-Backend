@@ -513,7 +513,7 @@ async def alerts_unblock_vts_truck(
     upload_file: fastapi.UploadFile | None = fastapi.File(None)
 ):
     try: 
-        remarks_unblocked = remarks.strip() if remarks_unblocked else None
+        remarks_unblocked = remarks.strip() if remarks else ""
 
         rpt = urdhva_base.context.context.get('rpt', {})
         if not rpt:
