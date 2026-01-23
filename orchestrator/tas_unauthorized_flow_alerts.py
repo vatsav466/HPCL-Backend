@@ -11,7 +11,7 @@ from hpcl_ceg_model import Alerts
 # CONFIG
 # ==========================================================
 RAW_INTERLOCK_NAME = "Unauthorized Flow Alarm_BCU"
-WEEKLY_INTERLOCK_NAME = "more_than_two_unauthorized_flow_week"
+WEEKLY_INTERLOCK_NAME = "Morethan 2 Unauthorized_flow a week"
 WEEK_DAYS = 7   
 
 

@@ -451,8 +451,13 @@ def get_and_insert_data(cursor, query, params=None):
     print(data['NETWEIGHT_TMT'].unique().to_list())
     #data= data.with_columns(pl.col("ORGZONECD").replace("ORGZONECD").alias("col"))
     #EAS':'EZ' 'NOR':'NZ' 'SOU':'SZ' , 'WES':'WZ',
-    
+    data = data.with_columns(
+        pl.col("FISCAL_YEAR")
+        .str.replace("^FY\\s*", "")
+        .alias("FISCAL_YEAR")
+    )
     insertToDB(data, params["table_name"])
+
 
 
 if __name__ == "__main__":
