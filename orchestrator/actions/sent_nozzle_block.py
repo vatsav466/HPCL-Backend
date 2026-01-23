@@ -50,7 +50,7 @@ class SendNozzleCommand:
                                                "block_status": None,
                                                "ro_offline": True}).modify()
                 return True, {"blocked": False, "offline": True}
-            if not blocking_status:
+            elif not blocking_status:
                 alert_message = (
                     f"Failed to Block the Outlet {alert_data.get('location_name', '')}, status: Failed, RO: {alert_data.get('sap_id', '')}"
                 )
@@ -63,17 +63,17 @@ class SendNozzleCommand:
                                                "ro_offline": False,
                                                "block_status": None}).modify()
                 return True, {"blocked": False, "offline": False}
-                
-            alert_message = (
-                f"Succefully Blocked Outlet {alert_data.get('location_name', '')}, status: Block, RO: {alert_data.get('sap_id', '')} details are sent successfully to CRIS to block the Outlet"
-            )
-            alert_data["action_msg"] = alert_message
-            alert_data["action_type"] = "Blocked"
-            await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
-            await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
-                                           "ro_offline": False,
-                                           "block_status": hpcl_ceg_enum.BlockStatus.Blocked}).modify()
-            return True, {"blocked": True}
+            elif blocking_status:    
+                alert_message = (
+                    f"Succefully Blocked Outlet {alert_data.get('location_name', '')}, status: Block, RO: {alert_data.get('sap_id', '')} details are sent successfully to CRIS to block the Outlet"
+                )
+                alert_data["action_msg"] = alert_message
+                alert_data["action_type"] = "Blocked"
+                await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                                            "ro_offline": False,
+                                            "block_status": hpcl_ceg_enum.BlockStatus.Blocked}).modify()
+                return True, {"blocked": True}
 
         if params.get("interrupt").lower() == 'unblock':
             # UnBlocking in IMS blockingFlag="N"
@@ -98,28 +98,25 @@ class SendNozzleCommand:
                                                "alert_closure_reason": "UNBLOCK_NO_CONNECTIVITY",
                                                "ro_offline": True}).modify()
                 return True, {"unblocked": True, "offline": True}
-            if not unblocking_status:
+            elif not unblocking_status:
                 alert_message = (
                     f"Failed to Unblock the Outlet {alert_data.get('location_name', '')}, status: Failed, RO: {alert_data.get('sap_id', '')}"
                     )
                 alert_data["action_msg"] = alert_message
                 alert_data["action_type"] = "UnblockFailed"
                 await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
-                # await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
-                #                                "ro_offline": False,
-                #                                "block_status": hpcl_ceg_enum.BlockStatus.WaitingForUnBlockAck}).modify()
                 return True, {"unblocked": False, "offline": False}
-                
-            alert_message = (
-                f"Successfully Unblocked Outlet {alert_data.get('location_name', '')}, status: Unblock, RO: {alert_data.get('sap_id', '')} details are sent successfully to CRIS to unblock the Outlet "
-            )
-            alert_data["action_msg"] = alert_message
-            alert_data["action_type"] = "UnBlocked"
-            await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
-            await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
-                                           "ro_offline": False,
-                                           "alert_closure_reason": closure_reason,
-                                           "block_status": hpcl_ceg_enum.BlockStatus.UnBlocked}).modify()
-            return True, {"unblocked": True}
+            elif unblocking_status: 
+                alert_message = (
+                    f"Successfully Unblocked Outlet {alert_data.get('location_name', '')}, status: Unblock, RO: {alert_data.get('sap_id', '')} details are sent successfully to CRIS to unblock the Outlet "
+                )
+                alert_data["action_msg"] = alert_message
+                alert_data["action_type"] = "UnBlocked"
+                await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                await hpcl_ceg_model.Alerts(**{"id": alert_data["id"],
+                                            "ro_offline": False,
+                                            "alert_closure_reason": closure_reason,
+                                            "block_status": hpcl_ceg_enum.BlockStatus.UnBlocked}).modify()
+                return True, {"unblocked": True}
             
         return False, {"sapcommandsent": False}
