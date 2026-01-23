@@ -1,0 +1,1694 @@
+{
+  "owner": "HPCL",
+  "source_file": "PIPELINE DATA.xlsx",
+  "pipelines": [
+    {
+      "name": "MPSPL",
+      "description": "Mumbai Pune Solapur Pipeline",
+      "pipeline_type": "Product",
+      "total_length_km": 508.26,
+      "capacity": {
+        "value": 4.3,
+        "unit": "MMTPA"
+      },
+      "products": [
+        "MS",
+        "HSD",
+        "SKO",
+        "ATF"
+      ],
+      "states_spanned": [
+        "Maharashtra"
+      ],
+      "phases": [
+        {
+          "phase_code": "MPPL",
+          "from": "Mumbai",
+          "to": "Pune",
+          "commissioning": "1985-12",
+          "length_km": 162.18,
+          "line_fill_quantity_kl": 14884.0,
+          "pipe_size_inch": "14",
+          "from_coordinates": {
+            "latitude": 19.076,
+            "longitude": 72.8777
+          },
+          "to_coordinates": {
+            "latitude": 18.5204,
+            "longitude": 73.8567
+          }
+        },
+        {
+          "phase_code": "PSPL",
+          "from": "Pune",
+          "to": "Solapur",
+          "commissioning": "2006-11 / 2007-02",
+          "length_km": 346.08,
+          "line_fill_quantity_kl": 29298.0,
+          "pipe_size_inch": "14/12.75",
+          "from_coordinates": {
+            "latitude": 18.5204,
+            "longitude": 73.8567
+          },
+          "to_coordinates": {
+            "latitude": 17.6599,
+            "longitude": 75.9064
+          }
+        }
+      ],
+      "locations": [
+        {
+          "location_code": "TRO",
+          "location_name": "Trombay",
+          "location_type": "DISPATCH_TERMINAL",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 19.05,
+            "longitude": 72.9
+          }
+        },
+        {
+          "location_code": "VAS",
+          "location_name": "Vashi",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 19.0791,
+            "longitude": 73.01
+          }
+        },
+        {
+          "location_code": "KHO",
+          "location_name": "Khopoli",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 18.785,
+            "longitude": 73.33
+          }
+        },
+        {
+          "location_code": "TAL",
+          "location_name": "Talegaon",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 18.6967,
+            "longitude": 73.6758
+          }
+        },
+        {
+          "location_code": "LON",
+          "location_name": "Loni",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 18.6,
+            "longitude": 73.9
+          }
+        },
+        {
+          "location_code": "HAZ",
+          "location_name": "Hazarwadi",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 17.0,
+            "longitude": 74.5
+          }
+        },
+        {
+          "location_code": "PAK",
+          "location_name": "Pakni",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 17.6599,
+            "longitude": 75.9064
+          }
+        },
+        {
+          "location_code": "MUM",
+          "location_name": "Mumbai",
+          "location_type": "DISPATCH_TERMINAL",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 19.076,
+            "longitude": 72.8777
+          }
+        },
+        {
+          "location_code": "PUN",
+          "location_name": "Pune",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 18.5204,
+            "longitude": 73.8567
+          }
+        },
+        {
+          "location_code": "SOL",
+          "location_name": "Solapur",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 17.6599,
+            "longitude": 75.9064
+          }
+        }
+      ],
+      "sv_stations": {
+        "count": 14,
+        "avg_spacing_km": 11.6
+      },
+      "line_fill_quantity_kl": 44182.0,
+      "pipe_size_inch": "14 & 14/12.75",
+      "url": "http://10.2.64.45",
+      "main_route": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            72.8777,
+            19.076
+          ],
+          [
+            73.15591696189908,
+            18.806016112969502
+          ],
+          [
+            73.4822502952324,
+            18.620816112969504
+          ],
+          [
+            73.8567,
+            18.5204
+          ],
+          [
+            74.46541184733769,
+            18.056057439652967
+          ],
+          [
+            75.14864518067102,
+            17.769224106319637
+          ],
+          [
+            75.9064,
+            17.6599
+          ]
+        ]
+      },
+      "branch_lines": [
+        {
+          "to_station": "Hazarwadi",
+          "to_station_code": "HAZ",
+          "from_point": {
+            "longitude": 74.87173779732959,
+            "latitude": 17.885474681216113
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                74.87173779732959,
+                17.885474681216113
+              ],
+              [
+                74.5,
+                17.0
+              ]
+            ]
+          },
+          "length_km": 106.06,
+          "branch_type": "receiving_terminal"
+        },
+        {
+          "to_station": "Pakni",
+          "to_station_code": "PAK",
+          "from_point": {
+            "longitude": 75.9064,
+            "latitude": 17.6599
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                75.9064,
+                17.6599
+              ],
+              [
+                75.9064,
+                17.6599
+              ]
+            ]
+          },
+          "length_km": 0.0,
+          "branch_type": "receiving_terminal",
+          "is_endpoint": true
+        },
+        {
+          "to_station": "Pune",
+          "to_station_code": "PUN",
+          "from_point": {
+            "longitude": 73.8567,
+            "latitude": 18.5204
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                73.8567,
+                18.5204
+              ],
+              [
+                73.8567,
+                18.5204
+              ]
+            ]
+          },
+          "length_km": 0.0,
+          "branch_type": "receiving_terminal",
+          "is_endpoint": true
+        },
+        {
+          "to_station": "Solapur",
+          "to_station_code": "SOL",
+          "from_point": {
+            "longitude": 75.9064,
+            "latitude": 17.6599
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                75.9064,
+                17.6599
+              ],
+              [
+                75.9064,
+                17.6599
+              ]
+            ]
+          },
+          "length_km": 0.0,
+          "branch_type": "receiving_terminal",
+          "is_endpoint": true
+        }
+      ],
+      "map_visualization": {
+        "has_branches": true,
+        "branch_count": 4,
+        "main_route_length": 2
+      }
+    },
+    {
+      "name": "VVSPL",
+      "description": "Visakh Vijayawada Secunderabad Pipeline",
+      "pipeline_type": "Product",
+      "total_length_km": 572.5,
+      "capacity": {
+        "value": 7.7,
+        "unit": "MMTPA"
+      },
+      "products": [
+        "MS",
+        "HSD",
+        "SKO",
+        "ATF"
+      ],
+      "states_spanned": [
+        "Andhra Pradesh",
+        "Telangana"
+      ],
+      "phases": [
+        {
+          "phase_code": "VVPL",
+          "from": "Visakhapatnam",
+          "to": "Vijayawada",
+          "commissioning": "1998-05",
+          "line_fill_quantity_kl": 54200.0,
+          "pipe_size_inch": "18",
+          "length_km": 348.8,
+          "from_coordinates": {
+            "latitude": 17.6869,
+            "longitude": 83.2185
+          },
+          "to_coordinates": {
+            "latitude": 16.5062,
+            "longitude": 80.648
+          }
+        },
+        {
+          "phase_code": "VSPL",
+          "from": "Vijayawada",
+          "to": "Secunderabad",
+          "commissioning": "2002-03",
+          "line_fill_quantity_kl": 23900.0,
+          "pipe_size_inch": "16/14",
+          "length_km": 223.7,
+          "from_coordinates": {
+            "latitude": 16.5062,
+            "longitude": 80.648
+          },
+          "to_coordinates": {
+            "latitude": 17.4399,
+            "longitude": 78.4983
+          }
+        }
+      ],
+      "locations": [
+        {
+          "location_code": "VIS",
+          "location_name": "Visakha Dispatch Station",
+          "location_type": "DISPATCH_TERMINAL",
+          "state": "Andhra Pradesh",
+          "coordinates": {
+            "latitude": 17.6869,
+            "longitude": 83.2185
+          }
+        },
+        {
+          "location_code": "MB",
+          "location_name": "M B Patnam",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Andhra Pradesh",
+          "coordinates": {
+            "latitude": 17.6869,
+            "longitude": 83.2185
+          }
+        },
+        {
+          "location_code": "RAJ",
+          "location_name": "Rajahmundry",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Andhra Pradesh",
+          "coordinates": {
+            "latitude": 17.0,
+            "longitude": 81.7833
+          }
+        },
+        {
+          "location_code": "JK",
+          "location_name": "J K Gudem",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Andhra Pradesh",
+          "coordinates": {
+            "latitude": 16.8,
+            "longitude": 81.0
+          }
+        },
+        {
+          "location_code": "VIJ",
+          "location_name": "Vijayawada",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Andhra Pradesh",
+          "coordinates": {
+            "latitude": 16.5062,
+            "longitude": 80.648
+          }
+        },
+        {
+          "location_code": "SUR",
+          "location_name": "Suryapet",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Telangana",
+          "coordinates": {
+            "latitude": 17.15,
+            "longitude": 79.6167
+          }
+        },
+        {
+          "location_code": "BHO",
+          "location_name": "Bhogaram",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Telangana",
+          "coordinates": {
+            "latitude": 17.4,
+            "longitude": 78.5
+          }
+        },
+        {
+          "location_code": "SEC",
+          "location_name": "Secunderabad",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Telangana",
+          "coordinates": {
+            "latitude": 17.4399,
+            "longitude": 78.4983
+          }
+        },
+        {
+          "location_code": "VIS",
+          "location_name": "Visakhapatnam",
+          "location_type": "DISPATCH_TERMINAL",
+          "state": "Andhra Pradesh",
+          "coordinates": {
+            "latitude": 17.6869,
+            "longitude": 83.2185
+          }
+        }
+      ],
+      "sv_stations": {
+        "count": 24,
+        "avg_spacing_km": 14.5
+      },
+      "line_fill_quantity_kl": 78100.0,
+      "pipe_size_inch": "18 & 16/14",
+      "url": "http://10.4.80.10",
+      "main_route": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.2185,
+            17.6869
+          ],
+          [
+            82.25941504724183,
+            17.515945163376124
+          ],
+          [
+            81.4025817139085,
+            17.12237849670946
+          ],
+          [
+            80.648,
+            16.5062
+          ],
+          [
+            80.01229412528468,
+            17.003602814384873
+          ],
+          [
+            79.29572745861802,
+            17.314836147718207
+          ],
+          [
+            78.4983,
+            17.4399
+          ]
+        ]
+      },
+      "branch_lines": [
+        {
+          "to_station": "Secunderabad",
+          "to_station_code": "SEC",
+          "from_point": {
+            "longitude": 78.4983,
+            "latitude": 17.4399
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                78.4983,
+                17.4399
+              ],
+              [
+                78.4983,
+                17.4399
+              ]
+            ]
+          },
+          "length_km": 0.0,
+          "branch_type": "receiving_terminal",
+          "is_endpoint": true
+        }
+      ],
+      "map_visualization": {
+        "has_branches": true,
+        "branch_count": 1,
+        "main_route_length": 2
+      }
+    },
+    {
+      "name": "MDPL",
+      "description": "Mundra Delhi Pipeline",
+      "pipeline_type": "Product",
+      "total_length_km": 1053.65,
+      "capacity": {
+        "value": 6.9,
+        "unit": "MMTPA"
+      },
+      "products": [
+        "MS",
+        "HSD",
+        "SKO"
+      ],
+      "states_spanned": [
+        "Gujarat",
+        "Rajasthan",
+        "Haryana"
+      ],
+      "phases": [
+        {
+          "phase_code": "MDPL",
+          "from": "Mundra",
+          "to": "Bahadurgarh",
+          "commissioning": "2007-05",
+          "line_fill_quantity_kl": 161691.313,
+          "pipe_size_inch": "18 (979 KM) & 16\" (74 KM)",
+          "length_km": 1053.65,
+          "from_coordinates": {
+            "latitude": 22.85,
+            "longitude": 69.7167
+          },
+          "to_coordinates": {
+            "latitude": 28.6923,
+            "longitude": 76.9356
+          }
+        },
+        {
+          "phase_code": "ASPL",
+          "from": "Awa",
+          "to": "Salawas",
+          "commissioning": "2015-01",
+          "length_km": 93.79,
+          "line_fill_quantity_kl": 4992.95,
+          "pipe_size_inch": "10",
+          "from_coordinates": {
+            "latitude": 25.75,
+            "longitude": 73.0
+          },
+          "to_coordinates": {
+            "latitude": 26.3,
+            "longitude": 73.0
+          }
+        },
+        {
+          "phase_code": "PVPL",
+          "from": "Palanpur",
+          "to": "Vadodara",
+          "commissioning": "2019-12",
+          "length_km": 235.452,
+          "line_fill_quantity_kl": 36434.61,
+          "pipe_size_inch": "18",
+          "from_coordinates": {
+            "latitude": 24.1724,
+            "longitude": 72.4347
+          },
+          "to_coordinates": {
+            "latitude": 22.3072,
+            "longitude": 73.1812
+          }
+        }
+      ],
+      "locations": [
+        {
+          "location_code": "MUN",
+          "location_name": "Mundra Dispatch & Pumping Station",
+          "location_type": "DISPATCH_TERMINAL",
+          "state": "Gujarat",
+          "coordinates": {
+            "latitude": 22.85,
+            "longitude": 69.7167
+          }
+        },
+        {
+          "location_code": "BIP",
+          "location_name": "Bachau Intermediate Pumping Station",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Gujarat",
+          "coordinates": {
+            "latitude": 23.3,
+            "longitude": 69.8
+          }
+        },
+        {
+          "location_code": "SIP",
+          "location_name": "Santalpur Intermediate Pumping Station",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Gujarat",
+          "coordinates": {
+            "latitude": 24.0,
+            "longitude": 71.5
+          }
+        },
+        {
+          "location_code": "PIP",
+          "location_name": "Pindwara Intermediate Pumping Station",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Rajasthan",
+          "coordinates": {
+            "latitude": 24.8,
+            "longitude": 73.0833
+          }
+        },
+        {
+          "location_code": "AIP",
+          "location_name": "Awa Intermediate Pumping Station",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Rajasthan",
+          "coordinates": {
+            "latitude": 25.75,
+            "longitude": 73.0
+          }
+        },
+        {
+          "location_code": "PRP",
+          "location_name": "Palanpur Receiving Pumping Station",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Gujarat",
+          "coordinates": {
+            "latitude": 24.1724,
+            "longitude": 72.4347
+          }
+        },
+        {
+          "location_code": "VRS",
+          "location_name": "Vadodara Receiving Station",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Gujarat",
+          "coordinates": {
+            "latitude": 22.3072,
+            "longitude": 73.1812
+          }
+        },
+        {
+          "location_code": "SRS",
+          "location_name": "Salawas Receiving Station",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Rajasthan",
+          "coordinates": {
+            "latitude": 26.3,
+            "longitude": 73.0
+          }
+        },
+        {
+          "location_code": "ARP",
+          "location_name": "Ajmer Receiving Pumping Station",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Rajasthan",
+          "coordinates": {
+            "latitude": 26.4499,
+            "longitude": 74.6399
+          }
+        },
+        {
+          "location_code": "JRP",
+          "location_name": "Jaipur Receiving Pumping Station",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Rajasthan",
+          "coordinates": {
+            "latitude": 26.9124,
+            "longitude": 75.7873
+          }
+        },
+        {
+          "location_code": "BAH",
+          "location_name": "Bahadurgarh",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Haryana",
+          "coordinates": {
+            "latitude": 28.6923,
+            "longitude": 76.9356
+          }
+        },
+        {
+          "location_code": "REW",
+          "location_name": "Rewari Receiving Pumping Station",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Haryana",
+          "coordinates": {
+            "latitude": 28.1992,
+            "longitude": 76.6173
+          }
+        }
+      ],
+      "sv_stations": {
+        "count": 38,
+        "avg_spacing_km": 27.7
+      },
+      "line_fill_quantity_kl": 161691.313,
+      "pipe_size_inch": "18 (979 KM) & 16\" (74 KM)",
+      "url": "http://10.2.114.40/detail.aspx",
+      "main_route": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            69.7167,
+            22.85
+          ],
+          [
+            72.62895802165299,
+            24.172258254595388
+          ],
+          [
+            75.03525802165298,
+            26.11969158792872
+          ],
+          [
+            76.9356,
+            28.6923
+          ]
+        ]
+      },
+      "branch_lines": [
+        {
+          "to_station": "Palanpur Receiving Pumping Station",
+          "to_station_code": "PRP",
+          "from_point": {
+            "longitude": 72.46795444454004,
+            "latitude": 24.099157482866328
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                72.46795444454004,
+                24.099157482866328
+              ],
+              [
+                72.4347,
+                24.1724
+              ]
+            ]
+          },
+          "length_km": 8.82,
+          "branch_type": "receiving_terminal"
+        },
+        {
+          "to_station": "Vadodara Receiving Station",
+          "to_station_code": "VRS",
+          "from_point": {
+            "longitude": 72.38474684279576,
+            "latitude": 24.061378571302367
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                72.38474684279576,
+                24.061378571302367
+              ],
+              [
+                73.1812,
+                22.3072
+              ]
+            ]
+          },
+          "length_km": 211.36,
+          "branch_type": "receiving_terminal"
+        },
+        {
+          "to_station": "Salawas Receiving Station",
+          "to_station_code": "SRS",
+          "from_point": {
+            "longitude": 73.89365061815705,
+            "latitude": 25.195781721682575
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                73.89365061815705,
+                25.195781721682575
+              ],
+              [
+                73.0,
+                26.3
+              ]
+            ]
+          },
+          "length_km": 151.94,
+          "branch_type": "receiving_terminal"
+        },
+        {
+          "to_station": "Ajmer Receiving Pumping Station",
+          "to_station_code": "ARP",
+          "from_point": {
+            "longitude": 75.0534970695486,
+            "latitude": 26.144382895377106
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                75.0534970695486,
+                26.144382895377106
+              ],
+              [
+                74.6399,
+                26.4499
+              ]
+            ]
+          },
+          "length_km": 53.42,
+          "branch_type": "receiving_terminal"
+        },
+        {
+          "to_station": "Jaipur Receiving Pumping Station",
+          "to_station_code": "JRP",
+          "from_point": {
+            "longitude": 75.67959028694874,
+            "latitude": 26.99196332888698
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                75.67959028694874,
+                26.99196332888698
+              ],
+              [
+                75.7873,
+                26.9124
+              ]
+            ]
+          },
+          "length_km": 13.87,
+          "branch_type": "receiving_terminal"
+        },
+        {
+          "to_station": "Bahadurgarh",
+          "to_station_code": "BAH",
+          "from_point": {
+            "longitude": 76.9356,
+            "latitude": 28.6923
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                76.9356,
+                28.6923
+              ],
+              [
+                76.9356,
+                28.6923
+              ]
+            ]
+          },
+          "length_km": 0.0,
+          "branch_type": "receiving_terminal",
+          "is_endpoint": true
+        },
+        {
+          "to_station": "Rewari Receiving Pumping Station",
+          "to_station_code": "REW",
+          "from_point": {
+            "longitude": 76.58757497195829,
+            "latitude": 28.2211573714873
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                76.58757497195829,
+                28.2211573714873
+              ],
+              [
+                76.6173,
+                28.1992
+              ]
+            ]
+          },
+          "length_km": 3.8,
+          "branch_type": "receiving_terminal"
+        }
+      ],
+      "map_visualization": {
+        "has_branches": true,
+        "branch_count": 7,
+        "main_route_length": 1
+      }
+    },
+    {
+      "name": "RBPL",
+      "description": "Ramanmandi Bahadurgarh Pipeline",
+      "pipeline_type": "Product",
+      "total_length_km": 243.0,
+      "capacity": {
+        "value": 7.11,
+        "unit": "MMTPA"
+      },
+      "products": [
+        "MS",
+        "HSD",
+        "SKO"
+      ],
+      "states_spanned": [
+        "Punjab",
+        "Haryana"
+      ],
+      "phases": [
+        {
+          "phase_code": "RBPL",
+          "from": "Ramanmandi",
+          "to": "Bahadurgarh",
+          "commissioning": "2010-11",
+          "length_km": 243.0,
+          "from_coordinates": {
+            "latitude": 30.2,
+            "longitude": 74.9
+          },
+          "to_coordinates": {
+            "latitude": 28.6923,
+            "longitude": 76.9356
+          },
+          "line_fill_quantity_kl": 37600.0,
+          "pipe_size_inch": "18"
+        }
+      ],
+      "locations": [
+        {
+          "location_code": "RAM",
+          "location_name": "Ramanmandi Dispatch Station",
+          "location_type": "DISPATCH_TERMINAL",
+          "state": "Punjab",
+          "coordinates": {
+            "latitude": 30.2,
+            "longitude": 74.9
+          }
+        },
+        {
+          "location_code": "BAR",
+          "location_name": "Barwala",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Haryana",
+          "coordinates": {
+            "latitude": 29.3667,
+            "longitude": 75.9
+          }
+        },
+        {
+          "location_code": "HIS",
+          "location_name": "Hisar",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Haryana",
+          "coordinates": {
+            "latitude": 29.1492,
+            "longitude": 75.7217
+          }
+        },
+        {
+          "location_code": "BAH",
+          "location_name": "Bahadurgarh",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Haryana",
+          "coordinates": {
+            "latitude": 28.6923,
+            "longitude": 76.9356
+          }
+        }
+      ],
+      "sv_stations": {
+        "count": 5,
+        "avg_spacing_km": 48.6
+      },
+      "line_fill_quantity_kl": 37600.0,
+      "pipe_size_inch": "18",
+      "url": "http://10.1.126.252/ggsr/Overview.aspx",
+      "main_route": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            74.9,
+            30.2
+          ],
+          [
+            75.44796268320476,
+            29.521145202138975
+          ],
+          [
+            76.12649601653808,
+            29.018578535472308
+          ],
+          [
+            76.9356,
+            28.6923
+          ]
+        ]
+      },
+      "branch_lines": [
+        {
+          "to_station": "Hisar",
+          "to_station_code": "HIS",
+          "from_point": {
+            "longitude": 75.80262455937704,
+            "latitude": 29.258459158365664
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                75.80262455937704,
+                29.258459158365664
+              ],
+              [
+                75.7217,
+                29.1492
+              ]
+            ]
+          },
+          "length_km": 14.47,
+          "branch_type": "receiving_terminal"
+        },
+        {
+          "to_station": "Bahadurgarh",
+          "to_station_code": "BAH",
+          "from_point": {
+            "longitude": 76.9356,
+            "latitude": 28.6923
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                76.9356,
+                28.6923
+              ],
+              [
+                76.9356,
+                28.6923
+              ]
+            ]
+          },
+          "length_km": 0.0,
+          "branch_type": "receiving_terminal",
+          "is_endpoint": true
+        }
+      ],
+      "map_visualization": {
+        "has_branches": true,
+        "branch_count": 2,
+        "main_route_length": 1
+      }
+    },
+    {
+      "name": "RKPL",
+      "description": "Rewari Kanpur Pipeline",
+      "pipeline_type": "Product",
+      "total_length_km": 443.0,
+      "capacity": {
+        "value": 4.3,
+        "unit": "MMTPA"
+      },
+      "products": [
+        "MS",
+        "HSD",
+        "SKO"
+      ],
+      "states_spanned": [
+        "Haryana",
+        "Rajasthan",
+        "Uttar Pradesh"
+      ],
+      "phases": [
+        {
+          "phase_code": "RKPL",
+          "from": "Rewari",
+          "to": "Kanpur",
+          "commissioning": "2015-10",
+          "length_km": 443,
+          "from_coordinates": {
+            "latitude": 28.1992,
+            "longitude": 76.6173
+          },
+          "to_coordinates": {
+            "latitude": 26.4499,
+            "longitude": 80.3319
+          },
+          "line_fill_quantity_kl": 25575.0,
+          "pipe_size_inch": "18"
+        }
+      ],
+      "locations": [
+        {
+          "location_code": "RRP",
+          "location_name": "Rewari Receiving Pumping Station",
+          "location_type": "DISPATCH_TERMINAL",
+          "state": "Haryana"
+        },
+        {
+          "location_code": "BHA",
+          "location_name": "Bharatpur",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Rajasthan",
+          "coordinates": {
+            "latitude": 27.2172,
+            "longitude": 77.49
+          }
+        },
+        {
+          "location_code": "MAT",
+          "location_name": "Mathura",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Uttar Pradesh",
+          "coordinates": {
+            "latitude": 27.4924,
+            "longitude": 77.6737
+          }
+        },
+        {
+          "location_code": "KAN",
+          "location_name": "Kanpur",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Uttar Pradesh",
+          "coordinates": {
+            "latitude": 26.4499,
+            "longitude": 80.3319
+          }
+        }
+      ],
+      "sv_stations": {
+        "count": 11,
+        "avg_spacing_km": 40.3
+      },
+      "line_fill_quantity_kl": 25575.0,
+      "pipe_size_inch": "18",
+      "url": "http://10.1.28.80:8080/home.aspx",
+      "main_route": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            76.6173,
+            28.1992
+          ],
+          [
+            77.704006176116,
+            27.29440620351023
+          ],
+          [
+            78.94220617611599,
+            26.711306203510233
+          ],
+          [
+            80.3319,
+            26.4499
+          ]
+        ]
+      },
+      "branch_lines": [
+        {
+          "to_station": "Bharatpur",
+          "to_station_code": "BHA",
+          "from_point": {
+            "longitude": 77.61558081759908,
+            "latitude": 27.368029338812956
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                77.61558081759908,
+                27.368029338812956
+              ],
+              [
+                77.49,
+                27.2172
+              ]
+            ]
+          },
+          "length_km": 20.86,
+          "branch_type": "receiving_terminal"
+        },
+        {
+          "to_station": "Mathura",
+          "to_station_code": "MAT",
+          "from_point": {
+            "longitude": 77.5887491478274,
+            "latitude": 27.390369442230458
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                77.5887491478274,
+                27.390369442230458
+              ],
+              [
+                77.6737,
+                27.4924
+              ]
+            ]
+          },
+          "length_km": 14.11,
+          "branch_type": "receiving_terminal"
+        },
+        {
+          "to_station": "Kanpur",
+          "to_station_code": "KAN",
+          "from_point": {
+            "longitude": 80.3319,
+            "latitude": 26.4499
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                80.3319,
+                26.4499
+              ],
+              [
+                80.3319,
+                26.4499
+              ]
+            ]
+          },
+          "length_km": 0.0,
+          "branch_type": "receiving_terminal",
+          "is_endpoint": true
+        }
+      ],
+      "map_visualization": {
+        "has_branches": true,
+        "branch_count": 3,
+        "main_route_length": 1
+      }
+    },
+    {
+      "name": "MHMBPL",
+      "description": "Mangalore Hassan Mysore Bangalore LPG Pipeline",
+      "pipeline_type": "LPG",
+      "total_length_km": 357,
+      "capacity": {
+        "value": 3.5,
+        "unit": "MMTPA"
+      },
+      "products": [
+        "LPG"
+      ],
+      "states_spanned": [
+        "Karnataka"
+      ],
+      "phases": [
+        {
+          "phase_code": "MHMBPL",
+          "from": "Mangalore",
+          "to": "Bangalore",
+          "commissioning": "2008-09",
+          "length_km": 357,
+          "from_coordinates": {
+            "latitude": 12.9141,
+            "longitude": 74.856
+          },
+          "to_coordinates": {
+            "latitude": 12.9716,
+            "longitude": 77.5946
+          },
+          "line_fill_quantity_kl": 28155.722,
+          "pipe_size_inch": "14"
+        }
+      ],
+      "locations": [
+        {
+          "location_code": "MAN",
+          "location_name": "Mangalore",
+          "location_type": "DISPATCH_TERMINAL",
+          "state": "Karnataka",
+          "coordinates": {
+            "latitude": 12.9141,
+            "longitude": 74.856
+          }
+        },
+        {
+          "location_code": "HAS",
+          "location_name": "Hassan",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Karnataka",
+          "coordinates": {
+            "latitude": 13.0033,
+            "longitude": 76.1004
+          }
+        },
+        {
+          "location_code": "BLR",
+          "location_name": "Bangalore",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Karnataka",
+          "coordinates": {
+            "latitude": 12.9716,
+            "longitude": 77.5946
+          }
+        }
+      ],
+      "sv_stations": {
+        "count": 30,
+        "avg_spacing_km": 24
+      },
+      "url": "http://10.4.75.47:8080/mobileoperator/",
+      "main_route": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            74.856,
+            12.9141
+          ],
+          [
+            75.77384631273843,
+            12.69609694958626
+          ],
+          [
+            76.68671297940509,
+            12.715263616252926
+          ],
+          [
+            77.5946,
+            12.9716
+          ]
+        ]
+      },
+      "branch_lines": [
+        {
+          "to_station": "Bangalore",
+          "to_station_code": "BLR",
+          "from_point": {
+            "longitude": 77.5946,
+            "latitude": 12.9716
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                77.5946,
+                12.9716
+              ],
+              [
+                77.5946,
+                12.9716
+              ]
+            ]
+          },
+          "length_km": 0.0,
+          "branch_type": "receiving_terminal",
+          "is_endpoint": true
+        }
+      ],
+      "map_visualization": {
+        "has_branches": true,
+        "branch_count": 1,
+        "main_route_length": 1
+      },
+      "line_fill_quantity_kl": 28155.722,
+      "pipe_size_inch": "14"
+    },
+    {
+      "name": "UCSPL",
+      "description": "Uran Chakan Shikrapur Pipeline",
+      "pipeline_type": "LPG",
+      "total_length_km": 156.9,
+      "capacity": {
+        "value": 1.16,
+        "unit": "MMTPA"
+      },
+      "products": [
+        "LPG"
+      ],
+      "states_spanned": [
+        "Maharashtra"
+      ],
+      "phases": [
+        {
+          "phase_code": "Uran-Shikrapur",
+          "from": "Uran",
+          "to": "Shikrapur",
+          "commissioning": "2019-11",
+          "length_km": 156.9,
+          "from_coordinates": {
+            "latitude": 18.8769,
+            "longitude": 72.9397
+          },
+          "to_coordinates": {
+            "latitude": 18.69,
+            "longitude": 74.0
+          },
+          "line_fill_quantity_kl": 12032.0,
+          "pipe_size_inch": "12"
+        }
+      ],
+      "locations": [
+        {
+          "location_code": "URA",
+          "location_name": "Uran dispatch Station",
+          "location_type": "DISPATCH_TERMINAL",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 18.8769,
+            "longitude": 72.9397
+          }
+        },
+        {
+          "location_code": "CHA",
+          "location_name": "Chakan receiving Station",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 18.7606,
+            "longitude": 73.8575
+          }
+        },
+        {
+          "location_code": "SHI",
+          "location_name": "Shikrapur Receiving station",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Maharashtra",
+          "coordinates": {
+            "latitude": 18.69,
+            "longitude": 74.0
+          }
+        }
+      ],
+      "sv_stations": {
+        "count": 5,
+        "avg_spacing_km": 31.4
+      },
+      "line_fill_quantity_kl": 12032.0,
+      "pipe_size_inch": "12",
+      "url": "http://10.2.93.9",
+      "main_route": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            72.9397,
+            18.8769
+          ],
+          [
+            73.2769473185366,
+            18.722775326436736
+          ],
+          [
+            73.63038065186994,
+            18.66047532643674
+          ],
+          [
+            74.0,
+            18.69
+          ]
+        ]
+      },
+      "branch_lines": [
+        {
+          "to_station": "Chakan receiving Station",
+          "to_station_code": "CHA",
+          "from_point": {
+            "longitude": 73.86400714329787,
+            "latitude": 18.67913708191582
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                73.86400714329787,
+                18.67913708191582
+              ],
+              [
+                73.8575,
+                18.7606
+              ]
+            ]
+          },
+          "length_km": 9.08,
+          "branch_type": "receiving_terminal"
+        },
+        {
+          "to_station": "Shikrapur Receiving station",
+          "to_station_code": "SHI",
+          "from_point": {
+            "longitude": 74.0,
+            "latitude": 18.69
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                74.0,
+                18.69
+              ],
+              [
+                74.0,
+                18.69
+              ]
+            ]
+          },
+          "length_km": 0.0,
+          "branch_type": "receiving_terminal",
+          "is_endpoint": true
+        }
+      ],
+      "map_visualization": {
+        "has_branches": true,
+        "branch_count": 2,
+        "main_route_length": 1
+      }
+    },
+    {
+      "name": "VDPL",
+      "description": "Vijayawada Dharmapuri Pipeline",
+      "pipeline_type": "Product",
+      "total_length_km": 698.818,
+      "capacity": {
+        "value": 4.24,
+        "unit": "MMTPA"
+      },
+      "products": [
+        "MS",
+        "HSD"
+      ],
+      "states_spanned": [
+        "Andhra Pradesh",
+        "Tamil Nadu"
+      ],
+      "phases": [
+        {
+          "phase_code": "VDPL",
+          "from": "Vijayawada",
+          "to": "Dharmapuri",
+          "commissioning": "2023-03",
+          "length_km": 698.818,
+          "from_coordinates": {
+            "latitude": 16.5062,
+            "longitude": 80.648
+          },
+          "to_coordinates": {
+            "latitude": 12.1276,
+            "longitude": 78.1579
+          },
+          "line_fill_quantity_kl": 84390.0,
+          "pipe_size_inch": "16"
+        }
+      ],
+      "locations": [
+        {
+          "location_code": "VIS",
+          "location_name": "Visakha Dispatch Station",
+          "location_type": "DISPATCH_TERMINAL",
+          "state": "Andhra Pradesh",
+          "coordinates": {
+            "latitude": 17.6869,
+            "longitude": 83.2185
+          }
+        },
+        {
+          "location_code": "VIJ",
+          "location_name": "Vijayawada Booster Station",
+          "location_type": "DISPATCH_TERMINAL",
+          "state": "Andhra Pradesh",
+          "coordinates": {
+            "latitude": 16.5062,
+            "longitude": 80.648
+          }
+        },
+        {
+          "location_code": "DON",
+          "location_name": "Donokonda",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Andhra Pradesh",
+          "coordinates": {
+            "latitude": 15.0,
+            "longitude": 78.0
+          }
+        },
+        {
+          "location_code": "KAD",
+          "location_name": "Kadapa",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Andhra Pradesh",
+          "coordinates": {
+            "latitude": 14.4667,
+            "longitude": 78.8167
+          }
+        },
+        {
+          "location_code": "KAL",
+          "location_name": "Kalakada",
+          "location_type": "INTERMEDIATE_PUMPING",
+          "state": "Andhra Pradesh",
+          "coordinates": {
+            "latitude": 13.5,
+            "longitude": 79.0
+          }
+        },
+        {
+          "location_code": "DHA",
+          "location_name": "Dharmapuri",
+          "location_type": "RECEIVING_TERMINAL",
+          "state": "Tamil Nadu",
+          "coordinates": {
+            "latitude": 12.1276,
+            "longitude": 78.1579
+          }
+        }
+      ],
+      "sv_stations": {
+        "count": 17,
+        "avg_spacing_km": 41.1
+      },
+      "line_fill_quantity_kl": 84390.0,
+      "pipe_size_inch": "16",
+      "url": "http://10.4.61.70:8080/",
+      "main_route": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.648,
+            16.5062
+          ],
+          [
+            79.4387687833656,
+            15.26231565246303
+          ],
+          [
+            78.60873545003227,
+            13.802782319129697
+          ],
+          [
+            78.1579,
+            12.1276
+          ]
+        ]
+      },
+      "branch_lines": [
+        {
+          "to_station": "Dharmapuri",
+          "to_station_code": "DHA",
+          "from_point": {
+            "longitude": 78.1579,
+            "latitude": 12.1276
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                78.1579,
+                12.1276
+              ],
+              [
+                78.1579,
+                12.1276
+              ]
+            ]
+          },
+          "length_km": 0.0,
+          "branch_type": "receiving_terminal",
+          "is_endpoint": true
+        }
+      ],
+      "map_visualization": {
+        "has_branches": true,
+        "branch_count": 1,
+        "main_route_length": 1
+      }
+    }
+  ],
+  "last_updated": "2026-01-23"
+}
