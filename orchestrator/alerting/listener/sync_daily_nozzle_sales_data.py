@@ -16,6 +16,11 @@ async def sync_old_nozzles_data():
     query = f"""select * FROM "HPCL_HOS".fetch_yesterdaysales_sitewise_vw"""
     nozzles_resp = await function(query=query)
     df = pl.DataFrame(nozzles_resp)
+
+    print('*'*200)
+    print('Initial Data',df.height)
+    print('*'*200)
+
     # -------------------------------------------------
     # 2. Normalize & parse Transaction_Date (SAFE)
     # -------------------------------------------------
