@@ -2752,6 +2752,203 @@ async def unauthorized_flow_dashboard(data):
         "top_10_locations": top_10_locations
     }
 
+async def host_bay_reassignment_alert(data):
+    
+    # 1. BUILD QUERY
+    conditions = []
+
+    if data.start_date and data.end_date:
+        conditions.append(
+            f"date BETWEEN '{data.start_date}' AND '{data.end_date}'"
+        )
+
+    if data.location_name:
+        conditions.append(
+            f"location_name = '{data.location_name}'"
+        )
+
+    # SAFE access for truck_number
+    if data.truck_number:
+        conditions.append(
+            f"truck_number = '{data.truck_number}'"
+        )
+
+    query = " AND ".join(conditions) if conditions else ""
+
+    # 2. QUERY PARAMS
+    params = urdhva_base.queryparams.QueryParams(
+        q=query,
+        limit=0
+    )
+
+    params.fields = [
+        "sap_id",
+        "truck_number",
+        "reassigned_bay",
+        "location_name",
+        "zone",
+        "date"
+    ]
+
+    # 3. FETCH DATA
+    resp = await HostBayReAssignment.get_all(
+        params,
+        resp_type="plain"
+    )
+
+    records = resp.get("data", [])
+
+    if not records:
+        return {
+            "status": "success",
+            "message": "No host bay reassignment data found",
+            "data": {
+                "location_based_reassignment": [],
+                "top_10_truck_reassignments": []
+            }
+        }
+
+    # 4. POLARS DATAFRAME
+    df = pl.from_dicts(
+        records,
+        schema={
+            "sap_id": pl.Utf8,
+            "truck_number": pl.Utf8,
+            "reassigned_bay": pl.Utf8,
+            "location_name": pl.Utf8,
+            "zone": pl.Utf8,
+            "date": pl.Date,
+        },
+        strict=False
+    )
+
+    # 5. CLEAN DATA
+    df = df.filter(pl.col("reassigned_bay").is_not_null())
+
+    if df.is_empty():
+        return {
+            "status": "success",
+            "message": "No valid reassigned bay records found",
+            "data": {
+                "location_based_reassignment": [],
+                "top_10_truck_reassignments": []
+            }
+        }
+
+    # 6. LOCATION LEVEL AGGREGATION (SAP-wise)
+    location_df = (
+        df.group_by(["location_name", "date", "sap_id"])
+          .agg([
+              pl.count().alias("reassign_count"),
+              pl.first("zone").alias("zone"),
+              pl.col("reassigned_bay").unique().alias("reassigned_bays")
+          ])
+          .filter(pl.col("reassign_count") > 2)
+    )
+
+    if location_df.is_empty():
+        return {
+            "status": "success",
+            "message": "No location exceeded reassignment threshold",
+            "data": {
+                "location_based_reassignment": [],
+                "top_10_truck_reassignments": []
+            }
+        }
+
+    # 7. TRUCK LEVEL AGGREGATION (Nested)
+    truck_df = (
+        df.group_by(["location_name", "date", "sap_id", "truck_number"])
+          .agg([
+              pl.count().alias("reassign_count"),
+              pl.col("reassigned_bay").unique().alias("reassigned_bays")
+          ])
+          .filter(pl.col("reassign_count") > 2)
+    )
+
+    # 8. BUILD NESTED LOCATION → TRUCK RESPONSE
+    response = []
+
+    for loc in location_df.to_dicts():
+
+        trucks = (
+            truck_df
+            .filter(
+                (pl.col("location_name") == loc["location_name"]) &
+                (pl.col("date") == loc["date"]) &
+                (pl.col("sap_id") == loc["sap_id"])
+            )
+            .select([
+                "truck_number",
+                "reassign_count",
+                "reassigned_bays"
+            ])
+            .to_dicts()
+        )
+
+        response.append({
+            "sap_id": loc["sap_id"],
+            "location_name": loc["location_name"],
+            "zone": loc["zone"],
+            "date": loc["date"],
+            "reassign_count": loc["reassign_count"],
+            "reassigned_bays": loc["reassigned_bays"],
+            "trucks": trucks
+        })
+
+    # 9. SORT LOCATIONS (HIGHEST → LOWEST)
+    response = sorted(
+        response,
+        key=lambda x: x["reassign_count"],
+        reverse=True
+    )
+
+    # 10. TOP 10 TRUCKS (GLOBAL – LIFETIME)
+    top_params = urdhva_base.queryparams.QueryParams(
+        q="reassigned_bay IS NOT NULL",
+        limit=0
+    )
+
+    top_params.fields = [
+        "truck_number",
+        "reassigned_bay"
+    ]
+
+    top_resp = await HostBayReAssignment.get_all(
+        top_params,
+        resp_type="plain"
+    )
+
+    top_df = pl.from_dicts(
+        top_resp.get("data", []),
+        schema={
+            "truck_number": pl.Utf8,
+            "reassigned_bay": pl.Utf8
+        },
+        strict=False
+    )
+
+    top_10_trucks = (
+        top_df.group_by("truck_number")
+            .agg([
+                pl.count().alias("total_reassign_count"),
+                pl.col("reassigned_bay").unique().alias("reassigned_bays")
+            ])
+            .sort("total_reassign_count", descending=True)
+            .head(10)
+            .to_dicts()
+    )
+
+    # 11. FINAL RESPONSE
+    return {
+        "status": "success",
+        "message": "Host bay reassignment analysis completed successfully",
+        "data": {
+            "location_based_reassignment": response,
+            "top_10_truck_reassignments": top_10_trucks
+        }
+    }
+
 
 
 AnalyticsModelMapping = {
@@ -2764,7 +2961,8 @@ AnalyticsModelMapping = {
     "Location Wise Total Loaded Qty": location_wise_total_loaded_qty,
     "Top five Alerts": top_five_alerts,
     "BCU DIff Alerts":bcu_totalizer_diff_alert,
-    "Unauthorized Alerts":unauthorized_flow_dashboard
+    "Unauthorized Alerts":unauthorized_flow_dashboard,
+    "Hostbay Reassignment Alerts":host_bay_reassignment_alert
 
 }
 
