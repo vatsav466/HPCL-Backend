@@ -2565,6 +2565,7 @@ async def bcu_totalizer_diff_alert(data):
     params.fields = [
         "sap_id",
         "bcu_number",
+        "bay_number",
         "location_name",
         "zone",
         "date",
@@ -2586,6 +2587,7 @@ async def bcu_totalizer_diff_alert(data):
         schema={
             "sap_id": pl.Utf8,
             "bcu_number": pl.Utf8,
+            "bay_number": pl.Utf8,
             "location_name": pl.Utf8,
             "zone": pl.Utf8,
             "date": pl.Date,
@@ -2630,6 +2632,7 @@ async def bcu_totalizer_diff_alert(data):
     return df.select([
         "sap_id",
         "bcu_number",
+        "bay_number",
         "location_name",
         "zone",
         "date",
