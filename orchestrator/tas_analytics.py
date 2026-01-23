@@ -2768,10 +2768,9 @@ async def host_bay_reassignment_alert(data):
         )
 
     # SAFE access for truck_number
-    truck_number = getattr(data, "truck_number", None)
-    if truck_number:
+    if data.truck_number:
         conditions.append(
-            f"truck_number = '{truck_number}'"
+            f"truck_number = '{data.truck_number}'"
         )
 
     query = " AND ".join(conditions) if conditions else ""
