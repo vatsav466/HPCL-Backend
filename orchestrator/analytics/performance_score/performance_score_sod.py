@@ -278,7 +278,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 if not interlocks:
                     pi_score.append({
                         "name": rule['name'],
-                        "score": round(rule['weightage'] / 100, 2),
+                        "score": round(rule['weightage'], 2),
                         "weightage": rule['weightage'],
                         "module": rules.get('name', rule['name'])
                     })
@@ -306,7 +306,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 only_other_devices = other_alert_devices - tank_maintenance_devices
                 unhealthy_devices = tank_maintenance_devices.union(only_other_devices)
 
-                score = ((parameter_count - len(unhealthy_devices)) / parameter_count) * (rule['weightage'] / 100)
+                score = ((parameter_count - len(unhealthy_devices)) / parameter_count) * (rule['weightage'])
                 pi_score.append({
                     "name": rule['name'],
                     "score": round(score, 2),
@@ -315,15 +315,14 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 })
         print("safety pi score --> ", pi_score)
         # Final score calculation
-        final_score = round(sum([r['score'] for r in pi_score]) * rules['weightage'] / 100, 2)
+        final_score = round(sum([r['score'] for r in pi_score]), 2)
         print("safety final_score --> ", final_score)
         return {
             "name": rules.get('name', ""),
-            "score": final_score * 100,
+            "score": final_score,
             "weightage": rules['weightage'],
             "results": pi_score
         }
-        
 
 
     async def _compute_gantry_interlocks_pi_score(self, name, rules, location_id):
@@ -347,10 +346,10 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 continue
             if isinstance(rule['interlock_name'], list):
                 all_interlocks.extend(rule['interlock_name'])
-                equipment_names.append(rule['equipment_name'])
+                # equipment_names.append(rule['equipment_name'])
             else:
                 all_interlocks.append(rule['interlock_name'])
-                equipment_names.append(rule['equipment_name'])
+                # equipment_names.append(rule['equipment_name'])
                 
 
         # Remove duplicates
@@ -376,7 +375,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         query = (
             f"SELECT interlock_name, tas_device_name, alert_status, DATE(created_at), alert_history FROM alerts "
             f"WHERE interlock_name IN ({in_clause_raw}) "
-            f"AND equipment_name IN ({in_clause_equipment}) "
+            # f"AND equipment_name IN ({in_clause_equipment}) "
             f"AND sap_id = '{location_id}' "
             f"AND alert_section = 'TAS' AND bu = 'TAS' "
             f"AND created_at::DATE >= '{first_day_of_month.strftime('%Y-%m-%d')}' "
@@ -486,12 +485,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                             asset_unhealthy_count = 0
                         else:
                             # If alerts without "Alert due to Analog input" exist, no unhealthy count
-                            asset_unhealthy_count = 0
+                            asset_unhealthy_count = 1
                     else:
                         # No LRC alert found, consider 1 device unhealthy
-                        asset_unhealthy_count = 1
+                        asset_unhealthy_count = 0
                     
-                    score = ((parameter_count - asset_unhealthy_count) / parameter_count) * (rule_weightage / 100)
+                    score = ((parameter_count - asset_unhealthy_count) / parameter_count) * (rule_weightage)
                     
                 else:
                     # Standard calculation for other Gantry rules
@@ -502,7 +501,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                                 unique_devices.add(device_name)
 
                     asset_unhealthy_count = len(unique_devices)
-                    score = ((parameter_count - asset_unhealthy_count) / parameter_count) * (rule_weightage / 100)
+                    score = ((parameter_count - asset_unhealthy_count) / parameter_count) * (rule_weightage)
 
             final_rule_score = score
 
@@ -514,8 +513,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             })
 
         # Final score scaled by weightage
-        final_score = sum([score['score'] for score in gantry_score])
-        final_score = round((final_score * rules['weightage']) / 100, 2)
+        final_score = round(sum([score['score'] for score in gantry_score]), 2)
+        # final_score = round((final_score * rules['weightage']) / 100, 2)
         
         for rec in gantry_score:
             rec['score'] = round(rec['score'], 2)
@@ -523,7 +522,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         print("Gantry final_score ----->", final_score)
         return {
             "name": rules.get('name', name), 
-            "score": final_score * 100, 
+            "score": final_score,
             "weightage": rules['weightage'], 
             "results": gantry_score
         }
@@ -550,10 +549,9 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 continue
             if isinstance(rule['interlock_name'], list):
                 all_interlocks.extend(rule['interlock_name'])
-                all_equipment_names.append(rule['equipment_name'])
             else:
                 all_interlocks.append(rule['interlock_name'])
-                all_equipment_names.append(rule['equipment_name'])
+            all_equipment_names.append(rule['equipment_name'])
 
         # Remove duplicates
         interlocks = list(set(all_interlocks))
@@ -587,7 +585,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             if not rule['interlock_name']:
                 process_score.append({
                     "name": rule['name'],
-                    "score": round(rule_weightage / 100, 2),
+                    "score": round(rule_weightage, 2),
                     "weightage": rule_weightage,
                     "module": rules.get('name')
                 })
@@ -622,7 +620,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     for device_name in maintenance_alerts.get(interlock_name, [])
                 }
                 maintenance_count = len(under_maintenance_devices)
-                score = ((parameter_count - maintenance_count) / parameter_count) * (rule_weightage / 100)
+                score = ((parameter_count - maintenance_count) / parameter_count) * (rule_weightage)
 
             process_score.append({
                 "name": rule['name'],
@@ -632,12 +630,11 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             })
 
         # Final score
-        final_score = sum([score['score'] for score in process_score])
-        final_score = round((final_score * rules['weightage']) / 100, 2)
+        final_score = round(sum([score['score'] for score in process_score]), 2)
 
         return {
             "name": rules.get('name'),
-            "score": final_score * 100,
+            "score": final_score,
             "weightage": rules['weightage'],
             "results": process_score
         }
@@ -929,6 +926,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     WATER_THRESHOLD = required_kls
                     if available_water < WATER_THRESHOLD:
                         percentage = 0
+                    elif available_water > target_volume:
+                        percentage = 100
                     else:
                         percentage = (available_water / target_volume) * 100
 
@@ -947,7 +946,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     continue
 
         # Final score
-        final_score = round(sum(r['score'] for r in pi_score), 2)
+        final_score = round(sum([score['score'] for score in pi_score]), 2)
+
         print("final_score --->", final_score)
 
         return {

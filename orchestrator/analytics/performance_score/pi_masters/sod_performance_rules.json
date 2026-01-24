@@ -528,11 +528,11 @@
             "name": "Water_Quantity",
             "weightage": 10,
             "rules": [
-            {
-                "name": "Water Quantity",
-                "weightage": 10,
-                "month_calendar": false
-            }
+              {
+                  "name": "Water Quantity",
+                  "weightage": 10,
+                  "month_calendar": false
+              }
             ]
         },
 
