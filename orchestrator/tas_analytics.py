@@ -1,5 +1,5 @@
-import polars as pl
 import urdhva_base
+import polars as pl
 from datetime import datetime
 from hpcl_ceg_model import Alerts, HostMFMFactor ,HostDayEndDetails
 from hpcl_ceg_model import HostBayReAssignment, HostLocalLoadedTts, HostCancelledTts
@@ -2100,14 +2100,7 @@ async def location_wise_total_loaded_qty(data):
     Get location-wise total loaded quantity from host_local_loaded_tts
     Filters out records where sap_id or location_name is null/empty
     Categorizes loaded_qty by truck type: DG, PROVER, and TANK_TRUCK
-    Analyzes loading patterns:
-    - local_loading_repeated: 4+ trucks within one hour for same sap_id
-    - particular_time_of_day: trucks sent at same hour across multiple days
-    - particular_product: only one product type loaded
-    - assigned_at_particular_bay: bay assignment details from host_bay_re_assignment
-
-    Returns:
-        List of dicts with sap_id, location_name, categorized totals, pattern flags, and bay info
+    Analyzes loading patterns and enriches with indent request information
     """
 
     # Build query using the helper function
@@ -2124,7 +2117,7 @@ async def location_wise_total_loaded_qty(data):
         query += f" AND sap_id = '{sap_id}'"
 
     try:
-        from hpcl_ceg_model import HostLocalLoadedTts, HostBayReAssignment
+        from hpcl_ceg_model import HostLocalLoadedTts, HostBayReAssignment, LocationMaster
 
         params = urdhva_base.queryparams.QueryParams(q=query, limit=0)
 
@@ -2164,6 +2157,11 @@ async def location_wise_total_loaded_qty(data):
                 pl.lit(None).cast(pl.Datetime).alias("created_at_dt")
             ])
 
+        # Extract date only from created_at
+        df = df.with_columns([
+            pl.col("created_at_dt").dt.date().alias("load_date")
+        ])
+
         # Clean truck_number - REMOVE ALL WHITESPACES AND CONVERT TO UPPERCASE
         if "truck_number" in df.columns:
             df = df.with_columns([
@@ -2181,6 +2179,12 @@ async def location_wise_total_loaded_qty(data):
             df = df.with_columns([
                 pl.lit("").alias("truck_number_clean")
             ])
+
+        # Filter valid truck numbers (pattern: alphanumeric, at least 6 characters)
+        # Valid pattern example: TS08UG9576
+        df = df.with_columns([
+            pl.col("truck_number_clean").str.contains(r"^[A-Z0-9]{6,}$").alias("is_valid_truck")
+        ])
 
         # Categorize truck types using config patterns
         prover_pattern = TRUCK_TYPE_PATTERNS["prover"]
@@ -2222,16 +2226,9 @@ async def location_wise_total_loaded_qty(data):
 
         # Add date and hour columns for pattern analysis
         df = df.with_columns([
-            pl.col("created_at_dt").dt.date().alias("load_date"),
             pl.col("created_at_dt").dt.hour().alias("load_hour"),
             pl.col("created_at_dt").dt.strftime("%Y-%m-%d %H:00:00").alias("hour_window")
-        ])
-
-        # ============================================================================
-        # BAY RE-ASSIGNMENT DATA LOOKUP
-        # ============================================================================
-
-        # Fetch bay re-assignment data for matching truck numbers
+        ])        
         # Get unique truck numbers from the filtered data (already cleaned - no spaces)
         unique_trucks = df.filter(pl.col("truck_number_clean") != "").select(
             "truck_number_clean").unique().to_series().to_list()
@@ -2262,20 +2259,18 @@ async def location_wise_total_loaded_qty(data):
                 bay_resp = await HostBayReAssignment.get_all(bay_params, resp_type="plain")
                 bay_result_data = bay_resp.get("data", [])
 
-                # Create a dictionary for quick lookup: (truck_number, created_at_date) -> bay info
-                # IMPORTANT: Clean truck numbers from bay table the same way
+                # Create a dictionary for quick lookup
                 for bay_record in bay_result_data:
                     truck_num_raw = bay_record.get("truck_number", "")
                     created_at_raw = bay_record.get("created_at")
 
                     if truck_num_raw and created_at_raw:
-                        # Apply same cleaning: remove all whitespaces and uppercase
+                        # Apply same cleaning
                         truck_num_clean = str(truck_num_raw).strip()
-                        # Remove all types of whitespace
                         import re
                         truck_num_clean = re.sub(r'\s+', '', truck_num_clean).upper()
 
-                        # Parse created_at to date only (ignore time for matching)
+                        # Parse created_at to date only
                         try:
                             if isinstance(created_at_raw, str):
                                 created_at_dt = pl.Series([created_at_raw]).str.to_datetime().to_list()[0]
@@ -2285,7 +2280,6 @@ async def location_wise_total_loaded_qty(data):
                             created_at_date = created_at_dt.date() if hasattr(created_at_dt, 'date') else created_at_dt
 
                             if truck_num_clean:
-                                # Use tuple of (truck_number, date) as key
                                 key = (truck_num_clean, str(created_at_date))
                                 if key not in bay_data:
                                     bay_data[key] = []
@@ -2301,10 +2295,115 @@ async def location_wise_total_loaded_qty(data):
                 import traceback
                 traceback.print_exc()
 
-        # ============================================================================
-        # END BAY RE-ASSIGNMENT DATA LOOKUP
-        # ============================================================================
+        indent_data = {}  # Format: {(truck_number, date): user_id}
+        location_master_data = {}  # Format: {sap_id: name}
 
+        # Get unique valid trucks with dates for indent lookup
+        valid_trucks_df = df.filter(
+            (pl.col("is_valid_truck") == True) &
+            (pl.col("truck_number_clean") != "")
+        ).select(["truck_number_clean", "load_date"]).unique()
+
+        if not valid_trucks_df.is_empty():
+            try:
+                # Query INDENT_REQUEST table from IMS_SAP schema
+                # Build query for each truck + date combination
+                indent_conditions = []
+                for row in valid_trucks_df.iter_rows(named=True):
+                    truck = row["truck_number_clean"]
+                    date = row["load_date"]
+                    # Escape single quotes
+                    truck_escaped = truck.replace("'", "''")
+                    indent_conditions.append(
+                        f"(\"TRUCK_REGNO\" = '{truck_escaped}' AND DATE(\"INDENT_DATE\") = '{date}')"
+                    )
+
+                if indent_conditions:
+                    # Build the query for IMS_SAP.INDENT_REQUEST
+                    indent_query_conditions = " OR ".join(indent_conditions)
+                    
+                    # Use the same pattern as your example
+                    indent_query = f"""
+                        SELECT
+                            "TRUCK_REGNO",
+                            "INDENT_DATE",
+                            "USER_ID"
+                        FROM "IMS_SAP"."INDENT_REQUEST"
+                        WHERE {indent_query_conditions}
+                    """                    
+                    # Import the charts_actions and model
+                    import dashboard_studio_model
+                    import charts_actions
+                    
+                    # Set connection parameters
+                    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+                    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "execute_query"
+                    
+                    # Get the function
+                    function = await charts_actions.charts_connection_vault_routing(
+                        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+                    )
+                    
+                    # Execute the query
+                    indent_results = await function(query=indent_query)
+                    
+                    # Convert to list of dicts if it's a DataFrame or other format
+                    if hasattr(indent_results, 'to_dict'):
+                        indent_results = indent_results.to_dict('records')
+                    elif not isinstance(indent_results, list):
+                        indent_results = list(indent_results)
+                    
+                    # Process indent results
+                    user_ids = set()
+                    for indent_row in indent_results:
+                        # Handle both dict and asyncpg.Record format
+                        truck_regno = indent_row.get("truck_regno") or indent_row.get("TRUCK_REGNO", "")
+                        truck_regno = str(truck_regno).strip().replace(" ", "").upper()
+                        
+                        indent_date = indent_row.get("indent_date") or indent_row.get("INDENT_DATE")
+                        user_id = indent_row.get("user_id") or indent_row.get("USER_ID", "")
+                        
+                        # Extract date from INDENT_DATE
+                        if isinstance(indent_date, str):
+                            indent_date_obj = pl.Series([indent_date]).str.to_datetime().to_list()[0]
+                        else:
+                            indent_date_obj = indent_date
+                        
+                        indent_date_only = indent_date_obj.date() if hasattr(indent_date_obj, 'date') else indent_date_obj
+                        
+                        # Remove leading "00" from USER_ID if present
+                        if user_id and user_id.startswith("00"):
+                            user_id = user_id[2:]
+                        
+                        # Store in indent_data
+                        key = (truck_regno, str(indent_date_only))
+                        indent_data[key] = user_id
+                        user_ids.add(user_id)
+                    
+                    # Now fetch location_master data for these USER_IDs
+                    if user_ids:
+                        # Build query for location_master table
+                        user_ids_list = list(user_ids)
+                        user_ids_str = "', '".join([uid.replace("'", "''") for uid in user_ids_list])
+                        location_query = f"sap_id IN ('{user_ids_str}')"
+                        
+                        location_params = urdhva_base.queryparams.QueryParams(q=location_query, limit=0)
+                        location_params.fields = ["sap_id", "name"]
+                        
+                        location_resp = await LocationMaster.get_all(location_params, resp_type="plain")
+                        location_result_data = location_resp.get("data", [])
+                        
+                        # Build lookup dictionary
+                        for loc_record in location_result_data:
+                            sap_id_val = loc_record.get("sap_id")
+                            name_val = loc_record.get("name")
+                            if sap_id_val:
+                                location_master_data[sap_id_val] = name_val
+
+            except Exception as indent_err:
+                print(f"Error fetching indent data: {indent_err}")
+                import traceback
+                traceback.print_exc()
         # Group by sap_id and location_name for aggregations
         result_df = (
             df.group_by(["sap_id", "location_name"])
@@ -2336,7 +2435,7 @@ async def location_wise_total_loaded_qty(data):
                 (pl.col("location_name") == location_name_val)
             )
 
-            # 1. Check for repeated loading (configurable threshold)
+            # 1. Check for repeated loading
             local_loading_repeated = False
             if "hour_window" in location_df.columns:
                 trucks_per_hour = (
@@ -2347,14 +2446,12 @@ async def location_wise_total_loaded_qty(data):
                     max_trucks_in_hour = trucks_per_hour.select(pl.max("truck_count")).item()
                     local_loading_repeated = max_trucks_in_hour >= min_trucks_per_hour
 
-            # 2. Check for particular time of day (configurable thresholds)
+            # 2. Check for particular time of day
             particular_time_of_day = False
             if "load_hour" in location_df.columns and "load_date" in location_df.columns:
-                # Get unique dates
                 unique_dates = location_df.select(pl.col("load_date").unique()).to_series().to_list()
 
                 if len(unique_dates) >= min_days_for_pattern:
-                    # Count trucks per hour
                     hour_frequency = (
                         location_df.group_by("load_hour")
                         .agg(pl.count().alias("hour_count"))
@@ -2362,18 +2459,15 @@ async def location_wise_total_loaded_qty(data):
                     )
 
                     if not hour_frequency.is_empty():
-                        # Get most frequent hour and its count
                         most_frequent_hour_count = hour_frequency.select(pl.first("hour_count")).item()
 
-                        # If the most frequent hour appears on multiple days, it's a pattern
                         if most_frequent_hour_count >= max(min_days_for_pattern,
                                                            len(unique_dates) * min_occurrence_ratio):
                             particular_time_of_day = True
 
-            # 3. Check for particular product (configurable unique count)
+            # 3. Check for particular product
             particular_product = False
             if "recipe_name" in location_df.columns:
-                # Get unique non-null recipe names
                 unique_recipes = (
                     location_df.filter(pl.col("recipe_name").is_not_null())
                     .select(pl.col("recipe_name").unique())
@@ -2381,19 +2475,15 @@ async def location_wise_total_loaded_qty(data):
                     .to_list()
                 )
 
-                # Filter out empty strings
                 unique_recipes = [r for r in unique_recipes if r and str(r).strip() != ""]
 
-                # Check against configured unique count
                 particular_product = len(unique_recipes) == unique_product_count
 
             # 4. Check for bay assignments
-            # Get all trucks for this location from host_local_loaded_tts (already cleaned - no spaces)
             location_trucks_df = location_df.select(["truck_number_clean", "load_date"]).unique()
 
-            assigned_at_particular_bay = False  # Default to False if no match found
+            assigned_at_particular_bay = False
 
-            # Search for truck + date match in host_bay_re_assignment
             for truck_row in location_trucks_df.iter_rows(named=True):
                 truck = truck_row.get("truck_number_clean")
                 load_date = truck_row.get("load_date")
@@ -2401,12 +2491,10 @@ async def location_wise_total_loaded_qty(data):
                 if not truck:
                     continue
 
-                # Create key to lookup in bay_data (truck_number, date)
                 key = (truck, str(load_date))
 
                 if key in bay_data:
-                    # Found matching truck_number AND created_at (date)
-                    bay_info = bay_data[key][0]  # Take first record if multiple
+                    bay_info = bay_data[key][0]
 
                     assigned_at_particular_bay = {
                         "truck_number": truck,
@@ -2415,7 +2503,36 @@ async def location_wise_total_loaded_qty(data):
                         "reassign_loaded_qty": bay_info.get("reassign_loaded_qty")
                     }
 
-                    break  # Stop after finding first match
+                    break
+
+            # 5. NEW: Get indent request details with location names
+            indent_details = []
+            
+            # Get unique valid trucks for this location
+            valid_trucks_for_location = location_df.filter(
+                (pl.col("is_valid_truck") == True) &
+                (pl.col("truck_number_clean") != "")
+            ).select(["truck_number_clean", "load_date"]).unique()
+
+            for truck_row in valid_trucks_for_location.iter_rows(named=True):
+                truck = truck_row.get("truck_number_clean")
+                load_date = truck_row.get("load_date")
+
+                if not truck:
+                    continue
+
+                key = (truck, str(load_date))
+
+                if key in indent_data:
+                    user_id = indent_data[key]
+                    location_name_from_master = location_master_data.get(user_id, None)
+                    
+                    indent_details.append({
+                        "truck_number": truck,
+                        "date": str(load_date),
+                        "user_id": user_id,
+                        "vendor_name": location_name_from_master
+                    })
 
             pattern_analysis.append({
                 "sap_id": sap_id_val,
@@ -2429,7 +2546,8 @@ async def location_wise_total_loaded_qty(data):
                 "local_loading_repeated": local_loading_repeated,
                 "particular_time_of_day": particular_time_of_day,
                 "particular_product": particular_product,
-                "assigned_at_particular_bay": assigned_at_particular_bay
+                "assigned_at_particular_bay": assigned_at_particular_bay,
+                "indent_request_details": indent_details if indent_details else None
             })
 
         return pattern_analysis
@@ -2439,6 +2557,8 @@ async def location_wise_total_loaded_qty(data):
         import traceback
         traceback.print_exc()
         return []
+
+
 
 async def top_five_alerts(data):
     
