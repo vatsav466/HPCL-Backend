@@ -6198,7 +6198,7 @@ class HostMFMFactorSchema(UrdhvaPostgresBase):
     date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
     date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(mfm_number, stock_code, sap_id, date, name="host_mfm_factor_mfm_number_stock_code_sap_id_date"),)
+    __table_args__ = (UniqueConstraint(mfm_number, stock_code, last_k_factor_change_date, last_meter_factor_change_date, sap_id, name="host_mfm_factor_mfmnu_stock_lastk_lastm_sapid"),)
 
 
 class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -6226,7 +6226,7 @@ class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostMFMFactorSchema
-        upsert_keys = ['mfm_number', 'stock_code', 'sap_id', 'date']
+        upsert_keys = ['mfm_number', 'stock_code', 'last_k_factor_change_date', 'last_meter_factor_change_date', 'sap_id']
         search_fields = ['mfm_number', 'bcu_number', 'sap_id']
 
 
@@ -6255,7 +6255,7 @@ class HostMFMFactor(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostMFMFactorSchema
-        upsert_keys = ['mfm_number', 'stock_code', 'sap_id', 'date']
+        upsert_keys = ['mfm_number', 'stock_code', 'last_k_factor_change_date', 'last_meter_factor_change_date', 'sap_id']
         search_fields = ['mfm_number', 'bcu_number', 'sap_id']
 
 
