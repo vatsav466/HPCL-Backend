@@ -630,6 +630,9 @@
                 },
                 {
                     "name": "get_pending_completed_counts"
+                },
+                {
+                    "name": "get_all_dry_wet_cleaning_records"
                 }
             ]
         },
@@ -654,6 +657,9 @@
                 },
                 {
                     "name": "get_pending_completed_counts"
+                },
+                {
+                    "name": "get_all_dry_wet_cleaning_records"
                 }
             ]
         },
@@ -690,6 +696,9 @@
                 },
                 {
                     "name": "get_pending_completed_counts"
+                },
+                {
+                    "name": "get_all_dry_wet_cleaning_records"
                 }
             ]
         },
@@ -964,6 +973,10 @@
         {
             "name": "get_pending_completed_counts",
             "displayName": "get_pending_completed_counts"
+        },
+        {
+            "name": "get_all_dry_wet_cleaning_records",
+            "displayName": "get_all_dry_wet_cleaning_records"
         }
     ]
 }
