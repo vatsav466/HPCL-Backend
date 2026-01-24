@@ -2356,15 +2356,15 @@ Model HostMFMFactor {
     stock_code optional unique_field str
     current_k_factor optional float
     last_k_factor optional str
-    last_k_factor_change_date optional str
+    last_k_factor_change_date optional unique_field str
     current_meter_factor optional float
     last_meter_factor optional float
-    last_meter_factor_change_date optional str
+    last_meter_factor_change_date optional unique_field str
     sap_id optional unique_field str
     location_name optional str
     zone optional str
     alert_created optional bool
-    date optional unique_field date
+    date optional  date
     date_time optional datetime
 
     Config=> {

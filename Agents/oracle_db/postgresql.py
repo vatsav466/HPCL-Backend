@@ -138,7 +138,7 @@ class Postgresql:
 
     async def create_cancel_tt_report(self, data):
         """
-        Create or update cancel TT report alerts.
+        Create or update cancel TT report alerts
 
         Parameters:
         data (dict): A dictionary containing vehicle_number, tt_load_number, and message fields.
@@ -359,6 +359,12 @@ class Postgresql:
             # Specific processing for different table types
             # if table_db_name == 'host_unauthorised_flow':
             #     processed_data = [x for x in processed_data if x['nettotalizer'] > 0]
+
+            if table_db_name == 'host_mfm_factor':
+                for record in processed_data:
+                    for key in model.Config.upsert_keys:
+                        if record.get(key) is None or record.get(key) == '':
+                            record[key] = ''
             
             if table_db_name == 'host_manual_fan_printed':
                 # Step 1: Check if we need to process EOD record
