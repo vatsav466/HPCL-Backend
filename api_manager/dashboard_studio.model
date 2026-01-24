@@ -627,6 +627,16 @@ Model SolarPanelWetDryCleaning {
         time_grain optional str
     }
 
+    Action=> get_all_dry_wet_cleaning_records {
+        cleaning_type str
+        filters optional list WidgetFilters
+        drill_state optional str
+        cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+
+    }
+
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,zone,location,sap_id'

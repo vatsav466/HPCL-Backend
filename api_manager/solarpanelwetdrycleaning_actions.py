@@ -472,3 +472,34 @@ async def solarpanelwetdrycleaning_get_pending_completed_counts(data: Solarpanel
                 "completed": {"count": 0, "details": []}
             }
         }
+
+
+# Action get_all_dry_wet_cleaning_records
+@router.post('/get_all_dry_wet_cleaning_records', tags=['SolarPanelWetDryCleaning'])
+async def solarpanelwetdrycleaning_get_all_dry_wet_cleaning_records(data: Solarpanelwetdrycleaning_Get_All_Dry_Wet_Cleaning_RecordsParams):
+    try:
+        query = """
+                SELECT *
+                    FROM (
+                        SELECT * FROM solar_panel_wet_dry_cleaning
+                        UNION ALL
+                        SELECT * FROM historic_solar_panel_wet_dry_cleaning_create
+                    ) AS combined_data
+                    WHERE panel_status = 'Completed'
+            """
+        if data.filters:
+            query = await widget_actions.WidgetActions.apply_filter_drilldown(query, data.filters, data.drill_state)
+
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(
+            query, limit=0, skip=0
+        )
+
+        records = result.get("data", [])
+        return records
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": "Failed to fetch solar panel cleaning data",
+            "error": str(e)
+        }
