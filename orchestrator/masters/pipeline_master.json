@@ -6,6 +6,7 @@
       "name": "MPSPL",
       "description": "Mumbai Pune Solapur Pipeline",
       "pipeline_type": "Product",
+      "pipeline_color": "#FF6B6B",
       "total_length_km": 508.26,
       "capacity": {
         "value": 4.3,
@@ -305,6 +306,7 @@
       "name": "VVSPL",
       "description": "Visakh Vijayawada Secunderabad Pipeline",
       "pipeline_type": "Product",
+      "pipeline_color": "#4ECDC4",
       "total_length_km": 572.5,
       "capacity": {
         "value": 7.7,
@@ -524,6 +526,7 @@
       "name": "MDPL",
       "description": "Mundra Delhi Pipeline",
       "pipeline_type": "Product",
+      "pipeline_color": "#45B7D1",
       "total_length_km": 1053.65,
       "capacity": {
         "value": 6.9,
@@ -1072,7 +1075,8 @@
         "has_branches": true,
         "branch_count": 2,
         "main_route_length": 1
-      }
+      },
+      "pipeline_color": "#FFA07A"
     },
     {
       "name": "RKPL",
@@ -1254,7 +1258,8 @@
         "has_branches": true,
         "branch_count": 3,
         "main_route_length": 1
-      }
+      },
+      "pipeline_color": "#98D8C8"
     },
     {
       "name": "MHMBPL",
@@ -1380,7 +1385,8 @@
         "main_route_length": 1
       },
       "line_fill_quantity_kl": 28155.722,
-      "pipe_size_inch": "14"
+      "pipe_size_inch": "14/16/10",
+      "pipeline_color": "#F7DC6F"
     },
     {
       "name": "UCSPL",
@@ -1529,12 +1535,31 @@
         "has_branches": true,
         "branch_count": 2,
         "main_route_length": 1
-      }
+      },
+      "spurlines": [
+        {
+          "name": "HPCL Chakan",
+          "diameter": "10",
+          "length_km": 7.2
+        },
+        {
+          "name": "IOCL Chakan",
+          "diameter": "10",
+          "length_km": 4.8
+        },
+        {
+          "name": "HPCL Patalganga",
+          "diameter": "8",
+          "length_km": 2.2
+        }
+      ],
+      "pipeline_color": "#BB8FCE"
     },
     {
       "name": "VDPL",
       "description": "Vijayawada Dharmapuri Pipeline",
       "pipeline_type": "Product",
+      "pipeline_color": "#85C1E2",
       "total_length_km": 698.818,
       "capacity": {
         "value": 4.24,
