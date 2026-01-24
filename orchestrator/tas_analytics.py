@@ -1,23 +1,17 @@
 import urdhva_base
 import polars as pl
 from datetime import datetime
-from hpcl_ceg_model import Alerts, HostMFMFactor ,HostDayEndDetails
-from hpcl_ceg_model import HostBayReAssignment, HostLocalLoadedTts, HostCancelledTts
 import json 
+import hpcl_ceg_model
+import traceback
+import dashboard_studio_model
+import charts_actions
 import decimal
 from orchestrator.dbconnector.widget_actions.vts_analytics import  download_streaming_data
 from datetime import datetime, timedelta
 import re
 from utilities.analog_data_mapping import Maintenance, Fault, Normal
-from orchestrator.tas_queries import (
-    ESD_QUERIES, ESD_FIELDS, ESD_CATEGORIES,
-    VFT_QUERIES, VFT_FIELDS, VFT_CATEGORIES,
-    RADAR_QUERIES, RADAR_FIELDS, RADAR_CATEGORIES,
-    BCU_QUERIES, BCU_FIELDS, BCU_INTERLOCKS, BCU_ALARM_DETAILS_LIMIT,
-    FIRE_EFFECT_QUERIES, FIRE_EFFECT_FIELDS, FIRE_EFFECT_INTERLOCKS,
-    FAIL_PATTERNS,ESD_DEVICE_ANALYSIS_CONFIG,HOST_LOCAL_LOADED_TTS_QUERIES,
-    HOST_LOCAL_LOADED_TTS_FIELDS,TRUCK_TYPE_PATTERNS,PATTERN_ANALYSIS_CONFIG,BAY_REASSIGNMENT_CONFIG,
-    build_complete_query, format_sap_ids_for_query, format_interlocks_for_query)
+from orchestrator.tas_queries import *
 
 
 async def top_repeat_alerts(data):
@@ -70,7 +64,7 @@ async def top_repeat_alerts(data):
         "created_at"
     ]
 
-    alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
+    alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
 
     if not alert_data:
@@ -153,7 +147,7 @@ async def tas_severity_summary(data):
         "zone", "location_name",
         "severity", "interlock_name", "equipment_name", "created_at" ]
 
-    alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
+    alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
 
     if not alert_data:
@@ -259,7 +253,7 @@ async def location_alert_critical(data):
         "created_at"
     ]
 
-    resp = await Alerts.get_all(params, resp_type="plain")
+    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
     rows = resp.get("data", [])
 
     if not rows:
@@ -435,7 +429,7 @@ async def critical_alerts_by_equipment(data):
     ):
         alert_params.fields.append("location_name")
 
-    alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
+    alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
 
     if not alert_data:
@@ -503,7 +497,7 @@ async def tas_alerts_exception_report(data):
     params = urdhva_base.queryparams.QueryParams(q=q, fields=json.dumps(["location_name", "sap_id", "interlock_name","created_at", "vehicle_number", "device_name"]))
     params.limit = 0
 
-    alerts = (await Alerts.get_all(params, resp_type="plain")).get("data", [])
+    alerts = (await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")).get("data", [])
     if not alerts:
         return []
     df = (pl.DataFrame(alerts)
@@ -516,7 +510,7 @@ async def tas_alerts_exception_report(data):
             pl.col("created_at").dt.date().alias("created_date")
         ])
     )
-    mfm = await HostMFMFactor.get_all(
+    mfm = await hpcl_ceg_model.HostMFMFactor.get_all(
         urdhva_base.queryparams.QueryParams(limit=0),
         resp_type="plain"
     )
@@ -559,7 +553,7 @@ async def tas_alerts_exception_report(data):
     # ---- Bay reassignment
     bay_df = (
         pl.DataFrame(
-            (await HostBayReAssignment.get_all(
+            (await hpcl_ceg_model.HostBayReAssignment.get_all(
                 urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
                 resp_type="plain"
             )).get("data", [])
@@ -576,7 +570,7 @@ async def tas_alerts_exception_report(data):
     # ---- Local loading
     local_df = (
         pl.DataFrame(
-            (await HostLocalLoadedTts.get_all(
+            (await hpcl_ceg_model.HostLocalLoadedTts.get_all(
                 urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
                 resp_type="plain"
             )).get("data", [])
@@ -593,7 +587,7 @@ async def tas_alerts_exception_report(data):
     # ---- Cancel TT
     cancel_df = (
         pl.DataFrame(
-            (await HostCancelledTts.get_all(
+            (await hpcl_ceg_model.HostCancelledTts.get_all(
                 urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
                 resp_type="plain"
             )).get("data", [])
@@ -796,7 +790,7 @@ async def process_esd_data(data):
     esd_pushbutton_params = urdhva_base.queryparams.QueryParams(q=esd_pushbutton_query, limit=0)
     esd_pushbutton_params.fields = ESD_FIELDS["pushbutton_activated"]
 
-    esd_pushbutton_resp = await Alerts.get_all(esd_pushbutton_params, resp_type="plain")
+    esd_pushbutton_resp = await hpcl_ceg_model.Alerts.get_all(esd_pushbutton_params, resp_type="plain")
     esd_pushbutton_data = esd_pushbutton_resp.get("data", [])
 
     # Process ESD Pushbutton data with details
@@ -873,7 +867,7 @@ async def process_esd_data(data):
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
     interlock_params.fields = ESD_FIELDS["interlocks"] + ["device_name"]  # Add device_name
 
-    interlock_resp = await Alerts.get_all(interlock_params, resp_type="plain")
+    interlock_resp = await hpcl_ceg_model.Alerts.get_all(interlock_params, resp_type="plain")
     all_interlock_alerts = interlock_resp.get("data", [])   
     if not all_interlock_alerts:
         result = []
@@ -1146,7 +1140,7 @@ async def process_vft_data(data):
     vft_hhh_params = urdhva_base.queryparams.QueryParams(q=vft_hhh_query, limit=0)
     vft_hhh_params.fields = VFT_FIELDS["hhh_alarm"]
 
-    vft_hhh_resp = await Alerts.get_all(vft_hhh_params, resp_type="plain")
+    vft_hhh_resp = await hpcl_ceg_model.Alerts.get_all(vft_hhh_params, resp_type="plain")
     vft_hhh_data = vft_hhh_resp.get("data", [])
     # Build other interlocks query
     alert_query = build_complete_query(
@@ -1159,7 +1153,7 @@ async def process_vft_data(data):
     alert_params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
     alert_params.fields = VFT_FIELDS["other_interlocks"]
 
-    alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
+    alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])    
     # Process VFT HHH data with details
     vft_activated_details = {}
@@ -1385,7 +1379,7 @@ async def process_radar_data(data):
     radar_activated_params = urdhva_base.queryparams.QueryParams(q=radar_activated_query, limit=0)
     radar_activated_params.fields = RADAR_FIELDS["radar_activated"]
 
-    radar_activated_resp = await Alerts.get_all(radar_activated_params, resp_type="plain")
+    radar_activated_resp = await hpcl_ceg_model.Alerts.get_all(radar_activated_params, resp_type="plain")
     radar_activated_data = radar_activated_resp.get("data", [])
     # Build other interlocks query
     alert_query = build_complete_query(
@@ -1398,7 +1392,7 @@ async def process_radar_data(data):
     alert_params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
     alert_params.fields = RADAR_FIELDS["other_interlocks"]
 
-    alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
+    alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
     
     print(f"RADAR other interlocks data count: {len(alert_data)}")
@@ -1625,7 +1619,7 @@ async def process_bcu_data(data):
     bcu_alarm_params = urdhva_base.queryparams.QueryParams(q=bcu_alarm_query, limit=0)
     bcu_alarm_params.fields = BCU_FIELDS["bcu_alarm"]
     
-    bcu_alarm_resp = await Alerts.get_all(bcu_alarm_params, resp_type="plain")
+    bcu_alarm_resp = await hpcl_ceg_model.Alerts.get_all(bcu_alarm_params, resp_type="plain")
     bcu_alarm_data = bcu_alarm_resp.get("data", [])
     
     if not bcu_alarm_data:
@@ -1686,7 +1680,7 @@ async def process_bcu_data(data):
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
     interlock_params.fields = BCU_FIELDS["interlocks"]
     
-    interlock_resp = await Alerts.get_all(interlock_params, resp_type="plain")
+    interlock_resp = await hpcl_ceg_model.Alerts.get_all(interlock_params, resp_type="plain")
     all_interlock_alerts = interlock_resp.get("data", [])
     
     
@@ -1703,7 +1697,7 @@ async def process_bcu_data(data):
     permissive_params = urdhva_base.queryparams.QueryParams(q=permissive_query, limit=0)
     permissive_params.fields = BCU_FIELDS["permissive_off"]
     
-    permissive_resp = await Alerts.get_all(permissive_params, resp_type="plain")
+    permissive_resp = await hpcl_ceg_model.Alerts.get_all(permissive_params, resp_type="plain")
     all_permissive_alerts = permissive_resp.get("data", [])
         
     # Create efficient lookup structure organized by unique_id
@@ -1860,7 +1854,7 @@ async def process_fire_effect_data(data):
     fire_effect_alarm_params = urdhva_base.queryparams.QueryParams(q=fire_effect_alarm_query, limit=0)
     fire_effect_alarm_params.fields = FIRE_EFFECT_FIELDS["fire_effect_alarm"]
     
-    fire_effect_alarm_resp = await Alerts.get_all(fire_effect_alarm_params, resp_type="plain")
+    fire_effect_alarm_resp = await hpcl_ceg_model.Alerts.get_all(fire_effect_alarm_params, resp_type="plain")
     fire_effect_alarm_data = fire_effect_alarm_resp.get("data", [])
     
 
@@ -1911,7 +1905,7 @@ async def process_fire_effect_data(data):
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
     interlock_params.fields = FIRE_EFFECT_FIELDS["interlocks"]
     
-    interlock_resp = await Alerts.get_all(interlock_params, resp_type="plain")
+    interlock_resp = await hpcl_ceg_model.Alerts.get_all(interlock_params, resp_type="plain")
     all_interlock_alerts = interlock_resp.get("data", [])
         
     if not all_interlock_alerts:
@@ -2117,8 +2111,6 @@ async def location_wise_total_loaded_qty(data):
         query += f" AND sap_id = '{sap_id}'"
 
     try:
-        from hpcl_ceg_model import HostLocalLoadedTts, HostBayReAssignment, LocationMaster
-
         params = urdhva_base.queryparams.QueryParams(q=query, limit=0)
 
         # Use fields from config
@@ -2127,7 +2119,7 @@ async def location_wise_total_loaded_qty(data):
             HOST_LOCAL_LOADED_TTS_FIELDS)
         params.fields = fields_to_fetch
 
-        resp = await HostLocalLoadedTts.get_all(params, resp_type="plain")
+        resp = await hpcl_ceg_model.HostLocalLoadedTts.get_all(params, resp_type="plain")
         result_data = resp.get("data", [])
 
         if not result_data:
@@ -2256,7 +2248,7 @@ async def location_wise_total_loaded_qty(data):
                 # Use fields from config
                 bay_params.fields = BAY_REASSIGNMENT_CONFIG["fields"]
 
-                bay_resp = await HostBayReAssignment.get_all(bay_params, resp_type="plain")
+                bay_resp = await hpcl_ceg_model.HostBayReAssignment.get_all(bay_params, resp_type="plain")
                 bay_result_data = bay_resp.get("data", [])
 
                 # Create a dictionary for quick lookup
@@ -2267,7 +2259,6 @@ async def location_wise_total_loaded_qty(data):
                     if truck_num_raw and created_at_raw:
                         # Apply same cleaning
                         truck_num_clean = str(truck_num_raw).strip()
-                        import re
                         truck_num_clean = re.sub(r'\s+', '', truck_num_clean).upper()
 
                         # Parse created_at to date only
@@ -2292,7 +2283,6 @@ async def location_wise_total_loaded_qty(data):
                             continue
 
             except Exception as bay_err:
-                import traceback
                 traceback.print_exc()
 
         indent_data = {}  # Format: {(truck_number, date): user_id}
@@ -2331,10 +2321,6 @@ async def location_wise_total_loaded_qty(data):
                         FROM "IMS_SAP"."INDENT_REQUEST"
                         WHERE {indent_query_conditions}
                     """                    
-                    # Import the charts_actions and model
-                    import dashboard_studio_model
-                    import charts_actions
-                    
                     # Set connection parameters
                     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
                     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "execute_query"
@@ -2390,7 +2376,7 @@ async def location_wise_total_loaded_qty(data):
                         location_params = urdhva_base.queryparams.QueryParams(q=location_query, limit=0)
                         location_params.fields = ["sap_id", "name"]
                         
-                        location_resp = await LocationMaster.get_all(location_params, resp_type="plain")
+                        location_resp = await hpcl_ceg_model.LocationMaster.get_all(location_params, resp_type="plain")
                         location_result_data = location_resp.get("data", [])
                         
                         # Build lookup dictionary
@@ -2402,7 +2388,6 @@ async def location_wise_total_loaded_qty(data):
 
             except Exception as indent_err:
                 print(f"Error fetching indent data: {indent_err}")
-                import traceback
                 traceback.print_exc()
         # Group by sap_id and location_name for aggregations
         result_df = (
@@ -2554,7 +2539,6 @@ async def location_wise_total_loaded_qty(data):
 
     except Exception as e:
         print(f"Error fetching location-wise total loaded qty: {e}")
-        import traceback
         traceback.print_exc()
         return []
 
@@ -2603,7 +2587,7 @@ async def top_five_alerts(data):
         "created_at"
     ]
 
-    resp = await Alerts.get_all(params, resp_type="plain")
+    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
     rows = resp.get("data", [])
 
     if not rows:
@@ -2695,7 +2679,7 @@ async def bcu_totalizer_diff_alert(data):
     ]
 
     # 3. FETCH DATA
-    resp = await HostDayEndDetails.get_all(params, resp_type="plain")
+    resp = await hpcl_ceg_model.HostDayEndDetails.get_all(params, resp_type="plain")
     records = resp.get("data", [])
 
     if not records:
@@ -2807,7 +2791,7 @@ async def unauthorized_flow_dashboard(data):
         "created_at"
     ]
 
-    alerts_resp = await Alerts.get_all(alert_params, resp_type="plain")
+    alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
 
     if not alert_data:
@@ -2911,7 +2895,7 @@ async def host_bay_reassignment_alert(data):
     ]
 
     # 3. FETCH DATA
-    resp = await HostBayReAssignment.get_all(
+    resp = await hpcl_ceg_model.HostBayReAssignment.get_all(
         params,
         resp_type="plain"
     )
@@ -3034,7 +3018,7 @@ async def host_bay_reassignment_alert(data):
         "reassigned_bay"
     ]
 
-    top_resp = await HostBayReAssignment.get_all(
+    top_resp = await hpcl_ceg_model.HostBayReAssignment.get_all(
         top_params,
         resp_type="plain"
     )
