@@ -7,11 +7,11 @@ import traceback
 import dashboard_studio_model
 import charts_actions
 import decimal
-from orchestrator.dbconnector.widget_actions.vts_analytics import  download_streaming_data
+import orchestrator.dbconnector.widget_actions.vts_analytics as vts_analytics
 from datetime import datetime, timedelta
 import re
-from utilities.analog_data_mapping import Maintenance, Fault, Normal
-from orchestrator.tas_queries import *
+import utilities.analog_data_mapping as analog_mapping
+import orchestrator.tas_queries as tas_queries
 
 
 async def top_repeat_alerts(data):
@@ -176,13 +176,13 @@ async def tas_severity_summary(data):
 
     # Extract interlock names
     maintenance_terms = [
-        i["interlock_name"].lower() for i in Maintenance if i.get("interlock_name")]
+        i["interlock_name"].lower() for i in analog_mapping.Maintenance if i.get("interlock_name")]
 
     fault_terms = [
-        i["interlock_name"].lower() for i in Fault if i.get("interlock_name")]
+        i["interlock_name"].lower() for i in analog_mapping.Fault if i.get("interlock_name")]
 
     normal_terms = [
-        i["interlock_name"].lower() for i in Normal if i.get("interlock_name")]
+        i["interlock_name"].lower() for i in analog_mapping.Normal if i.get("interlock_name")]
 
 
     # Categorize each alert
@@ -716,7 +716,7 @@ async def tas_alerts_exception_report(data):
         result.append(row)
 
     if str(data.download).lower() == "true":
-        return await download_streaming_data(
+        return await vts_analytics.download_streaming_data(
             pl.DataFrame(result), "exception_report"
         )
 
@@ -781,14 +781,14 @@ async def process_esd_data(data):
     within 1 minute WITH THE SAME unique_id
     """
     # Build ESD Pushbutton query
-    esd_pushbutton_query = build_complete_query(
-        ESD_QUERIES["pushbutton_activated"],
+    esd_pushbutton_query = tas_queries.build_complete_query(
+        tas_queries.ESD_QUERIES["pushbutton_activated"],
         data.start_date,
         data.end_date,
         data.location_name
     )
     esd_pushbutton_params = urdhva_base.queryparams.QueryParams(q=esd_pushbutton_query, limit=0)
-    esd_pushbutton_params.fields = ESD_FIELDS["pushbutton_activated"]
+    esd_pushbutton_params.fields = tas_queries.ESD_FIELDS["pushbutton_activated"]
 
     esd_pushbutton_resp = await hpcl_ceg_model.Alerts.get_all(esd_pushbutton_params, resp_type="plain")
     esd_pushbutton_data = esd_pushbutton_resp.get("data", [])
@@ -849,10 +849,10 @@ async def process_esd_data(data):
     
     sap_ids = list(set(loc['sap_id'] for loc in unique_locations.values()))
     
-    # Build batch query for all interlocks using template
-    sap_ids_str = format_sap_ids_for_query(sap_ids)
+    # Build batch query for all interlocks using templat
+    sap_ids_str = tas_queries.format_sap_ids_for_query(sap_ids)
     
-    all_interlocks_query = ESD_QUERIES["all_interlocks_template"].format(
+    all_interlocks_query = tas_queries.ESD_QUERIES["all_interlocks_template"].format(
         sap_ids=sap_ids_str
     )
     
@@ -865,7 +865,7 @@ async def process_esd_data(data):
         all_interlocks_query += f" AND location_name = '{data.location_name}'"
     
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
-    interlock_params.fields = ESD_FIELDS["interlocks"] + ["device_name"]  # Add device_name
+    interlock_params.fields = tas_queries.ESD_FIELDS["interlocks"] + ["device_name"]  # Add device_name
 
     interlock_resp = await hpcl_ceg_model.Alerts.get_all(interlock_params, resp_type="plain")
     all_interlock_alerts = interlock_resp.get("data", [])   
@@ -881,13 +881,13 @@ async def process_esd_data(data):
             }
             
             # Initialize categories from configuration
-            for category in ESD_CATEGORIES.keys():
+            for category in tas_queries.ESD_CATEGORIES.keys():
                 result_item[category] = [{"success": 0, "failed": 0}]
             result.append(result_item)
         return result
 
     # Get time window from config
-    time_window_minutes = ESD_DEVICE_ANALYSIS_CONFIG.get("time_window_minutes", 3)
+    time_window_minutes = tas_queries.ESD_DEVICE_ANALYSIS_CONFIG.get("time_window_minutes", 3)
 
     # Organize alerts by unique_id and category (keeping original logic)
     alerts_by_unique_id = {}
@@ -901,7 +901,7 @@ async def process_esd_data(data):
 
         # Determine category
         category = None
-        for cat, pattern in ESD_CATEGORIES.items():
+        for cat, pattern in tas_queries.ESD_CATEGORIES.items():
             if re.search(pattern, interlock_name):
                 category = cat
                 break
@@ -922,7 +922,7 @@ async def process_esd_data(data):
                 alert_time = created_at
                    
             # Check if this is a Fail alert
-            is_fail = any(pattern in interlock_name for pattern in FAIL_PATTERNS)
+            is_fail = any(pattern in interlock_name for pattern in tas_queries.FAIL_PATTERNS)
             
             alerts_by_unique_id[key].append({
                 'id': alert.get('id'),
@@ -957,7 +957,7 @@ async def process_esd_data(data):
         }
         
         # Initialize categories from configuration
-        for category in ESD_CATEGORIES.keys():
+        for category in tas_queries.ESD_CATEGORIES.keys():
             location_results[key][category] = {"success": 0, "failed": 0}
 
     # Process alerts with original logic (1-minute window + unique_id matching)
@@ -1027,7 +1027,7 @@ async def process_esd_data(data):
 
                     if device_key not in device_category_counts:
                         device_category_counts[device_key] = {}
-                        for cat in ESD_CATEGORIES.keys():
+                        for cat in tas_queries.ESD_CATEGORIES.keys():
                             device_category_counts[device_key][cat] = {"success": 0, "failed": 0}
 
                     if found_fail:
@@ -1057,7 +1057,7 @@ async def process_esd_data(data):
 
                         if device_key not in device_category_counts:
                             device_category_counts[device_key] = {}
-                            for cat in ESD_CATEGORIES.keys():
+                            for cat in tas_queries.ESD_CATEGORIES.keys():
                                 device_category_counts[device_key][cat] = {"success": 0, "failed": 0}
 
                         device_category_counts[device_key][category]["failed"] += 1
@@ -1084,13 +1084,13 @@ async def process_esd_data(data):
             # Calculate total count and add category counts
             total_count = 0
             if device_key in device_category_counts:
-                for category in ESD_CATEGORIES.keys():
+                for category in tas_queries.ESD_CATEGORIES.keys():
                     counts = device_category_counts[device_key][category]
                     enriched_detail[category] = [counts]
                     total_count += counts["success"] + counts["failed"]
             else:
                 # No alerts found for this device activation
-                for category in ESD_CATEGORIES.keys():
+                for category in tas_queries.ESD_CATEGORIES.keys():
                     enriched_detail[category] = [{"success": 0, "failed": 0}]
 
             # Add count after device_name, before categories
@@ -1100,7 +1100,7 @@ async def process_esd_data(data):
                 "count": total_count
             }
             # Add all category counts
-            for category in ESD_CATEGORIES.keys():
+            for category in tas_queries.ESD_CATEGORIES.keys():
                 enriched_detail_ordered[category] = enriched_detail[category]
 
             enriched_detail = enriched_detail_ordered
@@ -1116,7 +1116,7 @@ async def process_esd_data(data):
         }
 
         # Add location-level category counts
-        for category in ESD_CATEGORIES.keys():
+        for category in tas_queries.ESD_CATEGORIES.keys():
             result_item[category] = [value[category]]
         
         final_result.append(result_item)
@@ -1130,28 +1130,28 @@ async def process_vft_data(data):
     Logic: Match base and fail alerts within 1 minute WITH THE SAME unique_id
     """
     # Build VFT HHH alarm query
-    vft_hhh_query = build_complete_query(
-        VFT_QUERIES["hhh_alarm"],
+    vft_hhh_query = tas_queries.build_complete_query(
+        tas_queries.VFT_QUERIES["hhh_alarm"],
         data.start_date,
         data.end_date,
         data.location_name
     )
 
     vft_hhh_params = urdhva_base.queryparams.QueryParams(q=vft_hhh_query, limit=0)
-    vft_hhh_params.fields = VFT_FIELDS["hhh_alarm"]
+    vft_hhh_params.fields = tas_queries.VFT_FIELDS["hhh_alarm"]
 
     vft_hhh_resp = await hpcl_ceg_model.Alerts.get_all(vft_hhh_params, resp_type="plain")
     vft_hhh_data = vft_hhh_resp.get("data", [])
     # Build other interlocks query
-    alert_query = build_complete_query(
-        VFT_QUERIES["other_interlocks"],
+    alert_query = tas_queries.build_complete_query(
+        tas_queries.VFT_QUERIES["other_interlocks"],
         data.start_date,
         data.end_date,
         data.location_name
     )
 
     alert_params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
-    alert_params.fields = VFT_FIELDS["other_interlocks"]
+    alert_params.fields = tas_queries.VFT_FIELDS["other_interlocks"]
 
     alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])    
@@ -1189,7 +1189,7 @@ async def process_vft_data(data):
             }
             
             # Initialize categories from configuration
-            for category in VFT_CATEGORIES.keys():
+            for category in tas_queries.VFT_CATEGORIES.keys():
                 result[key][category] = [{"success": 0, "failed": 0}]
         
         final_result = list(result.values())
@@ -1208,7 +1208,7 @@ async def process_vft_data(data):
         
         # Determine category
         category = None
-        for cat, pattern in VFT_CATEGORIES.items():
+        for cat, pattern in tas_queries.VFT_CATEGORIES.items():
             if re.search(pattern, interlock_name):
                 category = cat
                 break
@@ -1271,7 +1271,7 @@ async def process_vft_data(data):
         }
         
         # Initialize categories from configuration
-        for category in VFT_CATEGORIES.keys():
+        for category in tas_queries.VFT_CATEGORIES.keys():
             location_results[key][category] = {"success": 0, "failed": 0}
     
     # Process alerts with 1-minute window + unique_id matching
@@ -1353,7 +1353,7 @@ async def process_vft_data(data):
             "vft_activated_details": value["vft_activated_details"]
         }
         
-        for category in VFT_CATEGORIES.keys():
+        for category in tas_queries.VFT_CATEGORIES.keys():
             result_item[category] = [value[category]]
         
         final_result.append(result_item)
@@ -1369,28 +1369,28 @@ async def process_radar_data(data):
     Logic: Match base and fail alerts within 1 minute WITH THE SAME unique_id
     """
     # Build RADAR activated query
-    radar_activated_query = build_complete_query(
-        RADAR_QUERIES["radar_activated"],
+    radar_activated_query = tas_queries.build_complete_query(
+        tas_queries.RADAR_QUERIES["radar_activated"],
         data.start_date,
         data.end_date,
         data.location_name
     )
 
     radar_activated_params = urdhva_base.queryparams.QueryParams(q=radar_activated_query, limit=0)
-    radar_activated_params.fields = RADAR_FIELDS["radar_activated"]
+    radar_activated_params.fields = tas_queries.RADAR_FIELDS["radar_activated"]
 
     radar_activated_resp = await hpcl_ceg_model.Alerts.get_all(radar_activated_params, resp_type="plain")
     radar_activated_data = radar_activated_resp.get("data", [])
     # Build other interlocks query
-    alert_query = build_complete_query(
-        RADAR_QUERIES["other_interlocks"],
+    alert_query = tas_queries.build_complete_query(
+        tas_queries.RADAR_QUERIES["other_interlocks"],
         data.start_date,
         data.end_date,
         data.location_name
     )
 
     alert_params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
-    alert_params.fields = RADAR_FIELDS["other_interlocks"]
+    alert_params.fields = tas_queries.RADAR_FIELDS["other_interlocks"]
 
     alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
@@ -1432,7 +1432,7 @@ async def process_radar_data(data):
             }
             
             # Initialize categories from configuration
-            for category in RADAR_CATEGORIES.keys():
+            for category in tas_queries.RADAR_CATEGORIES.keys():
                 result[key][category] = [{"success": 0, "failed": 0}]
         
         final_result = list(result.values())
@@ -1450,7 +1450,7 @@ async def process_radar_data(data):
         
         # Determine category
         category = None
-        for cat, pattern in RADAR_CATEGORIES.items():
+        for cat, pattern in tas_queries.RADAR_CATEGORIES.items():
             if re.search(pattern, interlock_name):
                 category = cat
                 break
@@ -1513,7 +1513,7 @@ async def process_radar_data(data):
         }
         
         # Initialize categories from configuration
-        for category in RADAR_CATEGORIES.keys():
+        for category in tas_queries.RADAR_CATEGORIES.keys():
             location_results[key][category] = {"success": 0, "failed": 0}
     
     # Process alerts with 1-minute window + unique_id matching
@@ -1594,7 +1594,7 @@ async def process_radar_data(data):
             "radar_activated_details": value["radar_activated_details"]
         }
         
-        for category in RADAR_CATEGORIES.keys():
+        for category in tas_queries.RADAR_CATEGORIES.keys():
             result_item[category] = [value[category]]
         
         final_result.append(result_item)
@@ -1609,15 +1609,15 @@ async def process_bcu_data(data):
     within 1 minute WITH THE SAME unique_id
     """
     # Build BCU alarm query
-    bcu_alarm_query = build_complete_query(
-        BCU_QUERIES["bcu_alarm"],
+    bcu_alarm_query = tas_queries.build_complete_query(
+        tas_queries.BCU_QUERIES["bcu_alarm"],
         data.start_date,
         data.end_date,
         data.location_name
     )
 
     bcu_alarm_params = urdhva_base.queryparams.QueryParams(q=bcu_alarm_query, limit=0)
-    bcu_alarm_params.fields = BCU_FIELDS["bcu_alarm"]
+    bcu_alarm_params.fields = tas_queries.BCU_FIELDS["bcu_alarm"]
     
     bcu_alarm_resp = await hpcl_ceg_model.Alerts.get_all(bcu_alarm_params, resp_type="plain")
     bcu_alarm_data = bcu_alarm_resp.get("data", [])
@@ -1645,7 +1645,7 @@ async def process_bcu_data(data):
         if key not in bcu_alarm_details:
             bcu_alarm_details[key] = []
         
-        if len(bcu_alarm_details[key]) < BCU_ALARM_DETAILS_LIMIT:
+        if len(bcu_alarm_details[key]) < tas_queries.BCU_ALARM_DETAILS_LIMIT:
             bcu_alarm_details[key].append({
                 "created_at": row["created_at"],
                 "device_name": row.get("device_name", "")
@@ -1664,10 +1664,10 @@ async def process_bcu_data(data):
     sap_ids = list(set(loc['sap_id'] for loc in unique_locations.values()))
         
     # Build batch query for all interlocks using template
-    interlocks_str = format_interlocks_for_query(BCU_INTERLOCKS)
-    sap_ids_str = format_sap_ids_for_query(sap_ids)
+    interlocks_str = tas_queries.format_interlocks_for_query(tas_queries.BCU_INTERLOCKS)
+    sap_ids_str = tas_queries.format_sap_ids_for_query(sap_ids)
     
-    all_interlocks_query = BCU_QUERIES["all_interlocks_template"].format(
+    all_interlocks_query = tas_queries.BCU_QUERIES["all_interlocks_template"].format(
         sap_ids=sap_ids_str,
         interlocks=interlocks_str
     )
@@ -1678,14 +1678,14 @@ async def process_bcu_data(data):
         all_interlocks_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
     
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
-    interlock_params.fields = BCU_FIELDS["interlocks"]
+    interlock_params.fields = tas_queries.BCU_FIELDS["interlocks"]
     
     interlock_resp = await hpcl_ceg_model.Alerts.get_all(interlock_params, resp_type="plain")
     all_interlock_alerts = interlock_resp.get("data", [])
     
     
     # Build batch query for BCU Permissive Off using template
-    permissive_query = BCU_QUERIES["permissive_off_template"].format(
+    permissive_query = tas_queries.BCU_QUERIES["permissive_off_template"].format(
         sap_ids=sap_ids_str
     )
     
@@ -1695,7 +1695,7 @@ async def process_bcu_data(data):
         permissive_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
     
     permissive_params = urdhva_base.queryparams.QueryParams(q=permissive_query, limit=0)
-    permissive_params.fields = BCU_FIELDS["permissive_off"]
+    permissive_params.fields = tas_queries.BCU_FIELDS["permissive_off"]
     
     permissive_resp = await hpcl_ceg_model.Alerts.get_all(permissive_params, resp_type="plain")
     all_permissive_alerts = permissive_resp.get("data", [])
@@ -1716,7 +1716,7 @@ async def process_bcu_data(data):
                 alert_time = created_at
             
             interlock_name = alert.get('interlock_name', '')
-            is_fail = any(pattern in interlock_name for pattern in FAIL_PATTERNS)
+            is_fail = any(pattern in interlock_name for pattern in tas_queries.FAIL_PATTERNS)
             
             permissive_by_unique_id[unique_id].append({
                 'id': alert.get('id'),
@@ -1750,7 +1750,7 @@ async def process_bcu_data(data):
         }
         
         # Initialize all interlocks from configuration
-        for interlock in BCU_INTERLOCKS:
+        for interlock in tas_queries.BCU_INTERLOCKS:
             location_results[key][interlock] = {"success": 0, "failed": 0}
     
     # Process each interlock alert with 1-minute window logic + unique_id matching
@@ -1828,7 +1828,7 @@ async def process_bcu_data(data):
             "bcu_alarm_details": value["bcu_alarm_details"]
         }
         
-        for interlock in BCU_INTERLOCKS:
+        for interlock in tas_queries.BCU_INTERLOCKS:
             result_item[interlock] = [value[interlock]]
         
         final_result.append(result_item)
@@ -1843,8 +1843,8 @@ async def process_fire_effect_data(data):
     within 1 minute WITH THE SAME unique_id
     """
     # Build Fire Effect alarm query
-    fire_effect_alarm_query = build_complete_query(
-        FIRE_EFFECT_QUERIES["fire_effect_alarm"],
+    fire_effect_alarm_query = tas_queries.build_complete_query(
+        tas_queries.FIRE_EFFECT_QUERIES["fire_effect_alarm"],
         data.start_date,
         data.end_date,
         data.location_name
@@ -1852,7 +1852,7 @@ async def process_fire_effect_data(data):
 
 
     fire_effect_alarm_params = urdhva_base.queryparams.QueryParams(q=fire_effect_alarm_query, limit=0)
-    fire_effect_alarm_params.fields = FIRE_EFFECT_FIELDS["fire_effect_alarm"]
+    fire_effect_alarm_params.fields = tas_queries.FIRE_EFFECT_FIELDS["fire_effect_alarm"]
     
     fire_effect_alarm_resp = await hpcl_ceg_model.Alerts.get_all(fire_effect_alarm_params, resp_type="plain")
     fire_effect_alarm_data = fire_effect_alarm_resp.get("data", [])
@@ -1891,9 +1891,9 @@ async def process_fire_effect_data(data):
     sap_ids = list(set(loc['sap_id'] for loc in unique_locations.values()))
         
     # Build batch query for all interlocks using template
-    sap_ids_str = format_sap_ids_for_query(sap_ids)
+    sap_ids_str = tas_queries.format_sap_ids_for_query(sap_ids)
     
-    all_interlocks_query = FIRE_EFFECT_QUERIES["all_interlocks_template"].format(
+    all_interlocks_query = tas_queries.FIRE_EFFECT_QUERIES["all_interlocks_template"].format(
         sap_ids=sap_ids_str
     )
     
@@ -1903,7 +1903,7 @@ async def process_fire_effect_data(data):
         all_interlocks_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
     
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
-    interlock_params.fields = FIRE_EFFECT_FIELDS["interlocks"]
+    interlock_params.fields = tas_queries.FIRE_EFFECT_FIELDS["interlocks"]
     
     interlock_resp = await hpcl_ceg_model.Alerts.get_all(interlock_params, resp_type="plain")
     all_interlock_alerts = interlock_resp.get("data", [])
@@ -1920,7 +1920,7 @@ async def process_fire_effect_data(data):
             }
             
             # Initialize categories from configuration
-            for interlock in FIRE_EFFECT_INTERLOCKS:
+            for interlock in tas_queries.FIRE_EFFECT_INTERLOCKS:
                 result_item[interlock] = [{"success": 0, "failed": 0}]
             
             result.append(result_item)
@@ -1937,7 +1937,7 @@ async def process_fire_effect_data(data):
         
         # Determine category
         category = None
-        for interlock in FIRE_EFFECT_INTERLOCKS:
+        for interlock in tas_queries.FIRE_EFFECT_INTERLOCKS:
             if interlock.lower().replace(' ', '') in interlock_name.lower().replace(' ', ''):
                 category = interlock
                 break
@@ -1958,7 +1958,7 @@ async def process_fire_effect_data(data):
                 alert_time = created_at
             
             # Check if this is a Fail alert
-            is_fail = any(pattern in interlock_name for pattern in FAIL_PATTERNS)
+            is_fail = any(pattern in interlock_name for pattern in tas_queries.FAIL_PATTERNS)
             
             alerts_by_unique_id[key].append({
                 'id': alert.get('id'),
@@ -1992,7 +1992,7 @@ async def process_fire_effect_data(data):
         }
         
         # Initialize categories from configuration
-        for interlock in FIRE_EFFECT_INTERLOCKS:
+        for interlock in tas_queries.FIRE_EFFECT_INTERLOCKS:
             location_results[key][interlock] = {"success": 0, "failed": 0}
     
     # Process alerts with 1-minute window logic + unique_id matching
@@ -2079,7 +2079,7 @@ async def process_fire_effect_data(data):
             "fire_effect_alarm_details": value["fire_effect_alarm_details"]
         }
         
-        for interlock in FIRE_EFFECT_INTERLOCKS:
+        for interlock in tas_queries.FIRE_EFFECT_INTERLOCKS:
             result_item[interlock] = [value[interlock]]
         
         final_result.append(result_item)
@@ -2098,8 +2098,8 @@ async def location_wise_total_loaded_qty(data):
     """
 
     # Build query using the helper function
-    query = build_complete_query(
-        HOST_LOCAL_LOADED_TTS_QUERIES["location_wise_total"],
+    query = tas_queries.build_complete_query(
+        tas_queries.HOST_LOCAL_LOADED_TTS_QUERIES["location_wise_total"],
         data.start_date,
         data.end_date,
         getattr(data, 'location_name', None)
@@ -2114,9 +2114,9 @@ async def location_wise_total_loaded_qty(data):
         params = urdhva_base.queryparams.QueryParams(q=query, limit=0)
 
         # Use fields from config
-        fields_to_fetch = HOST_LOCAL_LOADED_TTS_FIELDS.copy() if isinstance(HOST_LOCAL_LOADED_TTS_FIELDS,
+        fields_to_fetch = tas_queries.HOST_LOCAL_LOADED_TTS_FIELDS.copy() if isinstance(tas_queries.HOST_LOCAL_LOADED_TTS_FIELDS,
                                                                             list) else list(
-            HOST_LOCAL_LOADED_TTS_FIELDS)
+            tas_queries.HOST_LOCAL_LOADED_TTS_FIELDS)
         params.fields = fields_to_fetch
 
         resp = await hpcl_ceg_model.HostLocalLoadedTts.get_all(params, resp_type="plain")
@@ -2179,8 +2179,8 @@ async def location_wise_total_loaded_qty(data):
         ])
 
         # Categorize truck types using config patterns
-        prover_pattern = TRUCK_TYPE_PATTERNS["prover"]
-        dg_pattern = TRUCK_TYPE_PATTERNS["dg"]
+        prover_pattern = tas_queries.TRUCK_TYPE_PATTERNS["prover"]
+        dg_pattern = tas_queries.TRUCK_TYPE_PATTERNS["dg"]
 
         df = df.with_columns([
             # PROVER: starts with 'P' and contains only letters
@@ -2246,7 +2246,7 @@ async def location_wise_total_loaded_qty(data):
 
                 bay_params = urdhva_base.queryparams.QueryParams(q=bay_query, limit=0)
                 # Use fields from config
-                bay_params.fields = BAY_REASSIGNMENT_CONFIG["fields"]
+                bay_params.fields = tas_queries.BAY_REASSIGNMENT_CONFIG["fields"]
 
                 bay_resp = await hpcl_ceg_model.HostBayReAssignment.get_all(bay_params, resp_type="plain")
                 bay_result_data = bay_resp.get("data", [])
@@ -2402,10 +2402,10 @@ async def location_wise_total_loaded_qty(data):
         )
 
         # Get pattern analysis thresholds from config
-        min_trucks_per_hour = PATTERN_ANALYSIS_CONFIG["local_loading_repeated"]["min_trucks_per_hour"]
-        min_days_for_pattern = PATTERN_ANALYSIS_CONFIG["particular_time_of_day"]["min_days_for_pattern"]
-        min_occurrence_ratio = PATTERN_ANALYSIS_CONFIG["particular_time_of_day"]["min_occurrence_ratio"]
-        unique_product_count = PATTERN_ANALYSIS_CONFIG["particular_product"]["unique_count"]
+        min_trucks_per_hour = tas_queries.PATTERN_ANALYSIS_CONFIG["local_loading_repeated"]["min_trucks_per_hour"]
+        min_days_for_pattern = tas_queries.PATTERN_ANALYSIS_CONFIG["particular_time_of_day"]["min_days_for_pattern"]
+        min_occurrence_ratio = tas_queries.PATTERN_ANALYSIS_CONFIG["particular_time_of_day"]["min_occurrence_ratio"]
+        unique_product_count = tas_queries.PATTERN_ANALYSIS_CONFIG["particular_product"]["unique_count"]
 
         # Analyze patterns for each sap_id
         pattern_analysis = []
