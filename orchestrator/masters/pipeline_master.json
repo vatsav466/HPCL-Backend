@@ -10004,6 +10004,7 @@
       "description": "Ramanmandi-Bhatinda Pipeline",
       "pipeline_type": "Product",
       "pipeline_color": "#F8B739",
+       "url": "http://10.2.114.40/detail.aspx",
       "total_length_km": 81.07,
       "capacity": {
         "value": 2.1,
@@ -10534,6 +10535,7 @@
       "description": "Palanpur-Vadodara Pipeline",
       "pipeline_type": "Product",
       "pipeline_color": "#85C1E2",
+      "url": "http://10.2.114.40/detail.aspx",
       "total_length_km": 230.78,
       "capacity": {
         "value": 4.5,
@@ -12436,6 +12438,7 @@
       "description": "Awa Salawas Pipeline",
       "pipeline_type": "Product",
       "pipeline_color": "#FFB6C1",
+      "url": "http://10.2.114.40/detail.aspx",
       "total_length_km": 288.2,
       "capacity": {
         "value": 2.3,
