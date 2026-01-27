@@ -2872,19 +2872,36 @@ async def bcu_totalizer_diff_alert(data):
         return []
 
     # 7. FINAL RESPONSE
-    return df.select([
-        "sap_id",
-        "bcu_number",
-        "bay_number",
-        "location_name",
-        "zone",
-        "date",
-        "bcu_mfm_net_totalizer_diff",
-        "invoiced_total_tl_qty_diff",
-        "bcu_net_totalizer",
-        "percentage_diff",
-        "invoice_percentage_diff",
-    ]).to_dicts()
+    result = (
+        df
+        .with_columns(
+            pl.max_horizontal(
+                "percentage_diff",
+                "invoice_percentage_diff"
+            ).alias("max_diff")
+        )
+        .sort("max_diff", descending=True)   # sort by difference value
+        .select([
+            "sap_id",
+            "bcu_number",
+            "bay_number",
+            "location_name",
+            "zone",
+            "date",
+            "bcu_mfm_net_totalizer_diff",
+            "invoiced_total_tl_qty_diff",
+            "bcu_net_totalizer",
+            "percentage_diff",
+            "invoice_percentage_diff",
+        ])
+        .to_dicts()
+    )
+
+    return {
+        "status": "success",
+        "message": "BCU totalizer diff alerts fetched successfully",
+        "data": result
+    }
 
 
 async def unauthorized_flow_dashboard(data):
@@ -2936,13 +2953,13 @@ async def unauthorized_flow_dashboard(data):
     if not alert_data:
         return {
             "repeated_unauthorized_flow_count": 0,
-            "top_10_locations": []
+            "locations": []
         }
 
     df = pl.DataFrame(alert_data)
 
     # REPEATED UNAUTHORIZED FLOW COUNT
-    # (>2 alarms of same bay in period)
+    # (>2 alarms of same device on same date)
     repeated_df = (
         df
         .with_columns(pl.col("created_at").dt.date().alias("date"))
@@ -2953,17 +2970,17 @@ async def unauthorized_flow_dashboard(data):
 
     repeated_unauthorized_flow_count = repeated_df.height
 
-    # TOP 10 LOCATIONS
-    top_locations_df = (
+    # LOCATION LEVEL AGGREGATION (NO TOP LIMIT)
+    locations_df = (
         repeated_df
         .group_by("location_name")
         .agg(pl.sum("cnt").alias("count"))
         .sort("count", descending=True)
-        .head(10)
     )
-    top_10_locations = []
 
-    for loc in top_locations_df.to_dicts():
+    locations = []
+
+    for loc in locations_df.to_dicts():
         location = loc["location_name"]
 
         devices = (
@@ -2983,20 +3000,25 @@ async def unauthorized_flow_dashboard(data):
             for d in devices
         ]
 
-        top_10_locations.append({
+        locations.append({
             "location_name": location,
             "count": loc["count"],
             "devices": formatted_devices
         })
 
-    # RESPONSE
+    # FINAL RESPONSE (ALL DATA)
     return {
-        "repeated_unauthorized_flow_count": repeated_unauthorized_flow_count,
-        "top_10_locations": top_10_locations
+            "status": "success",
+            "message": "unauthorized flow counts",
+            "data": {
+                "repeated_unauthorized_flow_count": repeated_unauthorized_flow_count,
+                "locations": locations
+            }
     }
 
+
 async def host_bay_reassignment_alert(data):
-    
+
     # 1. BUILD QUERY
     conditions = []
 
@@ -3010,7 +3032,6 @@ async def host_bay_reassignment_alert(data):
             f"location_name = '{data.location_name}'"
         )
 
-    # SAFE access for truck_number
     if data.truck_number:
         conditions.append(
             f"truck_number = '{data.truck_number}'"
@@ -3027,6 +3048,7 @@ async def host_bay_reassignment_alert(data):
     params.fields = [
         "sap_id",
         "truck_number",
+        "fan_number",          # REQUIRED for DISTINCT count
         "reassigned_bay",
         "location_name",
         "zone",
@@ -3046,8 +3068,7 @@ async def host_bay_reassignment_alert(data):
             "status": "success",
             "message": "No host bay reassignment data found",
             "data": {
-                "location_based_reassignment": [],
-                "top_10_truck_reassignments": []
+                "location_based_reassignment": []
             }
         }
 
@@ -3057,6 +3078,7 @@ async def host_bay_reassignment_alert(data):
         schema={
             "sap_id": pl.Utf8,
             "truck_number": pl.Utf8,
+            "fan_number": pl.Utf8,
             "reassigned_bay": pl.Utf8,
             "location_name": pl.Utf8,
             "zone": pl.Utf8,
@@ -3073,20 +3095,21 @@ async def host_bay_reassignment_alert(data):
             "status": "success",
             "message": "No valid reassigned bay records found",
             "data": {
-                "location_based_reassignment": [],
-                "top_10_truck_reassignments": []
+                "location_based_reassignment": []
             }
         }
 
-    # 6. LOCATION LEVEL AGGREGATION (SAP-wise)
+    # 6. LOCATION LEVEL AGGREGATION (DISTINCT FAN NUMBER COUNT)
     location_df = (
         df.group_by(["location_name", "date", "sap_id"])
           .agg([
-              pl.count().alias("reassign_count"),
+              pl.col("fan_number").n_unique().alias("reassign_count"),
               pl.first("zone").alias("zone"),
-              pl.col("reassigned_bay").unique().alias("reassigned_bays")
+              pl.col("reassigned_bay").unique().alias("reassigned_bays"),
+              pl.col("fan_number").unique().alias("fan_numbers")
           ])
-          .filter(pl.col("reassign_count") > 2)
+          .sort("reassign_count", descending=True)
+
     )
 
     if location_df.is_empty():
@@ -3094,19 +3117,18 @@ async def host_bay_reassignment_alert(data):
             "status": "success",
             "message": "No location exceeded reassignment threshold",
             "data": {
-                "location_based_reassignment": [],
-                "top_10_truck_reassignments": []
+                "location_based_reassignment": []
             }
         }
 
-    # 7. TRUCK LEVEL AGGREGATION (Nested)
+    # 7. TRUCK LEVEL AGGREGATION (UNCHANGED – NESTED VIEW)
     truck_df = (
         df.group_by(["location_name", "date", "sap_id", "truck_number"])
-          .agg([
-              pl.count().alias("reassign_count"),
-              pl.col("reassigned_bay").unique().alias("reassigned_bays")
-          ])
-          .filter(pl.col("reassign_count") > 2)
+        .agg([
+            pl.col("fan_number").n_unique().alias("reassign_count"),
+            pl.col("reassigned_bay").unique().alias("reassigned_bays"),
+            pl.col("fan_number").unique().alias("fan_numbers")
+        ])
     )
 
     # 8. BUILD NESTED LOCATION → TRUCK RESPONSE
@@ -3124,7 +3146,8 @@ async def host_bay_reassignment_alert(data):
             .select([
                 "truck_number",
                 "reassign_count",
-                "reassigned_bays"
+                "reassigned_bays",
+                "fan_numbers"
             ])
             .to_dicts()
         )
@@ -3134,61 +3157,18 @@ async def host_bay_reassignment_alert(data):
             "location_name": loc["location_name"],
             "zone": loc["zone"],
             "date": loc["date"],
-            "reassign_count": loc["reassign_count"],
+            "reassign_count": loc["reassign_count"],   # DISTINCT FAN COUNT
             "reassigned_bays": loc["reassigned_bays"],
+            "fan_numbers": loc["fan_numbers"],
             "trucks": trucks
         })
 
-    # 9. SORT LOCATIONS (HIGHEST → LOWEST)
-    response = sorted(
-        response,
-        key=lambda x: x["reassign_count"],
-        reverse=True
-    )
-
-    # 10. TOP 10 TRUCKS (GLOBAL – LIFETIME)
-    top_params = urdhva_base.queryparams.QueryParams(
-        q="reassigned_bay IS NOT NULL",
-        limit=0
-    )
-
-    top_params.fields = [
-        "truck_number",
-        "reassigned_bay"
-    ]
-
-    top_resp = await hpcl_ceg_model.HostBayReAssignment.get_all(
-        top_params,
-        resp_type="plain"
-    )
-
-    top_df = pl.from_dicts(
-        top_resp.get("data", []),
-        schema={
-            "truck_number": pl.Utf8,
-            "reassigned_bay": pl.Utf8
-        },
-        strict=False
-    )
-
-    top_10_trucks = (
-        top_df.group_by("truck_number")
-            .agg([
-                pl.count().alias("total_reassign_count"),
-                pl.col("reassigned_bay").unique().alias("reassigned_bays")
-            ])
-            .sort("total_reassign_count", descending=True)
-            .head(10)
-            .to_dicts()
-    )
-
-    # 11. FINAL RESPONSE
+    # 9. FINAL RESPONSE (ONLY LOCATION BASED)
     return {
         "status": "success",
         "message": "Host bay reassignment analysis completed successfully",
         "data": {
-            "location_based_reassignment": response,
-            "top_10_truck_reassignments": top_10_trucks
+            "location_based_reassignment": response
         }
     }
 
