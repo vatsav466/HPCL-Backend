@@ -2393,10 +2393,14 @@ async def location_wise_total_loaded_qty(data):
         result_df = (
             df.group_by(["sap_id", "location_name"])
             .agg([
-                pl.sum("dg_qty").alias("dg"),
-                pl.sum("tank_truck_qty").alias("tank_truck"),
-                pl.sum("prover_qty").alias("prover"),
-                pl.sum("loaded_qty").alias("total_loaded_qty")
+                pl.col("dg_qty").sum().alias("dg"),
+                pl.col("tank_truck_qty").sum().alias("tank_truck"),
+                pl.col("prover_qty").sum().alias("prover"),
+                (
+                    pl.col("dg_qty") +
+                    pl.col("tank_truck_qty") +
+                    pl.col("prover_qty")
+                ).sum().alias("total_loaded_qty")
             ])
             .sort(["sap_id", "location_name"])
         )
@@ -2420,8 +2424,9 @@ async def location_wise_total_loaded_qty(data):
                 (pl.col("location_name") == location_name_val)
             )
 
-            # 1. Check for repeated loading
             local_loading_repeated = False
+            local_loading_repeated_details = []
+            
             if "hour_window" in location_df.columns:
                 trucks_per_hour = (
                     location_df.group_by("hour_window")
@@ -2429,10 +2434,59 @@ async def location_wise_total_loaded_qty(data):
                 )
                 if not trucks_per_hour.is_empty():
                     max_trucks_in_hour = trucks_per_hour.select(pl.max("truck_count")).item()
-                    local_loading_repeated = max_trucks_in_hour >= min_trucks_per_hour
+                    pattern_detected = max_trucks_in_hour >= min_trucks_per_hour
+                    
+                    # If pattern detected, collect details
+                    if pattern_detected:
+                        # Find the hour windows that exceed threshold
+                        qualifying_hours = trucks_per_hour.filter(
+                            pl.col("truck_count") >= min_trucks_per_hour
+                        ).select("hour_window").to_series().to_list()
+                        
+                        # Get truck details for those hours
+                        repeated_trucks = location_df.filter(
+                            pl.col("hour_window").is_in(qualifying_hours)
+                        ).select([
+                            "truck_number_clean",
+                            "load_date"
+                        ]).unique()
+                        
+                        # Enrich with user_id from indent_data - ONLY VALID TANK TRUCKS
+                        for truck_row in repeated_trucks.iter_rows(named=True):
+                            truck = truck_row.get("truck_number_clean")
+                            load_date = truck_row.get("load_date")
+                            
+                            if not truck:
+                                continue
+                            
+                            # Filter: Skip PROVER (starts with P, no digits) and DG trucks
+                            is_prover = truck.startswith('P') and not any(c.isdigit() for c in truck)
+                            is_dg = 'DG' in truck
+                            
+                            # Validate proper vehicle registration format (must have both letters AND digits)
+                            has_letters = any(c.isalpha() for c in truck)
+                            has_digits = any(c.isdigit() for c in truck)
+                            is_valid_vehicle_format = has_letters and has_digits
+                            
+                            # Only include valid tank trucks (vehicle registration format)
+                            if is_prover or is_dg or not is_valid_vehicle_format:
+                                continue
+                            
+                            key = (truck, str(load_date))
+                            user_id = indent_data.get(key, None)
+                            
+                            local_loading_repeated_details.append({
+                                "date": str(load_date),
+                                "truck_number": truck,
+                                "user_id": user_id
+                            })
+                        
+                        # Only set flag to true if we have valid truck details
+                        local_loading_repeated = len(local_loading_repeated_details) > 0
 
-            # 2. Check for particular time of day
             particular_time_of_day = False
+            particular_time_of_day_details = []
+            
             if "load_hour" in location_df.columns and "load_date" in location_df.columns:
                 unique_dates = location_df.select(pl.col("load_date").unique()).to_series().to_list()
 
@@ -2448,10 +2502,53 @@ async def location_wise_total_loaded_qty(data):
 
                         if most_frequent_hour_count >= max(min_days_for_pattern,
                                                            len(unique_dates) * min_occurrence_ratio):
-                            particular_time_of_day = True
+                            pattern_detected = True
+                            
+                            # Get the most frequent hour
+                            most_frequent_hour = hour_frequency.select(pl.first("load_hour")).item()
+                            
+                            # Collect details for trucks at that hour - ONLY VALID TANK TRUCKS
+                            time_pattern_trucks = location_df.filter(
+                                pl.col("load_hour") == most_frequent_hour
+                            ).select([
+                                "truck_number_clean",
+                                "created_at_dt"
+                            ]).unique()
+                            
+                            for truck_row in time_pattern_trucks.iter_rows(named=True):
+                                truck = truck_row.get("truck_number_clean")
+                                created_at = truck_row.get("created_at_dt")
+                                
+                                if not truck or not created_at:
+                                    continue
+                                
+                                # Filter: Skip PROVER (starts with P, no digits) and DG trucks
+                                is_prover = truck.startswith('P') and not any(c.isdigit() for c in truck)
+                                is_dg = 'DG' in truck
+                                
+                                # Validate proper vehicle registration format (must have both letters AND digits)
+                                has_letters = any(c.isalpha() for c in truck)
+                                has_digits = any(c.isdigit() for c in truck)
+                                is_valid_vehicle_format = has_letters and has_digits
+                                
+                                # Only include valid tank trucks (vehicle registration format)
+                                if is_prover or is_dg or not is_valid_vehicle_format:
+                                    continue
+                                
+                                # Format datetime as string
+                                date_with_time = created_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(created_at, 'strftime') else str(created_at)
+                                
+                                particular_time_of_day_details.append({
+                                    "truck_number": truck,
+                                    "date_with_time": date_with_time
+                                })
+                            
+                            # Only set flag to true if we have valid truck details
+                            particular_time_of_day = len(particular_time_of_day_details) > 0
 
-            # 3. Check for particular product
             particular_product = False
+            particular_product_details = []
+            
             if "recipe_name" in location_df.columns:
                 unique_recipes = (
                     location_df.filter(pl.col("recipe_name").is_not_null())
@@ -2462,9 +2559,48 @@ async def location_wise_total_loaded_qty(data):
 
                 unique_recipes = [r for r in unique_recipes if r and str(r).strip() != ""]
 
-                particular_product = len(unique_recipes) == unique_product_count
+                pattern_detected = len(unique_recipes) == unique_product_count
+                
+                # If pattern detected, collect details - ONLY VALID TANK TRUCKS
+                if pattern_detected and unique_recipes:
+                    product_trucks = location_df.filter(
+                        pl.col("recipe_name").is_not_null()
+                    ).select([
+                        "truck_number_clean",
+                        "load_date",
+                        "recipe_name"
+                    ]).unique()
+                    
+                    for truck_row in product_trucks.iter_rows(named=True):
+                        truck = truck_row.get("truck_number_clean")
+                        load_date = truck_row.get("load_date")
+                        recipe = truck_row.get("recipe_name")
+                        
+                        if not truck:
+                            continue
+                        
+                        # Filter: Skip PROVER (starts with P, no digits) and DG trucks
+                        is_prover = truck.startswith('P') and not any(c.isdigit() for c in truck)
+                        is_dg = 'DG' in truck
+                        
+                        # Validate proper vehicle registration format (must have both letters AND digits)
+                        has_letters = any(c.isalpha() for c in truck)
+                        has_digits = any(c.isdigit() for c in truck)
+                        is_valid_vehicle_format = has_letters and has_digits
+                        
+                        # Only include valid tank trucks (vehicle registration format)
+                        if is_prover or is_dg or not is_valid_vehicle_format:
+                            continue
+                        
+                        particular_product_details.append({
+                            "truck_number": truck,
+                            "date": str(load_date),
+                            "recipe_name": recipe
+                        })
+                    
+                    # Only set flag to true if we have valid truck details
+                    particular_product = len(particular_product_details) > 0
 
-            # 4. Check for bay assignments
             location_trucks_df = location_df.select(["truck_number_clean", "load_date"]).unique()
 
             assigned_at_particular_bay = False
@@ -2529,8 +2665,11 @@ async def location_wise_total_loaded_qty(data):
                     "prover": row.get("prover", 0)
                 },
                 "local_loading_repeated": local_loading_repeated,
+                "local_loading_repeated_details": local_loading_repeated_details if local_loading_repeated else None,
                 "particular_time_of_day": particular_time_of_day,
+                "particular_time_of_day_details": particular_time_of_day_details if particular_time_of_day else None,
                 "particular_product": particular_product,
+                "particular_product_details": particular_product_details if particular_product else None,
                 "assigned_at_particular_bay": assigned_at_particular_bay,
                 "indent_request_details": indent_details if indent_details else None
             })
