@@ -1157,14 +1157,14 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             pi_score.extend([
                 {
                     'name': 'Pressurized Hydrant Line',
-                    'score': 2.5,
-                    'weightage': 2.5,
+                    'score': 5.0,
+                    'weightage': 5.0,
                     'module': module_name
                 },
                 {
                     'name': 'Jockey Pump',
-                    'score': 2.5,
-                    'weightage': 2.5,
+                    'score': 5.0,
+                    'weightage': 5.0,
                     'module': module_name
                 }
             ])
@@ -1176,8 +1176,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
                         if not device_id:
                             # No device_id, assign full scores
-                            pressure_score = 2.5
-                            jockey_score = 2.5
+                            pressure_score = 5.0
+                            jockey_score = 5.0
                         else:
                             alarms_data = fetch_alarm_data(device_id)
 
@@ -1194,8 +1194,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                                 elif device_type == 'Jockey Alarm' and interlock_name == 'Jockey Pump not in Auto Remote' and status == 'ACTIVE_UNACK':
                                     jockey_alarm_active = True
 
-                            pressure_score = 0.0 if hydrant_alarm_active else 2.5
-                            jockey_score = 0.0 if jockey_alarm_active else 2.5
+                            pressure_score = 0.0 if hydrant_alarm_active else 5.0
+                            jockey_score = 0.0 if jockey_alarm_active else 5.0
 
                         module_name = rules.get('name', '')
 
@@ -1203,13 +1203,13 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                             {
                                 'name': 'Pressurized Hydrant Line',
                                 'score': pressure_score,
-                                'weightage': 2.5,
+                                'weightage': 5.0,
                                 'module': module_name
                             },
                             {
                                 'name': 'Jockey Pump',
                                 'score': jockey_score,
-                                'weightage': 2.5,
+                                'weightage': 5.0,
                                 'module': module_name
                             }
                         ])
