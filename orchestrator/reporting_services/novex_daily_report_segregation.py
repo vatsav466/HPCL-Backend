@@ -133,7 +133,7 @@ async def publish_daily_novex_status_email():
         to_recipients=["dramarao@hpcl.in"],
         subject="Novex Daily Report: SOD",
         cc_recipients=["subodh@hpcl.in","SOD.OPNS.HQO@hpcl.in","jays@hpcl.in","rvaid@hpcl.in","gauravyadav1@hpcl.in","Diwakar.Kumar@hpcl.in"],
-        bcc_recipients=["cvmallinath@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
+        bcc_recipients=["cvmallinath@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in"],
         notification_data=status_data,
         inline_images={
             "monthly_score_path_sod": f"{status_data.get('sod_monthly_score_path')}",
