@@ -593,11 +593,14 @@ vts_query = {
                             """,
     "emlock_open": """ 
                     SELECT 
-                        (COUNT(*) FILTER (WHERE swipeoutl1 != 'true') +
-                        COUNT(*) FILTER (WHERE swipeoutl2 != 'true')) as emlock_open
+                    COUNT(DISTINCT invoicenumber) FILTER (
+                       WHERE swipeoutl1 != 'true' OR swipeoutl2 != 'true'
+                     ) 
+                    as emlock_open
                     FROM vts_tripauditmaster
-                    WHERE 1=1
-                    """,                    
+                    WHERE invoicenumber != 'null' and invoicenumber != ''
+                    """,   
+                                     
     "all_violations" : [   
                             "route_deviation_count_orig",
                             "stoppage_violations_count",
