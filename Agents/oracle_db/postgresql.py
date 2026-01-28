@@ -360,7 +360,7 @@ class Postgresql:
             # if table_db_name == 'host_unauthorised_flow':
             #     processed_data = [x for x in processed_data if x['nettotalizer'] > 0]
 
-            if table_db_name in ['host_mfm_factor', 'host_sick_tts']:
+            if table_db_name in ['host_mfm_factor','host_sick_tts']:
                 for record in processed_data:
                     for key in model.Config.upsert_keys:
                         if record.get(key) is None or record.get(key) == '':
