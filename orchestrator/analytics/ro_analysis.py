@@ -1,6 +1,7 @@
 import urdhva_base
 import json
 import time
+import datetime
 import pytz
 import tempfile
 import requests
@@ -387,6 +388,39 @@ async def create_va_cleanliness_summary(data: hpcl_ceg_model.Alerts_Va_Cleanline
 
     return True, analytical_data
 
+def utc_to_ist(ts: str | None):
+    if not ts:
+        return None
+    IST = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+    dt = datetime.datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    return dt.astimezone(IST)
+
+def extract_block_details(alert_history: list):
+    block_time = None
+    unblock_time = None
+
+    for event in alert_history:
+        action = event.get("action_type")
+        action_msg = event.get("action_msg", "")
+
+        if action_msg in ["Outlet Not Communicating"]:
+            return None, None, None
+
+        if action == "Blocked" and not block_time:
+            block_time = utc_to_ist(event.get("processed_time"))
+
+        elif action == "UnBlocked" and not unblock_time:
+            unblock_time = utc_to_ist(event.get("processed_time"))
+
+    # Calculate duration
+    block_duration_minutes = None
+    if block_time and unblock_time:
+        block_duration_minutes = int(
+            (unblock_time - block_time).total_seconds() / 60
+        )
+
+    return block_time, unblock_time, block_duration_minutes
+
 
 async def generate_va_download_excel_report(data: hpcl_ceg_model.Alerts_Download_Excel_ReportParams):
     query_extension = ["bu='RO'"]
@@ -414,7 +448,8 @@ async def generate_va_download_excel_report(data: hpcl_ceg_model.Alerts_Download
         {"alert_status": "Alert Status"},
         {"block_status": "Block Status"},
         {"image_uploaded": "Image Uploaded"},
-        {"created_at": "Alert Created Date"}
+        {"created_at": "Alert Created Date"},
+        {"alert_history": "Alert History"}
     ]
     keys_required = ", ".join(list(rec.keys())[0] for rec in key_mapping)
     query = (f"SELECT {keys_required} from alerts where "
@@ -422,6 +457,21 @@ async def generate_va_download_excel_report(data: hpcl_ceg_model.Alerts_Download
     resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
     if not resp['data']:
         return "No Data Found"
+    
+    for row in resp['data']:
+        alert_history = row.get("alert_history", [])
+        block_time, unblock_time, block_duration = extract_block_details(alert_history)
+        row["block_time"] = block_time.strftime("%Y-%m-%d %H:%M:%S") if block_time else ""
+        row["unblock_time"] = unblock_time.strftime("%Y-%m-%d %H:%M:%S") if unblock_time else ""
+        row["block_duration_minutes"] = block_duration if block_duration is not None else ""
+    
+
+    key_mapping.extend([
+        {"block_time": "Block Time (IST)"},
+        {"unblock_time": "Unblock Time (IST)"},
+        {"block_duration_minutes": "Block Duration (Minutes)"}
+    ])
+
     # Convert mapping to dict (old -> new)
     rename_map = {
         old: new
@@ -440,6 +490,9 @@ async def generate_va_download_excel_report(data: hpcl_ceg_model.Alerts_Download
 
     # Reorder columns (only those that exist)
     df = df.select([col for col in ordered_columns if col in df.columns])
+
+    # Drop alert_history column
+    df = df.drop("Alert History")
 
     # Write to Excel
     with tempfile.NamedTemporaryFile(
