@@ -130,7 +130,9 @@ async def publish_daily_novex_status_email():
     )
     await send_notification(
         template_name="seg4.html",
-        to_recipients=["dramarao@hpcl.in"],
+        to_recipients=["dramarao@hpcl.in","CZ.OND.IC@hpcl.in","ECZ.OND.IC@hpcl.in","EZ.OND.IC@hpcl.in","NCZ.OND.IC@hpcl.in",
+                       "NFZ.OND.IC@hpcl.in","NWF.OND.IC@hpcl.in","NWZ.OND.IC@hpcl.in","NZ.OND.IC@hpcl.in","SCRZ.OND.IC@hpcl.in",
+                       "SWZ.OND.IC@hpcl.in","SZ.OND.IC@hpcl.in","WZ.OND.IC@hpcl.in","raokvj@hpcl.in"],
         subject="Novex Daily Report: SOD",
         cc_recipients=["subodh@hpcl.in","SOD.OPNS.HQO@hpcl.in","jays@hpcl.in","rvaid@hpcl.in","gauravyadav1@hpcl.in","Diwakar.Kumar@hpcl.in"],
         bcc_recipients=["cvmallinath@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in"],
