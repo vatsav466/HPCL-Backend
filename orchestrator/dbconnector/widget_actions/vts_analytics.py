@@ -3681,32 +3681,51 @@ class VTSAnalyticsActions:
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers=headers
                 )
-
-            clicked_invoice_no = payload.get("clicked_invoice_no")
-            if table_name == "completed_trips_risk_score" and clicked_invoice_no:
-                safe_invoice = str(clicked_invoice_no).replace("'", "''")
-                combo_query = f"SELECT * FROM public.combo_alerts WHERE invoice_no = '{safe_invoice}'"
-                combo_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=combo_query, skip_total=True)
-                combo_alerts_data = combo_resp.get('data', [])
-                return {
-                    "status": True,
-                    "message": f"Combo alerts for invoice {clicked_invoice_no}",
-                    "data": combo_alerts_data,
-                    "total_records": len(combo_alerts_data)
+            
+            CLICK_HANDLERS = {
+                "completed_trips_risk_score": {
+                    "payload_key": "clicked_invoice_no",
+                    "table": "public.combo_alerts",
+                    "column": "invoice_no",
+                    "message_template": "Combo alerts for invoice {}"
+                },
+                "cluster_master": {
+                    "payload_key": "clicked_cluster_id",
+                    "table": "public.clusterwise_event",
+                    "column": "cluster_id",
+                    "message_template": "Cluster events for cluster_id {}"
+                },
+                "transporter_risk_score": {
+                    "payload_key": "clicked_transporter_code",
+                    "table": "public.transporter_risk_score_daily_master",
+                    "column": "transporter_code",
+                    "message_template": "Transporter events for transporter_code {}"
+                },
+                "tt_risk_score": {
+                    "payload_key": "clicked_tt_number",
+                    "table": "public.tt_risk_score_daily_master",
+                    "column": "tt_number",
+                    "message_template": "Transporter events for tt_number {}"
                 }
-
-            clicked_cluster_id = payload.get("clicked_cluster_id")
-            if table_name == "cluster_master" and clicked_cluster_id:
-                safe_cluster_id = str(clicked_cluster_id).replace("'", "''")
-                cluster_query = f"SELECT * FROM public.clusterwise_event WHERE cluster_id = '{safe_cluster_id}'"
-                cluster_resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=cluster_query, skip_total=True)
-                cluster_events_data = cluster_resp.get('data', [])
-                return {
-                    "status": True,
-                    "message": f"Cluster events for cluster_id {clicked_cluster_id}",
-                    "data": cluster_events_data,
-                    "total_records": len(cluster_events_data)
-                }
+            }
+            if table_name in CLICK_HANDLERS:
+                config = CLICK_HANDLERS[table_name]
+                clicked_value = payload.get(config["payload_key"])
+                
+                if clicked_value:
+                    safe_value = str(clicked_value).replace("'", "''")
+                    query = f"SELECT * FROM {config['table']} WHERE {config['column']} = '{safe_value}'"
+                    
+                    response = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, skip_total=True)
+                    data = response.get('data', [])
+                    
+                    return {
+                        "status": True,
+                        "message": config["message_template"].format(clicked_value),
+                        "data": data,
+                        "total_records": len(data)
+                    }
+                
             return {
                 "status": True,
                 "message": f"Successfully fetched {len(resp['data'])} records from {table_name}",
