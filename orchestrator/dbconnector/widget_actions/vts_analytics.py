@@ -2090,6 +2090,19 @@ class VTSAnalyticsActions:
                 pl.col("transporter_name").fill_null("Unknown")
             ])
 
+            if payload.get("zone"):
+                merged_df = merged_df.filter(pl.col("zone") == payload["zone"])
+
+            if payload.get("location_name"):
+                merged_df = merged_df.filter(
+                    pl.col("location_name") == payload["location_name"]
+                )
+
+            if payload.get("transporter_name"):
+                merged_df = merged_df.filter(
+                    pl.col("transporter_name") == payload["transporter_name"]
+                )
+
             if payload.get("transporter_name"):
                 group_col = "tt_number"
             elif payload.get("location_name"):
