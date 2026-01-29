@@ -117,12 +117,20 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
             
             if not is_onboard:
+                # module_scores[module_name] = {
+                #     "name": module_name,
+                #     "score": module["weightage"],   # full score
+                #     "weightage": module["weightage"],
+                #     "results": [],
+                #     "reason": f"location_onboard = {raw_value} → full score assigned"
+                # }
+
                 module_scores[module_name] = {
                     "name": module_name,
-                    "score": module["weightage"],   # full score
+                    "score": 0,   # zero score
                     "weightage": module["weightage"],
                     "results": [],
-                    "reason": f"location_onboard = {raw_value} → full score assigned"
+                    "reason": f"location_onboard = {raw_value} → zero score assigned"
                 }
                 continue
 
