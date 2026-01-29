@@ -12,7 +12,7 @@ import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.notification_manager.notification_factory as notification_factory
-from orchestrator.reporting_services.reporting_helpers import get_alert_data, lpg_data, retail_data, sales_data, sod_data
+from orchestrator.reporting_services.reporting_helpers import get_alert_data, lpg_data, retail_data, sales_data, sod_data, ro_va_cleanliness
 
 
 WRITE_TO_DB = False
@@ -83,6 +83,8 @@ async def publish_daily_novex_status_email():
     status_data.update(await sod_data.get_tas_path())
     status_data.update(await sod_data.get_fault_and_maintenance())
     status_data.update(await sod_data.get_parameters_summary())
+    #status_data.update(await retail_data.get_ro_ratings())
+    status_data.update(ro_va_cleanliness.main())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data.get_alert_data(alert_section))
@@ -145,6 +147,16 @@ async def publish_daily_novex_status_email():
         attachments = [status_data.get('zone_wise_pdf_path'),status_data.get('tas_day_wise_trend_exl_path'),
                        status_data.get('tas_va_path'),status_data.get('tas_emlock_path'),status_data.get('tas_tas_path')]
     )
+
+    await send_notification(
+        template_name="ro_va_cleanliness.html",
+        to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
+        subject=f"Clean Toilet Picture upload | MIS | Date : {status_data.get('yesterday_date')}",
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com"],
+        notification_data=status_data
+    )
+
     await send_notification(
         template_name="seg5.html",
         to_recipients=["sreedhar.maddipati@algofusiontech.com"],
