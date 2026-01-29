@@ -18,10 +18,16 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
             rpt = {}
         
         if rpt and rpt.get('username','') in ['admin','superadmin']:
-            return False, "Not allowed to perform this operation"
+            return {
+                "success": False, 
+                "message": "Not allowed to perform this operation"
+            }
         
         if data.data.username in ['admin','superadmin']:
-            return False, "Not allowed to perform this operation"
+            return {
+                "success": False, 
+                "message": "Not allowed to perform this operation"
+            }
 
         if not isinstance(data.data,dict):
             data = data.data.__dict__
@@ -30,12 +36,16 @@ async def usermaster_create_user(data: Usermaster_Create_UserParams):
                 """
         user_data = await Users.get_all(urdhva_base.QueryParams(q=query), resp_type="plain")
         if user_data["data"]:
-            return False, "User Already Exists"
-        
+            return {
+                "success": False, 
+                "message": "User Already Exists"
+            }
 
         if not data.get('is_ad_user') and not data.get('password'):
-            return False, "Not a Valid ADUser"
-        
+            return {
+                "success": False, 
+                "message": "Not a Valid ADUser"
+            }
         
         user_response = await UsersCreate(**{
             "username": data.get('username',''),
@@ -105,7 +115,10 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
             rpt = {}
         
         if rpt and rpt.get('username','') in ['admin','superadmin']:
-            return False, "Not allowed to perform this operation"
+            return {
+                "success": False, 
+                "message": "Not allowed to perform this operation"
+            }
         
         if not isinstance(data.data,dict):
             data = data.data.__dict__
@@ -115,7 +128,10 @@ async def usermaster_update_user(data: Usermaster_Update_UserParams):
 
         user_data = await Users.get_all(urdhva_base.QueryParams(q=query), resp_type="plain")
         if not user_data["data"]:
-            return False, "User does not exists to modify"
+            return {
+                "success": False, 
+                "message": "User does not exists to modify"
+            }
         
         data_dict = data
         data_dict.update({"id": user_data['data'][0]['id']})
@@ -200,7 +216,10 @@ async def usermaster_delete_user(data: Usermaster_Delete_UserParams):
             rpt = {}
 
         if rpt and rpt.get('username','') not in ['admin','superadmin','dnc_user']:
-            return False, "Not allowed to perform this operation"
+            return {
+                "success": False, 
+                "message": "Not allowed to perform this operation"
+            }
         
         if not isinstance(data,dict):
             data = data.__dict__
