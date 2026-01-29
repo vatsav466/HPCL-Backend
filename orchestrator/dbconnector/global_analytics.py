@@ -7262,7 +7262,6 @@ class GlobalAnalytics:
             ])
 
             query = "\n".join(query_parts)
-            print("query -->", query)
 
             # Execute SQL
             try:
