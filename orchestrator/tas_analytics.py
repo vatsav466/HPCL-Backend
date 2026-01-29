@@ -2689,8 +2689,8 @@ async def top_five_alerts(data):
     alert_query = "alert_section = 'TAS'"
 
     alert_query += (
-        f" AND created_at::date BETWEEN "
-        f"'{data.start_date}' AND '{data.end_date}'"
+        f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
+        " AND interlock_name NOT IN ('BCU Permissive Off', 'BCU Permissive Off_Fail')"
     )
 
     if data.alert_status:
@@ -2923,6 +2923,9 @@ async def unauthorized_flow_dashboard(data):
 
     if data.alert_status:
         alert_query += f" AND alert_status = '{data.alert_status}'"
+    
+    if data.zone:
+        alert_query += f" AND zone = '{data.zone}'"
 
     if data.alert_severity:
         if isinstance(data.alert_severity, list):
@@ -2944,6 +2947,7 @@ async def unauthorized_flow_dashboard(data):
     alert_params.fields = [
         "location_name",
         "device_name",
+        "zone",
         "created_at"
     ]
 
@@ -2963,9 +2967,9 @@ async def unauthorized_flow_dashboard(data):
     repeated_df = (
         df
         .with_columns(pl.col("created_at").dt.date().alias("date"))
-        .group_by(["location_name", "device_name", "date"])
+        .group_by(["location_name", "zone", "device_name", "date"])
         .agg(pl.count().alias("cnt"))
-        .filter(pl.col("cnt") > 2)
+        .filter(pl.col("cnt") >= 2)
     )
 
     repeated_unauthorized_flow_count = repeated_df.height
@@ -2973,19 +2977,24 @@ async def unauthorized_flow_dashboard(data):
     # LOCATION LEVEL AGGREGATION (NO TOP LIMIT)
     locations_df = (
         repeated_df
-        .group_by("location_name")
+        .group_by(["location_name", "zone"])
         .agg(pl.sum("cnt").alias("count"))
         .sort("count", descending=True)
     )
+
 
     locations = []
 
     for loc in locations_df.to_dicts():
         location = loc["location_name"]
+        zone = loc["zone"]
 
         devices = (
             repeated_df
-            .filter(pl.col("location_name") == location)
+            .filter(
+            (pl.col("location_name") == location) &
+            (pl.col("zone") == zone)
+        )
             .select(["device_name", "date", "cnt"])
             .sort(["device_name", "date"])
             .to_dicts()
@@ -3003,6 +3012,7 @@ async def unauthorized_flow_dashboard(data):
         locations.append({
             "location_name": location,
             "count": loc["count"],
+            "zone": zone,               
             "devices": formatted_devices
         })
 
@@ -3015,8 +3025,7 @@ async def unauthorized_flow_dashboard(data):
                 "locations": locations
             }
     }
-
-
+    
 async def host_bay_reassignment_alert(data):
 
     # 1. BUILD QUERY
@@ -3048,13 +3057,13 @@ async def host_bay_reassignment_alert(data):
     params.fields = [
         "sap_id",
         "truck_number",
-        "fan_number",          # REQUIRED for DISTINCT count
+        "fan_number",
         "reassigned_bay",
         "location_name",
         "zone",
         "date"
     ]
-
+    
     # 3. FETCH DATA
     resp = await hpcl_ceg_model.HostBayReAssignment.get_all(
         params,
@@ -3099,79 +3108,66 @@ async def host_bay_reassignment_alert(data):
             }
         }
 
-    # 6. LOCATION LEVEL AGGREGATION (DISTINCT FAN NUMBER COUNT)
-    location_df = (
-        df.group_by(["location_name", "date", "sap_id"])
-          .agg([
-              pl.col("fan_number").n_unique().alias("reassign_count"),
-              pl.first("zone").alias("zone"),
-              pl.col("reassigned_bay").unique().alias("reassigned_bays"),
-              pl.col("fan_number").unique().alias("fan_numbers")
-          ])
-          .sort("reassign_count", descending=True)
-
+    # 6. IDENTIFY GROUPS WITH DISTINCT FAN_NUMBER >= 2
+    valid_groups = (
+    df.group_by([
+        "sap_id",
+        "location_name",
+        "date",
+        "reassigned_bay",
+        "truck_number"
+    ])
+    .agg(
+        pl.col("fan_number")
+          .n_unique()
+          .alias("distinct_fan_count")
     )
+    .filter(pl.col("distinct_fan_count") >= 2)
+)
 
-    if location_df.is_empty():
+    if valid_groups.is_empty():
         return {
             "status": "success",
-            "message": "No location exceeded reassignment threshold",
+            "message": "No repeated bay reassignment found (distinct fan count < 2)",
             "data": {
                 "location_based_reassignment": []
             }
         }
 
-    # 7. TRUCK LEVEL AGGREGATION (UNCHANGED – NESTED VIEW)
-    truck_df = (
-        df.group_by(["location_name", "date", "sap_id", "truck_number"])
-        .agg([
-            pl.col("fan_number").n_unique().alias("reassign_count"),
-            pl.col("reassigned_bay").unique().alias("reassigned_bays"),
-            pl.col("fan_number").unique().alias("fan_numbers")
-        ])
+    # 7. FETCH RAW RECORDS FOR THOSE GROUPS
+    final_df = (
+    df.join(
+        valid_groups,
+        on=[
+            "sap_id",
+            "location_name",
+            "date",
+            "reassigned_bay",
+            "truck_number"
+        ],
+        how="inner"
     )
+    .unique(subset=[
+        "sap_id",
+        "location_name",
+        "date",
+        "reassigned_bay",
+        "truck_number",
+        "fan_number"
+    ])
+    .sort(["date", "reassigned_bay"])
+)
+    # 8. BUILD RESPONSE (RAW ROWS)
+    response = final_df.to_dicts()
 
-    # 8. BUILD NESTED LOCATION → TRUCK RESPONSE
-    response = []
-
-    for loc in location_df.to_dicts():
-
-        trucks = (
-            truck_df
-            .filter(
-                (pl.col("location_name") == loc["location_name"]) &
-                (pl.col("date") == loc["date"]) &
-                (pl.col("sap_id") == loc["sap_id"])
-            )
-            .select([
-                "truck_number",
-                "reassign_count",
-                "reassigned_bays",
-                "fan_numbers"
-            ])
-            .to_dicts()
-        )
-
-        response.append({
-            "sap_id": loc["sap_id"],
-            "location_name": loc["location_name"],
-            "zone": loc["zone"],
-            "date": loc["date"],
-            "reassign_count": loc["reassign_count"],   # DISTINCT FAN COUNT
-            "reassigned_bays": loc["reassigned_bays"],
-            "fan_numbers": loc["fan_numbers"],
-            "trucks": trucks
-        })
-
-    # 9. FINAL RESPONSE (ONLY LOCATION BASED)
+    # 9. FINAL RESPONSE
     return {
         "status": "success",
-        "message": "Host bay reassignment analysis completed successfully",
+        "message": "Repeated bay reassignment with distinct fan_number >= 2 fetched successfully",
         "data": {
             "location_based_reassignment": response
         }
     }
-
 
 
 AnalyticsModelMapping = {
