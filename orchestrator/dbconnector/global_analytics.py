@@ -7214,7 +7214,7 @@ class GlobalAnalytics:
                 return next((f.value for f in filters if key_part in f.key), '')
 
             zone_filter = get_filter_value("zone")
-            plant_filter = get_filter_value("plant")
+            plant_filter = get_filter_value("sap_id")
             bcu_number = get_filter_value("bcu_number")
 
             # Date filter setup
@@ -7255,7 +7255,8 @@ class GlobalAnalytics:
                 "FROM mfmfactor h",
                 "LEFT JOIN alerts a ON (a.device_name = h.mfm_number OR a.device_name = h.bcu_number OR a.device_name = CONCAT(h.mfm_number, '_', h.bcu_number))",
                 "    AND a.interlock_name = 'MFM K Factor Change'",
-                "    AND DATE(a.created_at) = h.created_date",
+                "     AND a.sap_id = h.sap_id",
+               # "    AND DATE(a.created_at) = h.created_date",
                 "GROUP BY h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number, h.mfm_number",
                 "HAVING COUNT(a.id) > 0",
                 "ORDER BY h.created_date DESC, alert_count DESC"
