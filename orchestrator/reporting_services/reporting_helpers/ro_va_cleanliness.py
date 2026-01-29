@@ -161,7 +161,14 @@ def main():
             "% ROs with Clean image"
         ])
 
-        return {"ro_va_cleanliness_df": df}
+        df = df.rename({
+            "Total Outlets": "Total Outlets (Active)"
+        })
+
+        return {
+            "ro_va_cleanliness_df": df,
+            "ro_va_cleanliness_rows": df.to_dicts()
+        }
     
     except Exception as e:
         print("Error occurred:")

@@ -54,10 +54,10 @@
 </head>
 
 <body>
-    <h2>Novex Today - Daily Report</h2>
+    <h2>RO Toilet Cleanliness - Daily Report</h2>
     <p><strong>Date:</strong> {{today_date}} | <strong>Day:</strong> {{today_week}}</p>
     <hr>
-    <h4>1. The Zone wise MIS of Toilet cleanliness picture upload at Retail outlets is as under:</h4>
+    <h3>Zone wise MIS of Toilet cleanliness picture upload at Retail outlets:</h3>
     <table>
         <thead>
             <tr>
@@ -67,8 +67,8 @@
             </tr>
         </thead>
         <tbody>
-            {% for row in ro_va_cleanliness_df.to_dict(orient='records') %}
-            <tr>
+            {% for row in ro_va_cleanliness_rows %}
+            <tr {% if row['Zone'] == 'TOTAL' %}style="font-weight:bold; background-color:#f2f2f2;"{% endif %}>
                 {% for col in ro_va_cleanliness_df.columns %}
                     <td>{{ row[col] }}</td>
                 {% endfor %}
