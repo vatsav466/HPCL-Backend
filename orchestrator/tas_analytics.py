@@ -744,7 +744,7 @@ async def equipment_location_wise_count(data):
             equipment_types = [equipment_name_str.upper()]
     else:
         # If no equipment_name provided, process all five
-        equipment_types = DEFAULT_EQUIPMENT_TYPES.copy()
+        equipment_types = tas_queries.DEFAULT_EQUIPMENT_TYPES.copy()
     
     final_combined_result = []
     
@@ -2428,34 +2428,29 @@ async def location_wise_total_loaded_qty(data):
             local_loading_repeated_details = []
             
             if "hour_window" in location_df.columns:
+                # Count trucks per hour window
                 trucks_per_hour = (
                     location_df.group_by("hour_window")
-                    .agg(pl.count().alias("truck_count"))
+                    .agg([
+                        pl.count().alias("truck_count"),
+                        pl.col("truck_number_clean").alias("trucks"),
+                        pl.col("created_at_dt").alias("timestamps")
+                    ])
                 )
-                if not trucks_per_hour.is_empty():
-                    max_trucks_in_hour = trucks_per_hour.select(pl.max("truck_count")).item()
-                    pattern_detected = max_trucks_in_hour >= min_trucks_per_hour
-                    
-                    # If pattern detected, collect details
-                    if pattern_detected:
-                        # Find the hour windows that exceed threshold
-                        qualifying_hours = trucks_per_hour.filter(
-                            pl.col("truck_count") >= min_trucks_per_hour
-                        ).select("hour_window").to_series().to_list()
+                
+                # Filter to get ONLY hours with 4+ trucks
+                qualifying_hours_df = trucks_per_hour.filter(
+                    pl.col("truck_count") >= min_trucks_per_hour
+                )
+                
+                if not qualifying_hours_df.is_empty():
+                    # Process each qualifying hour
+                    for hour_row in qualifying_hours_df.iter_rows(named=True):
+                        trucks_list = hour_row.get("trucks", [])
+                        timestamps_list = hour_row.get("timestamps", [])
                         
-                        # Get truck details for those hours
-                        repeated_trucks = location_df.filter(
-                            pl.col("hour_window").is_in(qualifying_hours)
-                        ).select([
-                            "truck_number_clean",
-                            "load_date"
-                        ]).unique()
-                        
-                        # Enrich with user_id from indent_data - ONLY VALID TANK TRUCKS
-                        for truck_row in repeated_trucks.iter_rows(named=True):
-                            truck = truck_row.get("truck_number_clean")
-                            load_date = truck_row.get("load_date")
-                            
+                        # Process each truck in this hour
+                        for i, truck in enumerate(trucks_list):
                             if not truck:
                                 continue
                             
@@ -2472,17 +2467,23 @@ async def location_wise_total_loaded_qty(data):
                             if is_prover or is_dg or not is_valid_vehicle_format:
                                 continue
                             
-                            key = (truck, str(load_date))
-                            user_id = indent_data.get(key, None)
-                            
-                            local_loading_repeated_details.append({
-                                "date": str(load_date),
-                                "truck_number": truck,
-                                "user_id": user_id
-                            })
-                        
-                        # Only set flag to true if we have valid truck details
-                        local_loading_repeated = len(local_loading_repeated_details) > 0
+                            # Get timestamp
+                            created_at = timestamps_list[i] if i < len(timestamps_list) else None
+                            if created_at:
+                                date_with_time = created_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(created_at, 'strftime') else str(created_at)
+                                
+                                local_loading_repeated_details.append({
+                                    "date_with_time": date_with_time,
+                                    "truck_number": truck
+                                })
+                    
+                    # Sort by date_with_time
+                    if local_loading_repeated_details:
+                        local_loading_repeated_details = sorted(
+                            local_loading_repeated_details, 
+                            key=lambda x: x['date_with_time']
+                        )
+                        local_loading_repeated = True
 
             particular_time_of_day = False
             particular_time_of_day_details = []
