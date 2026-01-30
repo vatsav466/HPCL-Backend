@@ -2141,3 +2141,27 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await NozzleSales.get_all(params, skip_secrets=True)
 
+
+@router.post('/tasfaulty', response_model=TasFaulty, tags=['TasFaulty'])
+async def create(inputObj: TasFaultyCreate):
+    return await inputObj.create()
+
+
+@router.put('/tasfaulty', response_model=TasFaulty, tags=['TasFaulty'])
+async def update(inputObj: TasFaulty):
+    return await inputObj.modify()
+
+
+@router.get('/tasfaulty/{id}', response_model=TasFaulty, tags=['TasFaulty'])
+async def get(id: str):
+    return await TasFaulty.get(id, skip_secrets=True)
+
+
+@router.get('/tasfaulty', response_model=TasFaultyGetResp, tags=['TasFaulty'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TasFaulty.get_all(params, skip_secrets=True)
+
+
+@router.delete('/tasfaulty/{id}', tags=['TasFaulty'])
+async def delete(id: str):
+    return await TasFaulty.delete(id)

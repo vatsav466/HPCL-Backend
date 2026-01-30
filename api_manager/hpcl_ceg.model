@@ -3993,3 +3993,43 @@ Model NozzleSales {
         crud_operations='read'
     }
 }
+
+Model TasFaulty{
+    sap_id  str
+    name optional str
+    device_type optional str
+    zone optional str
+    equipment_name optional str
+    user_remarks optional str
+    vendor_remarks optional str
+    workflow_instance_id str
+    faulty optional datetime
+    certificate optional str
+    status optional str
+
+    Action=> tas_faulty_create {
+        sap_id  str
+        name optional str
+        device_type optional str
+        zone optional str
+        equipment_name optional str
+        user_remarks optional str
+        faulty optional datetime
+        certificate optional str
+        status optional str
+    }
+
+    Action=> update_faulty{
+        transaction_id str
+        vendor_remarks  str
+        resolved bool
+
+    }
+
+    Action=> get_info{
+        sap_id optional str
+        device_type optional str
+        equipment_name optional str
+    }
+
+}

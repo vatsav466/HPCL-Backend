@@ -10924,3 +10924,107 @@ class NozzleSalesGetResp(pydantic.BaseModel):
     data: typing.List[NozzleSales]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class TasFaultySchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_faulty'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[typing.Optional[str]] = mapped_column("name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_type: Mapped[typing.Optional[str]] = mapped_column("device_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    user_remarks: Mapped[typing.Optional[str]] = mapped_column("user_remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    vendor_remarks: Mapped[typing.Optional[str]] = mapped_column("vendor_remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    workflow_instance_id: Mapped[str] = mapped_column("workflow_instance_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    faulty: Mapped[typing.Optional[datetime.datetime]] = mapped_column("faulty", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    certificate: Mapped[typing.Optional[str]] = mapped_column("certificate", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class TasFaultyCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_faulty'
+    
+    sap_id: str
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+    user_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    vendor_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_instance_id: str
+    faulty: typing.Optional[datetime.datetime] | None = None
+    certificate: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasFaultySchema
+        upsert_keys = []
+
+
+class TasFaulty(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_faulty'
+    
+    sap_id: typing.Optional[str] | None = None
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+    user_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    vendor_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_instance_id: typing.Optional[str] | None = None
+    faulty: typing.Optional[datetime.datetime] | None = None
+    certificate: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasFaultySchema
+        upsert_keys = []
+
+
+class TasFaultyGetResp(pydantic.BaseModel):
+    data: typing.List[TasFaulty]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Tasfaulty_Tas_Faulty_CreateParams(pydantic.BaseModel):
+    sap_id: str
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+    user_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    faulty: typing.Optional[datetime.datetime] | None = None
+    certificate: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Tasfaulty_Update_FaultyParams(pydantic.BaseModel):
+    transaction_id: str
+    vendor_remarks: str
+    resolved: bool
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Tasfaulty_Get_InfoParams(pydantic.BaseModel):
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
