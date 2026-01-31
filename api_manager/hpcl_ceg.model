@@ -811,7 +811,7 @@ Model Alerts {
 
     // Location Details
     district optional str
-    zone optional str
+    zone optional index_field str
     region optional str
     state optional str
     city optional str
@@ -824,8 +824,8 @@ Model Alerts {
     r1_time optional datetime
     r2_time optional datetime
     r3_time optional datetime
-    indent_status optional IndentStatus
-    product_code optional str
+    indent_status optional index_field IndentStatus
+    product_code optional index_field str
     indent_no optional str
     dealer_id optional str
     workflow_instance_id optional str
@@ -837,10 +837,10 @@ Model Alerts {
     // For Indent Rerouting
     servicing_plant_id optional str
     servicing_plant_name optional str
-    progress_rate optional int
+    progress_rate optional index_field int
     category optional str
     indent_raised_date optional datetime
-    dry_out_in_days optional str
+    dry_out_in_days optional index_field str
     origin_altid optional str
     alert_message optional str
     external_timestamp optional datetime_no_zone
@@ -862,7 +862,7 @@ Model Alerts {
     vehicle_blocked_start_date optional datetime
     vehicle_blocked_end_date optional datetime
     vehicle_unblocked_date optional datetime
-    mark_as_false optional bool
+    mark_as_false optional index_field bool
     vts_alert_history_ids optional list str
     action_on optional MakerChecker
     remarks_unblocked optional str
