@@ -106,7 +106,7 @@ async def publish_daily_novex_status_email():
         template_name="seg2.html",
         to_recipients=["abalaji@hpcl.in"],
         subject="Novex Daily Report: Retail",
-        cc_recipients=["anujjain@hpcl.in"],
+        cc_recipients=["anujjain@hpcl.in","dbasak@hpcl.in"],
         bcc_recipients=["shubhra.Narayan@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in"],
         notification_data=status_data,
         inline_images={
