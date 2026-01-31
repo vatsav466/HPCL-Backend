@@ -2175,9 +2175,12 @@ async def location_wise_total_loaded_qty(data):
         # Filter valid truck numbers (pattern: alphanumeric, at least 6 characters)
         # Valid pattern example: TS08UG9576
         df = df.with_columns([
-            pl.col("truck_number_clean").str.contains(r"^[A-Z0-9]{6,}$").alias("is_valid_truck")
-        ])
-
+            pl.when(
+                (pl.col("truck_number_clean").str.len_chars() >= 6) &
+                pl.col("truck_number_clean").str.contains(r"[A-Z]") &
+                pl.col("truck_number_clean").str.contains(r"[0-9]") &
+                pl.col("truck_number_clean").str.contains(r"^[A-Z0-9]+$")
+            ).then(True).otherwise(False).alias("is_valid_truck")])
         # Categorize truck types using config patterns
         prover_pattern = tas_queries.TRUCK_TYPE_PATTERNS["prover"]
         dg_pattern = tas_queries.TRUCK_TYPE_PATTERNS["dg"]
@@ -2444,12 +2447,17 @@ async def location_wise_total_loaded_qty(data):
                 )
                 
                 if not qualifying_hours_df.is_empty():
-                    # Process each qualifying hour
+                    # Collect ALL valid trucks from qualifying hours first
+                    temp_details = []
+                    seen_combinations = set()
+                    
                     for hour_row in qualifying_hours_df.iter_rows(named=True):
                         trucks_list = hour_row.get("trucks", [])
                         timestamps_list = hour_row.get("timestamps", [])
                         
-                        # Process each truck in this hour
+                        # First pass: collect valid trucks for THIS hour
+                        valid_trucks_in_hour = []
+                        
                         for i, truck in enumerate(trucks_list):
                             if not truck:
                                 continue
@@ -2467,20 +2475,50 @@ async def location_wise_total_loaded_qty(data):
                             if is_prover or is_dg or not is_valid_vehicle_format:
                                 continue
                             
-                            # Get timestamp
                             created_at = timestamps_list[i] if i < len(timestamps_list) else None
                             if created_at:
                                 date_with_time = created_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(created_at, 'strftime') else str(created_at)
+                                unique_key = (truck, date_with_time)
                                 
-                                local_loading_repeated_details.append({
-                                    "date_with_time": date_with_time,
-                                    "truck_number": truck
+                                valid_trucks_in_hour.append({
+                                    'truck': truck,
+                                    'created_at': created_at,
+                                    'date_with_time': date_with_time,
+                                    'unique_key': unique_key
+                                })
+                        
+                        # Count unique trucks in this hour (after filtering)
+                        unique_valid_trucks = len(set(t['unique_key'] for t in valid_trucks_in_hour))
+                        
+                        # Only process this hour if it has 3+ VALID trucks
+                        if unique_valid_trucks >= min_trucks_per_hour:
+                            for truck_info in valid_trucks_in_hour:
+                                unique_key = truck_info['unique_key']
+                                
+                                # Skip if already seen
+                                if unique_key in seen_combinations:
+                                    continue
+                                
+                                seen_combinations.add(unique_key)
+                                
+                                # Get loaded_qty
+                                loaded_qty = location_df.filter(
+                                    (pl.col("truck_number_clean") == truck_info['truck']) &
+                                    (pl.col("created_at_dt") == truck_info['created_at'])
+                                ).select("loaded_qty").to_series().to_list()
+                                
+                                qty_value = sum(loaded_qty) if loaded_qty else 0
+                                
+                                temp_details.append({
+                                    "date_with_time": truck_info['date_with_time'],
+                                    "truck_number": truck_info['truck'],
+                                    "loaded_qty": qty_value
                                 })
                     
-                    # Sort by date_with_time
-                    if local_loading_repeated_details:
+                    # Sort and set flag
+                    if temp_details:
                         local_loading_repeated_details = sorted(
-                            local_loading_repeated_details, 
+                            temp_details,
                             key=lambda x: x['date_with_time']
                         )
                         local_loading_repeated = True
@@ -2513,12 +2551,17 @@ async def location_wise_total_loaded_qty(data):
                                 pl.col("load_hour") == most_frequent_hour
                             ).select([
                                 "truck_number_clean",
-                                "created_at_dt"
+                                "created_at_dt",
+                                "load_date"
                             ]).unique()
+
+                            pattern_dates = []
+                            temp_details = []
                             
                             for truck_row in time_pattern_trucks.iter_rows(named=True):
                                 truck = truck_row.get("truck_number_clean")
                                 created_at = truck_row.get("created_at_dt")
+                                load_date = truck_row.get("load_date")
                                 
                                 if not truck or not created_at:
                                     continue
@@ -2543,9 +2586,12 @@ async def location_wise_total_loaded_qty(data):
                                     "truck_number": truck,
                                     "date_with_time": date_with_time
                                 })
+                                pattern_dates.append(load_date)
                             
                             # Only set flag to true if we have valid truck details
-                            particular_time_of_day = len(particular_time_of_day_details) > 0
+                            if temp_details and has_consecutive_dates(pattern_dates, min_days_for_pattern):
+                                particular_time_of_day_details = temp_details
+                                particular_time_of_day = True
 
             particular_product = False
             particular_product_details = []
@@ -2602,30 +2648,149 @@ async def location_wise_total_loaded_qty(data):
                     # Only set flag to true if we have valid truck details
                     particular_product = len(particular_product_details) > 0
 
-            location_trucks_df = location_df.select(["truck_number_clean", "load_date"]).unique()
-
+            # 4. assigned_at_particular_bay logic
             assigned_at_particular_bay = False
+            assigned_at_particular_bay_details = []
 
-            for truck_row in location_trucks_df.iter_rows(named=True):
-                truck = truck_row.get("truck_number_clean")
-                load_date = truck_row.get("load_date")
+            # Get valid trucks for this location with bay_number
+            location_trucks_with_bay = location_df.filter(
+                (pl.col("is_valid_truck") == True) &
+                (pl.col("truck_number_clean") != "") &
+                (pl.col("bay_number").is_not_null())
+            ).select([
+                "truck_number_clean",
+                "bay_number",
+                "bcu_number",
+                "created_at_dt",  # Include created_at with time instead of just load_date
+                "load_date"
+            ])
 
-                if not truck:
-                    continue
+            if not location_trucks_with_bay.is_empty():
+                # Clean bay_number - remove whitespaces and convert to uppercase
+                location_trucks_with_bay = location_trucks_with_bay.with_columns([
+                    pl.when(pl.col("bay_number").is_not_null())
+                    .then(
+                        pl.col("bay_number")
+                        .cast(pl.Utf8)
+                        .str.replace_all(r"\s+", "")  # Remove all whitespaces
+                        .str.to_uppercase()
+                    )
+                    .otherwise(pl.lit(""))
+                    .alias("bay_number_clean")
+                ])
+                
+                # Also clean bcu_number
+                location_trucks_with_bay = location_trucks_with_bay.with_columns([
+                    pl.when(pl.col("bcu_number").is_not_null())
+                    .then(
+                        pl.col("bcu_number")
+                        .cast(pl.Utf8)
+                        .str.replace_all(r"\s+", "")
+                        .str.to_uppercase()
+                    )
+                    .otherwise(pl.lit(""))
+                    .alias("bcu_number_clean")
+                ])
+                
+                # Filter out empty bay_numbers
+                location_trucks_with_bay = location_trucks_with_bay.filter(
+                    pl.col("bay_number_clean") != ""
+                )
+                
+                # Remove duplicates based on truck_number and created_at (with time)
+                location_trucks_with_bay = location_trucks_with_bay.unique(
+                    subset=["truck_number_clean", "created_at_dt"]
+                )
+                
+                if not location_trucks_with_bay.is_empty():
+                    # Group by bay_number to find bays with 2+ trucks
+                    bay_groups = (
+                        location_trucks_with_bay.group_by("bay_number_clean")
+                        .agg([
+                            pl.count().alias("truck_count"),
+                            pl.col("truck_number_clean").alias("trucks"),
+                            pl.col("bcu_number_clean").alias("bcus"),
+                            pl.col("created_at_dt").alias("timestamps"),
+                            pl.col("load_date").alias("dates")
+                        ])
+                        .filter(pl.col("truck_count") >= 2)  # Only bays with 2+ trucks
+                    )
+                    
+                    if not bay_groups.is_empty():
+                        # Collect details for all trucks at these particular bays
+                        temp_details = []
+                        
+                        for bay_row in bay_groups.iter_rows(named=True):
+                            bay_number = bay_row.get("bay_number_clean")
+                            trucks_list = bay_row.get("trucks", [])
+                            bcus_list = bay_row.get("bcus", [])
+                            timestamps_list = bay_row.get("timestamps", [])
+                            dates_list = bay_row.get("dates", [])
+                            
+                            # Add each truck's details - with validation
+                            valid_trucks_in_bay = []
+                            seen_combinations = set()  # Track unique truck+timestamp combinations
+                            
+                            for i, truck in enumerate(trucks_list):
+                                if not truck:
+                                    continue
+                                
+                                timestamp = timestamps_list[i] if i < len(timestamps_list) else None
+                                if not timestamp:
+                                    continue
+                                
+                                # Create unique key with truck and timestamp
+                                date_with_time = timestamp.strftime("%Y-%m-%d %H:%M:%S") if hasattr(timestamp, 'strftime') else str(timestamp)
+                                unique_key = (truck, date_with_time)
+                                
+                                # Skip if already processed
+                                if unique_key in seen_combinations:
+                                    continue
+                                
+                                seen_combinations.add(unique_key)
+                                
+                                # ===== ADDITIONAL VALIDATION =====
+                                # Filter: Skip PROVER (starts with P, no digits) and DG trucks
+                                is_prover = truck.startswith('P') and not any(c.isdigit() for c in truck)
+                                is_dg = 'DG' in truck
+                                
+                                # Validate proper vehicle registration format (must have both letters AND digits)
+                                has_letters = any(c.isalpha() for c in truck)
+                                has_digits = any(c.isdigit() for c in truck)
+                                is_valid_vehicle_format = has_letters and has_digits
+                                
+                                # Skip invalid patterns like "ENTERDATAIT" (all letters, no digits)
+                                # Skip test/dummy data patterns
+                                invalid_patterns = ['ENTERDATAIT', 'ENTERDATA', 'TEST', 'DUMMY', 'NODATA']
+                                is_invalid_pattern = any(pattern in truck.upper() for pattern in invalid_patterns)
+                                
+                                # Only include valid tank trucks (vehicle registration format)
+                                if is_prover or is_dg or not is_valid_vehicle_format or is_invalid_pattern:
+                                    continue
+                                
+                                bcu = bcus_list[i] if i < len(bcus_list) else ""
+                                date = dates_list[i] if i < len(dates_list) else None
+                                
+                                valid_trucks_in_bay.append({
+                                    "truck_number": truck,
+                                    "bay_number": bay_number,
+                                    "bcu_number": bcu,
+                                    "date": date_with_time  # Include full timestamp
+                                })
+                            
+                            # Only add to temp_details if this bay has 2+ VALID trucks
+                            if len(valid_trucks_in_bay) >= 2:
+                                temp_details.extend(valid_trucks_in_bay)
+                        
+                        # Only set flag if we have valid results
+                        if temp_details:
+                            # Sort by bay_number, truck_number, and date for consistency
+                            assigned_at_particular_bay_details = sorted(
+                                temp_details,
+                                key=lambda x: (x['bay_number'], x['truck_number'], x['date'])
+                            )
+                            assigned_at_particular_bay = True
 
-                key = (truck, str(load_date))
-
-                if key in bay_data:
-                    bay_info = bay_data[key][0]
-
-                    assigned_at_particular_bay = {
-                        "truck_number": truck,
-                        "assigned_bay": bay_info.get("assigned_bay"),
-                        "reassigned_bay": bay_info.get("reassigned_bay"),
-                        "reassign_loaded_qty": bay_info.get("reassign_loaded_qty")
-                    }
-
-                    break
 
             # 5. NEW: Get indent request details with location names
             indent_details = []
@@ -2672,6 +2837,7 @@ async def location_wise_total_loaded_qty(data):
                 "particular_product": particular_product,
                 "particular_product_details": particular_product_details if particular_product else None,
                 "assigned_at_particular_bay": assigned_at_particular_bay,
+                "assigned_at_particular_bay_details": assigned_at_particular_bay_details if assigned_at_particular_bay else None,
                 "indent_request_details": indent_details if indent_details else None
             })
 
@@ -3169,6 +3335,7 @@ async def host_bay_reassignment_alert(data):
             "location_based_reassignment": response
         }
     }
+
 
 
 AnalyticsModelMapping = {
