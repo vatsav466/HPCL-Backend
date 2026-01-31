@@ -2,16 +2,294 @@ import urdhva_base
 import polars as pl
 from datetime import datetime
 import json 
+import os
 import hpcl_ceg_model
 import traceback
 import dashboard_studio_model
 import charts_actions
+import httpx
+from orchestrator.workflow.workflow_process import Camunda
+import utilities.minio_connector as minio_connector
 import decimal
 import orchestrator.dbconnector.widget_actions.vts_analytics as vts_analytics
 from datetime import datetime, timedelta
 import re
 import utilities.analog_data_mapping as analog_mapping
 import orchestrator.tas_queries as tas_queries
+import orchestrator.alerting.listener.tas_listener as tas_listener
+
+
+async def create_tas_faulty(data, certificate_file=None):
+    """
+    Create a TAS Faulty record and start the related workflow.
+
+    Checks for duplicate records, initiates the Camunda workflow,
+    optionally uploads a certificate to MinIO, and saves the
+    TAS Faulty details in the database.
+
+    Args:
+        data: TAS Faulty request data.
+        certificate_file: Optional certificate file.
+
+    Returns:
+        dict: Status, message, and created record details.
+    """
+    try:
+        sap_id = data.sap_id
+        device_type = data.device_type
+        equipment_name = data.equipment_name
+        zone = data.zone
+        location_name = data.name
+        user_remarks = data.user_remarks
+        faulty = data.faulty
+        
+        # default status
+        data.status = "Open"
+
+        # ---------------- DUPLICATE CHECK ----------------
+        params = urdhva_base.queryparams.QueryParams(limit=1)
+        params.q = (
+            f"sap_id='{sap_id}' "
+            f"AND device_type='{device_type}' "
+            f"AND equipment_name='{equipment_name}'"
+        )
+
+        existing = await hpcl_ceg_model.TasFaulty.get_all(
+            params, resp_type="plain"
+        )
+
+        if existing.get("data"):
+            return {
+                "status": False,
+                "message": (
+                    "Duplicate TasFaulty record exists for "
+                    f"SAP ID = {sap_id}, Equipment = {equipment_name}"
+                ),
+                "data": {}
+            }
+
+        # ---------------- START WORKFLOW ----------------
+        payload_workflow = {
+            "variables": {
+                "sap_id": {"value": sap_id, "type": "String"},
+                "location_name": {"value": location_name, "type": "String"},
+                "device_type": {"value": device_type, "type": "String"},
+                "equipment_name": {"value": equipment_name, "type": "String"},
+                "zone": {"value": zone, "type": "String"},
+                "remarks": {"value": user_remarks, "type": "String"},
+                "status": {"value": data.status, "type": "String"},
+            }
+        }
+
+        camunda_resp = await Camunda().start_tas_faulty_workflow(
+            payload=payload_workflow,
+            workflowId="TASFAULTYCHECK"
+        )
+
+        data.workflow_instance_id = camunda_resp.get("id", "")
+
+        # ---------------- SAVE CERTIFICATE ----------------
+        certificate_path = None
+
+        if certificate_file:
+            UPLOAD_DIR = os.path.join(
+                urdhva_base.settings.uploads,
+                "tas_faulty"
+            )
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+            faulty_val = faulty
+            if isinstance(faulty_val, datetime):
+                faulty_val = faulty_val.strftime("%Y%m%d_%H%M%S")
+
+            object_name = f"{faulty_val}_{sap_id}_{equipment_name}"
+
+            file_path = os.path.join(
+                UPLOAD_DIR,
+                certificate_file.filename
+            )
+
+            with open(file_path, "wb") as f:
+                f.write(await certificate_file.read())
+
+            status_minio, minio_path = minio_connector.upload_to_minio(
+                "TAS",
+                "tas_faulty_certificates",
+                object_name,
+                file_path
+            )
+
+            if not status_minio:
+                return {
+                    "status": False,
+                    "message": "MinIO upload failed",
+                    "error": minio_path
+                }
+
+            certificate_path = minio_path
+            data.certificate = certificate_path
+
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
+
+        # ---------------- INSERT ----------------
+        record = hpcl_ceg_model.TasFaultyCreate(**data).create()
+
+        return {
+            "status": True,
+            "message": "TasFaulty record saved successfully",
+            "data": record
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": f"Failed to save TasFaulty record: {e}",
+            "data": {}
+        }
+
+
+async def update_tas_faulty(data):
+    """
+    Update TAS Faulty record and trigger workflow resolution.
+
+    Triggers the Camunda workflow with resolved status and vendor remarks,
+    then updates the TAS Faulty record status accordingly.
+    """
+    try:
+        transaction_id = int(data.transaction_id)
+        vendor_remarks = data.vendor_remarks
+        resolved = data.resolved  # Boolean
+
+        # ---------------- FETCH RECORD ----------------
+        existing = await hpcl_ceg_model.TasFaulty.get(transaction_id)
+        rows = existing.get("data")
+
+        if not rows:
+            return {
+                "status": False,
+                "message": "No faulty record found",
+                "data": {}
+            }
+
+        row = rows[0]
+        process_instance_id = row.get("workflow_instance_id")
+
+        if not process_instance_id:
+            return {
+                "status": False,
+                "message": "Workflow instance not linked",
+                "data": {}
+            }
+
+        # ---------------- TRIGGER CAMUNDA ----------------
+        camunda_payload = {
+            "messageName": "Resolved",
+            "processInstanceId": process_instance_id,
+            "processVariables": {
+                "resolved": {
+                    "value": resolved,
+                    "type": "Boolean"
+                },
+                "remarks": {
+                    "value": vendor_remarks,
+                    "type": "String"
+                }
+            }
+        }
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{urdhva_base.settings.tas_faulty_camunda_url}/engine-rest/message",
+                json=camunda_payload,
+                timeout=10
+            )
+
+        if response.status_code not in (200, 204):
+            return {
+                "status": False,
+                "message": "Workflow trigger failed",
+                "data": response.text
+            }
+
+        # ---------------- UPDATE RECORD ----------------
+        update_data = dict(row)
+        update_data.pop("id", None)
+        update_data["vendor_remarks"] = vendor_remarks
+        update_data["status"] = "Resolved" if resolved else "Rejected"
+
+        await hpcl_ceg_model.TasFaulty(
+            id=transaction_id,
+            **update_data
+        ).modify()
+
+        return {
+            "status": True,
+            "message": "Workflow triggered and record updated successfully",
+            "data": {
+                "transaction_id": transaction_id,
+                "resolved": resolved
+            }
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": str(e),
+            "data": {}
+        }
+
+    
+
+async def get_info_tas_faulty(data):
+    """
+    Fetch device types or device names for a given SAP ID.
+
+    - If only SAP ID is provided, returns all available device types.
+    - If SAP ID and device type are provided, returns device names
+      matching the given device type.
+    """
+    sap_id = data.sap_id
+    device_type_filter = data.device_type
+
+    device_json = tas_listener.load_device_data(sap_id)
+    if not device_json:
+        return {
+            "status": False,
+            "message": f"Device data not found for SAP ID {sap_id}"
+        }
+
+    devices = device_json.get("data", [])
+
+    # ---------------- CASE 1: Only SAP ID ----------------
+    if not device_type_filter:
+        device_types = {
+            device["device_type"]
+            for device in devices
+            if device.get("device_type")
+        }
+
+        return {
+            "sap_id": sap_id,
+            "device_types": sorted(device_types)
+        }
+
+    # ---------------- CASE 2: SAP ID + Device Type ----------------
+    device_names = {
+        device["device_name"]
+        for device in devices
+        if device.get("device_type") == device_type_filter
+        and device.get("device_name")
+    }
+
+    return {
+        "sap_id": sap_id,
+        "device_type": device_type_filter,
+        "device_names": sorted(device_names)
+    }
+
 
 
 async def top_repeat_alerts(data):

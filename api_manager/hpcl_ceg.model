@@ -3994,29 +3994,29 @@ Model NozzleSales {
     }
 }
 
-Model TasFaulty{
-    sap_id  str
-    name optional str
-    device_type optional str
-    zone optional str
-    equipment_name optional str
-    user_remarks optional str
-    vendor_remarks optional str
-    workflow_instance_id str
-    faulty optional datetime
+Model TasFaulty {
+    sap_id index_field str
+    name  index_field  str
+    device_type index_field str
+    zone index_field optional str
+    equipment_name index_field str
+    user_remarks str
+    vendor_remarks str
+    workflow_instance_id optional str
+    faulty  datetime
     certificate optional str
-    status optional str
+    status index_field str
 
     Action=> tas_faulty_create {
         sap_id  str
-        name optional str
-        device_type optional str
+        name  str
+        device_type  str
         zone optional str
-        equipment_name optional str
-        user_remarks optional str
-        faulty optional datetime
+        equipment_name  str
+        user_remarks  str
+        faulty  datetime
         certificate optional str
-        status optional str
+        status  str
     }
 
     Action=> update_faulty{
@@ -4027,9 +4027,9 @@ Model TasFaulty{
     }
 
     Action=> get_info{
-        sap_id optional str
-        device_type optional str
-        equipment_name optional str
+        sap_id  str
+        device_type  str
+        equipment_name  str
     }
 
 }
