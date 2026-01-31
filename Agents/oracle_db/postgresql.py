@@ -360,6 +360,11 @@ class Postgresql:
             # if table_db_name == 'host_unauthorised_flow':
             #     processed_data = [x for x in processed_data if x['nettotalizer'] > 0]
 
+            # Remove unconsumed columns for host_day_end_details
+            if table_db_name == 'host_day_end_details':
+                 columns_to_skip = ['total_cancelled_tts', 'total_loaded_tts', 'total_sick_tts']
+                 processed_data = [{k: v for k, v in record.items() if k not in columns_to_skip} for record in processed_data]
+
             if table_db_name in ['host_mfm_factor','host_sick_tts']:
                 for record in processed_data:
                     for key in model.Config.upsert_keys:
