@@ -510,7 +510,7 @@
             <tr>
                 <th>SBU</th>
                 <th>Sick TT</th>
-                <th>Local Loaded TT</th>
+                <th>Local Loaded Instance</th>
                 <th>K Factor Changes</th>
                 <th>MFM Factor Changes</th>
             </tr>
@@ -542,7 +542,13 @@
         <thead>
             <tr>
                 {% for col in tas_parameters_query_resp_columns %}
-                    <th>{{ col }}</th>
+                    <th>
+                        {% if col == "Local Loaded TT" %}
+                            Local Loaded Instance
+                        {% else %}
+                            {{ col }}
+                        {% endif %}
+                    </th>
                 {% endfor %}
             </tr>
         </thead>

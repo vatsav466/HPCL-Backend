@@ -132,6 +132,9 @@ async def tas_severity_summary(data):
 
     if data.zone:
         alert_query += f" AND zone = '{data.zone}'"
+    
+    if data.alert_status:
+        alert_query += f" AND alert_status = '{data.alert_status}'"
 
     if data.location_name:
         alert_query += f" AND location_name = '{data.location_name}'"
@@ -2981,6 +2984,8 @@ async def bcu_totalizer_diff_alert(data):
         "date",
         "bcu_mfm_net_totalizer_diff",
         "bcu_net_totalizer",
+        "mfm_net_totalizer",
+        "invoiced_qty",
         "invoiced_total_tl_qty_diff"  
     ]
 
@@ -3003,6 +3008,8 @@ async def bcu_totalizer_diff_alert(data):
             "date": pl.Date,
             "bcu_mfm_net_totalizer_diff": pl.Int64,
             "bcu_net_totalizer": pl.Int64,
+            "mfm_net_totalizer":pl.Int64,
+            "invoiced_qty":pl.Int64,
             "invoiced_total_tl_qty_diff": pl.Int64,  
         },
         strict=False
@@ -3017,7 +3024,7 @@ async def bcu_totalizer_diff_alert(data):
              pl.col("bcu_net_totalizer")).round(3)
         )
         .otherwise(None)
-        .alias("percentage_diff"),
+        .alias("MFM_VS_BCU_Totalizer_Diff"),
 
         # Formula 2
         pl.when(pl.col("bcu_net_totalizer") > 0)
@@ -3026,13 +3033,13 @@ async def bcu_totalizer_diff_alert(data):
              pl.col("bcu_net_totalizer")).round(3)
         )
         .otherwise(None)
-        .alias("invoice_percentage_diff"),
+        .alias("Invoice_VS_BCU_Totalizer_Diff"),
     ])
 
     # 6. THRESHOLD FILTER (EITHER CONDITION)
     df = df.filter(
-        (pl.col("percentage_diff") > 0.05) |
-        (pl.col("invoice_percentage_diff") > 0.05)
+        (pl.col("MFM_VS_BCU_Totalizer_Diff") > 0.05) |
+        (pl.col("Invoice_VS_BCU_Totalizer_Diff") > 0.05)
     )
 
     if df.is_empty():
@@ -3043,8 +3050,8 @@ async def bcu_totalizer_diff_alert(data):
         df
         .with_columns(
             pl.max_horizontal(
-                "percentage_diff",
-                "invoice_percentage_diff"
+                "MFM_VS_BCU_Totalizer_Diff",
+                "Invoice_VS_BCU_Totalizer_Diff"
             ).alias("max_diff")
         )
         .sort("max_diff", descending=True)   # sort by difference value
@@ -3058,8 +3065,10 @@ async def bcu_totalizer_diff_alert(data):
             "bcu_mfm_net_totalizer_diff",
             "invoiced_total_tl_qty_diff",
             "bcu_net_totalizer",
-            "percentage_diff",
-            "invoice_percentage_diff",
+            "mfm_net_totalizer",
+            "invoiced_qty",
+            "MFM_VS_BCU_Totalizer_Diff",
+            "Invoice_VS_BCU_Totalizer_Diff",
         ])
         .to_dicts()
     )
