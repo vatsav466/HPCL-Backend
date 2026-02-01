@@ -1536,7 +1536,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     assigned_users: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_users", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     assigned_user_roles: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_user_roles", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
     district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -1545,8 +1545,8 @@ class AlertsSchema(UrdhvaPostgresBase):
     r1_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r1_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     r2_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r2_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     r3_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r3_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    indent_status: Mapped[typing.Optional[typing.Any]] = mapped_column("indent_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    product_code: Mapped[typing.Optional[str]] = mapped_column("product_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    indent_status: Mapped[typing.Optional[typing.Any]] = mapped_column("indent_status", String, index=True, nullable=True, default=None, primary_key=False, unique=False)
+    product_code: Mapped[typing.Optional[str]] = mapped_column("product_code", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     indent_no: Mapped[typing.Optional[str]] = mapped_column("indent_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     dealer_id: Mapped[typing.Optional[str]] = mapped_column("dealer_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -1557,10 +1557,10 @@ class AlertsSchema(UrdhvaPostgresBase):
     terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     servicing_plant_id: Mapped[typing.Optional[str]] = mapped_column("servicing_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     servicing_plant_name: Mapped[typing.Optional[str]] = mapped_column("servicing_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    progress_rate: Mapped[typing.Optional[int]] = mapped_column("progress_rate", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    progress_rate: Mapped[typing.Optional[int]] = mapped_column("progress_rate", Integer, index=True, nullable=True, default=0, primary_key=False, unique=False)
     category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     indent_raised_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("indent_raised_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    dry_out_in_days: Mapped[typing.Optional[str]] = mapped_column("dry_out_in_days", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dry_out_in_days: Mapped[typing.Optional[str]] = mapped_column("dry_out_in_days", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     origin_altid: Mapped[typing.Optional[str]] = mapped_column("origin_altid", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_message: Mapped[typing.Optional[str]] = mapped_column("alert_message", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     external_timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("external_timestamp", DateTime(timezone=False), index=False, nullable=True, default=None, primary_key=False, unique=False)
@@ -1580,7 +1580,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     vehicle_blocked_start_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vehicle_blocked_start_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     vehicle_blocked_end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vehicle_blocked_end_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     vehicle_unblocked_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vehicle_unblocked_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    mark_as_false: Mapped[typing.Optional[bool]] = mapped_column("mark_as_false", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    mark_as_false: Mapped[typing.Optional[bool]] = mapped_column("mark_as_false", Boolean, index=True, nullable=True, default=False, primary_key=False, unique=False)
     vts_alert_history_ids: Mapped[typing.Optional[typing.List[str]]] = mapped_column("vts_alert_history_ids", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     action_on: Mapped[typing.Optional[typing.Any]] = mapped_column("action_on", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     remarks_unblocked: Mapped[typing.Optional[str]] = mapped_column("remarks_unblocked", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -10924,3 +10924,107 @@ class NozzleSalesGetResp(pydantic.BaseModel):
     data: typing.List[NozzleSales]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class TasFaultySchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_faulty'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    device_type: Mapped[str] = mapped_column("device_type", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    equipment_name: Mapped[str] = mapped_column("equipment_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    user_remarks: Mapped[typing.Optional[str]] = mapped_column("user_remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    vendor_remarks: Mapped[typing.Optional[str]] = mapped_column("vendor_remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    faulty: Mapped[datetime.datetime] = mapped_column("faulty", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    certificate: Mapped[typing.Optional[str]] = mapped_column("certificate", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    status: Mapped[str] = mapped_column("status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class TasFaultyCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_faulty'
+    
+    sap_id: str
+    name: str
+    device_type: str
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: str
+    user_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    vendor_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
+    faulty: datetime.datetime
+    certificate: typing.Optional[str] = pydantic.Field("", **{})
+    status: str
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasFaultySchema
+        upsert_keys = []
+
+
+class TasFaulty(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_faulty'
+    
+    sap_id: typing.Optional[str] | None = None
+    name: typing.Optional[str] | None = None
+    device_type: typing.Optional[str] | None = None
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] | None = None
+    user_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    vendor_remarks: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
+    faulty: typing.Optional[datetime.datetime] | None = None
+    certificate: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasFaultySchema
+        upsert_keys = []
+
+
+class TasFaultyGetResp(pydantic.BaseModel):
+    data: typing.List[TasFaulty]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Tasfaulty_Tas_Faulty_CreateParams(pydantic.BaseModel):
+    sap_id: str
+    name: str
+    device_type: str
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: str
+    user_remarks: str
+    faulty: datetime.datetime
+    certificate: typing.Optional[str] = pydantic.Field("", **{})
+    status: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Tasfaulty_Update_FaultyParams(pydantic.BaseModel):
+    transaction_id: str
+    vendor_remarks: str
+    resolved: bool
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Tasfaulty_Get_InfoParams(pydantic.BaseModel):
+    sap_id: str
+    device_type: str
+    equipment_name: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
