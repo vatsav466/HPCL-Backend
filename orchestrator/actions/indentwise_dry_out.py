@@ -1714,13 +1714,31 @@ class IndentDryOut:
         )
 
         if not await self._check_ro_in_cris():
-            checking_cris_query = (f"update alerts set mark_as_false='false' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
-        else:
-            checking_cris_query = (f"update alerts set mark_as_false='true' "
-                     f"where id='{self.params['alert_id']}'")
-            await hpcl_ceg_model.Alerts.update_by_query(checking_cris_query)
+            input_data = {
+                "action_msg": "",
+                "event_tags": {
+                    "is_delivered": False
+                }
+            }
+            input_data["action_msg"] = "Indent Delivered"
+            input_data["action_type"] = "Created"
+            input_data["event_tags"]["is_delivered"] = True
+
+            await self.update_alert_status(
+                indent_status=IndentStatus.Completed,
+                alert_status=AlertStatus.Close,
+                alert_state=AlertState.Resolved,
+                input_data=input_data,
+                progress_rate="11"
+            )
+            await self.close_supply_chain_alert(
+                alert_id=self.params.get("alert_id"),
+                alert_status=AlertStatus.Close,
+                alert_state=AlertState.Resolved,
+                indent_status=IndentStatus.Completed
+            )
+            # await self.update_alert_status(indent_status=IndentStatus.InvoiceCreated)
+            return await self.send_alert_action(is_delivered=True)
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
