@@ -59,6 +59,7 @@ async def top_repeat_alerts(data):
 
     print("FINAL alert_query >>>", alert_query)
 
+
     alert_params = urdhva_base.queryparams.QueryParams(
         q=alert_query,
         limit=0
@@ -71,6 +72,7 @@ async def top_repeat_alerts(data):
         "severity",
         "interlock_name",
         "location_name",
+        "device_name",
         "created_at"
     ]
 
@@ -88,34 +90,75 @@ async def top_repeat_alerts(data):
 
         now = datetime.utcnow()
 
+        # Add ageing_days column
+        df = df.with_columns(
+            (
+                (pl.lit(now) - pl.col("created_at"))
+                .dt.total_days()
+                .cast(pl.Int64)
+            ).alias("ageing_days")
+        )
+
+        # Create ageing bucket
+        df = df.with_columns(
+            pl.when(pl.col("ageing_days") <= 15)
+            .then(pl.lit("0-15 Days"))
+            .when((pl.col("ageing_days") > 15) & (pl.col("ageing_days") <= 30))
+            .then(pl.lit("15-30 Days"))
+            .when((pl.col("ageing_days") > 30) & (pl.col("ageing_days") <= 60))
+            .then(pl.lit("30-60 Days"))
+            .otherwise(pl.lit("60+ Days"))
+            .alias("ageing_bucket")
+        )
+
+        # Detail list (your existing data)
         detail_df = (
             df
-            .with_columns([
-                # Remove microseconds
+            .with_columns(
                 pl.col("created_at")
-                  .dt.strftime("%Y-%m-%dT%H:%M:%S")
-                  .alias("created_at"),
-
-                # Ageing in days
-                (
-                    (pl.lit(now) - pl.col("created_at"))
-                    .dt.total_days()
-                    .cast(pl.Int64)
-                ).alias("ageing_days")
-            ])
+                .dt.strftime("%Y-%m-%dT%H:%M:%S")
+            )
             .select([
                 "unique_id",
                 "alert_status",  
                 "severity",  
                 "interlock_name",
                 "location_name",
+                "device_name",
                 "created_at",
                 "ageing_days"
             ])
             .sort("ageing_days", descending=True)
         )
 
-        return detail_df.to_dicts()
+        # Ageing bucket location summary
+        bucket_summary = (
+            df
+            .group_by(["ageing_bucket", "location_name"])
+            .agg(pl.len().alias("alert_count"))
+        )
+
+        bucket_result = []
+
+        for bucket in df["ageing_bucket"].unique().to_list():
+
+            bucket_df = bucket_summary.filter(pl.col("ageing_bucket") == bucket)
+
+            total_count = bucket_df["alert_count"].sum()
+
+            bucket_result.append({
+                "ageing_range": bucket,
+                "total_alerts": total_count,
+                "locations": bucket_df.select([
+                    "location_name",
+                    "alert_count"
+                ]).to_dicts()
+            })
+
+        return {
+            "detail_list": detail_df.to_dicts(),
+            "ageing_analysis": bucket_result
+        }
 
     # CASE 1: NO INTERLOCK → TOP 5 REPEATED
 
