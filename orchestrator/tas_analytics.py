@@ -101,12 +101,24 @@ async def top_repeat_alerts(data):
 
         # Create ageing bucket
         df = df.with_columns(
-            pl.when(pl.col("ageing_days") <= 15)
-            .then(pl.lit("0-15 Days"))
-            .when((pl.col("ageing_days") > 15) & (pl.col("ageing_days") <= 30))
-            .then(pl.lit("15-30 Days"))
-            .when((pl.col("ageing_days") > 30) & (pl.col("ageing_days") <= 60))
-            .then(pl.lit("30-60 Days"))
+            pl.when(pl.col("ageing_days") == 1)
+            .then(pl.lit("1 Day"))
+            .when(pl.col("ageing_days") == 2)
+            .then(pl.lit("2 Days"))
+            .when(pl.col("ageing_days") == 3)
+            .then(pl.lit("3 Days"))
+            .when(pl.col("ageing_days") == 4)
+            .then(pl.lit("4 Days"))
+            .when(pl.col("ageing_days") == 5)
+            .then(pl.lit("5 Days"))
+            .when((pl.col("ageing_days") >= 6) & (pl.col("ageing_days") <= 10))
+            .then(pl.lit("6-10 Days"))
+            .when((pl.col("ageing_days") >= 11) & (pl.col("ageing_days") <= 15))
+            .then(pl.lit("11-15 Days"))
+            .when((pl.col("ageing_days") >= 16) & (pl.col("ageing_days") <= 30))
+            .then(pl.lit("16-30 Days"))
+            .when((pl.col("ageing_days") >= 31) & (pl.col("ageing_days") <= 60))
+            .then(pl.lit("31-60 Days"))
             .otherwise(pl.lit("60+ Days"))
             .alias("ageing_bucket")
         )
@@ -138,11 +150,30 @@ async def top_repeat_alerts(data):
             .agg(pl.len().alias("alert_count"))
         )
 
+        # Define correct order manually
+        ordered_buckets = [
+            "1 Day",
+            "2 Days",
+            "3 Days",
+            "4 Days",
+            "5 Days",
+            "6-10 Days",
+            "11-15 Days",
+            "16-30 Days",
+            "31-60 Days",
+            "60+ Days"
+        ]
+
         bucket_result = []
 
-        for bucket in df["ageing_bucket"].unique().to_list():
+        for bucket in ordered_buckets:
 
-            bucket_df = bucket_summary.filter(pl.col("ageing_bucket") == bucket)
+            bucket_df = bucket_summary.filter(
+                pl.col("ageing_bucket") == bucket
+            )
+
+            if bucket_df.height == 0:
+                continue
 
             total_count = bucket_df["alert_count"].sum()
 
