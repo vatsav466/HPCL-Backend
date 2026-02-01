@@ -35,16 +35,21 @@ async def create_tas_faulty(data, certificate_file=None):
         dict: Status, message, and created record details.
     """
     try:
-        sap_id = data.sap_id
-        device_type = data.device_type
-        equipment_name = data.equipment_name
-        zone = data.zone
-        location_name = data.name
-        user_remarks = data.user_remarks
-        faulty = data.faulty
+        # Convert to dict at the start
+        data = data.dict()
         
-        # default status
-        data.status = "Open"
+        sap_id = data['sap_id']
+        device_type = data['device_type']
+        equipment_name = data['equipment_name']
+        zone = data['zone']
+        location_name = data['name']
+        user_remarks = data['user_remarks']
+        faulty = data['faulty']
+        
+        print("sap_id:", sap_id)
+        
+        # Set default status
+        data['status'] = "Open"
 
         # ---------------- DUPLICATE CHECK ----------------
         params = urdhva_base.queryparams.QueryParams(limit=1)
@@ -77,7 +82,7 @@ async def create_tas_faulty(data, certificate_file=None):
                 "equipment_name": {"value": equipment_name, "type": "String"},
                 "zone": {"value": zone, "type": "String"},
                 "remarks": {"value": user_remarks, "type": "String"},
-                "status": {"value": data.status, "type": "String"},
+                "status": {"value": data['status'], "type": "String"},
             }
         }
 
@@ -86,7 +91,7 @@ async def create_tas_faulty(data, certificate_file=None):
             workflowId="TASFAULTYCHECK"
         )
 
-        data.workflow_instance_id = camunda_resp.get("id", "")
+        data['workflow_instance_id'] = camunda_resp.get("id", "")
 
         # ---------------- SAVE CERTIFICATE ----------------
         certificate_path = None
@@ -127,7 +132,7 @@ async def create_tas_faulty(data, certificate_file=None):
                 }
 
             certificate_path = minio_path
-            data.certificate = certificate_path
+            data['certificate'] = certificate_path
 
             try:
                 os.remove(file_path)
@@ -135,7 +140,7 @@ async def create_tas_faulty(data, certificate_file=None):
                 pass
 
         # ---------------- INSERT ----------------
-        record = hpcl_ceg_model.TasFaultyCreate(**data).create()
+        record = await hpcl_ceg_model.TasFaultyCreate(**data).create()
 
         return {
             "status": True,
@@ -150,53 +155,35 @@ async def create_tas_faulty(data, certificate_file=None):
             "data": {}
         }
 
-
 async def update_tas_faulty(data):
     """
-    Update TAS Faulty record and trigger workflow resolution.
-
-    Triggers the Camunda workflow with resolved status and vendor remarks,
-    then updates the TAS Faulty record status accordingly.
+    Update a TAS Faulty record and trigger the Camunda workflow with vendor remarks and resolved status.
     """
     try:
         transaction_id = int(data.transaction_id)
         vendor_remarks = data.vendor_remarks
-        resolved = data.resolved  # Boolean
+        resolved = bool(data.resolved)
 
         # ---------------- FETCH RECORD ----------------
-        existing = await hpcl_ceg_model.TasFaulty.get(transaction_id)
-        rows = existing.get("data")
+        record = await hpcl_ceg_model.TasFaulty.get_all(urdhva_base.queryparams.QueryParams(q=f"id={transaction_id}", limit=1), 
+                                                        resp_type="plain")
+        row = record.get("data")
 
-        if not rows:
-            return {
-                "status": False,
-                "message": "No faulty record found",
-                "data": {}
-            }
-
-        row = rows[0]
-        process_instance_id = row.get("workflow_instance_id")
-
+        if not row:
+            return {"status": False, "message": "No faulty record found", "data": {}}
+        
+        row = row[0]
+        process_instance_id = row["workflow_instance_id"]
         if not process_instance_id:
-            return {
-                "status": False,
-                "message": "Workflow instance not linked",
-                "data": {}
-            }
+            return {"status": False, "message": "Workflow instance not linked", "data": {}}
 
         # ---------------- TRIGGER CAMUNDA ----------------
         camunda_payload = {
             "messageName": "Resolved",
             "processInstanceId": process_instance_id,
             "processVariables": {
-                "resolved": {
-                    "value": resolved,
-                    "type": "Boolean"
-                },
-                "remarks": {
-                    "value": vendor_remarks,
-                    "type": "String"
-                }
+                "resolved": {"value": resolved, "type": "Boolean"},
+                "remarks": {"value": vendor_remarks, "type": "String"}
             }
         }
 
@@ -208,40 +195,25 @@ async def update_tas_faulty(data):
             )
 
         if response.status_code not in (200, 204):
-            return {
-                "status": False,
-                "message": "Workflow trigger failed",
-                "data": response.text
-            }
+            return {"status": False, "message": "Workflow trigger failed", "data": response.text}
 
         # ---------------- UPDATE RECORD ----------------
-        update_data = dict(row)
+        update_data = dict(record)
         update_data.pop("id", None)
         update_data["vendor_remarks"] = vendor_remarks
         update_data["status"] = "Resolved" if resolved else "Rejected"
 
-        await hpcl_ceg_model.TasFaulty(
-            id=transaction_id,
-            **update_data
-        ).modify()
+        await hpcl_ceg_model.TasFaulty(id=transaction_id, **update_data).modify()
 
         return {
             "status": True,
             "message": "Workflow triggered and record updated successfully",
-            "data": {
-                "transaction_id": transaction_id,
-                "resolved": resolved
-            }
+            "data": {"transaction_id": transaction_id, "resolved": resolved}
         }
 
     except Exception as e:
-        return {
-            "status": False,
-            "message": str(e),
-            "data": {}
-        }
+        return {"status": False, "message": str(e), "data": {}}
 
-    
 
 async def get_info_tas_faulty(data):
     """

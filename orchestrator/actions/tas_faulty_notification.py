@@ -1,7 +1,8 @@
 import os
-import csv
-import aiofiles
+import ast
 import traceback
+import polars as pl
+import aiofiles
 import urdhva_base
 from jinja2 import Template
 import orchestrator.notification_manager.notification_factory as notification_factory
@@ -13,7 +14,7 @@ class VendorEmailNotification:
 
     def __init__(self):
         """Initialize VendorEmailNotification object"""
-        self.params = None
+        self.params = {}
         self.vendor_email_map = {}
         self.mail_recipients = []
         self.subject = ""
@@ -27,42 +28,43 @@ class VendorEmailNotification:
             list: Required variables
         """
         return [
-            "sap_id", "device_type", "equipment_name", "zone", 
-            "remarks", "status", "messagetype","location_name"
-        ]
-
-    async def load_vendor_email_csv(self):
-        """Load vendor email CSV and return mapping"""
+                "sap_id", "device_type", "equipment_name", "zone", 
+                "remarks", "status", "messagetype", "location_name"
+               ]
+   
+    async def load_vendor_email_csv(self, sap_id: str) -> list[str]:
+        """Load vendor emails for a given SAP ID from CSV"""
         try:
+            csv_path = os.path.join(os.path.dirname(__file__), "vendor_email.csv")
+            
+            df = pl.read_csv(csv_path, truncate_ragged_lines=True).with_columns(pl.col("sap_id").cast(pl.Utf8))
+            row = (df.filter(pl.col("sap_id") == sap_id).select("vendor_email")
+                   .to_series()
+                   .to_list()
+                )
 
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            csv_path = os.path.join(current_dir, "vendor_email.csv")  
-            vendor_map = {}
-            async with aiofiles.open(csv_path, mode='r') as f:
-                content = await f.read()
-                csv_reader = csv.DictReader(content.splitlines())
+            emails = []
+            for val in row:
+                try:
+                    emails.extend(ast.literal_eval(val))
+                except Exception:
+                    logger.error(f"Invalid vendor_email skipped: {val}")
 
-                for row in csv_reader:
-                    sap_id = row.get('sap_id', '').strip()
-                    vendor_email = row.get('vendor_email', '').strip()
-
-                    if sap_id and vendor_email:
-                        vendor_map[sap_id] = vendor_email
-
-            return vendor_map
+            return list(set(emails))  # remove duplicates
 
         except Exception as e:
-            logger.error(f"Error loading vendor CSV: {str(e)}")
-            return {}
+            logger.exception(f"Error loading vendor email CSV: {e}")
+            return []
+
 
     async def read_template(self, filename: str) -> str:
         """Read HTML template file"""
         try:
             filepath = os.path.join(urdhva_base.settings.template_path, filename)
-            async with aiofiles.open(filepath, 'r') as f:
+            async with aiofiles.open(filepath, "r") as f:
                 return await f.read()
         except Exception as e:
-            logger.error(f"Error reading template: {str(e)}")
+            logger.error(f"Template read error: {e}")
             return ""
 
     async def process(self, params: dict):
@@ -78,70 +80,64 @@ class VendorEmailNotification:
         self.params = params
 
         try:
-            # Get required variables
-            sap_id = self.params.get("sap_id", "")
-            device_type = self.params.get("device_type", "")
-            equipment_name = self.params.get("equipment_name", "")
-            zone = self.params.get("zone", "")
-            remarks = self.params.get("remarks", "")
-            status = self.params.get("status", "")
-            message_type = self.params.get("messagetype", "notify")
+            sap_id = params.get("sap_id")
+            device_type = params.get("device_type")
+            equipment_name = params.get("equipment_name")
+            zone = params.get("zone")
+            remarks = params.get("remarks")
+            status = params.get("status")
+            message_type = params.get("messagetype", "notify")
+            location_name = params.get("location_name", "")
 
             # Load vendor emails
-            self.vendor_email_map = await self.load_vendor_email_csv()
+            self.mail_recipients = await self.load_vendor_email_csv(sap_id)
 
-            # Check if sap_id matches
-            vendor_email = self.vendor_email_map.get(sap_id)
-            if not vendor_email:
-                logger.info(f"No vendor email for SAP ID: {sap_id}")
-                return True, {"msg": "No vendor email configured"}
 
-            self.mail_recipients = [vendor_email]
+            if not self.mail_recipients:
+                logger.info(f"No vendor emails configured for SAP ID {sap_id}")
+                return True, {"msg": "No vendor emails configured"}
 
-            # Prepare template data
+            # Template data
             template_data = {
                 "sap_id": sap_id,
                 "device_type": device_type,
                 "equipment_name": equipment_name,
                 "zone": zone,
-                "location_name": self.params.get("location_name", ""),
+                "location_name": location_name,
                 "remarks": remarks,
                 "status": status,
                 "message_type": message_type
             }
 
-            # Load template based on message type
-            template_filename = f"vendor_notification_{message_type}.html"
-            template_content = await self.read_template(template_filename)
+            # Load template
+            template_name = f"vendor_notification_{message_type}.html"
+            template_content = await self.read_template(template_name)
 
             if not template_content:
-                logger.warning(f"Template not found: {template_filename}, using default")
-                # Try default template
                 template_content = await self.read_template("vendor_notification.html")
 
             if not template_content:
-                return False, "Template not found"
+                return False, "Email template not found"
 
-            # Render template
+            # Render
             self.body = Template(template_content).render(**template_data)
-            self.subject = f"Notification - {equipment_name} ({sap_id})"
+            self.subject = f"TAS Notification - {equipment_name} ({sap_id})"
 
-            # Send notification
+            # Send mail
             await self._send_notification()
-
-            logger.info(f"Vendor notification sent to {vendor_email} for SAP ID: {sap_id}")
-            return True, {"msg": "Notification sent successfully", "recipient": vendor_email}
+            logger.info(f"Vendor email sent | SAP ID={sap_id} | Recipients={self.mail_recipients}")
+            return True, {"msg": "Notification sent successfully"}
 
         except Exception as e:
-            logger.error(f"Error processing vendor notification: {str(e)}")
+            logger.error(f"Vendor notification failed: {e}")
             logger.error(traceback.format_exc())
-            return False, f"Failed to process notification: {str(e)}"
+            return False, str(e)
 
     async def _send_notification(self):
         """Send email notification"""
         try:
             notification_module = await notification_factory.get_notification_module(module_type="email")
-
+            
             await notification_module.publish_message(
                 recipients=self.mail_recipients,
                 subject=self.subject,
@@ -149,9 +145,9 @@ class VendorEmailNotification:
                 force_send=True,
                 html_content=True
             )
-
+            
             logger.info(f"Email sent to: {self.mail_recipients}")
-
+            
         except Exception as e:
             logger.error(f"Error sending notification: {str(e)}")
             raise

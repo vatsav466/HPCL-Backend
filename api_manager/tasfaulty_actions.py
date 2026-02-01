@@ -1,8 +1,9 @@
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
-from fastapi import UploadFile, File
+
 import orchestrator.tas_analytics as tas_analytics
+import json
 
 router = fastapi.APIRouter(prefix='/tasfaulty')
 
@@ -10,10 +11,10 @@ router = fastapi.APIRouter(prefix='/tasfaulty')
 # Action tas_faulty_create
 @router.post("/tas_faulty_create", tags=["TasFaulty"])
 async def tasfaulty_tas_faulty_create(
-    data: Tasfaulty_Tas_Faulty_CreateParams,
-    certificate_file: UploadFile | str |  None = File(None)
+    data: Tasfaulty_Tas_Faulty_CreateParams  = fastapi.Depends(Tasfaulty_Tas_Faulty_CreateParams),
+    certificate_file: fastapi.UploadFile | None = fastapi.File(None)
 ):
-  
+       
         resp = await tas_analytics.create_tas_faulty(data, certificate_file)
         return resp
 

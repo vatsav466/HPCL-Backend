@@ -4000,8 +4000,8 @@ Model TasFaulty {
     device_type index_field str
     zone index_field optional str
     equipment_name index_field str
-    user_remarks str
-    vendor_remarks str
+    user_remarks optional str
+    vendor_remarks optional str
     workflow_instance_id optional str
     faulty  datetime
     certificate optional str
