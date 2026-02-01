@@ -8,7 +8,7 @@ import traceback
 import dashboard_studio_model
 import charts_actions
 import httpx
-from orchestrator.workflow.workflow_process import Camunda
+import orchestrator.workflow.workflow_process as workflow_process
 import utilities.minio_connector as minio_connector
 import decimal
 import orchestrator.dbconnector.widget_actions.vts_analytics as vts_analytics
@@ -86,7 +86,7 @@ async def create_tas_faulty(data, certificate_file=None):
             }
         }
 
-        camunda_resp = await Camunda().start_tas_faulty_workflow(
+        camunda_resp = await workflow_process.Camunda().start_tas_faulty_workflow(
             payload=payload_workflow,
             workflowId="TASFAULTYCHECK"
         )
