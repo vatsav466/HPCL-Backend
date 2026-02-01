@@ -4016,14 +4016,13 @@ Model TasFaulty {
         user_remarks  str
         faulty  datetime
         certificate optional str
-        status  str
+        status optional str
     }
 
     Action=> update_faulty{
         transaction_id str
         vendor_remarks  str
         resolved bool
-
     }
 
     Action=> get_info{
@@ -4031,5 +4030,4 @@ Model TasFaulty {
         device_type  str
         equipment_name  str
     }
-
 }
