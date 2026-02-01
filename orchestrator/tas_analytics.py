@@ -14,6 +14,16 @@ import utilities.analog_data_mapping as analog_mapping
 import orchestrator.tas_queries as tas_queries
 
 
+def create_valid_vehicle_filter(column_name: str, min_length: int = 9) -> pl.Expr:
+    """Validate vehicle/truck numbers: min length, contains A-Z and 0-9, alphanumeric only."""
+    return pl.when(
+        (pl.col(column_name).str.len_chars() >= min_length) &
+        pl.col(column_name).str.contains(r"[A-Z]") &
+        pl.col(column_name).str.contains(r"[0-9]") &
+        pl.col(column_name).str.contains(r"^[A-Z0-9]+$")
+    ).then(True).otherwise(False)
+
+
 async def top_repeat_alerts(data):
 
     alert_query = """
@@ -510,19 +520,17 @@ async def tas_alerts_exception_report(data):
                 .str.to_lowercase()
                 .str.replace_all(" ", "")
                 .alias("interlock_norm"),
-            pl.col("created_at").dt.date().alias("created_date")
+            pl.col("created_at").dt.date().alias("created_date"),
+            pl.col("created_at").dt.truncate("1h").alias("created_at_hour")
         ])
         .with_columns([
-            pl.when(
-                (pl.col("vehicle_number").str.len_chars() >= 9) &
-                pl.col("vehicle_number").str.contains(r"[A-Z]") &
-                pl.col("vehicle_number").str.contains(r"[0-9]") &
-                pl.col("vehicle_number").str.contains(r"^[A-Z0-9]+$")
-            ).then(True).otherwise(False).alias("is_valid_vehicle")
+            create_valid_vehicle_filter("vehicle_number").alias("is_valid_vehicle")
         ])
         .filter(pl.col("is_valid_vehicle") == True)
         .drop("is_valid_vehicle")
     )
+    df = df.unique(subset=["vehicle_number", "created_at_hour", "interlock_norm"])
+
     mfm = await hpcl_ceg_model.HostMFMFactor.get_all(
         urdhva_base.queryparams.QueryParams(limit=0),
         resp_type="plain"
@@ -593,12 +601,7 @@ async def tas_alerts_exception_report(data):
             pl.col("created_at").dt.date().alias("created_date")
         ])
         .with_columns([
-            pl.when(
-                (pl.col("truck_number_clean").str.len_chars() >= 9) &
-                pl.col("truck_number_clean").str.contains(r"[A-Z]") &
-                pl.col("truck_number_clean").str.contains(r"[0-9]") &
-                pl.col("truck_number_clean").str.contains(r"^[A-Z0-9]+$")
-            ).then(True).otherwise(False).alias("is_valid_truck")
+            create_valid_vehicle_filter("truck_number_clean").alias("is_valid_truck")
         ])
         .filter(pl.col("is_valid_truck") == True)
         .group_by(["truck_number_clean", "created_date"])
@@ -2198,15 +2201,11 @@ async def location_wise_total_loaded_qty(data):
                 pl.lit("").alias("truck_number_clean")
             ])
 
-        # Filter valid truck numbers (pattern: alphanumeric, at least 6 characters)
+        # Filter valid truck numbers (pattern: alphanumeric, at least 9 characters)
         # Valid pattern example: TS08UG9576
         df = df.with_columns([
-            pl.when(
-                (pl.col("truck_number_clean").str.len_chars() >= 6) &
-                pl.col("truck_number_clean").str.contains(r"[A-Z]") &
-                pl.col("truck_number_clean").str.contains(r"[0-9]") &
-                pl.col("truck_number_clean").str.contains(r"^[A-Z0-9]+$")
-            ).then(True).otherwise(False).alias("is_valid_truck")])
+            create_valid_vehicle_filter("truck_number_clean").alias("is_valid_truck")
+        ])
         # Categorize truck types using config patterns
         prover_pattern = tas_queries.TRUCK_TYPE_PATTERNS["prover"]
         dg_pattern = tas_queries.TRUCK_TYPE_PATTERNS["dg"]
