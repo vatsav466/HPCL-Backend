@@ -512,6 +512,16 @@ async def tas_alerts_exception_report(data):
                 .alias("interlock_norm"),
             pl.col("created_at").dt.date().alias("created_date")
         ])
+        .with_columns([
+            pl.when(
+                (pl.col("vehicle_number").str.len_chars() >= 9) &
+                pl.col("vehicle_number").str.contains(r"[A-Z]") &
+                pl.col("vehicle_number").str.contains(r"[0-9]") &
+                pl.col("vehicle_number").str.contains(r"^[A-Z0-9]+$")
+            ).then(True).otherwise(False).alias("is_valid_vehicle")
+        ])
+        .filter(pl.col("is_valid_vehicle") == True)
+        .drop("is_valid_vehicle")
     )
     mfm = await hpcl_ceg_model.HostMFMFactor.get_all(
         urdhva_base.queryparams.QueryParams(limit=0),
@@ -578,13 +588,26 @@ async def tas_alerts_exception_report(data):
                 resp_type="plain"
             )).get("data", [])
         )
-        .with_columns(pl.col("created_at").dt.date().alias("created_date"))
-        .group_by(["truck_number", "created_date"])
+        .with_columns([
+            pl.col("truck_number").str.strip_chars().alias("truck_number_clean"),
+            pl.col("created_at").dt.date().alias("created_date")
+        ])
+        .with_columns([
+            pl.when(
+                (pl.col("truck_number_clean").str.len_chars() >= 9) &
+                pl.col("truck_number_clean").str.contains(r"[A-Z]") &
+                pl.col("truck_number_clean").str.contains(r"[0-9]") &
+                pl.col("truck_number_clean").str.contains(r"^[A-Z0-9]+$")
+            ).then(True).otherwise(False).alias("is_valid_truck")
+        ])
+        .filter(pl.col("is_valid_truck") == True)
+        .group_by(["truck_number_clean", "created_date"])
         .agg([
             pl.col("bcu_number").drop_nulls().first(),
-            pl.col("loaded_qty").drop_nulls().first(),
-            pl.col("recipe_name").drop_nulls().first(),
+            pl.col("loaded_qty").drop_nulls().sum().alias("loaded_qty"),  # SUM the loaded_qty
+            pl.col("recipe_name").str.strip_chars().drop_nulls().first(),
         ])
+        .rename({"truck_number_clean": "truck_number"})
     )
 
     # ---- Cancel TT
@@ -3344,7 +3367,6 @@ async def host_bay_reassignment_alert(data):
             "location_based_reassignment": response
         }
     }
-
 
 
 AnalyticsModelMapping = {
