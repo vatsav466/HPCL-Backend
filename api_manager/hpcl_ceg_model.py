@@ -11003,7 +11003,7 @@ class Tasfaulty_Tas_Faulty_CreateParams(pydantic.BaseModel):
     user_remarks: str
     faulty: datetime.datetime
     certificate: typing.Optional[str] = pydantic.Field("", **{})
-    status: str
+    status: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
