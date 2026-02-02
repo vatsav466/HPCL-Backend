@@ -69,6 +69,7 @@ async def check_run_time_fire_engine(data):
                 f"AND fire_engine_off_datetime IS NULL"
             ),
             limit=1,
+            sort=json.dumps({"created_at": "desc"}) 
         )
 
         records = await hpcl_ceg_model.TasFireEngineTest.get_all(

@@ -2167,16 +2167,6 @@ async def delete(id: str):
     return await TasFaulty.delete(id)
 
 
-@router.post('/tasfireenginetest', response_model=TasFireEngineTest, tags=['TasFireEngineTest'])
-async def create(inputObj: TasFireEngineTestCreate):
-    return await inputObj.create()
-
-
-@router.put('/tasfireenginetest', response_model=TasFireEngineTest, tags=['TasFireEngineTest'])
-async def update(inputObj: TasFireEngineTest):
-    return await inputObj.modify()
-
-
 @router.get('/tasfireenginetest/{id}', response_model=TasFireEngineTest, tags=['TasFireEngineTest'])
 async def get(id: str):
     return await TasFireEngineTest.get(id, skip_secrets=True)
@@ -2186,7 +2176,3 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await TasFireEngineTest.get_all(params, skip_secrets=True)
 
-
-@router.delete('/tasfireenginetest/{id}', tags=['TasFireEngineTest'])
-async def delete(id: str):
-    return await TasFireEngineTest.delete(id)

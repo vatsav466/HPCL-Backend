@@ -4040,4 +4040,8 @@ Model TasFireEngineTest {
     fire_engine_on_datetime optional datetime
     fire_engine_off_datetime optional datetime
     total_run_time optional str
+    
+    Config=> {
+        crud_operations='read'
+    }
 }
