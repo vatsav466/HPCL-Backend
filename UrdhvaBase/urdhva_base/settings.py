@@ -174,7 +174,8 @@ class Settings(pydantic_settings.BaseSettings):
 
     # camunda
     # Default Camunda
-    camunda_url: str = 'http://10.90.38.167:8080'    
+    camunda_url: str = 'http://10.90.38.167:8080' 
+    tas_faulty_camunda_url: str = ''    
     cris_interlock_disable_url: str = ''
     camunda_default_config: typing.Dict[str, int] = {
         "maxTasks": 10,

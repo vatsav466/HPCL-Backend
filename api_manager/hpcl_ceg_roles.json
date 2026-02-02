@@ -7871,6 +7871,90 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "tasfaulty",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasFaulty",
+            "attributes": {},
+            "uris": [
+                "/api/tasfaulty/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_faulty_create"
+                },
+                {
+                    "name": "update_faulty"
+                },
+                {
+                    "name": "get_info"
+                }
+            ]
+        },
+        {
+            "name": "tasfaulty_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasFaulty_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasfaulty/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_info"
+                }
+            ]
+        },
+        {
+            "name": "tasfaulty_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasFaulty_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasfaulty/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "tas_faulty_create"
+                },
+                {
+                    "name": "update_faulty"
+                },
+                {
+                    "name": "get_info"
+                }
+            ]
         }
     ],
     "policies": [
@@ -8704,6 +8788,18 @@
         {
             "name": "delete_user",
             "displayName": "delete_user"
+        },
+        {
+            "name": "tas_faulty_create",
+            "displayName": "tas_faulty_create"
+        },
+        {
+            "name": "update_faulty",
+            "displayName": "update_faulty"
+        },
+        {
+            "name": "get_info",
+            "displayName": "get_info"
         }
     ]
 }
