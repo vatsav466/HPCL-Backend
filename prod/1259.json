@@ -1,7 +1,7 @@
 {
     "data": [
         {
-            "device_name": "TK-01_BS VI HSD@Srinagar",
+            "device_name": "TK-01_HSD@Srinagar",
             "device_id": "14eba6f0-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank",
             "device_key": "CFa1K77KdLvAoZNvjuOk",
@@ -186,7 +186,7 @@
             ]
         },
         {
-            "device_name": "TK-02_BS VI HSD@Srinagar",
+            "device_name": "TK-02_HSD@Srinagar",
             "device_id": "14f12530-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank",
             "device_key": "8zly8MVmJswTc0SBN2dM",
@@ -371,7 +371,7 @@
             ]
         },
         {
-            "device_name": "TK-03_BS VI HSD@Srinagar",
+            "device_name": "TK-03_SKO@Srinagar",
             "device_id": "14f87830-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank",
             "device_key": "mWL6ZtWMyDq7hNtnaygP",
@@ -556,7 +556,7 @@
             ]
         },
         {
-            "device_name": "TK-04_BS VI HSD@Srinagar",
+            "device_name": "TK-04_SKO@Srinagar",
             "device_id": "15006770-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank",
             "device_key": "XS37aCok2FIUm9RbUP9I",
@@ -741,7 +741,7 @@
             ]
         },
         {
-            "device_name": "TK-05_BS VI HSD@Srinagar",
+            "device_name": "TK-05_Gasohol@Srinagar",
             "device_id": "1506d010-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank",
             "device_key": "MIdBZZs97RvDPvJn0qiY",
@@ -926,7 +926,7 @@
             ]
         },
         {
-            "device_name": "TK-06_BS VI HSD@Srinagar",
+            "device_name": "TK-06_Gasohol@Srinagar",
             "device_id": "15106d00-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank",
             "device_key": "ksnqKX3vi3eVd2RO1bB8",
@@ -1111,7 +1111,7 @@
             ]
         },
         {
-            "device_name": "TK-07_BS VI HSD@Srinagar",
+            "device_name": "TK-07_Gasohol@Srinagar",
             "device_id": "1517e710-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank",
             "device_key": "4QUlL1uUSBPGc0AV3pMr",
@@ -1296,7 +1296,7 @@
             ]
         },
         {
-            "device_name": "TK-08_NAPHTHA@Srinagar",
+            "device_name": "TK-08_ATF@Srinagar",
             "device_id": "151faf40-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank",
             "device_key": "jwQ7cRSn89sWEf7OrKD9",
@@ -1481,7 +1481,7 @@
             ]
         },
         {
-            "device_name": "TK-09_NAPHTHA@Srinagar",
+            "device_name": "TK-09_ATF@Srinagar",
             "device_id": "15275060-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank",
             "device_key": "RnvFzk4etuA4cedDL6F4",
@@ -1666,7 +1666,7 @@
             ]
         },
         {
-            "device_name": "TK-10_NAPHTHA@Srinagar",
+            "device_name": "TK-10_Gasohol@Srinagar",
             "device_id": "152e0720-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank",
             "device_key": "ogduoSDRB5mnQilMKoTr",
@@ -2406,7 +2406,7 @@
             ]
         },
         {
-            "device_name": "TK-01_BS VI HSD@Srinagar_M",
+            "device_name": "TK-01_HSD@Srinagar_M",
             "device_id": "154b7a30-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank Maintenance",
             "device_key": "qL2m742gGbDgXK2APb1j",
@@ -2495,7 +2495,7 @@
             ]
         },
         {
-            "device_name": "TK-02_BS VI HSD@Srinagar_M",
+            "device_name": "TK-02_HSD@Srinagar_M",
             "device_id": "15534260-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank Maintenance",
             "device_key": "71ohqdXhzo1YpI7e7VXE",
@@ -2584,7 +2584,7 @@
             ]
         },
         {
-            "device_name": "TK-03_BS VI HSD@Srinagar_M",
+            "device_name": "TK-03_SKO@Srinagar_M",
             "device_id": "155cb840-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank Maintenance",
             "device_key": "Wdr7kvm2hbIvLC20J6UV",
@@ -2673,7 +2673,7 @@
             ]
         },
         {
-            "device_name": "TK-04_BS VI HSD@Srinagar_M",
+            "device_name": "TK-04_SKO@Srinagar_M",
             "device_id": "15645960-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank Maintenance",
             "device_key": "ho37DktV97X64oAIsC45",
@@ -2762,7 +2762,7 @@
             ]
         },
         {
-            "device_name": "TK-05_BS VI HSD@Srinagar_M",
+            "device_name": "TK-05_Gasohol@Srinagar_M",
             "device_id": "156b1020-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank Maintenance",
             "device_key": "mrfWaGrBgHIWvwazY1uW",
@@ -2851,7 +2851,7 @@
             ]
         },
         {
-            "device_name": "TK-06_BS VI HSD@Srinagar_M",
+            "device_name": "TK-06_Gasohol@Srinagar_M",
             "device_id": "15739ba0-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank Maintenance",
             "device_key": "4LvDyaYjk7nLuymr1rae",
@@ -2940,7 +2940,7 @@
             ]
         },
         {
-            "device_name": "TK-07_BS VI HSD@Srinagar_M",
+            "device_name": "TK-07_Gasohol@Srinagar_M",
             "device_id": "157a7970-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank Maintenance",
             "device_key": "lvqhc8bcK2iS05CvJGCt",
@@ -3029,7 +3029,7 @@
             ]
         },
         {
-            "device_name": "TK-08_NAPHTHA@Srinagar_M",
+            "device_name": "TK-08_ATF@Srinagar_M",
             "device_id": "158304f0-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank Maintenance",
             "device_key": "jsUtM0hVZ5aVI4ng0lvj",
@@ -3118,7 +3118,7 @@
             ]
         },
         {
-            "device_name": "TK-09_NAPHTHA@Srinagar_M",
+            "device_name": "TK-09_ATF@Srinagar_M",
             "device_id": "1589bbb0-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank Maintenance",
             "device_key": "A3teYxwHncQR4sVooGNb",
@@ -3207,7 +3207,7 @@
             ]
         },
         {
-            "device_name": "TK-10_NAPHTHA@Srinagar_M",
+            "device_name": "TK-10_Gasohol@Srinagar_M",
             "device_id": "15924730-7673-11f0-8d7a-97bc9c350a5a",
             "device_type": "Tank Maintenance",
             "device_key": "TtE28w7neElfC7fnwPKw",
