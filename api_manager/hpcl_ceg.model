@@ -4031,3 +4031,13 @@ Model TasFaulty {
         equipment_name  str
     }
 }
+
+Model TasFireEngineTest {
+    sap_id index_field str
+    device_name index_field str
+    location_name index_field str
+    zone index_field str
+    fire_engine_on_datetime optional datetime
+    fire_engine_off_datetime optional datetime
+    total_run_time optional str
+}
