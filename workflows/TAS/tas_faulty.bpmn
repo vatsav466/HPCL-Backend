@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_03wpgyq" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.28.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.22.0">
+  <bpmn:process id="TASFAULTYCHECK" name="TASFAULTYCHECK" isExecutable="true" camunda:historyTimeToLive="101">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0nm8pq9</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_1y837og" name="send_vendor_notification" camunda:type="external" camunda:topic="tas_workflow_consumer_1">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="messagetype">notify</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">tas_faulty_notification</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">VendorEmailNotification</camunda:inputParameter>
+          <camunda:inputParameter name="function_name">handle_vendor_notification</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0nm8pq9</bpmn:incoming>
+      <bpmn:outgoing>Flow_14m83r6</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0nm8pq9" sourceRef="StartEvent_1" targetRef="Activity_1y837og" />
+    <bpmn:parallelGateway id="Gateway_0oet7xs">
+      <bpmn:incoming>Flow_14m83r6</bpmn:incoming>
+      <bpmn:outgoing>Flow_1rw3e3t</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0zxdzb7</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="Flow_14m83r6" sourceRef="Activity_1y837og" targetRef="Gateway_0oet7xs" />
+    <bpmn:intermediateCatchEvent id="Event_17aoqrq" name="48 hours">
+      <bpmn:incoming>Flow_1rw3e3t</bpmn:incoming>
+      <bpmn:outgoing>Flow_1v5n1sz</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_15inm7t">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT48H</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_1rw3e3t" sourceRef="Gateway_0oet7xs" targetRef="Event_17aoqrq" />
+    <bpmn:serviceTask id="Activity_0ujh01m" name="send_vendor_notification" camunda:type="external" camunda:topic="tas_workflow_consumer_2">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="function_name">handle_vendor_notification</camunda:inputParameter>
+          <camunda:inputParameter name="messagetype">notify</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">tas_faulty_notification</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">VendorEmailNotification</camunda:inputParameter>
+          <camunda:inputParameter name="escalationlevel">1</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1v5n1sz</bpmn:incoming>
+      <bpmn:outgoing>Flow_0gx5uk1</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1v5n1sz" sourceRef="Event_17aoqrq" targetRef="Activity_0ujh01m" />
+    <bpmn:intermediateCatchEvent id="Event_0z56clw">
+      <bpmn:incoming>Flow_0zxdzb7</bpmn:incoming>
+      <bpmn:incoming>Flow_0c0f905</bpmn:incoming>
+      <bpmn:outgoing>Flow_13ou84a</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0sb6pyp" messageRef="Message_3h0m7hv" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_0zxdzb7" sourceRef="Gateway_0oet7xs" targetRef="Event_0z56clw" />
+    <bpmn:serviceTask id="Activity_0byg3sa" name="send_vendor_notication" camunda:type="external" camunda:topic="tas_workflow_consumer_5">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="messagetype">notify</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">tas_faulty_notification</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">VendorEmailNotification</camunda:inputParameter>
+          <camunda:inputParameter name="function_name">handle_vendor_notification</camunda:inputParameter>
+          <camunda:inputParameter name="remarks">#{remarks}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1wol0la</bpmn:incoming>
+      <bpmn:outgoing>Flow_078qc3k</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:intermediateCatchEvent id="Event_0pxme1c" name="96 hours">
+      <bpmn:incoming>Flow_0gx5uk1</bpmn:incoming>
+      <bpmn:outgoing>Flow_0fcizbu</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1w5g2lc">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT48H</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_0gx5uk1" sourceRef="Activity_0ujh01m" targetRef="Event_0pxme1c" />
+    <bpmn:serviceTask id="Activity_1gg8xmx" name="send_vendor_notification" camunda:type="external" camunda:topic="tas_workflow_consumer_3">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="messagetype">notify</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">tas_faulty_notification</camunda:inputParameter>
+          <camunda:inputParameter name="function_name">handle_vendor_notification</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">VendorEmailNotification</camunda:inputParameter>
+          <camunda:inputParameter name="escalationlevel">2</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0fcizbu</bpmn:incoming>
+      <bpmn:outgoing>Flow_102gjv2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0fcizbu" sourceRef="Event_0pxme1c" targetRef="Activity_1gg8xmx" />
+    <bpmn:endEvent id="Event_19rif88">
+      <bpmn:incoming>Flow_078qc3k</bpmn:incoming>
+      <bpmn:terminateEventDefinition id="TerminateEventDefinition_0gp32bs" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_078qc3k" sourceRef="Activity_0byg3sa" targetRef="Event_19rif88" />
+    <bpmn:endEvent id="Event_0y5gp9c">
+      <bpmn:incoming>Flow_102gjv2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_102gjv2" sourceRef="Activity_1gg8xmx" targetRef="Event_0y5gp9c" />
+    <bpmn:exclusiveGateway id="Gateway_0wlxtv6">
+      <bpmn:incoming>Flow_13ou84a</bpmn:incoming>
+      <bpmn:outgoing>Flow_1wol0la</bpmn:outgoing>
+      <bpmn:outgoing>Flow_02okvwx</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_13ou84a" sourceRef="Event_0z56clw" targetRef="Gateway_0wlxtv6" />
+    <bpmn:sequenceFlow id="Flow_1wol0la" sourceRef="Gateway_0wlxtv6" targetRef="Activity_0byg3sa">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">#{resolved}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:serviceTask id="Activity_0ka0tiu" name="send_vendor_notification" camunda:type="external" camunda:topic="tas_workflow_consumer_4">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="messagetype">notify</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">tas_faulty_notification</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">VendorEmailNotification</camunda:inputParameter>
+          <camunda:inputParameter name="function_name">handle_vendor_notification</camunda:inputParameter>
+          <camunda:inputParameter name="remarks">#{remarks}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_02okvwx</bpmn:incoming>
+      <bpmn:outgoing>Flow_0c0f905</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_02okvwx" sourceRef="Gateway_0wlxtv6" targetRef="Activity_0ka0tiu">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">#{not resolved}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0c0f905" sourceRef="Activity_0ka0tiu" targetRef="Event_0z56clw" />
+  </bpmn:process>
+  <bpmn:message id="Message_3h0m7hv" name="Resolved" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="TASFAULTYCHECK">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1y837og_di" bpmnElement="Activity_1y837og">
+        <dc:Bounds x="330" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0oet7xs_di" bpmnElement="Gateway_0oet7xs">
+        <dc:Bounds x="545" y="152" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_17aoqrq_di" bpmnElement="Event_17aoqrq">
+        <dc:Bounds x="612" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="609" y="125" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ujh01m_di" bpmnElement="Activity_0ujh01m">
+        <dc:Bounds x="730" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0z56clw_di" bpmnElement="Event_0z56clw">
+        <dc:Bounds x="612" y="242" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0byg3sa_di" bpmnElement="Activity_0byg3sa">
+        <dc:Bounds x="970" y="220" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0pxme1c_di" bpmnElement="Event_0pxme1c">
+        <dc:Bounds x="882" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="879" y="125" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1gg8xmx_di" bpmnElement="Activity_1gg8xmx">
+        <dc:Bounds x="970" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_19rif88_di" bpmnElement="Event_19rif88">
+        <dc:Bounds x="1132" y="242" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0y5gp9c_di" bpmnElement="Event_0y5gp9c">
+        <dc:Bounds x="1122" y="82" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0wlxtv6_di" bpmnElement="Gateway_0wlxtv6" isMarkerVisible="true">
+        <dc:Bounds x="755" y="235" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ka0tiu_di" bpmnElement="Activity_0ka0tiu">
+        <dc:Bounds x="730" y="340" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0nm8pq9_di" bpmnElement="Flow_0nm8pq9">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="330" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14m83r6_di" bpmnElement="Flow_14m83r6">
+        <di:waypoint x="430" y="177" />
+        <di:waypoint x="545" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1rw3e3t_di" bpmnElement="Flow_1rw3e3t">
+        <di:waypoint x="570" y="152" />
+        <di:waypoint x="570" y="100" />
+        <di:waypoint x="612" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1v5n1sz_di" bpmnElement="Flow_1v5n1sz">
+        <di:waypoint x="648" y="100" />
+        <di:waypoint x="730" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0zxdzb7_di" bpmnElement="Flow_0zxdzb7">
+        <di:waypoint x="570" y="202" />
+        <di:waypoint x="570" y="260" />
+        <di:waypoint x="612" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0gx5uk1_di" bpmnElement="Flow_0gx5uk1">
+        <di:waypoint x="830" y="100" />
+        <di:waypoint x="882" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0fcizbu_di" bpmnElement="Flow_0fcizbu">
+        <di:waypoint x="918" y="100" />
+        <di:waypoint x="970" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_078qc3k_di" bpmnElement="Flow_078qc3k">
+        <di:waypoint x="1070" y="260" />
+        <di:waypoint x="1132" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_102gjv2_di" bpmnElement="Flow_102gjv2">
+        <di:waypoint x="1070" y="100" />
+        <di:waypoint x="1122" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13ou84a_di" bpmnElement="Flow_13ou84a">
+        <di:waypoint x="648" y="260" />
+        <di:waypoint x="755" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1wol0la_di" bpmnElement="Flow_1wol0la">
+        <di:waypoint x="805" y="260" />
+        <di:waypoint x="970" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02okvwx_di" bpmnElement="Flow_02okvwx">
+        <di:waypoint x="780" y="285" />
+        <di:waypoint x="780" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0c0f905_di" bpmnElement="Flow_0c0f905">
+        <di:waypoint x="730" y="380" />
+        <di:waypoint x="630" y="380" />
+        <di:waypoint x="630" y="278" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

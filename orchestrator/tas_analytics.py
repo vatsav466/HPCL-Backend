@@ -2,16 +2,276 @@ import urdhva_base
 import polars as pl
 from datetime import datetime
 import json 
+import os
 import hpcl_ceg_model
 import traceback
 import dashboard_studio_model
 import charts_actions
+import httpx
+import orchestrator.workflow.workflow_process as workflow_process
+import utilities.minio_connector as minio_connector
 import decimal
 import orchestrator.dbconnector.widget_actions.vts_analytics as vts_analytics
 from datetime import datetime, timedelta
 import re
 import utilities.analog_data_mapping as analog_mapping
 import orchestrator.tas_queries as tas_queries
+import orchestrator.alerting.listener.tas_listener as tas_listener
+
+
+async def create_tas_faulty(data, certificate_file=None):
+    """
+    Create a TAS Faulty record and start the related workflow.
+
+    Checks for duplicate records, initiates the Camunda workflow,
+    optionally uploads a certificate to MinIO, and saves the
+    TAS Faulty details in the database.
+
+    Args:
+        data: TAS Faulty request data.
+        certificate_file: Optional certificate file.
+
+    Returns:
+        dict: Status, message, and created record details.
+    """
+    try:
+        # Convert to dict at the start
+        data = data.dict()
+        
+        sap_id = data['sap_id']
+        device_type = data['device_type']
+        equipment_name = data['equipment_name']
+        zone = data['zone']
+        location_name = data['name']
+        user_remarks = data['user_remarks']
+        faulty = data['faulty']
+        
+        print("sap_id:", sap_id)
+        
+        # Set default status
+        data['status'] = "Open"
+
+        # ---------------- DUPLICATE CHECK ----------------
+        params = urdhva_base.queryparams.QueryParams(limit=1)
+        params.q = (
+            f"sap_id='{sap_id}' "
+            f"AND device_type='{device_type}' "
+            f"AND equipment_name='{equipment_name}'"
+        )
+
+        existing = await hpcl_ceg_model.TasFaulty.get_all(
+            params, resp_type="plain"
+        )
+
+        if existing.get("data"):
+            return {
+                "status": False,
+                "message": (
+                    "Duplicate TasFaulty record exists for "
+                    f"SAP ID = {sap_id}, Equipment = {equipment_name}"
+                ),
+                "data": {}
+            }
+
+        # ---------------- START WORKFLOW ----------------
+        payload_workflow = {
+            "variables": {
+                "sap_id": {"value": sap_id, "type": "String"},
+                "location_name": {"value": location_name, "type": "String"},
+                "device_type": {"value": device_type, "type": "String"},
+                "equipment_name": {"value": equipment_name, "type": "String"},
+                "zone": {"value": zone, "type": "String"},
+                "remarks": {"value": user_remarks, "type": "String"},
+                "status": {"value": data['status'], "type": "String"},
+            }
+        }
+
+        camunda_resp = await workflow_process.Camunda().start_tas_faulty_workflow(
+            payload=payload_workflow,
+            workflowId="TASFAULTYCHECK"
+        )
+
+        data['workflow_instance_id'] = camunda_resp.get("id", "")
+
+        # ---------------- SAVE CERTIFICATE ----------------
+        certificate_path = None
+
+        if certificate_file:
+            UPLOAD_DIR = os.path.join(
+                urdhva_base.settings.uploads,
+                "tas_faulty"
+            )
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+            faulty_val = faulty
+            if isinstance(faulty_val, datetime):
+                faulty_val = faulty_val.strftime("%Y%m%d_%H%M%S")
+
+            object_name = f"{faulty_val}_{sap_id}_{equipment_name}"
+
+            file_path = os.path.join(
+                UPLOAD_DIR,
+                certificate_file.filename
+            )
+
+            with open(file_path, "wb") as f:
+                f.write(await certificate_file.read())
+
+            status_minio, minio_path = minio_connector.upload_to_minio(
+                "TAS",
+                "tas_faulty_certificates",
+                object_name,
+                file_path
+            )
+
+            if not status_minio:
+                return {
+                    "status": False,
+                    "message": "MinIO upload failed",
+                    "error": minio_path
+                }
+
+            certificate_path = minio_path
+            data['certificate'] = certificate_path
+
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
+
+        # ---------------- INSERT ----------------
+        record = await hpcl_ceg_model.TasFaultyCreate(**data).create()
+
+        return {
+            "status": True,
+            "message": "TasFaulty record saved successfully",
+            "data": record
+        }
+
+    except Exception as e:
+        return {
+            "status": False,
+            "message": f"Failed to save TasFaulty record: {e}",
+            "data": {}
+        }
+
+async def update_tas_faulty(data):
+    """
+    Update a TAS Faulty record and trigger the Camunda workflow with vendor remarks and resolved status.
+    """
+    try:
+        transaction_id = int(data.transaction_id)
+        vendor_remarks = data.vendor_remarks
+        resolved = bool(data.resolved)
+
+        # ---------------- FETCH RECORD ----------------
+        record = await hpcl_ceg_model.TasFaulty.get_all(urdhva_base.queryparams.QueryParams(q=f"id={transaction_id}", limit=1), 
+                                                        resp_type="plain")
+        row = record.get("data")
+
+        if not row:
+            return {"status": False, "message": "No faulty record found", "data": {}}
+        
+        row = row[0]
+        process_instance_id = row["workflow_instance_id"]
+        if not process_instance_id:
+            return {"status": False, "message": "Workflow instance not linked", "data": {}}
+
+        # ---------------- TRIGGER CAMUNDA ----------------
+        camunda_payload = {
+            "messageName": "Resolved",
+            "processInstanceId": process_instance_id,
+            "processVariables": {
+                "resolved": {"value": resolved, "type": "Boolean"},
+                "remarks": {"value": vendor_remarks, "type": "String"}
+            }
+        }
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{urdhva_base.settings.tas_faulty_camunda_url}/engine-rest/message",
+                json=camunda_payload,
+                timeout=10
+            )
+
+        if response.status_code not in (200, 204):
+            return {"status": False, "message": "Workflow trigger failed", "data": response.text}
+
+        # ---------------- UPDATE RECORD ----------------
+        update_data = dict(record)
+        update_data.pop("id", None)
+        update_data["vendor_remarks"] = vendor_remarks
+        update_data["status"] = "Resolved" if resolved else "Rejected"
+
+        await hpcl_ceg_model.TasFaulty(id=transaction_id, **update_data).modify()
+
+        return {
+            "status": True,
+            "message": "Workflow triggered and record updated successfully",
+            "data": {"transaction_id": transaction_id, "resolved": resolved}
+        }
+
+    except Exception as e:
+        return {"status": False, "message": str(e), "data": {}}
+
+
+async def get_info_tas_faulty(data):
+    """
+    Fetch device types or device names for a given SAP ID.
+
+    - If only SAP ID is provided, returns all available device types.
+    - If SAP ID and device type are provided, returns device names
+      matching the given device type.
+    """
+    sap_id = data.sap_id
+    device_type_filter = data.device_type
+
+    device_json = tas_listener.load_device_data(sap_id)
+    if not device_json:
+        return {
+            "status": False,
+            "message": f"Device data not found for SAP ID {sap_id}"
+        }
+
+    devices = device_json.get("data", [])
+
+    # ---------------- CASE 1: Only SAP ID ----------------
+    if not device_type_filter:
+        device_types = {
+            device["device_type"]
+            for device in devices
+            if device.get("device_type")
+        }
+
+        return {
+            "sap_id": sap_id,
+            "device_types": sorted(device_types)
+        }
+
+    # ---------------- CASE 2: SAP ID + Device Type ----------------
+    device_names = {
+        device["device_name"]
+        for device in devices
+        if device.get("device_type") == device_type_filter
+        and device.get("device_name")
+    }
+
+    return {
+        "sap_id": sap_id,
+        "device_type": device_type_filter,
+        "device_names": sorted(device_names)
+    }
+
+
+
+def create_valid_vehicle_filter(column_name: str, min_length: int = 9) -> pl.Expr:
+    """Validate vehicle/truck numbers: min length, contains A-Z and 0-9, alphanumeric only."""
+    return pl.when(
+        (pl.col(column_name).str.len_chars() >= min_length) &
+        pl.col(column_name).str.contains(r"[A-Z]") &
+        pl.col(column_name).str.contains(r"[0-9]") &
+        pl.col(column_name).str.contains(r"^[A-Z0-9]+$")
+    ).then(True).otherwise(False)
 
 
 async def top_repeat_alerts(data):
@@ -510,9 +770,17 @@ async def tas_alerts_exception_report(data):
                 .str.to_lowercase()
                 .str.replace_all(" ", "")
                 .alias("interlock_norm"),
-            pl.col("created_at").dt.date().alias("created_date")
+            pl.col("created_at").dt.date().alias("created_date"),
+            pl.col("created_at").dt.truncate("1h").alias("created_at_hour")
         ])
+        .with_columns([
+            create_valid_vehicle_filter("vehicle_number").alias("is_valid_vehicle")
+        ])
+        .filter(pl.col("is_valid_vehicle") == True)
+        .drop("is_valid_vehicle")
     )
+    df = df.unique(subset=["vehicle_number", "created_at_hour", "interlock_norm"])
+
     mfm = await hpcl_ceg_model.HostMFMFactor.get_all(
         urdhva_base.queryparams.QueryParams(limit=0),
         resp_type="plain"
@@ -578,13 +846,21 @@ async def tas_alerts_exception_report(data):
                 resp_type="plain"
             )).get("data", [])
         )
-        .with_columns(pl.col("created_at").dt.date().alias("created_date"))
-        .group_by(["truck_number", "created_date"])
+        .with_columns([
+            pl.col("truck_number").str.strip_chars().alias("truck_number_clean"),
+            pl.col("created_at").dt.date().alias("created_date")
+        ])
+        .with_columns([
+            create_valid_vehicle_filter("truck_number_clean").alias("is_valid_truck")
+        ])
+        .filter(pl.col("is_valid_truck") == True)
+        .group_by(["truck_number_clean", "created_date"])
         .agg([
             pl.col("bcu_number").drop_nulls().first(),
-            pl.col("loaded_qty").drop_nulls().first(),
-            pl.col("recipe_name").drop_nulls().first(),
+            pl.col("loaded_qty").drop_nulls().sum().alias("loaded_qty"),  # SUM the loaded_qty
+            pl.col("recipe_name").str.strip_chars().drop_nulls().first(),
         ])
+        .rename({"truck_number_clean": "truck_number"})
     )
 
     # ---- Cancel TT
@@ -2175,12 +2451,11 @@ async def location_wise_total_loaded_qty(data):
                 pl.lit("").alias("truck_number_clean")
             ])
 
-        # Filter valid truck numbers (pattern: alphanumeric, at least 6 characters)
+        # Filter valid truck numbers (pattern: alphanumeric, at least 9 characters)
         # Valid pattern example: TS08UG9576
         df = df.with_columns([
-            pl.col("truck_number_clean").str.contains(r"^[A-Z0-9]{6,}$").alias("is_valid_truck")
+            create_valid_vehicle_filter("truck_number_clean").alias("is_valid_truck")
         ])
-
         # Categorize truck types using config patterns
         prover_pattern = tas_queries.TRUCK_TYPE_PATTERNS["prover"]
         dg_pattern = tas_queries.TRUCK_TYPE_PATTERNS["dg"]
@@ -2447,12 +2722,17 @@ async def location_wise_total_loaded_qty(data):
                 )
                 
                 if not qualifying_hours_df.is_empty():
-                    # Process each qualifying hour
+                    # Collect ALL valid trucks from qualifying hours first
+                    temp_details = []
+                    seen_combinations = set()
+                    
                     for hour_row in qualifying_hours_df.iter_rows(named=True):
                         trucks_list = hour_row.get("trucks", [])
                         timestamps_list = hour_row.get("timestamps", [])
                         
-                        # Process each truck in this hour
+                        # First pass: collect valid trucks for THIS hour
+                        valid_trucks_in_hour = []
+                        
                         for i, truck in enumerate(trucks_list):
                             if not truck:
                                 continue
@@ -2470,20 +2750,50 @@ async def location_wise_total_loaded_qty(data):
                             if is_prover or is_dg or not is_valid_vehicle_format:
                                 continue
                             
-                            # Get timestamp
                             created_at = timestamps_list[i] if i < len(timestamps_list) else None
                             if created_at:
                                 date_with_time = created_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(created_at, 'strftime') else str(created_at)
+                                unique_key = (truck, date_with_time)
                                 
-                                local_loading_repeated_details.append({
-                                    "date_with_time": date_with_time,
-                                    "truck_number": truck
+                                valid_trucks_in_hour.append({
+                                    'truck': truck,
+                                    'created_at': created_at,
+                                    'date_with_time': date_with_time,
+                                    'unique_key': unique_key
+                                })
+                        
+                        # Count unique trucks in this hour (after filtering)
+                        unique_valid_trucks = len(set(t['unique_key'] for t in valid_trucks_in_hour))
+                        
+                        # Only process this hour if it has 3+ VALID trucks
+                        if unique_valid_trucks >= min_trucks_per_hour:
+                            for truck_info in valid_trucks_in_hour:
+                                unique_key = truck_info['unique_key']
+                                
+                                # Skip if already seen
+                                if unique_key in seen_combinations:
+                                    continue
+                                
+                                seen_combinations.add(unique_key)
+                                
+                                # Get loaded_qty
+                                loaded_qty = location_df.filter(
+                                    (pl.col("truck_number_clean") == truck_info['truck']) &
+                                    (pl.col("created_at_dt") == truck_info['created_at'])
+                                ).select("loaded_qty").to_series().to_list()
+                                
+                                qty_value = sum(loaded_qty) if loaded_qty else 0
+                                
+                                temp_details.append({
+                                    "date_with_time": truck_info['date_with_time'],
+                                    "truck_number": truck_info['truck'],
+                                    "loaded_qty": qty_value
                                 })
                     
-                    # Sort by date_with_time
-                    if local_loading_repeated_details:
+                    # Sort and set flag
+                    if temp_details:
                         local_loading_repeated_details = sorted(
-                            local_loading_repeated_details, 
+                            temp_details,
                             key=lambda x: x['date_with_time']
                         )
                         local_loading_repeated = True
@@ -2516,12 +2826,17 @@ async def location_wise_total_loaded_qty(data):
                                 pl.col("load_hour") == most_frequent_hour
                             ).select([
                                 "truck_number_clean",
-                                "created_at_dt"
+                                "created_at_dt",
+                                "load_date"
                             ]).unique()
+
+                            pattern_dates = []
+                            temp_details = []
                             
                             for truck_row in time_pattern_trucks.iter_rows(named=True):
                                 truck = truck_row.get("truck_number_clean")
                                 created_at = truck_row.get("created_at_dt")
+                                load_date = truck_row.get("load_date")
                                 
                                 if not truck or not created_at:
                                     continue
@@ -2546,9 +2861,12 @@ async def location_wise_total_loaded_qty(data):
                                     "truck_number": truck,
                                     "date_with_time": date_with_time
                                 })
+                                pattern_dates.append(load_date)
                             
                             # Only set flag to true if we have valid truck details
-                            particular_time_of_day = len(particular_time_of_day_details) > 0
+                            if temp_details and has_consecutive_dates(pattern_dates, min_days_for_pattern):
+                                particular_time_of_day_details = temp_details
+                                particular_time_of_day = True
 
             particular_product = False
             particular_product_details = []
@@ -2605,30 +2923,149 @@ async def location_wise_total_loaded_qty(data):
                     # Only set flag to true if we have valid truck details
                     particular_product = len(particular_product_details) > 0
 
-            location_trucks_df = location_df.select(["truck_number_clean", "load_date"]).unique()
-
+            # 4. assigned_at_particular_bay logic
             assigned_at_particular_bay = False
+            assigned_at_particular_bay_details = []
 
-            for truck_row in location_trucks_df.iter_rows(named=True):
-                truck = truck_row.get("truck_number_clean")
-                load_date = truck_row.get("load_date")
+            # Get valid trucks for this location with bay_number
+            location_trucks_with_bay = location_df.filter(
+                (pl.col("is_valid_truck") == True) &
+                (pl.col("truck_number_clean") != "") &
+                (pl.col("bay_number").is_not_null())
+            ).select([
+                "truck_number_clean",
+                "bay_number",
+                "bcu_number",
+                "created_at_dt",  # Include created_at with time instead of just load_date
+                "load_date"
+            ])
 
-                if not truck:
-                    continue
+            if not location_trucks_with_bay.is_empty():
+                # Clean bay_number - remove whitespaces and convert to uppercase
+                location_trucks_with_bay = location_trucks_with_bay.with_columns([
+                    pl.when(pl.col("bay_number").is_not_null())
+                    .then(
+                        pl.col("bay_number")
+                        .cast(pl.Utf8)
+                        .str.replace_all(r"\s+", "")  # Remove all whitespaces
+                        .str.to_uppercase()
+                    )
+                    .otherwise(pl.lit(""))
+                    .alias("bay_number_clean")
+                ])
+                
+                # Also clean bcu_number
+                location_trucks_with_bay = location_trucks_with_bay.with_columns([
+                    pl.when(pl.col("bcu_number").is_not_null())
+                    .then(
+                        pl.col("bcu_number")
+                        .cast(pl.Utf8)
+                        .str.replace_all(r"\s+", "")
+                        .str.to_uppercase()
+                    )
+                    .otherwise(pl.lit(""))
+                    .alias("bcu_number_clean")
+                ])
+                
+                # Filter out empty bay_numbers
+                location_trucks_with_bay = location_trucks_with_bay.filter(
+                    pl.col("bay_number_clean") != ""
+                )
+                
+                # Remove duplicates based on truck_number and created_at (with time)
+                location_trucks_with_bay = location_trucks_with_bay.unique(
+                    subset=["truck_number_clean", "created_at_dt"]
+                )
+                
+                if not location_trucks_with_bay.is_empty():
+                    # Group by bay_number to find bays with 2+ trucks
+                    bay_groups = (
+                        location_trucks_with_bay.group_by("bay_number_clean")
+                        .agg([
+                            pl.count().alias("truck_count"),
+                            pl.col("truck_number_clean").alias("trucks"),
+                            pl.col("bcu_number_clean").alias("bcus"),
+                            pl.col("created_at_dt").alias("timestamps"),
+                            pl.col("load_date").alias("dates")
+                        ])
+                        .filter(pl.col("truck_count") >= 2)  # Only bays with 2+ trucks
+                    )
+                    
+                    if not bay_groups.is_empty():
+                        # Collect details for all trucks at these particular bays
+                        temp_details = []
+                        
+                        for bay_row in bay_groups.iter_rows(named=True):
+                            bay_number = bay_row.get("bay_number_clean")
+                            trucks_list = bay_row.get("trucks", [])
+                            bcus_list = bay_row.get("bcus", [])
+                            timestamps_list = bay_row.get("timestamps", [])
+                            dates_list = bay_row.get("dates", [])
+                            
+                            # Add each truck's details - with validation
+                            valid_trucks_in_bay = []
+                            seen_combinations = set()  # Track unique truck+timestamp combinations
+                            
+                            for i, truck in enumerate(trucks_list):
+                                if not truck:
+                                    continue
+                                
+                                timestamp = timestamps_list[i] if i < len(timestamps_list) else None
+                                if not timestamp:
+                                    continue
+                                
+                                # Create unique key with truck and timestamp
+                                date_with_time = timestamp.strftime("%Y-%m-%d %H:%M:%S") if hasattr(timestamp, 'strftime') else str(timestamp)
+                                unique_key = (truck, date_with_time)
+                                
+                                # Skip if already processed
+                                if unique_key in seen_combinations:
+                                    continue
+                                
+                                seen_combinations.add(unique_key)
+                                
+                                # ===== ADDITIONAL VALIDATION =====
+                                # Filter: Skip PROVER (starts with P, no digits) and DG trucks
+                                is_prover = truck.startswith('P') and not any(c.isdigit() for c in truck)
+                                is_dg = 'DG' in truck
+                                
+                                # Validate proper vehicle registration format (must have both letters AND digits)
+                                has_letters = any(c.isalpha() for c in truck)
+                                has_digits = any(c.isdigit() for c in truck)
+                                is_valid_vehicle_format = has_letters and has_digits
+                                
+                                # Skip invalid patterns like "ENTERDATAIT" (all letters, no digits)
+                                # Skip test/dummy data patterns
+                                invalid_patterns = ['ENTERDATAIT', 'ENTERDATA', 'TEST', 'DUMMY', 'NODATA']
+                                is_invalid_pattern = any(pattern in truck.upper() for pattern in invalid_patterns)
+                                
+                                # Only include valid tank trucks (vehicle registration format)
+                                if is_prover or is_dg or not is_valid_vehicle_format or is_invalid_pattern:
+                                    continue
+                                
+                                bcu = bcus_list[i] if i < len(bcus_list) else ""
+                                date = dates_list[i] if i < len(dates_list) else None
+                                
+                                valid_trucks_in_bay.append({
+                                    "truck_number": truck,
+                                    "bay_number": bay_number,
+                                    "bcu_number": bcu,
+                                    "date": date_with_time  # Include full timestamp
+                                })
+                            
+                            # Only add to temp_details if this bay has 2+ VALID trucks
+                            if len(valid_trucks_in_bay) >= 2:
+                                temp_details.extend(valid_trucks_in_bay)
+                        
+                        # Only set flag if we have valid results
+                        if temp_details:
+                            # Sort by bay_number, truck_number, and date for consistency
+                            assigned_at_particular_bay_details = sorted(
+                                temp_details,
+                                key=lambda x: (x['bay_number'], x['truck_number'], x['date'])
+                            )
+                            assigned_at_particular_bay = True
 
-                key = (truck, str(load_date))
-
-                if key in bay_data:
-                    bay_info = bay_data[key][0]
-
-                    assigned_at_particular_bay = {
-                        "truck_number": truck,
-                        "assigned_bay": bay_info.get("assigned_bay"),
-                        "reassigned_bay": bay_info.get("reassigned_bay"),
-                        "reassign_loaded_qty": bay_info.get("reassign_loaded_qty")
-                    }
-
-                    break
 
             # 5. NEW: Get indent request details with location names
             indent_details = []
@@ -2675,6 +3112,7 @@ async def location_wise_total_loaded_qty(data):
                 "particular_product": particular_product,
                 "particular_product_details": particular_product_details if particular_product else None,
                 "assigned_at_particular_bay": assigned_at_particular_bay,
+                "assigned_at_particular_bay_details": assigned_at_particular_bay_details if assigned_at_particular_bay else None,
                 "indent_request_details": indent_details if indent_details else None
             })
 
