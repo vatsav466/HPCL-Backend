@@ -11,12 +11,83 @@ import httpx
 import orchestrator.workflow.workflow_process as workflow_process
 import utilities.minio_connector as minio_connector
 import decimal
+
 import orchestrator.dbconnector.widget_actions.vts_analytics as vts_analytics
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import re
 import utilities.analog_data_mapping as analog_mapping
 import orchestrator.tas_queries as tas_queries
 import orchestrator.alerting.listener.tas_listener as tas_listener
+import utilities.helpers as helpers
+
+
+def unix_ms_to_ist(ts_ms: int) -> datetime:
+    IST = timezone(timedelta(hours=5, minutes=30))
+    return datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc).astimezone(IST)
+
+
+async def check_run_time_fire_engine(data):
+
+    # Fire engine status (ON / OFF)
+    engine_status = data["status"]
+    device_name = data["device_name"]
+    sap_id = data["sap_id"]
+    bu = data["bu"]
+
+    status, location_details = await helpers.get_location_details(bu, sap_id)
+    if not status:
+        print(f"Location data missing for SAP ID {sap_id}")
+        return
+
+    location_name = location_details["name"]
+    zone = location_details["zone"]
+
+    if engine_status in ["ON"]:
+        fire_engine_on_datetime = unix_ms_to_ist(
+            data["fire_engine_on_datetime"]
+        )
+
+        await hpcl_ceg_model.TasFireEngineTestCreate(
+            device_name=device_name,
+            sap_id=sap_id,
+            location_name=location_name,
+            zone=zone,
+            fire_engine_on_datetime=fire_engine_on_datetime,
+        ).create()
+        
+        return
+
+    if engine_status in ["OFF"]:
+        fire_engine_off_datetime = unix_ms_to_ist(
+            data["fire_engine_off_datetime"]
+        )
+
+        params = urdhva_base.queryparams.QueryParams(
+            q=(
+                f"sap_id='{sap_id}' "
+                f"AND device_name='{device_name}' "
+                f"AND fire_engine_off_datetime IS NULL"
+            ),
+            limit=1,
+            sort=json.dumps({"created_at": "desc"}) 
+        )
+
+        records = await hpcl_ceg_model.TasFireEngineTest.get_all(
+            params, resp_type="plain"
+        )
+
+        rows = records.get("data", [])
+        if not rows:
+            return
+
+        latest = rows[0]
+        run_time = fire_engine_off_datetime - latest["fire_engine_on_datetime"]
+
+        await hpcl_ceg_model.TasFireEngineTest(
+            id=latest["id"],
+            fire_engine_off_datetime=fire_engine_off_datetime,
+            total_run_time=str(run_time),
+        ).modify()
 
 
 async def create_tas_faulty(data, certificate_file=None):
