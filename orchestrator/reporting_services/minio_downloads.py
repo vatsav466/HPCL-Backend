@@ -1,28 +1,15 @@
 import urdhva_base
-from hpcl_ceg_enum import *
-from hpcl_ceg_model import *
-import fastapi
 import asyncio
 import os
 import fnmatch
 import shutil
-import pytz
-import time
-import json
 import datetime
 from datetime import datetime, timedelta
-import polars as pl
 from pathlib import Path
-import urdhva_base.redispool
-import urdhva_base.utilities
-import utilities.helpers as helpers
-from fastapi.responses import FileResponse
-import utilities.vts_mapping as vts_mapping
-from dateutil.relativedelta import relativedelta
 import utilities.minio_connector as minio_connector
 
-async def download_to_local():
 
+async def download_to_local():
     minio_client = minio_connector.get_minio_client()
     today = datetime.now()
     last_10_dates = [(today - timedelta(days=i)).strftime("%y%m%d") for i in range(10)]
@@ -37,17 +24,14 @@ async def download_to_local():
 
     for date_str in last_10_dates:
         pattern = f"*{date_str}*"
-        print("for date_str ---->\n", pattern)
         file_list = [obj.object_name for obj in objects if fnmatch.fnmatch(os.path.basename(obj.object_name), pattern)]
-        print("file list ---->\n", file_list)
         if not file_list:
             print(f"No files found for {date_str}")
             continue
 
         date_folder = base_path / date_str
         date_folder.mkdir(exist_ok=True)
-        print(f"Downloading {len(file_list)} files for date {date_str}...")
-
+        print(f"Downloading {len(file_list)} files for date {date_str}")
 
         for fp in file_list:
             saved, temp_path = minio_connector.download_from_minio(fp)
@@ -60,9 +44,7 @@ async def download_to_local():
         zip_path = "/tmp/minio_downloads.zip"
         shutil.make_archive("/tmp/minio_downloads", 'zip', root_dir=base_path)
         print(f"All last 10 days zipped into: {zip_path}")
-        
         print(f"All files for {date_str} saved in {date_folder}")
-
     print("All last 10 days processed.")
 
 
