@@ -3947,61 +3947,90 @@ async def cancelled_tts_dashboard(data):
         }
     }
     
+
 async def host_tables_combined_data(data):
     """
-    Get combined host tables data grouped by location_name
+    Get combined host tables data grouped by date, then by bay number and table name
     Filters are handled at database level in fetch_host_tables_as_dfs
     """
     try:
         combined_df = await tas_host_data.fetch_host_tables_as_dfs(data)
 
-        
         if combined_df is None or combined_df.is_empty():
             return []
         
-        # Get unique locations
-        unique_locations = combined_df.select(["location_name", "sap_id"]).unique()
+        # Extract date from created_at
+        combined_df = combined_df.with_columns(
+            pl.col("created_at").cast(pl.Datetime).dt.date().alias("date")
+        )
+        
+        # Get unique dates
+        unique_dates = combined_df.select("date").unique().sort("date")
         
         result = []
-        for loc_row in unique_locations.iter_rows(named=True):
-            location_name = loc_row.get("location_name")
-            sap_id = loc_row.get("sap_id")
+        
+        for date_row in unique_dates.iter_rows(named=True):
+            date = date_row.get("date")
             
-            # Get all trucks for this location
-            location_df = combined_df.filter(
-                (pl.col("location_name") == location_name) &
-                (pl.col("sap_id") == sap_id)
-            )
+            # Filter data for this date
+            date_df = combined_df.filter(pl.col("date") == date)
             
-            # Convert to list of dictionaries
-            trucks = []
-            for truck_row in location_df.iter_rows(named=True):
-                trucks.append({
-                    "truck_number": truck_row.get("truck_number"),
-                    "created_at": str(truck_row.get("created_at")),
-                    "product_name": truck_row.get("product_name"),
-                    "required_qty": truck_row.get("required_qty"),
-                    "loaded_qty": truck_row.get("loaded_qty"),
-                    "overloaded_qty": truck_row.get("overloaded_qty"),
-                    "cumulative_loaded_qty": truck_row.get("cumulative_loaded_qty"),
-                    "assigned_bay": truck_row.get("assigned_bay"),
-                    "reassigned_bay": truck_row.get("reassigned_bay"),
-                    "Alerts_Count": truck_row.get("Alerts_Count"),
-                    "Gantry_Permissive_off_Count": truck_row.get("Gantry_Permissive_off_Count"),
-                    "Bay_Alerts_Count": truck_row.get("Bay_Alerts_Count"),
-                    "MFM_VS_BCU": truck_row.get("MFM_VS_BCU"),
-                    "Cross_checked_ManuallyAP_system": truck_row.get("Cross checked ManuallyAP system")
+            # Get unique bays for this date
+            unique_bays = date_df.select("assigned_bay").unique().sort("assigned_bay")
+            
+            bays_data = []
+            
+            for bay_row in unique_bays.iter_rows(named=True):
+                bay_number = bay_row.get("assigned_bay")
+                
+                # Filter data for this bay
+                bay_df = date_df.filter(pl.col("assigned_bay") == bay_number)
+                
+                # Group by table_name and prepare data
+                table_data = {}
+                
+                for table_name in ["HostBayReAssignment", "HostLocalLoaded", "HostOverLoaded"]:
+                    table_df = bay_df.filter(pl.col("table_name") == table_name)
+                    
+                    trucks = []
+                    for truck_row in table_df.iter_rows(named=True):
+                        trucks.append({
+                            "truck_number": truck_row.get("truck_number"),
+                            "created_at": str(truck_row.get("created_at")),
+                            "product_name": truck_row.get("product_name"),
+                            "required_qty": truck_row.get("required_qty"),
+                            "loaded_qty": truck_row.get("loaded_qty"),
+                            "overloaded_qty": truck_row.get("overloaded_qty"),
+                            "cumulative_loaded_qty": truck_row.get("cumulative_loaded_qty"),
+                            "assigned_bay": truck_row.get("assigned_bay"),
+                            "reassigned_bay": truck_row.get("reassigned_bay"),
+                            "Alerts_Count": truck_row.get("Alerts_Count"),
+                            "Gantry_Permissive_off_Count": truck_row.get("Gantry_Permissive_off_Count"),
+                            "Bay_Alerts_Count": truck_row.get("Bay_Alerts_Count"),
+                            "MFM_VS_BCU": truck_row.get("MFM_VS_BCU"),
+                            "Cross_checked_ManuallyAP_system": truck_row.get("Cross checked ManuallyAP system")
+                        })
+                    
+                    table_data[table_name] = {
+                        "count": len(trucks),
+                        "trucks": trucks
+                    }
+                
+                bays_data.append({
+                    "bay_number": bay_number,
+                    "total_count": len(bay_df),
+                    "HostBayReAssignment": table_data["HostBayReAssignment"]["count"],
+                    "HostBayReAssignment_details": table_data["HostBayReAssignment"]["trucks"],
+                    "LocalLoading": table_data["HostLocalLoaded"]["count"],
+                    "LocalLoading_details": table_data["HostLocalLoaded"]["trucks"],
+                    "OverLoading": table_data["HostOverLoaded"]["count"],
+                    "OverLoading_details": table_data["HostOverLoaded"]["trucks"]
                 })
             
             result.append({
-                "location_name": location_name,
-                "sap_id": sap_id,
-                "truck_count": len(trucks),
-                "trucks": trucks
+                "date": str(date),
+                "bays": bays_data
             })
-        
-        # Sort by location_name
-        result = sorted(result, key=lambda x: x["location_name"])
         
         return result
         
