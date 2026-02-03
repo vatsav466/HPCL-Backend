@@ -284,91 +284,92 @@ def get_pending_vs_delivered_data():
             CylType varchar(4),
             ActualDeliveryDate DATE)""",
         
-        "query_5": """DECLARE @vGroupCode VARCHAR(2),  				
-            @vCmd NVARCHAR(4000)
-
-            WHILE EXISTS (SELECT TOP 1 1 FROM #Group)
-            BEGIN
-                SELECT TOP 1 @vGroupCode=GroupCode FROM #Group
-                SET @vCmd = NULL
-                                    
-                SET @vCmd = 'SELECT ROD.OrderRefNo,ROD.OrderQuantity,ROD.Distributorid,
-                CASE WHEN qr.OrderDate is not null then qr.OrderDate else ROD.OrderDate end OrderDate,ROD.OrderStatusCode,CASE WHEN qr.OrderSource is not null then qr.OrderSource else ROD.OrderSourceCode end OrderSourceCode,
-                CASE WHEN ROD.Naturecode=''16'' THEN ''PMUY'' ELSE ''NPMUY'' END,
-                ROD.Pricecode,
-                CASE WHEN RPD.TransactionReferenceNumber IS NOT NULL THEN ''Y'' ELSE ''N'' END,
-                CASE WHEN ROD.Pricecode IN (''22'',''24'') THEN ''C142'' ELSE ''C5'' END,
-                ROD.ActualDeliveryDate
-                FROM DCMs.tblRefillOrderDtls$'+@vGroupCode+' ROD WITH(NOLOCK)
-                LEFT OUTER JOIN esv.tblRefillPaymentDtls RPD with(nolock)
-                ON RPD.OrderRefNo = ROD.OrderRefNo AND RPD.PaymentStatus=''SUCCESS''
-                LEFT OUTER JOIN DCMS.tblCancelledOrdersForQR qr WITH(NOLOCK)
-                ON qr.NewOrderRefno = ROD.OrderRefNo
-                WHERE ROD.Naturecode NOT IN (''3'',''4'')
-                AND ROD.OrderStatusCode !=''CNCL''
-                AND (ROD.ActualDeliveryDate IS NULL
-                OR CONVERT(DATE,ROD.OrderDate,120) >= CONVERT(DATE,GETDATE()-1,120)
-                OR ROD.ActualDeliveryDate >= CONVERT(DATE,GETDATE()-1,120))
-                AND ROD.Pricecode IN (''22'',''24'',''163'',''162'')'
-                                    
-                INSERT INTO #Order
-                (OrderRefNo,OrderQuantity,Distributorid,OrderDate,OrderStatusCode,
-                OrderSourceCode,ConsumerType,Pricecode,IsPrepaid,CylType,ActualDeliveryDate)
-                EXEC sp_executesql @vCmd
-                                    
-                DELETE FROM #Group WHERE GroupCode=@vGroupCode
-            END""",
+        "query_5": """DECLARE @vGroupCode VARCHAR(2), @vCmd NVARCHAR(4000)
+                    WHILE EXISTS (SELECT TOP 1 1 FROM #Group)
+                    BEGIN
+                        SELECT TOP 1 @vGroupCode=GroupCode FROM #Group
+                    
+                        SET @vCmd = NULL
+                        SET @vCmd = 'SELECT ROD.OrderRefNo,ROD.OrderQuantity,ROD.Distributorid,
+                        CASE WHEN qr.OrderDate is not null then qr.OrderDate else ROD.OrderDate end OrderDate,
+                        ROD.OrderStatusCode,
+                        CASE WHEN qr.OrderSource is not null then qr.OrderSource else ROD.OrderSourceCode end OrderSourceCode,
+                        CASE WHEN ROD.Naturecode=''16'' THEN ''PMUY'' ELSE ''NPMUY'' END,
+                        ROD.Pricecode,
+                        CASE WHEN RPD.TransactionReferenceNumber IS NOT NULL THEN ''Y'' ELSE ''N'' END,
+                        CASE WHEN ROD.Pricecode IN (''22'',''24'') THEN ''C142'' ELSE ''C5'' END,
+                        ROD.ActualDeliveryDate,
+                        ROD.OrderTypeCode
+                        FROM DCMs.tblRefillOrderDtls$'+@vGroupCode+' ROD WITH(NOLOCK)
+                        LEFT OUTER JOIN esv.tblRefillPaymentDtls RPD with(nolock)
+                            ON RPD.OrderRefNo = ROD.OrderRefNo AND RPD.PaymentStatus=''SUCCESS''
+                        LEFT OUTER JOIN DCMS.tblCancelledOrdersForQR qr WITH(NOLOCK)
+                            ON qr.NewOrderRefno = ROD.OrderRefNo
+                        WHERE ROD.Naturecode NOT IN (''3'',''4'')
+                        AND ROD.OrderStatusCode !=''CNCL''
+                        AND (ROD.ActualDeliveryDate IS NULL
+                            OR CONVERT(DATE,ROD.OrderDate,120) >= CONVERT(DATE,GETDATE()-1,120)
+                            OR ROD.ActualDeliveryDate >= CONVERT(DATE,GETDATE()-1,120))
+                        AND ROD.Pricecode IN (''22'',''24'',''163'',''162'')'
+                    
+                        INSERT INTO #Order (OrderRefNo,OrderQuantity,Distributorid,OrderDate,OrderStatusCode,
+                        OrderSourceCode,ConsumerType,Pricecode,IsPrepaid,CylType,ActualDeliveryDate,OrderTypeCode)
+                        EXEC sp_executesql @vCmd
+                    
+                        DELETE FROM #Group WHERE GroupCode=@vGroupCode
+                    END""",
         
-        "query_6": """INSERT INTO #Order
-            (OrderRefNo,OrderQuantity,Distributorid,OrderDate,OrderStatusCode,
-            OrderSourceCode,ConsumerType,Pricecode,IsPrepaid,CylType,ActualDeliveryDate)
-            SELECT ROD.OrderRefNo,ROD.OrderQuantity,ROD.Distributorid,
-                CASE WHEN qr.OrderDate is not null then qr.OrderDate else ROD.OrderDate end OrderDate,ROD.OrderStatusCode,CASE WHEN qr.OrderSource is not null then qr.OrderSource else ROD.OrderSourceCode end OrderSourceCode,
-                CASE WHEN ROD.Naturecode='16' THEN 'PMUY' ELSE 'NPMUY' END,
-                ROD.Pricecode,
-                CASE WHEN RPD.TransactionReferenceNumber IS NOT NULL THEN 'Y' ELSE 'N' END,
-                CASE WHEN ROD.Pricecode IN ('22','24') THEN 'C142' ELSE 'C5' END,
-                ROD.ActualDeliveryDate
-            FROM DCMs.tblRefillOrderDtls ROD WITH(NOLOCK)
-            LEFT OUTER JOIN esv.tblRefillPaymentDtls RPD with(nolock)
-            ON RPD.OrderRefNo = ROD.OrderRefNo AND RPD.PaymentStatus='SUCCESS'
-            LEFT OUTER JOIN DCMS.tblCancelledOrdersForQR qr WITH(NOLOCK)
-            ON qr.NewOrderRefno = ROD.OrderRefNo
-            WHERE ROD.Naturecode NOT IN ('3','4')
-            AND ROD.OrderStatusCode !='CNCL'
-            AND (ROD.ActualDeliveryDate IS NULL
-            OR CONVERT(DATE,ROD.OrderDate,120) >= CONVERT(DATE,GETDATE()-1,120)
-            OR ROD.ActualDeliveryDate >= CONVERT(DATE,GETDATE()-1,120))
-            AND ROD.Pricecode IN ('22','24','163','162')""",
+        "query_6": """INSERT INTO #Order (OrderRefNo,OrderQuantity,Distributorid,OrderDate,OrderStatusCode,
+                        OrderSourceCode,ConsumerType,Pricecode,IsPrepaid,CylType,ActualDeliveryDate,OrderTypeCode)
+                        SELECT ROD.OrderRefNo,ROD.OrderQuantity,ROD.Distributorid,
+                        CASE WHEN qr.OrderDate is not null then qr.OrderDate else ROD.OrderDate end OrderDate,
+                        ROD.OrderStatusCode,
+                        CASE WHEN qr.OrderSource is not null then qr.OrderSource else ROD.OrderSourceCode end OrderSourceCode,
+                        CASE WHEN ROD.Naturecode='16' THEN 'PMUY' ELSE 'NPMUY' END,
+                        ROD.Pricecode,
+                        CASE WHEN RPD.TransactionReferenceNumber IS NOT NULL THEN 'Y' ELSE 'N' END,
+                        CASE WHEN ROD.Pricecode IN ('22','24') THEN 'C142' ELSE 'C5' END,
+                        ROD.ActualDeliveryDate,
+                        ROD.OrderTypeCode
+                        FROM DCMs.tblRefillOrderDtls ROD WITH(NOLOCK)
+                        LEFT OUTER JOIN esv.tblRefillPaymentDtls RPD with(nolock)
+                            ON RPD.OrderRefNo = ROD.OrderRefNo AND RPD.PaymentStatus='SUCCESS'
+                        LEFT OUTER JOIN DCMS.tblCancelledOrdersForQR qr WITH(NOLOCK)
+                            ON qr.NewOrderRefno = ROD.OrderRefNo
+                        WHERE ROD.Naturecode NOT IN ('3','4')
+                        AND ROD.OrderStatusCode !='CNCL'
+                        AND (ROD.ActualDeliveryDate IS NULL
+                            OR CONVERT(DATE,ROD.OrderDate,120) >= CONVERT(DATE,GETDATE()-1,120)
+                            OR ROD.ActualDeliveryDate >= CONVERT(DATE,GETDATE()-1,120))
+                        AND ROD.Pricecode IN ('22','24','163','162')""",
         
         
-        "query_7": """SELECT DM.JDEDistributorCode,						
-            O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode,					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=0 THEN O.OrderQuantity ELSE 0 END) [Pending_0D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=1 THEN O.OrderQuantity ELSE 0 END) [Pending_1D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=2 THEN O.OrderQuantity ELSE 0 END) [Pending_2D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=3 THEN O.OrderQuantity ELSE 0 END) [Pending_3D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=4 THEN O.OrderQuantity ELSE 0 END) [Pending_4D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=5 THEN O.OrderQuantity ELSE 0 END) [Pending_5D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=6 THEN O.OrderQuantity ELSE 0 END) [Pending_6D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=7 THEN O.OrderQuantity ELSE 0 END) [Pending_7D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=8 THEN O.OrderQuantity ELSE 0 END) [Pending_8D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=9 THEN O.OrderQuantity ELSE 0 END) [Pending_9D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=10 THEN O.OrderQuantity ELSE 0 END) [Pending_10D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=11 THEN O.OrderQuantity ELSE 0 END) [Pending_11D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=12 THEN O.OrderQuantity ELSE 0 END) [Pending_12D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=13 THEN O.OrderQuantity ELSE 0 END) [Pending_13D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=14 THEN O.OrderQuantity ELSE 0 END) [Pending_14D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=15 THEN O.OrderQuantity ELSE 0 END) [Pending_15D],					
-            SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())>15 THEN O.OrderQuantity ELSE 0 END) [Pending_Beyond15D],					
-            SUM(CASE WHEN CONVERT(DATE,O.OrderDate,120) = CONVERT(DATE,GETDATE()-1,120) THEN O.OrderQuantity ELSE 0 END) BookingReceivedYesterday,					
-            SUM(CASE WHEN O.ActualDeliveryDate = CONVERT(DATE,GETDATE()-1,120) THEN O.OrderQuantity ELSE 0 END) TotalSalesYesterday,					
-            SUM(CASE WHEN CONVERT(DATE,O.OrderDate,120) = CONVERT(DATE,GETDATE(),120) THEN O.OrderQuantity ELSE 0 END) BookingReceivedToday,					
-            SUM(CASE WHEN O.ActualDeliveryDate = CONVERT(DATE,GETDATE(),120) THEN O.OrderQuantity ELSE 0 END) TotalSalesToday					
-            FROM #Order O WITH(NOLOCK)					
-            INNER JOIN DCMs.tblDistributorMaster DM WITH(NOLOCK) ON O.Distributorid=DM.DistributorId					
-            GROUP BY DM.JDEDistributorCode,O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode
-            ORDER BY DM.JDEDistributorCode,O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode"""
+        "query_7": """SELECT DM.JDEDistributorCode,
+                        O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode,
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=0 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_0D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=1 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_1D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=2 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_2D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=3 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_3D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=4 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_4D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=5 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_5D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=6 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_6D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=7 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_7D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=8 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_8D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=9 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_9D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=10 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_10D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=11 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_11D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=12 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_12D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=13 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_13D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=14 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_14D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())=15 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_15D],
+                        SUM(CASE WHEN O.ActualDeliveryDate IS NULL AND DATEDIFF(d,O.OrderDate,GETDATE())>15 AND O.OrderTypeCode<>'PSV' THEN O.OrderQuantity ELSE 0 END) [Pending_Beyond15D],
+                        SUM(CASE WHEN CONVERT(DATE,O.OrderDate,120) = CONVERT(DATE,GETDATE()-1,120) THEN O.OrderQuantity ELSE 0 END) BookingReceivedYesterday,
+                        SUM(CASE WHEN O.ActualDeliveryDate = CONVERT(DATE,GETDATE()-1,120) THEN O.OrderQuantity ELSE 0 END) TotalSalesYesterday,
+                        SUM(CASE WHEN CONVERT(DATE,O.OrderDate,120) = CONVERT(DATE,GETDATE(),120) THEN O.OrderQuantity ELSE 0 END) BookingReceivedToday,
+                        SUM(CASE WHEN O.ActualDeliveryDate = CONVERT(DATE,GETDATE(),120) THEN O.OrderQuantity ELSE 0 END) TotalSalesToday
+                        FROM #Order O WITH(NOLOCK)
+                        INNER JOIN DCMs.tblDistributorMaster DM WITH(NOLOCK) ON DM.Distributorid=O.Distributorid
+                        GROUP BY DM.JDEDistributorCode, O.ConsumerType,O.IsPrepaid,O.CylType,O.OrderSourceCode"""
     }
 
     data = None
