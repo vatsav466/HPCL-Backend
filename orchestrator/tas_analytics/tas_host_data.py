@@ -226,7 +226,7 @@ async def fetch_host_tables_as_dfs(data):
         required_columns = [
             'truck_number', 'created_at', 'zone', 'sap_id', 'location_name', 
             'product_name', 'required_qty', 'loaded_qty', 'overloaded_qty', 
-            'cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay']
+            'cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 'table_name']
 
         for col in required_columns:
             if col not in combined_df.columns:
