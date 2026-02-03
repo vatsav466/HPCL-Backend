@@ -153,6 +153,13 @@ class SolarCapacity:
 
             # Filter by monitoring status
             solar = solar.filter(pl.col('Monitoring').cast(pl.Utf8).str.strip_chars().str.to_lowercase() == 'yes')
+            if "DOC" in solar.columns:
+                solar = solar.filter(
+                    pl.col("DOC")
+                    .cast(pl.Utf8)
+                    .str.strip_chars()
+                    .str.to_lowercase() != "pending"
+                )
 
             total_kw = (solar.select(pl.col('Plant Capacity').cast(pl.Float64, strict=False).sum()).item())
 
@@ -230,6 +237,14 @@ class SolarCapacity:
                 .str.strip_chars()
                 .str.to_lowercase() == 'yes'
             )
+
+            if "DOC" in solar_master.columns:
+                solar_master = solar_master.filter(
+                    pl.col("DOC")
+                    .cast(pl.Utf8)
+                    .str.strip_chars()
+                    .str.to_lowercase() != "pending"
+                )
 
             solar_master = solar_master.filter(
                 pl.col('Plant Capacity').is_not_null()
@@ -1030,7 +1045,7 @@ class SolarCapacity:
             current_date = start_date
             while current_date <= end_date:
                 # Get generation for this date
-                generation_mwh = date_to_generation.get(current_date, 0.0)
+                generation_kwh = date_to_generation.get(current_date, 0.0)
 
                 # Calculate estimated energy for this day
                 # Estimated = Capacity (KW) * 4 (kWh per KW per day) 
@@ -1051,19 +1066,19 @@ class SolarCapacity:
                 ).item() or 0.0
                 print("total_capacity_kw: ",total_capacity_kw)
                 
-                estimated_mwh = (total_capacity_kw * 4) if total_capacity_kw else 0.0
-                print("generation_mwh: ",generation_mwh)
-                print("estimated_mwh: ",estimated_mwh)
+                estimated_kwh = (total_capacity_kw * 4) if total_capacity_kw else 0.0
+                print("generation_kwh: ",generation_kwh)
+                print("estimated_kwh: ",estimated_kwh)
 
                 # Calculate efficiency percentage
-                if estimated_mwh > 0:
-                    efficiency_pct = (generation_mwh / estimated_mwh) * 100.0
+                if estimated_kwh > 0:
+                    efficiency_pct = (generation_kwh / estimated_kwh) * 100.0
                 else:
                     efficiency_pct = 0.0
 
                 daily_data.append({
                     "date": current_date.strftime("%Y-%m-%d"),
-                    "generation": round(generation_mwh, 2),
+                    "generation": round(generation_kwh, 2),
                     "efficiency": round(efficiency_pct, 2)
                 })
 
@@ -1114,6 +1129,13 @@ class SolarCapacity:
             # Get Excel data with filters applied
             solar = await SolarHelpers.get_solar_master_data(filters=filters, drill_state=drill_state)
             solar = solar.filter(pl.col('Monitoring').cast(pl.Utf8).str.strip_chars().str.to_lowercase() == 'yes')
+            if "DOC" in solar.columns:
+                solar = solar.filter(
+                    pl.col("DOC")
+                    .cast(pl.Utf8)
+                    .str.strip_chars()
+                    .str.to_lowercase() != "pending"
+                )
             if filters:
                 solar = SolarHelpers.apply_filters_to_dataframe(solar, filters)
 
@@ -1301,6 +1323,20 @@ class SolarCapacity:
 
             # Get Excel data
             solar = await SolarHelpers.get_solar_master_data(filters=filters, drill_state=drill_state)
+            if "Monitoring" in solar.columns:
+                solar = solar.filter(
+                    pl.col("Monitoring")
+                    .cast(pl.Utf8)
+                    .str.strip_chars()
+                    .str.to_lowercase() == "yes"
+                )
+            if "DOC" in solar.columns:
+                solar = solar.filter(
+                    pl.col("DOC")
+                    .cast(pl.Utf8)
+                    .str.strip_chars()
+                    .str.to_lowercase() != "pending"
+                )
             if filters:
                 solar = SolarHelpers.apply_filters_to_dataframe(solar, filters)
 
@@ -2237,13 +2273,34 @@ class SolarCapacity:
             generation_hours = float(plant_df.select(pl.col("SolarGenHours_entry").sum()).item() or 0)
             # power_outage_hours = float(plant_df.select(pl.col("OutageDuringSolarHours_day").sum()).item() or 0)
             power_outage_hours = float(plant_df.select(pl.col("OutageDuringSolarHours_entry").sum()).item() or 0)
-            plant_capacity = float(
-                solar_master
-                .select(pl.col("Plant Capacity").cast(pl.Float64).fill_null(0).sum())
-                .item() or 0
-            )
+            # Identify matched SAP IDs (those present in the DB results)
+            matched_sap_ids = set()
+            if result_df is not None and not result_df.is_empty():
+                try:
+                    # distinct PLANT_CD from result_df
+                    unique_plants = result_df.select(pl.col("PLANT_CD")).unique().to_series().to_list()
+                    for p_cd in unique_plants:
+                        if p_cd:
+                            matched_sap_ids.add(str(p_cd).strip())
+                except Exception as e:
+                    print(f"Error extracting matched SAP IDs: {e}")
 
-            estimated_energy = plant_capacity * 4 * days_count
+            # Calculate estimated energy ONLY for matched plants
+            if matched_sap_ids:
+                estimated_energy = (
+                    solar_master
+                    .filter(pl.col("BU Code").cast(pl.Utf8).str.strip_chars().is_in(matched_sap_ids))
+                    .select(
+                        (pl.col('Plant Capacity')
+                        .cast(pl.Float64, strict=False)
+                        .fill_null(0)
+                        * 4
+                        * days_count).sum()
+                    )
+                    .item()
+                ) or 0.0
+            else:
+                estimated_energy = 0.0
             # solar_window_hours = solar_window_hours_list[0] if solar_window_hours_list else 0
             solar_window_hours = (
                     plant_df
