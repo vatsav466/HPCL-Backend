@@ -11028,3 +11028,59 @@ class Tasfaulty_Get_InfoParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class TasFireEngineTestSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tas_fire_engine_test'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    device_name: Mapped[str] = mapped_column("device_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    fire_engine_on_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("fire_engine_on_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    fire_engine_off_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("fire_engine_off_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    total_run_time: Mapped[typing.Optional[str]] = mapped_column("total_run_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class TasFireEngineTestCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tas_fire_engine_test'
+    
+    sap_id: str
+    device_name: str
+    location_name: str
+    zone: str
+    fire_engine_on_datetime: typing.Optional[datetime.datetime] | None = None
+    fire_engine_off_datetime: typing.Optional[datetime.datetime] | None = None
+    total_run_time: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasFireEngineTestSchema
+        upsert_keys = []
+
+
+class TasFireEngineTest(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tas_fire_engine_test'
+    
+    sap_id: typing.Optional[str] | None = None
+    device_name: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    fire_engine_on_datetime: typing.Optional[datetime.datetime] | None = None
+    fire_engine_off_datetime: typing.Optional[datetime.datetime] | None = None
+    total_run_time: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TasFireEngineTestSchema
+        upsert_keys = []
+
+
+class TasFireEngineTestGetResp(pydantic.BaseModel):
+    data: typing.List[TasFireEngineTest]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
