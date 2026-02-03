@@ -1006,7 +1006,7 @@ class SendNotification:
                     # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
                     "last_mailed_to": list(self.roles_mapper.get("rolemailto", {}).keys())
             })
-        print("self.update_alert ---> ", self.update_alert)
+        #print("self.update_alert ---> ", self.update_alert)
 
         if self.params.get("messagetype") in ["escalation", "escalate"]:
             if self.alert_data.get("alert_section","") in ["VTS","RO","TAS"]:
@@ -1082,7 +1082,7 @@ class SendNotification:
             if alert_data_history.get('action_type',"") in ['SendItBack']:
                 alert_data['action_on'] = hpcl_ceg_enum.MakerChecker.MAKER.value
 
-        print("before updating alert_data ---> ", alert_data)
+        #print("before updating alert_data ---> ", alert_data)
 
         if "_sa_instance_state" in alert_data.keys():
             del alert_data["_sa_instance_state"]
