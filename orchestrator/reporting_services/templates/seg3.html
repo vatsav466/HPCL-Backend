@@ -169,6 +169,26 @@
             {% endfor %}
         </tbody>
     </table>
+    <h4>2 LPG Sales Backlog Summary</h4>
+    <h5>2.1 Zone Wise Aging Analysis of Cylinder Backlog (Count in thousands)</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in zone_wise_cylinder_count_df.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in zone_wise_cylinder_count_df.to_dict(orient='records') %}
+            <tr>
+                {% for col in zone_wise_cylinder_count_df.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 <script>
     window.onload = function () {
         document.querySelectorAll(".growth").forEach(td => {

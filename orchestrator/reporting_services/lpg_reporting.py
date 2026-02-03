@@ -62,7 +62,8 @@ async def get_zone_wise_cylinder_backlog():
                 "Pending 1-3 days",
                 "Pending 4-7 days",
                 "Pending 8-15 days",
-                "Pending Beyond 15 days"
+                "Pending Beyond 15 days",
+                "Total"
             FROM (
                 SELECT
                     "ZOName",
@@ -70,6 +71,10 @@ async def get_zone_wise_cylinder_backlog():
                     SUM("pending_4_7_days")  AS "Pending 4-7 days",
                     SUM("pending_8_15_days") AS "Pending 8-15 days",
                     SUM("Pending_Beyond15D") AS "Pending Beyond 15 days",
+                    SUM("pending_1_3_days"
+                    + "pending_4_7_days"
+                    + "pending_8_15_days"
+                    + "Pending_Beyond15D") AS "Total",
                     1 AS sort_order
                 FROM "lpg_todays_cdcms_sales_summary"
                 GROUP BY "ZOName"
@@ -82,6 +87,10 @@ async def get_zone_wise_cylinder_backlog():
                     SUM("pending_4_7_days")  AS "Pending 4-7 days",
                     SUM("pending_8_15_days") AS "Pending 8-15 days",
                     SUM("Pending_Beyond15D") AS "Pending Beyond 15 days",
+                    SUM("pending_1_3_days"
+                    + "pending_4_7_days"
+                    + "pending_8_15_days"
+                    + "Pending_Beyond15D") AS "Total",
                     2 AS sort_order
                 FROM "lpg_todays_cdcms_sales_summary"
             ) t
