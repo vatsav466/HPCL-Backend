@@ -21,13 +21,13 @@ from dateutil.relativedelta import relativedelta
 import utilities.minio_connector as minio_connector
 import utilities.connection_mapping as connection_mapping
 import orchestrator.analytics.vts_analysis as vts_analysis
-from utilities.helpers import generate_filter_query, get_location_details
+import utilities.helpers as helpers
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.actions.check_violation_count as check_violation_count
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
-from orchestrator.hqo_blocked import get_blocked_trucks_service
-from orchestrator.gen_ai.vts_nlp.core_functions import process_vts_query
+import orchestrator.tas_analytics.hqo_blocked as hqo_blocked
+import orchestrator.gen_ai.vts_nlp.core_functions as core_functions
 import orchestrator.analytics.ro_analysis as ro_analysis
 
 router = fastapi.APIRouter(prefix='/alerts')
@@ -295,7 +295,7 @@ async def alerts_vts_alert_manager(data: Alerts_Vts_Alert_ManagerParams):
 )
     print("alert_status_value",alert_status_value)
     query = f"alert_section='VTS' AND alert_status='{alert_status_value}'"
-    query = await generate_filter_query(data.filters, query)
+    query = await helpers.generate_filter_query(data.filters, query)
     print("query",query)
     alert_data = await Alerts.get_all(
         urdhva_base.queryparams.QueryParams(
@@ -759,7 +759,7 @@ async def alerts_alerts_get_vts_query(data: Alerts_Alerts_Get_Vts_QueryParams):
             for i, filter_item in enumerate(data.cross_filters):
                 logger.info(f"Filter {i}: {filter_item.dict()}")
         
-        result = await process_vts_query(vehicle_number=data.vehicle_number, cross_filters=data.cross_filters)
+        result = await core_functions.process_vts_query(vehicle_number=data.vehicle_number, cross_filters=data.cross_filters)
         return result
         
     except Exception as e:
@@ -1159,7 +1159,8 @@ async def alerts_attach_vts_blocked_file(
 # Action hqo_blocked_vehicles
 @router.post('/hqo_blocked_vehicles', tags=['Alerts'])
 async def alerts_hqo_blocked_vehicles(data: Alerts_Hqo_Blocked_VehiclesParams):
-    return await get_blocked_trucks_service(
+    service = hqo_blocked.BlockedTruckService()
+    return await service.get_blocked_trucks_service(
         data.alert_status,
         data.start_date,
         data.end_date

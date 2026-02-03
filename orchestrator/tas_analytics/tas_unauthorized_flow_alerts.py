@@ -3,8 +3,8 @@ import json
 import urdhva_base
 import polars as pl
 from datetime import datetime, timedelta
-from orchestrator.alerting.alert_factory import AlertFactory
-from hpcl_ceg_model import Alerts
+import orchestrator.alerting.alert_factory as AlertFactory
+import hpcl_ceg_model 
 
 
 # ==========================================================
@@ -73,7 +73,7 @@ async def fetch_raw_unauthorized_flow(location_name=None):
         fields=fields
     )
 
-    resp = await Alerts.get_all(params, resp_type="plain")
+    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
     data = resp.get("data", [])
 
     print(f" Raw unauthorized flow records fetched: {len(data)}")
@@ -94,7 +94,7 @@ async def fetch_existing_weekly_alerts():
     print(query)
 
     params = urdhva_base.queryparams.QueryParams(q=query, limit=0)
-    resp = await Alerts.get_all(params, resp_type="plain")
+    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
 
     existing = resp.get("data", [])
     print(f"Existing weekly alerts found: {len(existing)}")
