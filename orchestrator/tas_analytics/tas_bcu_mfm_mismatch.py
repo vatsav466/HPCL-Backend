@@ -2,8 +2,8 @@ import asyncio
 import json
 import urdhva_base
 import polars as pl
-from orchestrator.alerting.alert_factory import AlertFactory
-from hpcl_ceg_model import Alerts
+import orchestrator.alerting.alert_factory as alert_factory
+import hpcl_ceg_model 
 
 
 
@@ -34,7 +34,7 @@ async def fetch_raw_bcu_mfm_alerts():
     fields = json.dumps(["sap_id","interlock_name","created_at","device_name","bu"])
 
     params = urdhva_base.queryparams.QueryParams(q=query, limit=0, fields=fields)
-    resp = await Alerts.get_all(params, resp_type="plain")
+    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
 
     data = resp.get("data", [])
 
@@ -52,7 +52,7 @@ async def fetch_existing_daily_alerts():
         )
 
     params = urdhva_base.queryparams.QueryParams(q=query, limit=0)
-    resp = await Alerts.get_all(params, resp_type="plain")
+    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
 
     return resp.get("data", [])
 
@@ -152,7 +152,7 @@ async def process_bcu_vs_mfm_alerts():
         }
 
         print("CREATING LOCATION ALERT PAYLOAD", alert_data)
-        await AlertFactory.create_alert(sanitize_alert_data(alert_data))
+        await alert_factory.AlertFactory.create_alert(sanitize_alert_data(alert_data))
 
 
     # =========================================
@@ -201,7 +201,7 @@ async def process_bcu_vs_mfm_alerts():
         }
 
         print("CREATING DEVICE ALERT PAYLOAD", alert_data)
-        await AlertFactory.create_alert(sanitize_alert_data(alert_data))
+        await alert_factory.AlertFactory.create_alert(sanitize_alert_data(alert_data))
 
 
 # ===============================================

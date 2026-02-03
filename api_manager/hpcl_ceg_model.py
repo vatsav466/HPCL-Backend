@@ -2058,12 +2058,13 @@ class Tasanalytics_Tas_AnalyticsParams(pydantic.BaseModel):
     alert_status: typing.Optional[str] = pydantic.Field("", **{})
     alert_severity: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
-    start_date: str
-    end_date: str
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    end_date: typing.Optional[str] = pydantic.Field("", **{})
     equipment_type: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: typing.Optional[str] = pydantic.Field("", **{})
     download: typing.Optional[str] = pydantic.Field("", **{})
     truck_number: typing.Optional[str] = pydantic.Field("", **{})
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

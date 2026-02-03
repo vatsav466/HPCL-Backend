@@ -1016,6 +1016,7 @@ Model Alerts {
     }
 }
 
+
 Model TasAnalytics crud_disable {
     Action=> tas_analytics {
         analytical_model      str    
@@ -1024,12 +1025,13 @@ Model TasAnalytics crud_disable {
         alert_status    optional str
         alert_severity  optional list str
         zone            optional str
-        start_date      str
-        end_date        str
+        start_date      optional str
+        end_date        optional str
         equipment_type  optional str
         equipment_name  optional str
         download        optional str
         truck_number optional str
+        filters optional list WidgetFilters
         
     }
 
