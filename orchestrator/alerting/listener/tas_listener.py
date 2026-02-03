@@ -4,9 +4,11 @@ import json
 # import pika
 import asyncio
 import traceback
+import hpcl_ceg_model
 from orchestrator.alerting.alert_manager import create_alert, close_alert
 import orchestrator.alerting.listener.tas_duplicate_alert_check as duplicates_check
 import orchestrator.alerting.listener.tas_maintenance_alert_check as maintenance_check
+import orchestrator.tas_analytics as tas_analytics
 
 logger = urdhva_base.logger.Logger.getInstance("rabbitmq_processing_log")
 
@@ -116,6 +118,18 @@ async def tas_listener(rmsg):
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_section'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
+
+            if alertdata.get('interlock_name') in ["Fire Engine On_Status"]: 
+                data = {
+                    "bu": alertdata['bu'],
+                    "device_name": alertdata['device_name'],
+                    "sap_id": alertdata['sap_id'],
+                    "fire_engine_on_datetime": rmsg['createdTime'],
+                    "status": "ON"
+                }
+    
+                await tas_analytics.check_run_time_fire_engine(data)
+                return True
             
             if alertdata.get('interlock_name') in ["ROSOV_Close Status", "MOV_Close Status"]:
                 if not alertdata.get('sensor_id'):
@@ -180,6 +194,19 @@ async def tas_listener(rmsg):
             alertdata = rmsg['details']['additionalInfo']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
+
+            if alertdata.get('interlock_name') in ["Fire Engine On_Status"]:
+                
+                data = {
+                    "bu": alertdata['bu'],
+                    "device_name": alertdata['device_name'],
+                    "sap_id": alertdata['sap_id'],
+                    "fire_engine_off_datetime": rmsg['clearTs'],
+                    "status": "OFF"
+                }
+                
+                await tas_analytics.check_run_time_fire_engine(data)
+                return True
             logger.info("Close Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
                                                         rmsg['type']))
             await close_alert(alertdata)

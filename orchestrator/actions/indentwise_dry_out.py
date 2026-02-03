@@ -231,6 +231,9 @@ class IndentDryOut:
                                     f"""dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', """
                                     f"""intra_day_dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' """
                                     f"""where id='{record["id"]}'""")
+                            await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
+                                                                connection_mapping.item_name_mapping.get(prod_code, ""),
+                                                                self.params.get('dry_out_in_days'))
                         else:
                             query = (f"""update alerts set indent_no='{str(each_indent.get('INDENT_NO'))}', """
                                     f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
@@ -256,7 +259,7 @@ class IndentDryOut:
 
                     query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                              f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params["sap_id"]}' and "
-                             f"alert_status != 'Close' and "
+                             f"alert_status != 'Close' and indent_no='{each_indent["INDENT_NO"]}' and "
                              f"product_code='{self.params["product_code"]}'")
                     alerts_data_1 = await hpcl_ceg_model.Alerts.get_aggr_data(query)
                     # checking with indent_no from ims
@@ -273,6 +276,9 @@ class IndentDryOut:
                                              f"dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', "
                                              f"intra_day_dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
                                              f"where id='{record['id']}'")
+                                await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
+                                                                    connection_mapping.item_name_mapping.get(prod_code, ""),
+                                                                    self.params.get('dry_out_in_days'))
                             else:     
                                 query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
                                         f"where id='{record['id']}'")
@@ -290,6 +296,9 @@ class IndentDryOut:
                                              f"dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', "
                                              f"intra_day_dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
                                              f"where id='{record['id']}'")
+                                await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
+                                                                    connection_mapping.item_name_mapping.get(prod_code, ""),
+                                                                    self.params.get('dry_out_in_days'))
                             else:
                                 query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
                                         f"where id='{record['id']}'")
@@ -329,7 +338,10 @@ class IndentDryOut:
                             query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}', "
                                      f"dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', "
                                      f"intra_day_dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
-                                     f"where id='{record['id']}'") 
+                                     f"where id='{record['id']}'")
+                        await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
+                                                            connection_mapping.item_name_mapping.get(prod_code, ""),
+                                                            self.params.get('dry_out_in_days')) 
                     else:
                         query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
                                 f"where id='{record['id']}'")
