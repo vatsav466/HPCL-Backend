@@ -3,7 +3,7 @@ import json
 import urdhva_base
 import polars as pl
 from datetime import datetime, timedelta
-import orchestrator.alerting.alert_factory as AlertFactory
+import orchestrator.alerting.alert_factory as alert_factory
 import hpcl_ceg_model 
 
 
@@ -206,7 +206,7 @@ async def process_weekly_unauthorized_flow_alerts(location_name=None):
         print("\n CREATING WEEKLY UNAUTHORIZED FLOW ALERT >>>")
         print(alert_data)
 
-        await AlertFactory.create_alert(
+        await alert_factory.AlertFactory.create_alert(
             sanitize_alert_data(alert_data)
         )
 
