@@ -3968,6 +3968,14 @@ async def host_tables_combined_data(data):
         unique_dates = combined_df.select("date").unique().sort("date")
         
         result = []
+
+        total_counts = {
+            "TotalBCU": 240,
+            "TotalActiveBays": 235,
+            "HostBayReAssignment": len(combined_df.filter(pl.col("table_name") == "HostBayReAssignment")),
+            "LocalLoading": len(combined_df.filter(pl.col("table_name") == "HostLocalLoaded")),
+            "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded"))
+        }
         
         for date_row in unique_dates.iter_rows(named=True):
             date = date_row.get("date")
@@ -4092,7 +4100,10 @@ async def host_tables_combined_data(data):
                 "bays": bays_data
             })
         
-        return result
+        return {
+            "Counts": total_counts,
+            "data": result
+        }
         
     except Exception as e:
         print(f"Error in host_tables_combined_data: {e}")

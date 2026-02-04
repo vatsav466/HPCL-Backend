@@ -240,6 +240,7 @@ async def fetch_host_tables_as_dfs(data):
                 pl.col("created_at").cast(pl.Date).alias("created_date")
             )
             
+            combined_df = combined_df.filter(pl.col("assigned_bay").is_not_null() & (pl.col("assigned_bay") != ""))            
             combined_df = combined_df.unique(
                 subset=["table_name", "created_date", "truck_number", "load_number"],
                 keep="first"
