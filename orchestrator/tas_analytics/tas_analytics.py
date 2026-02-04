@@ -3954,7 +3954,7 @@ async def host_tables_combined_data(data):
     Filters are handled at database level in fetch_host_tables_as_dfs
     """
     try:
-        combined_df, alerts_df = await tas_host_data.fetch_host_tables_as_dfs(data)
+        combined_df, alerts_df, total_bcu_count, total_active_bays_count = await tas_host_data.fetch_host_tables_as_dfs(data)
 
         if combined_df is None or combined_df.is_empty():
             return []
@@ -3970,8 +3970,8 @@ async def host_tables_combined_data(data):
         result = []
 
         total_counts = {
-            "TotalBCU": 240,
-            "TotalActiveBays": 235,
+            "TotalBCU": total_bcu_count,
+            "TotalActiveBays": total_active_bays_count,
             "HostBayReAssignment": len(combined_df.filter(pl.col("table_name") == "HostBayReAssignment")),
             "LocalLoading": len(combined_df.filter(pl.col("table_name") == "HostLocalLoaded")),
             "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded"))
