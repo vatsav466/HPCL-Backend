@@ -80,7 +80,11 @@ async def fetch_host_tables_as_dfs(data):
 
     params = urdhva_base.queryparams.QueryParams(q=query_str, limit=0)
 
-    alerts_query = "alert_section = 'TAS'"
+    alerts_query = (
+        "alert_section = 'TAS'"
+        "AND equipment_name = 'BCU'"
+        "AND interlock_name NOT ILIKE '%BCU Permissive Off%'"
+    )
     if conditions:
         alerts_query += " AND " + " AND ".join(conditions)
 
@@ -91,6 +95,13 @@ async def fetch_host_tables_as_dfs(data):
             "device_type", "created_at",
             "equipment_name", "interlock_name",
             "vehicle_number"
+        ]))
+
+    day_end_params = urdhva_base.queryparams.QueryParams(
+        q=query_str,
+        fields=json.dumps([
+            "created_at", "bcu_number",
+            "bcu_net_totalizer", "mfm_net_totalizer"
         ])
     )
     alerts_params.limit = 0
@@ -101,7 +112,7 @@ async def fetch_host_tables_as_dfs(data):
     bay_resp = await hpcl_ceg_model.HostBayReAssignment.get_all(params, resp_type="plain")
     local_loaded_resp = await hpcl_ceg_model.HostLocalLoadedTts.get_all(params, resp_type="plain")
     over_loaded_resp = await hpcl_ceg_model.HostOverLoadedTts.get_all(params, resp_type="plain")
-    day_end_resp = await hpcl_ceg_model.HostDayEndDetails.get_all(params, resp_type="plain")
+    day_end_resp = await hpcl_ceg_model.HostDayEndDetails.get_all(day_end_params, resp_type="plain")
     alerts_resp = await hpcl_ceg_model.Alerts.get_all(alerts_params, resp_type="plain")
 
     bay_df = pl.DataFrame(bay_resp.get("data", []))
@@ -246,7 +257,7 @@ async def fetch_host_tables_as_dfs(data):
         combined_df = combined_df[['truck_number', 'created_at', 'zone' ,'sap_id', 'location_name','load_number', 'product_name', 'required_qty', 'loaded_qty','overloaded_qty','cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 
                                 'Alerts_Count', 'Gantry_Permissive_off_Count', 'Bay_Alerts_Count', 'MFM_VS_BCU', 'Cross checked ManuallyAP system', 'table_name']]
    
-    # combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_test.csv")
+    # combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_tesing.csv")
 
     return combined_df, alerts_df
 
