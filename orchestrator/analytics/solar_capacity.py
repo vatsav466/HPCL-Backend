@@ -2331,7 +2331,8 @@ class SolarCapacity:
                 if estimated_energy else 0
             )
 
-            dust_loss = max(0, adjusted_expected - actual_energy)
+            # dust_loss = max(0, adjusted_expected - actual_energy)
+            dust_loss = abs(adjusted_expected - actual_energy)
             dust_loss_percentage = (
                 (dust_loss / adjusted_expected) * 100
                 if adjusted_expected else 0

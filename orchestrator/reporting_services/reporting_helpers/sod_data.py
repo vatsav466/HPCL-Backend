@@ -1019,6 +1019,61 @@ async def get_fault_and_maintenance():
         "tas_fault_maintenance_columns": df.columns.tolist()
     }
 
+async def get_valid_local_loaded_tts():
+    query = f'''
+                WITH date_range AS (
+                    SELECT
+                        CASE
+                            WHEN EXTRACT(DAY FROM CURRENT_DATE) = 1
+                            THEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+                            ELSE DATE_TRUNC('month', CURRENT_DATE)
+                        END AS start_date,
+                        CASE
+                            WHEN EXTRACT(DAY FROM CURRENT_DATE) = 1
+                            THEN DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 second'
+                            ELSE CURRENT_DATE - INTERVAL '1 second'
+                        END AS end_date
+                ),
+                valid_trucks AS (
+                    SELECT
+                        h.sap_id,
+                        DATE_TRUNC('hour', h.created_at) AS hour_bucket,
+                        REGEXP_REPLACE(UPPER(h.truck_number), '[^A-Z0-9]', '', 'g') AS truck
+                    FROM host_local_loaded_tts h
+                    CROSS JOIN date_range d
+                    WHERE h.created_at BETWEEN d.start_date AND d.end_date
+                    AND REGEXP_REPLACE(UPPER(h.truck_number), '[^A-Z0-9]', '', 'g')
+                        ~ '^[A-Z]{{2}}[0-9]{{2}}[A-Z]{{2}}[0-9]{{4}}$'
+                ),
+                hourly_distinct AS (
+                    SELECT DISTINCT
+                        sap_id,
+                        hour_bucket,
+                        truck
+                    FROM valid_trucks
+                )
+                SELECT
+                    hd.sap_id,
+                    lm.name,
+                    COUNT(*) AS overall_valid_truck_count
+                FROM hourly_distinct hd
+                LEFT JOIN location_master lm
+                    ON hd.sap_id = lm.sap_id
+                GROUP BY
+                    hd.sap_id,
+                    lm.name
+                ORDER BY
+                    hd.sap_id;
+                '''
+    result = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+
+    print('*'*200)
+    print("Result:", result['data'])
+    print('*'*200)
+
+    df = pl.DataFrame(result['data'])
+    return df
+
 async def get_parameters_summary():
     date = urdhva_base.utilities.get_present_time()
 
@@ -1082,10 +1137,42 @@ async def get_parameters_summary():
 
     tas_parameters_summary = pd.DataFrame(tas_parameters_summary)
 
+    valid_trucks_df = await get_valid_local_loaded_tts()
+
+    if valid_trucks_df.is_empty():
+        total_truck = 0
+    else:
+        total_truck = valid_trucks_df.select(
+            pl.col("overall_valid_truck_count").sum()
+        ).item()
+
+    # Get Local Loaded TT value
+    local_loaded_value = tas_parameters_summary.loc[0, "Local Loaded TT"]
+
+    # Update it with valid truck count
+    tas_parameters_summary.loc[0, "Local Loaded TT"] = (
+        f"{local_loaded_value} (TT: {total_truck})"
+    )
+
+    print('*'*200)
+    print("Total Valid Trucks:", total_truck)
+    print('*'*200)
+
     date_filter = (
         f"a.created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
         f"AND a.created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     )
+
+    if valid_trucks_df.is_empty():
+        valid_trucks_pd = pd.DataFrame(
+            columns=["Location Name", "overall_valid_truck_count"]
+        )
+    else:
+        valid_trucks_pd = valid_trucks_df.to_pandas()
+
+    valid_trucks_pd = valid_trucks_pd.rename(columns={
+        "name": "Location Name"
+    })
 
     tas_parameters_query = f"""SELECT
                                     lm.name AS "Location Name",
@@ -1144,21 +1231,55 @@ async def get_parameters_summary():
 
     df = tas_parameters_query_resp.copy()
 
+    df = df.merge(
+        valid_trucks_pd,
+        on="Location Name",
+        how="left"
+    )
+
+    df["overall_valid_truck_count"] = (
+        df["overall_valid_truck_count"]
+        .fillna(0)
+        .astype(int)
+    )
+
+    df.rename(
+        columns={"overall_valid_truck_count": "Valid Trucks"},
+        inplace=True
+    )
+
+    print('*'*200)
+    print('Merged DataFrame before formatting:',df)
+    print('*'*200)
+
+     # Update Local Loaded TT with valid truck count
+
+    total_valid_trucks = df["Valid Trucks"].sum()
+
     df.insert(0, "S.NO", range(1, len(df) + 1))
     total_sick_tt = df["Sick TT"].sum()
     total_loaded_tt = df["Local Loaded TT"].sum()
     total_kfactor_tt = df["K Factor Changes"].sum()
     total_mfm_factor_tt = df["MFM Factor Changes"].sum()
+
+    df["Local Loaded TT"] = df.apply(
+        lambda row: f"{row['Local Loaded TT']} (TT: {row['Valid Trucks']})",
+        axis=1
+    )
+
     total_row = pd.DataFrame([{
         "S.NO": "Total",
         "Location Name": "",
         "Sick TT": total_sick_tt,
-        "Local Loaded TT": total_loaded_tt,
+        "Local Loaded TT": f"{total_loaded_tt} (TT: {total_valid_trucks})",
+        "Valid Trucks": total_valid_trucks,
         "K Factor Changes": total_kfactor_tt,
         "MFM Factor Changes": total_mfm_factor_tt
     }])
     df = pd.concat([df, total_row], ignore_index=True)
+    df.drop(columns=["Valid Trucks","sap_id"], inplace=True)
     print('*'*200)
+    print('tas_parameters_summary',tas_parameters_summary)
     print('tas_parameters_query_resp',df)
     print('*'*200)
     return {
