@@ -3947,63 +3947,163 @@ async def cancelled_tts_dashboard(data):
         }
     }
     
+
 async def host_tables_combined_data(data):
     """
-    Get combined host tables data grouped by location_name
+    Get combined host tables data grouped by date, then by bay number and table name
     Filters are handled at database level in fetch_host_tables_as_dfs
     """
     try:
-        combined_df = await tas_host_data.fetch_host_tables_as_dfs(data)
+        combined_df, alerts_df, total_bcu_count, total_active_bays_count = await tas_host_data.fetch_host_tables_as_dfs(data)
 
-        
         if combined_df is None or combined_df.is_empty():
             return []
         
-        # Get unique locations
-        unique_locations = combined_df.select(["location_name", "sap_id"]).unique()
+        # Extract date from created_at
+        combined_df = combined_df.with_columns(
+            pl.col("created_at").cast(pl.Datetime).dt.date().alias("date")
+        )
+        
+        # Get unique dates
+        unique_dates = combined_df.select("date").unique().sort("date")
         
         result = []
-        for loc_row in unique_locations.iter_rows(named=True):
-            location_name = loc_row.get("location_name")
-            sap_id = loc_row.get("sap_id")
+
+        total_counts = {
+            "TotalBCU": total_bcu_count,
+            "TotalActiveBays": total_active_bays_count,
+            "HostBayReAssignment": len(combined_df.filter(pl.col("table_name") == "HostBayReAssignment")),
+            "LocalLoading": len(combined_df.filter(pl.col("table_name") == "HostLocalLoaded")),
+            "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded"))
+        }
+        
+        for date_row in unique_dates.iter_rows(named=True):
+            date = date_row.get("date")
             
-            # Get all trucks for this location
-            location_df = combined_df.filter(
-                (pl.col("location_name") == location_name) &
-                (pl.col("sap_id") == sap_id)
-            )
+            # Filter data for this date
+            date_df = combined_df.filter(pl.col("date") == date)
             
-            # Convert to list of dictionaries
-            trucks = []
-            for truck_row in location_df.iter_rows(named=True):
-                trucks.append({
-                    "truck_number": truck_row.get("truck_number"),
-                    "created_at": str(truck_row.get("created_at")),
-                    "product_name": truck_row.get("product_name"),
-                    "required_qty": truck_row.get("required_qty"),
-                    "loaded_qty": truck_row.get("loaded_qty"),
-                    "overloaded_qty": truck_row.get("overloaded_qty"),
-                    "cumulative_loaded_qty": truck_row.get("cumulative_loaded_qty"),
-                    "assigned_bay": truck_row.get("assigned_bay"),
-                    "reassigned_bay": truck_row.get("reassigned_bay"),
-                    "Alerts_Count": truck_row.get("Alerts_Count"),
-                    "Gantry_Permissive_off_Count": truck_row.get("Gantry_Permissive_off_Count"),
-                    "Bay_Alerts_Count": truck_row.get("Bay_Alerts_Count"),
-                    "MFM_VS_BCU": truck_row.get("MFM_VS_BCU"),
-                    "Cross_checked_ManuallyAP_system": truck_row.get("Cross checked ManuallyAP system")
+            # Get unique bays for this date
+            unique_bays = date_df.select("assigned_bay").unique().sort("assigned_bay")
+            
+            bays_data = []
+            
+            for bay_row in unique_bays.iter_rows(named=True):
+                bay_number = bay_row.get("assigned_bay")
+                
+                # Filter data for this bay
+                bay_df = date_df.filter(pl.col("assigned_bay") == bay_number)
+                
+                # Group by table_name and prepare data
+                table_data = {}
+                
+                for table_name in ["HostBayReAssignment", "HostLocalLoaded", "HostOverLoaded"]:
+                    table_df = bay_df.filter(pl.col("table_name") == table_name)
+                    
+                    trucks = []
+                    for truck_row in table_df.iter_rows(named=True):
+                        current_time = truck_row.get("created_at")
+                        current_bay = str(truck_row.get("assigned_bay")).zfill(2)
+                        
+                        # Calculate time ranges
+                        start_time_20 = current_time - timedelta(minutes=20)
+                        end_time_20 = current_time + timedelta(minutes=20)
+                        start_time_40 = current_time - timedelta(minutes=40)
+                        
+                        # Get Alerts_Count details
+                        alerts_count_details = []
+                        if len(alerts_df) > 0:
+                            filtered_alerts = alerts_df.filter(
+                                (pl.col("created_at") >= start_time_20) &
+                                (pl.col("created_at") <= end_time_20) &
+                                (pl.col("equipment_name") == "BCU") &
+                                (pl.col("bay_number") == current_bay)
+                            )
+                            for alert_row in filtered_alerts.iter_rows(named=True):
+                                alerts_count_details.append({
+                                    "created_at": str(alert_row.get("created_at")),
+                                    "interlock_name": alert_row.get("interlock_name"),
+                                    "device_name": alert_row.get("device_name"),
+                                    "vehicle_number": alert_row.get("vehicle_number"),
+                                    "location_name": alert_row.get("location_name"),
+                                    "sap_id": alert_row.get("sap_id")
+                                })
+                        
+                        # Get Bay_Alerts_Count details (before 40 minutes)
+                        bay_alerts_count_details = []
+                        if len(alerts_df) > 0:
+                            filtered_bay_alerts = alerts_df.filter(
+                                (pl.col("created_at") >= start_time_40) &
+                                (pl.col("created_at") < current_time) &
+                                (pl.col("equipment_name") == "BCU") &
+                                (pl.col("bay_number") == current_bay)
+                            )
+                            for alert_row in filtered_bay_alerts.iter_rows(named=True):
+                                bay_alerts_count_details.append({
+                                    "created_at": str(alert_row.get("created_at")),
+                                    "interlock_name": alert_row.get("interlock_name"),
+                                    "device_name": alert_row.get("device_name"),
+                                    "vehicle_number": alert_row.get("vehicle_number"),
+                                    "location_name": alert_row.get("location_name"),
+                                    "sap_id": alert_row.get("sap_id")
+                                })
+                        
+                        # Build truck data dictionary
+                        truck_data = {
+                            "truck_number": truck_row.get("truck_number"),
+                            "created_at": str(truck_row.get("created_at")),
+                            "load_number": truck_row.get("load_number"),
+                            "product_name": truck_row.get("product_name"),
+                            "required_qty": truck_row.get("required_qty"),
+                            "loaded_qty": truck_row.get("loaded_qty"),
+                            "overloaded_qty": truck_row.get("overloaded_qty"),
+                            "cumulative_loaded_qty": truck_row.get("cumulative_loaded_qty"),
+                            "assigned_bay": truck_row.get("assigned_bay"),
+                            "reassigned_bay": truck_row.get("reassigned_bay"),
+                            "Alerts_Count": truck_row.get("Alerts_Count"),
+                        }
+                        
+                        # Add Alerts_Count_details only if count > 0
+                        if truck_row.get("Alerts_Count") > 0:
+                            truck_data["Alerts_Count_details"] = alerts_count_details
+                        
+                        truck_data["Gantry_Permissive_off_Count"] = truck_row.get("Gantry_Permissive_off_Count")
+                        truck_data["Bay_Alerts_Count"] = truck_row.get("Bay_Alerts_Count")
+                        
+                        # Add Bay_Alerts_Count_details only if count > 0
+                        if truck_row.get("Bay_Alerts_Count") > 0:
+                            truck_data["Bay_Alerts_Count_details"] = bay_alerts_count_details
+                        
+                        truck_data["MFM_VS_BCU"] = truck_row.get("MFM_VS_BCU")
+                        truck_data["Cross_checked_ManuallyAP_system"] = truck_row.get("Cross checked ManuallyAP system")
+                        
+                        trucks.append(truck_data)
+                    
+                    table_data[table_name] = {
+                        "count": len(trucks),
+                        "trucks": trucks
+                    }
+                
+                bays_data.append({
+                    "bay_number": bay_number,
+                    "total_count": len(bay_df),
+                    "HostBayReAssignment": table_data["HostBayReAssignment"]["count"],
+                    "HostBayReAssignment_details": table_data["HostBayReAssignment"]["trucks"],
+                    "LocalLoading": table_data["HostLocalLoaded"]["count"],
+                    "LocalLoading_details": table_data["HostLocalLoaded"]["trucks"],
+                    "OverLoading": table_data["HostOverLoaded"]["count"],
+                    "OverLoading_details": table_data["HostOverLoaded"]["trucks"]
                 })
             
             result.append({
-                "location_name": location_name,
-                "sap_id": sap_id,
-                "truck_count": len(trucks),
-                "trucks": trucks
+                "date": str(date),
+                "bays": bays_data
             })
         
-        # Sort by location_name
-        result = sorted(result, key=lambda x: x["location_name"])
-        
-        return result
+        return {
+            "Counts": total_counts,
+            "data": result
+        }
         
     except Exception as e:
         print(f"Error in host_tables_combined_data: {e}")

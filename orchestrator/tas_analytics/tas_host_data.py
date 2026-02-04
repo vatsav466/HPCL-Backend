@@ -80,7 +80,11 @@ async def fetch_host_tables_as_dfs(data):
 
     params = urdhva_base.queryparams.QueryParams(q=query_str, limit=0)
 
-    alerts_query = "alert_section = 'TAS'"
+    alerts_query = (
+        "alert_section = 'TAS'"
+        "AND equipment_name = 'BCU'"
+        "AND interlock_name NOT ILIKE '%BCU Permissive Off%'"
+    )
     if conditions:
         alerts_query += " AND " + " AND ".join(conditions)
 
@@ -91,6 +95,13 @@ async def fetch_host_tables_as_dfs(data):
             "device_type", "created_at",
             "equipment_name", "interlock_name",
             "vehicle_number"
+        ]))
+
+    day_end_params = urdhva_base.queryparams.QueryParams(
+        q=query_str,
+        fields=json.dumps([
+            "created_at", "bcu_number",
+            "bcu_net_totalizer", "mfm_net_totalizer","bcu_start_totalizer","bcu_end_totalizer"
         ])
     )
     alerts_params.limit = 0
@@ -101,7 +112,7 @@ async def fetch_host_tables_as_dfs(data):
     bay_resp = await hpcl_ceg_model.HostBayReAssignment.get_all(params, resp_type="plain")
     local_loaded_resp = await hpcl_ceg_model.HostLocalLoadedTts.get_all(params, resp_type="plain")
     over_loaded_resp = await hpcl_ceg_model.HostOverLoadedTts.get_all(params, resp_type="plain")
-    day_end_resp = await hpcl_ceg_model.HostDayEndDetails.get_all(params, resp_type="plain")
+    day_end_resp = await hpcl_ceg_model.HostDayEndDetails.get_all(day_end_params, resp_type="plain")
     alerts_resp = await hpcl_ceg_model.Alerts.get_all(alerts_params, resp_type="plain")
 
     bay_df = pl.DataFrame(bay_resp.get("data", []))
@@ -110,9 +121,28 @@ async def fetch_host_tables_as_dfs(data):
     day_end_df = pl.DataFrame(day_end_resp.get("data", []))
     alerts_df = pl.DataFrame(alerts_resp.get("data", []))
 
+    total_bcu_count = 0
+    total_active_bays_count = 0
+
+    if len(day_end_df) > 0 and "bcu_number" in day_end_df.columns:
+        # Get unique BCU numbers for TotalBCU
+
+        unique_bcu_df = day_end_df.unique(subset=["bcu_number"])
+        total_bcu_count = len(unique_bcu_df)
+        
+        # Calculate TotalActiveBays
+        if "bcu_start_totalizer" in day_end_df.columns and "bcu_end_totalizer" in day_end_df.columns:
+            day_end_with_diff = day_end_df.with_columns(
+                (pl.col("bcu_end_totalizer") - pl.col("bcu_start_totalizer")).abs().alias("difference")
+            )
+            active_bays_df = day_end_with_diff.filter(pl.col("difference") > 100)
+            total_active_bays_count = len(active_bays_df.unique(subset=["bcu_number"]))
+
+
     # Add table_name column to dataframes that have data
     if len(bay_df) > 0:
         bay_df = bay_df.with_columns(pl.lit('HostBayReAssignment').alias("table_name"))
+        bay_df = bay_df.filter(pl.col("reassigned_bay").is_not_null() & (pl.col("reassigned_bay") != ""))
     if len(local_loaded_df) > 0:
         local_loaded_df = local_loaded_df.with_columns(pl.lit('HostLocalLoaded').alias("table_name"))
     if len(over_loaded_df) > 0:
@@ -222,22 +252,33 @@ async def fetch_host_tables_as_dfs(data):
         if "table_name" in combined_df.columns and "loaded_qty" in combined_df.columns and "required_qty" in combined_df.columns:
             combined_df = combined_df.with_columns(pl.when(pl.col('table_name') == 'HostOverLoaded').then(pl.col('loaded_qty') - pl.col('required_qty'))
                 .otherwise(None).alias('overloaded_qty'))
+
+        if len(combined_df) > 0:
+            combined_df = combined_df.with_columns(
+                pl.col("created_at").cast(pl.Date).alias("created_date")
+            )
+            
+            combined_df = combined_df.filter(pl.col("assigned_bay").is_not_null() & (pl.col("assigned_bay") != ""))            
+            combined_df = combined_df.unique(
+                subset=["table_name", "created_date", "truck_number", "load_number"],
+                keep="first"
+            ).drop("created_date")
             
         required_columns = [
-            'truck_number', 'created_at', 'zone', 'sap_id', 'location_name', 
+            'truck_number', 'created_at', 'zone', 'sap_id', 'location_name', 'load_number',
             'product_name', 'required_qty', 'loaded_qty', 'overloaded_qty', 
-            'cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay']
+            'cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 'table_name']
 
         for col in required_columns:
             if col not in combined_df.columns:
                 combined_df = combined_df.with_columns(pl.lit(None).alias(col))
 
-        combined_df = combined_df[['truck_number', 'created_at', 'zone' ,'sap_id', 'location_name', 'product_name', 'required_qty', 'loaded_qty','overloaded_qty','cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 
+        combined_df = combined_df[['truck_number', 'created_at', 'zone' ,'sap_id', 'location_name','load_number', 'product_name', 'required_qty', 'loaded_qty','overloaded_qty','cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 
                                 'Alerts_Count', 'Gantry_Permissive_off_Count', 'Bay_Alerts_Count', 'MFM_VS_BCU', 'Cross checked ManuallyAP system', 'table_name']]
    
-    # combined_df.write_csv("/Users/algofusion/Downloads/combined_df_test.csv")
+    # combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_tesing.csv")
 
-    return combined_df
+    return combined_df, alerts_df, total_bcu_count, total_active_bays_count
 
 # if _name_ == "_main_":
     # asyncio.run(fetch_host_tables_as_dfs())
