@@ -8,7 +8,7 @@ import hpcl_ceg_model
 from orchestrator.alerting.alert_manager import create_alert, close_alert
 import orchestrator.alerting.listener.tas_duplicate_alert_check as duplicates_check
 import orchestrator.alerting.listener.tas_maintenance_alert_check as maintenance_check
-import orchestrator.tas_analytics as tas_analytics
+import orchestrator.tas_analytics.tas_analytics as tas_analytics
 
 logger = urdhva_base.logger.Logger.getInstance("rabbitmq_processing_log")
 
