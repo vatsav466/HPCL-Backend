@@ -101,7 +101,7 @@ async def fetch_host_tables_as_dfs(data):
         q=query_str,
         fields=json.dumps([
             "created_at", "bcu_number",
-            "bcu_net_totalizer", "mfm_net_totalizer"
+            "bcu_net_totalizer", "mfm_net_totalizer","bcu_start_totalizer","bcu_end_totalizer"
         ])
     )
     alerts_params.limit = 0
@@ -120,6 +120,24 @@ async def fetch_host_tables_as_dfs(data):
     over_loaded_df = pl.DataFrame(over_loaded_resp.get("data", []))
     day_end_df = pl.DataFrame(day_end_resp.get("data", []))
     alerts_df = pl.DataFrame(alerts_resp.get("data", []))
+
+    total_bcu_count = 0
+    total_active_bays_count = 0
+
+    if len(day_end_df) > 0 and "bcu_number" in day_end_df.columns:
+        # Get unique BCU numbers for TotalBCU
+
+        unique_bcu_df = day_end_df.unique(subset=["bcu_number"])
+        total_bcu_count = len(unique_bcu_df)
+        
+        # Calculate TotalActiveBays
+        if "bcu_start_totalizer" in day_end_df.columns and "bcu_end_totalizer" in day_end_df.columns:
+            day_end_with_diff = day_end_df.with_columns(
+                (pl.col("bcu_end_totalizer") - pl.col("bcu_start_totalizer")).abs().alias("difference")
+            )
+            active_bays_df = day_end_with_diff.filter(pl.col("difference") > 100)
+            total_active_bays_count = len(active_bays_df.unique(subset=["bcu_number"]))
+
 
     # Add table_name column to dataframes that have data
     if len(bay_df) > 0:
@@ -240,6 +258,7 @@ async def fetch_host_tables_as_dfs(data):
                 pl.col("created_at").cast(pl.Date).alias("created_date")
             )
             
+            combined_df = combined_df.filter(pl.col("assigned_bay").is_not_null() & (pl.col("assigned_bay") != ""))            
             combined_df = combined_df.unique(
                 subset=["table_name", "created_date", "truck_number", "load_number"],
                 keep="first"
@@ -259,7 +278,7 @@ async def fetch_host_tables_as_dfs(data):
    
     # combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_tesing.csv")
 
-    return combined_df, alerts_df
+    return combined_df, alerts_df, total_bcu_count, total_active_bays_count
 
 # if _name_ == "_main_":
     # asyncio.run(fetch_host_tables_as_dfs())
