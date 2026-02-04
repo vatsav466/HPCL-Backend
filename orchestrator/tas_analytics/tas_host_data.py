@@ -113,6 +113,7 @@ async def fetch_host_tables_as_dfs(data):
     # Add table_name column to dataframes that have data
     if len(bay_df) > 0:
         bay_df = bay_df.with_columns(pl.lit('HostBayReAssignment').alias("table_name"))
+        bay_df = bay_df.filter(pl.col("reassigned_bay").is_not_null() & (pl.col("reassigned_bay") != ""))
     if len(local_loaded_df) > 0:
         local_loaded_df = local_loaded_df.with_columns(pl.lit('HostLocalLoaded').alias("table_name"))
     if len(over_loaded_df) > 0:
@@ -222,9 +223,19 @@ async def fetch_host_tables_as_dfs(data):
         if "table_name" in combined_df.columns and "loaded_qty" in combined_df.columns and "required_qty" in combined_df.columns:
             combined_df = combined_df.with_columns(pl.when(pl.col('table_name') == 'HostOverLoaded').then(pl.col('loaded_qty') - pl.col('required_qty'))
                 .otherwise(None).alias('overloaded_qty'))
+
+        if len(combined_df) > 0:
+            combined_df = combined_df.with_columns(
+                pl.col("created_at").cast(pl.Date).alias("created_date")
+            )
+            
+            combined_df = combined_df.unique(
+                subset=["table_name", "created_date", "truck_number", "load_number"],
+                keep="first"
+            ).drop("created_date")
             
         required_columns = [
-            'truck_number', 'created_at', 'zone', 'sap_id', 'location_name', 
+            'truck_number', 'created_at', 'zone', 'sap_id', 'location_name', 'load_number',
             'product_name', 'required_qty', 'loaded_qty', 'overloaded_qty', 
             'cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 'table_name']
 
@@ -232,12 +243,12 @@ async def fetch_host_tables_as_dfs(data):
             if col not in combined_df.columns:
                 combined_df = combined_df.with_columns(pl.lit(None).alias(col))
 
-        combined_df = combined_df[['truck_number', 'created_at', 'zone' ,'sap_id', 'location_name', 'product_name', 'required_qty', 'loaded_qty','overloaded_qty','cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 
+        combined_df = combined_df[['truck_number', 'created_at', 'zone' ,'sap_id', 'location_name','load_number', 'product_name', 'required_qty', 'loaded_qty','overloaded_qty','cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 
                                 'Alerts_Count', 'Gantry_Permissive_off_Count', 'Bay_Alerts_Count', 'MFM_VS_BCU', 'Cross checked ManuallyAP system', 'table_name']]
    
-    # combined_df.write_csv("/Users/algofusion/Downloads/combined_df_test.csv")
+    # combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_test.csv")
 
-    return combined_df
+    return combined_df, alerts_df
 
 # if _name_ == "_main_":
     # asyncio.run(fetch_host_tables_as_dfs())

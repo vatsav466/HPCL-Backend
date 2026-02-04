@@ -3954,7 +3954,7 @@ async def host_tables_combined_data(data):
     Filters are handled at database level in fetch_host_tables_as_dfs
     """
     try:
-        combined_df = await tas_host_data.fetch_host_tables_as_dfs(data)
+        combined_df, alerts_df = await tas_host_data.fetch_host_tables_as_dfs(data)
 
         if combined_df is None or combined_df.is_empty():
             return []
@@ -3994,9 +3994,57 @@ async def host_tables_combined_data(data):
                     
                     trucks = []
                     for truck_row in table_df.iter_rows(named=True):
-                        trucks.append({
+                        current_time = truck_row.get("created_at")
+                        current_bay = str(truck_row.get("assigned_bay")).zfill(2)
+                        
+                        # Calculate time ranges
+                        start_time_20 = current_time - timedelta(minutes=20)
+                        end_time_20 = current_time + timedelta(minutes=20)
+                        start_time_40 = current_time - timedelta(minutes=40)
+                        
+                        # Get Alerts_Count details
+                        alerts_count_details = []
+                        if len(alerts_df) > 0:
+                            filtered_alerts = alerts_df.filter(
+                                (pl.col("created_at") >= start_time_20) &
+                                (pl.col("created_at") <= end_time_20) &
+                                (pl.col("equipment_name") == "BCU") &
+                                (pl.col("bay_number") == current_bay)
+                            )
+                            for alert_row in filtered_alerts.iter_rows(named=True):
+                                alerts_count_details.append({
+                                    "created_at": str(alert_row.get("created_at")),
+                                    "interlock_name": alert_row.get("interlock_name"),
+                                    "device_name": alert_row.get("device_name"),
+                                    "vehicle_number": alert_row.get("vehicle_number"),
+                                    "location_name": alert_row.get("location_name"),
+                                    "sap_id": alert_row.get("sap_id")
+                                })
+                        
+                        # Get Bay_Alerts_Count details (before 40 minutes)
+                        bay_alerts_count_details = []
+                        if len(alerts_df) > 0:
+                            filtered_bay_alerts = alerts_df.filter(
+                                (pl.col("created_at") >= start_time_40) &
+                                (pl.col("created_at") < current_time) &
+                                (pl.col("equipment_name") == "BCU") &
+                                (pl.col("bay_number") == current_bay)
+                            )
+                            for alert_row in filtered_bay_alerts.iter_rows(named=True):
+                                bay_alerts_count_details.append({
+                                    "created_at": str(alert_row.get("created_at")),
+                                    "interlock_name": alert_row.get("interlock_name"),
+                                    "device_name": alert_row.get("device_name"),
+                                    "vehicle_number": alert_row.get("vehicle_number"),
+                                    "location_name": alert_row.get("location_name"),
+                                    "sap_id": alert_row.get("sap_id")
+                                })
+                        
+                        # Build truck data dictionary
+                        truck_data = {
                             "truck_number": truck_row.get("truck_number"),
                             "created_at": str(truck_row.get("created_at")),
+                            "load_number": truck_row.get("load_number"),
                             "product_name": truck_row.get("product_name"),
                             "required_qty": truck_row.get("required_qty"),
                             "loaded_qty": truck_row.get("loaded_qty"),
@@ -4005,11 +4053,23 @@ async def host_tables_combined_data(data):
                             "assigned_bay": truck_row.get("assigned_bay"),
                             "reassigned_bay": truck_row.get("reassigned_bay"),
                             "Alerts_Count": truck_row.get("Alerts_Count"),
-                            "Gantry_Permissive_off_Count": truck_row.get("Gantry_Permissive_off_Count"),
-                            "Bay_Alerts_Count": truck_row.get("Bay_Alerts_Count"),
-                            "MFM_VS_BCU": truck_row.get("MFM_VS_BCU"),
-                            "Cross_checked_ManuallyAP_system": truck_row.get("Cross checked ManuallyAP system")
-                        })
+                        }
+                        
+                        # Add Alerts_Count_details only if count > 0
+                        if truck_row.get("Alerts_Count") > 0:
+                            truck_data["Alerts_Count_details"] = alerts_count_details
+                        
+                        truck_data["Gantry_Permissive_off_Count"] = truck_row.get("Gantry_Permissive_off_Count")
+                        truck_data["Bay_Alerts_Count"] = truck_row.get("Bay_Alerts_Count")
+                        
+                        # Add Bay_Alerts_Count_details only if count > 0
+                        if truck_row.get("Bay_Alerts_Count") > 0:
+                            truck_data["Bay_Alerts_Count_details"] = bay_alerts_count_details
+                        
+                        truck_data["MFM_VS_BCU"] = truck_row.get("MFM_VS_BCU")
+                        truck_data["Cross_checked_ManuallyAP_system"] = truck_row.get("Cross checked ManuallyAP system")
+                        
+                        trucks.append(truck_data)
                     
                     table_data[table_name] = {
                         "count": len(trucks),
