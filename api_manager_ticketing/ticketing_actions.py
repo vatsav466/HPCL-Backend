@@ -1330,12 +1330,11 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
         "ticket": main_ticket
     }
 
-
-
 # Action get_location_data
 @router.post('/get_location_data', tags=['Ticketing'])
 async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
 
+    # ------------------ BUILD FILTERS ------------------
     filters = []
 
     def add_filter(field, value):
@@ -1348,7 +1347,7 @@ async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
     add_filter("sales_area", data.sales_area)
     add_filter("sap_id", data.sap_id)
 
-   
+    # ------------------ QUERY PARAMS ------------------
     params = urdhva_base.queryparams.QueryParams()
     params.q = " AND ".join(filters) if filters else None
     params.limit = 100000000
@@ -1357,15 +1356,57 @@ async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
     resp = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type="plain")
     rows = resp.get("data", [])
 
-    bu_list      = sorted({r["bu"] for r in rows if r.get("bu")})
-    zones        = sorted({r["zone"] for r in rows if r.get("zone")})
-    regions      = sorted({r["region"] for r in rows if r.get("region")})
-    sales_areas  = sorted({r["sales_area"] for r in rows if r.get("sales_area")})
-    rows = sorted(rows, key=lambda x: x['name'])
-    names        = [r["name"] for r in rows]
-    sap_ids      = [r["sap_id"] for r in rows]
-    
- 
+    # ------------------ PREPARE UNIQUE VALUES (Single Loop) ------------------
+    import ast
+
+    bu_set = set()
+    zone_set = set()
+    region_set = set()
+    sales_area_set = set()
+
+    for r in rows:
+
+        # Collect BU
+        bu = r.get("bu")
+        if bu:
+            bu_set.add(bu)
+
+        # Collect Zone
+        zone = r.get("zone")
+        if zone:
+            zone_set.add(zone)
+
+        # Collect Region
+        region = r.get("region")
+        if region:
+            region_set.add(region)
+
+        # Collect Sales Area (convert string list to real list)
+        raw_sales_area = r.get("sales_area")
+        if raw_sales_area:
+            try:
+                parsed = ast.literal_eval(raw_sales_area)
+                if isinstance(parsed, list):
+                    sales_area_set.update(parsed)
+                else:
+                    sales_area_set.add(raw_sales_area)
+            except:
+                sales_area_set.add(raw_sales_area)
+
+    # Sort results
+    bu_list = sorted(bu_set)
+    zones = sorted(zone_set)
+    regions = sorted(region_set)
+    sales_areas = sorted(sales_area_set)
+
+    # ------------------ SORT LOCATIONS ------------------
+    rows.sort(key=lambda x: x["name"])
+
+    locations = [
+        {"sap_id": r["sap_id"], "name": r["name"]}
+        for r in rows
+    ]
+
     # ------------------ RETURN ------------------
     return {
         "status": True,
@@ -1375,8 +1416,6 @@ async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
             "zones": zones,
             "regions": regions,
             "sales_areas": sales_areas,
-            "names": names,
-            "sap_ids": sap_ids
-         
+            "locations": locations
         }
     }

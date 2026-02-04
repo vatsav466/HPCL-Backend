@@ -11,6 +11,8 @@ from dateutil.relativedelta import relativedelta
 import hashlib
 import urdhva_base
 import sys
+import argparse
+
 
 import orchestrator.notification_manager.notification_factory
 import os
@@ -285,7 +287,7 @@ async def send_sales_sync_email(table_name: str, total_records: int):
     
 
 
-def get_and_insert_data(cursor, query, params=None):
+def get_and_insert_data(cursor, query, params=None, debug=False):
     """
     Fetch data from database using a SQL query
     Args:
@@ -306,14 +308,16 @@ def get_and_insert_data(cursor, query, params=None):
     columns = [column[0] for column in cursor.description]
     data = pd.DataFrame.from_records(data, columns=columns)
     
-    data.to_csv('/tmp/actual_sales_data.csv',index = False)
+    if debug:
+        data.to_csv('/tmp/actual_sales_data.csv', index=False)
     print(len(data))
     
     print(len(data))
     print(len(data.drop_duplicates()))
     data = data.drop_duplicates()
     print(len(data))
-    data.to_csv('/tmp/data_org_drop.csv',index = False)
+    if debug:
+        data.to_csv('/tmp/data_org_drop.csv', index=False)
     print(data['CURFISCALYEAR'].unique())
     data['CURFISCALYEAR'] = data['CURFISCALYEAR'].fillna('0').astype(str).apply(lambda x :x.split('.')[0] if '.' in x else x)
     print(data['CURFISCALYEAR'].unique())
@@ -364,7 +368,8 @@ def get_and_insert_data(cursor, query, params=None):
     zone_map = {'WES':'West','NOR':'North','SOU':'South','EAS':'East','HQO':'HQO Customer'}
     #lubes_ps_data = lubes_ps_data.merge(lubes_data[['SUPPLY_LOC','SALES_DISTRICT']],left_on = 'PLANT_CD',right_on = 'SUPPLY_LOC')
     lubes_ps_data['Zone_Name'] = lubes_ps_data['ZZONE'].map(zone_map)
-    lubes_ps_data.to_csv('/tmp/lubes_ps_data.csv',index = False)
+    if debug:
+        lubes_ps_data.to_csv('/tmp/lubes_ps_data.csv', index=False)
     '''
     cursor.execute(f"""
                    select * FROM CONN_ENT.ZSDCV_SO_PARAM_STG
@@ -456,6 +461,18 @@ def get_and_insert_data(cursor, query, params=None):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Sales Daywise Sync Job")
+    parser.add_argument(
+        "--debug",
+        type=str,
+        default="false",
+        help="Enable debug file writing (true/false)"
+    )
+
+    args = parser.parse_args()
+    DEBUG_MODE = args.debug.lower() == "true"
+
+    print("DEBUG_MODE:", DEBUG_MODE)
     creds = credential_loader.get_credentials('TIBCO') 
     print("creds",creds)
     params = {
@@ -1203,5 +1220,6 @@ ORDER BY ORGSBUCD, DAY_ID;
     connection = get_db_connection(params)
     
     cursor = connection.cursor()
-    get_and_insert_data(cursor, query_daywise, params=params)
+    get_and_insert_data(cursor, query_daywise, params=params, debug=DEBUG_MODE)
+
 
