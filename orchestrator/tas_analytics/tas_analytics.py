@@ -3971,7 +3971,7 @@ async def host_tables_combined_data(data):
 
         total_counts = {
             "TotalBCU": total_bcu_count,
-            "TotalActiveBays": total_active_bays_count,
+            "TotalActiveBays": total_bcu_count,
             "HostBayReAssignment": len(combined_df.filter(pl.col("table_name") == "HostBayReAssignment")),
             "LocalLoading": len(combined_df.filter(pl.col("table_name") == "HostLocalLoaded")),
             "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded"))
