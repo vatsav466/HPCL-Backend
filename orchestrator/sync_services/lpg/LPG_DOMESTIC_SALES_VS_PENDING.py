@@ -282,7 +282,8 @@ def get_pending_vs_delivered_data():
             Pricecode varchar(5),
             IsPrepaid char(1),
             CylType varchar(4),
-            ActualDeliveryDate DATE)""",
+            ActualDeliveryDate DATE),
+            """,
         
         "query_5": """DECLARE @vGroupCode VARCHAR(2), @vCmd NVARCHAR(4000)
                     WHILE EXISTS (SELECT TOP 1 1 FROM #Group)
