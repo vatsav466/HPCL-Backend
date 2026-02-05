@@ -3947,14 +3947,13 @@ async def cancelled_tts_dashboard(data):
         }
     }
     
-
 async def host_tables_combined_data(data):
     """
     Get combined host tables data grouped by date, then by bay number and table name
     Filters are handled at database level in fetch_host_tables_as_dfs
     """
     try:
-        combined_df, alerts_df, total_bcu_count, total_active_bays_count = await tas_host_data.fetch_host_tables_as_dfs(data)
+        combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count = await tas_host_data.fetch_host_tables_as_dfs(data)
 
         if combined_df is None or combined_df.is_empty():
             return []
@@ -3968,13 +3967,14 @@ async def host_tables_combined_data(data):
         unique_dates = combined_df.select("date").unique().sort("date")
         
         result = []
-
+        unique_truck_count = combined_df.select("truck_number").unique().height
         total_counts = {
             "TotalBCU": total_bcu_count,
-            "TotalActiveBays": total_bcu_count,
+            "TotalActiveBays": total_active_bays_count,
             "HostBayReAssignment": len(combined_df.filter(pl.col("table_name") == "HostBayReAssignment")),
             "LocalLoading": len(combined_df.filter(pl.col("table_name") == "HostLocalLoaded")),
-            "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded"))
+            "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded")),
+            "TotalUniqueTruckNumbersCount": unique_truck_count
         }
         
         for date_row in unique_dates.iter_rows(named=True):
@@ -4002,80 +4002,20 @@ async def host_tables_combined_data(data):
                     
                     trucks = []
                     for truck_row in table_df.iter_rows(named=True):
-                        current_time = truck_row.get("created_at")
-                        current_bay = str(truck_row.get("assigned_bay")).zfill(2)
-                        
-                        # Calculate time ranges
-                        start_time_20 = current_time - timedelta(minutes=20)
-                        end_time_20 = current_time + timedelta(minutes=20)
-                        start_time_40 = current_time - timedelta(minutes=40)
-                        
-                        # Get Alerts_Count details
-                        alerts_count_details = []
-                        if len(alerts_df) > 0:
-                            filtered_alerts = alerts_df.filter(
-                                (pl.col("created_at") >= start_time_20) &
-                                (pl.col("created_at") <= end_time_20) &
-                                (pl.col("equipment_name") == "BCU") &
-                                (pl.col("bay_number") == current_bay)
-                            )
-                            for alert_row in filtered_alerts.iter_rows(named=True):
-                                alerts_count_details.append({
-                                    "created_at": str(alert_row.get("created_at")),
-                                    "interlock_name": alert_row.get("interlock_name"),
-                                    "device_name": alert_row.get("device_name"),
-                                    "vehicle_number": alert_row.get("vehicle_number"),
-                                    "location_name": alert_row.get("location_name"),
-                                    "sap_id": alert_row.get("sap_id")
-                                })
-                        
-                        # Get Bay_Alerts_Count details (before 40 minutes)
-                        bay_alerts_count_details = []
-                        if len(alerts_df) > 0:
-                            filtered_bay_alerts = alerts_df.filter(
-                                (pl.col("created_at") >= start_time_40) &
-                                (pl.col("created_at") < current_time) &
-                                (pl.col("equipment_name") == "BCU") &
-                                (pl.col("bay_number") == current_bay)
-                            )
-                            for alert_row in filtered_bay_alerts.iter_rows(named=True):
-                                bay_alerts_count_details.append({
-                                    "created_at": str(alert_row.get("created_at")),
-                                    "interlock_name": alert_row.get("interlock_name"),
-                                    "device_name": alert_row.get("device_name"),
-                                    "vehicle_number": alert_row.get("vehicle_number"),
-                                    "location_name": alert_row.get("location_name"),
-                                    "sap_id": alert_row.get("sap_id")
-                                })
-                        
-                        # Build truck data dictionary
+                        # Build truck data dictionary (without the 5 metrics)
                         truck_data = {
                             "truck_number": truck_row.get("truck_number"),
                             "created_at": str(truck_row.get("created_at")),
                             "load_number": truck_row.get("load_number"),
+                            "location_name": truck_row.get("location_name"),
                             "product_name": truck_row.get("product_name"),
                             "required_qty": truck_row.get("required_qty"),
                             "loaded_qty": truck_row.get("loaded_qty"),
                             "overloaded_qty": truck_row.get("overloaded_qty"),
                             "cumulative_loaded_qty": truck_row.get("cumulative_loaded_qty"),
                             "assigned_bay": truck_row.get("assigned_bay"),
-                            "reassigned_bay": truck_row.get("reassigned_bay"),
-                            "Alerts_Count": truck_row.get("Alerts_Count"),
+                            "reassigned_bay": truck_row.get("reassigned_bay")
                         }
-                        
-                        # Add Alerts_Count_details only if count > 0
-                        if truck_row.get("Alerts_Count") > 0:
-                            truck_data["Alerts_Count_details"] = alerts_count_details
-                        
-                        truck_data["Gantry_Permissive_off_Count"] = truck_row.get("Gantry_Permissive_off_Count")
-                        truck_data["Bay_Alerts_Count"] = truck_row.get("Bay_Alerts_Count")
-                        
-                        # Add Bay_Alerts_Count_details only if count > 0
-                        if truck_row.get("Bay_Alerts_Count") > 0:
-                            truck_data["Bay_Alerts_Count_details"] = bay_alerts_count_details
-                        
-                        truck_data["MFM_VS_BCU"] = truck_row.get("MFM_VS_BCU")
-                        truck_data["Cross_checked_ManuallyAP_system"] = truck_row.get("Cross checked ManuallyAP system")
                         
                         trucks.append(truck_data)
                     
@@ -4084,7 +4024,146 @@ async def host_tables_combined_data(data):
                         "trucks": trucks
                     }
                 
-                bays_data.append({
+                # Calculate bay-level metrics (for the entire day)
+                bay_current_date = date  # Using the date from the outer loop
+                bay_number_str = str(bay_number).zfill(2)
+                
+                # Get Alerts_Count for this bay - DEDUPLICATED
+                alerts_count_bay = 0
+                alerts_count_details_bay = []
+                if len(alerts_df) > 0:
+                    filtered_alerts_bay = alerts_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
+                        (pl.col("equipment_name") == "BCU") &
+                        (pl.col("bay_number") == bay_number_str)
+                    )
+                    
+                    # Deduplicate by created_at and bay_number, keep latest and unique interlock_names
+                    if len(filtered_alerts_bay) > 0:
+                        deduplicated_alerts = filtered_alerts_bay.unique(
+                            subset=["created_at", "bay_number", "interlock_name"],
+                            keep="last"
+                        ).sort("created_at", descending=True)
+                        
+                        alerts_count_bay = len(deduplicated_alerts)
+                        
+                        for alert_row in deduplicated_alerts.iter_rows(named=True):
+                            alerts_count_details_bay.append({
+                                "created_at": str(alert_row.get("created_at")),
+                                "interlock_name": alert_row.get("interlock_name"),
+                                "device_name": alert_row.get("device_name"),
+                                "location_name": alert_row.get("location_name"),
+                                "sap_id": alert_row.get("sap_id")
+                            })
+                
+                # Get Gantry_Permissive_off_Count for this bay - DEDUPLICATED
+                gantry_count_bay = 0
+                gantry_details_bay = []
+                if len(alerts_df) > 0:
+                    filtered_gantry_bay = alerts_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
+                        (pl.col("equipment_name") == "BCU") &
+                        (pl.col("bay_number") == bay_number_str) &
+                        (pl.col("interlock_name") == "Gantry Permissive Off")
+                    )
+                    
+                    # Deduplicate by created_at and bay_number, keep latest
+                    if len(filtered_gantry_bay) > 0:
+                        deduplicated_gantry = filtered_gantry_bay.unique(
+                            subset=["created_at", "bay_number"],
+                            keep="last"
+                        ).sort("created_at", descending=True)
+                        
+                        gantry_count_bay = len(deduplicated_gantry)
+                        
+                        for alert_row in deduplicated_gantry.iter_rows(named=True):
+                            gantry_details_bay.append({
+                                "created_at": str(alert_row.get("created_at")),
+                                "interlock_name": alert_row.get("interlock_name"),
+                                "device_name": alert_row.get("device_name"),
+                                "location_name": alert_row.get("location_name"),
+                                "sap_id": alert_row.get("sap_id")
+                            })
+                
+                # Get MFM_VS_BCU for this bay - DEDUPLICATED
+                mfm_vs_bcu_bay = 0
+                mfm_vs_bcu_details_bay = []
+                if len(day_end_df) > 0:
+                    filtered_day_end_bay = day_end_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
+                        (pl.col("bay_number_extracted") == bay_number_str)
+                    )
+                    if len(filtered_day_end_bay) > 0:
+                        # Group by created_at and bay_number, aggregate the totals
+                        grouped_day_end = filtered_day_end_bay.group_by(["created_at", "bay_number_extracted"]).agg([
+                            pl.col("bcu_net_totalizer").sum().alias("bcu_total"),
+                            pl.col("mfm_net_totalizer").sum().alias("mfm_total"),
+                            pl.col("bcu_number").first().alias("bcu_number"),  # Representative BCU number
+                            pl.col("bay_number").first().alias("bay_number")
+                        ]).sort("created_at", descending=True)  # Latest first
+                        
+                        bcu_sum = grouped_day_end["bcu_total"].sum()
+                        mfm_sum = grouped_day_end["mfm_total"].sum()
+                        mfm_vs_bcu_bay = mfm_sum - bcu_sum
+                        
+                        if mfm_vs_bcu_bay != 0:
+                            for day_end_row in grouped_day_end.iter_rows(named=True):
+                                difference = day_end_row.get("mfm_total") - day_end_row.get("bcu_total")
+                                if difference != 0:  # Only include if there's an actual difference
+                                    mfm_vs_bcu_details_bay.append({
+                                        "created_at": str(day_end_row.get("created_at")),
+                                        "bcu_number": day_end_row.get("bcu_number"),
+                                        "bay_number": day_end_row.get("bay_number"),
+                                        "bcu_net_totalizer": day_end_row.get("bcu_total"),
+                                        "mfm_net_totalizer": day_end_row.get("mfm_total"),
+                                        "difference": difference
+                                    })
+                
+                # Get BCU_VS_INVOICE for this bay - DEDUPLICATED
+                bcu_vs_invoice_bay = 0
+                bcu_vs_invoice_details_bay = []
+                
+                # Get total invoiced_qty for this bay on this date
+                bay_invoiced_total = 0
+                if len(bay_df) > 0 and "invoiced_qty" in bay_df.columns:
+                    invoiced_values = bay_df.select("invoiced_qty").to_series()
+                    # Filter out None/null values and sum
+                    bay_invoiced_total = invoiced_values.filter(invoiced_values.is_not_null()).sum()
+                
+                if len(day_end_df) > 0:
+                    filtered_day_end_bay = day_end_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
+                        (pl.col("bay_number_extracted") == bay_number_str)
+                    )
+                    if len(filtered_day_end_bay) > 0:
+                        # Group by created_at and bay_number to eliminate duplicates
+                        grouped_day_end = filtered_day_end_bay.group_by(["created_at", "bay_number_extracted"]).agg([
+                            pl.col("bcu_net_totalizer").sum().alias("bcu_total"),
+                            pl.col("bcu_number").first().alias("bcu_number"),
+                            pl.col("bay_number").first().alias("bay_number")
+                        ]).sort("created_at", descending=True)
+                        
+                        bcu_sum = grouped_day_end["bcu_total"].sum()
+                        bcu_vs_invoice_bay = bcu_sum - bay_invoiced_total
+                        
+                        if bcu_vs_invoice_bay != 0:
+                            for day_end_row in grouped_day_end.iter_rows(named=True):
+                                difference = day_end_row.get("bcu_total") - bay_invoiced_total
+                                if difference != 0:  # Only include if there's an actual difference
+                                    bcu_vs_invoice_details_bay.append({
+                                        "created_at": str(day_end_row.get("created_at")),
+                                        "bcu_number": day_end_row.get("bcu_number"),
+                                        "bay_number": day_end_row.get("bay_number"),
+                                        "bcu_net_totalizer": day_end_row.get("bcu_total"),
+                                        "invoiced_qty": bay_invoiced_total,
+                                        "difference": difference
+                                    })
+                
+                # Get Cross_checked_ManuallyAP_system (you can set logic here)
+                cross_checked = "NO"  # Default value, modify based on your business logic
+                
+                # Build bay data
+                bay_data = {
                     "bay_number": bay_number,
                     "total_count": len(bay_df),
                     "HostBayReAssignment": table_data["HostBayReAssignment"]["count"],
@@ -4092,8 +4171,29 @@ async def host_tables_combined_data(data):
                     "LocalLoading": table_data["HostLocalLoaded"]["count"],
                     "LocalLoading_details": table_data["HostLocalLoaded"]["trucks"],
                     "OverLoading": table_data["HostOverLoaded"]["count"],
-                    "OverLoading_details": table_data["HostOverLoaded"]["trucks"]
-                })
+                    "OverLoading_details": table_data["HostOverLoaded"]["trucks"],
+                    "Alerts_Count": alerts_count_bay
+                }
+                
+                # Add details only if count > 0
+                if alerts_count_bay > 0:
+                    bay_data["Alerts_Count_details"] = alerts_count_details_bay
+                
+                bay_data["Gantry_Permissive_off_Count"] = gantry_count_bay
+                if gantry_count_bay > 0:
+                    bay_data["Gantry_Permissive_off_Count_details"] = gantry_details_bay
+                
+                bay_data["MFM_VS_BCU"] = mfm_vs_bcu_bay
+                if mfm_vs_bcu_bay != 0:
+                    bay_data["MFM_VS_BCU_details"] = mfm_vs_bcu_details_bay
+                
+                bay_data["BCU_VS_INVOICE"] = bcu_vs_invoice_bay
+                if bcu_vs_invoice_bay != 0:
+                    bay_data["BCU_VS_INVOICE_details"] = bcu_vs_invoice_details_bay
+                
+                bay_data["Cross_checked_ManuallyAP_system"] = cross_checked
+                
+                bays_data.append(bay_data)
             
             result.append({
                 "date": str(date),
@@ -4109,6 +4209,8 @@ async def host_tables_combined_data(data):
         print(f"Error in host_tables_combined_data: {e}")
         traceback.print_exc()
         return []
+
+
     
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
