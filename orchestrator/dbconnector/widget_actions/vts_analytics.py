@@ -881,6 +881,9 @@ class VTSAnalyticsActions:
         
         if "completed_trips_risk_score" in query.lower():
             return f"scheduled_trip_start_datetime BETWEEN '{start}' AND '{end}'"
+        
+        if any(term in query.lower() for term in ["cluster_master", "transporter_risk_score", "tt_risk_score"]):
+            return f"version_date BETWEEN '{start}' AND '{end}'"
                 
         queries = ["vts_device_removed", "vts_harsh_acceleration", "vts_harsh_braking", "vts_panic"]
         if any(q in query.lower() for q in queries):
@@ -3599,6 +3602,61 @@ class VTSAnalyticsActions:
 
             print(f"Fetching data from table: {table_name}")
 
+            CLICK_HANDLERS = {
+                "completed_trips_risk_score": {
+                    "payload_key": "clicked_invoice_no",
+                    "table": "public.combo_alerts",
+                    "column": "invoice_no",
+                    "message_template": "Combo alerts for invoice {}"
+                },
+                "cluster_master": {
+                    "payload_key": "clicked_cluster_id",
+                    "table": "public.clusterwise_event",
+                    "column": "cluster_id",
+                    "message_template": "Cluster events for cluster_id {}"
+                },
+                "transporter_risk_score": {
+                    "payload_key": "clicked_transporter_code",
+                    "table": "public.transporter_risk_score_daily_master",
+                    "column": "transporter_code",
+                    "message_template": "Transporter events for transporter_code {}"
+                },
+                "tt_risk_score": {
+                    "payload_key": "clicked_tt_number",
+                    "table": "public.tt_risk_score_daily_master",
+                    "column": "tt_number",
+                    "message_template": "Transporter events for tt_number {}"
+                }
+            }
+            if table_name in CLICK_HANDLERS:
+                config = CLICK_HANDLERS[table_name]
+                clicked_value = payload.get(config["payload_key"])
+                
+                if clicked_value:
+                    safe_value = str(clicked_value).replace("'", "''")
+                    query = f"SELECT * FROM {config['table']} WHERE {config['column']} = '{safe_value}'"
+                    
+                    response = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, skip_total=True)
+                    data = response.get('data', [])
+                    
+                    # Check if download is requested
+                    if payload.get("download") == "true":
+                        df = pd.DataFrame(data)
+                        if not df.empty:
+                            # Remove timezone info from datetime columns
+                            for col in df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                                df[col] = df[col].dt.tz_localize(None)
+                            
+                            pl_df = pl.from_pandas(df)
+                            return await download_streaming_data(pl_df, filename=f'{table_name}_{clicked_value}')
+                    
+                    return {
+                        "status": True,
+                        "message": config["message_template"].format(clicked_value),
+                        "data": data,
+                        "total_records": len(data)
+                    }
+
             if columns and isinstance(columns, list) and columns:
                 select_columns = ", ".join([f'"{col}"' for col in columns])
                 base_query = f'SELECT {select_columns} FROM public."{table_name}"'
@@ -3695,50 +3753,6 @@ class VTSAnalyticsActions:
                     headers=headers
                 )
             
-            CLICK_HANDLERS = {
-                "completed_trips_risk_score": {
-                    "payload_key": "clicked_invoice_no",
-                    "table": "public.combo_alerts",
-                    "column": "invoice_no",
-                    "message_template": "Combo alerts for invoice {}"
-                },
-                "cluster_master": {
-                    "payload_key": "clicked_cluster_id",
-                    "table": "public.clusterwise_event",
-                    "column": "cluster_id",
-                    "message_template": "Cluster events for cluster_id {}"
-                },
-                "transporter_risk_score": {
-                    "payload_key": "clicked_transporter_code",
-                    "table": "public.transporter_risk_score_daily_master",
-                    "column": "transporter_code",
-                    "message_template": "Transporter events for transporter_code {}"
-                },
-                "tt_risk_score": {
-                    "payload_key": "clicked_tt_number",
-                    "table": "public.tt_risk_score_daily_master",
-                    "column": "tt_number",
-                    "message_template": "Transporter events for tt_number {}"
-                }
-            }
-            if table_name in CLICK_HANDLERS:
-                config = CLICK_HANDLERS[table_name]
-                clicked_value = payload.get(config["payload_key"])
-                
-                if clicked_value:
-                    safe_value = str(clicked_value).replace("'", "''")
-                    query = f"SELECT * FROM {config['table']} WHERE {config['column']} = '{safe_value}'"
-                    
-                    response = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, skip_total=True)
-                    data = response.get('data', [])
-                    
-                    return {
-                        "status": True,
-                        "message": config["message_template"].format(clicked_value),
-                        "data": data,
-                        "total_records": len(data)
-                    }
-                
             return {
                 "status": True,
                 "message": f"Successfully fetched {len(resp['data'])} records from {table_name}",
