@@ -4159,7 +4159,7 @@ async def host_tables_combined_data(data):
                             bcu_vs_invoice_bay = len(bcu_vs_invoice_details_bay)
                 
                 # Get Cross_checked_ManuallyAP_system (you can set logic here)
-                cross_checked = "NO"  # Default value, modify based on your business logic
+                cross_checked = 0  # Default value
                 
                 # Build bay data
                 bay_data = {
