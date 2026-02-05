@@ -4160,11 +4160,11 @@ async def host_tables_combined_data(data):
                 
                 # Get Cross_checked_ManuallyAP_system (you can set logic here)
                 cross_checked = 0  # Default value
-                
+                total_count = (len(bay_df) +  alerts_count_bay + gantry_count_bay + mfm_vs_bcu_bay + bcu_vs_invoice_bay)
                 # Build bay data
                 bay_data = {
                     "bay_number": bay_number,
-                    "total_count": len(bay_df),
+                    "total_count" : total_count,
                     "HostBayReAssignment": table_data["HostBayReAssignment"]["count"],
                     "HostBayReAssignment_details": table_data["HostBayReAssignment"]["trucks"],
                     "LocalLoading": table_data["HostLocalLoaded"]["count"],
