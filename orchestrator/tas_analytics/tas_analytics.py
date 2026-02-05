@@ -4118,40 +4118,45 @@ async def host_tables_combined_data(data):
                 
                 bcu_vs_invoice_bay = 0
                 bcu_vs_invoice_details_bay = []
-                
-                # Get total invoiced_qty for this bay on this date
-                bay_invoiced_total = 0
-                if len(bay_df) > 0 and "invoiced_qty" in bay_df.columns:
-                    invoiced_values = bay_df.select("invoiced_qty").to_series()
-                    # Filter out None/null values and sum
-                    bay_invoiced_total = invoiced_values.filter(invoiced_values.is_not_null()).sum()
-                
+
                 if len(day_end_df) > 0:
                     filtered_day_end_bay = day_end_df.filter(
                         (pl.col("created_at").cast(pl.Date) == bay_current_date) &
                         (pl.col("bay_number_extracted") == bay_number_str)
                     )
+                    
                     if len(filtered_day_end_bay) > 0:
-                        # Group by created_at and bay_number to eliminate duplicates
-                        grouped_day_end = filtered_day_end_bay.group_by(["created_at", "bay_number_extracted"]).agg([
-                            pl.col("bcu_net_totalizer").sum().alias("bcu_total"),
-                            pl.col("bcu_number").first().alias("bcu_number"),
-                            pl.col("bay_number").first().alias("bay_number")
-                        ]).sort("created_at", descending=True)
+                        # Filter out records where invoiced_qty is null or 0
+                        filtered_day_end_bay = filtered_day_end_bay.filter(
+                            pl.col('invoiced_qty').is_not_null() & 
+                            (pl.col('invoiced_qty') != 0)
+                        )
                         
-                        for day_end_row in grouped_day_end.iter_rows(named=True):
-                            difference = day_end_row.get("bcu_total") - bay_invoiced_total
-                            if difference != 0:  # Only include if there's an actual difference
-                                bcu_vs_invoice_details_bay.append({
-                                    "created_at": str(day_end_row.get("created_at")),
-                                    "bcu_number": day_end_row.get("bcu_number"),
-                                    "bay_number": day_end_row.get("bay_number"),
-                                    "bcu_net_totalizer": day_end_row.get("bcu_total"),
-                                    "invoiced_qty": bay_invoiced_total,
-                                    "difference": difference
-                                })
-                        
-                        bcu_vs_invoice_bay = len(bcu_vs_invoice_details_bay)  # Count of entries, not sum of differences
+                        if len(filtered_day_end_bay) > 0:
+                            # Group by created_at and bay_number to aggregate
+                            grouped_day_end = filtered_day_end_bay.group_by(["created_at", "bay_number_extracted"]).agg([
+                                pl.col("bcu_net_totalizer").sum().alias("bcu_total"),
+                                pl.col("invoiced_qty").sum().alias("invoiced_total"), 
+                                pl.col("bcu_number").first().alias("bcu_number"),
+                                pl.col("bay_number").first().alias("bay_number")
+                            ]).sort("created_at", descending=True)
+                            
+                            for day_end_row in grouped_day_end.iter_rows(named=True):
+                                bcu_total = day_end_row.get("bcu_total")
+                                invoiced_total = day_end_row.get("invoiced_total") 
+                                difference = bcu_total - invoiced_total
+                                
+                                if difference != 0:
+                                    bcu_vs_invoice_details_bay.append({
+                                        "created_at": str(day_end_row.get("created_at")),
+                                        "bcu_number": day_end_row.get("bcu_number"),
+                                        "bay_number": day_end_row.get("bay_number"),
+                                        "bcu_net_totalizer": bcu_total,
+                                        "invoiced_qty": invoiced_total, 
+                                        "difference": difference
+                                    })
+                            
+                            bcu_vs_invoice_bay = len(bcu_vs_invoice_details_bay)
                 
                 # Get Cross_checked_ManuallyAP_system (you can set logic here)
                 cross_checked = "NO"  # Default value, modify based on your business logic

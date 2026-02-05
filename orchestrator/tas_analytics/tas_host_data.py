@@ -105,7 +105,7 @@ async def fetch_host_tables_as_dfs(data):
             "bcu_net_totalizer", "mfm_net_totalizer","bcu_start_totalizer","bcu_end_totalizer"
         ])
     )
-    alerts_params.limit = 0
+    day_end_params.limit = 0
 
     # ---------------------------
     # Fetch Data (UNCHANGED)
@@ -121,6 +121,7 @@ async def fetch_host_tables_as_dfs(data):
     over_loaded_df = pl.DataFrame(over_loaded_resp.get("data", []))
     day_end_df = pl.DataFrame(day_end_resp.get("data", []))
     alerts_df = pl.DataFrame(alerts_resp.get("data", []))
+
 
     total_bcu_count = 0
     total_active_bays_count = 0
