@@ -4102,24 +4102,20 @@ async def host_tables_combined_data(data):
                             pl.col("bay_number").first().alias("bay_number")
                         ]).sort("created_at", descending=True)  # Latest first
                         
-                        bcu_sum = grouped_day_end["bcu_total"].sum()
-                        mfm_sum = grouped_day_end["mfm_total"].sum()
-                        mfm_vs_bcu_bay = mfm_sum - bcu_sum
+                        for day_end_row in grouped_day_end.iter_rows(named=True):
+                            difference = day_end_row.get("mfm_total") - day_end_row.get("bcu_total")
+                            if difference != 0:  # Only include if there's an actual difference
+                                mfm_vs_bcu_details_bay.append({
+                                    "created_at": str(day_end_row.get("created_at")),
+                                    "bcu_number": day_end_row.get("bcu_number"),
+                                    "bay_number": day_end_row.get("bay_number"),
+                                    "bcu_net_totalizer": day_end_row.get("bcu_total"),
+                                    "mfm_net_totalizer": day_end_row.get("mfm_total"),
+                                    "difference": difference
+                                })
                         
-                        if mfm_vs_bcu_bay != 0:
-                            for day_end_row in grouped_day_end.iter_rows(named=True):
-                                difference = day_end_row.get("mfm_total") - day_end_row.get("bcu_total")
-                                if difference != 0:  # Only include if there's an actual difference
-                                    mfm_vs_bcu_details_bay.append({
-                                        "created_at": str(day_end_row.get("created_at")),
-                                        "bcu_number": day_end_row.get("bcu_number"),
-                                        "bay_number": day_end_row.get("bay_number"),
-                                        "bcu_net_totalizer": day_end_row.get("bcu_total"),
-                                        "mfm_net_totalizer": day_end_row.get("mfm_total"),
-                                        "difference": difference
-                                    })
+                        mfm_vs_bcu_bay = len(mfm_vs_bcu_details_bay)  # Count of entries, not sum of differences
                 
-                # Get BCU_VS_INVOICE for this bay - DEDUPLICATED
                 bcu_vs_invoice_bay = 0
                 bcu_vs_invoice_details_bay = []
                 
@@ -4143,21 +4139,19 @@ async def host_tables_combined_data(data):
                             pl.col("bay_number").first().alias("bay_number")
                         ]).sort("created_at", descending=True)
                         
-                        bcu_sum = grouped_day_end["bcu_total"].sum()
-                        bcu_vs_invoice_bay = bcu_sum - bay_invoiced_total
+                        for day_end_row in grouped_day_end.iter_rows(named=True):
+                            difference = day_end_row.get("bcu_total") - bay_invoiced_total
+                            if difference != 0:  # Only include if there's an actual difference
+                                bcu_vs_invoice_details_bay.append({
+                                    "created_at": str(day_end_row.get("created_at")),
+                                    "bcu_number": day_end_row.get("bcu_number"),
+                                    "bay_number": day_end_row.get("bay_number"),
+                                    "bcu_net_totalizer": day_end_row.get("bcu_total"),
+                                    "invoiced_qty": bay_invoiced_total,
+                                    "difference": difference
+                                })
                         
-                        if bcu_vs_invoice_bay != 0:
-                            for day_end_row in grouped_day_end.iter_rows(named=True):
-                                difference = day_end_row.get("bcu_total") - bay_invoiced_total
-                                if difference != 0:  # Only include if there's an actual difference
-                                    bcu_vs_invoice_details_bay.append({
-                                        "created_at": str(day_end_row.get("created_at")),
-                                        "bcu_number": day_end_row.get("bcu_number"),
-                                        "bay_number": day_end_row.get("bay_number"),
-                                        "bcu_net_totalizer": day_end_row.get("bcu_total"),
-                                        "invoiced_qty": bay_invoiced_total,
-                                        "difference": difference
-                                    })
+                        bcu_vs_invoice_bay = len(bcu_vs_invoice_details_bay)  # Count of entries, not sum of differences
                 
                 # Get Cross_checked_ManuallyAP_system (you can set logic here)
                 cross_checked = "NO"  # Default value, modify based on your business logic
@@ -4184,11 +4178,11 @@ async def host_tables_combined_data(data):
                     bay_data["Gantry_Permissive_off_Count_details"] = gantry_details_bay
                 
                 bay_data["MFM_VS_BCU"] = mfm_vs_bcu_bay
-                if mfm_vs_bcu_bay != 0:
+                if mfm_vs_bcu_bay > 0:
                     bay_data["MFM_VS_BCU_details"] = mfm_vs_bcu_details_bay
                 
                 bay_data["BCU_VS_INVOICE"] = bcu_vs_invoice_bay
-                if bcu_vs_invoice_bay != 0:
+                if bcu_vs_invoice_bay > 0:
                     bay_data["BCU_VS_INVOICE_details"] = bcu_vs_invoice_details_bay
                 
                 bay_data["Cross_checked_ManuallyAP_system"] = cross_checked
