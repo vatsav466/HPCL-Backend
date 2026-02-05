@@ -2,6 +2,7 @@ import mysql.connector
 import sys
 import psycopg2
 import polars as pl
+
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
 
@@ -14,32 +15,9 @@ MYSQL_CONFIG = {
     "port": 3306,
 }
 
-SOURCE_TABLE = "CONN_ENT.ZSDCV_AY_INV3_TILL_DATE"
+# ---------- CONFIGURATION ----------
 TARGET_TABLE = "sales_trips_till_date"
-INCREMENTAL_KEY = "syncdt"  # date
-USER_DEFINED_WHERE = (
-    "division IN ('11','20','21') AND load_status = '6' AND qty_shortage > '0' "
-    "AND sales_org IN ('7000','2000')"
-)
-USER_DEFINED_WHERE_2 = (
-    "distribution_channel = '12'  AND sales_org IN ('3000')AND load_status = '6'"
-)
-# CONFLICT_COLUMNS = ["invoice_no", "vehicle_id", "sap_id", "item_no"]
 CONFLICT_COLUMNS = ["invoice_no", "vehicle_id", "sap_id", "item_no", "invoice_type"]
-
-
-# MySQL → PostgreSQL type mapping
-MYSQL_TO_PG_TYPE_MAP = {
-    "int": "INTEGER",
-    "bigint": "BIGINT",
-    "varchar": "VARCHAR",
-    "text": "TEXT",
-    "datetime": "TIMESTAMP",
-    "float": "FLOAT",
-    "double": "DOUBLE PRECISION",
-    "tinyint": "SMALLINT",
-    "decimal": "NUMERIC",
-}
 
 ITEM_NAME_MAP = {
     2812000: "HSD",
@@ -59,38 +37,72 @@ ITEM_NAME_MAP = {
 
 # ---------- CONNECTION HELPERS ----------
 def get_mysql_connection():
-    """Connect to MySQL"""
     return mysql.connector.connect(**credential_loader.get_credentials('TIBCO'))
 
 
 def get_postgres_connection():
-    """Connect to Postgres"""
     return psycopg2.connect(**credential_loader.get_credentials('APP_DB'))
 
+# ============================================================
+# MYSQL FETCH (ONLY QUERY CHANGED)
+# ============================================================
+def fetch_mysql_data(conn, table, key_column, last_key, user_wheres=None):
+    """Fetch incremental + multiple user filters OR logic"""
 
-# ---------- MYSQL CHECK HELPERS ----------
-def mysql_table_exists(conn, table_name: str) -> bool:
-    """Check if MySQL table exists"""
-    schema, _, tbl = table_name.partition(".")
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=%s AND table_name=%s;", (schema, tbl))
-    exists = cur.fetchone()[0] > 0
+    base_query = """
+        SELECT DISTINCT
+            zinv.*,
+            zsh.original_inv,
+            zsh.billing_dt,
+            zsh.plant,
+            zsh.shortage,
+            zsh.material
+        FROM CONN_ENT.ZSDCV_SHORTAGE_STG zsh
+        INNER JOIN CONN_ENT.ZSDCV_AY_INV3_STG zinv
+            ON zsh.original_inv = zinv.invoice_no
+        WHERE
+            zsh.plant = zinv.supply_loc
+            AND zsh.shortage > 0
+            AND zinv.load_status = '6'
+            AND zsh.clearing_date IS NOT NULL
+    """
+
+    conditions = []
+    params = []
+
+    # Incremental only on zinv.syncdt
+    if last_key is not None:
+        conditions.append(f"zinv.{key_column} > %s")
+        params.append(last_key)
+
+    if conditions:
+        base_query += " AND " + " AND ".join(conditions)
+
+    cur = conn.cursor(dictionary=True)
+    cur.execute(base_query, params)
+    rows = cur.fetchall()
     cur.close()
-    return exists
 
+    if not rows:
+        return pl.DataFrame()
 
-def mysql_table_has_data(conn, table_name: str) -> bool:
-    """Check if MySQL table has data"""
-    cur = conn.cursor()
-    cur.execute(f"SELECT COUNT(*) FROM {table_name};")
-    count = cur.fetchone()[0]
-    cur.close()
-    return count > 0
+    all_keys = set()
+    for row in rows:
+        all_keys.update(row.keys())
+
+    columns_data = {key: [] for key in all_keys}
+
+    for row in rows:
+        for key in all_keys:
+            val = row.get(key)
+            columns_data[key].append(str(val) if val is not None else None)
+
+    return pl.DataFrame({k: pl.Series(v, dtype=pl.Utf8) for k, v in columns_data.items()})
+
 
 
 # ---------- LOCATION MASTER ----------
 def get_location_master_data(pg_conn):
-    """Fetch location master data from Postgres"""
     cur = pg_conn.cursor()
     cur.execute("""
         SELECT sap_id, name AS plant_nm, zone AS zone_nm, region, bu AS sbu_nm
@@ -105,10 +117,9 @@ def get_location_master_data(pg_conn):
 
 
 def sync_location_master(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
-    """Merge location master data into main DF"""
     lm_df = get_location_master_data(pg_conn)
     if lm_df.is_empty():
-        print("location_master table returned no data, skipping enrichment.")
+        print("location_master empty, skipping enrichment.")
         return df
 
     if "supply_loc" in df.columns:
@@ -120,41 +131,42 @@ def sync_location_master(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
         df = df.join(lm_df, left_on="supply_loc", right_on="sap_id", how="left")
         df = df.rename({"supply_loc": "sap_id"})
         print(f"Enriched with location_master → total rows: {df.height}")
-    else:
-        print("Column 'supply_loc' not found in source data, skipping enrichment.")
 
     return df
 
 
-# ---------- TRANSFORMATION HOOK ----------
+# ---------- ENRICHMENT ----------
 def enrich_data(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
-    """Main enrichment entry"""
     df.columns = [col.lower() for col in df.columns]
+    if "material" in df.columns:
+        df = df.drop("item_no") if "item_no" in df.columns else df
+        df = df.rename({"material": "item_no"})
+
     df = sync_location_master(pg_conn, df)
 
     if "ship_to_party" in df.columns:
         df = df.with_columns(
             pl.when(pl.col("ship_to_party").cast(pl.Utf8).str.starts_with("P"))
             .then(pl.col("ship_to_party").str.slice(1))
-
             .when(pl.col("ship_to_party").cast(pl.Utf8).str.starts_with("00"))
             .then(pl.col("ship_to_party").str.slice(2))
-
             .otherwise(pl.col("ship_to_party"))
             .alias("destination_code")
         )
         df = df.drop("ship_to_party")
 
-    # You can add more enrichment steps here (e.g. ITEM_NAME_MAP mapping)
+    # SAME OLD MATERIAL GROUP LOGIC
     if any(c.lower() == "item_no" for c in df.columns):
-        # Handle column name case variations (e.g., ITEM_NO or item_no)
         item_col = next(c for c in df.columns if c.lower() == "item_no")
 
         df = df.with_columns([
             pl.col(item_col)
             .cast(pl.Int64, strict=False)
-            .map_elements(lambda x: ITEM_NAME_MAP.get(int(x)) if x and str(x).isdigit() and int(
-                x) in ITEM_NAME_MAP else None)
+            .map_elements(lambda x:
+                ITEM_NAME_MAP.get(int(x))
+                if x and str(x).isdigit() and int(x) in ITEM_NAME_MAP
+                else None
+            )
             .alias("material_group_nm")
         ])
         print(" Added 'material_group_nm' column based on item_no mapping")
@@ -163,128 +175,29 @@ def enrich_data(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
     return df
 
 
-# ---------- SYNC HELPERS ----------
-def get_last_sync_key(pg_conn, table, key_column):
-    with pg_conn.cursor() as cur:
-        cur.execute(f'SELECT MAX({key_column}::DATE) FROM "{table}"')
-        result = cur.fetchone()
-        return result[0] if result and result[0] is not None else None
 
-
-# def fetch_mysql_data(conn, table, key_column, last_key, user_where=None):
-#     """Fetch incremental + user-filtered data from MySQL"""
-#     base_query = f"SELECT * FROM {table}"
-#     conditions = []
-#     params = []
-
-#     if user_where:
-#         conditions.append(f"({user_where})")
-
-#     if last_key is not None:
-#         conditions.append(f"{key_column} >= %s")
-#         params.append(last_key)
-
-#     if conditions:
-#         base_query += " WHERE " + " AND ".join(conditions)
-
-#     cur = conn.cursor(dictionary=True)
-#     cur.execute(base_query, params)
-#     rows = cur.fetchall()
-#     cur.close()
-
-#     if not rows:
-#         return pl.DataFrame()
-
-#     return pl.DataFrame(rows)
-def fetch_mysql_data(conn, table, key_column, last_key, user_wheres=None):
-    """Fetch incremental + multiple user filters OR logic"""
-    base_query = f"SELECT * FROM {table}"
-    conditions = []
-    params = []
-
-    # --- OR conditions for multiple WHERE filters ---
-    if user_wheres:
-        or_block = " OR ".join(f"({w})" for w in user_wheres)
-        conditions.append(f"({or_block})")
-
-    # --- Incremental ---
-    if last_key is not None:
-        conditions.append(f"{key_column} >= %s")
-        params.append(last_key)
-
-    # Final SQL
-    if conditions:
-        base_query += " WHERE " + " AND ".join(conditions)
-
-    cur = conn.cursor(dictionary=True)
-    cur.execute(base_query, params)
-    rows = cur.fetchall()
-    cur.close()
-
-    if not rows:
-        return pl.DataFrame()
-
-    # Convert each dict value to string to make schema consistent
-    if not rows:
-        return pl.DataFrame()
-
-    # 1. Get all keys from all rows
-    all_keys = set()
-    for row in rows:
-        all_keys.update(row.keys())
-
-    # 2. Build columns manually (every value converted to string)
-    columns_data = {key: [] for key in all_keys}
-
-    for row in rows:
-        for key in all_keys:
-            val = row.get(key)
-            columns_data[key].append(str(val) if val is not None else None)
-
-    # 3. Create Polars DataFrame WITHOUT inference
-    return pl.DataFrame({k: pl.Series(v, dtype=pl.Utf8) for k, v in columns_data.items()})
-
-
-
+# ---------- POSTGRES SCHEMA ----------
 def ensure_postgres_columns(pg_conn, df: pl.DataFrame, table: str):
-    """Ensure missing columns in Postgres are created"""
     with pg_conn.cursor() as cur:
-        cur.execute(
-            """
-            SELECT column_name, data_type
+        cur.execute("""
+            SELECT column_name
             FROM information_schema.columns
             WHERE table_name = %s
-            """,
-            (table.split(".")[-1],),
-        )
-        existing = {row[0]: row[1] for row in cur.fetchall()}
+        """, (table,))
+        existing = {r[0] for r in cur.fetchall()}
 
         if not existing:
-            print(f"Creating table: {table}")
-            columns_sql = []
-            for col, dtype in zip(df.columns, df.dtypes):
-                pg_type = map_polars_dtype_to_pg(dtype)
-                columns_sql.append(f'"{col}" {pg_type}')
-
-            create_sql = f"""
-                        CREATE TABLE {table} (
-                            {", ".join(columns_sql)}
-                        );
-                    """
-            cur.execute(create_sql)
+            cols = ", ".join(f'"{c}" TEXT' for c in df.columns)
+            cur.execute(f'CREATE TABLE {table} ({cols});')
             pg_conn.commit()
-            print(f"Table '{table}' created successfully.")
             return
 
-        for col, dtype in zip(df.columns, df.dtypes):
-            if col not in existing:
-                pg_type = map_polars_dtype_to_pg(dtype)
-                alter_sql = f'ALTER TABLE {table} ADD COLUMN "{col}" {pg_type};'
-                print(f"🧩 Adding missing column: {col} ({pg_type})")
-                cur.execute(alter_sql)
+        for c in df.columns:
+            if c not in existing:
+                cur.execute(f'ALTER TABLE {table} ADD COLUMN "{c}" TEXT;')
+
     pg_conn.commit()
-
-
+    
 def map_polars_dtype_to_pg(dtype) -> str:
     """Convert Polars dtype to Postgres"""
     if dtype in (pl.Int8, pl.Int16, pl.Int32, pl.Int64):
@@ -300,34 +213,25 @@ def map_polars_dtype_to_pg(dtype) -> str:
     else:
         return "TEXT"
 
-def ensure_unique_constraint(pg_conn, table: str, conflict_columns: list[str]):
-    """Ensure a unique constraint exists for the conflict columns in Postgres."""
-    # constraint_name = f"{table.split('.')[-1]}{''.join(conflict_columns)}_uniq"
-    constraint_name = f"{table.split('.')[-1]}_uniq"
 
-    joined_cols = ", ".join(f'"{c}"' for c in conflict_columns)
+# ---------- UNIQUE CONSTRAINT ----------
+def ensure_unique_constraint(pg_conn, table: str):
+    constraint_name = f"{table}_uniq"
+    joined_cols = ", ".join(f'"{c}"' for c in CONFLICT_COLUMNS)
 
     with pg_conn.cursor() as cur:
-        # Check existing unique indexes/constraints
-        cur.execute(
-            """
+        cur.execute("""
             SELECT constraint_name
             FROM information_schema.table_constraints
             WHERE table_name = %s
               AND constraint_type = 'UNIQUE'
-            """,
-            (table.split(".")[-1],),
-        )
-        existing_constraints = [r[0] for r in cur.fetchall()]
+        """, (table,))
+        existing = [r[0] for r in cur.fetchall()]
 
-        if constraint_name not in existing_constraints:
-            print(f"⚙️ Creating UNIQUE constraint '{constraint_name}' on ({joined_cols})...")
-            alter_sql = f'ALTER TABLE {table} ADD CONSTRAINT {constraint_name} UNIQUE ({joined_cols});'
-            cur.execute(alter_sql)
+        if constraint_name not in existing:
+            cur.execute(f'ALTER TABLE {table} ADD CONSTRAINT {constraint_name} UNIQUE ({joined_cols});')
             pg_conn.commit()
-            print(f"Unique constraint '{constraint_name}' created.")
-        else:
-            print(f"Unique constraint '{constraint_name}' already exists.")
+            
 def log_conflicts(df, pg_conn, table, conflict_columns):
     """
     Identify rows in df that already exist in Postgres based on conflict columns.
@@ -370,93 +274,78 @@ def log_conflicts(df, pg_conn, table, conflict_columns):
 
     print(f"Found {dup.height} conflicting rows. Writing to CSV...")
 
-    dup.write_csv("/opt/ceg/algo/conflict_dropped_records.csv")
-    print("Saved duplicate rows → /tmp/conflict_dropped_records.csv")
+    # dup.write_csv("/opt/ceg/algo/conflict_dropped_records.csv")
+    # print("Saved duplicate rows → /tmp/conflict_dropped_records.csv")
+
+
+# ---------- UPSERT ----------
 def upsert_postgres(pg_conn, df: pl.DataFrame, table: str):
-    """Upsert (INSERT ... ON CONFLICT DO UPDATE)"""
     if df.is_empty():
-        print("No new data to sync.")
+        print("No data to sync.")
         return
-    log_conflicts(df, pg_conn, table, CONFLICT_COLUMNS)
-    ensure_unique_constraint(pg_conn, table, conflict_columns=CONFLICT_COLUMNS)
+
+    ensure_unique_constraint(pg_conn, table)
+
     cols = df.columns
-    col_names = ",".join(f'"{c}"' for c in cols)
+    col_sql = ",".join(f'"{c}"' for c in cols)
     placeholders = ",".join(["%s"] * len(cols))
     conflict_cols = ",".join(f'"{c}"' for c in CONFLICT_COLUMNS)
-    update_clause = ",".join([f'"{c}" = EXCLUDED."{c}"' for c in cols if c not in CONFLICT_COLUMNS])
+    update_clause = ",".join(
+        [f'"{c}" = EXCLUDED."{c}"' for c in cols if c not in CONFLICT_COLUMNS]
+    )
 
-    upsert_sql = f"""
-        INSERT INTO {table} ({col_names})
+    sql = f"""
+        INSERT INTO {table} ({col_sql})
         VALUES ({placeholders})
-        ON CONFLICT ({conflict_cols}) DO UPDATE
-        SET {update_clause};
+        ON CONFLICT ({conflict_cols})
+        DO UPDATE SET {update_clause};
     """
 
     data = [tuple(row) for row in df.to_numpy()]
-    with pg_conn.cursor() as cur:
-        cur.executemany(upsert_sql, data)
-    pg_conn.commit()
-    print(f"Upserted {df.height} records into {table}.")
 
+    with pg_conn.cursor() as cur:
+        cur.executemany(sql, data)
+
+    pg_conn.commit()
+    print(f"Upserted {df.height} rows into {table}.")
+
+def get_last_sync_key(pg_conn, table, key_column):
+    try:
+        with pg_conn.cursor() as cur:
+            cur.execute(f'SELECT MAX({key_column}::DATE) FROM "{table}"')
+            result = cur.fetchone()
+            return result[0] if result and result[0] is not None else None
+    except psycopg2.errors.UndefinedTable:
+        pg_conn.rollback()
+        print(f"Table '{table}' does not exist yet. Skipping incremental check.")
+        return None
+# ============================================================
+# MAIN
+# ============================================================
 def sync_data():
-    """Main sync flow"""
     mysql_conn = get_mysql_connection()
     pg_conn = get_postgres_connection()
 
     try:
-        # Check table existence
-        if not mysql_table_exists(mysql_conn, SOURCE_TABLE):
-            print(f"MySQL table '{SOURCE_TABLE}' does not exist. Skipping sync.")
-            return
+        last_key = get_last_sync_key(pg_conn, TARGET_TABLE, "syncdt")
 
-        # 2️⃣ Check data availability
-        if not mysql_table_has_data(mysql_conn, SOURCE_TABLE):
-            print(f"MySQL table '{SOURCE_TABLE}' has no data. Skipping sync.")
-            return
-
-        # 3️⃣ Get last incremental key
-        last_key = get_last_sync_key(pg_conn, TARGET_TABLE, INCREMENTAL_KEY)
-        # last_key = None
-
-        print(f"Last synced key: {last_key}")
-
-        # 4️⃣ Fetch data (with user WHERE)
-        # df = fetch_mysql_data(mysql_conn, SOURCE_TABLE, INCREMENTAL_KEY, last_key, USER_DEFINED_WHERE)
-        df1 = fetch_mysql_data(
+        df = fetch_mysql_data(
             mysql_conn,
-            SOURCE_TABLE,
-            INCREMENTAL_KEY,
-            last_key,                 # <— uses last_key
-            user_wheres=[USER_DEFINED_WHERE]
+            "CONN_ENT.ZSDCV_AY_INV3_STG",   # table not used but keep structure
+            "syncdt",
+            last_key,
+            user_wheres=None
         )
-        print(f"Shortage rows (incremental): {df1.height}")
-
-        # 5️⃣ Fetch distribution_channel=12 (full fetch)
-        df2 = fetch_mysql_data(
-            mysql_conn,
-            SOURCE_TABLE,
-            INCREMENTAL_KEY,
-            None,                     # <— ALWAYS None for this filter
-            user_wheres=[USER_DEFINED_WHERE_2]
-        )
-        print(f"Distribution channel rows (full load): {df2.height}")
-
-        # 6️⃣ Combine both
-        df = pl.concat([df1, df2], how="vertical")
-        print(f"Total combined rows: {df.height}")
 
         if df.is_empty():
-            print("Nothing new to sync.")
+            print("No data fetched.")
             return
 
-        # 5️⃣ Enrich data
         df = enrich_data(pg_conn, df)
-
-        # 6️⃣ Ensure schema
         ensure_postgres_columns(pg_conn, df, TARGET_TABLE)
-
-        # 7️⃣ Upsert
         upsert_postgres(pg_conn, df, TARGET_TABLE)
+
+        print(f"Sync completed → {df.height} rows")
 
     finally:
         mysql_conn.close()
