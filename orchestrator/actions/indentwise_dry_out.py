@@ -152,7 +152,7 @@ class IndentDryOut:
                     await self.generate_dry_out_history(self.params.get("dealer_id"), self.params.get("product_code"),
                                                         connection_mapping.item_name_mapping.get(self.params.get("product_code"), ""),
                                                         self.params.get('dry_out_in_days'))
-                await hpcl_ceg_model.Alerts.update_by_query(query)
+                    await hpcl_ceg_model.Alerts.update_by_query(query)
             return True
         return False
 
