@@ -1391,6 +1391,9 @@ def get_interlock_name_and_instance_name_vts(interlock_name, instance_count):
         else:
             suffix = "th"
     
-    interlock_name = f"{interlock_name.split()[0]} {interlock_name.split()[1]} {instance_count}{suffix}Time"
+    # Split and remove last word (ThirdTime, SecondTime, etc.)
+    parts = interlock_name.split()
+    base_name = " ".join(parts[:-1])
+    interlock_name = f"{base_name} {instance_count}{suffix}Time"
     instance_name = f"Instance - {instance_count}"
     return interlock_name, instance_name
