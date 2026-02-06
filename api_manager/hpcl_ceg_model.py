@@ -10083,6 +10083,12 @@ class VtsOngoingTripsSchema(UrdhvaPostgresBase):
     vehicle_latitude: Mapped[typing.Optional[float]] = mapped_column("vehicle_latitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
     vehicle_longitude: Mapped[typing.Optional[float]] = mapped_column("vehicle_longitude", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
     vehicle_location: Mapped[typing.Optional[str]] = mapped_column("vehicle_location", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    trip_completed_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("trip_completed_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    trip_status: Mapped[typing.Optional[str]] = mapped_column("trip_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    vts_status: Mapped[typing.Optional[str]] = mapped_column("vts_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    ims_status: Mapped[typing.Optional[str]] = mapped_column("ims_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    destination_name: Mapped[typing.Optional[str]] = mapped_column("destination_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class VtsOngoingTripsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -10113,6 +10119,12 @@ class VtsOngoingTripsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     vehicle_latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     vehicle_longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     vehicle_location: typing.Optional[str] = pydantic.Field("", **{})
+    trip_completed_time: typing.Optional[datetime.datetime] | None = None
+    trip_status: typing.Optional[str] = pydantic.Field("", **{})
+    vts_status: typing.Optional[str] = pydantic.Field("", **{})
+    ims_status: typing.Optional[str] = pydantic.Field("", **{})
+    destination_name: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -10150,6 +10162,12 @@ class VtsOngoingTrips(urdhva_base.postgresmodel.PostgresModel):
     vehicle_latitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     vehicle_longitude: typing.Optional[float] = pydantic.Field(0.0, **{})
     vehicle_location: typing.Optional[str] = pydantic.Field("", **{})
+    trip_completed_time: typing.Optional[datetime.datetime] | None = None
+    trip_status: typing.Optional[str] = pydantic.Field("", **{})
+    vts_status: typing.Optional[str] = pydantic.Field("", **{})
+    ims_status: typing.Optional[str] = pydantic.Field("", **{})
+    destination_name: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
