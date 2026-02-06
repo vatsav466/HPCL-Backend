@@ -96,7 +96,9 @@ async def fetch_host_tables_as_dfs(data):
             "device_type", "created_at",
             "equipment_name", "interlock_name",
             "vehicle_number"
-        ]))
+        ])
+    )
+    alerts_params.limit = 0
 
     day_end_params = urdhva_base.queryparams.QueryParams(
         q=query_str,
@@ -159,7 +161,7 @@ async def fetch_host_tables_as_dfs(data):
 
     # Rename bay_number to assigned_bay if column exists
     if len(local_loaded_df) > 0 and "bay_number" in local_loaded_df.columns:
-        local_loaded_df = local_loaded_df.rename({'bay_number': 'assigned_bay'})
+        local_loaded_df = local_loaded_df.rename({'bay_number': 'assigned_bay', 'recipe_name': 'product_name'})
     if len(over_loaded_df) > 0 and "bay_number" in over_loaded_df.columns:
         over_loaded_df = over_loaded_df.rename({'bay_number': 'assigned_bay'})
 
