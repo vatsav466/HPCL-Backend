@@ -281,6 +281,35 @@ class SolarHelpers:
             cursor.close()
             pg_conn.close()
 
+    @staticmethod
+    def _get_capped_month_range(current_date, months):
+        """
+        Month-based range ending at current_date,
+        capped to months * 31 days.
+        """
+        year = current_date.year
+        month = current_date.month - months
+        while month <= 0:
+            month += 12
+            year -= 1
+        try:
+            month_ago = current_date.replace(year=year, month=month)
+        except ValueError:
+            # Handle month-end overflow (e.g., March 31 → Feb 28/29)
+            _, last_day = calendar.monthrange(year, month)
+            month_ago = current_date.replace(
+                year=year,
+                month=month,
+                day=last_day
+            )
+        max_days = months * 31
+        actual_days = (current_date - month_ago).days
+        if (actual_days + 1) > max_days:
+            start_date = current_date - datetime.timedelta(days=max_days - 1)
+        else:
+            start_date = month_ago
+        return start_date, current_date
+
     @classmethod
     def extract_date_range_from_filters(cls, filters):
         """
@@ -394,45 +423,21 @@ class SolarHelpers:
                                 start_date = yesterday
                                 end_date = yesterday
                             elif val == '1w':
-                                week_ago = current_date - datetime.timedelta(days=7)
+                                week_ago = current_date - datetime.timedelta(days=6)
                                 start_date = week_ago
                                 end_date = current_date
                             elif val == '15d':
-                                days_ago = current_date - datetime.timedelta(days=15)
+                                days_ago = current_date - datetime.timedelta(days=14)
                                 start_date = days_ago
                                 end_date = current_date
                             elif val == '1m':
-                                if current_date.month == 1:
-                                    month_ago = current_date.replace(year=current_date.year - 1, month=12)
-                                else:
-                                    month_ago = current_date.replace(month=current_date.month - 1)
-                                try:
-                                    month_ago = month_ago.replace(day=current_date.day)
-                                except ValueError:
-                                    _, last_day = calendar.monthrange(month_ago.year, month_ago.month)
-                                    month_ago = month_ago.replace(day=last_day)
-                                start_date = month_ago
-                                end_date = current_date
+                                start_date, end_date = cls._get_capped_month_range(current_date, 1)
 
-                                # If start_date is in the future relative to current_date (which shouldn't happen with this logic),
-                                # or if the month subtraction results in same month next year (not possible here),
-                                # Ensure we have correct range.
-                                # Actually, for '1m', if today is Jan 3, month_ago is Dec 3. Range: Dec 3 to Jan 3.
-                                pass
                             elif val == '3m':
-                                target_month = current_date.month - 3
-                                target_year = current_date.year
-                                if target_month <= 0:
-                                    target_month += 12
-                                    target_year -= 1
-                                month_ago = current_date.replace(year=target_year, month=target_month)
-                                try:
-                                    month_ago = month_ago.replace(day=current_date.day)
-                                except ValueError:
-                                    _, last_day = calendar.monthrange(month_ago.year, month_ago.month)
-                                    month_ago = month_ago.replace(day=last_day)
-                                start_date = month_ago
-                                end_date = current_date
+                                start_date, end_date = cls._get_capped_month_range(current_date, 3)
+
+                            elif val == '6m':
+                                start_date, end_date = cls._get_capped_month_range(current_date, 6)
                             elif val == '24h':
                                 start_date = current_date
                                 end_date = current_date
@@ -524,35 +529,20 @@ class SolarHelpers:
                             yesterday = current_date - datetime.timedelta(days=1)
                             df = df.filter((date_col >= pl.lit(yesterday)) & (date_col < pl.lit(current_date)))
                         elif val == '1w':
-                            week_ago = current_date - datetime.timedelta(days=7)
+                            week_ago = current_date - datetime.timedelta(days=6)
                             df = df.filter(date_col >= pl.lit(week_ago))
                         elif val == '15d':
-                            days_ago = current_date - datetime.timedelta(days=15)
+                            days_ago = current_date - datetime.timedelta(days=14)
                             df = df.filter(date_col >= pl.lit(days_ago))
                         elif val == '1m':
-                            if current_date.month == 1:
-                                month_ago = current_date.replace(year=current_date.year - 1, month=12)
-                            else:
-                                month_ago = current_date.replace(month=current_date.month - 1)
-                            try:
-                                month_ago = month_ago.replace(day=current_date.day)
-                            except ValueError:
-                                _, last_day = calendar.monthrange(month_ago.year, month_ago.month)
-                                month_ago = month_ago.replace(day=last_day)
-                            df = df.filter(date_col >= pl.lit(month_ago))
+                            start_date, _ = cls._get_capped_month_range(current_date, 1)
+                            df = df.filter(date_col >= pl.lit(start_date))
                         elif val == '3m':
-                            target_month = current_date.month - 3
-                            target_year = current_date.year
-                            if target_month <= 0:
-                                target_month += 12
-                                target_year -= 1
-                            month_ago = current_date.replace(year=target_year, month=target_month)
-                            try:
-                                month_ago = month_ago.replace(day=current_date.day)
-                            except ValueError:
-                                _, last_day = calendar.monthrange(month_ago.year, month_ago.month)
-                                month_ago = month_ago.replace(day=last_day)
-                            df = df.filter(date_col >= pl.lit(month_ago))
+                            start_date, _ = cls._get_capped_month_range(current_date, 3)
+                            df = df.filter(date_col >= pl.lit(start_date))
+                        elif val == '6m':
+                            start_date, _ = cls._get_capped_month_range(current_date, 6)
+                            df = df.filter(date_col >= pl.lit(start_date))
                         elif isinstance(val, str) and ',' in val:
                             date_range = val.split(",")
                             if len(date_range) == 2:
