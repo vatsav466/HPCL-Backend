@@ -1,4 +1,3 @@
-from orchestrator.sync_services.vts import vts_ongoing_trips
 import urdhva_base
 import asyncio
 import traceback
@@ -6,16 +5,20 @@ import datetime
 import charts_actions
 import dashboard_studio_model
 import utilities.connection_mapping as connection_mapping
+import orchestrator.sync_services.vts.vts_ongoing_trips as vts_ongoing_trips
 import hpcl_ceg_enum
-import hpcl_ceg_model
 import orchestrator.dbconnector.widget_actions.vts_analytics as vts_analytics
 import polars as pl
+import orchestrator.dbconnector.credential_loader as credential_loader
+import psycopg2
+import psycopg2.extras
 
 
 logger = urdhva_base.Logger.getInstance("vts_live_trips_check")
 
 class VTSTripSyncService:
     CHUNK_SIZE = 1000
+    BULK_UPDATE_BATCH_SIZE = 1000
     
     @staticmethod
     async def get_completed_invoices_from_vts(invoice_list):
@@ -79,16 +82,97 @@ class VTSTripSyncService:
         return completed_set
     
     @staticmethod
+    async def bulk_update_trips(trips_data):
+        """
+        Bulk update trips using direct database connection for faster updates
+        """
+        update_count = 0
+        failed_count = 0
+        conn = None
+        cursor = None
+        
+        try:
+            # Get database credentials
+            creds = credential_loader.get_credentials('APP_DB')
+            params = {
+                "host": creds["host"],
+                "database": creds["database"],
+                "user": creds["user"],
+                "password": creds["password"],
+                "port": creds["port"]
+            }
+            
+            # Establish connection
+            conn = psycopg2.connect(**params)
+            cursor = conn.cursor()
+            
+            # Prepare update query
+            update_query = """
+                UPDATE vts_ongoing_trips
+                SET trip_status = %s,
+                    vts_status = %s,
+                    ims_status = %s,
+                    trip_completed_time = %s
+                WHERE id = %s
+            """
+            
+            # Process in batches
+            for i in range(0, len(trips_data), VTSTripSyncService.BULK_UPDATE_BATCH_SIZE):
+                batch = trips_data[i:i + VTSTripSyncService.BULK_UPDATE_BATCH_SIZE]
+                
+                # Prepare batch data
+                batch_values = [
+                    (
+                        record['trip_status'],
+                        record['vts_status'],
+                        record['ims_status'],
+                        record['trip_completed_time'],
+                        record['id']
+                    )
+                    for record in batch
+                ]
+                
+                try:
+                    # Execute batch update using psycopg2.extras.execute_batch for performance
+                    psycopg2.extras.execute_batch(cursor, update_query, batch_values)
+                    conn.commit()
+                    
+                    batch_success = len(batch)
+                    update_count += batch_success
+                    logger.info(f"Batch {i//VTSTripSyncService.BULK_UPDATE_BATCH_SIZE + 1}: {batch_success}/{len(batch)} successful")
+                    
+                except Exception as e:
+                    conn.rollback()
+                    failed_count += len(batch)
+                    logger.error(f"Batch update failed: {str(e)}")
+                    logger.error(traceback.format_exc())
+            
+            return update_count, failed_count
+            
+        except Exception as e:
+            logger.error(f"Bulk update error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return update_count, failed_count
+            
+        finally:
+            # Clean up resources
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+    
+    @staticmethod
     async def sync_trip_completion_status():
         """Main sync function"""
         try:
             logger.info(f"[{datetime.datetime.now()}] Starting sync...")
             
             vts_live_query = """
-                                SELECT id, invoice_no, trip_status, vts_status, ims_status
-                                FROM vts_ongoing_trips
-                                WHERE trip_status IS NULL OR trip_status = 'Live'
-                             """
+                SELECT id, invoice_no, trip_status, vts_status, ims_status
+                FROM vts_ongoing_trips
+                WHERE trip_status IS NULL OR trip_status = 'Live'
+            """
+            
             # Get ongoing trips
             df = await vts_analytics.VTSAnalyticsActions.execute_query(vts_live_query, engine='polars')
             
@@ -120,7 +204,7 @@ class VTSTripSyncService:
                 VTSTripSyncService.get_completed_invoices_from_ims(base_invoice_list, ims_function)
             )
             
-            logger.info(f"VTS: {len(vts_set)}, IMS: {len(ims_set)}")
+            logger.info(f"VTS completed: {len(vts_set)}, IMS completed: {len(ims_set)}")
             
             # Mark which trips are completed
             df = df.with_columns([
@@ -128,60 +212,48 @@ class VTSTripSyncService:
                 pl.col("base_invoice").is_in(list(ims_set)).alias("in_ims")
             ])
             
-            # Filter only trips that need update
-            trips_to_update = df.filter(
-                pl.col("in_vts") | pl.col("in_ims")
-            )
+            # Prepare bulk update data - now updating ALL trips
+            current_time = datetime.datetime.now()
+            trips_data = []
             
-            if trips_to_update.is_empty():
-                logger.info("No completed trips found")
+            for row in df.iter_rows(named=True):
+                in_vts = row['in_vts']
+                in_ims = row['in_ims']
+                
+                # If invoice is in at least one table, mark as completed
+                # If not in both tables, mark as ongoing
+                if in_vts or in_ims:
+                    trip_status = hpcl_ceg_enum.VtsLive.TripCompleted.value
+                    trip_completed_time = current_time
+                else:
+                    trip_status = hpcl_ceg_enum.VtsLive.TripOngoing.value
+                    trip_completed_time = None
+                
+                trips_data.append({
+                    'id': row['id'],
+                    'trip_status': trip_status,
+                    'vts_status': (hpcl_ceg_enum.VtsLive.TripCompleted if in_vts else hpcl_ceg_enum.VtsLive.TripOngoing).value,
+                    'ims_status': (hpcl_ceg_enum.VtsLive.TripCompleted if in_ims else hpcl_ceg_enum.VtsLive.TripOngoing).value,
+                    'trip_completed_time': trip_completed_time
+                })
+            
+            if not trips_data:
+                logger.info("No trips to update")
                 return {"status": True, "message": "No updates needed", "updated": 0}
             
-            logger.info(f"Updating {trips_to_update.height} trips")
+            logger.info(f"Preparing to update {len(trips_data)} trips")
             
-            # Prepare bulk update list
-            update_count = 0
-            failed_count = 0
-            updates_list = []
+            # Perform bulk update
+            update_count, failed_count = await VTSTripSyncService.bulk_update_trips(trips_data)
             
-            for row in trips_to_update.iter_rows(named=True):
-                try:
-                    # Determine status based on presence in tables
-                    in_vts = row['in_vts']
-                    in_ims = row['in_ims']
-                    
-                    update_record = {
-                        "id": row['id'],
-                        "invoice_no": row['invoice_no'],
-                        "trip_status": hpcl_ceg_enum.VtsLive.TripCompleted,
-                        "vts_status": hpcl_ceg_enum.VtsLive.TripCompleted if in_vts else hpcl_ceg_enum.VtsLive.TripOngoing,
-                        "ims_status": hpcl_ceg_enum.VtsLive.TripCompleted if in_ims else hpcl_ceg_enum.VtsLive.TripOngoing,
-                        "trip_completed_time": datetime.datetime.now()
-                    }
-                    
-                    updates_list.append(update_record)
-                    
-                except Exception as e:
-                    failed_count += 1
-                    logger.error(f"Preparation failed for trip {row['id']}: {str(e)}")
-            
-            # Bulk update all existing records at once
-            if updates_list:
-                try:
-                    await hpcl_ceg_model.VtsOngoingTripsCreate.bulk_update(records=updates_list,upsert=True)
-                    update_count = len(updates_list)
-                    logger.info(f"Bulk updated {update_count} trips")
-                except Exception as e:
-                    logger.error(f"Bulk update failed: {str(e)}")
-                    failed_count += len(updates_list)
-            
-            logger.info(f"[{datetime.datetime.now()}] Updated {update_count} trips, {failed_count} failed")
+            logger.info(f"[{datetime.datetime.now()}] Sync completed: {update_count} updated, {failed_count} failed")
             
             return {
                 "status": True,
                 "message": "Sync completed",
                 "updated": update_count,
-                "failed": failed_count
+                "failed": failed_count,
+                "total_checked": df.height
             }
             
         except Exception as e:
@@ -192,7 +264,7 @@ class VTSTripSyncService:
 
 async def main():
     result = await VTSTripSyncService.sync_trip_completion_status()
-    logger.info(f"Result: {result}")
+    logger.info(f"Final Result: {result}")
     return result
 
 
