@@ -4144,7 +4144,7 @@ async def host_tables_combined_data(data):
                             for day_end_row in grouped_day_end.iter_rows(named=True):
                                 bcu_total = day_end_row.get("bcu_total")
                                 invoiced_total = day_end_row.get("invoiced_total") 
-                                difference = bcu_total - invoiced_total
+                                difference = abs(bcu_total - invoiced_total)
                                 
                                 if difference != 0:
                                     bcu_vs_invoice_details_bay.append({
