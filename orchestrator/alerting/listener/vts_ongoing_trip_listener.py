@@ -126,7 +126,6 @@ class VTSOnGoingTripListener:
                 "region": location_row.get('region'),
                 "zone" : location_row.get('zone'),
                 "location_name": location_row.get('name'),
-                "destination_code": data.get('destination_code'),
                 "destination_name": destination_row.get('name'), 
                 "trip_status": hpcl_ceg_enum.VtsLive.TripOngoing.value
 
