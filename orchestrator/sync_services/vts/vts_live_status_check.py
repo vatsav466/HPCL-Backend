@@ -22,8 +22,8 @@ class VTSTripSyncService:
     
     @staticmethod
     async def get_completed_invoices_from_vts(invoice_list):
-        """Get completed invoices from VTS COMPLETED_TRIP table"""
-        completed_set = set()
+        """Get completed invoices from VTS COMPLETED_TRIP table with completion time"""
+        completed_dict = {}
         
         try:
             conn = vts_ongoing_trips.get_db_connection()
@@ -34,29 +34,30 @@ class VTSTripSyncService:
                 invoices_str = "', '".join(chunk)
                 
                 cursor.execute(f"""
-                    SELECT DISTINCT CHALLAN_NO
+                    SELECT DISTINCT CHALLAN_NO, RET_DEPOT_IN
                     FROM COMPLETED_TRIP
                     WHERE CHALLAN_NO IN ('{invoices_str}')
                 """)
                 
-                completed_set.update(
-                    str(row[0]).strip().replace(" ", "") 
-                    for row in cursor.fetchall() 
-                    if row[0]
-                )
+                for row in cursor.fetchall():
+                    if row[0]:
+                        invoice_key = str(row[0]).strip().replace(" ", "")
+                        completion_time = row[1] if row[1] else None
+                        completed_dict[invoice_key] = completion_time
                         
             cursor.close()
             conn.close()
             
         except Exception as e:
             logger.error(f"VTS query error: {str(e)}")
+            logger.error(traceback.format_exc())
             
-        return completed_set
+        return completed_dict
     
     @staticmethod
     async def get_completed_invoices_from_ims(base_invoice_list, ims_function):
-        """Get completed invoices from IMS AUTO_DC_REQUESTS table"""
-        completed_set = set()
+        """Get completed invoices from IMS AUTO_DC_REQUESTS table with completion time"""
+        completed_dict = {}
         
         try:
             for i in range(0, len(base_invoice_list), VTSTripSyncService.CHUNK_SIZE):
@@ -64,22 +65,35 @@ class VTSTripSyncService:
                 invoices_str = "', '".join(chunk)
                 
                 ims_rows = await ims_function(query=f"""
-                    SELECT DISTINCT INVOICE_NO
+                    SELECT DISTINCT INVOICE_NO, AUTODC_UPDATE_DATE, AUTODC_UPDATE_TIME
                     FROM "IMS_SAP"."AUTO_DC_REQUESTS"
                     WHERE "INVOICE_NO" IN ('{invoices_str}')
                 """)
                 
                 if ims_rows:
-                    completed_set.update(
-                        str(row["INVOICE_NO"]).strip().replace(" ", "")
-                        for row in ims_rows
-                        if row.get("INVOICE_NO")
-                    )
+                    for row in ims_rows:
+                        if row.get("INVOICE_NO"):
+                            invoice_key = str(row["INVOICE_NO"]).strip().replace(" ", "")
+                            
+                            # Parse IMS datetime from date and time strings
+                            completion_time = None
+                            try:
+                                date_str = str(row.get("AUTODC_UPDATE_DATE", "")).strip()
+                                time_str = str(row.get("AUTODC_UPDATE_TIME", "")).strip()
+                                
+                                if date_str and time_str and date_str != "None" and time_str != "None":
+                                    # date_str format: 20260209, time_str format: 095709
+                                    completion_time = datetime.datetime.strptime(f"{date_str}{time_str}", "%Y%m%d%H%M%S")
+                            except Exception as e:
+                                logger.warning(f"Failed to parse IMS datetime for {invoice_key}: {str(e)}")
+                            
+                            completed_dict[invoice_key] = completion_time
                     
         except Exception as e:
             logger.error(f"IMS query error: {str(e)}")
+            logger.error(traceback.format_exc())
             
-        return completed_set
+        return completed_dict
     
     @staticmethod
     async def bulk_update_trips(trips_data):
@@ -170,7 +184,7 @@ class VTSTripSyncService:
             vts_live_query = """
                 SELECT id, invoice_no, trip_status, vts_status, ims_status
                 FROM vts_ongoing_trips
-                WHERE trip_status IS NULL OR trip_status = 'Live'
+                WHERE trip_status != 'Closed'
             """
             
             # Get ongoing trips
@@ -198,33 +212,37 @@ class VTSTripSyncService:
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             ims_function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
             
-            # Fetch from both tables in parallel
-            vts_set, ims_set = await asyncio.gather(
+            # Fetch from both tables in parallel - now returns dictionaries with completion times
+            vts_dict, ims_dict = await asyncio.gather(
                 VTSTripSyncService.get_completed_invoices_from_vts(invoice_list),
                 VTSTripSyncService.get_completed_invoices_from_ims(base_invoice_list, ims_function)
             )
             
-            logger.info(f"VTS completed: {len(vts_set)}, IMS completed: {len(ims_set)}")
+            logger.info(f"VTS completed: {len(vts_dict)}, IMS completed: {len(ims_dict)}")
             
-            # Mark which trips are completed
-            df = df.with_columns([
-                pl.col("invoice_clean").is_in(list(vts_set)).alias("in_vts"),
-                pl.col("base_invoice").is_in(list(ims_set)).alias("in_ims")
-            ])
-            
-            # Prepare bulk update data - now updating ALL trips
-            current_time = datetime.datetime.now()
+            # Prepare bulk update data
             trips_data = []
             
             for row in df.iter_rows(named=True):
-                in_vts = row['in_vts']
-                in_ims = row['in_ims']
+                invoice_clean = row['invoice_clean']
+                base_invoice = row['base_invoice']
                 
-                # If invoice is in at least one table, mark as completed
-                # If not in both tables, mark as ongoing
+                # Check if invoice exists in VTS and IMS
+                in_vts = invoice_clean in vts_dict
+                in_ims = base_invoice in ims_dict
+                
+                # Determine trip status and completion time
                 if in_vts or in_ims:
                     trip_status = hpcl_ceg_enum.VtsLive.TripCompleted.value
-                    trip_completed_time = current_time
+                    
+                    # Priority: VTS completion time if available, otherwise IMS completion time
+                    # If both are present, use VTS time as per requirement
+                    if in_vts:
+                        trip_completed_time = vts_dict[invoice_clean]
+                    elif in_ims:
+                        trip_completed_time = ims_dict[base_invoice]
+                    else:
+                        trip_completed_time = None
                 else:
                     trip_status = hpcl_ceg_enum.VtsLive.TripOngoing.value
                     trip_completed_time = None

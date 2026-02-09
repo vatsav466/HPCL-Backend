@@ -108,8 +108,7 @@ class VTSOnGoingTripListener:
                 location_query = f"select name,zone,region from location_master where sap_id = '{data['location_code']}'"
                 location_data  = await urdhva_base.BasePostgresModel.get_aggr_data(location_query)
                 location_row = ( location_data.get('data')[0] if location_data and location_data.get('data') else {})
-                print(location_data)
-
+    
             if data['destination_code']:
                 destination_code = await self.clean_destination_code(data['destination_code'])
                 destination_query = f"select name from location_master where sap_id = '{destination_code}'"
