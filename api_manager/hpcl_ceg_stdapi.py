@@ -42,9 +42,9 @@ async def delete(id: str):
     return await UserLoginAudit.delete(id)
 
 
-@router.get('/users/{id}', response_model=Users, tags=['Users'])
-async def get(id: str):
-    return await Users.get(id, skip_secrets=True)
+# @router.get('/users/{id}', response_model=Users, tags=['Users'])
+# async def get(id: str):
+#     return await Users.get(id, skip_secrets=True)
 
 
 @router.get('/users', response_model=UsersGetResp, tags=['Users'])
