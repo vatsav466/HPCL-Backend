@@ -100,16 +100,18 @@ class VTSOnGoingTripListener:
 
     async def process_task(self, task):
         enriched_tasks = []
-
+        
         # Loop over each item in the task list
         for data in task:
-            
-            if data['location_code']:
+            location_row = {}
+            destination_row = {}
+    
+            if data.get('location_code'):
                 location_query = f"select name,zone,region from location_master where sap_id = '{data['location_code']}'"
                 location_data  = await urdhva_base.BasePostgresModel.get_aggr_data(location_query)
                 location_row = ( location_data.get('data')[0] if location_data and location_data.get('data') else {})
     
-            if data['destination_code']:
+            if data.get('destination_code'):
                 destination_code = await self.clean_destination_code(data['destination_code'])
                 destination_query = f"select name from location_master where sap_id = '{destination_code}'"
                 destination_data = await urdhva_base.BasePostgresModel.get_aggr_data(destination_query)
@@ -126,7 +128,7 @@ class VTSOnGoingTripListener:
                 "location_name": location_row.get('name'),
                 "destination_code": data.get('destination_code'),
                 "destination_name": destination_row.get('name'), 
-                "trip_status": hpcl_ceg_enum.VtsLive.TripOngoing
+                "trip_status": hpcl_ceg_enum.VtsLive.TripOngoing.value
 
             }
 
