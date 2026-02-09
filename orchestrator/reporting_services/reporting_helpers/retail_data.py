@@ -716,18 +716,18 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
 
     # Summary row values (example values, modify if needed) Day wise No. of Dryout ROs
     default_ro_values_base = {
-        'CZ': 2474,
-        'ECZ': 1867,
-        'EZ': 1171,
-        'NCZ': 2949,
-        'NFZ': 1531,
-        'NWFZ': 1879,
-        'NWZ': 1373,
-        'NZ': 1430,
-        'SCZ': 2816,
-        'SWZ': 2518,
-        'SZ': 1913,
-        'WZ': 2651
+        'CZ': 2487,
+        'ECZ': 1878,
+        'EZ': 1178,
+        'NCZ': 2979,
+        'NFZ': 1538,
+        'NWFZ': 1888,
+        'NWZ': 1377,
+        'NZ': 1437,
+        'SCZ': 2827,
+        'SWZ': 2530,
+        'SZ': 1923,
+        'WZ': 2657
     }
 
     default_ro_values = {
@@ -800,25 +800,31 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
                                             FROM dry_out_daily_report Where created_at::DATE > CURRENT_DATE - INTERVAL '30 days'
                                         """
     nozzle_sales_query = f"""SELECT
-            "transaction_date",
-            (
-                (
-                    SUM("sales_volume") FILTER (WHERE product_grp ILIKE '%MS%') / 1411.0
-                ) / 1000.0
-            )::BIGINT AS "MS_TMT",
+                                "transaction_date",
 
-            (
-                (
-                    SUM("sales_volume") FILTER (WHERE product_grp ILIKE '%HSD%') / 1210.0
-                ) / 1000.0
-            )::BIGINT AS "HSD_TMT"
+                                ROUND(
+                                    (
+                                        (
+                                            SUM("sales_volume") FILTER (WHERE product_grp in ('MS','POWER 99','POWER 95','POWER 100'))
+                                            / 1411.0
+                                        ) / 1000.0
+                                    ) / 0.89
+                                )::BIGINT AS "MS_TMT",
 
-        FROM "public".nozzle_sales
-        WHERE "transaction_date" >= CURRENT_DATE - INTERVAL '30 days'
-        GROUP BY "transaction_date"
-        ORDER BY "transaction_date";
-        """
-    
+                                ROUND(
+                                    (
+                                        (
+                                            SUM("sales_volume") FILTER (WHERE product_grp in ('HSD','TURBO'))
+                                            / 1210.0
+                                        ) / 1000.0
+                                    ) / 0.89
+                                )::BIGINT AS "HSD_TMT"
+
+                            FROM "public".nozzle_sales
+                            WHERE "transaction_date" >= CURRENT_DATE - INTERVAL '31 days'
+                            GROUP BY "transaction_date"
+                            ORDER BY "transaction_date";
+                        """
     nozzel_previous_day_query = f"""select count(distinct(site_id)) from nozzle_sales where transaction_date::DATE=CURRENT_DATE - INTERVAL '1 day' """
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -840,7 +846,7 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
     print("nozzel_previous_day ---->\n", nozzel_previous_day)
 
     nozzle_sales_percentage = round(
-        (nozzel_previous_day[0]['count'] / 24572) * 100,
+        (nozzel_previous_day[0]['count'] / 24699) * 100,
         1
     )
     print("nozzle_sales_percentage ---->\n", nozzle_sales_percentage)

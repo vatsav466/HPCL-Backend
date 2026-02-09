@@ -124,7 +124,7 @@
             {% endfor %}
         </tbody>
     </table>
-    <h5>2.1. Last 30 days trend of Nozzle Sales (MS/HSD) of connected outlets in TMT</h5>
+    <h5>2.1. Last 30 days trend of estimated nozzle sales (MS/HSD) in TMT</h5>
     <h6>Connected Sites on {{yesterday_date}} - {{nozzel_previous_day[0]['count']}} [{{nozzle_sales_percentage}}%]</h6>
     <div class="logo">
         <img src="cid:nozzel_sales_chart", alt="Daily Product Wise Nozzle Sales (in TMT)" width="1000" height="auto">
@@ -342,6 +342,26 @@
             {% for row in lpg_blocked_data_resp_violation.to_dict(orient='records') %}
             <tr>
                 {% for col in lpg_blocked_data_resp_violation.columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h4>3.8 LPG Sales Backlog Summary</h4>
+    <h5>3.8.1 Zone Wise Aging Analysis of Cylinder Backlog</h5>
+    <table>
+        <thead>
+            <tr>
+                {% for col in zone_wise_cylinder_count_df.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in zone_wise_cylinder_count_df.to_dict(orient='records') %}
+            <tr>
+                {% for col in zone_wise_cylinder_count_df.columns %}
                     <td>{{ row[col] }}</td>
                 {% endfor %}
             </tr>
