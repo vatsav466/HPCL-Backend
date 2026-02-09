@@ -9,6 +9,11 @@ Enum BusinessUnit str {
     DS='DS'
 }
 
+Enum VtsLive str {
+    TripOngoing = 'Live'
+    TripCompleted = 'Closed'
+}
+
 Enum BlockStatus str {
     Blocked='Blocked'
     UnBlocked='UnBlocked'
@@ -3706,6 +3711,13 @@ Model VtsOngoingTrips {
     vehicle_latitude optional float
     vehicle_longitude optional float
     vehicle_location optional str
+    trip_completed_time optional datetime
+    trip_status optional str
+    vts_status optional str
+    ims_status optional str
+    destination_name optional str
+    location_name optional str
+
 }
 
 Model ViolationHistoryVts {

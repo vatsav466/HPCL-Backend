@@ -4,6 +4,7 @@ import json
 import time
 import asyncio
 import hpcl_ceg_model
+import hpcl_ceg_enum
 import traceback
 import urdhva_base.redispool
 import cache_gateway.cache_api_actions as cache_api_actions
@@ -59,6 +60,26 @@ class VTSOnGoingTripListener:
         except Exception as _:
             pass
         return False
+    
+
+    async def clean_destination_code(self, code):
+        """
+        Remove leading '00' and 'P' from destination code and strip extra spaces
+        
+        Args:
+            code (str): The destination code to clean
+            
+        Returns:
+            str: Cleaned destination code
+        """
+        if not code:
+            return code
+        
+        code_str = str(code).strip()
+        code_str = code_str[2:] if code_str.startswith('00') else code_str
+        code_str = code_str[1:] if code_str.startswith('P') else code_str
+        return code_str
+    
 
     async def listener(self):
         queue_ins = urdhva_base.redispool.RedisQueue(self.queue_name)
@@ -70,7 +91,6 @@ class VTSOnGoingTripListener:
                     await self.process_task(json.loads(task))
             except Exception as e:
                 if 'Timeout reading' not in str(e):
-                    print(f"Exception in VTS task process {e}, {traceback.format_exc()}")
                     logger.error(f"Exception in VTS task process {e}, {traceback.format_exc()}")
             if (int(time.time()) - base_time) > 300:
                 if await self.validate_restart(self.worker_start_time):
@@ -80,15 +100,22 @@ class VTSOnGoingTripListener:
 
     async def process_task(self, task):
         enriched_tasks = []
-
+        
         # Loop over each item in the task list
         for data in task:
-            # Fetch location details asynchronously
-            _, location_data = await cache_api_actions.get_location_data( 
-                bu=data.get('location_type'),
-                location_id=data.get('location_code')
-            )
-            print("Location details fetched:", location_data)
+            location_row = {}
+            destination_row = {}
+    
+            if data.get('location_code'):
+                location_query = f"select name,zone,region from location_master where sap_id = '{data['location_code']}'"
+                location_data  = await urdhva_base.BasePostgresModel.get_aggr_data(location_query)
+                location_row = ( location_data.get('data')[0] if location_data and location_data.get('data') else {})
+    
+            if data.get('destination_code'):
+                destination_code = await self.clean_destination_code(data['destination_code'])
+                destination_query = f"select name from location_master where sap_id = '{destination_code}'"
+                destination_data = await urdhva_base.BasePostgresModel.get_aggr_data(destination_query)
+                destination_row = ( destination_data.get('data')[0] if destination_data and destination_data.get('data') else {})
 
             # Add region from result to data
             data_with_region = {
@@ -96,8 +123,12 @@ class VTSOnGoingTripListener:
                 "event_start_datetime": data.get("event_date"),
                 "sap_id": data.get("location_code"),
                 "bu": data.get("location_type"),
-                "region": location_data.get('region'),
-                "zone" : location_data.get('zone')
+                "region": location_row.get('region'),
+                "zone" : location_row.get('zone'),
+                "location_name": location_row.get('name'),
+                "destination_name": destination_row.get('name'), 
+                "trip_status": hpcl_ceg_enum.VtsLive.TripOngoing.value
+
             }
 
             enriched_tasks.append(data_with_region)
@@ -110,7 +141,7 @@ class VTSOnGoingTripListener:
        
 
 def usage():
-    print(f"Usage:- python {sys.argv[0]} <connector_name> <queue_name>{sys.argv[0]}")
+    logger.info(f"Usage:- python {sys.argv[0]} <connector_name> <queue_name>{sys.argv[0]}")
 
 
 if __name__ == "__main__":
