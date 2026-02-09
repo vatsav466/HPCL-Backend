@@ -43,6 +43,11 @@ class VTSTripSyncService:
                     if row[0]:
                         invoice_key = str(row[0]).strip().replace(" ", "")
                         completion_time = row[1] if row[1] else None
+                        
+                        # Remove timezone info if present to store as-is
+                        if completion_time and hasattr(completion_time, 'tzinfo') and completion_time.tzinfo is not None:
+                            completion_time = completion_time.replace(tzinfo=None)
+                        
                         completed_dict[invoice_key] = completion_time
                         
             cursor.close()
@@ -83,7 +88,11 @@ class VTSTripSyncService:
                                 
                                 if date_str and time_str and date_str != "None" and time_str != "None":
                                     # date_str format: 20260209, time_str format: 095709
+                                    # Parse and ensure it's a naive datetime (no timezone info)
                                     completion_time = datetime.datetime.strptime(f"{date_str}{time_str}", "%Y%m%d%H%M%S")
+                                    # Remove any timezone info if present
+                                    if completion_time.tzinfo is not None:
+                                        completion_time = completion_time.replace(tzinfo=None)
                             except Exception as e:
                                 logger.warning(f"Failed to parse IMS datetime for {invoice_key}: {str(e)}")
                             
@@ -135,16 +144,26 @@ class VTSTripSyncService:
                 batch = trips_data[i:i + VTSTripSyncService.BULK_UPDATE_BATCH_SIZE]
                 
                 # Prepare batch data
-                batch_values = [
-                    (
+                # Since PostgreSQL 'timestamp with time zone' column adds +5:30, we subtract it first
+                batch_values = []
+                for record in batch:
+                    trip_time = record['trip_completed_time']
+                    
+                    if trip_time:
+                        # Subtract 5 hours 30 minutes to compensate for PostgreSQL's auto-conversion
+                        adjusted_time = trip_time - datetime.timedelta(hours=5, minutes=30)
+                        trip_time_str = adjusted_time.strftime('%Y-%m-%d %H:%M:%S')
+                    else:
+                        trip_time_str = None
+                    
+                    batch_values.append((
                         record['trip_status'],
                         record['vts_status'],
                         record['ims_status'],
-                        record['trip_completed_time'],
+                        trip_time_str,
                         record['id']
-                    )
-                    for record in batch
-                ]
+                    ))
+
                 
                 try:
                     # Execute batch update using psycopg2.extras.execute_batch for performance
@@ -184,7 +203,7 @@ class VTSTripSyncService:
             vts_live_query = """
                 SELECT id, invoice_no, trip_status, vts_status, ims_status
                 FROM vts_ongoing_trips
-                WHERE trip_status != 'Closed'
+                WHERE trip_status IS NULL OR trip_status != 'Closed'
             """
             
             # Get ongoing trips
@@ -246,6 +265,11 @@ class VTSTripSyncService:
                 else:
                     trip_status = hpcl_ceg_enum.VtsLive.TripOngoing.value
                     trip_completed_time = None
+                
+                # Safety check: Ensure trip_status is never empty
+                if not trip_status:
+                    trip_status = hpcl_ceg_enum.VtsLive.TripOngoing.value
+                    logger.warning(f"Empty trip_status for id {row['id']}, defaulting to TripOngoing")
                 
                 trips_data.append({
                     'id': row['id'],
