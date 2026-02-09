@@ -3432,9 +3432,7 @@ class VTSAnalyticsActions:
                 filter_keys = [str(rec.key).lower() for rec in filters]
                 
                 if "zone" in filter_keys:
-                    if "region" not in filter_keys:
-                        group_by_keys = ["region"]
-                    elif "location_name" not in filter_keys:
+                    if "location_name" not in filter_keys:
                         group_by_keys = ["location_name"]
                     elif "trucknumber" not in filter_keys:
                         group_by_keys = ["trucknumber"]

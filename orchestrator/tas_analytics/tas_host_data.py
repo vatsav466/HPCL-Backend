@@ -5,6 +5,7 @@ import json
 from datetime import timedelta
 
 
+
 async def fetch_host_tables_as_dfs(data):
 
     # ---------------------------
@@ -95,16 +96,18 @@ async def fetch_host_tables_as_dfs(data):
             "device_type", "created_at",
             "equipment_name", "interlock_name",
             "vehicle_number"
-        ]))
+        ])
+    )
+    alerts_params.limit = 0
 
     day_end_params = urdhva_base.queryparams.QueryParams(
         q=query_str,
         fields=json.dumps([
-            "created_at", "bcu_number",
+            "created_at", "bcu_number","bay_number","invoiced_qty",
             "bcu_net_totalizer", "mfm_net_totalizer","bcu_start_totalizer","bcu_end_totalizer"
         ])
     )
-    alerts_params.limit = 0
+    day_end_params.limit = 0
 
     # ---------------------------
     # Fetch Data (UNCHANGED)
@@ -121,23 +124,22 @@ async def fetch_host_tables_as_dfs(data):
     day_end_df = pl.DataFrame(day_end_resp.get("data", []))
     alerts_df = pl.DataFrame(alerts_resp.get("data", []))
 
+
     total_bcu_count = 0
     total_active_bays_count = 0
 
-    if len(day_end_df) > 0 and "bcu_number" in day_end_df.columns:
-        # Get unique BCU numbers for TotalBCU
+    day_end_df = day_end_df.with_columns([
+    pl.col("bcu_start_totalizer").cast(pl.Float64),
+    pl.col("bcu_end_totalizer").cast(pl.Float64),
+    ])
 
-        unique_bcu_df = day_end_df.unique(subset=["bcu_number"])
-        total_bcu_count = len(unique_bcu_df)
-        
-        # Calculate TotalActiveBays
-        if "bcu_start_totalizer" in day_end_df.columns and "bcu_end_totalizer" in day_end_df.columns:
-            day_end_with_diff = day_end_df.with_columns(
-                (pl.col("bcu_end_totalizer") - pl.col("bcu_start_totalizer")).abs().alias("difference")
-            )
-            active_bays_df = day_end_with_diff.filter(pl.col("difference") > 100)
-            total_active_bays_count = len(active_bays_df.unique(subset=["bcu_number"]))
-
+    grouped_df = (day_end_df.group_by(["bay_number", "bcu_number"]).agg([
+            pl.col("bcu_start_totalizer").sum().alias("sum_start"),
+            pl.col("bcu_end_totalizer").sum().alias("sum_end"),
+        ])
+        .with_columns((pl.col("sum_end") - pl.col("sum_start")).abs().alias("total_difference")))
+    total_bcu_count = grouped_df.height
+    total_active_bays_count = grouped_df.filter(pl.col("total_difference") > 100).height
 
     # Add table_name column to dataframes that have data
     if len(bay_df) > 0:
@@ -159,7 +161,7 @@ async def fetch_host_tables_as_dfs(data):
 
     # Rename bay_number to assigned_bay if column exists
     if len(local_loaded_df) > 0 and "bay_number" in local_loaded_df.columns:
-        local_loaded_df = local_loaded_df.rename({'bay_number': 'assigned_bay'})
+        local_loaded_df = local_loaded_df.rename({'bay_number': 'assigned_bay', 'recipe_name': 'product_name'})
     if len(over_loaded_df) > 0 and "bay_number" in over_loaded_df.columns:
         over_loaded_df = over_loaded_df.rename({'bay_number': 'assigned_bay'})
 
@@ -182,20 +184,17 @@ async def fetch_host_tables_as_dfs(data):
         gantry_count_list = []
         bay_alerts_count_list = []
         mfm_vs_bcu_list = []
+        bcu_vs_invoice_list = []
         
         for i in range(len(combined_df)):
             current_time = combined_df[i, "created_at"]
+            current_date = current_time.date()  # Extract only the date
             current_bay = str(combined_df[i, "assigned_bay"]).zfill(2) 
-            
-            start_time_20 = current_time - timedelta(minutes=20)
-            end_time_20 = current_time + timedelta(minutes=20)
-            start_time_40 = current_time - timedelta(minutes=40)
             
             # Calculate Alerts_Count
             if len(alerts_df) > 0:
                 filtered = alerts_df.filter(
-                    (pl.col("created_at") >= start_time_20) &
-                    (pl.col("created_at") <= end_time_20) &
+                    (pl.col("created_at").cast(pl.Date) == current_date) &
                     (pl.col("equipment_name") == "BCU") &
                     (pl.col("bay_number") == current_bay)
                 )
@@ -206,8 +205,7 @@ async def fetch_host_tables_as_dfs(data):
             # Calculate Gantry Permissive off Count
             if len(alerts_df) > 0:
                 filtered = alerts_df.filter(
-                    (pl.col("created_at") >= start_time_20) &
-                    (pl.col("created_at") <= end_time_20) &
+                    (pl.col("created_at").cast(pl.Date) == current_date) &
                     (pl.col("equipment_name") == "BCU") &
                     (pl.col("bay_number") == current_bay) &
                     (pl.col("interlock_name") == "Gantry Permissive Off")
@@ -216,24 +214,12 @@ async def fetch_host_tables_as_dfs(data):
             else:
                 gantry_count_list.append(0)
             
-            # Calculate Bay Alerts Count (before 40 minutes)
-            if len(alerts_df) > 0:
-                filtered = alerts_df.filter(
-                    (pl.col("created_at") >= start_time_40) &
-                    (pl.col("created_at") < current_time) &
-                    (pl.col("equipment_name") == "BCU") &
-                    (pl.col("bay_number") == current_bay)
-                )
-                bay_alerts_count_list.append(len(filtered))
-            else:
-                bay_alerts_count_list.append(0)
             
             # Calculate MFM VS BCU
             difference = 0
             if len(day_end_df) > 0:
                 filtered = day_end_df.filter(
-                    (pl.col("created_at") >= start_time_20) &
-                    (pl.col("created_at") <= end_time_20) &
+                    (pl.col("created_at").cast(pl.Date) == current_date) &
                     (pl.col("bay_number_extracted") == current_bay)
                 )
                 if len(filtered) > 0:
@@ -241,12 +227,29 @@ async def fetch_host_tables_as_dfs(data):
                     mfm_sum = filtered["mfm_net_totalizer"].sum()
                     difference = mfm_sum - bcu_sum
             mfm_vs_bcu_list.append(difference)
+
+             # Calculate BCU VS INVOICE
+            bcu_vs_invoice_difference = 0
+            if len(combined_df) > 0 and "invoiced_qty" in combined_df.columns:
+                # Get invoiced_qty for current truck
+                current_invoiced_qty = combined_df[i, "invoiced_qty"] if "invoiced_qty" in combined_df.columns else 0
+                
+                # Get BCU totalizer for current bay and date
+                if len(day_end_df) > 0:
+                    filtered = day_end_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == current_date) &
+                        (pl.col("bay_number_extracted") == current_bay)
+                    )
+                    if len(filtered) > 0:
+                        bcu_sum = filtered["bcu_net_totalizer"].sum()
+                        bcu_vs_invoice_difference = bcu_sum - (current_invoiced_qty if current_invoiced_qty else 0)
+            bcu_vs_invoice_list.append(bcu_vs_invoice_difference)
         
         # Add all calculated columns
         combined_df = combined_df.with_columns(pl.Series("Alerts_Count", alerts_count_list))
         combined_df = combined_df.with_columns(pl.Series("Gantry_Permissive_off_Count", gantry_count_list))
-        combined_df = combined_df.with_columns(pl.Series("Bay_Alerts_Count", bay_alerts_count_list))
         combined_df = combined_df.with_columns(pl.Series("MFM_VS_BCU", mfm_vs_bcu_list))
+        combined_df = combined_df.with_columns(pl.Series("BCU_VS_INVOICE", bcu_vs_invoice_list))
         combined_df = combined_df.with_columns(pl.lit('NO').alias('Cross checked ManuallyAP system'))   
 
         if "table_name" in combined_df.columns and "loaded_qty" in combined_df.columns and "required_qty" in combined_df.columns:
@@ -274,11 +277,11 @@ async def fetch_host_tables_as_dfs(data):
                 combined_df = combined_df.with_columns(pl.lit(None).alias(col))
 
         combined_df = combined_df[['truck_number', 'created_at', 'zone' ,'sap_id', 'location_name','load_number', 'product_name', 'required_qty', 'loaded_qty','overloaded_qty','cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 
-                                'Alerts_Count', 'Gantry_Permissive_off_Count', 'Bay_Alerts_Count', 'MFM_VS_BCU', 'Cross checked ManuallyAP system', 'table_name']]
+                                'Alerts_Count', 'Gantry_Permissive_off_Count', 'MFM_VS_BCU','BCU_VS_INVOICE', 'Cross checked ManuallyAP system', 'table_name']]
    
     # combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_tesing.csv")
 
-    return combined_df, alerts_df, total_bcu_count, total_active_bays_count
+    return combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count
 
 # if _name_ == "_main_":
     # asyncio.run(fetch_host_tables_as_dfs())

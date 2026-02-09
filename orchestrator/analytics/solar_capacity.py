@@ -1776,8 +1776,25 @@ class SolarCapacity:
                             ELSE 0
                         END AS SolarEndFlag
                     FROM calc1
+                ),
+
+                calc_window AS (
+                    SELECT
+                        *,
+                        MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampUTC END)
+                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_UTC,
+
+                        MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampIST END)
+                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_IST,
+
+                        MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampUTC END)
+                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_UTC,
+
+                        MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampIST END)
+                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_IST
+                    FROM calc
                 )
-                
+
                 SELECT
                     PLANT_CD,
                     SourceID,
@@ -1788,40 +1805,31 @@ class SolarCapacity:
                     Grid_Freq_Hz,
                     SolarGen_kWh_entry,
                     PowerOutageFlag,
-                
                     (IntervalHours * SolarGeneratingFlag) AS SolarGenHours_entry,
-                    (IntervalHours * PowerOutageFlag) AS OutageDuringSolarHours_entry,
-                
+                    CASE
+                        WHEN TimestampUTC >= SolarStart_UTC AND TimestampUTC <= SolarEnd_UTC
+                        THEN (IntervalHours * PowerOutageFlag)
+                        ELSE 0
+                    END AS OutageDuringSolarHours_entry,
                     SUM(ISNULL(SolarGen_kWh_entry, 0))
                         OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarGen_kWh_day,
-                
                     SUM(IntervalHours * SolarGeneratingFlag)
                         OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarGenHours_day,
-                
-                    SUM(IntervalHours * PowerOutageFlag)
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS OutageDuringSolarHours_day,
-                
-                    MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampUTC END)
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_UTC,
-                
-                    MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampIST END)
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_IST,
-                
-                    MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampUTC END)
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_UTC,
-                
-                    MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampIST END)
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_IST,
-                
+                    SUM(CASE
+                        WHEN TimestampUTC >= SolarStart_UTC AND TimestampUTC <= SolarEnd_UTC
+                        THEN (IntervalHours * PowerOutageFlag)
+                        ELSE 0
+                    END) OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS OutageDuringSolarHours_day,
+                    SolarStart_UTC,
+                    SolarStart_IST,
+                    SolarEnd_UTC,
+                    SolarEnd_IST,
                     DATEDIFF(
                         SECOND,
-                        MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampIST END)
-                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST),
-                        MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampIST END)
-                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST)
+                        SolarStart_IST,
+                        SolarEnd_IST
                     ) / 3600.0 AS SolarWindowHours_IST
-                
-                FROM calc
+                FROM calc_window
                 ORDER BY SourceID, TimestampUTC;
 
             """
@@ -1922,14 +1930,37 @@ class SolarCapacity:
                     if adjusted_expected else 0
                 )
 
+                solar_window_hours_mean = (
+                        plant_df
+                        .select([
+                            pl.col("SolarStart_IST"),
+                            pl.col("SolarWindowHours_IST").cast(pl.Float64)
+                        ])
+                        .drop_nulls(subset=["SolarStart_IST"])
+                        .unique(subset=["SolarStart_IST"])
+                        .select(pl.col("SolarWindowHours_IST").mean())
+                        .item() or 0
+                )
+                SolarGenHours_day_mean = (
+                        plant_df
+                        .select(pl.col("SolarGenHours_day").mean())
+                        .item() or 0
+                )
+                OutageDuringSolarHours_day_mean = (
+                        plant_df
+                        .select(pl.col("OutageDuringSolarHours_day").mean())
+                        .item() or 0
+                )
+                export_available_hour_mean = abs(solar_window_hours_mean - OutageDuringSolarHours_day_mean)
+
                 insights.append({
                     "sap_id": str(plant_cd),
                     "actual_energy": round(actual_energy, 2),
                     "estimated_energy": round(estimated_energy, 2),
-                    "energy_generation_hours": round(generation_hours, 2),
-                    "solar_window_hours": round(solar_window_hours,2),
-                    "export_available_hour": round(export_available_hour,2),
-                    "power_outage": round(power_outage_hours, 2),
+                    "energy_generation_hours": round(SolarGenHours_day_mean, 2),
+                    "solar_window_hours": round(solar_window_hours_mean,2),
+                    "export_available_hour": round(export_available_hour_mean,2),
+                    "power_outage": round(OutageDuringSolarHours_day_mean, 2),
                     "adjusted_expected": round(adjusted_expected, 2),
                     "loss_of_power_outage": round(loss_of_power_outage, 2),
                     "loss_of_power_outage_percentage": round(loss_of_power_outage_percentage, 2),
@@ -2048,191 +2079,207 @@ class SolarCapacity:
             # query
             # -------------------------------------------------
             query = f"""
-            WITH base AS (
-                    SELECT
-                        PLANT_CD,
-                        SourceID,
-                        TimestampUTC,
-                
-                        -- combine cumulative energy PER SOURCE
-                        SUM(CASE WHEN QuantityID = 129 THEN Value END) AS Energy_Cumulative_kWh,
-                
-                        -- instantaneous values
-                        MAX(CASE WHEN QuantityID = 544 THEN Value END) AS Solar_kW,
-                        MAX(CASE WHEN QuantityID = 540 THEN Value END) AS Grid_Freq_Hz
-                
-                    FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
-                    WHERE PLANT_CD IN ('{bu_codes_sql}')
-                        AND LOWER(SourceName) NOT LIKE '%total%'
-                        AND QuantityID IN (129, 544, 540)
-                        {date_filter_sql}
-                        AND DATEPART(SECOND, DATEADD(MINUTE, 330, TimestampUTC)) = 0
-                        AND DATEPART(MINUTE, DATEADD(MINUTE, 330, TimestampUTC)) % 15 = 0
-                    GROUP BY
-                        PLANT_CD,
-                        SourceID,
-                        TimestampUTC
-                ),
-                
-                w AS (
-                    SELECT
-                        b.*,
-                        DATEADD(MINUTE, 330, b.TimestampUTC) AS TimestampIST,
-                        CAST(DATEADD(MINUTE, 330, b.TimestampUTC) AS DATE) AS DayKey_IST,
-                
-                        LAG(b.Energy_Cumulative_kWh)
-                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
-                            AS Prev_Energy_Cumulative_kWh,
-                
-                        LAG(b.Solar_kW)
-                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
-                            AS Prev_Solar_kW,
-                
-                        LEAD(b.TimestampUTC)
-                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
-                            AS NextTimestampUTC
-                    FROM base b
-                ),
-                
-                calc1 AS (
-                    SELECT
-                        *,
-                
-                        CASE
-                            -- IGNORE energy during power outage
-                            WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 0
+                        WITH base AS (
+                                SELECT
+                                    PLANT_CD,
+                                    SourceID,
+                                    TimestampUTC,
 
-                            WHEN Energy_Cumulative_kWh IS NULL THEN 0
-                            WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
-                            WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
+                                    -- combine cumulative energy PER SOURCE
+                                    SUM(CASE WHEN QuantityID = 129 THEN Value END) AS Energy_Cumulative_kWh,
 
-                            ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
-                        END AS SolarGen_kWh_entry,
-                
-                        CASE
-                            WHEN NextTimestampUTC IS NULL THEN 0.0
-                            ELSE DATEDIFF(SECOND, TimestampUTC, NextTimestampUTC) / 3600.0
-                        END AS IntervalHours,
-                
-                        CASE
-                            WHEN COUNT(Solar_kW)
-                                 OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) > 0
-                            THEN 1 ELSE 0
-                        END AS SolarKW_Available_Flag
-                    FROM w
-                ),
-                
-                calc AS (
-                    SELECT
-                        *,
-                
-                        CASE
-                            WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 1 ELSE 0
-                        END AS PowerOutageFlag,
-                
-                        CASE
-                            WHEN SolarKW_Available_Flag = 1 AND Solar_kW > 0.6 THEN 1
-                            WHEN SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0 THEN 1
-                            ELSE 0
-                        END AS SolarWindowFlag,
-                
-                        CASE
-                            WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
-                             AND (
-                                    (SolarKW_Available_Flag = 1 AND Solar_kW > 0.6)
-                                 OR (SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0)
-                                 )
-                            THEN 1 ELSE 0
-                        END AS SolarGeneratingFlag,
-                
-                        CASE
-                            WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
-                             AND (
-                                    (SolarKW_Available_Flag = 1 AND Solar_kW <= 0.6)
-                                 OR (SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) = 0)
-                                 )
-                            THEN 1 ELSE 0
-                        END AS SolarZeroWhileGridOnFlag,
-                
-                        CASE
-                            WHEN SolarKW_Available_Flag = 1
-                                 AND ISNULL(Prev_Solar_kW, 0) <= 0.25
-                                 AND Solar_kW > 0.05
-                            THEN 1
-                
-                            WHEN SolarKW_Available_Flag = 0
-                                 AND ISNULL(SolarGen_kWh_entry, 0) > 0
-                                 AND LAG(ISNULL(SolarGen_kWh_entry, 0))
-                                     OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) = 0
-                            THEN 1
-                
-                            ELSE 0
-                        END AS SolarStartFlag,
-                
-                        CASE
-                            WHEN SolarKW_Available_Flag = 1
-                                 AND ISNULL(Prev_Solar_kW, 0) > 0.05
-                                 AND ISNULL(Solar_kW, 0) <= 0.25
-                            THEN 1
-                
-                            WHEN SolarKW_Available_Flag = 0
-                                 AND ISNULL(SolarGen_kWh_entry, 0) < 0.25
-                                 AND LAG(ISNULL(SolarGen_kWh_entry, 0))
-                                     OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) > 0
-                            THEN 1
-                
-                            ELSE 0
-                        END AS SolarEndFlag
-                    FROM calc1
-                )
-                
-                SELECT
-                    PLANT_CD,
-                    SourceID,
-                    TimestampUTC,
-                    TimestampIST,
-                    Energy_Cumulative_kWh,
-                    Solar_kW,
-                    Grid_Freq_Hz,
-                    SolarGen_kWh_entry,
-                    PowerOutageFlag,
-                
-                    (IntervalHours * SolarGeneratingFlag) AS SolarGenHours_entry,
-                    (IntervalHours * PowerOutageFlag) AS OutageDuringSolarHours_entry,
-                
-                    SUM(ISNULL(SolarGen_kWh_entry, 0))
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarGen_kWh_day,
-                
-                    SUM(IntervalHours * SolarGeneratingFlag)
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarGenHours_day,
-                
-                    SUM(IntervalHours * PowerOutageFlag)
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS OutageDuringSolarHours_day,
-                
-                    MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampUTC END)
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_UTC,
-                
-                    MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampIST END)
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_IST,
-                
-                    MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampUTC END)
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_UTC,
-                
-                    MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampIST END)
-                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_IST,
-                
-                    DATEDIFF(
-                        SECOND,
-                        MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampIST END)
-                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST),
-                        MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampIST END)
-                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST)
-                    ) / 3600.0 AS SolarWindowHours_IST
-                
-                FROM calc
-                ORDER BY SourceID, TimestampUTC;
+                                    -- instantaneous values
+                                    MAX(CASE WHEN QuantityID = 544 THEN Value END) AS Solar_kW,
+                                    MAX(CASE WHEN QuantityID = 540 THEN Value END) AS Grid_Freq_Hz
 
-            """
+                                FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
+                                WHERE PLANT_CD IN ('{bu_codes_sql}')
+                                    AND LOWER(SourceName) NOT LIKE '%total%'
+                                    AND QuantityID IN (129, 544, 540)
+                                    {date_filter_sql}
+                                    AND DATEPART(SECOND, DATEADD(MINUTE, 330, TimestampUTC)) = 0
+                                    AND DATEPART(MINUTE, DATEADD(MINUTE, 330, TimestampUTC)) % 15 = 0
+                                GROUP BY
+                                    PLANT_CD,
+                                    SourceID,
+                                    TimestampUTC
+                            ),
+
+                            w AS (
+                                SELECT
+                                    b.*,
+                                    DATEADD(MINUTE, 330, b.TimestampUTC) AS TimestampIST,
+                                    CAST(DATEADD(MINUTE, 330, b.TimestampUTC) AS DATE) AS DayKey_IST,
+
+                                    LAG(b.Energy_Cumulative_kWh)
+                                        OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                                        AS Prev_Energy_Cumulative_kWh,
+
+                                    LAG(b.Solar_kW)
+                                        OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                                        AS Prev_Solar_kW,
+
+                                    LEAD(b.TimestampUTC)
+                                        OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                                        AS NextTimestampUTC
+                                FROM base b
+                            ),
+
+                            calc1 AS (
+                                SELECT
+                                    *,
+
+                                    CASE
+                                        -- IGNORE energy during power outage
+                                        WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 0
+
+                                        WHEN Energy_Cumulative_kWh IS NULL THEN 0
+                                        WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
+                                        WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
+
+                                        ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
+                                    END AS SolarGen_kWh_entry,
+
+                                    CASE
+                                        WHEN NextTimestampUTC IS NULL THEN 0.0
+                                        ELSE DATEDIFF(SECOND, TimestampUTC, NextTimestampUTC) / 3600.0
+                                    END AS IntervalHours,
+
+                                    CASE
+                                        WHEN COUNT(Solar_kW)
+                                             OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) > 0
+                                        THEN 1 ELSE 0
+                                    END AS SolarKW_Available_Flag
+                                FROM w
+                            ),
+
+                            calc AS (
+                                SELECT
+                                    *,
+
+                                    CASE
+                                        WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 1 ELSE 0
+                                    END AS PowerOutageFlag,
+
+                                    CASE
+                                        WHEN SolarKW_Available_Flag = 1 AND Solar_kW > 0.6 THEN 1
+                                        WHEN SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0 THEN 1
+                                        ELSE 0
+                                    END AS SolarWindowFlag,
+
+                                    CASE
+                                        WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
+                                         AND (
+                                                (SolarKW_Available_Flag = 1 AND Solar_kW > 0.6)
+                                             OR (SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0)
+                                             )
+                                        THEN 1 ELSE 0
+                                    END AS SolarGeneratingFlag,
+
+                                    CASE
+                                        WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
+                                         AND (
+                                                (SolarKW_Available_Flag = 1 AND Solar_kW <= 0.6)
+                                             OR (SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) = 0)
+                                             )
+                                        THEN 1 ELSE 0
+                                    END AS SolarZeroWhileGridOnFlag,
+
+                                    CASE
+                                        WHEN SolarKW_Available_Flag = 1
+                                             AND ISNULL(Prev_Solar_kW, 0) <= 0.25
+                                             AND Solar_kW > 0.05
+                                        THEN 1
+
+                                        WHEN SolarKW_Available_Flag = 0
+                                             AND ISNULL(SolarGen_kWh_entry, 0) > 0
+                                             AND LAG(ISNULL(SolarGen_kWh_entry, 0))
+                                                 OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) = 0
+                                        THEN 1
+
+                                        ELSE 0
+                                    END AS SolarStartFlag,
+
+                                    CASE
+                                        WHEN SolarKW_Available_Flag = 1
+                                             AND ISNULL(Prev_Solar_kW, 0) > 0.05
+                                             AND ISNULL(Solar_kW, 0) <= 0.25
+                                        THEN 1
+
+                                        WHEN SolarKW_Available_Flag = 0
+                                             AND ISNULL(SolarGen_kWh_entry, 0) < 0.25
+                                             AND LAG(ISNULL(SolarGen_kWh_entry, 0))
+                                                 OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) > 0
+                                        THEN 1
+
+                                        ELSE 0
+                                    END AS SolarEndFlag
+                                FROM calc1
+                            ),
+
+                            calc_window AS (
+                                SELECT
+                                    *,
+                                    MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampUTC END)
+                                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_UTC,
+
+                                    MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampIST END)
+                                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_IST,
+
+                                    MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampUTC END)
+                                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_UTC,
+
+                                    MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampIST END)
+                                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_IST
+                                FROM calc
+                            )
+
+                            SELECT
+                                PLANT_CD,
+                                SourceID,
+                                TimestampUTC,
+                                TimestampIST,
+                                Energy_Cumulative_kWh,
+                                Solar_kW,
+                                Grid_Freq_Hz,
+                                SolarGen_kWh_entry,
+                                PowerOutageFlag,
+
+                                (IntervalHours * SolarGeneratingFlag) AS SolarGenHours_entry,
+
+                                CASE
+                                    WHEN TimestampUTC >= SolarStart_UTC AND TimestampUTC <= SolarEnd_UTC
+                                    THEN (IntervalHours * PowerOutageFlag)
+                                    ELSE 0
+                                END AS OutageDuringSolarHours_entry,
+
+                                SUM(ISNULL(SolarGen_kWh_entry, 0))
+                                    OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarGen_kWh_day,
+
+                                SUM(IntervalHours * SolarGeneratingFlag)
+                                    OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarGenHours_day,
+
+                                SUM(CASE
+                                    WHEN TimestampUTC >= SolarStart_UTC AND TimestampUTC <= SolarEnd_UTC
+                                    THEN (IntervalHours * PowerOutageFlag)
+                                    ELSE 0
+                                END) OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS OutageDuringSolarHours_day,
+
+                                SolarStart_UTC,
+                                SolarStart_IST,
+                                SolarEnd_UTC,
+                                SolarEnd_IST,
+
+                                DATEDIFF(
+                                    SECOND,
+                                    SolarStart_IST,
+                                    SolarEnd_IST
+                                ) / 3600.0 AS SolarWindowHours_IST
+
+                            FROM calc_window
+                            ORDER BY SourceID, TimestampUTC;
+
+                        """
             print("Insight Query: ", query)
 
             conn = SolarHelpers.get_db_connection(bu=bu_code)
@@ -2342,14 +2389,39 @@ class SolarCapacity:
                 (actual_energy / adjusted_expected) * 100
                 if adjusted_expected else 0
             )
+            solar_window_hours_mean = (
+                    plant_df
+                    .select([
+                        pl.col("SolarStart_IST"),
+                        pl.col("SolarWindowHours_IST").cast(pl.Float64)
+                    ])
+                    .drop_nulls(subset=["SolarStart_IST"])
+                    .unique(subset=["SolarStart_IST"])
+                    .select(pl.col("SolarWindowHours_IST").mean())
+                    .item() or 0
+            )
+
+            SolarGenHours_day_mean = (
+                    plant_df
+                    .select(pl.col("SolarGenHours_day").mean())
+                    .item() or 0
+            )
+
+            OutageDuringSolarHours_day_mean = (
+                    plant_df
+                    .select(pl.col("OutageDuringSolarHours_day").mean())
+                    .item() or 0
+            )
+
+            export_available_hour_mean = abs(solar_window_hours_mean - OutageDuringSolarHours_day_mean)
 
             insights = {
                 "actual_energy": round(actual_energy, 2),
                 "estimated_energy": round(estimated_energy, 2),
-                "energy_generation_hours": round(generation_hours, 2),
-                "solar_window_hours": round(solar_window_hours,2),
-                "export_available_hour": round(export_available_hour,2),
-                "power_outage": round(power_outage_hours, 2),
+                "energy_generation_hours": round(SolarGenHours_day_mean, 2),
+                "solar_window_hours": round(solar_window_hours_mean,2),
+                "export_available_hour": round(export_available_hour_mean,2),
+                "power_outage": round(OutageDuringSolarHours_day_mean, 2),
                 "adjusted_expected": round(adjusted_expected, 2),
                 "loss_of_power_outage": round(loss_of_power_outage, 2),
                 "loss_of_power_outage_percentage": round(loss_of_power_outage_percentage, 2),
