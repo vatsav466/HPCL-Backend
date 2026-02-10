@@ -107,8 +107,8 @@ class Settings(pydantic_settings.BaseSettings):
     # VTS Truck Status
     vts_truck_status_url: str = ""
     
-    commisioning_url: str ="http://10.90.37.178:8007/commdecomm/api/Device/Commisioning"
-    decommisioning_url: str ="http://10.90.37.178:8007/commdecomm/api/Device/DeCommisioning"
+    commisioning_url: str =""
+    decommisioning_url: str =""
     
 
 
