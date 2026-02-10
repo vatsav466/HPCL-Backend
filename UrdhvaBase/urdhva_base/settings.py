@@ -106,6 +106,12 @@ class Settings(pydantic_settings.BaseSettings):
 
     # VTS Truck Status
     vts_truck_status_url: str = ""
+    
+    commisioning_url: str =""
+    decommisioning_url: str =""
+    
+
+
 
     # LPG VTS blocking and unblocking
     lpg_vts_auth_url:str = ""

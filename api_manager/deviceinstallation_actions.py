@@ -1,140 +1,484 @@
 import os
-import shutil
+import httpx
+import urdhva_base
+import json
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
-import fastapi
+from fastapi import UploadFile, File, Depends
 import urdhva_base.queryparams as queryparams
-from fastapi import UploadFile, File, Depends,Form
-from hpcl_ceg_model import DeviceInstallation
-                              
+import utilities.minio_connector as minio_connector
+import fastapi
+
+router = fastapi.APIRouter(prefix="/deviceinstallation", tags=["DeviceInstallation"])
 
 
+def _format_date(value): 
+    if isinstance(value, datetime):
+        return value.strftime("%Y-%m-%d")
+    return None
 
-router = fastapi.APIRouter(prefix='/deviceinstallation')
+
+async def call_commissioning_api(payload: dict):
+    async with httpx.AsyncClient(timeout=30) as client:
+            try:
+                response = await client.post(urdhva_base.settings.commisioning_url,
+                                             json=payload,
+                                             headers={"Content-Type": "application/json"})
+                if response.status_code // 100 != 2:
+                    return False, {
+                        "status_code": response.status_code, "body": response.text,
+                        "message": "Error to get the link"
+                    }
+
+                return True, response.json()
+            except httpx.RequestError as e:
+                return False, {"error": f"Network error: {str(e)}"}
+            except Exception as e:
+                return False, {"error": str(e)}
+            
+async def call_decommissioning_api(payload: dict):
+    async with httpx.AsyncClient(timeout=60) as client:
+            try:
+                response = await client.post(urdhva_base.settings.decommisioning_url,
+                                             json=payload,
+                                             headers={"Content-Type": "application/json"})
+                if response.status_code // 100 != 2:
+                    return False, {
+                        "status_code": response.status_code, "body": response.text,
+                        "message": "Error to get the link"
+                    }
+
+                return True, response.json()
+            except httpx.RequestError as e:
+                return False, {"error": f"Network error: {str(e)}"}
+            except Exception as e:
+                return False, {"error": str(e)}
+      
+
+
+# Action validate_aot_details
+@router.post('/validate_aot_details', tags=['DeviceInstallation'])
+async def deviceinstallation_validate_aot_details(data: Deviceinstallation_Validate_Aot_DetailsParams):
+    """
+    Create device installation record and perform commissioning
+    """
+    try:
+        payload = data.dict()
+ 
+        initial_payload = {
+            "sap_tt_no": payload.get("sap_tt_no"),
+            "sap_id": payload.get("sap_id"),
+            "transporter": payload.get("transporter"),
+            "contract_valid_upto": payload.get("contract_valid_upto"),
+            "status": "REQUESTED"
+        }
+        
+                
+        record = DeviceInstallationCreate(**initial_payload)
+        result = await record.create()
+
+        record_dict = result if isinstance(result, dict) else result.__dict__
+        device_id = record_dict.get("id")
+
+        # print(f"Device record created with ID: {device_id}")
+
+        # STEP 2: Build commissioning payload
+        comm_payload = {
+            "id": device_id,
+            "created_at": _format_date(record_dict.get("created_at")),
+            "sap_tt_no": record_dict.get("sap_tt_no"),
+            "location": record_dict.get("sap_id"),
+            "transporter": record_dict.get("transporter"),
+            "reason_for_cancel": "",
+            "contract_valid_upto": record_dict.get("contract_valid_upto"),
+            "status": "REQUESTED",
+            "remarks": "Device installation requested"
+        }
+
+        print("Commissioning payload:", comm_payload)
+
+        # STEP 3: Call commissioning API       
+        comm_success, comm_response = await call_commissioning_api(comm_payload)
+
+        status_messages = comm_response.get("statusMessages", "")
+        if isinstance(status_messages, list):
+            status_messages = ", ".join(status_messages)
+
+        final_status = comm_response.get("status", "")
+        status_code = comm_response.get("statusCode")
+
+        # STEP 4: FAILURE CASE        
+        if not comm_success or  status_code == 1:
+            await DeviceInstallation(**{
+                "id": device_id,
+                "commissioning_status": final_status,
+                "commissioning_responses": status_messages
+            }).modify()
+
+            return {
+                "status": False, "message": f"Device installation failed {status_messages}",
+                "data": {
+                    "device_id": device_id,
+                    "commissioning": {
+                        "success": False, "status": final_status, "response": comm_response
+                    }
+                }
+            }
+
+        # STEP 5: SUCCESS CASE        
+        if comm_success and status_code == 0:
+        
+            await DeviceInstallation(**{
+                "id": device_id, "commissioning_status": final_status,
+                "commissioning_responses": status_messages
+            }).modify()
+
+            return {
+                "status": True, "message": f"The {status_messages}",
+                "data": {
+                    "device_id": device_id,
+                    "commissioning": {
+                        "success": True,
+                        "status": final_status, "status_code": status_code, "response": comm_response
+                    }
+                }
+            }
+
+    except Exception as e:
+        print(f"Exception in update_device_installation: {str(e)}")
+        return {
+            "status": False,
+            "message": f"Failed to process device installation: {str(e)}", "data": {}
+        }   
+
 
 # Action update_device_installation
 @router.post('/update_device_installation', tags=['DeviceInstallation'])
-async def deviceinstallation_upload_certificate(
-    payload: str = Form(...),
-    certificate_file: UploadFile = File(...)
+async def update_device_installation(
+    data: Deviceinstallation_Update_Device_InstallationParams = Depends(
+        Deviceinstallation_Update_Device_InstallationParams
+    ),certificate_file: UploadFile | None = File(None)
 ):
+    """
+    Update device installation record safely
+    """
     try:
-        import json
-        data = json.loads(payload)
+        # Get only fields sent by client
+        payload = data.dict(exclude_unset=True)
 
-        sap_tt_no = data.get("sap_tt_no")
-        if not sap_tt_no:
-            return {"status": False, "message": "sap_tt_no is required", "data": []}
+        sap_tt_no = payload.get("sap_tt_no")
+        sap_id = payload.get("sap_id")
 
-        # 1) Save file
-        file_path = await save_certificate_file(certificate_file, sap_tt_no)
-
-        # 2) Fetch existing record
-        params = queryparams.QueryParams()
-        params.q = f"sap_tt_no='{sap_tt_no}'"
+        # Fetch existing record
+        params = urdhva_base.queryparams.QueryParams()
+        params.q = (
+            f"sap_id='{sap_id}' "
+            f"AND sap_tt_no='{sap_tt_no}' "
+            f"AND commissioning_status = 'SUCCESS'"
+        )
         params.limit = 1
+        params.fields = []
 
-        existing = await DeviceInstallation.get_all(params, resp_type="plain")
-
-        # --- Normalize existing ---
-        if isinstance(existing, dict):
-            rows = existing.get("data", [])
-        elif isinstance(existing, list):
-            rows = existing
-        else:
-            rows = []
-
+        result = await DeviceInstallation.get_all(params, resp_type="plain")
+        rows = result.get("data", [])
+        
         if not rows:
-            return {"status": False, "message": "No record found", "data": []}
+                return {
+                    "status": False, "message": "validation Required and No data found"
+                }
 
-        record_id = rows[0].get("id")
+        device_id = rows[0]["id"]
+        
+        # CERTIFICATE UPLOAD
+        if certificate_file:
+            upload_dir = os.path.join(
+                urdhva_base.settings.uploads,
+                "device_installation"
+            )
+            os.makedirs(upload_dir, exist_ok=True)
 
-        # 3) ONLY update certificate field
-        update_payload = {"certificate": file_path}
+            file_path = os.path.join(upload_dir, certificate_file.filename)
+            with open(file_path, "wb") as f:
+                f.write(await certificate_file.read())
 
-        await DeviceInstallation(id=record_id, **update_payload).modify()
+            status, minio_path = minio_connector.upload_to_minio(
+                "VTS",
+                "Device_Installation_Certificates",sap_tt_no,file_path
+            )
 
-        # 4) Fetch updated record
-        updated = await DeviceInstallation.get_all(params, resp_type="plain")
+            if not status:
+                return {
+                    "status": False, "message": "MinIO upload failed", "error": minio_path
+                }
 
-        # --- Normalize updated (THIS WAS FAILING FOR YOU) ---
-        if isinstance(updated, dict):
-            updated_rows = updated.get("data", [])
-        elif isinstance(updated, list):
-            updated_rows = updated
-        else:
-            updated_rows = []
+            payload["certificate"] = minio_path
+
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
+
+        # Build update data (do NOT overwrite missing fields)
+        update_data = {"id": device_id}
+        for key, value in payload.items():
+            if value is not None:
+                update_data[key] = value
+
+        # Update record
+        await DeviceInstallation(**update_data).modify()
 
         return {
             "status": True,
-            "message": "Certificate uploaded successfully",
-            "file_path": file_path,
-            "data": updated_rows
+            "message": "Record updated successfully",
+            "data": {
+                "device_id": device_id,
+                "updated_fields": list(update_data.keys())
+            }
         }
 
     except Exception as e:
-        print("Upload error:", e)
-        return {"status": False, "message": str(e), "data": []}
+        return {
+            "status": False, "message": str(e), "data": {}
+        }
 
-async def save_certificate_file(file: UploadFile, sap_tt_no: str):
-    # Save to /opt/downloads
-    base_dir = "/opt/downloads"
-    os.makedirs(base_dir, exist_ok=True)
 
-    ext = file.filename.rsplit(".", 1)[-1]
-    file_name = f"{sap_tt_no}_certificate.{ext}"
-    file_path = os.path.join(base_dir, file_name)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return file_path
-
-# Action upload_certificate
-# ---------------------------------------------------------
-# API: upload + update only certificate column
-# ---------------------------------------------------------
-@router.post('/upload_certificate', tags=['DeviceInstallation'])
-async def upload_certificate(
-        sap_tt_no: str = Form(...),
-        certificate_file: UploadFile = File(...)
-):
+# Action action_device_vts
+@router.post('/action_device_vts', tags=['DeviceInstallation'])
+async def deviceinstallation_action_device_vts(payload :dict):
+    """
+    If only sap_tt_no given → return row from DB (no update)
+    """
     try:
-        # 1) Save file
-        file_path = await save_certificate_file(certificate_file, sap_tt_no)
+        id = payload.get("id")
+        status = payload.get("status")
+        remarks = payload.get("remarks")
 
-        # 2) Fetch existing record
-        params = queryparams.QueryParams()
-        params.q = f"sap_tt_no='{sap_tt_no}'"
+        params = urdhva_base.queryparams.QueryParams()
+        params.q = f"id='{id}'"
         params.limit = 1
+        params.fields = []   # all fields
 
         existing = await DeviceInstallation.get_all(params, resp_type="plain")
 
-        # Normalize
-        rows = existing.get("data", []) if isinstance(existing, dict) else existing
-
+        rows = existing.get("data")
         if not rows:
-            return {
-                "success": False,
-                "message": f"No record found for sap_tt_no {sap_tt_no}"
-            }
+            return {"status": False,"message": f"No record found for SAP TT No","data": []}
 
-        record_id = rows[0].get("id")   # Correct field is "id"
+        row = rows[0]
 
-        # 3) Update certificate field
-        updated_data = {"certificate": file_path}
-        await DeviceInstallation(id=record_id, **updated_data).modify()
+        status = "Approved" if status == "Accepted" else "Rejected"
+        device_id = row.get("id")
 
-        # 4) Return response
+        # update dict from existing row
+        data_dict = dict(row)
+        data_dict.pop("id", None)
+        data_dict["status"] = status
+        data_dict["remarks"] = remarks
+
+        await DeviceInstallation(id=device_id, **data_dict).modify()
+        updated = await DeviceInstallation.get_all(params, resp_type="plain")
+        updated_rows = updated.get("data")
+
+        if isinstance(updated_rows, list) :
+            record_dict = updated_rows[0]
+
+        device_id = record_dict.get("id")
+
+        # BUILD COMMISSIONING PAYLOAD
+        comm_payload_2 = {
+            "id": device_id,
+            "created_at": _format_date(record_dict.get("updated_at")),
+            "contract_valid_upto": record_dict.get("contract_valid_upto"),
+            "location": record_dict.get("sap_id"),
+            "reason_for_cancel": "",
+            "sap_tt_no": record_dict.get("sap_tt_no"),
+            "transporter": record_dict.get("transporter"),
+            "status":"PENDING",
+            "remarks" :record_dict.get("remarks"),
+        }
+
+        # CALL COMMISSIONING API
+        comm_success, comm_response = await call_commissioning_api(comm_payload_2)
+        status_messages = comm_response.get("statusMessages")
+
+        if isinstance(status_messages, list):
+            status_messages = ", ".join(status_messages)
+
+        await DeviceInstallation(**{
+            "id": device_id,
+            "commissioning_responses_2": status_messages,
+        }).modify()
+
         return {
-            "success": True,
-            "message": "Certificate uploaded and updated successfully",
-            "sap_tt_no": sap_tt_no,
-            "certificate_path": file_path
+            "status": True,
+            "message":  f"Device installation of {status_messages}",
+            "data": {
+                "commissioning": {
+                    "success": comm_success,
+                    "response": comm_response
+                }
+            }
         }
 
     except Exception as e:
+        print("Exception in action_device_vts:", str(e))
+        return {"status": False,"message": str(e),"data": [] }
+
+
+# Action action_decommissioning
+@router.post('/action_decommissioning', tags=['DeviceInstallation'])
+async def deviceinstallation_action_decommissioning(payload: dict):
+    """
+    1. If reason_for_cancel provided → Create new record with status_decommissioning
+    2. If status_decommissioning='Accepted' → Update existing record and call de-commissioning API
+    """
+    try:
+
+        device_id = int(payload.get("id"))
+
+        status_decommissioning = payload.get("status_decommissioning")
+        reason_for_cancel = payload.get("reason_for_cancel")
+
+        params = urdhva_base.queryparams.QueryParams()
+        params.q = f"id='{device_id}'"
+        params.limit = 1
+        params.fields = []  # all fields
+
+        existing = await DeviceInstallation.get_all(params, resp_type="plain")
+        rows = existing.get("data", [])
+
+        if not rows:
+            return {
+                "status": False,
+                "message": f"No record found for ID: {device_id}",
+                "data": {}
+            }
+
+        row = rows[0]
+        # print(f'Found existing record: {row.get("sap_tt_no")}')
+
+        # CREATE NEW RECORD
+        if reason_for_cancel and not status_decommissioning:
+
+            # Copy data from existing record
+            data_dict = dict(row)
+            data_dict.pop("id", None)
+
+            data_dict["reason_for_cancel"] = reason_for_cancel
+            data_dict["status_decommissioning"] = "Request For Approval"
+            data_dict["status"]="Decommissioning Request"
+
+            record = DeviceInstallationCreate(**data_dict)
+            new_record = await record.create()
+
+            # Convert to dict if needed
+            record_dict = new_record if isinstance(new_record, dict) else new_record.__dict__
+            # new_device_id = record_dict.get("id")
+
+            return {
+                "status": True, "message": "decommissioning requested",
+                "data": {
+                    "reason_for_cancel": reason_for_cancel,
+                    "status_decommissioning": "Request For Approval"
+                }
+            }
+
+        elif status_decommissioning and status_decommissioning.lower() == 'accepted':
+
+            params = urdhva_base.queryparams.QueryParams()
+            params.q = f"id='{device_id}'"
+            params.limit = 1
+            params.fields = []   # all fields
+
+            existing = await DeviceInstallation.get_all(params, resp_type="plain")
+
+            rows = existing.get("data")
+            row = rows[0]
+            # update dict from existing row
+            
+            data_dict = dict(row)
+            data_dict.pop("id", None)
+            data_dict["status_decommissioning"] = "Approved"
+
+            await DeviceInstallation(id=device_id, **data_dict).modify()
+            updated = await DeviceInstallation.get_all(params, resp_type="plain")
+            updated_rows = updated.get("data")
+
+            if isinstance(updated_rows, list) :
+                record_dict = updated_rows[0]
+
+            device_id = record_dict.get("id")
+
+            # Build de-commission payload
+            de_comm_payload = {
+                "id": device_id,
+                "created_at": _format_date(record_dict.get("updated_at")),
+                "sap_tt_no": record_dict.get("sap_tt_no"),
+                "location": record_dict.get("sap_id"),
+                "transporter": record_dict.get("transporter"),
+                "reason_for_cancel": record_dict.get("reason_for_cancel"),
+                "status": "PENDING",
+                "remarks": "",
+                "contract_valid_upto": record_dict.get("contract_valid_upto")
+            }
+
+            # print(f'De-commissioning payload: {de_comm_payload}')
+
+            comm_success, comm_response = await call_decommissioning_api(de_comm_payload)
+
+            # print('comm_success->',comm_success)
+            # print('comm_response->',comm_response)
+
+            # Extract status messages from successful response
+            status_messages = comm_response.get("statusMessages", "")
+            if isinstance(status_messages, list):
+                status_messages = ", ".join(status_messages)
+                
+            final_status = comm_response.get("status", "")
+            status_code = comm_response.get("statusCode")
+
+            # print(f'[ACTION] Status messages: {status_messages}')
+                   
+            if not comm_success or  status_code == 1:
+                await DeviceInstallation(**{
+                    "id": device_id,
+                    "de_commissioning_responses": status_messages,
+                    "status_decommissioning": "Failed"
+                }).modify()
+
+                return {
+                    "status": False, "message": f"{status_messages}",
+                    "data": {
+                        "device_id": device_id,
+                        "commissioning": {
+                            "success": False, "status": final_status, "response": comm_response
+                        }
+                    }
+                }
+
+            # STEP 5: SUCCESS CASE                        
+            if comm_success and status_code == 0:            
+                await DeviceInstallation(**{
+                    "id": device_id,
+                    "de_commissioning_responses": status_messages
+                }).modify()
+
+                return {
+                    "status": True, "message": f"The {status_messages}",
+                    "data": {
+                        "device_id": device_id,
+                        "commissioning": {
+                            "success": True,
+                            "status": final_status, "status_code": status_code, "response": comm_response
+                        }
+                    }
+                }
+
+    except Exception as e:
+        print(f"Exception in update_device_installation: {str(e)}")
+
         return {
-            "success": False,
-            "message": str(e)
+            "status": False,
+            "message": f"Failed to process device installation: {str(e)}", "data": {}
         }
+

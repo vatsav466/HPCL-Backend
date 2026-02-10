@@ -7490,7 +7490,13 @@
                     "name": "update_device_installation"
                 },
                 {
-                    "name": "upload_certificate"
+                    "name": "validate_aot_details"
+                },
+                {
+                    "name": "action_device_vts"
+                },
+                {
+                    "name": "action_decommissioning"
                 }
             ]
         },
@@ -7535,7 +7541,13 @@
                     "name": "update_device_installation"
                 },
                 {
-                    "name": "upload_certificate"
+                    "name": "validate_aot_details"
+                },
+                {
+                    "name": "action_device_vts"
+                },
+                {
+                    "name": "action_decommissioning"
                 }
             ]
         },
@@ -8837,8 +8849,16 @@
             "displayName": "update_device_installation"
         },
         {
-            "name": "upload_certificate",
-            "displayName": "upload_certificate"
+            "name": "validate_aot_details",
+            "displayName": "validate_aot_details"
+        },
+        {
+            "name": "action_device_vts",
+            "displayName": "action_device_vts"
+        },
+        {
+            "name": "action_decommissioning",
+            "displayName": "action_decommissioning"
         },
         {
             "name": "create_user",
