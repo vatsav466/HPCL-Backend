@@ -2,10 +2,12 @@ import urdhva_base
 import asyncio
 import datetime
 import pandas as pd
+import argparse
 import hpcl_ceg_model
 import performance_score_lpg as pslpg
 import performance_score_sod as pssod
 import orchestrator.analytics.va_analysis as va_analysis
+from orchestrator.analytics.performance_score.performance_score_insights import generate_overall_insights
 
 
 def get_performance_score_instance(bu):
@@ -77,11 +79,23 @@ WHERE bu = '{bu}'
         response, _ = await ins.generate_performance_index(location['sap_id'])
         print("response --> ", response)
         score = sum([rec['score'] for rec in list(response.values())])
-        performance_score[location['sap_id']] = {"sap_id": location['sap_id'],
-                                                 "score": round(score if score < 100 else 100, 2),
-                                                 "category": list(response.values()),
-                                                 'timestamp': present_timestamp, "region": location["region"],
-                                                 'bu': bu, "zone": location["zone"], "name": location["name"]}
+        final_score = round(score if score < 100 else 100, 2)
+        
+        performance_score[location['sap_id']] = {
+            "sap_id": location['sap_id'],
+            "score": final_score,
+            "category": list(response.values()),
+            'timestamp': present_timestamp, 
+            "region": location["region"],
+            'bu': bu, 
+            "zone": location["zone"], 
+            "name": location["name"]
+        }
+        
+        # Generate overall insights for this location
+        performance_score[location['sap_id']]["insights"] = generate_overall_insights(
+            performance_score[location['sap_id']]
+        )
     # Generating rank and national average
     df = pd.DataFrame(list(performance_score.values()))
     df = df[['sap_id', 'score']]
@@ -98,32 +112,105 @@ WHERE bu = '{bu}'
     return performance_score
 
 
+def get_default_location_ids(bu):
+    """Get default location IDs for a given business unit."""
+    if bu == 'LPG':
+        return ['2662','2693','2241','2935','2371','2121','2520','2401','2324','2811',
+               '2435','2891','2663','2314','2844','2402','2455','2203','2892','2504',
+               '2248','2171','2262','2655','2215','2623','2204','2472','2959','2921',
+               '2330','2126','2947','2539','2777','2507','2829','2779','2373','2657',
+               '2949','2173','2707','2568','2659','2792','2660','2692','2471','2731',
+               '2630','2408','2316','2117','2732']
+    elif bu == 'TAS':
+        return ['1527', '1424', '1435', '1436', '1457', '1630', '1636', '1742', '1712',
+                '1723', '1128', '1146', '1157', '1292', '1305', '1313', '1319', '1644', 
+                '1650', '1656', '1677', '1164', '1180', '1183', '1187', '1254', '1256', 
+                '1259', '1265', '3129', '1233', '1242', '1278', '1281', '1385', '1410', 
+                '1412', '1546', '1583', '1155', '1308', '1216', '1221', '1334', '1341', 
+                '1915', '1919', '1937', '1940', '1953', '1979', '1992', '3693', '3708', 
+                '1775', '1777', '1797', '1800', '1895', '3833', '1845', '1892', '1856', 
+                '1871', '1879', '1973', '1991', '1999', '1397', '1485', '1504', '1509', 
+                '1551', '1554', '1584', '1585', '1588', '3562']
+    return []
+
+
 async def main():
-    supported_bus = ['LPG', 'TAS']
-    for bu in supported_bus:
-        
-        if bu == 'LPG':
-            location_id = ['2662','2693','2241','2935','2371','2121','2520','2401','2324','2811',
-                           '2435','2891','2663','2314','2844','2402','2455','2203','2892','2504',
-                           '2248','2171','2262','2655','2215','2623','2204','2472','2959','2921',
-                           '2330','2126','2947','2539','2777','2507','2829','2779','2373','2657',
-                           '2949','2173','2707','2568','2659','2792','2660','2692','2471','2731',
-                           '2630','2408','2316','2117','2732'
-                        ]
-        elif bu == 'TAS':            
-            location_id = ['1527', '1424', '1435', '1436', '1457', '1630', '1636', '1742', '1712',
-                            '1723', '1128', '1146', '1157', '1292', '1305', '1313', '1319', '1644', 
-                            '1650', '1656', '1677', '1164', '1180', '1183', '1187', '1254', '1256', 
-                            '1259', '1265', '3129', '1233', '1242', '1278', '1281', '1385', '1410', 
-                            '1412', '1546', '1583', '1155', '1308', '1216', '1221', '1334', '1341', 
-                            '1915', '1919', '1937', '1940', '1953', '1979', '1992', '3693', '3708', 
-                            '1775', '1777', '1797', '1800', '1895', '3833', '1845', '1892', '1856', 
-                            '1871', '1879', '1973', '1991', '1999', '1397', '1485', '1504', '1509', 
-                            '1551', '1554', '1584', '1585', '1588', '3562']
-        
+    parser = argparse.ArgumentParser(
+        description='Generate performance scores for locations',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Run for all BUs with default locations
+  python performance_score_generator.py
+  
+  # Run for specific BU with default locations
+  python performance_score_generator.py --bu LPG
+  
+  # Run for specific BU with custom location IDs
+  python performance_score_generator.py --bu LPG --location-ids 2662,2693,2241
+  
+  # Run for specific BU with custom location IDs (space-separated)
+  python performance_score_generator.py --bu TAS --location-ids "1216 1221 1334"
+        """
+    )
+    
+    parser.add_argument(
+        '--bu',
+        type=str,
+        nargs='+',
+        choices=['LPG', 'TAS'],
+        help='Business unit(s) to process. Can specify multiple: --bu LPG TAS. If not provided, processes all supported BUs.'
+    )
+    
+    parser.add_argument(
+        '--location-ids',
+        type=str,
+        help='Comma-separated or space-separated list of location IDs (SAP IDs). If not provided, uses default locations for each BU.'
+    )
+    
+    args = parser.parse_args()
+    
+    # Determine which BUs to process
+    if args.bu:
+        supported_bus = args.bu
+    else:
+        supported_bus = ['LPG', 'TAS']
+    
+    # Parse location IDs if provided
+    location_ids_dict = {}
+    if args.location_ids:
+        # Support both comma-separated and space-separated
+        if ',' in args.location_ids:
+            location_ids = [lid.strip() for lid in args.location_ids.split(',') if lid.strip()]
         else:
+            location_ids = [lid.strip() for lid in args.location_ids.split() if lid.strip()]
+        
+        # If location IDs are provided, use them for all BUs
+        # (User can filter by BU in the query)
+        for bu in supported_bus:
+            location_ids_dict[bu] = location_ids
+    else:
+        # Use default location IDs for each BU
+        location_ids_dict = {}
+    
+    # Process each BU
+    for bu in supported_bus:
+        # Get location IDs for this BU
+        if bu in location_ids_dict:
+            location_id = location_ids_dict[bu]
+        else:
+            # Use default locations from code
+            location_id = get_default_location_ids(bu)
+        
+        if not location_id:
+            print(f"Warning: No location IDs found for BU '{bu}'. Skipping...")
             continue
-        print("DEBUG:", bu, location_id)
+        
+        print(f"Processing BU: {bu}")
+        print(f"Location IDs: {location_id}")
+        print(f"Total locations: {len(location_id)}")
+        print("-" * 50)
+        
         await generate_performance_score(bu, location_id)
 
 if __name__ == "__main__":
