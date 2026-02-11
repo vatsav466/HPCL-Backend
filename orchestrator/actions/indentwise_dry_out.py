@@ -134,6 +134,25 @@ class IndentDryOut:
                  f"product_code='{self.params["product_code"]}'")
         alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         if alerts_data['data']:
+            for index, record in enumerate(alerts_data['data']):
+                if record['dry_out_in_days'] != self.params["dry_out_in_days"]:
+                    if self.params['dry_out_in_days'] == '1':
+                        query = (f"""update alerts set """
+                                 f"""dry_out_in_days='{self.params["dry_out_in_days"]}', """
+                                 f"""dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', """
+                                 f"""intra_day_dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' """
+                                 f"""where id='{record["id"]}'""")
+                    elif self.params['dry_out_in_days'] == '2':
+                        query = (f"""update alerts set """
+                                 f"""dry_out_in_days='{self.params["dry_out_in_days"]}', """
+                                 f"""dry_out_end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}', """
+                                 f"""intra_day_dry_out_start_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' """
+                                 f"""where id='{record["id"]}'""")
+                    
+                    await self.generate_dry_out_history(self.params.get("dealer_id"), self.params.get("product_code"),
+                                                        connection_mapping.item_name_mapping.get(self.params.get("product_code"), ""),
+                                                        self.params.get('dry_out_in_days'))
+                    await hpcl_ceg_model.Alerts.update_by_query(query)
             return True
         return False
 

@@ -40,6 +40,7 @@ from orchestrator.alerting import alert_helper
 from fastapi import APIRouter, HTTPException
 from urdhva_base.queryparams import QueryParams
 from fastapi import UploadFile, File, Form
+import utilities.minio_connector as minio_connector
 from hpcl_ceg_ticketing_model import Ticketing_Delete_File_AttachmentParams
 from hpcl_ceg_ticketing_model import Ticketing_Merge_TicketParams
 
@@ -662,55 +663,73 @@ async def ticketing_delete_ticket(data: Ticketing_Delete_TicketParams):
 # Action attach_file
 @router.post('/attach_file', tags=['Ticketing'])
 async def ticketing_attach_file(
-    ticket_id:  Optional[str] = Form(None),
-    tid:  Optional[str] = Form(None),
+    ticket_id: Optional[str] = Form(None),
+    tid: Optional[str] = Form(None),
     uploadfile: UploadFile = File(None)
 ):
     try:
-        # Only create the directory if it doesn't exist
-        print("coming",urdhva_base.settings.ticketing_attachments)
-        target_dir = urdhva_base.settings.ticketing_attachments
-        print("target_dir",target_dir)
-        if not os.path.exists(target_dir):
-            os.makedirs(target_dir)
+        if not uploadfile:
+            return {"status": False, "message": "No file provided"}
 
-        # Path to save the file
-        temp_file_path = os.path.join(target_dir, uploadfile.filename)
-        # Save file in /tmp
-        # temp_file_path = os.path.join(urdhva_base.settings.ticketing_attachments, uploadfile.filename)
-        with open(temp_file_path, "wb") as file_to_attach:
-            file_to_attach.write(await uploadfile.read())
+        if not ticket_id or not tid:
+            return {"status": False, "message": "ticket_id and tid are required"}
 
-        print(" ticket_id --> ", ticket_id)
-        print(" tid --> ", tid)
-        # Query ticket
-        if ticket_id and tid:
-            query = f"ticket_id='{ticket_id}' and id = {tid}"  # tid ==> id column
-            params = urdhva_base.queryparams.QueryParams(q=query)
-            result = await Ticketing.get_all(params, resp_type='plain')
-            resp = result.get("data", [])
-            if not resp:
-                return {"status": False, "message": "Ticket not found"}
+        # print("ticket_id -->", ticket_id)
+        # print("tid -->", tid)
 
-            # Attach file to ticket (must be a list)
-            await Ticketing(
-                **{
-                    "id": resp[0].get("id"),
-                    "file_attachment": [temp_file_path]
-                }
-            ).modify()
-        
+        # ---------------- FETCH TICKET ----------------
+        query = f"ticket_id='{ticket_id}' and id={tid}"
+        params = urdhva_base.queryparams.QueryParams(q=query)
+        result = await Ticketing.get_all(params, resp_type='plain')
+        resp = result.get("data", [])
 
-        # Generate UUID for file
-        file_uuid = str(uuid.uuid4())
+        if not resp:
+            return {"status": False, "message": "Ticket not found"}
+
+        # ---------------- MINIO UPLOAD (DIRECT) ----------------
+
+        base_folder = "ticketing"
+
+        unique_filename = f"{uuid.uuid4()}_{uploadfile.filename}"
+
+        # final object structure
+        object_name = f"{ticket_id}/{tid}/{unique_filename}"
+
+        # read file bytes
+        file_bytes = await uploadfile.read()
+
+        status, minio_path = minio_connector.upload_bytes_to_minio(
+            base_folder,          # folder name
+            object_name,          # object path inside folder
+            file_bytes,
+            uploadfile.content_type
+        )
+
+        if not status:
+            return {
+                "status": False,
+                "message": "File upload to Minio failed",
+                "file_path": minio_path
+            }
+
+        # ---------------- UPDATE DB ----------------
+        existing_files = resp[0].get("file_attachment") or []
+        updated_files = existing_files + [minio_path]
+
+        await Ticketing(
+            **{
+                "id": resp[0].get("id"),
+                "file_attachment": updated_files
+            }
+        ).modify()
 
         return {
             "status": True,
-            "message": f"File {uploadfile.filename} saved successfully",
-            "file_attachment": temp_file_path,          # full path
-            "file_attachment_name": uploadfile.filename, # only filename
-            "file_attachment_id": file_uuid,            # generated uuid
-            "content_type": uploadfile.content_type     # file type
+            "message": f"File {uploadfile.filename} uploaded successfully",
+            "file_attachment": minio_path,
+            "file_attachment_name": uploadfile.filename,
+            "file_attachment_id": str(uuid.uuid4()),
+            "content_type": uploadfile.content_type
         }
 
     except Exception as e:
@@ -760,13 +779,15 @@ async def ticketing_delete_file_attachment(data: Ticketing_Delete_File_Attachmen
 # Action download_file_attachment
 @router.post('/download_file_attachment', tags=['Ticketing'])
 async def ticketing_download_file_attachment(data: Ticketing_Download_File_AttachmentParams):
+
     ticket_id = data.ticket_id
     requested_file_name = data.file_attachment_name
 
-    # Fetch ticket details
+    # ---------------- FETCH TICKET ----------------
     params = urdhva_base.queryparams.QueryParams()
     params.q = f"id='{ticket_id}'"
     params.limit = 1
+
     ticket_resp = await Ticketing.get_all(params, resp_type="plain")
 
     if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
@@ -774,33 +795,35 @@ async def ticketing_download_file_attachment(data: Ticketing_Download_File_Attac
 
     ticket = ticket_resp["data"][0]
 
-    # Normalize file_attachment (convert '{"/tmp/..."}' -> ['/tmp/...'])
-    raw_paths = ticket.get("file_attachment")
-    if isinstance(raw_paths, str) and raw_paths.startswith("{"):
-        file_paths = [p.strip('"') for p in raw_paths.strip("{}").split(",") if p]
-    elif isinstance(raw_paths, list):
-        file_paths = raw_paths
-    else:
-        file_paths = []
-
-    # file_attachment_name is a single string
+    file_paths = ticket.get("file_attachment") or []
     db_file_name = ticket.get("file_attachment_name")
 
-    if not file_paths or not db_file_name:
+    if not file_paths:
         raise HTTPException(status_code=404, detail="No file attachments found")
 
-    # Check requested file matches DB
-    if db_file_name != requested_file_name:
-        raise HTTPException(status_code=404, detail="Requested file not found for this ticket")
+    # Since you're storing list
+    matched_path = None
+    for path in file_paths:
+        if requested_file_name in path:
+            matched_path = path
+            break
 
-    file_path = file_paths[0]  # only one stored in DB right now
+    if not matched_path:
+        raise HTTPException(status_code=404, detail="Requested file not found")
 
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File missing on server")
+    print("Downloading from MinIO path:", matched_path)
+
+    # ---------------- DOWNLOAD FROM MINIO ----------------
+    success, local_file_path = minio_connector.download_from_minio(matched_path)
+
+    if not success:
+        raise HTTPException(status_code=500, detail=local_file_path)
+
+    print("Downloaded to temp path:", local_file_path)
 
     return FileResponse(
-        path=file_path,
-        filename=db_file_name,
+        path=local_file_path,
+        filename=requested_file_name,
         media_type="application/octet-stream"
     )
     
@@ -1330,12 +1353,11 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
         "ticket": main_ticket
     }
 
-
-
 # Action get_location_data
 @router.post('/get_location_data', tags=['Ticketing'])
 async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
 
+    # ------------------ BUILD FILTERS ------------------
     filters = []
 
     def add_filter(field, value):
@@ -1348,7 +1370,7 @@ async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
     add_filter("sales_area", data.sales_area)
     add_filter("sap_id", data.sap_id)
 
-   
+    # ------------------ QUERY PARAMS ------------------
     params = urdhva_base.queryparams.QueryParams()
     params.q = " AND ".join(filters) if filters else None
     params.limit = 100000000
@@ -1357,15 +1379,57 @@ async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
     resp = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type="plain")
     rows = resp.get("data", [])
 
-    bu_list      = sorted({r["bu"] for r in rows if r.get("bu")})
-    zones        = sorted({r["zone"] for r in rows if r.get("zone")})
-    regions      = sorted({r["region"] for r in rows if r.get("region")})
-    sales_areas  = sorted({r["sales_area"] for r in rows if r.get("sales_area")})
-    rows = sorted(rows, key=lambda x: x['name'])
-    names        = [r["name"] for r in rows]
-    sap_ids      = [r["sap_id"] for r in rows]
-    
- 
+    # ------------------ PREPARE UNIQUE VALUES (Single Loop) ------------------
+    import ast
+
+    bu_set = set()
+    zone_set = set()
+    region_set = set()
+    sales_area_set = set()
+
+    for r in rows:
+
+        # Collect BU
+        bu = r.get("bu")
+        if bu:
+            bu_set.add(bu)
+
+        # Collect Zone
+        zone = r.get("zone")
+        if zone:
+            zone_set.add(zone)
+
+        # Collect Region
+        region = r.get("region")
+        if region:
+            region_set.add(region)
+
+        # Collect Sales Area (convert string list to real list)
+        raw_sales_area = r.get("sales_area")
+        if raw_sales_area:
+            try:
+                parsed = ast.literal_eval(raw_sales_area)
+                if isinstance(parsed, list):
+                    sales_area_set.update(parsed)
+                else:
+                    sales_area_set.add(raw_sales_area)
+            except:
+                sales_area_set.add(raw_sales_area)
+
+    # Sort results
+    bu_list = sorted(bu_set)
+    zones = sorted(zone_set)
+    regions = sorted(region_set)
+    sales_areas = sorted(sales_area_set)
+
+    # ------------------ SORT LOCATIONS ------------------
+    rows.sort(key=lambda x: x["name"])
+
+    locations = [
+        {"sap_id": r["sap_id"], "name": r["name"]}
+        for r in rows
+    ]
+
     # ------------------ RETURN ------------------
     return {
         "status": True,
@@ -1375,8 +1439,6 @@ async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
             "zones": zones,
             "regions": regions,
             "sales_areas": sales_areas,
-            "names": names,
-            "sap_ids": sap_ids
-         
+            "locations": locations
         }
     }

@@ -9,6 +9,11 @@ Enum BusinessUnit str {
     DS='DS'
 }
 
+Enum VtsLive str {
+    TripOngoing = 'Live'
+    TripCompleted = 'Closed'
+}
+
 Enum BlockStatus str {
     Blocked='Blocked'
     UnBlocked='UnBlocked'
@@ -1016,6 +1021,7 @@ Model Alerts {
     }
 }
 
+
 Model TasAnalytics crud_disable {
     Action=> tas_analytics {
         analytical_model      str    
@@ -1024,12 +1030,13 @@ Model TasAnalytics crud_disable {
         alert_status    optional str
         alert_severity  optional list str
         zone            optional str
-        start_date      str
-        end_date        str
+        start_date      optional str
+        end_date        optional str
         equipment_type  optional str
         equipment_name  optional str
         download        optional str
         truck_number optional str
+        filters optional list WidgetFilters
         
     }
 
@@ -3704,6 +3711,13 @@ Model VtsOngoingTrips {
     vehicle_latitude optional float
     vehicle_longitude optional float
     vehicle_location optional str
+    trip_completed_time optional datetime
+    trip_status optional str
+    vts_status optional str
+    ims_status optional str
+    destination_name optional str
+    location_name optional str
+
 }
 
 Model ViolationHistoryVts {
@@ -3829,7 +3843,8 @@ Model DeviceInstallation{
     select_business optional str  
     location optional str  
     transporter optional str  
-    device optional str  
+    device optional str
+    zone optional str  
     vehicle_installed_by optional str  
     vehicle_installation_date optional str  
     device_installation_approved_by optional str  
@@ -3839,6 +3854,16 @@ Model DeviceInstallation{
     remarks optional str
     reason_for_cancel optional str
     status_decommissioning optional str
+    sap_id optional str
+    commissioning_status optional str
+    commissioning_status_code optional str
+    commissioning_responses optional str
+    commissioned_at optional str
+    commissioning_responses_2 optional str
+    de_commissioning_responses optional str
+    AOT_status optional str
+    AOT_sap_tt_no optional str
+    AOT_request_type optional str
 
     Action=> update_device_installation {
             sap_tt_no  str  
@@ -3847,20 +3872,29 @@ Model DeviceInstallation{
             select_business optional str  
             location optional str  
             transporter optional str  
-            device optional str  
+            device optional str
+            zone optional str 
             vehicle_installed_by optional str  
             vehicle_installation_date optional str  
-            device_installation_approved_by optional str  
+            device_installation_approved_by optional str
             contract_valid_upto optional str  
-            certificate optional str  
-            status optional  str
-            remarks optional  str
-            reason_for_cancel optional str
-            status_decommissioning optional str
+            certificate optional str
+            sap_id optional str
         }
-    Action=> upload_certificate {
-        sap_tt_no str
-        certificate optional str
+    
+    Action=> validate_aot_details{
+        sap_tt_no optional str 
+        sap_id optional str 
+        transporter optional str 
+        contract_valid_upto optional str 
+    }
+   
+    Action=> action_device_vts{
+        payload optional dict
+    }
+
+    Action=> action_decommissioning{
+        payload optional dict
     }
 
     Config=> {

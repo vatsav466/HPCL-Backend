@@ -584,7 +584,7 @@ vts_query = {
     
     "get_emlock_open_data": """
                             SELECT
-                                sap_id, location_name, zone, region, trucknumber,
+                                createdat, sap_id, location_name, zone, region, trucknumber,
                                 invoicenumber as invoice_number, swipeoutl1, swipeoutl2
                             FROM
                                 vts_tripauditmaster

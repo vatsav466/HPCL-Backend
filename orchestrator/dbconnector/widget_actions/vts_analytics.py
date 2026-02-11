@@ -881,6 +881,9 @@ class VTSAnalyticsActions:
         
         if "completed_trips_risk_score" in query.lower():
             return f"scheduled_trip_start_datetime BETWEEN '{start}' AND '{end}'"
+        
+        if any(term in query.lower() for term in ["cluster_master", "transporter_risk_score", "tt_risk_score"]):
+            return f"version_date BETWEEN '{start}' AND '{end}'"
                 
         queries = ["vts_device_removed", "vts_harsh_acceleration", "vts_harsh_braking", "vts_panic"]
         if any(q in query.lower() for q in queries):
@@ -1932,26 +1935,25 @@ class VTSAnalyticsActions:
     @staticmethod
     async def vts_ongoing_trips(filters, cross_filters, drill_state, payload):
         try:
-            # Step 1: Get base query and apply filters
+            # Step 1: Build and execute base query
             query = vts_query.vts_query.get(drill_state.split(",")[0])
             ongoing_trips_type = payload.get("ongoing_trips_type")
 
             if ongoing_trips_type:
-                ongoing_trips_query = query.format(ongoing_trips_type=ongoing_trips_type)
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, ongoing_trips_query)
-                query = VTSAnalyticsActions.apply_conditions_to_query(ongoing_trips_query, conditions)
-            else:
-                conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
-                query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+                query = query.format(ongoing_trips_type=ongoing_trips_type)
+            
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
 
-            # Step 2: Execute base ongoing trips query
+            # Step 2: Execute query
             df = await VTSAnalyticsActions.execute_query(query)
-
+            
             for col in ["vehicle_latitude", "vehicle_longitude"]:
                 if col in df.columns:
                     df[col] = df[col].astype(str)
 
             df = pl.DataFrame(df) if isinstance(df, pd.DataFrame) else df
+            
             if df.is_empty():
                 return {"status": True, "message": "No data found", "data": []}
             
@@ -1961,148 +1963,68 @@ class VTSAnalyticsActions:
                 keep="first"
             )
 
-            # Step 3: Get location info
-            sap_id_list = df.select("sap_id").drop_nulls().to_series().cast(str).to_list()
-            
-            if not sap_id_list:
-                df = df.with_columns([
-                    pl.lit("Unknown").alias("location_name"),
-                    pl.lit("Unknown").alias("zone")
-                ])
-                merged_df = df.clone()
-            else:
-                sap_id_str = "', '".join(map(str, sap_id_list))
-                location_query = f"""
-                    SELECT sap_id, name AS location_name, zone 
-                    FROM location_master 
-                    WHERE sap_id IN ('{sap_id_str}')
-                """
-                loc_df = await VTSAnalyticsActions.execute_query(location_query, engine='polars')
-                # Step 4: Merge location info (keep all trips)
-                df = df.with_columns(pl.col("sap_id").cast(str).str.strip_chars())
-                loc_df = loc_df.with_columns(pl.col("sap_id").cast(str).str.strip_chars())
-                
-                merged_df = df.join(loc_df, on="sap_id", how="left")
-
-                # Fill missing values — don't drop any record
-                merged_df = merged_df.with_columns([
-                    pl.col("location_name").fill_null("Unknown"),
-                    pl.col("zone").fill_null("Unknown")
-                ])
-
-            # Step 5: Fetch alert history only for ongoing trips' invoices
-            invoice_list = merged_df.select("invoice_no").drop_nulls().to_series().cast(str).unique().to_list()
-            
-            if not invoice_list:
-                return {"status": True, "message": "No invoices found in trips", "data": []}
-
-            completed_invoice_set = set()
-
-            conn = vts_ongoing_trips.get_db_connection()
-            cursor = conn.cursor()
-
-            CHUNK_SIZE = 1000  # Safe size to avoid 8623
-            try:
-                for i in range(0, len(invoice_list), CHUNK_SIZE):
-                    chunk = invoice_list[i:i + CHUNK_SIZE]
-                    invoices_str = "', '".join(chunk)
-
-                    completed_query = f"""
-                        SELECT DISTINCT CHALLAN_NO
-                        FROM COMPLETED_TRIP
-                        WHERE CHALLAN_NO IN ('{invoices_str}')
-                    """
-
-                    cursor.execute(completed_query)
-                    rows = cursor.fetchall()
-
-                    # completed_query = f"""
-                    #             SELECT DISTINCT  invoice_no
-                    #             FROM vts_completed_trip
-                    #             WHERE invoice_no IN ('{invoices_str}')
-                    #         """
-                    # rows = await VTSAnalyticsActions.execute_query(completed_query, engine='polars')
-
-                    completed_invoice_set.update(
-                        str(r[0]).strip()
-                        for r in rows
-                        if r[0] is not None
-                    )
-            except Exception as e:
-                print("Error fetching completed invoices:", str(e))
-
-            finally:    
-                cursor.close()
-                conn.close()
-
-            # Step 6: Filter by status
+            # Step 3: Filter by trip_status (Live/Closed)
             status_filter = payload.get("status")
-
+            
             if status_filter == "live":
-                merged_df = merged_df.filter(
-                    ~pl.col("invoice_no").is_in(list(completed_invoice_set))
-                )
+                df = df.filter(pl.col("trip_status") == "Live")
             elif status_filter == "closed":
-                merged_df = merged_df.filter(
-                    pl.col("invoice_no").is_in(list(completed_invoice_set))
-                )
+                df = df.filter(pl.col("trip_status") == "Closed")
 
-            if merged_df.height == 0:
+            if df.height == 0:
                 return {"status": True, "message": f"No {status_filter} trips found", "data": []}
             
+            # Step 4: Handle table view
             if payload.get("table") == "true":
                 final_columns = [
-                            "event_start_datetime", "event_end_datetime", "sap_id", "region", 
-                            "zone", "location_type", "destination_code", "tt_number", "trip_id",
-                            "invoice_no", "load_no", 
-                            "vehicle_latitude", "vehicle_longitude", "vehicle_location", "transporter_name"
-                        ]
-                existing_columns = [col for col in final_columns if col in merged_df.columns]
-                table_df = merged_df.select(existing_columns)
+                    "event_start_datetime", "event_end_datetime", "sap_id", "region", 
+                    "zone", "location_type", "destination_code", "tt_number", "destination_name",
+                    "invoice_no", "load_no", "vehicle_latitude", "vehicle_longitude", 
+                    "vehicle_location", "transporter_name", "location_name"
+                ]
+                existing_columns = [col for col in final_columns if col in df.columns]
+                table_df = df.select(existing_columns)
                 result = table_df.to_dicts()
                 return {"status": True, "message": "Data found", "total_records": table_df.height, "data": result}
 
-            # Step 7: TT-level drill-down
+            # Step 5: TT-level drill-down
             selected_tt = payload.get("tt_number")
             if selected_tt:
-                merged_df = merged_df.filter(pl.col("tt_number") == selected_tt)
+                df = df.filter(pl.col("tt_number") == selected_tt)
                 
-                if merged_df.height == 0:
+                if df.height == 0:
                     return {"status": True, "message": f"No trips found for vehicle {selected_tt}", "data": []}
 
-                # Create created_at column
-                trip_df = merged_df.with_columns(
+                trip_df = df.with_columns(
                     pl.coalesce([
                         pl.col("event_start_datetime"),
                         pl.col("event_end_datetime")
                     ]).cast(pl.Date).cast(str).alias("created_at")
                 ).sort("created_at")
                 
-                trip_df = trip_df.select(["invoice_no", "created_at"])
+                trip_df = trip_df.select(["invoice_no", "created_at", "trip_status"])
                 result = trip_df.to_dicts()
                 
                 return {"status": True, "message": f"Trip details for vehicle {selected_tt}", "data": result}
 
-            # Step 8: Grouping logic (zone / location / transporter)
-            merged_df = merged_df.with_columns([
+            # Step 6: Fill null values for filters
+            df = df.with_columns([
                 pl.col("zone").fill_null("Unknown"),
                 pl.col("location_name").fill_null("Unknown"),
                 pl.col("transporter_name").fill_null("Unknown")
             ])
 
+            # Step 7: Apply payload filters
             if payload.get("zone"):
-                merged_df = merged_df.filter(pl.col("zone") == payload["zone"])
+                df = df.filter(pl.col("zone") == payload["zone"])
 
             if payload.get("location_name"):
-                merged_df = merged_df.filter(
-                    pl.col("location_name") == payload["location_name"]
-                )
+                df = df.filter(pl.col("location_name") == payload["location_name"])
 
             if payload.get("transporter_name"):
-                merged_df = merged_df.filter(
-                    pl.col("transporter_name") == payload["transporter_name"]
-                )
+                df = df.filter(pl.col("transporter_name") == payload["transporter_name"])
 
+            # Step 8: Determine grouping column
             if payload.get("transporter_name"):
                 group_col = "tt_number"
             elif payload.get("location_name"):
@@ -2112,26 +2034,22 @@ class VTSAnalyticsActions:
             else:
                 group_col = "zone"
 
-            # Group by and aggregate
-            summary_df = merged_df.group_by(group_col).agg([
+            # Step 9: Create summary
+            summary_df = df.group_by(group_col).agg([
                 pl.col("invoice_no").n_unique().alias("invoice_count")
             ])
 
             if group_col != "tt_number":
-                vehicle_counts = merged_df.group_by(group_col).agg([
+                vehicle_counts = df.group_by(group_col).agg([
                     pl.col("tt_number").n_unique().alias("vehicle_count")
                 ])
                 summary_df = summary_df.join(vehicle_counts, on=group_col, how="left")
 
-            result = summary_df.to_dicts()
-
-        
-            # Step 9: Handle Excel download
+            # Step 10: Handle Excel download
             if payload.get("download") == "true":
-                # Remove timezone info from datetime columns
-                for col in merged_df.columns:
-                    if merged_df[col].dtype in [pl.Datetime, pl.Datetime("ms"), pl.Datetime("us"), pl.Datetime("ns")]:
-                        merged_df = merged_df.with_columns(
+                for col in df.columns:
+                    if df[col].dtype in [pl.Datetime, pl.Datetime("ms"), pl.Datetime("us"), pl.Datetime("ns")]:
+                        df = df.with_columns(
                             pl.col(col).dt.replace_time_zone(None)
                         )
 
@@ -2142,21 +2060,19 @@ class VTSAnalyticsActions:
                     "WR": "Trip without route"
                 }
                 
-                if "violation_type" in merged_df.columns:
-                    merged_df = merged_df.with_columns(
+                if "violation_type" in df.columns:
+                    df = df.with_columns(
                         pl.col("violation_type").replace(violation_mapping, default=pl.col("violation_type"))
                     )
 
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                file_name = f"{ongoing_trips_type}{status_filter}{timestamp}.xlsx"
+                file_name = f"{ongoing_trips_type}_{status_filter}_{timestamp}.xlsx"
                 output = io.BytesIO()
                 
-                # Convert to pandas for Excel writing (xlsxwriter works with pandas)
-                merged_pd = merged_df.to_pandas()
-                with pl.Config() as cfg:
-                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                        merged_pd.to_excel(writer, index=False, sheet_name='ongoing_trips')
-               
+                df_pd = df.to_pandas()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    df_pd.to_excel(writer, index=False, sheet_name='ongoing_trips')
+                
                 output.seek(0)
                 headers = {"Content-Disposition": f'attachment; filename="{file_name}"'}
                 return StreamingResponse(
@@ -2165,6 +2081,7 @@ class VTSAnalyticsActions:
                     headers=headers
                 )
 
+            result = summary_df.to_dicts()
             return {"status": True, "message": f"{status_filter} data found", "data": result}
 
         except Exception as e:
@@ -3429,9 +3346,7 @@ class VTSAnalyticsActions:
                 filter_keys = [str(rec.key).lower() for rec in filters]
                 
                 if "zone" in filter_keys:
-                    if "region" not in filter_keys:
-                        group_by_keys = ["region"]
-                    elif "location_name" not in filter_keys:
+                    if "location_name" not in filter_keys:
                         group_by_keys = ["location_name"]
                     elif "trucknumber" not in filter_keys:
                         group_by_keys = ["trucknumber"]
@@ -3599,6 +3514,61 @@ class VTSAnalyticsActions:
 
             print(f"Fetching data from table: {table_name}")
 
+            CLICK_HANDLERS = {
+                "completed_trips_risk_score": {
+                    "payload_key": "clicked_invoice_no",
+                    "table": "public.combo_alerts",
+                    "column": "invoice_no",
+                    "message_template": "Combo alerts for invoice {}"
+                },
+                "cluster_master": {
+                    "payload_key": "clicked_cluster_id",
+                    "table": "public.clusterwise_event",
+                    "column": "cluster_id",
+                    "message_template": "Cluster events for cluster_id {}"
+                },
+                "transporter_risk_score": {
+                    "payload_key": "clicked_transporter_code",
+                    "table": "public.transporter_risk_score_daily_master",
+                    "column": "transporter_code",
+                    "message_template": "Transporter events for transporter_code {}"
+                },
+                "tt_risk_score": {
+                    "payload_key": "clicked_tt_number",
+                    "table": "public.tt_risk_score_daily_master",
+                    "column": "tt_number",
+                    "message_template": "Transporter events for tt_number {}"
+                }
+            }
+            if table_name in CLICK_HANDLERS:
+                config = CLICK_HANDLERS[table_name]
+                clicked_value = payload.get(config["payload_key"])
+                
+                if clicked_value:
+                    safe_value = str(clicked_value).replace("'", "''")
+                    query = f"SELECT * FROM {config['table']} WHERE {config['column']} = '{safe_value}'"
+                    
+                    response = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, skip_total=True)
+                    data = response.get('data', [])
+                    
+                    # Check if download is requested
+                    if payload.get("download") == "true":
+                        df = pd.DataFrame(data)
+                        if not df.empty:
+                            # Remove timezone info from datetime columns
+                            for col in df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                                df[col] = df[col].dt.tz_localize(None)
+                            
+                            pl_df = pl.from_pandas(df)
+                            return await download_streaming_data(pl_df, filename=f'{table_name}_{clicked_value}')
+                    
+                    return {
+                        "status": True,
+                        "message": config["message_template"].format(clicked_value),
+                        "data": data,
+                        "total_records": len(data)
+                    }
+
             if columns and isinstance(columns, list) and columns:
                 select_columns = ", ".join([f'"{col}"' for col in columns])
                 base_query = f'SELECT {select_columns} FROM public."{table_name}"'
@@ -3695,50 +3665,6 @@ class VTSAnalyticsActions:
                     headers=headers
                 )
             
-            CLICK_HANDLERS = {
-                "completed_trips_risk_score": {
-                    "payload_key": "clicked_invoice_no",
-                    "table": "public.combo_alerts",
-                    "column": "invoice_no",
-                    "message_template": "Combo alerts for invoice {}"
-                },
-                "cluster_master": {
-                    "payload_key": "clicked_cluster_id",
-                    "table": "public.clusterwise_event",
-                    "column": "cluster_id",
-                    "message_template": "Cluster events for cluster_id {}"
-                },
-                "transporter_risk_score": {
-                    "payload_key": "clicked_transporter_code",
-                    "table": "public.transporter_risk_score_daily_master",
-                    "column": "transporter_code",
-                    "message_template": "Transporter events for transporter_code {}"
-                },
-                "tt_risk_score": {
-                    "payload_key": "clicked_tt_number",
-                    "table": "public.tt_risk_score_daily_master",
-                    "column": "tt_number",
-                    "message_template": "Transporter events for tt_number {}"
-                }
-            }
-            if table_name in CLICK_HANDLERS:
-                config = CLICK_HANDLERS[table_name]
-                clicked_value = payload.get(config["payload_key"])
-                
-                if clicked_value:
-                    safe_value = str(clicked_value).replace("'", "''")
-                    query = f"SELECT * FROM {config['table']} WHERE {config['column']} = '{safe_value}'"
-                    
-                    response = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, skip_total=True)
-                    data = response.get('data', [])
-                    
-                    return {
-                        "status": True,
-                        "message": config["message_template"].format(clicked_value),
-                        "data": data,
-                        "total_records": len(data)
-                    }
-                
             return {
                 "status": True,
                 "message": f"Successfully fetched {len(resp['data'])} records from {table_name}",
@@ -3866,69 +3792,4 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False,"message": str(e),"data": []}
 
-    @staticmethod
-    async def action_device_vts(filters, cross_filters, drill_state, payload):
-        """
 
-        If only sap_tt_no given → return row from DB (no update)
-        If sap_tt_no + action/remarks given → update that row and return updated data
-
-        """
-        try:
-            sap_tt_no = payload.get("sap_tt_no")
-            
-            params = urdhva_base.queryparams.QueryParams()
-            params.q = f"sap_tt_no='{sap_tt_no}'"
-            print(params.q)
-            params.limit = 1
-            params.fields = []   # all fields
-            
-
-            existing = await DeviceInstallation.get_all(params, resp_type="plain") 
-            # in list the data_will be {'data': [{'tt_chassis_no': 'CHS1234567890',....},'count':1,'ss':1]
-            rows = existing.get("data")
-            if not rows:
-                return {"status": False,"message": f"No record found for SAP TT No {sap_tt_no}","data": []}
-
-            row = rows[0] 
-
-            action = payload.get("action")
-            remarks = payload.get("remarks")
-            reason_for_cancel = payload.get("reason_for_cancel") # remarks_2
-            if (not action) and (remarks is None or remarks == "") and (not reason_for_cancel ):
-                return {"status": True,"message": f"Data found for SAP TT No {sap_tt_no}","data": [row]}
-        
-            # 3) Get integer id from row (primary key) for update
-            device_id = row.get("id")
-
-            action = (action or "")
-            print("status",action)
-            status = "Approved" if action == "Accepted" else "Rejected"
-            print("Approved")
-            remarks = (remarks or "").strip()
-            reason_for_cancel = (reason_for_cancel or "").strip()
-            
-            
-            if reason_for_cancel:
-                status_decommissioning = "Request For Approval"
-                
-            # update dict from existing row
-            data_dict = dict(row)     
-            data_dict.pop("id", None)  
-            data_dict["status"] = status
-            data_dict["remarks"] = remarks
-            
-            data_dict["reason_for_cancel"] = reason_for_cancel
-            data_dict["status_decommissioning"]=status_decommissioning
-
-            await DeviceInstallation(id=device_id, **data_dict).modify()
-            updated = await DeviceInstallation.get_all(params, resp_type="plain")
-            updated_rows = updated.get("data")
-
-            return {
-                "status": True,"message": f"Status updated to '{status}' for SAP TT No {sap_tt_no}","data": updated_rows}
-
-        except Exception as e:
-            print("Exception in action_device_vtss:", str(e))
-            print("traceback:", traceback.format_exc())
-            return {"status": False,"message": str(e),"data": [] }

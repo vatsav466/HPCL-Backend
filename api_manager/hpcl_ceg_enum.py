@@ -19,6 +19,16 @@ class BusinessUnit(str, enum.Enum):
 
 
 
+class VtsLive(str, enum.Enum):
+    TripOngoing = 'Live'
+    TripCompleted = 'Closed'
+
+
+
+
+
+
+
 class BlockStatus(str, enum.Enum):
     Blocked = 'Blocked'
     UnBlocked = 'UnBlocked'

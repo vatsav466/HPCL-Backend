@@ -3,11 +3,13 @@ import polars as pl
 from datetime import datetime
 import json 
 import os
+import math
 import hpcl_ceg_model
 import traceback
 import dashboard_studio_model
 import charts_actions
 import httpx
+from collections import defaultdict
 import orchestrator.workflow.workflow_process as workflow_process
 import utilities.minio_connector as minio_connector
 import decimal
@@ -16,9 +18,10 @@ import orchestrator.dbconnector.widget_actions.vts_analytics as vts_analytics
 from datetime import datetime, timedelta, timezone
 import re
 import utilities.analog_data_mapping as analog_mapping
-import orchestrator.tas_queries as tas_queries
+import orchestrator.tas_analytics.tas_queries as tas_queries
 import orchestrator.alerting.listener.tas_listener as tas_listener
 import utilities.helpers as helpers
+import orchestrator.tas_analytics.tas_host_data as tas_host_data
 
 
 def unix_ms_to_ist(ts_ms: int) -> datetime:
@@ -380,6 +383,7 @@ async def top_repeat_alerts(data):
 
     print("FINAL alert_query >>>", alert_query)
 
+
     alert_params = urdhva_base.queryparams.QueryParams(
         q=alert_query,
         limit=0
@@ -392,6 +396,7 @@ async def top_repeat_alerts(data):
         "severity",
         "interlock_name",
         "location_name",
+        "device_name",
         "created_at"
     ]
 
@@ -409,34 +414,106 @@ async def top_repeat_alerts(data):
 
         now = datetime.utcnow()
 
+        # Add ageing_days column
+        df = df.with_columns(
+            (
+                (pl.lit(now) - pl.col("created_at"))
+                .dt.total_days()
+                .cast(pl.Int64)
+            ).alias("ageing_days")
+        )
+
+        # Create ageing bucket
+        df = df.with_columns(
+            pl.when(pl.col("ageing_days") == 1)
+            .then(pl.lit("1 Day"))
+            .when(pl.col("ageing_days") == 2)
+            .then(pl.lit("2 Days"))
+            .when(pl.col("ageing_days") == 3)
+            .then(pl.lit("3 Days"))
+            .when(pl.col("ageing_days") == 4)
+            .then(pl.lit("4 Days"))
+            .when(pl.col("ageing_days") == 5)
+            .then(pl.lit("5 Days"))
+            .when((pl.col("ageing_days") >= 6) & (pl.col("ageing_days") <= 10))
+            .then(pl.lit("6-10 Days"))
+            .when((pl.col("ageing_days") >= 11) & (pl.col("ageing_days") <= 15))
+            .then(pl.lit("11-15 Days"))
+            .when((pl.col("ageing_days") >= 16) & (pl.col("ageing_days") <= 30))
+            .then(pl.lit("16-30 Days"))
+            .when((pl.col("ageing_days") >= 31) & (pl.col("ageing_days") <= 60))
+            .then(pl.lit("31-60 Days"))
+            .otherwise(pl.lit("60+ Days"))
+            .alias("ageing_bucket")
+        )
+
+        # Detail list (your existing data)
         detail_df = (
             df
-            .with_columns([
-                # Remove microseconds
+            .with_columns(
                 pl.col("created_at")
-                  .dt.strftime("%Y-%m-%dT%H:%M:%S")
-                  .alias("created_at"),
-
-                # Ageing in days
-                (
-                    (pl.lit(now) - pl.col("created_at"))
-                    .dt.total_days()
-                    .cast(pl.Int64)
-                ).alias("ageing_days")
-            ])
+                .dt.strftime("%Y-%m-%dT%H:%M:%S")
+            )
             .select([
                 "unique_id",
                 "alert_status",  
                 "severity",  
                 "interlock_name",
                 "location_name",
+                "device_name",
                 "created_at",
                 "ageing_days"
             ])
             .sort("ageing_days", descending=True)
         )
 
-        return detail_df.to_dicts()
+        # Ageing bucket location summary
+        bucket_summary = (
+            df
+            .group_by(["ageing_bucket", "location_name"])
+            .agg(pl.len().alias("alert_count"))
+        )
+
+        # Define correct order manually
+        ordered_buckets = [
+            "1 Day",
+            "2 Days",
+            "3 Days",
+            "4 Days",
+            "5 Days",
+            "6-10 Days",
+            "11-15 Days",
+            "16-30 Days",
+            "31-60 Days",
+            "60+ Days"
+        ]
+
+        bucket_result = []
+
+        for bucket in ordered_buckets:
+
+            bucket_df = bucket_summary.filter(
+                pl.col("ageing_bucket") == bucket
+            )
+
+            if bucket_df.height == 0:
+                continue
+
+            total_count = bucket_df["alert_count"].sum()
+
+            bucket_result.append({
+                "ageing_range": bucket,
+                "total_alerts": total_count,
+                "locations": bucket_df.select([
+                    "location_name",
+                    "alert_count"
+                ]).to_dicts()
+            })
+
+        return {
+            "detail_list": detail_df.to_dicts(),
+            "ageing_analysis": bucket_result
+        }
 
     # CASE 1: NO INTERLOCK → TOP 5 REPEATED
 
@@ -3687,8 +3764,453 @@ async def host_bay_reassignment_alert(data):
             "location_based_reassignment": response
         }
     }
+async def cancelled_tts_dashboard(data):
+    
+    # BUILD WHERE CONDITIONS
+    conditions = []
+
+    if data.filters:
+        for f in data.filters:
+
+            if not f.value:
+                continue
+
+            # Handle date range
+            if f.key == "start_date":
+                start_date = f.value if isinstance(f.value, str) else None
+                end_date = next(
+                    (x.value for x in data.filters if x.key == "end_date"),
+                    None
+                )
+
+                if start_date and end_date:
+                    conditions.append(
+                        f"DATE(created_at) BETWEEN '{start_date}' AND '{end_date}'"
+                    )
+                continue
+
+            if f.key == "end_date":
+                continue
+
+            if isinstance(f.value, str):
+
+                # if comma separated → split
+                if "," in f.value:
+                    clean_values = [v.strip() for v in f.value.split(",") if v.strip()]
+                else:
+                    clean_values = [f.value]
+
+            else:
+                clean_values = []
+
+            if not clean_values:
+                continue
+
+            if f.cond == "=":
+                if len(clean_values) == 1:
+                    conditions.append(f"{f.key} = '{clean_values[0]}'")
+                else:
+                    values = ", ".join(f"'{v}'" for v in clean_values)
+                    conditions.append(f"{f.key} IN ({values})")
+
+            elif f.cond == "!=":
+                if len(clean_values) == 1:
+                    conditions.append(f"{f.key} != '{clean_values[0]}'")
+                else:
+                    values = ", ".join(f"'{v}'" for v in clean_values)
+                    conditions.append(f"{f.key} NOT IN ({values})")
+
+    where_clause = ""
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+    # COMMON CTE (Distinct Load Based)
+    common_cte = f"""
+        WITH base_data AS (
+            SELECT *
+            FROM host_cancelled_tts
+            {where_clause}
+        ),
+
+        -- Top 10 locations based on DISTINCT load count
+        location_totals AS (
+            SELECT
+                location_name,
+                COUNT(DISTINCT load_number) AS total_location_raw_count
+            FROM base_data
+            GROUP BY location_name
+            ORDER BY total_location_raw_count DESC
+            LIMIT 10
+        )
+    """
+
+    # DAY WISE SUMMARY (Distinct Load Based)
+    day_wise_query = common_cte + """
+        SELECT
+            b.location_name,
+            DATE(b.created_at) AS created_date,
+            b.load_number,
+            b.truck_number,
+            b.zone,
+            b.sap_id,
+
+            SUM(b.required_qty) AS total_required_qty,
+
+            -- DISTINCT LOAD COUNT FIXED
+            COUNT(DISTINCT b.load_number) AS raw_record_count,
+
+            STRING_AGG(DISTINCT b.customer_name, ', ') AS customer_name,
+            STRING_AGG(DISTINCT b.cancelled_by, ', ') AS cancelled_by,
+            STRING_AGG(DISTINCT b.remarks, ', ') AS remarks,
+
+            lt.total_location_raw_count
+
+        FROM base_data b
+        JOIN location_totals lt
+            ON b.location_name = lt.location_name
+
+        GROUP BY
+            b.location_name,
+            DATE(b.created_at),
+            b.load_number,
+            b.truck_number,
+            b.zone,
+            b.sap_id,
+            lt.total_location_raw_count
+
+        ORDER BY
+            lt.total_location_raw_count DESC,
+            DATE(b.created_at) DESC
+    """
+
+    # TRUCK WISE SUMMARY (Distinct Load Based)
+    truck_wise_query = f"""
+        WITH base_data AS (
+            SELECT *
+            FROM host_cancelled_tts
+            {where_clause}
+        )
+        SELECT
+            location_name,
+            truck_number,
+            COUNT(DISTINCT load_number) AS truck_load_count
+        FROM base_data
+        GROUP BY location_name, truck_number
+        ORDER BY truck_load_count DESC
+    """
+
+    # EXECUTE QUERIES
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
+
+    day_result = await function(query=day_wise_query)
+    truck_result = await function(query=truck_wise_query)
+
+    # CLEAN NaN
+    def clean_nan(data_list):
+        return [
+            {
+                k: (None if isinstance(v, float) and math.isnan(v) else v)
+                for k, v in row.items()
+            }
+            for row in (data_list or [])
+        ]
+
+    day_result = clean_nan(day_result)
+    truck_result = clean_nan(truck_result)
+
+    # STRUCTURE RESPONSE (Minimal Python Processing)
+    location_map = defaultdict(list)
+    for row in day_result:
+        location_map[row["location_name"]].append(row)
+
+    structured_day_summary = []
+
+    for location, rows in location_map.items():
+        structured_day_summary.append({
+            "location_name": location,
+            "total_location_raw_count": rows[0]["total_location_raw_count"],
+            "day_wise_summary": rows  # already sorted in SQL
+        })
+
+    # FINAL RESPONSE
+    return {
+        "status": "success",
+        "message": "Cancelled TTS dashboard data fetched successfully",
+        "data": {
+            "day_wise_summary": structured_day_summary,
+            "truck_wise_summary": truck_result
+        }
+    }
+    
+async def host_tables_combined_data(data):
+    """
+    Get combined host tables data grouped by date, then by bay number and table name
+    Filters are handled at database level in fetch_host_tables_as_dfs
+    """
+    try:
+        combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count = await tas_host_data.fetch_host_tables_as_dfs(data)
+
+        if combined_df is None or combined_df.is_empty():
+            return []
+        
+        # Extract date from created_at
+        combined_df = combined_df.with_columns(
+            pl.col("created_at").cast(pl.Datetime).dt.date().alias("date")
+        )
+        
+        # Get unique dates
+        unique_dates = combined_df.select("date").unique().sort("date")
+        
+        result = []
+        unique_truck_count = combined_df.select("truck_number").unique().height
+        total_counts = {
+            "TotalBCU": total_bcu_count,
+            "TotalActiveBays": total_active_bays_count,
+            "HostBayReAssignment": len(combined_df.filter(pl.col("table_name") == "HostBayReAssignment")),
+            "LocalLoading": len(combined_df.filter(pl.col("table_name") == "HostLocalLoaded")),
+            "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded")),
+            "TotalUniqueTruckNumbersCount": unique_truck_count
+        }
+        
+        for date_row in unique_dates.iter_rows(named=True):
+            date = date_row.get("date")
+            
+            # Filter data for this date
+            date_df = combined_df.filter(pl.col("date") == date)
+            
+            # Get unique bays for this date
+            unique_bays = date_df.select("assigned_bay").unique().sort("assigned_bay")
+            
+            bays_data = []
+            
+            for bay_row in unique_bays.iter_rows(named=True):
+                bay_number = bay_row.get("assigned_bay")
+                
+                # Filter data for this bay
+                bay_df = date_df.filter(pl.col("assigned_bay") == bay_number)
+                
+                # Group by table_name and prepare data
+                table_data = {}
+                
+                for table_name in ["HostBayReAssignment", "HostLocalLoaded", "HostOverLoaded"]:
+                    table_df = bay_df.filter(pl.col("table_name") == table_name)
+                    
+                    trucks = []
+                    for truck_row in table_df.iter_rows(named=True):
+                        # Build truck data dictionary (without the 5 metrics)
+                        truck_data = {
+                            "truck_number": truck_row.get("truck_number"),
+                            "created_at": str(truck_row.get("created_at")),
+                            "load_number": truck_row.get("load_number"),
+                            "location_name": truck_row.get("location_name"),
+                            "product_name": truck_row.get("product_name"),
+                            "required_qty": truck_row.get("required_qty"),
+                            "loaded_qty": truck_row.get("loaded_qty"),
+                            "overloaded_qty": truck_row.get("overloaded_qty"),
+                            "cumulative_loaded_qty": truck_row.get("cumulative_loaded_qty"),
+                            "assigned_bay": truck_row.get("assigned_bay"),
+                            "reassigned_bay": truck_row.get("reassigned_bay")
+                        }
+                        
+                        trucks.append(truck_data)
+                    
+                    table_data[table_name] = {
+                        "count": len(trucks),
+                        "trucks": trucks
+                    }
+                
+                # Calculate bay-level metrics (for the entire day)
+                bay_current_date = date  # Using the date from the outer loop
+                bay_number_str = str(bay_number).zfill(2)
+                
+                # Get Alerts_Count for this bay - DEDUPLICATED
+                alerts_count_bay = 0
+                alerts_count_details_bay = []
+                if len(alerts_df) > 0:
+                    filtered_alerts_bay = alerts_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
+                        (pl.col("equipment_name") == "BCU") &
+                        (pl.col("bay_number") == bay_number_str)
+                    )
+                    
+                    # Deduplicate by created_at and bay_number, keep latest and unique interlock_names
+                    if len(filtered_alerts_bay) > 0:
+                        deduplicated_alerts = filtered_alerts_bay.unique(
+                            subset=["created_at", "bay_number", "interlock_name"],
+                            keep="last"
+                        ).sort("created_at", descending=True)
+                        
+                        alerts_count_bay = len(deduplicated_alerts)
+                        
+                        for alert_row in deduplicated_alerts.iter_rows(named=True):
+                            alerts_count_details_bay.append({
+                                "created_at": str(alert_row.get("created_at")),
+                                "interlock_name": alert_row.get("interlock_name"),
+                                "device_name": alert_row.get("device_name"),
+                                "location_name": alert_row.get("location_name"),
+                                "sap_id": alert_row.get("sap_id")
+                            })
+                
+                # Get Gantry_Permissive_off_Count for this bay - DEDUPLICATED
+                gantry_count_bay = 0
+                gantry_details_bay = []
+                if len(alerts_df) > 0:
+                    filtered_gantry_bay = alerts_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
+                        (pl.col("equipment_name") == "BCU") &
+                        (pl.col("bay_number") == bay_number_str) &
+                        (pl.col("interlock_name") == "Gantry Permissive Off")
+                    )
+                    
+                    # Deduplicate by created_at and bay_number, keep latest
+                    if len(filtered_gantry_bay) > 0:
+                        deduplicated_gantry = filtered_gantry_bay.unique(
+                            subset=["created_at", "bay_number"],
+                            keep="last"
+                        ).sort("created_at", descending=True)
+                        
+                        gantry_count_bay = len(deduplicated_gantry)
+                        
+                        for alert_row in deduplicated_gantry.iter_rows(named=True):
+                            gantry_details_bay.append({
+                                "created_at": str(alert_row.get("created_at")),
+                                "interlock_name": alert_row.get("interlock_name"),
+                                "device_name": alert_row.get("device_name"),
+                                "location_name": alert_row.get("location_name"),
+                                "sap_id": alert_row.get("sap_id")
+                            })
+                
+                # Get MFM_VS_BCU for this bay - DEDUPLICATED
+                mfm_vs_bcu_bay = 0
+                mfm_vs_bcu_details_bay = []
+                if len(day_end_df) > 0:
+                    filtered_day_end_bay = day_end_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
+                        (pl.col("bay_number_extracted") == bay_number_str)
+                    )
+                    if len(filtered_day_end_bay) > 0:
+                        # Group by created_at and bay_number, aggregate the totals
+                        grouped_day_end = filtered_day_end_bay.group_by(["created_at", "bay_number_extracted"]).agg([
+                            pl.col("bcu_net_totalizer").sum().alias("bcu_total"),
+                            pl.col("mfm_net_totalizer").sum().alias("mfm_total"),
+                            pl.col("bcu_number").first().alias("bcu_number"),  # Representative BCU number
+                            pl.col("bay_number").first().alias("bay_number")
+                        ]).sort("created_at", descending=True)  # Latest first
+                        
+                        for day_end_row in grouped_day_end.iter_rows(named=True):
+                            difference = day_end_row.get("mfm_total") - day_end_row.get("bcu_total")
+                            if difference != 0:  # Only include if there's an actual difference
+                                mfm_vs_bcu_details_bay.append({
+                                    "created_at": str(day_end_row.get("created_at")),
+                                    "bcu_number": day_end_row.get("bcu_number"),
+                                    "bay_number": day_end_row.get("bay_number"),
+                                    "bcu_net_totalizer": day_end_row.get("bcu_total"),
+                                    "mfm_net_totalizer": day_end_row.get("mfm_total"),
+                                    "difference": difference
+                                })
+                        
+                        mfm_vs_bcu_bay = len(mfm_vs_bcu_details_bay)  # Count of entries, not sum of differences
+                
+                bcu_vs_invoice_bay = 0
+                bcu_vs_invoice_details_bay = []
+
+                if len(day_end_df) > 0:
+                    filtered_day_end_bay = day_end_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
+                        (pl.col("bay_number_extracted") == bay_number_str)
+                    )
+                    
+                    if len(filtered_day_end_bay) > 0:
+                        # Filter out records where invoiced_qty is null or 0
+                        filtered_day_end_bay = filtered_day_end_bay.filter(
+                            pl.col('invoiced_qty').is_not_null() & 
+                            (pl.col('invoiced_qty') != 0)
+                        )
+                        
+                        if len(filtered_day_end_bay) > 0:
+                            # Group by created_at and bay_number to aggregate
+                            grouped_day_end = filtered_day_end_bay.group_by(["created_at", "bay_number_extracted"]).agg([
+                                pl.col("bcu_net_totalizer").sum().alias("bcu_total"),
+                                pl.col("invoiced_qty").sum().alias("invoiced_total"), 
+                                pl.col("bcu_number").first().alias("bcu_number"),
+                                pl.col("bay_number").first().alias("bay_number")
+                            ]).sort("created_at", descending=True)
+                            
+                            for day_end_row in grouped_day_end.iter_rows(named=True):
+                                bcu_total = day_end_row.get("bcu_total")
+                                invoiced_total = day_end_row.get("invoiced_total") 
+                                difference = abs(bcu_total - invoiced_total)
+                                
+                                if difference != 0:
+                                    bcu_vs_invoice_details_bay.append({
+                                        "created_at": str(day_end_row.get("created_at")),
+                                        "bcu_number": day_end_row.get("bcu_number"),
+                                        "bay_number": day_end_row.get("bay_number"),
+                                        "bcu_net_totalizer": bcu_total,
+                                        "invoiced_qty": invoiced_total, 
+                                        "difference": difference
+                                    })
+                            
+                            bcu_vs_invoice_bay = len(bcu_vs_invoice_details_bay)
+                
+                # Get Cross_checked_ManuallyAP_system (you can set logic here)
+                cross_checked = 0  # Default value
+                total_count = (len(bay_df) +  alerts_count_bay + gantry_count_bay + mfm_vs_bcu_bay + bcu_vs_invoice_bay)
+                # Build bay data
+                bay_data = {
+                    "bay_number": bay_number,
+                    "total_count" : total_count,
+                    "HostBayReAssignment": table_data["HostBayReAssignment"]["count"],
+                    "HostBayReAssignment_details": table_data["HostBayReAssignment"]["trucks"],
+                    "LocalLoading": table_data["HostLocalLoaded"]["count"],
+                    "LocalLoading_details": table_data["HostLocalLoaded"]["trucks"],
+                    "OverLoading": table_data["HostOverLoaded"]["count"],
+                    "OverLoading_details": table_data["HostOverLoaded"]["trucks"],
+                    "Alerts_Count": alerts_count_bay
+                }
+                
+                # Add details only if count > 0
+                if alerts_count_bay > 0:
+                    bay_data["Alerts_Count_details"] = alerts_count_details_bay
+                
+                bay_data["Gantry_Permissive_off_Count"] = gantry_count_bay
+                if gantry_count_bay > 0:
+                    bay_data["Gantry_Permissive_off_Count_details"] = gantry_details_bay
+                
+                bay_data["MFM_VS_BCU"] = mfm_vs_bcu_bay
+                if mfm_vs_bcu_bay > 0:
+                    bay_data["MFM_VS_BCU_details"] = mfm_vs_bcu_details_bay
+                
+                bay_data["BCU_VS_INVOICE"] = bcu_vs_invoice_bay
+                if bcu_vs_invoice_bay > 0:
+                    bay_data["BCU_VS_INVOICE_details"] = bcu_vs_invoice_details_bay
+                
+                bay_data["Cross_checked_ManuallyAP_system"] = cross_checked
+                
+                bays_data.append(bay_data)
+            
+            result.append({
+                "date": str(date),
+                "bays": bays_data
+            })
+        
+        return {
+            "Counts": total_counts,
+            "data": result
+        }
+        
+    except Exception as e:
+        print(f"Error in host_tables_combined_data: {e}")
+        traceback.print_exc()
+        return []
 
 
+    
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
@@ -3700,12 +4222,22 @@ AnalyticsModelMapping = {
     "Top five Alerts": top_five_alerts,
     "BCU DIff Alerts":bcu_totalizer_diff_alert,
     "Unauthorized Alerts":unauthorized_flow_dashboard,
-    "Hostbay Reassignment Alerts":host_bay_reassignment_alert
+    "Hostbay Reassignment Alerts":host_bay_reassignment_alert,
+    "Cancelled Report tts":cancelled_tts_dashboard,
+    "Host Tables Combined Data":host_tables_combined_data
 
 }
 
 
 async def tas_analytics_action(data):
+    if hasattr(data, "filters") and data.filters:
+        for f in data.filters:
+            if f.value:
+                if isinstance(f.value, list) and len(f.value) > 1:
+                    setattr(data, f.key, f.value)   # keep full list
+                else:
+                    setattr(data, f.key, f.value[0] if isinstance(f.value, list) else f.value)
+
     analytical_model = data.analytical_model
 
     if not analytical_model or analytical_model not in AnalyticsModelMapping:
