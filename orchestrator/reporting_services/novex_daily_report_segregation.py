@@ -150,7 +150,7 @@ async def publish_daily_novex_status_email():
         to_recipients=["sreedhar.maddipati@algofusiontech.com"],
         subject="Novex Daily Report",
         cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com"],
+        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com","vamsi.c@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -170,7 +170,7 @@ async def publish_daily_novex_status_email():
         to_recipients=["cvmallinath@hpcl.in","MdTausif.Anwar@hpcl.in","vimalkumar@hpcl.in"],
         subject=f"Clean Toilet Picture upload | MIS | Date : {status_data.get('yesterday_date')}",
         cc_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in"],
-        bcc_recipients=["venu@algofusiontech.com","yesu.p@algofusiontech.com"],
+        bcc_recipients=["venu@algofusiontech.com","yesu.p@algofusiontech.com","vamsi.c@algofusiontech.com"],
         notification_data=status_data
     )
 
