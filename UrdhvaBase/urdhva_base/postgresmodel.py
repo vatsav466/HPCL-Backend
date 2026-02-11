@@ -342,8 +342,15 @@ class BasePostgresModel(pydantic.BaseModel):
         fields = params.fields if params and params.fields else '["*"]'
         if isinstance(fields, str):
             fields = json.loads(fields)
+
+        # Added if field incase if its missing
         if fields and "*" not in fields and "id" not in fields:
             fields.append("id")
+
+        # Removing duplicate fields from fields
+        if fields and isinstance(fields, list):
+            fields = list(set(fields))
+            
         # ******************** For Specific Fields End ******************** #
 
         query = [f"select {','.join(fields)} from {cls.__tablename__}"]
