@@ -1427,85 +1427,68 @@ class VTSAnalyticsActions:
         except Exception as e:
             print("ERROR:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
-
+    
 
     @staticmethod
     async def violation_percentages(filters, cross_filters, drill_state, payload):
         try:
-            # Step 1: Get base query and apply filters
-            query = vts_query.vts_query.get(drill_state.split(",")[0])
-            emlock_open_query = vts_query.vts_query.get("emlock_open")
+            base_query = vts_query.vts_query.get(drill_state.split(",")[0])
 
-            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
-            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
-            df = await VTSAnalyticsActions.execute_query(query)
-            total_trip_count=len(df)          # Total vts_trip_count
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query )
 
-            emlock_conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, emlock_open_query)
-            emlock_query = VTSAnalyticsActions.apply_conditions_to_query(emlock_open_query, emlock_conditions)
-            emlock_df = await VTSAnalyticsActions.execute_query(emlock_query)
-            emlock_open = emlock_df["emlock_open"][0] if not emlock_df.empty else 0
+            final_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
 
-            if df.empty:
+            print("Violation Percentages Query:", final_query)
+
+            data = await VTSAnalyticsActions.execute_query(final_query, engine="dict")
+
+            if not data:
                 return {"status": True, "message": "No data found", "data": []}
 
-            # Step 2: Define violation columns
-            violation_cols = [
-                "route_deviation_count_orig",
-                "stoppage_violations_count",
-                "device_tamper_count",
-                "speed_violation_count",
-                "night_driving_count",
-                "main_supply_removal_count",
-                "continuous_driving_count"
+            row = data[0]
+            total_trip_count = int(row.get("total_trip_count", 0))
 
-            ]
-            print("dfcolumns",df.columns)
+            violation_cols = vts_query.vts_query.get("all_violations", [])
 
-            df_viol = df[["invoice_number"] + violation_cols].copy()
-            df_viol.dropna(subset=["invoice_number"], inplace=True)
+            violation_counts = {
+                col: int(row.get(col, 0) or 0)
+                for col in violation_cols
+            }
 
-            # Step 3: Convert to binary (mark violations)
-            for col in violation_cols:
-                if col == "main_supply_removal_count":
-                    df_viol[col] = df_viol[col].apply(lambda x: 1 if x and x >= 6 else 0)
-                else:
-                    df_viol[col] = df_viol[col].apply(lambda x: 1 if x and x != 0 else 0)
+        
+            emlock_query = vts_query.vts_query.get("emlock_open")
+            emlock_conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, emlock_query)
+            emlock_query = VTSAnalyticsActions.apply_conditions_to_query(emlock_query, emlock_conditions)
+            emlock_data = await VTSAnalyticsActions.execute_query(emlock_query, engine="dict")
+            emlock_open = int(emlock_data[0]["emlock_open"]) if emlock_data else 0
+            violation_counts["emlock_open"] = emlock_open
 
-            # Step 4: Count each violation across all invoices
-            violation_counts = {col: int(df_viol[col].sum()) for col in violation_cols}
-
-            # Step 5: Add emlock_open
-            violation_counts["emlock_open"] = int(emlock_open)
-
-            # Step 6: Get shortage count
+        
             shortage_result = await VTSAnalyticsActions.total_count_shortage(filters, cross_filters, drill_state, payload)
-            shortage_count = shortage_result.get("trip_count", 0) if shortage_result.get("status") else 0
+
+            shortage_count = (shortage_result.get("trip_count", 0) if shortage_result.get("status") else 0)
             violation_counts["shortage_count"] = shortage_count
 
-            # --- PRINT COUNTS ---
-            print("Violation counts (including emlock and shortage):")
-            for key, count in violation_counts.items():
-                print(f"{key}: {count}")
+            percentages = {
+                key: round((value * 100) / total_trip_count, 2) if total_trip_count > 0 else 0
+                for key, value in violation_counts.items()
+            }
 
-            # Step 7: Calculate total and percentages
-            percentages = {}
-            for key, count in violation_counts.items():
-                percentages[key] = round(100 * count / total_trip_count, 2) if total_trip_count > 0 else 0
-
-            
+        
             return {
-                "status": True,"message": "Violation percentages calculated",
-                "data": { "counts": violation_counts,"percentages": percentages,"total_trip":total_trip_count
-                }
+                "status": True,
+                "message": "Violation percentages calculated",
+                "data": {
+                    "counts": violation_counts,
+                    "percentages": percentages,
+                    "total_trip": total_trip_count,
+                },
             }
 
         except Exception as e:
             import traceback
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
-
-
 
     @staticmethod
     async def total_count_shortage(filters, cross_filters, drill_state, payload):
@@ -1570,106 +1553,181 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
 
+    
     @staticmethod
     async def vts_drill_down_violation(filters, cross_filters, drill_state, payload):
+        """
+        Violation drill-down with pure SQL
+        Single query approach - format based on payload, execute, return
+        
+        Args:
+            filters: Base filters (bu, etc.)
+            cross_filters: Date range filters
+            drill_state: Query key from vts_query
+            payload: Contains violation_type and drill parameters
+            
+        Returns:
+            dict with status, message, and data
+        """
         try:
-            # Step 1: Get base query and apply filters
-            query = vts_query.vts_query.get(drill_state.split(",")[0])
-            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
-            vts_drill_query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
-            print(vts_drill_query)
-
-            vts_df = await VTSAnalyticsActions.execute_query(vts_drill_query)
-            # vts_df = vts_df.drop_duplicates(subset=['invoice_number'], keep='first')
-            vts_df.rename(columns={"vts_end_datetime": "created_at"}, inplace=True)
-            vts_df["created_at"] = pd.to_datetime(vts_df["created_at"]).dt.date
-            vts_df = vts_df.sort_values(by='created_at', ascending=True)
-            # vts_df = vts_df.drop_duplicates(subset=['invoice_number', 'zone'], keep='first')
-
-
-            if vts_df.empty:
+            #  Validate violation type
+            violation_type = payload.get("violation_type")
+            if not violation_type:
+                return {"status": False, "message": "violation_type is required", "data": []}
+            
+            #  Get base query template
+            base_query = vts_query.vts_query.get(drill_state.split(",")[0])
+            if not base_query:
+                return {"status": False, "message": "Invalid drill_state", "data": []}
+            
+            #  Build SQL parts based on payload
+            sql_parts = VTSAnalyticsActions._format_vts_drill_down_query_parts(payload, violation_type, filters, cross_filters)
+            
+            # Format the query with all parts
+            formatted_query = base_query.format(**sql_parts)
+                    
+            
+            #  Execute query
+            result_df = await VTSAnalyticsActions.execute_query(formatted_query, engine="polars")
+            
+            # Step 7: Return results
+            if result_df.is_empty():
                 return {"status": True, "message": "No data found", "data": []}
             
-            transporter_query = """SELECT distinct truck_no, transporter_name FROM vts_truck_master"""
-            transporter_df = await VTSAnalyticsActions.execute_query(transporter_query)
-            merged_df = vts_df.merge(transporter_df, left_on="tl_number", right_on="truck_no", how="left")
-
-            # Step 5: Filter violation type
-            violation_type = payload.get("violation_type")
-            if not violation_type or violation_type not in merged_df.columns:
-                return {"status": False, "message": f"Invalid violation type: {violation_type}", "data": []}
-
-            violation_filtered_df = merged_df[merged_df[violation_type].fillna(0) != 0].copy()
-            violation_filtered_df = violation_filtered_df.sort_values(by='created_at', ascending=True)
-            violation_filtered_df = violation_filtered_df.drop_duplicates(subset=['invoice_number'], keep='first')
-
-            # Step 6: Remove empty values for zone, location, transporter
-            for key in ["zone", "location_name", "transporter_name"]:
-                if payload.get(key):
-                    violation_filtered_df = violation_filtered_df[violation_filtered_df[key] == payload[key]]
-
-            if violation_filtered_df.empty:
-                return {"status": True, "message": "No data found for the applied filters", "data": []}
-
-            # Step 7: TL-level drill-down for invoice details
-            selected_tl = payload.get("tl_number")
-            if selected_tl:
-                violation_filtered_df = violation_filtered_df[violation_filtered_df["tl_number"] == selected_tl]
-
-                if violation_filtered_df.empty:
-                    return {"status": True,  "message": f"No invoices found for vehicle {selected_tl}", "data": []  }
-
-                # Return invoice details sorted by created_at
-                invoice_df = violation_filtered_df.sort_values(by="created_at", ascending=True)
-                invoice_df = invoice_df[["invoice_number", "created_at", violation_type]]
-
-                # Rename columns for frontend
-                invoice_df.rename(columns={
-                    "invoice_number": "invoice_no",
-                    "created_at": "created_at",
-                    violation_type: f"{violation_type}"  
-                }, inplace=True)
-
-                result = invoice_df.to_dict(orient="records")
-                return { "status": True,  "message": f"{violation_type} details for vehicle {selected_tl}",  "data": result }
-
-            # Step 8: Determine grouping column for summaries
-            if payload.get("transporter_name"):
-                group_col = "tl_number"
-            elif payload.get("location_name"):
-                group_col = "transporter_name"
-            elif payload.get("zone"):
-                group_col = "location_name"
-            else:
-                group_col = "zone"
-            if "zone" in violation_filtered_df.columns:
-                violation_filtered_df["zone"] = violation_filtered_df["zone"].fillna("UNKNOWN")
-
-            # Step 9: Summarize counts
-            summary_df = (
-                violation_filtered_df.groupby(group_col)
-                .agg({"invoice_number": pd.Series.nunique})
-                .reset_index()
-            )
-
-            summary_df[violation_type] = violation_filtered_df.groupby(group_col)[violation_type].sum().values
-            if group_col != "tl_number":
-                 summary_df["vehicle_count"] = violation_filtered_df.groupby(group_col)["tl_number"].nunique().values
-                
-            rename_mapping = {
-                "invoice_number": "invoice_count",
+            return {
+                "status": True,
+                "message": "Success",
+                "data": result_df.to_dicts()
             }
-            summary_df.rename(columns=rename_mapping, inplace=True)
-
-            # Also rename the dynamic violation column for clarity
-            summary_df.rename(columns={violation_type: violation_type}, inplace=True)
-
-            result = summary_df.to_dict(orient="records")
-            return {"status": True,  "message": f"{violation_type} drill-down data", "data": result }
-
+            
         except Exception as e:
-            print("traceback:", traceback.format_exc())
+            print("Error in vts_drill_down_violation:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+
+
+    @staticmethod
+    def _format_vts_drill_down_query_parts(payload, violation_type, filters=None, cross_filters=None):
+        """
+        Build all SQL parts (SELECT, JOIN, FILTERS, GROUP BY, ORDER BY)
+        based on payload values
+        
+        Args:
+            payload: Dictionary with drill parameters
+            violation_type: Type of violation to analyze
+            
+        Returns:
+            Dictionary with all formatted SQL parts
+        """
+        # Extract payload values
+        date_wise = str(payload.get("date_wise", "")).lower() == "true"
+        tl_number = payload.get("tl_number", "")
+        transporter = payload.get("transporter_name", "")
+        location = payload.get("location_name", "")
+        zone = payload.get("zone", "")
+
+        filters = filters or []
+        cross_filters = cross_filters or []
+    
+        # Build bu filter from filters
+        bu_filter = ""
+        for f in filters:
+            if f.key == "bu":
+                bu_filter = f"AND vah.bu = '{f.value}'"
+                break
+        
+        # Build date filter from cross_filters
+        date_filter = ""
+        for cf in cross_filters:
+            if cf.key == "DATE":
+                date_value = cf.value
+                if "," in date_value:
+                    start_date, end_date = date_value.split(",")
+                    date_filter = f"AND vah.vts_end_datetime BETWEEN '{start_date}' AND '{end_date} 23:59:59'"
+                break
+        
+        # Determine if we need transporter join
+        needs_join = bool(transporter or location)
+        
+        # Build filter clauses (always include if present in payload)
+        zone_filter = f"AND vah.zone = '{zone}'" if zone else ""
+        location_filter = f"AND vah.location_name = '{location}'" if location else ""
+        transporter_filter = f"AND vtm.transporter_name = '{transporter}'" if transporter else ""
+        
+     
+        # Mode 1: Invoice Detail (Deepest Drill)
+        if tl_number:
+            return {
+                'violation_type': violation_type,
+                'select_clause': f"vah.invoice_number AS invoice_no, DATE(vah.vts_end_datetime) AS created_at, vah.{violation_type}",
+                'join_clause': "LEFT JOIN vts_truck_master vtm ON vah.tl_number = vtm.truck_no" if needs_join else "",
+                'zone_filter': zone_filter,
+                'location_filter': location_filter,
+                'transporter_filter': transporter_filter,
+                'tl_filter': f"AND vah.tl_number = '{tl_number}'",
+                'bu_filter': bu_filter,
+                'date_filter': date_filter,
+                'group_clause': f"GROUP BY vah.invoice_number, DATE(vah.vts_end_datetime), vah.{violation_type}",
+                'order_clause': "ORDER BY created_at"
+            }
+        
+        # Mode 2 & 3: Aggregation (Summary or Date-wise)
+        # Determine drill level and column name based on hierarchy
+        if transporter:
+            # Drill to vehicle level
+            drill_col = "vah.tl_number"
+            col_name = "tl_number"
+            needs_join = True  # Need join for transporter filter
+        elif location:
+            # Drill to transporter level
+            drill_col = "vtm.transporter_name"
+            col_name = "transporter_name"
+            needs_join = True  # Need join to show transporter
+        elif zone:
+            # Drill to location level
+            drill_col = "vah.location_name"
+            col_name = "location_name"
+            needs_join = False
+        else:
+            # Top level - zone
+            drill_col = "COALESCE(vah.zone, 'UNKNOWN')"
+            col_name = "zone"
+            needs_join = False
+        
+        # Build SELECT, GROUP BY, ORDER BY based on date_wise flag
+        if date_wise:
+            # Date-wise aggregation
+            select_clause = f"""DATE(vah.vts_end_datetime) AS created_at,
+                              {drill_col} AS {col_name}, 
+                              COUNT(DISTINCT vah.invoice_number) AS invoice_count, 
+                              COUNT(DISTINCT vah.tl_number) AS vehicle_count, 
+                              SUM(vah.{violation_type}) AS {violation_type}"""
+            group_clause = f"GROUP BY DATE(vah.vts_end_datetime), {drill_col}"
+            order_clause = "ORDER BY created_at"
+        else:
+            # Summary aggregation (no date grouping)
+            select_clause = f"""{drill_col} AS {col_name}, 
+                              COUNT(DISTINCT vah.invoice_number) AS invoice_count, 
+                              COUNT(DISTINCT vah.tl_number) AS vehicle_count, 
+                              SUM(vah.{violation_type}) AS {violation_type}"""
+            group_clause = f"GROUP BY {drill_col}"
+            order_clause = "ORDER BY invoice_count DESC"
+        
+        return {
+            'violation_type': violation_type,
+            'select_clause': select_clause,
+            'join_clause': "LEFT JOIN vts_truck_master vtm ON vah.tl_number = vtm.truck_no" if needs_join else "",
+            'zone_filter': zone_filter,
+            'location_filter': location_filter,
+            'transporter_filter': transporter_filter,
+            'tl_filter': "",
+            'bu_filter': bu_filter,
+            'date_filter': date_filter,
+            'group_clause': group_clause,
+            'order_clause': order_clause
+        }
+
+        
+
     @staticmethod
     async def vts_drill(filters, cross_filters, drill_state, payload):
         try:
@@ -1943,17 +2001,25 @@ class VTSAnalyticsActions:
                 query = query.format(ongoing_trips_type=ongoing_trips_type)
             
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+
+            status_filter = payload.get("status")
+            if status_filter == "live":
+                conditions.append("trip_status = 'Live'")
+            elif status_filter == "closed":
+                conditions.append("trip_status = 'Closed'")
+
             query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+            print(query)
 
             # Step 2: Execute query
             df = await VTSAnalyticsActions.execute_query(query)
             
             for col in ["vehicle_latitude", "vehicle_longitude"]:
                 if col in df.columns:
-                    df[col] = df[col].astype(str)
+                    df[col] = df[col].astype(str) 
 
             df = pl.DataFrame(df) if isinstance(df, pd.DataFrame) else df
-            
+                      
             if df.is_empty():
                 return {"status": True, "message": "No data found", "data": []}
             
@@ -1963,16 +2029,11 @@ class VTSAnalyticsActions:
                 keep="first"
             )
 
-            # Step 3: Filter by trip_status (Live/Closed)
-            status_filter = payload.get("status")
-            
-            if status_filter == "live":
-                df = df.filter(pl.col("trip_status") == "Live")
-            elif status_filter == "closed":
-                df = df.filter(pl.col("trip_status") == "Closed")
-
             if df.height == 0:
                 return {"status": True, "message": f"No {status_filter} trips found", "data": []}
+            
+            if payload.get("total_count") == "true":
+                return {"status": True, "total_records":df.height}
             
             # Step 4: Handle table view
             if payload.get("table") == "true":
@@ -3791,5 +3852,4 @@ class VTSAnalyticsActions:
             print("Exception in vts_accept_and_block:", str(e))
             print("traceback:", traceback.format_exc())
             return {"status": False,"message": str(e),"data": []}
-
 

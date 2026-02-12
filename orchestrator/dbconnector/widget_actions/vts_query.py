@@ -457,22 +457,48 @@ vts_query = {
                           FROM SALES_BASED_TRIPS_TILL_DATE
                         """,
     
-    "violation_drill_down" : """
-                            SELECT 
-                                tl_number,
-                                invoice_number,
-                                location_name,
-                                zone,
-                                DATE(vts_end_datetime) as created_at,
-                                route_deviation_count_orig,
-                                stoppage_violations_count,
-                                device_tamper_count,
-                                main_supply_removal_count,
-                                night_driving_count,
-                                speed_violation_count,
-                                continuous_driving_count
-                            FROM vts_alert_history
-                            """ ,
+    # "violation_drill_down" : """
+    #                         SELECT 
+    #                             tl_number,
+    #                             invoice_number,
+    #                             location_name,
+    #                             zone,
+    #                             DATE(vts_end_datetime) as created_at,
+    #                             {violation_type}
+    #                         FROM vts_alert_history
+    #                         AND {violation_type} > 0
+    #                         """ ,
+    
+
+
+    "violation_drill_down": """
+                                SELECT 
+                                    {select_clause}
+                                FROM (
+                                    SELECT 
+                                        vah.invoice_number,
+                                        vah.tl_number,
+                                        vah.zone,
+                                        vah.location_name,
+                                        vah.bu,
+                                        vah.vts_end_datetime,
+                                        MAX(vah.{violation_type}) as {violation_type}
+                                    FROM vts_alert_history vah
+                                    WHERE vah.{violation_type} > 0
+                                        {bu_filter}
+                                        {date_filter}
+                                    GROUP BY vah.invoice_number, vah.tl_number, vah.zone, vah.location_name, vah.bu, vah.vts_end_datetime
+                                ) vah
+                                {join_clause}
+                                WHERE 1=1
+                                    {zone_filter}
+                                    {location_filter}
+                                    {transporter_filter}
+                                    {tl_filter}
+                                {group_clause}
+                                {order_clause}
+                            """.strip(),
+
     "shoratage_vts_history" : """
                               SELECT 
                                     invoice_number,
