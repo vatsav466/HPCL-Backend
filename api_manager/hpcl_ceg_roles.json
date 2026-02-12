@@ -8030,6 +8030,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "terminalwisedryoutcounts",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TerminalWiseDryoutCounts",
+            "attributes": {},
+            "uris": [
+                "/api/terminalwisedryoutcounts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "terminalwisedryoutcounts_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TerminalWiseDryoutCounts_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/terminalwisedryoutcounts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "terminalwisedryoutcounts_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TerminalWiseDryoutCounts_admin",
+            "attributes": {},
+            "uris": [
+                "/api/terminalwisedryoutcounts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

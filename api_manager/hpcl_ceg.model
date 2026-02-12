@@ -4079,3 +4079,20 @@ Model TasFireEngineTest {
         crud_operations='read'
     }
 }
+
+Model TerminalWiseDryoutCounts {
+    run_id index_field unique_field str
+    zone optional index_field unique_field str
+    terminal_id optional index_field unique_field str
+    terminal_name optional index_field unique_field str
+    region optional unique_field str
+    outlets optional list str
+    dryout_ros optional int
+    outlets_with_valid_indents optional int
+    valid_pending_indents_last_3days optional int
+    pending_indents_last_3days optional int
+
+    Config=> {
+        crud_operations='read'
+    }
+}

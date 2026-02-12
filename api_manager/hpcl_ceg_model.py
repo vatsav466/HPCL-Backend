@@ -11152,3 +11152,70 @@ class TasFireEngineTestGetResp(pydantic.BaseModel):
     data: typing.List[TasFireEngineTest]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class TerminalWiseDryoutCountsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'terminal_wise_dryout_counts'
+    
+    run_id: Mapped[str] = mapped_column("run_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    terminal_id: Mapped[typing.Optional[str]] = mapped_column("terminal_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    terminal_name: Mapped[typing.Optional[str]] = mapped_column("terminal_name", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    outlets: Mapped[typing.Optional[typing.List[str]]] = mapped_column("outlets", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    dryout_ros: Mapped[typing.Optional[int]] = mapped_column("dryout_ros", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    outlets_with_valid_indents: Mapped[typing.Optional[int]] = mapped_column("outlets_with_valid_indents", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    valid_pending_indents_last_3days: Mapped[typing.Optional[int]] = mapped_column("valid_pending_indents_last_3days", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    pending_indents_last_3days: Mapped[typing.Optional[int]] = mapped_column("pending_indents_last_3days", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(run_id, zone, terminal_id, terminal_name, region, name="terminal_wise_dryout_counts_runid_zone_termi_termi_regio"),)
+
+
+class TerminalWiseDryoutCountsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'terminal_wise_dryout_counts'
+    
+    run_id: str
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_name: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    outlets: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    dryout_ros: typing.Optional[int] = pydantic.Field(0, **{})
+    outlets_with_valid_indents: typing.Optional[int] = pydantic.Field(0, **{})
+    valid_pending_indents_last_3days: typing.Optional[int] = pydantic.Field(0, **{})
+    pending_indents_last_3days: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TerminalWiseDryoutCountsSchema
+        upsert_keys = ['run_id', 'zone', 'terminal_id', 'terminal_name', 'region']
+
+
+class TerminalWiseDryoutCounts(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'terminal_wise_dryout_counts'
+    
+    run_id: typing.Optional[str] | None = None
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_name: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    outlets: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    dryout_ros: typing.Optional[int] = pydantic.Field(0, **{})
+    outlets_with_valid_indents: typing.Optional[int] = pydantic.Field(0, **{})
+    valid_pending_indents_last_3days: typing.Optional[int] = pydantic.Field(0, **{})
+    pending_indents_last_3days: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TerminalWiseDryoutCountsSchema
+        upsert_keys = ['run_id', 'zone', 'terminal_id', 'terminal_name', 'region']
+
+
+class TerminalWiseDryoutCountsGetResp(pydantic.BaseModel):
+    data: typing.List[TerminalWiseDryoutCounts]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
