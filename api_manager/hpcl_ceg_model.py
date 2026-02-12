@@ -11168,7 +11168,7 @@ class TerminalWiseDryoutCountsSchema(UrdhvaPostgresBase):
     valid_pending_indents_last_3days: Mapped[typing.Optional[int]] = mapped_column("valid_pending_indents_last_3days", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     pending_indents_last_3days: Mapped[typing.Optional[int]] = mapped_column("pending_indents_last_3days", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(run_id, zone, terminal_id, terminal_name, region, name="terminal_wise_dryout_counts_runid_zone_termi_termi_regio"),)
+    __table_args__ = (UniqueConstraint(run_id, terminal_id, name="terminal_wise_dryout_counts_run_id_terminal_id"),)
 
 
 class TerminalWiseDryoutCountsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -11190,7 +11190,7 @@ class TerminalWiseDryoutCountsCreate(urdhva_base.postgresmodel.BasePostgresModel
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TerminalWiseDryoutCountsSchema
-        upsert_keys = ['run_id', 'zone', 'terminal_id', 'terminal_name', 'region']
+        upsert_keys = ['run_id', 'terminal_id']
 
 
 class TerminalWiseDryoutCounts(urdhva_base.postgresmodel.PostgresModel):
@@ -11212,7 +11212,7 @@ class TerminalWiseDryoutCounts(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TerminalWiseDryoutCountsSchema
-        upsert_keys = ['run_id', 'zone', 'terminal_id', 'terminal_name', 'region']
+        upsert_keys = ['run_id', 'terminal_id']
 
 
 class TerminalWiseDryoutCountsGetResp(pydantic.BaseModel):
