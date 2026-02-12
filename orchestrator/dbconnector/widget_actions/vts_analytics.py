@@ -1438,8 +1438,6 @@ class VTSAnalyticsActions:
 
             final_query = VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions)
 
-            print("Violation Percentages Query:", final_query)
-
             data = await VTSAnalyticsActions.execute_query(final_query, engine="dict")
 
             if not data:
@@ -2009,7 +2007,6 @@ class VTSAnalyticsActions:
                 conditions.append("trip_status = 'Closed'")
 
             query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
-            print(query)
 
             # Step 2: Execute query
             df = await VTSAnalyticsActions.execute_query(query)
