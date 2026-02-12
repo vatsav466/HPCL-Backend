@@ -11160,7 +11160,7 @@ class TerminalWiseDryoutCountsSchema(UrdhvaPostgresBase):
     run_id: Mapped[str] = mapped_column("run_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     terminal_id: Mapped[typing.Optional[str]] = mapped_column("terminal_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    terminal_name: Mapped[typing.Optional[str]] = mapped_column("terminal_name", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    terminal_name: Mapped[typing.Optional[str]] = mapped_column("terminal_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     outlets: Mapped[typing.Optional[typing.List[str]]] = mapped_column("outlets", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     dryout_ros: Mapped[typing.Optional[int]] = mapped_column("dryout_ros", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)

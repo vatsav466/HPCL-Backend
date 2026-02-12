@@ -4084,7 +4084,7 @@ Model TerminalWiseDryoutCounts {
     run_id index_field unique_field str
     zone optional index_field str
     terminal_id optional index_field unique_field str
-    terminal_name optional index_field str
+    terminal_name optional str
     region optional str
     outlets optional list str
     dryout_ros optional int
