@@ -3,7 +3,8 @@ import polars as pl
 import hpcl_ceg_model
 import json
 from datetime import timedelta
-
+import asyncio
+from types import SimpleNamespace
 
 
 async def fetch_host_tables_as_dfs(data):
@@ -83,7 +84,6 @@ async def fetch_host_tables_as_dfs(data):
 
     alerts_query = (
         "alert_section = 'TAS'"
-        "AND equipment_name = 'BCU'"
         "AND interlock_name NOT ILIKE '%BCU Permissive Off%'"
     )
     if conditions:
@@ -95,7 +95,7 @@ async def fetch_host_tables_as_dfs(data):
             "sap_id", "location_name", "device_name",
             "device_type", "created_at",
             "equipment_name", "interlock_name",
-            "vehicle_number"
+            "vehicle_number", "closed_at"
         ])
     )
     alerts_params.limit = 0
@@ -103,11 +103,19 @@ async def fetch_host_tables_as_dfs(data):
     day_end_params = urdhva_base.queryparams.QueryParams(
         q=query_str,
         fields=json.dumps([
-            "created_at", "bcu_number","bay_number","invoiced_qty",
+            "created_at", "bcu_number","bay_number","invoiced_qty", "location_name",
             "bcu_net_totalizer", "mfm_net_totalizer","bcu_start_totalizer","bcu_end_totalizer"
         ])
     )
     day_end_params.limit = 0
+
+    unauthorised_flow_params = urdhva_base.queryparams.QueryParams(
+        q=query_str,
+        fields=json.dumps([
+            "bay_number", "net_totalizer", "created_at", "location_name", "zone"
+        ])
+    )
+    unauthorised_flow_params.limit = 0
 
     # ---------------------------
     # Fetch Data (UNCHANGED)
@@ -117,12 +125,30 @@ async def fetch_host_tables_as_dfs(data):
     over_loaded_resp = await hpcl_ceg_model.HostOverLoadedTts.get_all(params, resp_type="plain")
     day_end_resp = await hpcl_ceg_model.HostDayEndDetails.get_all(day_end_params, resp_type="plain")
     alerts_resp = await hpcl_ceg_model.Alerts.get_all(alerts_params, resp_type="plain")
+    unauthorised_flow_resp = await hpcl_ceg_model.HostUnauthorisedFlow.get_all(unauthorised_flow_params, resp_type="plain")
+
+
 
     bay_df = pl.DataFrame(bay_resp.get("data", []))
     local_loaded_df = pl.DataFrame(local_loaded_resp.get("data", []))
     over_loaded_df = pl.DataFrame(over_loaded_resp.get("data", []))
     day_end_df = pl.DataFrame(day_end_resp.get("data", []))
     alerts_df = pl.DataFrame(alerts_resp.get("data", []))
+    unauthorised_flow_data = unauthorised_flow_resp.get("data", [])
+    if unauthorised_flow_data:
+        for row in unauthorised_flow_data:
+            if "net_totalizer" in row and row["net_totalizer"] is not None:
+                row["net_totalizer"] = round(float(row["net_totalizer"]), 2)
+    
+    unauthorised_flow_df = pl.DataFrame(unauthorised_flow_data)
+    
+    # Filter out rows where net_totalizer is 0 or null
+    if len(unauthorised_flow_df) > 0 and "net_totalizer" in unauthorised_flow_df.columns:
+        unauthorised_flow_df = unauthorised_flow_df.filter(
+            (pl.col("net_totalizer").is_not_null()) & 
+            (pl.col("net_totalizer") > 0)
+        )
+
 
 
     total_bcu_count = 0
@@ -206,9 +232,8 @@ async def fetch_host_tables_as_dfs(data):
             if len(alerts_df) > 0:
                 filtered = alerts_df.filter(
                     (pl.col("created_at").cast(pl.Date) == current_date) &
-                    (pl.col("equipment_name") == "BCU") &
-                    (pl.col("bay_number") == current_bay) &
-                    (pl.col("interlock_name") == "Gantry Permissive Off")
+                    (pl.col("interlock_name").str.contains("Gantry Permissive Off")) &
+                    (~pl.col("interlock_name").str.contains("Fail"))
                 )
                 gantry_count_list.append(len(filtered))
             else:
@@ -279,9 +304,9 @@ async def fetch_host_tables_as_dfs(data):
         combined_df = combined_df[['truck_number', 'created_at', 'zone' ,'sap_id', 'location_name','load_number', 'product_name', 'required_qty', 'loaded_qty','overloaded_qty','cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 
                                 'Alerts_Count', 'Gantry_Permissive_off_Count', 'MFM_VS_BCU','BCU_VS_INVOICE', 'Cross checked ManuallyAP system', 'table_name']]
    
-    # combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_tesing.csv")
+    # combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_tesinggantry.csv")
 
-    return combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count
+    return combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count, unauthorised_flow_df
 
-# if _name_ == "_main_":
-    # asyncio.run(fetch_host_tables_as_dfs())
+# if __name__ == "__main__":
+    # asyncio.run(fetch_host_tables_as_dfs(SimpleNamespace(filters=[])))
