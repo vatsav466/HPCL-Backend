@@ -2111,7 +2111,9 @@ async def generate_omc_compare_data(filters, drill_state):
     for entry in resp_data:
         drill_key = entry[drill_state] if drill_state else "cumulative"
         company = entry["coname"]
-        sales = float(entry["sales"])  # Convert Decimal to int
+        # sales = float(entry["sales"])  # Convert Decimal to int
+        sales = entry.get("sales")
+        sales = 0 if sales is None or (isinstance(sales, str) and sales.strip() == "") else sales
         if entry["fiscal_year"] == fiscal_year_pre:
             table[drill_key]["Sales"][company] = sales
         elif entry["fiscal_year"] == fiscal_year_last:
