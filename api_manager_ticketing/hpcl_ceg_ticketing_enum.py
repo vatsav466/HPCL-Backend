@@ -70,6 +70,8 @@ class TicketType(str, enum.Enum):
     Cancelled = 'TicketCancelled'
     Resolved = 'TicketResolved'
     OnHold = 'TicketOnHold'
+    ReOpen = 'TicketReOpen'
+    OnCompleted = 'TicketOnCompleted'
 
 
 

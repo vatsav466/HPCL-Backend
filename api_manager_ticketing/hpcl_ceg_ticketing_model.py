@@ -43,9 +43,9 @@ class TicketingSchema(UrdhvaPostgresBase):
     bu: Mapped[typing.Any] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     alert_section: Mapped[typing.Optional[str]] = mapped_column("alert_section", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column("location_name", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[typing.List[str]]] = mapped_column("zone", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     ticket_status: Mapped[typing.Any] = mapped_column("ticket_status", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     ticket_state: Mapped[typing.Any] = mapped_column("ticket_state", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -72,6 +72,12 @@ class TicketingSchema(UrdhvaPostgresBase):
     parent_id: Mapped[typing.Optional[str]] = mapped_column("parent_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     subtask_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("subtask_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     ticket_end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("ticket_end_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    truck_no: Mapped[typing.Optional[typing.List[str]]] = mapped_column("truck_no", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    ticket_section: Mapped[typing.Optional[str]] = mapped_column("ticket_section", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    sub_category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("sub_category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    reason: Mapped[typing.Optional[str]] = mapped_column("reason", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),)
 
@@ -85,9 +91,9 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     bu: hpcl_ceg_ticketing_enum.BusinessUnit
     alert_section: typing.Optional[str] = pydantic.Field("", **{})
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
-    sap_id: str
-    location_name: str
-    zone: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.List[str]
+    location_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     ticket_status: hpcl_ceg_ticketing_enum.Status
     ticket_state: hpcl_ceg_ticketing_enum.State
@@ -114,6 +120,12 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     parent_id: typing.Optional[str] = pydantic.Field("", **{})
     subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     ticket_end_date: typing.Optional[datetime.datetime] | None = None
+    truck_no: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    ticket_section: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    reason: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -132,9 +144,9 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     bu: typing.Optional[hpcl_ceg_ticketing_enum.BusinessUnit] | None = None
     alert_section: typing.Optional[str] = pydantic.Field("", **{})
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
-    sap_id: typing.Optional[str] | None = None
-    location_name: typing.Optional[str] | None = None
-    zone: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[typing.List[str]] | None = None
+    location_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     ticket_status: typing.Optional[hpcl_ceg_ticketing_enum.Status] | None = None
     ticket_state: typing.Optional[hpcl_ceg_ticketing_enum.State] | None = None
@@ -161,6 +173,12 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     parent_id: typing.Optional[str] = pydantic.Field("", **{})
     subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     ticket_end_date: typing.Optional[datetime.datetime] | None = None
+    truck_no: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    ticket_section: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    reason: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -188,9 +206,9 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     bu: str
     alert_section: typing.Optional[str] = pydantic.Field("", **{})
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
-    sap_id: str
-    location_name: str
-    zone: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.List[str]
+    location_name: typing.List[str]
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     alert_type: typing.List[str]
     assignee: typing.Optional[hpcl_ceg_ticketing_enum.Assignee] | None = None
@@ -207,6 +225,12 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     parent_id: typing.Optional[str] = pydantic.Field("", **{})
     subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     ticket_end_date: typing.Optional[datetime.datetime] | None = None
+    truck_no: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    ticket_section: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    reason: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -224,11 +248,12 @@ class Ticketing_Close_TicketParams(pydantic.BaseModel):
 
 class Ticketing_Update_TicketParams(pydantic.BaseModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
-    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     alert_section: typing.Optional[str] = pydantic.Field("", **{})
     alert_type: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    location_name: typing.Optional[str] = pydantic.Field("", **{})
     assignee: typing.Optional[str] = pydantic.Field("", **{})
     summary: typing.Optional[str] = pydantic.Field("", **{})
     description: typing.Optional[str] = pydantic.Field("", **{})
@@ -242,6 +267,12 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     linked_alert_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     parent_id: typing.Optional[str] = pydantic.Field("", **{})
     subtask_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    truck_no: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    ticket_section: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    reason: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -253,6 +284,8 @@ class Ticketing_Merge_TicketParams(pydantic.BaseModel):
     merge_ticket_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     comment: typing.Optional[str] = pydantic.Field("", **{})
     merge_status: typing.Optional[str] = pydantic.Field("", **{})
+    truck_no: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    ticket_section: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -390,11 +423,11 @@ class Ticketing_Delete_File_From_CommentParams(pydantic.BaseModel):
 
 
 class Ticketing_Get_Location_DataParams(pydantic.BaseModel):
-    bu: typing.Optional[str] = pydantic.Field("", **{})
-    zone: typing.Optional[str] = pydantic.Field("", **{})
-    region: typing.Optional[str] = pydantic.Field("", **{})
-    sales_area: typing.Optional[str] = pydantic.Field("", **{})
-    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    bu: typing.List[str]
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sap_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
