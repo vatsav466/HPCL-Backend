@@ -3953,7 +3953,7 @@ async def host_tables_combined_data(data):
     Filters are handled at database level in fetch_host_tables_as_dfs
     """
     try:
-        combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count = await tas_host_data.fetch_host_tables_as_dfs(data)
+        combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count, unauthorised_flow_df = await tas_host_data.fetch_host_tables_as_dfs(data)
 
         if combined_df is None or combined_df.is_empty():
             return []
@@ -3968,13 +3968,15 @@ async def host_tables_combined_data(data):
         
         result = []
         unique_truck_count = combined_df.select("truck_number").unique().height
+        total_unauthorised_flow_count = len(unauthorised_flow_df) if len(unauthorised_flow_df) > 0 else 0
         total_counts = {
             "TotalBCU": total_bcu_count,
             "TotalActiveBays": total_active_bays_count,
             "HostBayReAssignment": len(combined_df.filter(pl.col("table_name") == "HostBayReAssignment")),
             "LocalLoading": len(combined_df.filter(pl.col("table_name") == "HostLocalLoaded")),
             "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded")),
-            "TotalUniqueTruckNumbersCount": unique_truck_count
+            "TotalUniqueTruckNumbersCount": unique_truck_count,
+            "UnauthorisedFlow": total_unauthorised_flow_count
         }
         
         for date_row in unique_dates.iter_rows(named=True):
@@ -3983,6 +3985,65 @@ async def host_tables_combined_data(data):
             # Filter data for this date
             date_df = combined_df.filter(pl.col("date") == date)
             
+            # Calculate Gantry count for THIS DATE (applies to all bays on this date)
+            gantry_count_for_date = 0
+            gantry_details_for_date = []
+            if len(alerts_df) > 0:
+                filtered_gantry_date = alerts_df.filter(
+                    (pl.col("created_at").cast(pl.Date) == date) &
+                    (pl.col("interlock_name").str.contains("Gantry Permissive Off")) &
+                    (~pl.col("interlock_name").str.contains("Fail"))
+                )
+                
+                if len(filtered_gantry_date) > 0:
+                    deduplicated_gantry = filtered_gantry_date.unique(
+                        subset=["created_at", "interlock_name"],
+                        keep="last"
+                    ).sort("created_at", descending=True)
+                    
+                    gantry_count_for_date = len(deduplicated_gantry)
+                    
+                    for alert_row in deduplicated_gantry.iter_rows(named=True):
+                        # Calculate downtime
+                        created_at = alert_row.get("created_at")
+                        closed_at = alert_row.get("closed_at")
+                        
+                        downtime_formatted = None
+                        if created_at and closed_at:
+                            # Calculate the difference
+                            time_diff = closed_at - created_at
+                            total_seconds = int(time_diff.total_seconds())
+                            
+                            # Break down into days, hours, minutes, seconds
+                            days = total_seconds // 86400  # 86400 seconds in a day
+                            hours = (total_seconds % 86400) // 3600  # 3600 seconds in an hour
+                            minutes = (total_seconds % 3600) // 60
+                            seconds = total_seconds % 60
+                            
+                            # Format the string
+                            parts = []
+                            if days > 0:
+                                parts.append(f"{days} day{'s' if days != 1 else ''}")
+                            if hours > 0:
+                                parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+                            if minutes > 0:
+                                parts.append(f"{minutes} min{'s' if minutes != 1 else ''}")
+                            if seconds > 0 or not parts:  # Show seconds if it's the only value or if there are seconds
+                                parts.append(f"{seconds} sec{'s' if seconds != 1 else ''}")
+                            
+                            downtime_formatted = " ".join(parts)
+                        
+                        gantry_details_for_date.append({
+                            "created_at": str(alert_row.get("created_at")),
+                            "closed_at": str(alert_row.get("closed_at")) if alert_row.get("closed_at") else None,
+                            "Downtime": downtime_formatted,
+                            "interlock_name": alert_row.get("interlock_name"),
+                            "device_name": alert_row.get("device_name"),
+                            "location_name": alert_row.get("location_name"),
+                            "sap_id": alert_row.get("sap_id"),
+
+                        })
+                    
             # Get unique bays for this date
             unique_bays = date_df.select("assigned_bay").unique().sort("assigned_bay")
             
@@ -4049,35 +4110,6 @@ async def host_tables_combined_data(data):
                         
                         for alert_row in deduplicated_alerts.iter_rows(named=True):
                             alerts_count_details_bay.append({
-                                "created_at": str(alert_row.get("created_at")),
-                                "interlock_name": alert_row.get("interlock_name"),
-                                "device_name": alert_row.get("device_name"),
-                                "location_name": alert_row.get("location_name"),
-                                "sap_id": alert_row.get("sap_id")
-                            })
-                
-                # Get Gantry_Permissive_off_Count for this bay - DEDUPLICATED
-                gantry_count_bay = 0
-                gantry_details_bay = []
-                if len(alerts_df) > 0:
-                    filtered_gantry_bay = alerts_df.filter(
-                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
-                        (pl.col("equipment_name") == "BCU") &
-                        (pl.col("bay_number") == bay_number_str) &
-                        (pl.col("interlock_name") == "Gantry Permissive Off")
-                    )
-                    
-                    # Deduplicate by created_at and bay_number, keep latest
-                    if len(filtered_gantry_bay) > 0:
-                        deduplicated_gantry = filtered_gantry_bay.unique(
-                            subset=["created_at", "bay_number"],
-                            keep="last"
-                        ).sort("created_at", descending=True)
-                        
-                        gantry_count_bay = len(deduplicated_gantry)
-                        
-                        for alert_row in deduplicated_gantry.iter_rows(named=True):
-                            gantry_details_bay.append({
                                 "created_at": str(alert_row.get("created_at")),
                                 "interlock_name": alert_row.get("interlock_name"),
                                 "device_name": alert_row.get("device_name"),
@@ -4158,9 +4190,43 @@ async def host_tables_combined_data(data):
                             
                             bcu_vs_invoice_bay = len(bcu_vs_invoice_details_bay)
                 
+                # NEW: Get HostUnauthorisedFlow for this bay
+                unauthorised_flow_net_totalizer = 0
+                unauthorised_flow_details_bay = []
+                
+                if len(unauthorised_flow_df) > 0:
+                    # Filter by bay_number and date
+                    filtered_unauthorised = unauthorised_flow_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
+                        (pl.col("bay_number") == bay_number_str)
+                    )
+                    
+                    if len(filtered_unauthorised) > 0:
+                        # Sort by created_at descending and get the latest entry per location
+                        latest_per_location = filtered_unauthorised.sort("created_at", descending=True).group_by("location_name").first()
+                        
+                        # Filter out entries where net_totalizer is 0
+                        latest_per_location = latest_per_location.filter(
+                            pl.col("net_totalizer") > 0
+                        )
+                        
+                        # Calculate total sum of latest entries across all locations
+                        if len(latest_per_location) > 0:
+                            # unauthorised_flow_net_totalizer = latest_per_location["net_totalizer"].sum()
+                            unauthorised_flow_net_totalizer = 1
+                            
+                            # Build details for each location (only non-zero)
+                            for unauth_row in latest_per_location.iter_rows(named=True):
+                                unauthorised_flow_details_bay.append({
+                                    "location_name": unauth_row.get("location_name"),
+                                    "bay_number": unauth_row.get("bay_number"),
+                                    "net_totalizer": unauth_row.get("net_totalizer"),
+                                    "created_at": str(unauth_row.get("created_at"))
+                                })
+
                 # Get Cross_checked_ManuallyAP_system (you can set logic here)
                 cross_checked = 0  # Default value
-                total_count = (len(bay_df) +  alerts_count_bay + gantry_count_bay + mfm_vs_bcu_bay + bcu_vs_invoice_bay)
+                total_count = (len(bay_df) +  alerts_count_bay + gantry_count_for_date + mfm_vs_bcu_bay + bcu_vs_invoice_bay)
                 # Build bay data
                 bay_data = {
                     "bay_number": bay_number,
@@ -4178,9 +4244,9 @@ async def host_tables_combined_data(data):
                 if alerts_count_bay > 0:
                     bay_data["Alerts_Count_details"] = alerts_count_details_bay
                 
-                bay_data["Gantry_Permissive_off_Count"] = gantry_count_bay
-                if gantry_count_bay > 0:
-                    bay_data["Gantry_Permissive_off_Count_details"] = gantry_details_bay
+                bay_data["Gantry_Permissive_off_Count"] = gantry_count_for_date
+                if gantry_count_for_date > 0:
+                    bay_data["Gantry_Permissive_off_Count_details"] = gantry_details_for_date
                 
                 bay_data["MFM_VS_BCU"] = mfm_vs_bcu_bay
                 if mfm_vs_bcu_bay > 0:
@@ -4189,6 +4255,9 @@ async def host_tables_combined_data(data):
                 bay_data["BCU_VS_INVOICE"] = bcu_vs_invoice_bay
                 if bcu_vs_invoice_bay > 0:
                     bay_data["BCU_VS_INVOICE_details"] = bcu_vs_invoice_details_bay
+                bay_data["HostUnauthorisedFlow_net_totalizer"] = unauthorised_flow_net_totalizer
+                if len(unauthorised_flow_details_bay) > 0:
+                    bay_data["HostUnauthorisedFlow_details"] = unauthorised_flow_details_bay
                 
                 bay_data["Cross_checked_ManuallyAP_system"] = cross_checked
                 
@@ -4208,8 +4277,245 @@ async def host_tables_combined_data(data):
         print(f"Error in host_tables_combined_data: {e}")
         traceback.print_exc()
         return []
+    
 
-
+async def get_bay_counts(data):
+    """
+    Get location-wise counts with bay-wise breakdown for ALL locations.
+    Returns:
+    {
+        "total_counts": {...},  # Overall totals across all locations
+        "locations": [
+            {
+                "location_name": "mathra",
+                "counts": {...},
+                "bays": [...]
+            }
+        ]
+    }
+    """
+    # Fetch all data using existing function
+    combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count, unauthorised_flow_df = \
+        await tas_host_data.fetch_host_tables_as_dfs(data)
+    
+    if combined_df is None or combined_df.is_empty():
+        return {"total_counts": {}, "locations": []}
+    
+    # Calculate OVERALL total counts (all locations combined)
+    overall_alerts_count = 0
+    if len(alerts_df) > 0:
+        overall_alerts = alerts_df.filter(pl.col("equipment_name") == "BCU")
+        if len(overall_alerts) > 0:
+            overall_alerts = overall_alerts.unique(
+                subset=["created_at", "device_name", "interlock_name"],
+                keep="last"
+            )
+            overall_alerts_count = len(overall_alerts)
+    
+    overall_gantry_count = 0
+    if len(alerts_df) > 0:
+        overall_gantry = alerts_df.filter(
+            (pl.col("interlock_name").str.contains("Gantry Permissive Off")) &
+            (~pl.col("interlock_name").str.contains("Fail"))
+        )
+        if len(overall_gantry) > 0:
+            overall_gantry = overall_gantry.unique(
+                subset=["created_at", "interlock_name"],
+                keep="last"
+            )
+            overall_gantry_count = len(overall_gantry)
+    
+    overall_unique_truck_count = combined_df.select("truck_number").unique().height
+    
+    total_counts = {
+        "TotalBCU": total_bcu_count,
+        "TotalActiveBays": total_active_bays_count,
+        "HostBayReAssignment": len(combined_df.filter(pl.col("table_name") == "HostBayReAssignment")),
+        "LocalLoading": len(combined_df.filter(pl.col("table_name") == "HostLocalLoaded")),
+        "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded")),
+        "TotalUniqueTruckNumbersCount": overall_unique_truck_count,
+        "UnauthorisedFlow": len(unauthorised_flow_df) if len(unauthorised_flow_df) > 0 else 0,
+        "Alerts_Count": overall_alerts_count,
+        "Gantry_Permissive_off_Count": overall_gantry_count
+    }
+    
+    # Get unique locations
+    unique_locations = combined_df.select("location_name").unique().sort("location_name")
+    
+    locations_result = []
+    
+    for loc_row in unique_locations.iter_rows(named=True):
+        location_name = loc_row.get("location_name")
+        
+        # Filter all dataframes for this location
+        location_combined_df = combined_df.filter(pl.col("location_name") == location_name)
+        
+        location_unauthorised_df = unauthorised_flow_df
+        if len(unauthorised_flow_df) > 0 and "location_name" in unauthorised_flow_df.columns:
+            location_unauthorised_df = unauthorised_flow_df.filter(pl.col("location_name") == location_name)
+        
+        location_day_end_df = day_end_df
+        if len(day_end_df) > 0 and "location_name" in day_end_df.columns:
+            location_day_end_df = day_end_df.filter(pl.col("location_name") == location_name)
+        
+        # Calculate location-level BCU counts
+        location_bcu_count = 0
+        location_active_bays_count = 0
+        
+        if len(location_day_end_df) > 0:
+            location_grouped = (
+                location_day_end_df.group_by(["bay_number", "bcu_number"]).agg([
+                    pl.col("bcu_start_totalizer").sum().alias("sum_start"),
+                    pl.col("bcu_end_totalizer").sum().alias("sum_end"),
+                ])
+                .with_columns((pl.col("sum_end") - pl.col("sum_start")).abs().alias("total_difference"))
+            )
+            
+            location_bcu_count = location_grouped.height
+            location_active_bays_count = location_grouped.filter(pl.col("total_difference") > 100).height
+        
+        # Calculate Alerts_Count for this location (BCU alerts only)
+        location_alerts_count = 0
+        if len(alerts_df) > 0:
+            location_alerts = alerts_df.filter(
+                (pl.col("location_name") == location_name) &
+                (pl.col("equipment_name") == "BCU")
+            )
+            if len(location_alerts) > 0:
+                # Deduplicate by created_at, bay_number, and interlock_name
+                location_alerts = location_alerts.unique(
+                    subset=["created_at", "device_name", "interlock_name"],
+                    keep="last"
+                )
+                location_alerts_count = len(location_alerts)
+        
+        # Calculate Gantry_Permissive_off_Count for this location
+        location_gantry_count = 0
+        if len(alerts_df) > 0:
+            location_gantry = alerts_df.filter(
+                (pl.col("location_name") == location_name) &
+                (pl.col("interlock_name").str.contains("Gantry Permissive Off")) &
+                (~pl.col("interlock_name").str.contains("Fail"))
+            )
+            if len(location_gantry) > 0:
+                # Deduplicate by created_at and interlock_name
+                location_gantry = location_gantry.unique(
+                    subset=["created_at", "interlock_name"],
+                    keep="last"
+                )
+                location_gantry_count = len(location_gantry)
+        
+        # Calculate location-level counts
+        unique_truck_count = location_combined_df.select("truck_number").unique().height
+        
+        location_counts = {
+            "TotalBCU": location_bcu_count,
+            "TotalActiveBays": location_active_bays_count,
+            "HostBayReAssignment": len(location_combined_df.filter(pl.col("table_name") == "HostBayReAssignment")),
+            "LocalLoading": len(location_combined_df.filter(pl.col("table_name") == "HostLocalLoaded")),
+            "OverLoading": len(location_combined_df.filter(pl.col("table_name") == "HostOverLoaded")),
+            "TotalUniqueTruckNumbersCount": unique_truck_count,
+            "UnauthorisedFlow": len(location_unauthorised_df) if len(location_unauthorised_df) > 0 else 0,
+            "Alerts_Count": location_alerts_count,
+            "Gantry_Permissive_off_Count": location_gantry_count
+        }
+        
+        # Get unique bay numbers for this location
+        unique_bays = location_combined_df.select("assigned_bay").unique().sort("assigned_bay")
+        
+        # Calculate counts for each bay
+        bays_data = []
+        
+        for bay_row in unique_bays.iter_rows(named=True):
+            bay_number = bay_row.get("assigned_bay")
+            
+            # Filter data for this specific bay
+            bay_combined_df = location_combined_df.filter(pl.col("assigned_bay") == bay_number)
+            
+            # Filter unauthorised flow for this bay
+            bay_unauthorised_df = location_unauthorised_df
+            if len(location_unauthorised_df) > 0 and "bay_number" in location_unauthorised_df.columns:
+                bay_unauthorised_df = location_unauthorised_df.filter(
+                    pl.col("bay_number") == str(bay_number).zfill(2)
+                )
+            
+            # Calculate bay-specific BCU counts
+            bay_bcu_count = 0
+            bay_active_bays_count = 0
+            
+            if len(location_day_end_df) > 0 and "bay_number_extracted" in location_day_end_df.columns:
+                bay_day_end = location_day_end_df.filter(
+                    pl.col("bay_number_extracted") == str(bay_number).zfill(2)
+                )
+                
+                if len(bay_day_end) > 0:
+                    bay_grouped = (
+                        bay_day_end.group_by(["bay_number", "bcu_number"]).agg([
+                            pl.col("bcu_start_totalizer").sum().alias("sum_start"),
+                            pl.col("bcu_end_totalizer").sum().alias("sum_end"),
+                        ])
+                        .with_columns((pl.col("sum_end") - pl.col("sum_start")).abs().alias("total_difference"))
+                    )
+                    
+                    bay_bcu_count = bay_grouped.height
+                    bay_active_bays_count = bay_grouped.filter(pl.col("total_difference") > 100).height
+            
+            # Calculate unique trucks for this bay
+            bay_unique_truck_count = bay_combined_df.select("truck_number").unique().height if len(bay_combined_df) > 0 else 0
+            
+            # Calculate Alerts_Count for this bay (BCU alerts only)
+            bay_alerts_count = 0
+            if len(alerts_df) > 0:
+                bay_alerts = alerts_df.filter(
+                    (pl.col("location_name") == location_name) &
+                    (pl.col("equipment_name") == "BCU")
+                )
+                
+                # Extract bay_number from device_name if column exists
+                if "device_name" in bay_alerts.columns:
+                    bay_alerts = bay_alerts.with_columns(
+                        pl.col("device_name").str.extract(r"BC-(\d{2})", 1).alias("alert_bay_number")
+                    )
+                    bay_alerts = bay_alerts.filter(pl.col("alert_bay_number") == str(bay_number).zfill(2))
+                
+                if len(bay_alerts) > 0:
+                    # Deduplicate
+                    bay_alerts = bay_alerts.unique(
+                        subset=["created_at", "alert_bay_number", "interlock_name"],
+                        keep="last"
+                    )
+                    bay_alerts_count = len(bay_alerts)
+            
+            # Note: Gantry_Permissive_off_Count is same for all bays in a location (it's location-wide)
+            bay_gantry_count = location_gantry_count
+            
+            bay_counts = {
+                "bay_number": str(bay_number).zfill(2),
+                "counts": {
+                    "TotalBCU": bay_bcu_count,
+                    "TotalActiveBays": bay_active_bays_count,
+                    "HostBayReAssignment": len(bay_combined_df.filter(pl.col("table_name") == "HostBayReAssignment")) if len(bay_combined_df) > 0 else 0,
+                    "LocalLoading": len(bay_combined_df.filter(pl.col("table_name") == "HostLocalLoaded")) if len(bay_combined_df) > 0 else 0,
+                    "OverLoading": len(bay_combined_df.filter(pl.col("table_name") == "HostOverLoaded")) if len(bay_combined_df) > 0 else 0,
+                    "TotalUniqueTruckNumbersCount": bay_unique_truck_count,
+                    "UnauthorisedFlow": len(bay_unauthorised_df) if len(bay_unauthorised_df) > 0 else 0,
+                    "Alerts_Count": bay_alerts_count,
+                    "Gantry_Permissive_off_Count": bay_gantry_count
+                }
+            }
+            
+            bays_data.append(bay_counts)
+        
+        locations_result.append({
+            "location_name": location_name,
+            "counts": location_counts,
+            "bays": bays_data
+        })
+    
+    return {
+        "total_counts": total_counts,
+        "locations": locations_result
+    }
     
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
@@ -4224,8 +4530,9 @@ AnalyticsModelMapping = {
     "Unauthorized Alerts":unauthorized_flow_dashboard,
     "Hostbay Reassignment Alerts":host_bay_reassignment_alert,
     "Cancelled Report tts":cancelled_tts_dashboard,
-    "Host Tables Combined Data":host_tables_combined_data
-
+    "Host Tables Combined Data":host_tables_combined_data,
+    "get bay counts":get_bay_counts
+    
 }
 
 
