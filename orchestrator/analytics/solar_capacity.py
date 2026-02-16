@@ -1,10 +1,64 @@
 import datetime
 import calendar
 import traceback
+import hashlib
+import json
+import functools
+import urdhva_base
 import polars as pl
 import dashboard_studio_model
+from urdhva_base.ttl_cache import InMemTTLCache
 
 from orchestrator.analytics.solar_helpers import SolarHelpers
+
+
+SOLAR_CACHE_INSTANCES = {}
+def with_solar_cache(key_prefix: str, expiration: int = 900):
+    """
+    Decorator to cache the result of a function using InMemTTLCache.
+    Uses a hash of the 'data' parameter to generate a unique cache instance.
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(cls, data, *args, **kwargs):
+            try:
+                cache_params = {
+                    "bu": getattr(data, 'bu', None),
+                    "category": getattr(data, 'category', None),
+                    "filters": getattr(data, 'filters', None),
+                    "drill_state": getattr(data, 'drill_state', ''),
+                    "year": getattr(data, 'year', None),
+                    "month": getattr(data, 'month', None),
+                    "action": getattr(data, 'action', None)
+                }
+                # Serialize params to string
+                cache_string = json.dumps(cache_params, sort_keys=True, default=str)
+                # Create hash
+                instance_key = f"{key_prefix}:{hashlib.md5(cache_string.encode()).hexdigest()}"
+
+                # Define the fetch function (closure capturing current args)
+                async def fetch_data():
+                    return await func(cls, data, *args, **kwargs)
+
+                # Get or create cache instance
+                if instance_key not in SOLAR_CACHE_INSTANCES:
+                    # Create new cache instance
+                    SOLAR_CACHE_INSTANCES[instance_key] = InMemTTLCache(
+                        ttl_seconds=expiration,
+                        fetch_function=fetch_data
+                    )
+                
+                # Retrieve from cache
+                # use a static key "result" because the uniqueness is handled by the instance_key
+                cache = SOLAR_CACHE_INSTANCES[instance_key]
+                return await cache.get("result")
+
+            except Exception as e:
+                print(f"Error in caching wrapper for {key_prefix}: {e}")
+                # Fallback to direct call in case of cache error
+                return await func(cls, data, *args, **kwargs)
+        return wrapper
+    return decorator
 
 
 class SolarCapacity:
@@ -125,6 +179,7 @@ class SolarCapacity:
             }
 
     @classmethod
+    @with_solar_cache("solar_total_installed_capacity", 900)
     async def get_total_installed_capacity(cls,
                                            data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
@@ -177,6 +232,7 @@ class SolarCapacity:
             }
 
     @classmethod
+    @with_solar_cache("solar_energy_generated", 900)
     async def get_energy_generated(cls,
                                    data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
@@ -451,6 +507,7 @@ class SolarCapacity:
             }
 
     @classmethod
+    @with_solar_cache("solar_efficiency", 900)
     async def get_efficiency(cls, data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
         Calculate efficiency per plant and categorize into efficiency classifications.
@@ -852,6 +909,7 @@ class SolarCapacity:
             }
 
     @classmethod
+    @with_solar_cache("solar_efficiency_last_30_days", 900)
     async def get_efficiency_last_30_days(cls,
                                           data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
@@ -1099,6 +1157,7 @@ class SolarCapacity:
             }
 
     @classmethod
+    @with_solar_cache("solar_active_total_plants", 900)
     async def get_active_total_plants(cls,
                                       data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
@@ -1295,6 +1354,7 @@ class SolarCapacity:
             }
 
     @classmethod
+    @with_solar_cache("solar_solar_summary", 900)
     async def get_solar_summary(cls, data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
         Get solar summary including bu, zone, sap_id, name, Plant capacity, estimated energy, actual energy, efficiency, status.
@@ -1536,6 +1596,7 @@ class SolarCapacity:
             }
 
     @classmethod
+    @with_solar_cache("solar_insights", 900)
     async def get_insights(
             cls,
             data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams
@@ -1648,15 +1709,23 @@ class SolarCapacity:
                 
                         -- combine cumulative energy PER SOURCE
                         SUM(CASE WHEN QuantityID = 129 THEN Value END) AS Energy_Cumulative_kWh,
-                
-                        -- instantaneous values
-                        MAX(CASE WHEN QuantityID = 544 THEN Value END) AS Solar_kW,
+                        -- MAX(CASE WHEN QuantityID = 544 THEN Value END) AS Solar_kW,
+                        COALESCE(
+                            MAX(CASE WHEN QuantityID = 544 THEN NULLIF(Value,0) END),
+                            MAX(CASE WHEN QuantityID = 518 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 519 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 520 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 515 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 516 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 517 THEN NULLIF(ABS(Value),0) END)
+                        ) AS Solar_kW,
+                        
                         MAX(CASE WHEN QuantityID = 540 THEN Value END) AS Grid_Freq_Hz
                 
                     FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
-                    WHERE PLANT_CD IN ('{bu_codes_sql}')
+                    WHERE   PLANT_CD IN ('{bu_codes_sql}')
                         AND LOWER(SourceName) NOT LIKE '%total%'
-                        AND QuantityID IN (129, 544, 540)
+                        AND QuantityID IN (129,540,544,518,519,520,515,516,517)
                         {date_filter_sql}
                         AND DATEPART(SECOND, DATEADD(MINUTE, 330, TimestampUTC)) = 0
                         AND DATEPART(MINUTE, DATEADD(MINUTE, 330, TimestampUTC)) % 15 = 0
@@ -1671,6 +1740,7 @@ class SolarCapacity:
                         b.*,
                         DATEADD(MINUTE, 330, b.TimestampUTC) AS TimestampIST,
                         CAST(DATEADD(MINUTE, 330, b.TimestampUTC) AS DATE) AS DayKey_IST,
+                        CAST(DATEADD(MINUTE,330,b.TimestampUTC) AS TIME) AS TimeIST,
                 
                         LAG(b.Energy_Cumulative_kWh)
                             OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
@@ -1753,7 +1823,7 @@ class SolarCapacity:
                             THEN 1
                 
                             WHEN SolarKW_Available_Flag = 0
-                                 AND ISNULL(SolarGen_kWh_entry, 0) > 0
+                                 AND ISNULL(SolarGen_kWh_entry, 0) > 0                             
                                  AND LAG(ISNULL(SolarGen_kWh_entry, 0))
                                      OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) = 0
                             THEN 1
@@ -1765,10 +1835,12 @@ class SolarCapacity:
                             WHEN SolarKW_Available_Flag = 1
                                  AND ISNULL(Prev_Solar_kW, 0) > 0.05
                                  AND ISNULL(Solar_kW, 0) <= 0.25
+                                 
                             THEN 1
                 
                             WHEN SolarKW_Available_Flag = 0
                                  AND ISNULL(SolarGen_kWh_entry, 0) < 0.25
+                                 
                                  AND LAG(ISNULL(SolarGen_kWh_entry, 0))
                                      OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) > 0
                             THEN 1
@@ -1983,6 +2055,7 @@ class SolarCapacity:
             }
         
     @classmethod
+    @with_solar_cache("solar_overall_insights", 900)
     async def get_overall_insights(cls, data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         try:
             filters = getattr(data, 'filters', None)
