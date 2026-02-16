@@ -1468,7 +1468,7 @@ class VTSAnalyticsActions:
             violation_counts["shortage_count"] = shortage_count
 
             percentages = {
-                key: round((value * 100) / total_trip_count, 2) if total_trip_count > 0 else 0
+                key: round(100-(value * 100) / total_trip_count, 2) if total_trip_count > 0 else 0
                 for key, value in violation_counts.items()
             }
 
@@ -2317,7 +2317,7 @@ class VTSAnalyticsActions:
                     counts[key] = int(df.iloc[0, 0]) if not df.empty else 0
                     
                                      
-                percentages = {k: round((v / total_length) * 100, 2) for k, v in counts.items()}
+                percentages = {k: round(100-(v / total_length) * 100, 2) for k, v in counts.items()}
                 return {"status": True, "message": "Success", "data": { "percentages":
                     percentages,"total_trip":total_length,"counts":counts}}
             
