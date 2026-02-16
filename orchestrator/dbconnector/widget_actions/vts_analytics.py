@@ -1602,7 +1602,6 @@ class VTSAnalyticsActions:
             print("Error in vts_drill_down_violation:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
 
-
     @staticmethod
     def _format_vts_drill_down_query_parts(payload, violation_type, filters=None, cross_filters=None):
         """
@@ -1612,6 +1611,8 @@ class VTSAnalyticsActions:
         Args:
             payload: Dictionary with drill parameters
             violation_type: Type of violation to analyze
+            filters: Optional list of filter objects
+            cross_filters: Optional list of cross-filter objects
             
         Returns:
             Dictionary with all formatted SQL parts
@@ -1622,10 +1623,13 @@ class VTSAnalyticsActions:
         transporter = payload.get("transporter_name", "")
         location = payload.get("location_name", "")
         zone = payload.get("zone", "")
+        
+        # Check if zone is a boolean flag
+        zone_is_true = str(zone).lower() == "true"
 
         filters = filters or []
         cross_filters = cross_filters or []
-    
+
         # Build bu filter from filters
         bu_filter = ""
         for f in filters:
@@ -1646,12 +1650,11 @@ class VTSAnalyticsActions:
         # Determine if we need transporter join
         needs_join = bool(transporter or location)
         
-        # Build filter clauses (always include if present in payload)
-        zone_filter = f"AND vah.zone = '{zone}'" if zone else ""
+        # Build filter clauses (only add zone filter if zone is specific value, not "true")
+        zone_filter = f"AND vah.zone = '{zone}'" if zone and not zone_is_true else ""
         location_filter = f"AND vah.location_name = '{location}'" if location else ""
         transporter_filter = f"AND vtm.transporter_name = '{transporter}'" if transporter else ""
         
-     
         # Mode 1: Invoice Detail (Deepest Drill)
         if tl_number:
             return {
@@ -1680,33 +1683,46 @@ class VTSAnalyticsActions:
             drill_col = "vtm.transporter_name"
             col_name = "transporter_name"
             needs_join = True  # Need join to show transporter
-        elif zone:
-            # Drill to location level
+        elif zone and not zone_is_true:
+            # Specific zone value (e.g., "SZ") - drill to location level
             drill_col = "vah.location_name"
             col_name = "location_name"
             needs_join = False
+        elif zone_is_true:
+            # zone="true" - show zone breakdown
+            drill_col = "COALESCE(vah.zone, 'UNKNOWN')"
+            col_name = "zone"
+            needs_join = False
+        elif date_wise:
+            # ONLY date_wise, no zone - don't group by zone
+            drill_col = None
+            col_name = None
+            needs_join = False
         else:
-            # Top level - zone
+            # Default summary - zone level
             drill_col = "COALESCE(vah.zone, 'UNKNOWN')"
             col_name = "zone"
             needs_join = False
         
-        # Build SELECT, GROUP BY, ORDER BY based on date_wise flag
+        # Build SELECT, GROUP BY, ORDER BY dynamically
         if date_wise:
-            # Date-wise aggregation
+            # Date-wise aggregation - build parts dynamically
+            drill_part = f"{drill_col} AS {col_name}," if drill_col else ""
+            group_drill_part = f" , {drill_col}" if drill_col else ""
+            
             select_clause = f"""DATE(vah.vts_end_datetime) AS created_at,
-                              {drill_col} AS {col_name}, 
-                              COUNT(DISTINCT vah.invoice_number) AS invoice_count, 
-                              COUNT(DISTINCT vah.tl_number) AS vehicle_count, 
-                              SUM(vah.{violation_type}) AS {violation_type}"""
-            group_clause = f"GROUP BY DATE(vah.vts_end_datetime), {drill_col}"
+                            {drill_part} COUNT(DISTINCT vah.invoice_number) AS invoice_count, 
+                            COUNT(DISTINCT vah.tl_number) AS vehicle_count, 
+                            SUM(vah.{violation_type}) AS {violation_type}"""
+            
+            group_clause = f"GROUP BY DATE(vah.vts_end_datetime) {group_drill_part}"
             order_clause = "ORDER BY created_at"
         else:
             # Summary aggregation (no date grouping)
             select_clause = f"""{drill_col} AS {col_name}, 
-                              COUNT(DISTINCT vah.invoice_number) AS invoice_count, 
-                              COUNT(DISTINCT vah.tl_number) AS vehicle_count, 
-                              SUM(vah.{violation_type}) AS {violation_type}"""
+                            COUNT(DISTINCT vah.invoice_number) AS invoice_count, 
+                            COUNT(DISTINCT vah.tl_number) AS vehicle_count, 
+                            SUM(vah.{violation_type}) AS {violation_type}"""
             group_clause = f"GROUP BY {drill_col}"
             order_clause = "ORDER BY invoice_count DESC"
         
