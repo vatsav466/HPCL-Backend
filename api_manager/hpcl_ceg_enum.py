@@ -182,6 +182,8 @@ class AlertActionType(str, enum.Enum):
     TicketCancelled = 'TicketCancelled'
     TicketResolved = 'TicketResolved'
     TicketOnHold = 'TicketOnHold'
+    TicketReOpen = 'TicketReOpen'
+    TicketOnCompleted = 'TicketOnCompleted'
     SendItBack = 'SendItBack'
     FalseViolation = 'FalseViolation'
     AcceptViolation = 'AcceptViolation'

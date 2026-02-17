@@ -26,17 +26,17 @@ class BlockedTruckService:
     # =====================================================
     def _initialize(self):
 
-        # Get current file directory (orchestrator folder)
         base_dir = os.path.dirname(__file__)
 
-        # Build dynamic path to masters folder
-        self.EXCEL_PATH = os.path.abspath(
-            os.path.join(
-                base_dir,
-                "masters",
-                "Tas_Dashboard_exception_report.xlsx"
-            )
+        # go up one level → orchestrator
+        project_root = os.path.dirname(base_dir)
+
+        self.EXCEL_PATH = os.path.join(
+            project_root,
+            "masters",
+            "Tas_Dashboard_exception_report.xlsx"
         )
+
 
         self.SHEET_NAME = "Alerts summary report"
         self.SOP_ENABLED = False

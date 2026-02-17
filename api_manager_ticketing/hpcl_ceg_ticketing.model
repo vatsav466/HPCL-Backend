@@ -20,6 +20,8 @@ Enum State str {
     Cancelled='Cancelled'
     Resolved='Resolved'
     OnHold='OnHold'
+    ReOpen='ReOpen'
+    OnCompleted='OnCompleted'
 }
 
 Enum Severity str {
@@ -75,7 +77,7 @@ Enum ContextType str{
 Model Ticketing {
     ticket_name str
     ticket_id index_field unique_field str
-    alert_id index_field str
+    alert_id index_field optional str
     bu BusinessUnit
     alert_section optional str
     sop_id optional str
@@ -128,7 +130,7 @@ Model Ticketing {
         location_name list str
         zone optional list str
         region optional str
-        alert_type list str
+        alert_type optional list str
         assignee optional Assignee
         summary str
         description str

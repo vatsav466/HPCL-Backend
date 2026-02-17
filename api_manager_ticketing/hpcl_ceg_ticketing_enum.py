@@ -35,6 +35,8 @@ class State(str, enum.Enum):
     Cancelled = 'Cancelled'
     Resolved = 'Resolved'
     OnHold = 'OnHold'
+    ReOpen = 'ReOpen'
+    OnCompleted = 'OnCompleted'
 
 
 
