@@ -2652,6 +2652,17 @@ Model PerformanceScoreCategory internal {
     results optional list PerformanceScoreResults
 }
 
+Model PerformanceScoreInsights internal {
+    overall_score float
+    overall_gap float
+    improvement_potential float
+    top_priority_modules list dict
+    critical_issues list dict
+    recommended_actions list dict
+    quick_wins list dict
+    focus_areas list dict
+}
+
 Model PerformanceScore {
     bu index_field str
     sap_id unique_field index_field str
@@ -2663,6 +2674,7 @@ Model PerformanceScore {
     national_score float
     rank int
     category optional list PerformanceScoreCategory
+    insights optional PerformanceScoreInsights
 
     Action=> get_pi_score {
         bu str
@@ -2709,6 +2721,7 @@ Model PerformanceScoreHistory {
     national_score float
     rank int
     category optional list PerformanceScoreCategory
+    insights optional PerformanceScoreInsights
 
     Config=> {
         crud_operations='read'
