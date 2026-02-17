@@ -782,7 +782,7 @@ class VTSAnalyticsActions:
                     all_conditions.append("sales_org = '7000'")
                     all_conditions.append("(qty_shortage > '0')")
                 elif bu == 'LPG':
-                    all_conditions.append("division in ('20', '80')")
+                    all_conditions.append("division in ('20', '21')")
                     all_conditions.append("sales_org = '2000'")
                     all_conditions.append("(qty_shortage > '0')")
                 elif bu == 'I&C':
@@ -882,7 +882,7 @@ class VTSAnalyticsActions:
         if "completed_trips_risk_score" in query.lower():
             return f"scheduled_trip_start_datetime BETWEEN '{start}' AND '{end}'"
         
-        if any(term in query.lower() for term in ["cluster_master", "transporter_risk_score", "tt_risk_score"]):
+        if any(term in query.lower() for term in ["cluster_master", "transporter_risk_score", "tt_risk_score","clusterwise_event"]):
             return f"version_date BETWEEN '{start}' AND '{end}'"
                 
         queries = ["vts_device_removed", "vts_harsh_acceleration", "vts_harsh_braking", "vts_panic"]
@@ -3588,6 +3588,88 @@ class VTSAnalyticsActions:
 
             print(f"Fetching data from table: {table_name}")
 
+            # ==================== HANDLE RISK_SCORE_TRENDS ====================
+            action = payload.get("action")
+            if action == "risk_score_trends":
+                TRENDS_CONFIG = {
+                    "tt_risk_score": {
+                        "payload_key": "clicked_tt_number",
+                        "query_key": "tt_risk_score_daily_violations",
+                        "message_template": "Violation trends for TT {}"
+                    },
+                    "transporter_risk_score": {
+                        "payload_key": "clicked_transporter_code",
+                        "query_key": "transporter_risk_score_daily_violations",
+                        "message_template": "Violation trends for transporter {}"
+                    }
+                }
+
+                if table_name not in TRENDS_CONFIG:
+                    return {"status": False, "message": f"Table {table_name} not supported for trends", "data": []}
+
+                config = TRENDS_CONFIG[table_name]
+                clicked_value = payload.get(config["payload_key"])
+
+                if not clicked_value:
+                    return {"status": False, "message": f"{config['payload_key']} not provided in payload", "data": []}
+
+                safe_value = str(clicked_value).replace("'", "''")
+                violation_query_template = vts_query.vts_query.get(config["query_key"])
+
+                if not violation_query_template:
+                    return {"status": False, "message": f"Query template not found for {config['query_key']}", "data": []}
+
+                violation_query = violation_query_template.format(safe_value)
+                print(f"Executing trends query: {violation_query}")
+
+                response = await urdhva_base.BasePostgresModel.get_aggr_data(query=violation_query, skip_total=True)
+                violation_data = response.get('data', [])
+
+                # ========== VIOLATION GROUPING LOGIC WITH POLARS ==========
+                if violation_data:
+                    df = pl.DataFrame(violation_data, infer_schema_length=None)
+                    violation_columns_map = vts_query.vts_query.get("violation_columns_map", {})
+
+                    # Convert violation_date to date format and format for display
+                    df = df.with_columns(
+                        pl.col('violation_date').cast(pl.Date).cast(pl.Utf8).str.replace_all(
+                            r'(\d{4})-(\d{2})-(\d{2})', r'$2-$3-$1'
+                        ).alias('violation_date_formatted')
+                    )
+
+                    # Get all violation type columns that exist
+                    violation_types = [col for col in violation_columns_map.keys() if col in df.columns]
+
+                    # Group by date and sum violations
+                    grouped_df = df.group_by('violation_date_formatted').agg(
+                        [pl.col(vtype).sum().cast(pl.Int64) for vtype in violation_types]
+                    ).sort('violation_date_formatted')
+
+                    # Transform to nested structure
+                    grouped_data = []
+                    for row in grouped_df.iter_rows(named=True):
+                        date = row.pop('violation_date_formatted')
+                        violations = [
+                            {"violation_type": k, "count": int(row[k]) if row[k] is not None else 0}
+                            for k in violation_types
+                        ]
+                        violations.sort(key=lambda x: x['violation_type'])
+                        grouped_data.append({"date": date, "records": violations})
+                else:
+                    grouped_data = []
+
+                if not grouped_data:
+                    return {"status": True, "message": f"No violation trends found for {clicked_value}", "data": []}
+
+                return {
+                    "status": True,
+                    "message": config["message_template"].format(clicked_value),
+                    "data": grouped_data,
+                    "total_records": len(grouped_data)
+                }
+
+            # ==================== HANDLE CLICK HANDLERS ====================
+
             CLICK_HANDLERS = {
                 "completed_trips_risk_score": {
                     "payload_key": "clicked_invoice_no",
@@ -3603,13 +3685,13 @@ class VTSAnalyticsActions:
                 },
                 "transporter_risk_score": {
                     "payload_key": "clicked_transporter_code",
-                    "table": "public.transporter_risk_score_daily_master",
+                    "table": "public.transporter_risk_score",
                     "column": "transporter_code",
                     "message_template": "Transporter events for transporter_code {}"
                 },
                 "tt_risk_score": {
                     "payload_key": "clicked_tt_number",
-                    "table": "public.tt_risk_score_daily_master",
+                    "table": "public.tt_risk_score",
                     "column": "tt_number",
                     "message_template": "Transporter events for tt_number {}"
                 }
@@ -3642,6 +3724,9 @@ class VTSAnalyticsActions:
                         "data": data,
                         "total_records": len(data)
                     }
+
+            if columns and isinstance(columns, list) and "zone" in columns:
+                columns.remove("zone")
 
             if columns and isinstance(columns, list) and columns:
                 select_columns = ", ".join([f'"{col}"' for col in columns])
@@ -3751,6 +3836,34 @@ class VTSAnalyticsActions:
             print("Exception in risk_score:", str(e))
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": [], "total_records": 0}
+
+    @staticmethod
+    async def risk_score_trends(filters, cross_filters, drill_state, payload):
+        """
+        Wrapper around risk_score that sets action to 'risk_score_trends'.
+        This ensures the dispatcher can find it via hasattr and routes it
+        through the standard risk_score logic for violation trends.
+        """
+        if not isinstance(payload, dict):
+            payload = {}
+        payload['action'] = 'risk_score_trends'
+        return await VTSAnalyticsActions.risk_score(
+            filters=filters,
+            cross_filters=cross_filters,
+            drill_state=drill_state,
+            payload=payload
+        )
+
+    @staticmethod
+    async def risk_score_max_date(filters, cross_filters, drill_state, payload):
+        try:
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(
+                query="SELECT MAX(version_date)::date AS max_date FROM public.tt_risk_score", skip_total=True
+            )
+            max_date = str(resp['data'][0]['max_date'])[:10] if resp.get('data') and resp['data'][0].get('max_date') else None
+            return {"status": bool(max_date), "message": "Last updated date fetched successfully" if max_date else "No data found", "data": max_date}
+        except Exception as e:
+            return {"status": False, "message": str(e), "data": None}
 
     @staticmethod
     async def adding_device(filters, cross_filters, drill_state, payload):
