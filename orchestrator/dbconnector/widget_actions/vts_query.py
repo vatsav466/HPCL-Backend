@@ -474,32 +474,34 @@ vts_query = {
     
 
     "violation_drill_down": """
+                            SELECT 
+                                {select_clause}
+                            FROM (
                                 SELECT 
-                                    {select_clause}
-                                FROM (
-                                    SELECT 
-                                        vah.invoice_number,
-                                        vah.tl_number,
-                                        vah.zone,
-                                        vah.location_name,
-                                        vah.bu,
-                                        vah.vts_end_datetime,
-                                        MAX(vah.{violation_type}) as {violation_type}
-                                    FROM vts_alert_history vah
-                                    WHERE vah.{violation_type} > 0
-                                        {bu_filter}
-                                        {date_filter}
-                                    GROUP BY vah.invoice_number, vah.tl_number, vah.zone, vah.location_name, vah.bu, vah.vts_end_datetime
-                                ) vah
-                                {join_clause}
-                                WHERE 1=1
+                                    vah.invoice_number,
+                                    vah.tl_number,
+                                    vah.zone,
+                                    vah.location_name,
+                                    vah.bu,
+                                    vah.sap_id,
+                                    vah.vts_end_datetime,
+                                    MAX(vah.{violation_type}) as {violation_type}
+                                FROM vts_alert_history vah
+                                WHERE vah.{violation_type} > 0
+                                    {bu_filter}
+                                    {sap_id_filter}
                                     {zone_filter}
                                     {location_filter}
-                                    {transporter_filter}
-                                    {tl_filter}
-                                {group_clause}
-                                {order_clause}
-                            """.strip(),
+                                    {date_filter}
+                                GROUP BY vah.invoice_number, vah.tl_number, vah.zone, vah.location_name, vah.bu, vah.sap_id, vah.vts_end_datetime
+                            ) vah
+                            {join_clause}
+                            WHERE 1=1
+                                {transporter_filter}
+                                {tl_filter}
+                            {group_clause}
+                            {order_clause}
+                        """.strip(),
 
     "shoratage_vts_history" : """
                               SELECT 
