@@ -149,6 +149,13 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "MOV.DBBV-001.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-001",
+                    "sensor_type": "MOV IL1"
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -156,14 +163,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "MOV.DBBV-004.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-004",
                     "sensor_type": "MOV OL"
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "MOV.DBBV-004.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-004",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "MOV.DBBV-002.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-002",
@@ -341,6 +355,13 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "MOV.DBBV-005.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-005",
+                    "sensor_type": "MOV IL1"
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -348,14 +369,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "MOV.DBBV-008.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-008",
                     "sensor_type": "MOV OL"
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "MOV.DBBV-008.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-008",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "MOV.DBBV-006.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-006",
@@ -533,6 +561,13 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "MOV.DBBV-009.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-009",
+                    "sensor_type": "MOV IL1"
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -540,14 +575,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "MOV.DBBV-012.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-012",
                     "sensor_type": "MOV OL"
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "MOV.DBBV-012.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-012",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "MOV.DBBV-010.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-010",
@@ -725,6 +767,13 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "MOV.DBBV-013.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-013",
+                    "sensor_type": "MOV IL1"
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -732,14 +781,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "MOV.DBBV-016.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-016",
                     "sensor_type": "MOV OL"
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "MOV.DBBV-016.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-016",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "MOV.DBBV-014.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-014",
@@ -917,6 +973,13 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "MOV.DBBV-017.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-017",
+                    "sensor_type": "MOV IL1"
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -924,14 +987,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "MOV.DBBV-020.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-020",
                     "sensor_type": "MOV OL"
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "MOV.DBBV-020.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-020",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "MOV.DBBV-018.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-018",
@@ -1109,6 +1179,13 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "MOV.DBBV-021.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-021",
+                    "sensor_type": "MOV IL1"
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -1116,14 +1193,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "MOV.DBBV-024.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-024",
                     "sensor_type": "MOV OL"
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "MOV.DBBV-024.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-024",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "MOV.DBBV-022.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-022",
@@ -1301,6 +1385,13 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "MOV.DBBV-026.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-026",
+                    "sensor_type": "MOV IL1"
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -1308,14 +1399,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "MOV.DBBV-025.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-025",
                     "sensor_type": "MOV OL"
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "MOV.DBBV-025.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-025",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -1493,6 +1591,13 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "MOV.DBBV-029.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-029",
+                    "sensor_type": "MOV IL1"
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -1500,14 +1605,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "MOV.DBBV-028.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-028",
                     "sensor_type": "MOV OL"
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "MOV.DBBV-028.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-028",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -1685,6 +1797,13 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "MOV.DBBV-031.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-031",
+                    "sensor_type": "MOV IL1"
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -1692,14 +1811,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "MOV.DBBV-032.OPEN_STATUS",
                     "normal_value": "0",
                     "sensor_id": "DBBV-032",
                     "sensor_type": "MOV OL"
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "MOV.DBBV-032.REMOTE_STATUS",
+                    "normal_value": "1",
+                    "sensor_id": "DBBV-032",
+                    "sensor_type": "MOV OL"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -1877,6 +2003,13 @@
                     "sensor_type": ""
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -1884,14 +2017,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -2069,6 +2209,13 @@
                     "sensor_type": ""
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -2076,14 +2223,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -2261,6 +2415,13 @@
                     "sensor_type": ""
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -2268,14 +2429,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -2453,6 +2621,13 @@
                     "sensor_type": ""
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -2460,14 +2635,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -2645,6 +2827,13 @@
                     "sensor_type": ""
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -2652,14 +2841,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -2837,6 +3033,13 @@
                     "sensor_type": ""
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -2844,14 +3047,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -3029,6 +3239,13 @@
                     "sensor_type": ""
                 },
                 {
+                    "sensor_name": "MOV REMOTE STATUS IL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
                     "sensor_name": "MOV STATUS IL2",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -3036,14 +3253,21 @@
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL",
+                    "sensor_name": "MOV STATUS OL1",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
-                    "sensor_name": "MOV STATUS OL1",
+                    "sensor_name": "MOV REMOTE STATUS OL1",
+                    "sensor_tag": "",
+                    "normal_value": "0",
+                    "sensor_id": "",
+                    "sensor_type": ""
+                },
+                {
+                    "sensor_name": "MOV STATUS OL2",
                     "sensor_tag": "",
                     "normal_value": "0",
                     "sensor_id": "",
@@ -3069,6 +3293,366 @@
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-001_TLF P/H DEL TOBV-52-MS IV@Meerut",
+            "device_id": "aaf682c0-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "kehaT7hKs2yEBcaPVgN8",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-001.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-001.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-001.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-002_TLF P/H DEL TOBV-53-MS VI@Meerut",
+            "device_id": "aafd3980-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "N6hKVpWcgD4JBOmc3Srm",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-002.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-002.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-002.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-003_TLF P/H DEL TOBV-56-HSD B7@Meerut",
+            "device_id": "ab0772b0-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "sVxYeJy7OYiHleOYtJIE",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-003.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-003.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-003.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-004_TLF P/H DEL TOBV-57-HSD VI@Meerut",
+            "device_id": "ab0db440-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "rS81LWduQtZCgA9ttapt",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-004.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-004.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-004.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-005_TLF P/H DEL TOBV-51-ETH@Meerut",
+            "device_id": "ab15ca90-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "F5X1t9PlKvfaSuWBPFeP",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-005.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-005.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-005.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-006_TLF P/H DEL TOBV-55-ETH@Meerut",
+            "device_id": "ab23ad40-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "uJLp7DGHoWNGCYi1DNv8",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-006.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-006.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-006.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-007_TLF P/H DEL TOBV-54-BD@Meerut",
+            "device_id": "ab2a8b10-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "9rIEG2wyeJSpjsm1EBgg",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-007.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-007.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-007.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-008_TLF P/H SUC TOBV-49-MS IV@Meerut",
+            "device_id": "ab3400f0-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "VsDPtFX7GypU3puoH45m",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-008.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-008.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-008.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-009_TLF P/H SUC TOBV-46-HSD VI@Meerut",
+            "device_id": "ab3d28b0-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "cTmddxzRWZx3M0JoZMYq",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-009.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-009.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-009.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-010_TLF P/H SUC TOBV-45-HSD B7@Meerut",
+            "device_id": "ab490f90-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "6N1pKyusWuc8ncGiGfO1",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-010.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-010.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-010.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-011_TLF P/H SUC TOBV-50-MS VI@Meerut",
+            "device_id": "ab5348c0-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "PzSzsmDa8WdOXVWHt2ku",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-011.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-011.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-011.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-012_TLF P/H SUC TOBV-48-ETH@Meerut",
+            "device_id": "ab5b10f0-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "fqTJIfKTI8J3SFYV9SPl",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-012.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-012.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-012.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-013_TLF P/H SUC TOBV-47-ETH@Meerut",
+            "device_id": "ab617990-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "0tKx99blgEV7S0gtCGmt",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-013.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-013.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-013.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-014_TWD P/H TOBV-42-MS@Meerut",
+            "device_id": "ab6a2c20-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "CmEpCcyMWvLrdSt9edAo",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-015.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-015.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-015.MAINTENANCE_STATUS",
+                    "normal_value": "False"
+                }
+            ]
+        },
+        {
+            "device_name": "TOBV-015_TWD P/H TOBV-43-HSD@Meerut",
+            "device_id": "ab71a630-08de-11f1-a599-bd16d92a3728",
+            "device_type": "HDR Line MOV",
+            "device_key": "qQ2wLUrx6LNtaXnN6Nd3",
+            "entity_id": "edad3580-889d-11f0-a8d9-7da968ec2def",
+            "sensors": [
+                {
+                    "sensor_name": "HDR MOV STATUS",
+                    "sensor_tag": "MOV.TOBV-016.OPEN_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV REMOTE STATUS",
+                    "sensor_tag": "MOV.TOBV-016.REMOTE_STATUS",
+                    "normal_value": "True"
+                },
+                {
+                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
+                    "sensor_tag": "MOV.TOBV-016.MAINTENANCE_STATUS",
+                    "normal_value": "False"
                 }
             ]
         },
