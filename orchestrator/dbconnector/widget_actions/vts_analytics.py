@@ -782,7 +782,7 @@ class VTSAnalyticsActions:
                     all_conditions.append("sales_org = '7000'")
                     all_conditions.append("(qty_shortage > '0')")
                 elif bu == 'LPG':
-                    all_conditions.append("division in ('20', '21')")
+                    all_conditions.append("division in ('20', '80')")
                     all_conditions.append("sales_org = '2000'")
                     all_conditions.append("(qty_shortage > '0')")
                 elif bu == 'I&C':

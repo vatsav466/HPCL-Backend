@@ -39,7 +39,7 @@ class TicketingSchema(UrdhvaPostgresBase):
     
     ticket_name: Mapped[str] = mapped_column("ticket_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     ticket_id: Mapped[str] = mapped_column("ticket_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    alert_id: Mapped[str] = mapped_column("alert_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     bu: Mapped[typing.Any] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     alert_section: Mapped[typing.Optional[str]] = mapped_column("alert_section", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -87,7 +87,7 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     
     ticket_name: str
     ticket_id: str
-    alert_id: str
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
     bu: hpcl_ceg_ticketing_enum.BusinessUnit
     alert_section: typing.Optional[str] = pydantic.Field("", **{})
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -140,7 +140,7 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     
     ticket_name: typing.Optional[str] | None = None
     ticket_id: typing.Optional[str] | None = None
-    alert_id: typing.Optional[str] | None = None
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.Optional[hpcl_ceg_ticketing_enum.BusinessUnit] | None = None
     alert_section: typing.Optional[str] = pydantic.Field("", **{})
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -210,7 +210,7 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     location_name: typing.List[str]
     zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
-    alert_type: typing.List[str]
+    alert_type: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     assignee: typing.Optional[hpcl_ceg_ticketing_enum.Assignee] | None = None
     summary: str
     description: str
