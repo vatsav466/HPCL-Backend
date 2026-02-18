@@ -151,7 +151,7 @@ Model Ticketing {
         sub_category optional list str
         remarks optional str 
         reason optional str
-        auto_ticket_close optional str 
+        auto_ticket_close optional str  //To close or Open the ticket based on user selection based on alert status
       
 
     }
@@ -188,7 +188,7 @@ Model Ticketing {
         sub_category optional list str
         remarks optional str 
         reason optional str
-        auto_ticket_close optional str 
+        auto_ticket_close optional str  //To close or Open the ticket based on user selection based on alert status
       
        
     }
