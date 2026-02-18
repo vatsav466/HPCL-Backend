@@ -231,7 +231,7 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     reason: typing.Optional[str] = pydantic.Field("", **{})
-    auto_close_on_alert_close: typing.Optional[str] = pydantic.Field("", **{})
+    auto_ticket_close: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -274,7 +274,7 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     reason: typing.Optional[str] = pydantic.Field("", **{})
-    auto_close_on_alert_close: typing.Optional[str] = pydantic.Field("", **{})
+    auto_ticket_close: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
