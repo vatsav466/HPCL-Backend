@@ -798,6 +798,7 @@ async def fetch_dryout_data(WRITE_TO_DB=False):
                     """
     last_30_days_dry_out_trends_query = f"""SELECT dry_out_date, dry_out_count
                                             FROM dry_out_daily_report Where created_at::DATE > CURRENT_DATE - INTERVAL '30 days'
+                                            ORDER BY dry_out_date ASC
                                         """
     nozzle_sales_query = f"""SELECT
                                 "transaction_date",

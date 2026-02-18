@@ -2176,3 +2176,13 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await TasFireEngineTest.get_all(params, skip_secrets=True)
 
+
+@router.get('/terminalwisedryoutcounts/{id}', response_model=TerminalWiseDryoutCounts, tags=['TerminalWiseDryoutCounts'])
+async def get(id: str):
+    return await TerminalWiseDryoutCounts.get(id, skip_secrets=True)
+
+
+@router.get('/terminalwisedryoutcounts', response_model=TerminalWiseDryoutCountsGetResp, tags=['TerminalWiseDryoutCounts'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TerminalWiseDryoutCounts.get_all(params, skip_secrets=True)
+

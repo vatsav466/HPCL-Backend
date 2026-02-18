@@ -20,6 +20,8 @@ Enum State str {
     Cancelled='Cancelled'
     Resolved='Resolved'
     OnHold='OnHold'
+    ReOpen='ReOpen'
+    OnCompleted='OnCompleted'
 }
 
 Enum Severity str {
@@ -59,6 +61,8 @@ Enum TicketType str{
     Cancelled = 'TicketCancelled'
     Resolved = 'TicketResolved'
     OnHold = 'TicketOnHold'
+    ReOpen = 'TicketReOpen'
+    OnCompleted = 'TicketOnCompleted'
 
 }
 
@@ -73,13 +77,13 @@ Enum ContextType str{
 Model Ticketing {
     ticket_name str
     ticket_id index_field unique_field str
-    alert_id index_field str
+    alert_id index_field optional str
     bu BusinessUnit
     alert_section optional str
     sop_id optional str
-    sap_id index_field unique_field str
-    location_name str
-    zone optional str
+    sap_id index_field unique_field list str
+    location_name optional list str
+    zone optional list str
     region optional str
     ticket_status Status
     ticket_state State
@@ -106,7 +110,12 @@ Model Ticketing {
     parent_id optional str
     subtask_id optional list str
     ticket_end_date optional datetime
-    
+    truck_no optional list str
+    ticket_section optional str //page from where ticket was created
+    category optional list str
+    sub_category optional list str
+    remarks optional str 
+    reason optional str
 
 
     Action=> get_ticket {
@@ -117,11 +126,11 @@ Model Ticketing {
         bu str
         alert_section optional str
         sop_id optional str
-        sap_id str
-        location_name str
-        zone optional str
+        sap_id list str
+        location_name list str
+        zone optional list str
         region optional str
-        alert_type list str
+        alert_type optional list str
         assignee optional Assignee
         summary str
         description str
@@ -136,6 +145,12 @@ Model Ticketing {
         parent_id optional str
         subtask_id optional list str
         ticket_end_date optional datetime
+        truck_no optional list str
+        ticket_section optional str
+        category optional list str
+        sub_category optional list str
+        remarks optional str 
+        reason optional str
       
 
     }
@@ -147,11 +162,12 @@ Model Ticketing {
 
     Action=> update_ticket {
         bu optional str
-        sap_id optional str
+        sap_id optional list str
         sop_id optional str
+        location_name optional list str
+        zone optional list str
         alert_section optional str
         alert_type optional list str
-        location_name optional str
         assignee optional str
         summary optional str
         description optional str
@@ -165,6 +181,12 @@ Model Ticketing {
         linked_alert_id optional list str
         parent_id optional str
         subtask_id optional list str
+        truck_no optional list str
+        ticket_section optional str
+        category optional list str
+        sub_category optional list str
+        remarks optional str 
+        reason optional str
       
        
     }
@@ -173,6 +195,8 @@ Model Ticketing {
         merge_ticket_id optional list str
         comment optional str
         merge_status optional str
+        truck_no optional list str
+        ticket_section optional str
     }
 
     Action=> delete_ticket {
@@ -253,12 +277,13 @@ Model Ticketing {
     }
 
     Action=> get_location_data {
-        bu optional str
-        zone optional str
-        region optional str
-        sales_area optional str
-        sap_id optional str
+        bu list str
+        zone optional list str
+        region optional list str
+        sales_area optional list str
+        sap_id optional list str
     }
+
 
     Config=> {
         crud_operations='read'

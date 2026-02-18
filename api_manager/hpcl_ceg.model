@@ -122,6 +122,8 @@ Enum AlertActionType str {
     TicketCancelled='TicketCancelled'
     TicketResolved='TicketResolved'
     TicketOnHold='TicketOnHold'
+    TicketReOpen='TicketReOpen'
+    TicketOnCompleted='TicketOnCompleted'
     SendItBack='SendItBack'
     FalseViolation='FalseViolation'
     AcceptViolation='AcceptViolation'
@@ -2652,6 +2654,17 @@ Model PerformanceScoreCategory internal {
     results optional list PerformanceScoreResults
 }
 
+Model PerformanceScoreInsights internal {
+    overall_score float
+    overall_gap float
+    improvement_potential float
+    top_priority_modules list dict
+    critical_issues list dict
+    recommended_actions list dict
+    quick_wins list dict
+    focus_areas list dict
+}
+
 Model PerformanceScore {
     bu index_field str
     sap_id unique_field index_field str
@@ -2663,6 +2676,7 @@ Model PerformanceScore {
     national_score float
     rank int
     category optional list PerformanceScoreCategory
+    insights optional PerformanceScoreInsights
 
     Action=> get_pi_score {
         bu str
@@ -2709,6 +2723,7 @@ Model PerformanceScoreHistory {
     national_score float
     rank int
     category optional list PerformanceScoreCategory
+    insights optional PerformanceScoreInsights
 
     Config=> {
         crud_operations='read'
@@ -4075,6 +4090,23 @@ Model TasFireEngineTest {
     fire_engine_off_datetime optional datetime
     total_run_time optional str
     
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model TerminalWiseDryoutCounts {
+    run_id index_field unique_field str
+    zone optional index_field unique_field str
+    terminal_id optional index_field unique_field str
+    terminal_name optional str
+    region optional unique_field str
+    outlets optional list str
+    dryout_ros optional int
+    outlets_with_valid_indents optional int
+    valid_pending_indents_last_3days optional int
+    pending_indents_last_3days optional int
+
     Config=> {
         crud_operations='read'
     }

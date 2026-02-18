@@ -240,18 +240,31 @@ vts_query = {
                          """,
 
     "percentage_of_violations" : """
-                                  SELECT
-                                        distinct invoice_number, 
-                                        route_deviation_count_orig,
-                                        stoppage_violations_count,
-                                        device_tamper_count,
-                                        speed_violation_count,
-                                        night_driving_count,
-                                        main_supply_removal_count,
-                                        continuous_driving_count
-                                    FROM 
-                                        vts_alert_history 
-                                    WHERE invoice_number IS NOT NULL        
+                                  WITH invoice_level AS (
+                                            SELECT
+                                                invoice_number,
+                                                MAX(route_deviation_count_orig)   AS route_deviation_count_orig,
+                                                MAX(stoppage_violations_count)    AS stoppage_violations_count,
+                                                MAX(device_tamper_count)          AS device_tamper_count,
+                                                MAX(speed_violation_count)        AS speed_violation_count,
+                                                MAX(night_driving_count)          AS night_driving_count,
+                                                MAX(main_supply_removal_count)    AS main_supply_removal_count,
+                                                MAX(continuous_driving_count)     AS continuous_driving_count
+                                            FROM vts_alert_history
+                                            WHERE invoice_number IS NOT NULL
+                                            GROUP BY invoice_number
+                                        )
+
+                                        SELECT
+                                            COUNT(*) AS total_trip_count, 
+                                            SUM(route_deviation_count_orig)   AS route_deviation_count_orig,
+                                            SUM(stoppage_violations_count)    AS stoppage_violations_count,
+                                            SUM(device_tamper_count)          AS device_tamper_count,
+                                            SUM(speed_violation_count)        AS speed_violation_count,
+                                            SUM(night_driving_count)          AS night_driving_count,
+                                            SUM(main_supply_removal_count)    AS main_supply_removal_count,
+                                            SUM(continuous_driving_count)     AS continuous_driving_count
+                                        FROM invoice_level      
                                  """,
 
     "product_safety": """
@@ -264,6 +277,7 @@ vts_query = {
             FROM vts_alert_history
             GROUP BY location_id                   
     """,
+
     "trip_safety": """
             SELECT
             location_id,
@@ -291,6 +305,7 @@ vts_query = {
             AND violation_type IN ('route_deviation_count', 'stoppage_violations_count', 'device_tamper_count', 'main_supply_removal_count', 'night_driving_count', 'speed_violation_count', 'continuous_driving_count')
         GROUP BY {group_by_column}
          """,
+
     "violations_blocked" : """
            SELECT 
             {group_by_column},
@@ -457,22 +472,35 @@ vts_query = {
                           FROM SALES_BASED_TRIPS_TILL_DATE
                         """,
     
-    "violation_drill_down" : """
-                            SELECT 
-                                tl_number,
-                                invoice_number,
-                                location_name,
-                                zone,
-                                DATE(vts_end_datetime) as created_at,
-                                route_deviation_count_orig,
-                                stoppage_violations_count,
-                                device_tamper_count,
-                                main_supply_removal_count,
-                                night_driving_count,
-                                speed_violation_count,
-                                continuous_driving_count
-                            FROM vts_alert_history
-                            """ ,
+
+    "violation_drill_down": """
+                                SELECT 
+                                    {select_clause}
+                                FROM (
+                                    SELECT 
+                                        vah.invoice_number,
+                                        vah.tl_number,
+                                        vah.zone,
+                                        vah.location_name,
+                                        vah.bu,
+                                        vah.vts_end_datetime,
+                                        MAX(vah.{violation_type}) as {violation_type}
+                                    FROM vts_alert_history vah
+                                    WHERE vah.{violation_type} > 0
+                                        {bu_filter}
+                                        {date_filter}
+                                    GROUP BY vah.invoice_number, vah.tl_number, vah.zone, vah.location_name, vah.bu, vah.vts_end_datetime
+                                ) vah
+                                {join_clause}
+                                WHERE 1=1
+                                    {zone_filter}
+                                    {location_filter}
+                                    {transporter_filter}
+                                    {tl_filter}
+                                {group_clause}
+                                {order_clause}
+                            """.strip(),
+
     "shoratage_vts_history" : """
                               SELECT 
                                     invoice_number,
@@ -633,7 +661,61 @@ vts_query = {
                 FROM alerts a, notices_vts n
                 WHERE a.alert_section = 'VTS' AND a.alert_status = 'Close'
                 AND a.vehicle_unblocked_date IS NULL AND CAST(n.alert_id AS BIGINT) = a.id
-                {final_condition}  """    
+                {final_condition}  """    ,
+
+
+                    "tt_risk_score_daily_violations": """
+                                        SELECT 
+                                            DATE(version_date) as violation_date,
+                                            dr as device_remove_count,
+                                            pd as power_disconnection_count,
+                                            rd as route_deviation_count,
+                                            st as stoppage_violations_count,
+                                            sv as speed_violation_count,
+                                            nd as night_driving_count,
+                                            ha as harsh_acceleration_count,
+                                            ht as harsh_turn_count,
+                                            hb as harsh_brake_count,
+                                            version_date
+                                        FROM public.tt_risk_score
+                                        WHERE tt_number = '{}'
+                                        ORDER BY violation_date DESC
+                                       """,
+
+    "transporter_risk_score_daily_violations": """
+                                        SELECT 
+                                            DATE(version_date) as violation_date,
+                                            dr as device_remove_count,
+                                            pd as power_disconnection_count,
+                                            rd as route_deviation_count,
+                                            st as stoppage_violations_count,
+                                            sv as speed_violation_count,
+                                            nd as night_driving_count,
+                                            ha as harsh_acceleration_count,
+                                            ht as harsh_turn_count,
+                                            hb as harsh_brake_count,
+                                            version_date
+                                        FROM public.transporter_risk_score
+                                        WHERE transporter_code = '{}'
+                                        ORDER BY violation_date DESC
+                                       """,
+
+    "risk_score_violations_table_mapping": {
+                    "tt_risk_score": "tt_risk_score_daily_violations",
+                    "transporter_risk_score": "transporter_risk_score_daily_violations"
+                },
+
+    "violation_columns_map": {
+        "device_remove_count": "Device Removal",
+        "power_disconnection_count": "Power Disconnection",
+        "route_deviation_count": "Route Deviation",
+        "stoppage_violations_count": "Stoppage Violations",
+        "speed_violation_count": "Speed Violation",
+        "night_driving_count": "Night Driving",
+        "harsh_acceleration_count": "Harsh Acceleration",
+        "harsh_turn_count": "Harsh Turn",
+        "harsh_brake_count": "Harsh Brake"
+    }
 
                               
     }

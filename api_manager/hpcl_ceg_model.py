@@ -7210,6 +7210,17 @@ class PerformanceScoreCategoryCreate(pydantic.BaseModel):
     results: typing.Optional[typing.List[PerformanceScoreResultsCreate]] | None = None
 
 
+class PerformanceScoreInsightsCreate(pydantic.BaseModel):
+    overall_score: float
+    overall_gap: float
+    improvement_potential: float
+    top_priority_modules: typing.List[dict]
+    critical_issues: typing.List[dict]
+    recommended_actions: typing.List[dict]
+    quick_wins: typing.List[dict]
+    focus_areas: typing.List[dict]
+
+
 class PerformanceScoreSchema(UrdhvaPostgresBase):
     __tablename__ = 'performance_score'
     
@@ -7223,6 +7234,7 @@ class PerformanceScoreSchema(UrdhvaPostgresBase):
     national_score: Mapped[float] = mapped_column("national_score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
     rank: Mapped[int] = mapped_column("rank", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
     category: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("category", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    insights: Mapped[typing.Optional[typing.Any]] = mapped_column("insights", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(sap_id, name="performance_score_sap_id"),)
 
@@ -7240,6 +7252,7 @@ class PerformanceScoreCreate(urdhva_base.postgresmodel.BasePostgresModel):
     national_score: float
     rank: int
     category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
+    insights: typing.Optional[PerformanceScoreInsightsCreate] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -7262,6 +7275,7 @@ class PerformanceScore(urdhva_base.postgresmodel.PostgresModel):
     national_score: typing.Optional[float] | None = None
     rank: typing.Optional[int] | None = None
     category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
+    insights: typing.Optional[PerformanceScoreInsightsCreate] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -7332,6 +7346,7 @@ class PerformanceScoreHistorySchema(UrdhvaPostgresBase):
     national_score: Mapped[float] = mapped_column("national_score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
     rank: Mapped[int] = mapped_column("rank", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
     category: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("category", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    insights: Mapped[typing.Optional[typing.Any]] = mapped_column("insights", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(sap_id, timestamp, name="performance_score_history_sap_id_timestamp"),)
 
@@ -7349,6 +7364,7 @@ class PerformanceScoreHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel)
     national_score: float
     rank: int
     category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
+    insights: typing.Optional[PerformanceScoreInsightsCreate] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -7371,6 +7387,7 @@ class PerformanceScoreHistory(urdhva_base.postgresmodel.PostgresModel):
     national_score: typing.Optional[float] | None = None
     rank: typing.Optional[int] | None = None
     category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
+    insights: typing.Optional[PerformanceScoreInsightsCreate] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -11150,5 +11167,72 @@ class TasFireEngineTest(urdhva_base.postgresmodel.PostgresModel):
 
 class TasFireEngineTestGetResp(pydantic.BaseModel):
     data: typing.List[TasFireEngineTest]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class TerminalWiseDryoutCountsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'terminal_wise_dryout_counts'
+    
+    run_id: Mapped[str] = mapped_column("run_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    terminal_id: Mapped[typing.Optional[str]] = mapped_column("terminal_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    terminal_name: Mapped[typing.Optional[str]] = mapped_column("terminal_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    outlets: Mapped[typing.Optional[typing.List[str]]] = mapped_column("outlets", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    dryout_ros: Mapped[typing.Optional[int]] = mapped_column("dryout_ros", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    outlets_with_valid_indents: Mapped[typing.Optional[int]] = mapped_column("outlets_with_valid_indents", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    valid_pending_indents_last_3days: Mapped[typing.Optional[int]] = mapped_column("valid_pending_indents_last_3days", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    pending_indents_last_3days: Mapped[typing.Optional[int]] = mapped_column("pending_indents_last_3days", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(run_id, zone, terminal_id, region, name="terminal_wise_dryout_counts_run_id_zone_terminal_id_region"),)
+
+
+class TerminalWiseDryoutCountsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'terminal_wise_dryout_counts'
+    
+    run_id: str
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_name: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    outlets: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    dryout_ros: typing.Optional[int] = pydantic.Field(0, **{})
+    outlets_with_valid_indents: typing.Optional[int] = pydantic.Field(0, **{})
+    valid_pending_indents_last_3days: typing.Optional[int] = pydantic.Field(0, **{})
+    pending_indents_last_3days: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TerminalWiseDryoutCountsSchema
+        upsert_keys = ['run_id', 'zone', 'terminal_id', 'region']
+
+
+class TerminalWiseDryoutCounts(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'terminal_wise_dryout_counts'
+    
+    run_id: typing.Optional[str] | None = None
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_name: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    outlets: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    dryout_ros: typing.Optional[int] = pydantic.Field(0, **{})
+    outlets_with_valid_indents: typing.Optional[int] = pydantic.Field(0, **{})
+    valid_pending_indents_last_3days: typing.Optional[int] = pydantic.Field(0, **{})
+    pending_indents_last_3days: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TerminalWiseDryoutCountsSchema
+        upsert_keys = ['run_id', 'zone', 'terminal_id', 'region']
+
+
+class TerminalWiseDryoutCountsGetResp(pydantic.BaseModel):
+    data: typing.List[TerminalWiseDryoutCounts]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
