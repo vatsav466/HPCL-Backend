@@ -151,6 +151,7 @@ Model Ticketing {
         sub_category optional list str
         remarks optional str 
         reason optional str
+        auto_close_on_alert_close optional str 
       
 
     }
@@ -187,6 +188,7 @@ Model Ticketing {
         sub_category optional list str
         remarks optional str 
         reason optional str
+        auto_close_on_alert_close optional str 
       
        
     }
