@@ -151,6 +151,7 @@ Model Ticketing {
         sub_category optional list str
         remarks optional str 
         reason optional str
+        auto_ticket_close optional str  //Configure whether a ticket should be automatically closed when the alert is closed, or remain open irrespective of the alert status.
       
 
     }
@@ -187,6 +188,7 @@ Model Ticketing {
         sub_category optional list str
         remarks optional str 
         reason optional str
+        auto_ticket_close optional str  //Configure whether a ticket should be automatically closed when the alert is closed, or remain open irrespective of the alert status.
       
        
     }
