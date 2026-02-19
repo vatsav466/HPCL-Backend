@@ -50,6 +50,7 @@ async def dry_out_trends_chart(last_30_days_trends_df, output_path='/tmp/dry_out
     last_30_days_trends_df['dry_out_date'] = pd.to_datetime(
         last_30_days_trends_df['dry_out_date'], errors='coerce'
     )
+    last_30_days_trends_df = last_30_days_trends_df.sort_values('dry_out_date').reset_index(drop=True)
 
     # Format date label: Nov-21
     last_30_days_trends_df['x_label'] = last_30_days_trends_df['dry_out_date'].dt.strftime('%b-%d')
