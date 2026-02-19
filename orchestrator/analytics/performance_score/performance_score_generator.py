@@ -1,4 +1,5 @@
 import urdhva_base
+import json
 import asyncio
 import datetime
 import pandas as pd
@@ -17,6 +18,16 @@ def get_performance_score_instance(bu):
         return pssod.SODPerformanceScore()
     return None
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+
+previous_va_score = {}
 
 async def fetch_va_score(bu):
     resp = await va_analysis.get_ro_terminal_scores({'LocationType': bu,
@@ -25,6 +36,64 @@ async def fetch_va_score(bu):
         va_score = {rec.get('LOCATION_ID', '').split(',')[-1].strip(): rec for rec in resp.get('data', []) if rec.get('LOCATION_ID', '')}
         return va_score
     return {}
+
+async def validate_locations_from_history(bu, location_ids, va_data):
+
+    if not location_ids:
+        return va_data
+
+    # Faster lookup
+    va_keys = set(va_data.keys())
+
+    # Find locations missing in VA
+    missing_in_va = [loc for loc in location_ids if loc not in va_keys]
+
+    if not missing_in_va:
+        return va_data
+
+    ids = ", ".join(f"'{loc}'" for loc in missing_in_va)
+
+    query = f"""
+       SELECT DISTINCT ON (sap_id) sap_id, category, created_at
+        FROM performance_score_history
+        WHERE bu = '{bu}'
+        AND sap_id IN ({ids})
+        ORDER BY sap_id, created_at DESC
+
+    """
+
+    resp = await hpcl_ceg_model.PerformanceScoreHistory.get_aggr_data(query, limit=0)
+    db_data = resp.get("data", [])
+
+    fallback_scores = va_data
+
+    for row in db_data:
+
+        sap_id = row['sap_id']
+        category_data = row.get('category')
+
+        if isinstance(category_data, str):
+            category_data = json.loads(category_data)
+
+        if not isinstance(category_data, list):
+            continue
+
+        for module in category_data:
+            if module.get("name") == "VA":
+
+                # 👇 NEW LOGIC: fetch VA Portal score
+                for result in module.get("results", []):
+                    if result.get("name") == "VA Portal":
+                        score = float(result.get("score", 0))
+                        if score > 0:
+                            fallback_scores[sap_id] = score
+                        break
+
+                break  # stop after VA module
+
+    return fallback_scores
+
+
 
 async def generate_performance_score(bu, location_id=None):
     """Generating Performance Score per location for the given BU"""
@@ -67,6 +136,26 @@ WHERE bu = '{bu}'
     ins = get_performance_score_instance(bu)
     await ins.initialize()
     va_data = await fetch_va_score(bu)
+    fallback_scores = await validate_locations_from_history(
+        bu,
+        location_id,
+        va_data
+    )
+
+    # Merge fallback VA scores into va_data
+    for sap_id, score in fallback_scores.items():
+        va_data[sap_id] = {
+            "LOCATION_ID": sap_id,
+            "OVERALL_SCORE": str(score),
+            "DATE": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
+            "FALLBACK": True
+        }
+
+
+    logger.info(f"Fallback applied for locations: {list(fallback_scores.keys())}")
+
+
+    
     # generating performance score for every plant
     performance_score = {}
     present_timestamp = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d")
@@ -212,6 +301,9 @@ Examples:
         print("-" * 50)
         
         await generate_performance_score(bu, location_id)
+    
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
+

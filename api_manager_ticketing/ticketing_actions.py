@@ -93,7 +93,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     
 
     tdata = data.model_dump()
-    auto_close_flag_raw = tdata.get("auto_close_on_alert_close", "")
+    auto_close_flag_raw = tdata.get("auto_ticket_close", "")
     auto_close_flag = False
 
     if str(auto_close_flag_raw).lower() in ["yes", "true", "1"]:
@@ -299,6 +299,8 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     if clean_linked_ids and all_alerts_closed and auto_close_flag:
         ticket_state_str = "Resolved"
         ticket_data['ticket_state'] = "Resolved"
+    ticket_data["auto_ticket_close"] = "Yes" if auto_close_flag else "No"
+
 
     # Defaults
     
@@ -576,11 +578,15 @@ async def ticketing_close_ticket(data: Ticketing_Close_TicketParams):
 async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
     try:
         data_dict = data.model_dump()
-        auto_close_flag_raw = data_dict.get("auto_close_on_alert_close", "")
+        # Use payload value if sent, else use existing DB value
+        if "auto_ticket_close" in data_dict:
+            auto_close_flag_raw = data_dict.get("auto_ticket_close")
+        else:
+            auto_close_flag_raw = existing_ticket.get("auto_ticket_close", False)
 
-        auto_close_flag = False  # default safe behavior
-
-        if str(auto_close_flag_raw).lower() in ["yes", "true", "1"]:
+        # Normalize to boolean
+        auto_close_flag = False
+        if str(auto_close_flag_raw).lower() in ["yes", "true", "1"] or auto_close_flag_raw is True:
             auto_close_flag = True
 
 
@@ -707,6 +713,13 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
 
 
         data_dict["ticket_history"] = updated_history
+        data_dict["auto_ticket_close"] = auto_close_flag
+        if "auto_ticket_close" in data_dict:
+            val = data_dict["auto_ticket_close"]
+            if str(val).lower() in ["yes", "true", "1"]:
+                data_dict["auto_ticket_close"] = "Yes"
+            else:
+                data_dict["auto_ticket_close"] = "No"
 
         await Ticketing(id=ticket_id, **data_dict).modify()
 
@@ -787,7 +800,8 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             "message": "Ticket updated successfully",
             "data": {
                 "ticket_id": ticket_id,
-                "ticket_history": updated_history
+                "ticket_history": updated_history,
+                "auto_ticket_close": "Yes" if auto_close_flag else "No"
             }
         }
 
@@ -974,10 +988,11 @@ async def ticketing_download_file_attachment(data: Ticketing_Download_File_Attac
 # Action update_assignee
 @router.post('/update_assignee', tags=['Ticketing'])
 async def ticketing_update_assignee(data: Ticketing_Update_AssigneeParams):
-    ticket_id = data.ticket_id
-    new_assignee = data.assignee
 
-    # Check if ticket exists
+    ticket_id = data.ticket_id
+    assignee_name = data.assignee_name or []
+    assignee_mail = data.assignee_mail or []
+
     params = QueryParams()
     params.q = f"id='{ticket_id}'"
     params.limit = 1
@@ -986,20 +1001,22 @@ async def ticketing_update_assignee(data: Ticketing_Update_AssigneeParams):
     if not ticket_resp or len(ticket_resp.get("data", [])) == 0:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    # Update assignee
     await Ticketing(**{
         "id": ticket_id,
-        "assignee": new_assignee
+        "assignee_name": assignee_name,
+        "assignee_mail": assignee_mail
     }).modify()
 
     return {
         "status": True,
-        "message": f"Ticket {ticket_id} assigned to {new_assignee} successfully",
+        "message": f"Assignee updated successfully",
         "data": {
             "ticket_id": ticket_id,
-            "assignee": new_assignee
+            "assignee_name": assignee_name,
+            "assignee_mail": assignee_mail
         }
     }
+
 
 
 # Action update_reporter
