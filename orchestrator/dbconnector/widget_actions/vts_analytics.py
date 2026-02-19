@@ -1583,9 +1583,7 @@ class VTSAnalyticsActions:
             sql_parts = VTSAnalyticsActions._format_vts_drill_down_query_parts(payload, violation_type, filters, cross_filters)
             
             # Format the query with all parts
-            formatted_query = base_query.format(**sql_parts)
-                    
-            
+            formatted_query = base_query.format(**sql_parts)                    
             #  Execute query
             result_df = await VTSAnalyticsActions.execute_query(formatted_query, engine="polars")
             
@@ -1603,6 +1601,7 @@ class VTSAnalyticsActions:
             print("Error in vts_drill_down_violation:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
 
+    
     @staticmethod
     def _format_vts_drill_down_query_parts(payload, violation_type, filters=None, cross_filters=None):
         """
@@ -1631,12 +1630,22 @@ class VTSAnalyticsActions:
         filters = filters or []
         cross_filters = cross_filters or []
 
-        # Build bu filter from filters
+        # Build filters from filters list and track what's filtered
         bu_filter = ""
+        zone_filter_from_filters = ""
+        sap_id_filter = ""
+        has_zone_filter = False
+        has_sap_id_filter = False
+        
         for f in filters:
             if f.key == "bu":
                 bu_filter = f"AND vah.bu = '{f.value}'"
-                break
+            elif f.key == "zone":
+                zone_filter_from_filters = f"AND vah.zone = '{f.value}'"
+                has_zone_filter = True
+            elif f.key == "sap_id":
+                sap_id_filter = f"AND vah.sap_id = '{f.value}'"
+                has_sap_id_filter = True
         
         # Build date filter from cross_filters
         date_filter = ""
@@ -1651,8 +1660,9 @@ class VTSAnalyticsActions:
         # Determine if we need transporter join
         needs_join = bool(transporter or location)
         
-        # Build filter clauses (only add zone filter if zone is specific value, not "true")
-        zone_filter = f"AND vah.zone = '{zone}'" if zone and not zone_is_true else ""
+        # Build filter clauses for payload-based filters
+        # Priority: zone from filters list > zone from payload (if specific value, not "true")
+        zone_filter = zone_filter_from_filters if zone_filter_from_filters else (f"AND vah.zone = '{zone}'" if zone and not zone_is_true else "")
         location_filter = f"AND vah.location_name = '{location}'" if location else ""
         transporter_filter = f"AND vtm.transporter_name = '{transporter}'" if transporter else ""
         
@@ -1667,6 +1677,7 @@ class VTSAnalyticsActions:
                 'transporter_filter': transporter_filter,
                 'tl_filter': f"AND vah.tl_number = '{tl_number}'",
                 'bu_filter': bu_filter,
+                'sap_id_filter': sap_id_filter,
                 'date_filter': date_filter,
                 'group_clause': f"GROUP BY vah.invoice_number, DATE(vah.vts_end_datetime), vah.{violation_type}",
                 'order_clause': "ORDER BY created_at"
@@ -1678,19 +1689,19 @@ class VTSAnalyticsActions:
             # Drill to vehicle level
             drill_col = "vah.tl_number"
             col_name = "tl_number"
-            needs_join = True  # Need join for transporter filter
+            needs_join = True
         elif location:
             # Drill to transporter level
             drill_col = "vtm.transporter_name"
             col_name = "transporter_name"
-            needs_join = True  # Need join to show transporter
+            needs_join = True
         elif zone and not zone_is_true:
-            # Specific zone value (e.g., "SZ") - drill to location level
+            # Specific zone value from payload (e.g., "SZ") - drill to location level
             drill_col = "vah.location_name"
             col_name = "location_name"
             needs_join = False
         elif zone_is_true:
-            # zone="true" - show zone breakdown
+            # zone="true" from payload - show zone breakdown
             drill_col = "COALESCE(vah.zone, 'UNKNOWN')"
             col_name = "zone"
             needs_join = False
@@ -1705,26 +1716,62 @@ class VTSAnalyticsActions:
             col_name = "zone"
             needs_join = False
         
+        # Additional grouping based on filters
+        additional_group_cols = []
+        additional_select_cols = []
+        
+        # If zone is in filters, add zone to GROUP BY and SELECT (but avoid duplication with drill_col)
+        if has_zone_filter:
+            # Only add if drill_col is not already zone-related
+            if drill_col not in ["COALESCE(vah.zone, 'UNKNOWN')", "vah.zone"]:
+                additional_select_cols.append("vah.zone")
+                additional_group_cols.append("vah.zone")
+        
+        # If sap_id is in filters, add location_name to GROUP BY and SELECT (but avoid duplication)
+        if has_sap_id_filter:
+            if drill_col != "vah.location_name":
+                additional_select_cols.append("vah.location_name")
+                additional_group_cols.append("vah.location_name")
+        
         # Build SELECT, GROUP BY, ORDER BY dynamically
         if date_wise:
-            # Date-wise aggregation - build parts dynamically
+            # Date-wise aggregation
             drill_part = f"{drill_col} AS {col_name}," if drill_col else ""
-            group_drill_part = f" , {drill_col}" if drill_col else ""
+            additional_select_part = (", ".join(additional_select_cols) + ",") if additional_select_cols else ""
+            
+            group_drill_part = f", {drill_col}" if drill_col else ""
+            additional_group_part = (", " + ", ".join(additional_group_cols)) if additional_group_cols else ""
             
             select_clause = f"""DATE(vah.vts_end_datetime) AS created_at,
+                            {additional_select_part}
                             {drill_part} COUNT(DISTINCT vah.invoice_number) AS invoice_count, 
                             COUNT(DISTINCT vah.tl_number) AS vehicle_count, 
                             SUM(vah.{violation_type}) AS {violation_type}"""
             
-            group_clause = f"GROUP BY DATE(vah.vts_end_datetime) {group_drill_part}"
+            group_clause = f"GROUP BY DATE(vah.vts_end_datetime){additional_group_part}{group_drill_part}"
             order_clause = "ORDER BY created_at"
         else:
             # Summary aggregation (no date grouping)
-            select_clause = f"""{drill_col} AS {col_name}, 
-                            COUNT(DISTINCT vah.invoice_number) AS invoice_count, 
+            additional_select_part = (", ".join(additional_select_cols) + ",") if additional_select_cols else ""
+            additional_group_part = (", ".join(additional_group_cols)) if additional_group_cols else ""
+            
+            # Build drill part
+            drill_part = f"{drill_col} AS {col_name}," if drill_col else ""
+            
+            # Combine select parts
+            select_clause = f"""{additional_select_part}
+                            {drill_part} COUNT(DISTINCT vah.invoice_number) AS invoice_count, 
                             COUNT(DISTINCT vah.tl_number) AS vehicle_count, 
                             SUM(vah.{violation_type}) AS {violation_type}"""
-            group_clause = f"GROUP BY {drill_col}"
+            
+            # Build group clause - combine additional and drill columns
+            group_parts = []
+            if additional_group_part:
+                group_parts.append(additional_group_part)
+            if drill_col:
+                group_parts.append(drill_col)
+            
+            group_clause = f"GROUP BY {', '.join(group_parts)}" if group_parts else ""
             order_clause = "ORDER BY invoice_count DESC"
         
         return {
@@ -1736,12 +1783,12 @@ class VTSAnalyticsActions:
             'transporter_filter': transporter_filter,
             'tl_filter': "",
             'bu_filter': bu_filter,
+            'sap_id_filter': sap_id_filter,
             'date_filter': date_filter,
             'group_clause': group_clause,
             'order_clause': order_clause
         }
 
-        
 
     @staticmethod
     async def vts_drill(filters, cross_filters, drill_state, payload):
