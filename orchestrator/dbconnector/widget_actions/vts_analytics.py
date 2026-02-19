@@ -1583,11 +1583,7 @@ class VTSAnalyticsActions:
             sql_parts = VTSAnalyticsActions._format_vts_drill_down_query_parts(payload, violation_type, filters, cross_filters)
             
             # Format the query with all parts
-            formatted_query = base_query.format(**sql_parts)
-
-            print("Formatted Drill-Down Query:", formatted_query)
-                    
-            
+            formatted_query = base_query.format(**sql_parts)                    
             #  Execute query
             result_df = await VTSAnalyticsActions.execute_query(formatted_query, engine="polars")
             
