@@ -124,7 +124,7 @@ async def get_shortage_data(filters, cross_filters, bu_ic, violation_types):
                             COALESCE(NULLIF(TRIM(qty_shortage), 'NaN'), '0.0')::NUMERIC AS qty_shortage, \
                             material_group_nm
                      FROM sales_trips_till_date
-                     WHERE load_status = '6' \
+                     WHERE load_status in ('6','7') \
                      """
 
     conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, shortage_query)
@@ -782,7 +782,7 @@ class VTSAnalyticsActions:
                     all_conditions.append("sales_org = '7000'")
                     all_conditions.append("(qty_shortage > '0')")
                 elif bu == 'LPG':
-                    all_conditions.append("division in ('20', '21')")
+                    all_conditions.append("division in ('20', '80')")
                     all_conditions.append("sales_org = '2000'")
                     all_conditions.append("(qty_shortage > '0')")
                 elif bu == 'I&C':
@@ -1500,7 +1500,7 @@ class VTSAnalyticsActions:
                 SUM(qty_shortage::numeric) as qty_shortage 
             FROM sales_trips_till_date
             WHERE
-                load_status = '6'
+                load_status in ('6', '7')
             GROUP BY vehicle_id, invoice_no, sap_id
             """
             
@@ -1870,7 +1870,7 @@ class VTSAnalyticsActions:
                     shortage_query = """
                         SELECT *
                         FROM sales_trips_till_date
-                        WHERE load_status = '6'
+                        WHERE load_status in ('6', '7')
                     """
                     shortage_conditions = VTSAnalyticsActions.build_filter_conditions(
                         filters, cross_filters, shortage_query
@@ -2757,7 +2757,7 @@ class VTSAnalyticsActions:
             SELECT *     
             FROM 
                 sales_trips_till_date T
-            WHERE load_status = '6'
+            WHERE load_status in ('6', '7')
         """
         sql_filters = [f for f in filters if getattr(f, "key", None) != "transporter_name"]    
         conditions = VTSAnalyticsActions.build_filter_conditions(sql_filters, cross_filters, trips_query)
@@ -2789,6 +2789,7 @@ class VTSAnalyticsActions:
                 .str.strip()
                 .str.replace(r'^00', '', regex=True)
             )
+            
 
             # Ensure transporter_code is unique
             email_df = email_df.drop_duplicates(subset=['transporter_code'])
@@ -2846,18 +2847,18 @@ class VTSAnalyticsActions:
                     
         # filtered_trips_df = filtered_trips_df.drop_duplicates()
 
-        # ----- 8. Convert load_date to IST (CRITICAL FIX: Original Logic) -----
+        # ----- 8. Convert invoice_date to IST (CRITICAL FIX: Original Logic) -----
         
         ist = pytz.timezone("Asia/Kolkata")
-        if 'load_date' in filtered_trips_df.columns:
-            filtered_trips_df['load_date'] = pd.to_datetime(filtered_trips_df['load_date'])
+        if 'invoice_date' in filtered_trips_df.columns:
+            filtered_trips_df['invoice_date'] = pd.to_datetime(filtered_trips_df['invoice_date'])
             
-            if filtered_trips_df['load_date'].dt.tz is None:
-                filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.tz_localize('UTC').dt.tz_convert(ist)
+            if filtered_trips_df['invoice_date'].dt.tz is None:
+                filtered_trips_df['invoice_date'] = filtered_trips_df['invoice_date'].dt.tz_localize('UTC').dt.tz_convert(ist)
             else:
-                filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.tz_convert(ist)
+                filtered_trips_df['invoice_date'] = filtered_trips_df['invoice_date'].dt.tz_convert(ist)
                 
-            filtered_trips_df['load_date'] = filtered_trips_df['load_date'].dt.strftime("%Y-%m-%d %H:%M:%S%z")
+            filtered_trips_df['invoice_date'] = filtered_trips_df['invoice_date'].dt.strftime("%Y-%m-%d %H:%M:%S%z")
 
         # ----- 9. Dynamic hierarchical grouping (Original Logic) -----
         
@@ -2910,8 +2911,8 @@ class VTSAnalyticsActions:
                     elif next_cols[0] == "invoice_no":
                         item["invoices"] = child
                 else:
-                    if current_col == "invoice_no" and "load_date" in group.columns:
-                        item["load_date"] = group["load_date"].iloc[0]
+                    if current_col == "invoice_no" and "invoice_date" in group.columns:
+                        item["invoice_date"] = group["invoice_date"].iloc[0]
                     
 
                 result.append(item)
@@ -2951,7 +2952,7 @@ class VTSAnalyticsActions:
                     'plant_nm': 'first',
                     'zone_nm': 'first',
                     'transporter_name': 'first',
-                    'load_date': 'first'
+                    'invoice_date': 'first'
                 })
             )
 
@@ -2983,7 +2984,7 @@ class VTSAnalyticsActions:
                     # Optional: search only in specific columns
                     search_cols = [
                         "vehicle_id","invoice_no","plant_nm",
-                        "zone_nm","transporter_name","product_bifurcation","load_date","shortage"
+                        "zone_nm","transporter_name","product_bifurcation","invoice_date","shortage"
                     ]
                     search_cols = [c for c in search_cols if c in table_df.columns]
 
