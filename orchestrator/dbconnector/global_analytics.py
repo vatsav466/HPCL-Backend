@@ -5564,7 +5564,8 @@ class GlobalAnalytics:
                 "Tank Leakage",
                 "Ups",
                 "Primary Level",
-                "Lrc Switchover"
+                "Lrc Switchover",
+                "Gantry Override"
             ]
 
             # Modified to store equipment_name alongside alert_category
@@ -5581,7 +5582,8 @@ class GlobalAnalytics:
                 "Tank Leakage": ["Tank leakage alarm"],
                 "Ups": ["UPS_Fail"],
                 "Primary Level": ["Primary Radar Guage_H alarm", "Primary Radar Guage_HH alarm"],
-                "Lrc Switchover": ["LRC Master Switchover required in 30 days"]
+                "Lrc Switchover": ["LRC Master Switchover required in 30 days"],
+                "Gantry Override": ["Gantry Permissive_Override"]
             }
 
             # Create a flat list of all specified interlock names
@@ -5593,6 +5595,7 @@ class GlobalAnalytics:
                     zone,
                     interlock_name,
                     location_name,
+                    closed_at,
                     COUNT(*) AS alert_count
                 FROM alerts
                 WHERE bu = 'TAS' AND alert_section = 'TAS'
