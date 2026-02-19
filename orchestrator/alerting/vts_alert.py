@@ -54,7 +54,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             f"for bu {alert_data['location_type']} - {location_details}")
                 location_details = {}
 
-        instance_data, violation_name, vts_alert_history_ids = await vts_analysis.get_vts_instance(alert_data['tl_number'],alert_data['base_location_id'],alert_data['location_type'])
+        instance_data, violation_name, vts_alert_history_ids = await vts_analysis.get_vts_instance(alert_data['tl_number'],alert_data['base_location_id'],alert_data['location_type'],alert_data.get('tt_type',''))
         if not instance_data:
             logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
             return
@@ -103,15 +103,13 @@ class VTSAlertManager(alert_factory.AlertFactory):
         vts_alert_data['vts_alert_history_ids'] = vts_alert_history_ids
         vts_alert_data['alert_timestamp'] = alert_data['vts_end_datetime'].isoformat()
         vts_alert_data['transporter_name'] = ''
+        vts_alert_data['tt_type'] = alert_data.get('tt_type','')
         vts_alert_data['transporter_code'] = alert_data['vendor_id']
         vts_alert_data['device_id'] = instance_data['instance']
         vts_alert_data['device_name'] = instance
         vts_alert_data['equipment_name'] = interlock_name
-        vts_alert_data['vehicle_blocked_start_date'] = (
-                urdhva_base.utilities.get_present_time() +
-                datetime.timedelta(days=1)
-        ).isoformat()
-        days_to_add = instance_data['block_duration'] + 1 if not await vts_analysis.is_vehicle_blacklisted(alert_data['tl_number']) else 1826
+        vts_alert_data['vehicle_blocked_start_date'] = urdhva_base.utilities.get_present_time().isoformat()
+        days_to_add = instance_data['block_duration'] if not await vts_analysis.is_vehicle_blacklisted(alert_data['tl_number']) else 1826
         vts_alert_data['vehicle_blocked_end_date'] = urdhva_base.utilities.get_present_time() + datetime.timedelta(days=days_to_add)
         # vts_alert_data['vehicle_blocked_end_date'] = (
         #         urdhva_base.utilities.get_present_time() +
