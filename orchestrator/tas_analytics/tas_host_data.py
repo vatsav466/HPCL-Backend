@@ -13,12 +13,23 @@ async def fetch_host_tables_as_dfs(data):
     # Build base conditions
     # ---------------------------
     conditions = []
+    bay_filter_values = []  # NEW: capture bay filter separately
 
     if data.filters:
         for f in data.filters:
 
             if not f.value:
                 continue
+
+            # -----------------------
+            # NEW: Handle bay filter
+            # -----------------------
+            if f.key == "bay":
+                if isinstance(f.value, str):
+                    bay_filter_values = [v.strip() for v in f.value.split(",") if v.strip()]
+                else:
+                    bay_filter_values = [v for v in f.value if v]
+                continue  # Don't add to SQL conditions
 
             # -----------------------
             # Handle date range
@@ -79,7 +90,6 @@ async def fetch_host_tables_as_dfs(data):
                     conditions.append(f"{f.key} NOT IN ({values})")
 
     query_str = " AND ".join(conditions) if conditions else "1=1"
-
     params = urdhva_base.queryparams.QueryParams(q=query_str, limit=0)
 
     alerts_query = (
@@ -141,6 +151,7 @@ async def fetch_host_tables_as_dfs(data):
                 row["net_totalizer"] = round(float(row["net_totalizer"]), 2)
     
     unauthorised_flow_df = pl.DataFrame(unauthorised_flow_data)
+
     
     # Filter out rows where net_totalizer is 0 or null
     if len(unauthorised_flow_df) > 0 and "net_totalizer" in unauthorised_flow_df.columns:
@@ -148,7 +159,6 @@ async def fetch_host_tables_as_dfs(data):
             (pl.col("net_totalizer").is_not_null()) & 
             (pl.col("net_totalizer") > 0)
         )
-
 
 
     total_bcu_count = 0
@@ -181,6 +191,13 @@ async def fetch_host_tables_as_dfs(data):
         alerts_df = alerts_df.unique(subset=["vehicle_number", "created_at"])
         if "device_name" in alerts_df.columns:
             alerts_df = alerts_df.with_columns(pl.col("device_name").str.extract(r"BC-(\d{2})", 1).alias("bay_number"))
+        
+        # NEW: Filter alerts_df by bay if provided
+        if bay_filter_values and "bay_number" in alerts_df.columns:
+            padded_bays = [b.zfill(2) for b in bay_filter_values]
+            alerts_df = alerts_df.filter(
+                pl.col("bay_number").is_in(padded_bays)
+            )
 
     if len(day_end_df) > 0 and "bcu_number" in day_end_df.columns:
         day_end_df = day_end_df.with_columns(pl.col("bcu_number").str.extract(r"BC-(\d+)", 1).alias("bay_number_extracted"))
@@ -200,6 +217,13 @@ async def fetch_host_tables_as_dfs(data):
         if "truck_number" in combined_df.columns:
             combined_df = combined_df.filter((pl.col("truck_number").str.len_chars() >= 9) & pl.col("truck_number").str.contains(r"[A-Z]") & 
                 pl.col("truck_number").str.contains(r"[0-9]") & pl.col("truck_number").str.contains(r"^[A-Z0-9]+$"))
+
+        # NEW: Filter combined_df by bay if provided
+        if bay_filter_values and "assigned_bay" in combined_df.columns:
+            padded_bays = [b.zfill(2) for b in bay_filter_values]
+            combined_df = combined_df.filter(
+                pl.col("assigned_bay").cast(pl.Utf8).str.zfill(2).is_in(padded_bays)
+            )
 
         if "loaded_qty" in combined_df.columns:
             combined_df = combined_df.with_columns(pl.col("loaded_qty").sum().over(["truck_number", "created_at"]).alias("cumulative_loaded_qty"))
@@ -304,9 +328,11 @@ async def fetch_host_tables_as_dfs(data):
         combined_df = combined_df[['truck_number', 'created_at', 'zone' ,'sap_id', 'location_name','load_number', 'product_name', 'required_qty', 'loaded_qty','overloaded_qty','cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 
                                 'Alerts_Count', 'Gantry_Permissive_off_Count', 'MFM_VS_BCU','BCU_VS_INVOICE', 'Cross checked ManuallyAP system', 'table_name']]
    
-    # combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_tesinggantry.csv")
+
 
     return combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count, unauthorised_flow_df
 
+# combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_tesinggantry.csv")
+
 # if __name__ == "__main__":
-    # asyncio.run(fetch_host_tables_as_dfs(SimpleNamespace(filters=[])))
+#   asyncio.run(fetch_host_tables_as_dfs(SimpleNamespace(filters=[])))
