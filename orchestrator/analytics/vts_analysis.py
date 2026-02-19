@@ -921,6 +921,7 @@ async def create_vts_alerts(enriched_data):
             entry["region"] = location_data.get("region")
             entry["zone"] = location_data.get("zone")
             entry["location_name"] = location_data.get("name")
+            entry['tt_type'] = entry.get("tt_type", "").lower()
 
 
             await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()

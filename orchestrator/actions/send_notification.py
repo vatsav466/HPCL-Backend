@@ -1159,6 +1159,8 @@ class SendNotification:
                     rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4'):
                     rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                elif self.alert_data.get('tt_type','') in ['packed']:
+                    rolemapping = role_configuration.lpg_packed_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if mailto and mailto in ["0","1","2"]:
                     return rolemapping["rolemailto"].get(mailto,"")
             if self.alert_data['created_at']> datetime.datetime(2025, 10, 3, 13, 20, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
@@ -1199,6 +1201,8 @@ class SendNotification:
                     rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4'):
                     rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
+                elif self.alert_data.get('tt_type','') in ['packed']:
+                    rolemapping = role_configuration.lpg_packed_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 if mqof and mqof in ["0","1","2"]:
                     return rolemapping["mqof"].get(mqof,"")
             if self.alert_data['created_at']> datetime.datetime(2025, 10, 3, 13, 20, 0) and self.alert_data['bu'] in ['TAS'] and self.alert_data['violation_type'] not in ['device_tamper_count','main_supply_removal_count']:
