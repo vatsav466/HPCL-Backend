@@ -4352,6 +4352,18 @@ def calc_unauthorised_net_totalizer(df):
         return 0
     return round(float(latest.select(pl.col("net_totalizer").sum()).item()), 2)
 
+def get_difference_severity(difference, days: int) -> str:
+    scale = days / 30
+    diff = abs(difference)
+    if diff > 500 * scale:
+        return "critical"
+    elif diff >= 300 * scale:
+        return "high"
+    elif diff >= 50 * scale:
+        return "medium"
+    else:
+        return "low"
+
 async def get_bay_counts(data):
     """
     Get location-wise counts with bay-wise breakdown for ALL locations.
@@ -4380,32 +4392,26 @@ async def get_bay_counts(data):
     overall_mfm_vs_bcu_count = 0
     overall_mfm_vs_bcu_difference = 0
     if len(day_end_df) > 0:
-        # Filter out null and zero values from both columns
-        filtered_overall = day_end_df.filter(pl.col('bcu_net_totalizer').is_not_null() & (pl.col('bcu_net_totalizer') != 0) &pl.col('mfm_net_totalizer').is_not_null() & (pl.col('mfm_net_totalizer') != 0))       
+        filtered_overall = day_end_df.filter(
+            pl.col('bcu_mfm_net_totalizer_diff').is_not_null() & 
+            (pl.col('bcu_mfm_net_totalizer_diff') != 0)
+        )
         if len(filtered_overall) > 0:
-            total_bcu = filtered_overall.select(pl.col("bcu_net_totalizer").sum()).item()
-            total_mfm = filtered_overall.select(pl.col("mfm_net_totalizer").sum()).item()           
-            overall_mfm_vs_bcu_difference = (total_bcu - total_mfm)
-            mismatches = filtered_overall.filter(pl.col("bcu_net_totalizer") != pl.col("mfm_net_totalizer"))
-            overall_mfm_vs_bcu_count = len(mismatches)
-    
+            overall_mfm_vs_bcu_difference = filtered_overall.select(pl.col("bcu_mfm_net_totalizer_diff").sum()).item() 
+            overall_mfm_vs_bcu_count = len(filtered_overall)  
+
     # Calculate OVERALL BCU_VS_INVOICE count and difference
     overall_bcu_vs_invoice_count = 0
     overall_bcu_vs_invoice_difference = 0
     if len(day_end_df) > 0:
-        # Filter out null/zero invoiced_qty and null/zero bcu_net_totalizer
-        filtered_overall = day_end_df.filter(pl.col('bcu_net_totalizer').is_not_null() & (pl.col('bcu_net_totalizer') != 0) &pl.col('invoiced_qty').is_not_null() & (pl.col('invoiced_qty') != 0))
-        
+        filtered_overall = day_end_df.filter(
+            pl.col('invoiced_bcu_net_qty_diff').is_not_null() & 
+            (pl.col('invoiced_bcu_net_qty_diff') != 0)
+        )
         if len(filtered_overall) > 0:
-            # Calculate total sums first
-            total_bcu = filtered_overall.select(pl.col("bcu_net_totalizer").sum()).item()
-            total_invoice = filtered_overall.select(pl.col("invoiced_qty").sum()).item()            
-            # Calculate difference (SUM(bcu) - SUM(invoice))
-            overall_bcu_vs_invoice_difference = (total_bcu - total_invoice)           
-            # Count records where individual values differ
-            mismatches = filtered_overall.filter(pl.col("bcu_net_totalizer") != pl.col("invoiced_qty"))
-            overall_bcu_vs_invoice_count = len(mismatches)
-    
+            overall_bcu_vs_invoice_difference = filtered_overall.select(pl.col("invoiced_bcu_net_qty_diff").sum()).item()  
+            overall_bcu_vs_invoice_count = len(filtered_overall) 
+        
     # Calculate OVERALL total counts (all locations combined)
     overall_alerts_count = 0
     if len(alerts_df) > 0:
@@ -4463,7 +4469,8 @@ async def get_bay_counts(data):
         "MFM_VS_BCU": overall_mfm_vs_bcu_count,
         "MFM_VS_BCU_difference": overall_mfm_vs_bcu_difference,
         "BCU_VS_INVOICE": overall_bcu_vs_invoice_count,
-        "BCU_VS_INVOICE_difference": overall_bcu_vs_invoice_difference
+        "BCU_VS_INVOICE_difference": overall_bcu_vs_invoice_difference,
+
     }
     
     # Get unique locations
@@ -4506,38 +4513,21 @@ async def get_bay_counts(data):
         location_mfm_vs_bcu_difference = 0
         if len(location_day_end_df) > 0:
             # Filter out null and zero values from both columns
-            filtered_location = location_day_end_df.filter(pl.col('bcu_net_totalizer').is_not_null() & (pl.col('bcu_net_totalizer') != 0) & pl.col('mfm_net_totalizer').is_not_null() & (pl.col('mfm_net_totalizer') != 0))
-            
+            filtered_location = location_day_end_df.filter(pl.col('bcu_mfm_net_totalizer_diff').is_not_null() & (pl.col('bcu_mfm_net_totalizer_diff') != 0))
             if len(filtered_location) > 0:
-                # Calculate total sums first
-                total_bcu = filtered_location.select(pl.col("bcu_net_totalizer").sum()).item()
-                total_mfm = filtered_location.select(pl.col("mfm_net_totalizer").sum()).item()
-                
-                # Calculate difference
-                location_mfm_vs_bcu_difference = (total_bcu - total_mfm)
-                
-                # Count mismatches
-                mismatches = filtered_location.filter(pl.col("bcu_net_totalizer") != pl.col("mfm_net_totalizer"))
-                location_mfm_vs_bcu_count = len(mismatches)
+                location_mfm_vs_bcu_difference = filtered_location.select(pl.col("bcu_mfm_net_totalizer_diff").sum()).item()
+                location_mfm_vs_bcu_count = len(filtered_location)
         
         # Calculate location-level BCU_VS_INVOICE count and difference
         location_bcu_vs_invoice_count = 0
         location_bcu_vs_invoice_difference = 0
         if len(location_day_end_df) > 0:
             # Filter out null/zero invoiced_qty and null/zero bcu_net_totalizer
-            filtered_location = location_day_end_df.filter(pl.col('bcu_net_totalizer').is_not_null() & (pl.col('bcu_net_totalizer') != 0) &pl.col('invoiced_qty').is_not_null() & (pl.col('invoiced_qty') != 0))
-            
+            filtered_location = location_day_end_df.filter(pl.col('invoiced_bcu_net_qty_diff').is_not_null() & (pl.col('invoiced_bcu_net_qty_diff') != 0))
             if len(filtered_location) > 0:
-                # Calculate total sums first
-                total_bcu = filtered_location.select(pl.col("bcu_net_totalizer").sum()).item()
-                total_invoice = filtered_location.select(pl.col("invoiced_qty").sum()).item()
-                
-                # Calculate difference
-                location_bcu_vs_invoice_difference = (total_bcu - total_invoice)
-                
-                # Count mismatches
-                mismatches = filtered_location.filter(pl.col("bcu_net_totalizer") != pl.col("invoiced_qty"))
-                location_bcu_vs_invoice_count = len(mismatches)
+                location_bcu_vs_invoice_difference = filtered_location.select(pl.col("invoiced_bcu_net_qty_diff").sum()).item()
+                location_bcu_vs_invoice_count = len(filtered_location)
+
         
         # Calculate Gantry_Permissive_off_Count for this location
         location_gantry_count = 0
@@ -4592,21 +4582,26 @@ async def get_bay_counts(data):
             "MFM_VS_BCU": location_mfm_vs_bcu_count,
             "MFM_VS_BCU_difference": location_mfm_vs_bcu_difference,
             "BCU_VS_INVOICE": location_bcu_vs_invoice_count,
-            "BCU_VS_INVOICE_difference": location_bcu_vs_invoice_difference
+            "BCU_VS_INVOICE_difference": location_bcu_vs_invoice_difference,
+
         }
         
         # Get unique bay numbers for this location
-        unique_bays = location_combined_df.select("assigned_bay").unique().sort("assigned_bay")
-        
+        unique_bays = pl.DataFrame({"bay": []}, schema={"bay": pl.Utf8})
+        if len(location_day_end_df) > 0 and "bay_number_extracted" in location_day_end_df.columns:
+            unique_bays = location_day_end_df.select(pl.col("bay_number_extracted").alias("bay")).unique().sort("bay")
+
         # Calculate counts for each bay
         bays_data = []
-        
+
         for bay_row in unique_bays.iter_rows(named=True):
-            bay_number = bay_row.get("assigned_bay")
+            bay_number = bay_row.get("bay")
             bay_number_str = str(bay_number).zfill(2)
-            
+
             # Filter data for this specific bay
-            bay_combined_df = location_combined_df.filter(pl.col("assigned_bay") == bay_number)
+            bay_combined_df = location_combined_df.filter(
+                pl.col("assigned_bay").cast(pl.Utf8).str.zfill(2) == bay_number_str
+            )
             
             # Filter unauthorised flow for this bay
             bay_unauthorised_df = location_unauthorised_df
@@ -4635,19 +4630,10 @@ async def get_bay_counts(data):
                 
                 if len(bay_day_end) > 0:
                     # Filter out null and zero values from both columns
-                    filtered_bay = bay_day_end.filter(pl.col('bcu_net_totalizer').is_not_null() & (pl.col('bcu_net_totalizer') != 0) & pl.col('mfm_net_totalizer').is_not_null() & (pl.col('mfm_net_totalizer') != 0))
-                    
+                    filtered_bay = bay_day_end.filter(pl.col('bcu_mfm_net_totalizer_diff').is_not_null() & (pl.col('bcu_mfm_net_totalizer_diff') != 0))
                     if len(filtered_bay) > 0:
-                        # Calculate total sums first
-                        total_bcu = filtered_bay.select(pl.col("bcu_net_totalizer").sum()).item()
-                        total_mfm = filtered_bay.select(pl.col("mfm_net_totalizer").sum()).item()
-                        
-                        # Calculate difference
-                        bay_mfm_vs_bcu_difference = (total_bcu - total_mfm)
-                        
-                        # Count mismatches
-                        mismatches = filtered_bay.filter(pl.col("bcu_net_totalizer") != pl.col("mfm_net_totalizer"))
-                        bay_mfm_vs_bcu_count = len(mismatches)
+                        bay_mfm_vs_bcu_difference = filtered_bay.select(pl.col("bcu_mfm_net_totalizer_diff").sum()).item()
+                        bay_mfm_vs_bcu_count = len(filtered_bay)
             
             # Calculate bay-specific BCU_VS_INVOICE count and difference
             bay_bcu_vs_invoice_count = 0
@@ -4656,18 +4642,10 @@ async def get_bay_counts(data):
                 bay_day_end = location_day_end_df.filter(pl.col("bay_number_extracted") == bay_number_str)
                 
                 if len(bay_day_end) > 0:
-                    # Filter out null/zero invoiced_qty and null/zero bcu_net_totalizer
-                    filtered_bay = bay_day_end.filter(pl.col('bcu_net_totalizer').is_not_null() & (pl.col('bcu_net_totalizer') != 0) &pl.col('invoiced_qty').is_not_null() & (pl.col('invoiced_qty') != 0))
-                    
+                    filtered_bay = bay_day_end.filter(pl.col('invoiced_bcu_net_qty_diff').is_not_null() & (pl.col('invoiced_bcu_net_qty_diff') != 0))
                     if len(filtered_bay) > 0:
-                        # Calculate total sums first
-                        total_bcu = filtered_bay.select(pl.col("bcu_net_totalizer").sum()).item()
-                        total_invoice = filtered_bay.select(pl.col("invoiced_qty").sum()).item()                       
-                        # Calculate difference
-                        bay_bcu_vs_invoice_difference = (total_bcu - total_invoice)                      
-                        # Count mismatches
-                        mismatches = filtered_bay.filter(pl.col("bcu_net_totalizer") != pl.col("invoiced_qty"))
-                        bay_bcu_vs_invoice_count = len(mismatches)
+                        bay_bcu_vs_invoice_difference = filtered_bay.select(pl.col("invoiced_bcu_net_qty_diff").sum()).item()
+                        bay_bcu_vs_invoice_count = len(filtered_bay)
             
             # Calculate unique trucks for this bay
             bay_unique_truck_count = bay_combined_df.select("truck_number").unique().height if len(bay_combined_df) > 0 else 0
@@ -4736,8 +4714,11 @@ async def get_bay_counts(data):
                     "Gantry_Permissive_off_Count": bay_gantry_count,
                     "MFM_VS_BCU": bay_mfm_vs_bcu_count,
                     "MFM_VS_BCU_difference": bay_mfm_vs_bcu_difference,
+                    "MFM_VS_BCU_severity": get_difference_severity(bay_mfm_vs_bcu_difference, days),
                     "BCU_VS_INVOICE": bay_bcu_vs_invoice_count,
-                    "BCU_VS_INVOICE_difference": bay_bcu_vs_invoice_difference
+                    "BCU_VS_INVOICE_difference": bay_bcu_vs_invoice_difference,
+                    "BCU_VS_INVOICE_severity": get_difference_severity(bay_bcu_vs_invoice_difference, days)
+
                 }
             }
             
