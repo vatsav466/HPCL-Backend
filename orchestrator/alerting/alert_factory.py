@@ -200,6 +200,7 @@ class AlertFactory:
                                                         'workflow_port': alert_data.get('workflow_port', ''),
                                                         'vts_alert_history_ids': alert_data.get('vts_alert_history_ids',[]),
                                                         'block_status': alert_data.get('block_status',None),
+                                                        'tt_type': (alert_data.get('tt_type') or '').lower(),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -218,11 +219,12 @@ class AlertFactory:
                     bu=base_data['bu'], violation_type=alert_data.get('violation_type', ''),
                     sap_id=str(base_data['sap_id'])
                 )
-            elif alert_data.get("alert_section", '') in ["VTS"] and alert_data.get("interlock_name","") not in ["No VTS No Load"]:
+            elif alert_data.get("alert_section", '') in ["VTS"] and alert_data.get("interlock_name","") not in ["No VTS No Load","Itdg Admin Blocked"]:
                 alert_level = await vts_analysis.get_vts_levels(
                     bu=base_data['bu'], vehicle_number=alert_data.get('vehicle_number', ''),
                     sap_id=str(base_data['sap_id']),
-                    alert_section=alert_data.get('alert_section','')
+                    alert_section=alert_data.get('alert_section',''),
+                    tt_type=alert_data.get('tt_type','')
                 )
                 print("alert_level----->",alert_level)
             else:
