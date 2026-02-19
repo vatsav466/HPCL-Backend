@@ -39,7 +39,7 @@ class TicketingSchema(UrdhvaPostgresBase):
     
     ticket_name: Mapped[str] = mapped_column("ticket_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     ticket_id: Mapped[str] = mapped_column("ticket_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    alert_id: Mapped[str] = mapped_column("alert_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     bu: Mapped[typing.Any] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     alert_section: Mapped[typing.Optional[str]] = mapped_column("alert_section", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -78,6 +78,9 @@ class TicketingSchema(UrdhvaPostgresBase):
     sub_category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("sub_category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     reason: Mapped[typing.Optional[str]] = mapped_column("reason", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    auto_ticket_close: Mapped[typing.Optional[str]] = mapped_column("auto_ticket_close", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    assignee_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assignee_name", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    assignee_mail: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assignee_mail", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),)
 
@@ -87,7 +90,7 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     
     ticket_name: str
     ticket_id: str
-    alert_id: str
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
     bu: hpcl_ceg_ticketing_enum.BusinessUnit
     alert_section: typing.Optional[str] = pydantic.Field("", **{})
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -126,6 +129,9 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     reason: typing.Optional[str] = pydantic.Field("", **{})
+    auto_ticket_close: typing.Optional[str] = pydantic.Field("", **{})
+    assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -140,7 +146,7 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     
     ticket_name: typing.Optional[str] | None = None
     ticket_id: typing.Optional[str] | None = None
-    alert_id: typing.Optional[str] | None = None
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.Optional[hpcl_ceg_ticketing_enum.BusinessUnit] | None = None
     alert_section: typing.Optional[str] = pydantic.Field("", **{})
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -179,6 +185,9 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     reason: typing.Optional[str] = pydantic.Field("", **{})
+    auto_ticket_close: typing.Optional[str] = pydantic.Field("", **{})
+    assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -210,7 +219,7 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     location_name: typing.List[str]
     zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
-    alert_type: typing.List[str]
+    alert_type: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     assignee: typing.Optional[hpcl_ceg_ticketing_enum.Assignee] | None = None
     summary: str
     description: str
@@ -231,6 +240,9 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     reason: typing.Optional[str] = pydantic.Field("", **{})
+    auto_ticket_close: typing.Optional[str] = pydantic.Field("", **{})
+    assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -273,6 +285,9 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     reason: typing.Optional[str] = pydantic.Field("", **{})
+    auto_ticket_close: typing.Optional[str] = pydantic.Field("", **{})
+    assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -329,7 +344,8 @@ class Ticketing_Download_File_AttachmentParams(pydantic.BaseModel):
 
 class Ticketing_Update_AssigneeParams(pydantic.BaseModel):
     ticket_id: str
-    assignee: str
+    assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

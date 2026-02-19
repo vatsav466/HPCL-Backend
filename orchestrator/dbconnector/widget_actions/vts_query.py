@@ -663,7 +663,61 @@ vts_query = {
                 FROM alerts a, notices_vts n
                 WHERE a.alert_section = 'VTS' AND a.alert_status = 'Close'
                 AND a.vehicle_unblocked_date IS NULL AND CAST(n.alert_id AS BIGINT) = a.id
-                {final_condition}  """    
+                {final_condition}  """    ,
+
+
+                    "tt_risk_score_daily_violations": """
+                                        SELECT 
+                                            DATE(version_date) as violation_date,
+                                            dr as device_remove_count,
+                                            pd as power_disconnection_count,
+                                            rd as route_deviation_count,
+                                            st as stoppage_violations_count,
+                                            sv as speed_violation_count,
+                                            nd as night_driving_count,
+                                            ha as harsh_acceleration_count,
+                                            ht as harsh_turn_count,
+                                            hb as harsh_brake_count,
+                                            version_date
+                                        FROM public.tt_risk_score
+                                        WHERE tt_number = '{}'
+                                        ORDER BY violation_date DESC
+                                       """,
+
+    "transporter_risk_score_daily_violations": """
+                                        SELECT 
+                                            DATE(version_date) as violation_date,
+                                            dr as device_remove_count,
+                                            pd as power_disconnection_count,
+                                            rd as route_deviation_count,
+                                            st as stoppage_violations_count,
+                                            sv as speed_violation_count,
+                                            nd as night_driving_count,
+                                            ha as harsh_acceleration_count,
+                                            ht as harsh_turn_count,
+                                            hb as harsh_brake_count,
+                                            version_date
+                                        FROM public.transporter_risk_score
+                                        WHERE transporter_code = '{}'
+                                        ORDER BY violation_date DESC
+                                       """,
+
+    "risk_score_violations_table_mapping": {
+                    "tt_risk_score": "tt_risk_score_daily_violations",
+                    "transporter_risk_score": "transporter_risk_score_daily_violations"
+                },
+
+    "violation_columns_map": {
+        "device_remove_count": "Device Removal",
+        "power_disconnection_count": "Power Disconnection",
+        "route_deviation_count": "Route Deviation",
+        "stoppage_violations_count": "Stoppage Violations",
+        "speed_violation_count": "Speed Violation",
+        "night_driving_count": "Night Driving",
+        "harsh_acceleration_count": "Harsh Acceleration",
+        "harsh_turn_count": "Harsh Turn",
+        "harsh_brake_count": "Harsh Brake"
+    }
 
                               
     }

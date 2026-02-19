@@ -12,6 +12,11 @@ import dashboard_studio_model
 import utilities.va_alert_mapping as va_alert_mapping
 import utilities.lpg_role_configuration as lpg_role_configuration
 import orchestrator.dbconnector.credential_loader as credential_loader
+import time
+import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 async def get_va_headers(db_name):
@@ -61,59 +66,75 @@ async def close_va_alerts(params: dict):
         return {"status": True, "message": "Data posted successfully", "data": response.json()}
     return {"status": False, "message": "Data posting unsuccessfully", "data": response.json()}
 
-async def get_ro_terminal_scores(params: dict):
-    """
 
-    Args:
-        params:
-        {
-            LocationType(string) - RO, TAS, LPG
-            StartDate(Mandatory) - 2025-01-27(yyyy-MM-dd)
-            EndDate(Nullable) - 2025-01-27(yyyy-MM-dd) (when nullable returns only one day data W.R.T start date)
-        }
-    Returns:
-        [
-          {
-            "VENDOR_ID": "Ms_ROCKROSE_AUTO_CENTRE",
-            "LOCATION_ID": "M/s Rockrose Auto Centre ,16144210",
-            "LOCATION_TYPE": "RO",
-            "OVERALL_SCORE": "0",
-            "DATE": "2025-01-27"
-          },
-          {
-            "VENDOR_ID": "Ms_ROCKROSE_AUTO_CENTRE",
-            "LOCATION_ID": "M/s Rockrose Auto Centre ,16144210",
-            "LOCATION_TYPE": "RO",
-            "OVERALL_SCORE": "0",
-            "DATE": "2025-01-28"
-          }
-        ]
-    """
-    creds = await get_va_headers("VA_ALERT_SCORE")
-    creds['url'] = f"https://{creds['host']}/api/Platform/v1/HPCLVendor/Scores"
-    ack_datetime = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d%H%M%S")
-    headers = {
-        "Content-Type": "application/json",
-        "CustId": creds['cust_id'],
-        "MessageId": f"ACKNOWLEDGE_ALARM{ack_datetime}",
-        "Origin": creds['Origin'],
-        "Referer": creds['Referer'],
-        "UserId": creds['user'],
-        "ApplicationId": creds['application_id'],
-        "Cookie": creds['cookie'],
-        "SessionToken": creds['session_token']
+async def get_ro_terminal_scores(params: dict):
+
+    max_retries = 5
+    retry_delay = 15  # seconds
+
+    for attempt in range(0, max_retries):
+        try:
+            logger.info(f"Attempt {attempt+1} to fetch VA score")
+
+            creds = await get_va_headers("VA_ALERT_SCORE")
+            creds['url'] = f"https://{creds['host']}/api/Platform/v1/HPCLVendor/Scores"
+
+            ack_datetime = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d%H%M%S")
+
+            headers = {
+                "Content-Type": "application/json",
+                "CustId": creds['cust_id'],
+                "MessageId": f"ACKNOWLEDGE_ALARM{ack_datetime}",
+                "Origin": creds['Origin'],
+                "Referer": creds['Referer'],
+                "UserId": creds['user'],
+                "ApplicationId": creds['application_id'],
+                "Cookie": creds['cookie'],
+                "SessionToken": creds['session_token']
+            }
+
+            response = requests.get(
+                url=creds['url'], params=params, headers=headers
+            )
+
+            #  If HTTP success
+            if response.status_code // 100 == 2:
+
+                data = response.json()
+
+                if 'RespBody' in data and 'Payload' in data['RespBody']:
+                    data = json.loads(data['RespBody']['Payload'])
+                else:
+                    data = []
+
+                logger.info(f"Success on attempt {attempt}")
+                return {
+                    "status": True,
+                    "message": "Data fetched successfully",
+                    "data": data
+                }
+
+            else:
+                logger.error(
+                    f"Attempt {attempt} failed with status code {response.status_code}, resp {response.text}"
+                )
+
+        except Exception as e:
+            logger.error(f"Exception on attempt {attempt}: {str(e)}")
+
+        # Sleep before retry (if not last attempt)
+        if attempt < max_retries:
+            logger.info(f"Waiting {retry_delay} seconds before retry...")
+            await asyncio.sleep(retry_delay)
+
+
+    #  If all retries failed
+    logger.error("All retry attempts failed.")
+    return {
+        "status": False,
+        "message": "Data fetching unsuccessfully after retries",
+        "data": None
     }
-    response = requests.get(
-        url=creds['url'], params=params, headers=headers
-    )
-    if response.status_code // 100 == 2:
-        data = response.json()
-        if 'RespBody' in data.keys() and 'Payload' in data['RespBody'].keys():
-            data = json.loads(data['RespBody']['Payload'])
-        else:
-            data = []
-        return {"status": True, "message": "Data fetched successfully", "data": data}
-    return {"status": False, "message": "Data fetching unsuccessfully", "data": response.json()}
 
 async def assign_values_to_dataframe(df, values):
         """

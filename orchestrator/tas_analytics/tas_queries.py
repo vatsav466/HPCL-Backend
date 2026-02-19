@@ -262,8 +262,8 @@ TRUCK_TYPE_PATTERNS = {
 # Pattern analysis thresholds
 PATTERN_ANALYSIS_CONFIG = {
     "local_loading_repeated": {
-        "min_trucks_per_hour": 3,
-        "description": "3+ trucks within one hour window"
+        "min_trucks_per_hour": 2,
+        "description": "2+ trucks within one hour window"
     },
     "particular_time_of_day": {
         "min_days_for_pattern": 2,

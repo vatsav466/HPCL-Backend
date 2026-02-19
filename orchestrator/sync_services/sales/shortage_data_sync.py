@@ -20,20 +20,26 @@ TARGET_TABLE = "sales_trips_till_date"
 CONFLICT_COLUMNS = ["invoice_no", "vehicle_id", "sap_id", "item_no", "invoice_type"]
 
 ITEM_NAME_MAP = {
-    2812000: "HSD",
-    4210000: "EBMS 15%",
-    4383000: "EBMS 20% P95",
-    2815000: "B5 HSD",
-    2814000: "EBMS 10%",
-    4211000: "EBMS 15 % P95",
-    2813000: "EBMS 5%",
-    2820000: "B7 HSD",
-    2822000: "EBMS 20%",
-    3912000: "HSD TURBO",
-    3925000: "EBMS 12% POWER",
-    3672000: "EBMS 11% P95",
+    "2812000": "HSD",
+    "4210000": "EBMS 15%",
+    "4383000": "EBMS 20% P95",
+    "2815000": "B5 HSD",
+    "2814000": "EBMS 10%",
+    "4211000": "EBMS 15 % P95",
+    "2813000": "EBMS 5%",
+    "2820000": "B7 HSD",
+    "2822000": "EBMS 20%",
+    "3912000": "HSD TURBO",
+    "3925000": "EBMS 12% POWER",
+    "3672000": "EBMS 11% P95",
+    "2946000": "BULK PROPANE",
+    "2982000": "BULK BUTANE",
+    "0948149": "5KG CYLINDER BLUE (NON DOM)FUL",
+    "0949109": "5 KG FILLED LPG CYLINDER-DOM",
+    "0949000": "BULK LPG",
+    "0948064": "19 KG FILLED LPG CYLINDER",
+    "0949036": "14.2 KG FILLED LPG CYLINDER"
 }
-
 
 # ---------- CONNECTION HELPERS ----------
 def get_mysql_connection():
@@ -56,15 +62,15 @@ def fetch_mysql_data(conn, table, key_column, last_key, user_wheres=None):
             zsh.billing_dt,
             zsh.plant,
             zsh.shortage,
-            zsh.material
-        FROM CONN_ENT.ZSDCV_SHORTAGE_STG zsh
-        INNER JOIN CONN_ENT.ZSDCV_AY_INV3_STG zinv
-            ON zsh.original_inv = zinv.invoice_no
-        WHERE
-            zsh.plant = zinv.supply_loc
-            AND zsh.shortage > 0
-            AND zinv.load_status = '6'
-            AND zsh.clearing_date IS NOT NULL
+            zsh.material,
+            zsh.vehicle
+            FROM CONN_ENT.ZSDCV_SHORTAGE_STG zsh
+            INNER JOIN CONN_ENT.ZSDCV_AY_INV3_STG zinv
+            ON zsh.original_inv = zinv.inv_ref
+            WHERE
+            zsh.shortage > 0
+            AND zinv.load_status IN ('6', '7')
+            
     """
 
     conditions = []
@@ -138,6 +144,23 @@ def sync_location_master(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
 # ---------- ENRICHMENT ----------
 def enrich_data(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
     df.columns = [col.lower() for col in df.columns]
+    # If invoice table column exists → remove it
+    if "qty_shortage" in df.columns:
+        df = df.drop("qty_shortage")
+
+    # Rename shortage → qty_shortage
+    if "shortage" in df.columns:
+        df = df.rename({"shortage": "qty_shortage"})
+    # Clean sold_to_party (remove starting 'P')
+    if "sold_to_party" in df.columns:
+        df = df.with_columns(
+            pl.when(pl.col("sold_to_party").cast(pl.Utf8).str.to_uppercase().str.starts_with("P"))
+            .then(pl.col("sold_to_party").str.slice(1))
+            .otherwise(pl.col("sold_to_party"))
+            .alias("sold_to_party")
+        )
+
+
     if "material" in df.columns:
         df = df.drop("item_no") if "item_no" in df.columns else df
         df = df.rename({"material": "item_no"})
@@ -161,12 +184,9 @@ def enrich_data(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
 
         df = df.with_columns([
             pl.col(item_col)
-            .cast(pl.Int64, strict=False)
-            .map_elements(lambda x:
-                ITEM_NAME_MAP.get(int(x))
-                if x and str(x).isdigit() and int(x) in ITEM_NAME_MAP
-                else None
-            )
+            .cast(pl.Utf8)
+            .str.strip_chars()
+            .map_elements(lambda x: ITEM_NAME_MAP.get(x))
             .alias("material_group_nm")
         ])
         print(" Added 'material_group_nm' column based on item_no mapping")

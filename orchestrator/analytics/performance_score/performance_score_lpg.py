@@ -7,6 +7,10 @@ from utilities.helpers import map_device_category
 import orchestrator.analytics.va_analysis as va_analysis
 from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.analytics.performance_score.performance_score_factory as performance_score_factory
+from orchestrator.analytics.performance_score.performance_score_insights import (
+    enhance_result_with_insights,
+    generate_summary_insights
+)
 
 
 class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
@@ -85,7 +89,8 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                     msg = f"There {verb} {count_value} open {verb_alert} for {rule['interlock_name']}"
                 else:
                     score = 100
-                    msg = f"No open alert found for {rule['interlock_name']}"
+                    system_name = rule.get('name', rule['interlock_name'])
+                    msg = f"No open alerts. {system_name} system operating normally."
 
             # Percentage Rejection
             elif rule["model"] == "percentage_rejection":
@@ -125,7 +130,8 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
 
                     if value_rejection < min_val:
                         score = base  # full score
-                        msg = f"{rule['interlock_name']} is less than {min_val}. Current rejection is {value_rejection}"
+                        system_name = rule.get('name', rule['interlock_name'])
+                        msg = f"No open alerts. {system_name} system operating normally."
                         break
                     elif value_rejection > max_val:
                         score = 0
@@ -146,15 +152,24 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             # Weightage scaling
             score = (score * rule_weightage) / 100
 
-            pi_score.append(
-                {
-                    "name": rule["name"],
-                    "score": round(score, 2),
-                    "weightage": rule_weightage,
-                    "module": rules.get("name", name),
-                    "msg": msg
+            result_item = {
+                "name": rule["name"],
+                "score": round(score, 2),
+                "weightage": rule_weightage,
+                "module": rules.get("name", name),
+                "msg": msg,
+                "details": {
+                    "current_value": value_rejection if rule["model"] == "percentage_rejection" else None,
+                    "threshold_min": min_val if rule["model"] == "percentage_rejection" else None,
+                    "threshold_max": max_val if rule["model"] == "percentage_rejection" else None,
+                    "alert_count": alert_count.get(f"{rule['interlock_name']}_count", 0) if rule["model"] == "open_alerts" else None
                 }
-            )
+            }
+            
+            # Enhance with insights
+            module_type = rule["model"]
+            result_item = enhance_result_with_insights(result_item, module_type)
+            pi_score.append(result_item)
 
         # Final PI Score
         print("-"*20)
@@ -176,12 +191,17 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
         final_score = alert_score + rej_score
         final_score = round((final_score * rules["weightage"]) / 100, 2)
 
-        return {
+        module_result = {
             "name": rules.get("name", name),
             "score": final_score,
             "weightage": rules["weightage"],
             "results": pi_score
         }
+        
+        # Add module-level summary insights
+        module_result["insights"] = generate_summary_insights(module_result)
+        
+        return module_result
 
     async def _compute_va_pi_score(self, name, rules, location_id):
         pi_score = []
@@ -190,8 +210,14 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
             score = 0
             if rule['model'] == 'va_portal':
                 if self.va_data:
-                    score = round((float(self.va_data['OVERALL_SCORE']) * 10 * rule['weightage']) / 100, 2)
-                    msg = f"VA Portal overall score: {self.va_data['OVERALL_SCORE']} * 10 * {rule['weightage']} / 100"
+                    va_overall_score = float(self.va_data.get('OVERALL_SCORE', 0))
+                    score = round((va_overall_score * 10 * rule['weightage']) / 100, 2)
+                    if abs(score - rule['weightage']) < 0.01:  # Full score achieved
+                        msg = f"No open alerts. VA Portal system operating normally."
+                    elif va_overall_score == 0:
+                        msg = f"VA Portal overall score is 0, resulting in 0 points out of {rule['weightage']}. Review VA Portal metrics to improve score."
+                    else:
+                        msg = f"VA Portal overall score: {va_overall_score} (calculated as {va_overall_score} * 10 * {rule['weightage']} / 100 = {score} points)"
                 else:
                     score = 0
                     msg = "VA Portal data not available, score set to 0"
@@ -232,19 +258,33 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 closed_alerts = sum(close_alerts.values())
                 if all(s == 0 for s in alert_score):
                     # If perfect compliance is achieved, force the module score to 100.0
-                    score = 100 # rules['weightage']
+                    score = rule['weightage']
                 else:
                     score = round((sum(alert_score) * rule['weightage']) / 100, 2)
-                msg = f"Total alerts: {total_alerts}. closed_alerts :{closed_alerts} .Calculation: ({round(sum(alert_score), 2)}) * ({rule['weightage']}) / 100"
+                
+                if abs(score - rule['weightage']) < 0.01:  # Full score achieved
+                    msg = f"No open alerts. VA Alert Severity system operating normally."
+                else:
+                    msg = f"Total alerts: {total_alerts}. closed_alerts :{closed_alerts} .Calculation: ({round(sum(alert_score), 2)}) * ({rule['weightage']}) / 100"
             else:
                 ...
-            pi_score.append({
+            result_item = {
                 "name": rule['name'], 
                 "score": score, 
                 "weightage": rule['weightage'],
                 'module': rules.get('name', name),
-                "msg": msg
-                })
+                "msg": msg,
+                "details": {
+                    "va_portal_score": self.va_data.get('OVERALL_SCORE') if rule['model'] == 'va_portal' and self.va_data else None,
+                    "total_alerts": total_alerts if rule['model'] == 'va_alerts' else None,
+                    "closed_alerts": closed_alerts if rule['model'] == 'va_alerts' else None
+                }
+            }
+            
+            # Enhance with insights
+            module_type = rule['model']
+            result_item = enhance_result_with_insights(result_item, module_type)
+            pi_score.append(result_item)
         # final_score = sum([score['score'] for score in pi_score])
         
         print("-"*20)
@@ -267,7 +307,13 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
-        return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
+        
+        module_result = {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
+        
+        # Add module-level summary insights
+        module_result["insights"] = generate_summary_insights(module_result)
+        
+        return module_result
 
     async def _compute_vts_pi_score(self, name, rules, location_id):
         pi_score = []
@@ -330,12 +376,17 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                     f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'VTS' and "
                     f"bu = 'LPG' and  created_at::DATE >= '2025-09-01' group by severity")
                 data = await hpcl_ceg_model.Alerts.get_aggr_data(query_open)
+                open_alerts = {}
+                close_alerts = {}
+                total_open = 0
+                total_closed = 0
+                
                 if not data.get("data", None):
-                    msg = f"No Open alerts found"
+                    msg = f"No open alerts. VTS Alerts system operating normally."
                     alert_score.append(rule['weightage'])
                 else:
                     open_alerts = {data['severity']: data['count'] for data in data['data']}
-                    ta = sum(open_alerts[key] for key in open_alerts.keys())
+                    total_open = sum(open_alerts.values())
 
                     # For all closure alerts in last 24 hours
                     query_close = (
@@ -343,23 +394,36 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                         f"sap_id = '{location_id}' and alert_status = 'Close' and alert_section = 'VTS' and "
                         f"bu = 'LPG' and  created_at::DATE >= '2025-09-01' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
                     data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
-                    close_alerts = {data['severity']: data['count'] for data in data['data']}
-                    cl = sum(close_alerts[key] for key in close_alerts.keys())
+                    if data.get("data"):
+                        close_alerts = {data['severity']: data['count'] for data in data['data']}
+                        total_closed = sum(close_alerts.values())
 
                     for rule_ in rule['rules']:
                         int_name = rule_['interlock_name']
                         if int_name in open_alerts or int_name in close_alerts:
-                            close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
-                                                                    (close_alerts.get(int_name, 0) +
-                                                                    open_alerts.get(int_name, 0)))
-                            msg = f"Calculation : weightage: {rule_['weightage']} * (closed_alert: {close_alerts.get(int_name, 0)} / (closed_alert: {close_alerts.get(int_name, 0)} + open_alerts: {open_alerts.get(int_name, 0)}))"
+                            open_count = open_alerts.get(int_name, 0)
+                            closed_count = close_alerts.get(int_name, 0)
+                            total_for_severity = open_count + closed_count
+                            close_percentage = rule_['weightage'] * (closed_count / total_for_severity) if total_for_severity > 0 else 0
                             alert_score.append(close_percentage)
                         else:   
-                            msg = f"Open alerts: {ta}  .closed_alerts :{cl}"
-                            
                             alert_score.append(0)
+                    
+                    # Generate appropriate message based on score
+                    score_sum = sum(alert_score)
+                    final_score = round((score_sum * rule['weightage']) / 100, 2)
+                    if abs(final_score - rule['weightage']) < 0.01:  # Full score achieved
+                        msg = f"No open alerts. VTS Alerts system operating normally."
+                    elif final_score == 0:
+                        msg = f"VTS Alerts: {total_open} open alerts with low closure rate, resulting in 0 points out of {rule['weightage']}. Focus on closing open alerts promptly."
+                    else:
+                        closure_rate = round((total_closed / (total_open + total_closed) * 100), 2) if (total_open + total_closed) > 0 else 0
+                        msg = f"VTS Alerts: {total_open} open alerts, {total_closed} closed in last 24 hours (closure rate: {closure_rate}%). Score: {round(final_score, 2)} out of {rule['weightage']}"
                     print(alert_score, rules['weightage'])
-            score = round((sum(alert_score) * rule['weightage']) / 100, 2)            
+            else:
+                final_score = round((sum(alert_score) * rule['weightage']) / 100, 2) if alert_score else 0
+            
+            score = final_score if 'final_score' in locals() else round((sum(alert_score) * rule['weightage']) / 100, 2)            
             pi_score.append({"name": rule['name'], 
                              "score": score, 
                              "weightage": rule['weightage'],

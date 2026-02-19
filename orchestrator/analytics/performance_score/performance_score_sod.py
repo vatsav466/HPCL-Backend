@@ -8,8 +8,14 @@ import hpcl_ceg_model
 from collections import defaultdict
 import orchestrator.analytics.va_analysis as va_analysis
 from orchestrator.dbconnector.widget_actions import widget_actions
-import orchestrator.analytics.performance_score.performance_score_factory as performance_score_factory
-from utilities.helpers import map_device_category, fetch_oi_devices, fetch_device_data, fetch_alarm_data
+import \
+    orchestrator.analytics.performance_score.performance_score_factory as performance_score_factory
+from utilities.helpers import map_device_category, fetch_oi_devices, fetch_device_data, \
+    fetch_alarm_data
+from orchestrator.analytics.performance_score.performance_score_insights import (
+    enhance_result_with_insights,
+    generate_summary_insights
+)
 
 
 class SODPerformanceScore(performance_score_factory.PerformanceIndex):
@@ -115,7 +121,6 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             # TRUE if: True, "True", "true", "TRUE"
             is_onboard = str(raw_value).strip().lower() == "true"
 
-            
             if not is_onboard:
                 # module_scores[module_name] = {
                 #     "name": module_name,
@@ -127,7 +132,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
                 module_scores[module_name] = {
                     "name": module_name,
-                    "score": 0,   # zero score
+                    "score": 0,  # zero score
                     "weightage": module["weightage"],
                     "results": [],
                     "reason": f"location_onboard = {raw_value} → zero score assigned"
@@ -156,7 +161,6 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             # Apply parent module weightage
             parent_final = round((parent_score * module["weightage"]) / 100, 2)
             # parent_final = module["weightage"]
-
 
             module_scores[module_name] = {
                 "name": module_name,
@@ -255,7 +259,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                         WHERE device_type = '{sub_rule['equipment_name']}' AND sap_id = '{location_id}'
                     """
                     arch_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(param_query)
-                    parameter_count = int(arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)
+                    parameter_count = int(
+                        arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)
 
                     # Separate Tank_Under Maintenance and other alerts by device
                     tank_maintenance_devices = set()
@@ -271,25 +276,81 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     only_other_devices = other_alert_devices - tank_maintenance_devices
                     unhealthy_devices = tank_maintenance_devices.union(only_other_devices)
 
-                    score = ((parameter_count - len(unhealthy_devices)) / parameter_count) * (sub_rule['weightage'] / 100)
+                    score = ((parameter_count - len(unhealthy_devices)) / parameter_count) * (
+                                sub_rule['weightage'] / 100)
                     hooter_sub_scores.append(score)
 
                 combined_score = sum(hooter_sub_scores)
-                pi_score.append({
+
+                # Calculate unhealthy devices for Hooter
+                total_unhealthy = 0
+                total_devices = 0
+                hooter_interlocks = []
+                for sub_rule in rule['rules']:
+                    interlocks = sub_rule.get('interlock_name', "")
+                    if interlocks:
+                        interlocks = interlocks if isinstance(interlocks, list) else [interlocks]
+                        hooter_interlocks.extend(interlocks)
+                        param_query = f"""
+                            SELECT count FROM architecture_data 
+                            WHERE device_type = '{sub_rule['equipment_name']}' AND sap_id = '{location_id}'
+                        """
+                        arch_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(param_query)
+                        param_count = int(
+                            arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)
+                        total_devices += param_count
+
+                        tank_maintenance_devices = set()
+                        other_alert_devices = set()
+                        for interlock in interlocks:
+                            devices = open_alerts.get(interlock, [])
+                            for dev in devices:
+                                if interlock == "Tank_Under Maintenance":
+                                    tank_maintenance_devices.add(dev)
+                                else:
+                                    other_alert_devices.add(dev)
+                        only_other_devices = other_alert_devices - tank_maintenance_devices
+                        unhealthy_devices = tank_maintenance_devices.union(only_other_devices)
+                        total_unhealthy += len(unhealthy_devices)
+
+                # Generate appropriate message
+                if abs(combined_score - rule['weightage']) < 0.01:  # Full score achieved
+                    msg = f"No open alerts. Hooter system operating normally."
+                else:
+                    msg = f"{total_unhealthy} out of {total_devices} devices have active alerts across Hooter sub-systems"
+                
+                result_item = {
                     "name": rule['name'],
                     "score": round(combined_score, 2),
                     "weightage": rule['weightage'],
-                    "module": rules.get('name', rule['name'])
-                })
+                    "module": rules.get('name', rule['name']),
+                    "msg": msg,
+                    "details": {
+                        "unhealthy_devices": total_unhealthy,
+                        "total_devices": total_devices,
+                        "affected_interlocks": list(set(hooter_interlocks)),
+                        "sub_scores": hooter_sub_scores
+                    }
+                }
+
+                # Enhance with insights
+                result_item = enhance_result_with_insights(result_item, "safety_interlocks")
+                pi_score.append(result_item)
             else:  # Regular rule
                 interlocks = rule.get('interlock_name', "")
                 if not interlocks:
-                    pi_score.append({
+                    # Rule with no interlock_name - give full score but still add insights
+                    system_name = rule.get('equipment_name', rule.get('name', 'Safety Interlocks'))
+                    result_item = {
                         "name": rule['name'],
                         "score": round(rule['weightage'], 2),
                         "weightage": rule['weightage'],
-                        "module": rules.get('name', rule['name'])
-                    })
+                        "module": rules.get('name', rule['name']),
+                        "msg": f"No open alerts. {system_name} system operating normally.",
+                        "details": {}
+                    }
+                    result_item = enhance_result_with_insights(result_item, "safety_interlocks")
+                    pi_score.append(result_item)
                     continue
 
                 interlocks = interlocks if isinstance(interlocks, list) else [interlocks]
@@ -298,7 +359,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     WHERE device_type = '{rule['equipment_name']}' AND sap_id = '{location_id}'
                 """
                 arch_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(param_query)
-                parameter_count = int(arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)             
+                parameter_count = int(
+                    arch_data['data'][0].get('count', 0) if arch_data.get('data') else 100)
 
                 # Separate Tank_Under Maintenance and other alerts by device
                 tank_maintenance_devices = set()
@@ -314,24 +376,48 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 only_other_devices = other_alert_devices - tank_maintenance_devices
                 unhealthy_devices = tank_maintenance_devices.union(only_other_devices)
 
-                score = ((parameter_count - len(unhealthy_devices)) / parameter_count) * (rule['weightage'])
-                pi_score.append({
+                score = ((parameter_count - len(unhealthy_devices)) / parameter_count) * (
+                rule['weightage'])
+
+                # Generate appropriate message
+                if abs(score - rule['weightage']) < 0.01:  # Full score achieved
+                    system_name = rule.get('equipment_name', rule.get('name', 'Safety Interlocks'))
+                    msg = f"No open alerts. {system_name} system operating normally."
+                else:
+                    msg = f"{len(unhealthy_devices)} out of {parameter_count} devices have active alerts"
+
+                result_item = {
                     "name": rule['name'],
                     "score": round(score, 2),
                     "weightage": rule['weightage'],
-                    "module": rules.get('name', rule['name'])
-                })
+                    "module": rules.get('name', rule['name']),
+                    "msg": msg,
+                    "details": {
+                        "unhealthy_devices": len(unhealthy_devices),
+                        "total_devices": parameter_count,
+                        "affected_interlocks": list(set(interlocks))
+                    }
+                }
+
+                # Enhance with insights
+                result_item = enhance_result_with_insights(result_item, "safety_interlocks")
+                pi_score.append(result_item)
         print("safety pi score --> ", pi_score)
         # Final score calculation
         final_score = round(sum([r['score'] for r in pi_score]), 2)
         print("safety final_score --> ", final_score)
-        return {
+
+        module_result = {
             "name": rules.get('name', ""),
             "score": final_score,
             "weightage": rules['weightage'],
             "results": pi_score
         }
 
+        # Add module-level summary insights
+        module_result["insights"] = generate_summary_insights(module_result)
+
+        return module_result
 
     async def _compute_gantry_interlocks_pi_score(self, name, rules, location_id):
         """
@@ -358,7 +444,6 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             else:
                 all_interlocks.append(rule['interlock_name'])
                 # equipment_names.append(rule['equipment_name'])
-                
 
         # Remove duplicates
         interlocks = list(set(all_interlocks))
@@ -399,7 +484,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             interlock_name = item['interlock_name']
             device_name = item['tas_device_name']
             open_alerts[interlock_name].append(device_name)
-            
+
             # Store LRC alert history information for special handling
             if interlock_name == "LRC Master Switchover required in 30 days":
                 alert_history = item.get('alert_history', [])
@@ -409,11 +494,11 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                         alert_history = json.loads(alert_history)
                     except (json.JSONDecodeError, TypeError):
                         alert_history = []
-                
+
                 lrc_alerts_info[device_name] = {
                     'has_analog_input': any(
-                        isinstance(entry, dict) and 
-                        entry.get('action_msg') == "Alert due to Analog input" 
+                        isinstance(entry, dict) and
+                        entry.get('action_msg') == "Alert due to Analog input"
                         for entry in alert_history if isinstance(alert_history, list)
                     )
                 }
@@ -424,7 +509,9 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
             rule_weightage = rule['weightage']
             equipment_name = rule['equipment_name']
-            interlock_names = rule['interlock_name'] if isinstance(rule['interlock_name'], list) else [rule['interlock_name']]
+            interlock_names = rule['interlock_name'] if isinstance(rule['interlock_name'],
+                                                                   list) else [
+                rule['interlock_name']]
 
             # Get parameter count from architecture_data
             special_interlocks = {
@@ -448,8 +535,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                         AND sap_id = '{location_id}'
                     """
                 architecture_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(query)
-                parameter_count = architecture_data['data'][0].get('count', 0) if architecture_data.get('data') else 100
-                parameter_count = int(parameter_count) if isinstance(parameter_count, str) and parameter_count.isdigit() else int(parameter_count or 0)
+                parameter_count = architecture_data['data'][0].get('count',
+                                                                   0) if architecture_data.get(
+                    'data') else 100
+                parameter_count = int(parameter_count) if isinstance(parameter_count,
+                                                                     str) and parameter_count.isdigit() else int(
+                    parameter_count or 0)
 
             if not parameter_count or parameter_count == 0:
                 weightage = None
@@ -466,28 +557,45 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                                 device_frequency[device_name] += 1
 
                     asset_unhealthy_score = 0
+                    healthy_devices = 0
+                    medium_devices = 0
+                    unhealthy_devices = 0
                     for device, count in device_frequency.items():
                         if count < 5:
                             asset_unhealthy_score += 100
+                            healthy_devices += 1
                         elif 5 <= count <= 15:
                             asset_unhealthy_score += 50
+                            medium_devices += 1
                         else:
                             asset_unhealthy_score += 0
+                            unhealthy_devices += 1
 
-                    score = (asset_unhealthy_score / (parameter_count * 100)) * (rule_weightage / 100)
-                
+                    score = (asset_unhealthy_score / (parameter_count * 100)) * (
+                                rule_weightage / 100)
+
+                    # Store details for insights
+                    bcu_details = {
+                        "healthy_devices": healthy_devices,
+                        "medium_devices": medium_devices,
+                        "unhealthy_devices": unhealthy_devices,
+                        "total_devices": parameter_count,
+                        "device_frequency_distribution": dict(device_frequency)
+                    }
+
                 # Special case for LRC Master
                 elif rule['name'] == "LRC Master":
                     # Check for "LRC Master Switchover required in 30 days" alert
                     lrc_interlock = "LRC Master Switchover required in 30 days"
-                    
+
                     if lrc_interlock in open_alerts and any(open_alerts[lrc_interlock]):
                         # We have LRC alerts - check if any has "Alert due to Analog input"
                         has_analog_input_devices = [
-                            device for device in open_alerts[lrc_interlock] 
-                            if device in lrc_alerts_info and lrc_alerts_info[device]['has_analog_input']
+                            device for device in open_alerts[lrc_interlock]
+                            if device in lrc_alerts_info and lrc_alerts_info[device][
+                                'has_analog_input']
                         ]
-                        
+
                         if has_analog_input_devices:
                             # If alerts with "Alert due to Analog input" exist, no unhealthy count
                             asset_unhealthy_count = 0
@@ -497,9 +605,16 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     else:
                         # No LRC alert found, consider 1 device unhealthy
                         asset_unhealthy_count = 0
-                    
-                    score = ((parameter_count - asset_unhealthy_count) / parameter_count) * (rule_weightage)
-                    
+
+                    score = ((parameter_count - asset_unhealthy_count) / parameter_count) * (
+                        rule_weightage)
+                    lrc_details = {
+                        "unhealthy_devices": asset_unhealthy_count,
+                        "total_devices": parameter_count,
+                        "has_analog_input_alerts": len(
+                            has_analog_input_devices) > 0 if 'has_analog_input_devices' in locals() else False
+                    }
+
                 else:
                     # Standard calculation for other Gantry rules
                     unique_devices = set()
@@ -509,32 +624,64 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                                 unique_devices.add(device_name)
 
                     asset_unhealthy_count = len(unique_devices)
-                    score = ((parameter_count - asset_unhealthy_count) / parameter_count) * (rule_weightage)
+                    score = ((parameter_count - asset_unhealthy_count) / parameter_count) * (
+                        rule_weightage)
 
             final_rule_score = score
 
-            gantry_score.append({
+            # Build details based on rule type
+            details = {
+                "unhealthy_devices": asset_unhealthy_count if 'asset_unhealthy_count' in locals() else 0,
+                "total_devices": parameter_count if parameter_count else 0,
+                "affected_interlocks": interlock_names if 'interlock_names' in locals() else []
+            }
+
+            # Add rule-specific details
+            if rule['name'] == "BCU Parameters Analysis" and 'bcu_details' in locals():
+                details.update(bcu_details)
+            elif rule['name'] == "LRC Master" and 'lrc_details' in locals():
+                details.update(lrc_details)
+
+            # Generate appropriate message
+            if abs(final_rule_score - rule_weightage) < 0.01:  # Full score achieved
+                system_name = rule.get('name', 'Gantry Interlocks')
+                msg = f"No open alerts. {system_name} system operating normally."
+            else:
+                msg = f"Score: {round(final_rule_score, 4)} out of {rule_weightage}. {details.get('unhealthy_devices', 0)} out of {details.get('total_devices', 0)} devices have active alerts"
+
+            result_item = {
                 "name": rule['name'],
                 "score": round(final_rule_score, 4),
                 "weightage": rule_weightage,
-                "module": rules.get('name', name)
-            })
+                "module": rules.get('name', name),
+                "msg": msg,
+                "details": details
+            }
+
+            # Enhance with insights
+            result_item = enhance_result_with_insights(result_item, "gantry_interlocks")
+            gantry_score.append(result_item)
 
         # Final score scaled by weightage
         final_score = round(sum([score['score'] for score in gantry_score]), 2)
         # final_score = round((final_score * rules['weightage']) / 100, 2)
-        
+
         for rec in gantry_score:
             rec['score'] = round(rec['score'], 2)
-        
+
         print("Gantry final_score ----->", final_score)
-        return {
-            "name": rules.get('name', name), 
+
+        module_result = {
+            "name": rules.get('name', name),
             "score": final_score,
-            "weightage": rules['weightage'], 
+            "weightage": rules['weightage'],
             "results": gantry_score
         }
-        
+
+        # Add module-level summary insights
+        module_result["insights"] = generate_summary_insights(module_result)
+
+        return module_result
 
     async def _compute_process_interlocks_pi_score(self, name, rules, location_id):
         """
@@ -599,7 +746,9 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 })
                 continue
 
-            interlock_names = rule['interlock_name'] if isinstance(rule['interlock_name'], list) else [rule['interlock_name']]
+            interlock_names = rule['interlock_name'] if isinstance(rule['interlock_name'],
+                                                                   list) else [
+                rule['interlock_name']]
 
             if isinstance(equipment_name, list):
                 device_types = ", ".join(f"'{item}'" for item in equipment_name)
@@ -616,8 +765,11 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 """
 
             architecture_data = await hpcl_ceg_model.ArchitectureData.get_aggr_data(query)
-            parameter_count = architecture_data['data'][0].get('count', 0) if architecture_data.get('data') else 100
-            parameter_count = int(parameter_count) if isinstance(parameter_count, str) and parameter_count.isdigit() else int(parameter_count or 0)
+            parameter_count = architecture_data['data'][0].get('count', 0) if architecture_data.get(
+                'data') else 100
+            parameter_count = int(parameter_count) if isinstance(parameter_count,
+                                                                 str) and parameter_count.isdigit() else int(
+                parameter_count or 0)
 
             if not parameter_count:
                 score = 0
@@ -630,82 +782,45 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 maintenance_count = len(under_maintenance_devices)
                 score = ((parameter_count - maintenance_count) / parameter_count) * (rule_weightage)
 
-            process_score.append({
+            # Generate appropriate message
+            if abs(score - rule_weightage) < 0.01:  # Full score achieved
+                system_name = rule.get('name', 'Process Interlocks')
+                msg = f"No open alerts. {system_name} system operating normally."
+            else:
+                msg = f"{maintenance_count} out of {parameter_count} devices under maintenance"
+
+            result_item = {
                 "name": rule['name'],
                 "score": round(score, 2),
                 "weightage": rule_weightage,
-                "module": rules.get('name')
-            })
+                "module": rules.get('name'),
+                "msg": msg,
+                "details": {
+                    "unhealthy_devices": maintenance_count,
+                    "total_devices": parameter_count,
+                    "affected_interlocks": interlock_names if 'interlock_names' in locals() else []
+                }
+            }
+
+            # Enhance with insights
+            result_item = enhance_result_with_insights(result_item, "process_interlocks")
+            process_score.append(result_item)
 
         # Final score
         final_score = round(sum([score['score'] for score in process_score]), 2)
 
-        return {
+        module_result = {
             "name": rules.get('name'),
             "score": final_score,
             "weightage": rules['weightage'],
             "results": process_score
         }
-       
 
-    # async def _compute_va_pi_score(self, name, rules, location_id):
-    #     pi_score = []
+        # Add module-level summary insights
+        module_result["insights"] = generate_summary_insights(module_result)
 
-    #     for rule in rules['rules']:
-    #         score = 0
-    #         rule_weightage = rule['weightage']
-            
-    #         if rule['model'] == 'va_portal':
-    #             if self.va_data:
-    #                 raw_score = float(self.va_data.get('OVERALL_SCORE', 0))
-    #                 if raw_score == 0:
-    #                     score = round(rule_weightage, 2)  # full score if portal score is 0
-    #                 else:
-    #                     score = round((raw_score * 10 * rule_weightage) / 100, 2)
-    #             else:
-    #                 score = round(rule_weightage, 2)  # assume full score if data is missing
-    #         # elif rule['model'] == 'va_alerts':
-    #         #     severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
-    #         #     in_clause_raw = ", ".join(f"'{value}'" for value in severity)
-    #         #     # For all open alerts
-    #         #     query_open = (
-    #         #         f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
-    #         #         f"sap_id = '{location_id}' and alert_status != 'Close' and alert_section = 'VA' and "
-    #         #         f"bu = 'TAS' group by severity")
-    #         #     data = await hpcl_ceg_model.Alerts.get_aggr_data(query_open)
-    #         #     open_alerts = {data['severity']: data['count'] for data in data['data']}
+        return module_result
 
-    #         #     # For all closure alerts in last 24 hours
-    #         #     query_close = (
-    #         #         f"select severity, count(device_name) as count from alerts where severity in ({in_clause_raw}) and "
-    #         #         f"sap_id = '{location_id}' and alert_status = 'Close' and alert_section = 'VA' and "
-    #         #         f"bu = 'TAS' and updated_at >= NOW() - INTERVAL '24 hours' group by severity")
-    #         #     data = await hpcl_ceg_model.Alerts.get_aggr_data(query_close)
-    #         #     close_alerts = {data['severity']: data['count'] for data in data['data']}
-    #         #     alert_score = []
-
-    #         #     for rule_ in rule['rules']:
-    #         #         int_name = rule_['interlock_name']
-    #         #         if int_name in open_alerts or int_name in close_alerts:
-    #         #             close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
-    #         #                                                      (close_alerts.get(int_name, 0) +
-    #         #                                                       open_alerts.get(int_name, 0)))
-    #         #             alert_score.append(close_percentage)
-    #         #         else:
-    #         #             alert_score.append(rule_['weightage'])
-    #         #     print(alert_score, rules['weightage'])
-    #         #     score = round((sum(alert_score) * rules['weightage']) / 100, 2)
-    #         # else:
-    #         #     ...
-    #         pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
-    #                          'module': rules.get('name', name)})
-    #     print(" vts pi score -----> ", pi_score)
-    #     final_score = sum([score['score'] for score in pi_score])
-    #     final_score = round((final_score * rules['weightage']) / 100, 2)
-    #     for rec in pi_score:
-    #         rec['score'] = round(rec['score'], 2)
-    #     print("final_score    ----->   ", final_score)
-    #     return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
     async def _compute_va_pi_score(self, name, rules, location_id):
         pi_score = []
         msg = ""
@@ -713,8 +828,14 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             score = 0
             if rule['model'] == 'va_portal':
                 if self.va_data:
-                    score = round((float(self.va_data['OVERALL_SCORE']) * 10 * rule['weightage']) / 100, 2)
-                    msg = f"VA Portal overall score: {self.va_data['OVERALL_SCORE']} * 10 * {rule['weightage']} / 100"
+                    va_overall_score = float(self.va_data.get('OVERALL_SCORE', 0))
+                    score = round((va_overall_score * 10 * rule['weightage']) / 100, 2)
+                    if abs(score - rule['weightage']) < 0.01:  # Full score achieved
+                        msg = f"No open alerts. VA Portal system operating normally."
+                    elif va_overall_score == 0:
+                        msg = f"VA Portal overall score is 0, resulting in 0 points out of {rule['weightage']}. Review VA Portal metrics to improve score."
+                    else:
+                        msg = f"VA Portal overall score: {va_overall_score} (calculated as {va_overall_score} * 10 * {rule['weightage']} / 100 = {score} points)"
                 else:
                     score = 0
                     msg = "VA Portal data not available, score set to 0"
@@ -742,7 +863,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     int_name = rule_['interlock_name']
                     if not open_alerts and not close_alerts:
                         alert_score.append(rule_['weightage'])
-                        print("alert_score:",alert_score)
+                        print("alert_score:", alert_score)
                     elif int_name in open_alerts or int_name in close_alerts:
                         close_percentage = rule_['weightage'] * (close_alerts.get(int_name, 0) /
                                                                  (close_alerts.get(int_name, 0) +
@@ -755,24 +876,39 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 closed_alerts = sum(close_alerts.values())
                 if all(s == 0 for s in alert_score):
                     # If perfect compliance is achieved, force the module score to 100.0
-                    score = rule['weightage'] # rules['weightage']
+                    score = rule['weightage']  # rules['weightage']
                 else:
                     score = round((sum(alert_score) * rule['weightage']) / 100, 2)
-                msg = f"Total alerts: {total_alerts}. closed_alerts :{closed_alerts} .Calculation: ({round(sum(alert_score), 2)}) * ({rule['weightage']}) / 100"
+                if abs(score - rule['weightage']) < 0.01:  # Full score achieved
+                    msg = "No open alerts. VA Alert Severity system operating normally."
+                else:
+                    msg = f"Total alerts: {total_alerts}. closed_alerts :{closed_alerts} .Calculation: ({round(sum(alert_score), 2)}) * ({rule['weightage']}) / 100"
             else:
                 ...
-            pi_score.append({
-                "name": rule['name'], 
-                "score": score, 
+
+            result_item = {
+                "name": rule['name'],
+                "score": score,
                 "weightage": rule['weightage'],
                 'module': rules.get('name', name),
-                "msg": msg
-                })
+                "msg": msg,
+                "details": {
+                    "va_portal_score": self.va_data.get('OVERALL_SCORE') if rule[
+                                                                                'model'] == 'va_portal' and self.va_data else None,
+                    "total_alerts": total_alerts if 'total_alerts' in locals() else None,
+                    "closed_alerts": closed_alerts if 'closed_alerts' in locals() else None
+                }
+            }
+
+            # Enhance with insights
+            module_type = rule['model']
+            result_item = enhance_result_with_insights(result_item, module_type)
+            pi_score.append(result_item)
         # final_score = sum([score['score'] for score in pi_score])
-        
-        print("-"*20)
-        print("pi_score :", pi_score)
-        print("-"*20)
+
+        # print("-"*20)
+        # print("pi_score :", pi_score)
+        # print("-"*20)
         alert_score = sum(
             s["score"] for s in pi_score
             if "alert" in s["name"].lower()
@@ -780,7 +916,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
         va_portal_score = sum(
             s["score"] for s in pi_score
-            if "alert" not in s["name"].lower()  
+            if "alert" not in s["name"].lower()
         )
 
         # alert_score = round((alert_score * 10) / 100, 2)
@@ -790,15 +926,23 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
-        return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
 
+        module_result = {"name": rules.get('name', name), "score": final_score,
+                         "weightage": rules['weightage'], "results": pi_score}
+
+        # Add module-level summary insights
+        module_result["insights"] = generate_summary_insights(module_result)
+
+        return module_result
 
     async def _compute_vts_pi_score(self, name, rules, location_id):
         pi_score = []
         total_vehicles = 190
-        df = pd.read_csv('/opt/ceg/algo/orchestrator/reporting_services/vehicle_master_count_of_tt_no.csv')
+        tt_count_csv = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..', 'orchestrator',
+                                    'reporting_services', 'vehicle_master_count_of_tt_no.csv')
+        df = pd.read_csv(tt_count_csv)
         df = df[df['sap_id'] == int(location_id)]
-        
+
         if not df.empty:
             total_vehicles = df['count_of_tt_no'].sum()
 
@@ -806,7 +950,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             alert_score = []
             if rule['model'] == 'vts_interlock':
                 search_values = [rec['search_value'] for rec in rule['rules']]
-                query_clause = " or ".join([f"interlock_name like '%{value}%'" for value in search_values])
+                query_clause = " or ".join(
+                    [f"interlock_name like '%{value}%'" for value in search_values])
                 query = (f"select interlock_name, count(vehicle_number) as count from alerts where "
                          f"sap_id = '{location_id}' and ({query_clause}) and bu='TAS' and alert_section='VTS' and "
                          f"alert_status != 'Close' group by interlock_name")
@@ -822,16 +967,18 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
                 for rule_ in rule['rules']:
                     if rule_['search_value'] in alert_data:
-                        score = ((total_vehicles - alert_data[rule_['search_value']]) / total_vehicles)
+                        score = ((total_vehicles - alert_data[
+                            rule_['search_value']]) / total_vehicles)
                         score = round(score * (rule_['weightage']), 2)
                         alert_score.append(float(score))
                     else:
                         alert_score.append(rule_['weightage'])
             # Generating score by comparing number of active vehicles with no of open alerts
             elif rule['model'] == 'vts_active_vehicles':
-                query = (f"select DISTINCT(vehicle_number), count(vehicle_number) as count from alerts "
-                         f"where sap_id = '{location_id}' and alert_status != 'Close' and "
-                         f"bu='TAS' and alert_section='VTS' group by vehicle_number")
+                query = (
+                    f"select DISTINCT(vehicle_number), count(vehicle_number) as count from alerts "
+                    f"where sap_id = '{location_id}' and alert_status != 'Close' and "
+                    f"bu='TAS' and alert_section='VTS' group by vehicle_number")
                 data = await hpcl_ceg_model.VTS.get_aggr_data(query)
                 alert_data = {}
 
@@ -840,6 +987,10 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 resp = active_vehicles / total_vehicles if total_vehicles else 0
                 resp = round(resp * rule['weightage'], 2)
                 alert_score.append(resp)
+
+                # Store for insights
+                vts_active_vehicles_count = active_vehicles
+                vts_total_vehicles_count = total_vehicles
             # Generating PI score base don total open and total close alerts
             elif rule['model'] == 'vts_alerts':
                 severity = list(set([rule_['interlock_name'] for rule_ in rule['rules']]))
@@ -870,16 +1021,91 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     else:
                         alert_score.append(rule_['weightage'])
                 print(alert_score, rules['weightage'])
+
+                # Store for insights
+                vts_open_alerts_count = sum(open_alerts.values())
+                vts_closed_alerts_count = sum(close_alerts.values())
             score = round((sum(alert_score) * rule['weightage']) / 100, 2)
-            pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
-                             'module': rules.get('name', name)})
+
+            # Build details based on rule model
+            details = {}
+            msg = ""
+            if rule['model'] == 'vts_active_vehicles':
+                active_count = vts_active_vehicles_count if 'vts_active_vehicles_count' in locals() else 0
+                total_count = vts_total_vehicles_count if 'vts_total_vehicles_count' in locals() else 0
+                details = {
+                    "active_vehicles": active_count,
+                    "total_vehicles": total_count,
+                    "inactive_vehicles": (total_count - active_count) if total_count > 0 else 0
+                }
+                if abs(score - rule['weightage']) < 0.01:  # Full score achieved
+                    msg = f"No open alerts. VTS Active Vehicles system operating normally."
+                elif score == 0:
+                    msg = f"VTS Active Vehicles: 0 out of {total_count} vehicles are active, resulting in 0 points out of {rule['weightage']}. Review vehicle status and VTS connectivity."
+                else:
+                    msg = f"VTS Active Vehicles: {active_count} out of {total_count} vehicles are active. Score: {round(score, 2)} out of {rule['weightage']}"
+            elif rule['model'] == 'vts_alerts':
+                open_count = vts_open_alerts_count if 'vts_open_alerts_count' in locals() else 0
+                closed_count = vts_closed_alerts_count if 'vts_closed_alerts_count' in locals() else 0
+                details = {
+                    "open_alerts": open_count,
+                    "closed_alerts": closed_count
+                }
+                if abs(score - rule['weightage']) < 0.01:  # Full score achieved
+                    msg = f"No open alerts. VTS Alerts system operating normally."
+                elif score == 0:
+                    if open_count > 0:
+                        msg = f"VTS Alerts: {open_count} open alerts with low closure rate, resulting in 0 points out of {rule['weightage']}. Focus on closing open alerts promptly."
+                    else:
+                        msg = f"VTS Alerts: No alerts found in the system. Score: {round(score, 2)} out of {rule['weightage']}"
+                else:
+                    if open_count == 0 and closed_count == 0:
+                        msg = f"VTS Alerts: No alerts found. Full score of {round(score, 2)} out of {rule['weightage']} assigned."
+                    else:
+                        closure_rate = round((closed_count / (open_count + closed_count) * 100),
+                                             2) if (open_count + closed_count) > 0 else 0
+                        msg = f"VTS Alerts: {open_count} open alerts, {closed_count} closed in last 24 hours (closure rate: {closure_rate}%). Score: {round(score, 2)} out of {rule['weightage']}"
+            elif rule['model'] == 'vts_interlock':
+                affected_count = len(alert_data) if 'alert_data' in locals() else 0
+                details = {
+                    "affected_vehicles": affected_count,
+                    "total_vehicles": total_vehicles
+                }
+                if abs(score - rule['weightage']) < 0.01:  # Full score achieved
+                    msg = f"No open alerts. VTS Interlock system operating normally."
+                elif score == 0:
+                    msg = f"VTS Interlock: {affected_count} vehicles have active interlock alerts, resulting in 0 points out of {rule['weightage']}. Resolve interlock issues to improve score."
+                else:
+                    msg = f"VTS Interlock: {affected_count} out of {total_vehicles} vehicles have interlock alerts. Score: {round(score, 2)} out of {rule['weightage']}"
+            else:
+                # Default message for other VTS models
+                msg = f"VTS {rule['model']} score: {round(score, 2)} out of {rule['weightage']}"
+
+            result_item = {
+                "name": rule['name'],
+                "score": score,
+                "weightage": rule['weightage'],
+                'module': rules.get('name', name),
+                "msg": msg,
+                "details": details
+            }
+
+            # Enhance with insights
+            result_item = enhance_result_with_insights(result_item, "vts")
+            pi_score.append(result_item)
         final_score = sum([score['score'] for score in pi_score])
         final_score = round((final_score * rules['weightage']) / 100, 2)
         # final_score = rules['weightage'] 
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
-        return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
 
+        module_result = {"name": rules.get('name', name), "score": final_score,
+                         "weightage": rules['weightage'], "results": pi_score}
+
+        # Add module-level summary insights
+        module_result["insights"] = generate_summary_insights(module_result)
+
+        return module_result
 
     async def _compute_water_quantity_pi_score(self, name, rules, location_id):
         """
@@ -906,10 +1132,11 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         WATER_THRESHOLD = 0
         all_devices = fetch_oi_devices(page_size=1000)
 
-        #Filter only devices matching the location_id
+        # Filter only devices matching the location_id
         location_devices = [
             d for d in all_devices
-            if d.get("type") == "OI" and d.get("additionalInfo", {}).get("location_id") == location_id
+            if
+            d.get("type") == "OI" and d.get("additionalInfo", {}).get("location_id") == location_id
         ]
 
         pi_score = []
@@ -930,7 +1157,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             for device in location_devices:
                 try:
                     device_id = device.get('id', {}).get('id')
-                    required_kls, target_volume, available_water = fetch_device_data(device_id, key="Water Volume")
+                    required_kls, target_volume, available_water = fetch_device_data(device_id,
+                                                                                     key="Water Volume")
                     WATER_THRESHOLD = required_kls
                     if available_water < WATER_THRESHOLD:
                         percentage = 0
@@ -942,13 +1170,32 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     for rule in rules.get('rules', []):
                         weightage = rule.get('weightage', 0)
                         score = round((percentage * weightage) / 100, 2)
-                        pi_score.append({
+                        
+                        # Generate appropriate message
+                        if abs(score - weightage) < 0.01:  # Full score achieved
+                            msg = f"No open alerts. {rule.get('name', 'Water Quantity')} system operating normally."
+                        else:
+                            msg = f"Water quantity: {available_water} KL (Required: {required_kls} KL, Target: {target_volume} KL)"
+
+                        result_item = {
                             "name": rule.get('name', ''),
                             "score": score,
                             "weightage": weightage,
-                            "module": rules.get('name', '')
-                        })
-                    break  # Only process the first matching device
+                            "module": rules.get('name', ''),
+                            "msg": msg,
+                            "details": {
+                                "available_quantity": available_water,
+                                "required_quantity": required_kls,
+                                "target_quantity": target_volume,
+                                "percentage": round(percentage, 2)
+                            }
+                        }
+
+                        # Enhance with insights
+                        result_item = enhance_result_with_insights(result_item,
+                                                                   "water_quantity")
+                        pi_score.append(result_item)
+                        break  # Only process the first matching device
                 except Exception as e:
                     print(f"Error processing device {device.get('name', '')}: {e}")
                     continue
@@ -964,7 +1211,6 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             "weightage": rules.get('weightage', 100),
             "results": pi_score
         }
-
 
     async def _compute_foam_quantity_pi_score(self, name, rules, location_id):
         """
@@ -990,7 +1236,9 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         """
         FOAM_THRESHOLD = 0
         all_devices = fetch_oi_devices(page_size=1000)
-        location_devices = [d for d in all_devices if d.get("type") == "OI" and d.get("additionalInfo").get("location_id") == location_id]
+        location_devices = [d for d in all_devices if
+                            d.get("type") == "OI" and d.get("additionalInfo").get(
+                                "location_id") == location_id]
         pi_score = []
 
         if not location_devices:
@@ -999,18 +1247,28 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             for rule in rules.get('rules', []):
                 weightage = rule.get('weightage', 0)
                 score = round((percentage * weightage) / 100, 2)
-                pi_score.append({
+                result_item = {
                     "name": rule.get('name', ''),
                     "score": score,
                     "weightage": weightage,
-                    "module": rules.get('name', '')
-                })
+                    "module": rules.get('name', ''),
+                    "msg": f"No open alerts. {rule.get('name', 'Foam Quantity')} system operating normally.",
+                    "details": {
+                        "available_quantity": 0,
+                        "required_quantity": 0,
+                        "target_quantity": 0,
+                        "percentage": 100
+                    }
+                }
+                result_item = enhance_result_with_insights(result_item, "foam_quantity")
+                pi_score.append(result_item)
         else:
             for device in location_devices:
                 if device.get("type") == "OI":
                     try:
                         device_id = device['id']['id']
-                        required_kls, target_volume, available_water = fetch_device_data(device_id, key="Foam Volume")
+                        required_kls, target_volume, available_water = fetch_device_data(device_id,
+                                                                                         key="Foam Volume")
                         FOAM_THRESHOLD = required_kls
                         if available_water < FOAM_THRESHOLD:
                             percentage = 100
@@ -1019,14 +1277,31 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
                         for rule in rules['rules']:
                             weightage = rule.get('weightage', 0)
-                            score = round((percentage * weightage) / 100 , 2)
+                            score = round((percentage * weightage) / 100, 2)
+                            
+                            # Generate appropriate message
+                            if abs(score - weightage) < 0.01:  # Full score achieved
+                                msg = f"No open alerts. {rule.get('name', 'Foam Quantity')} system operating normally."
+                            else:
+                                msg = f"Foam quantity: {available_water} KL (Required: {FOAM_THRESHOLD} KL, Target: {target_volume} KL)"
 
-                            pi_score.append({
+                            result_item = {
                                 "name": rule['name'],
                                 "score": score,
                                 "weightage": weightage,
-                                "module": rules.get('name', '')
-                            })
+                                "module": rules.get('name', ''),
+                                "msg": msg,
+                                "details": {
+                                    "available_quantity": available_water,
+                                    "required_quantity": FOAM_THRESHOLD,
+                                    "target_quantity": target_volume,
+                                    "percentage": round(percentage, 2)
+                                }
+                            }
+
+                            # Enhance with insights
+                            result_item = enhance_result_with_insights(result_item, "foam_quantity")
+                            pi_score.append(result_item)
                         break
                     except Exception as e:
                         print(f"Error processing device {device.get('name')}: {e}")
@@ -1035,13 +1310,18 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         final_score = round(sum(r['score'] for r in pi_score), 2)
 
         print("final_score ---> ", final_score)
-        return {
+
+        module_result = {
             "name": rules.get('name', ''),
             "score": final_score,
             "weightage": rules['weightage'],
             "results": pi_score
         }
 
+        # Add module-level summary insights
+        module_result["insights"] = generate_summary_insights(module_result)
+
+        return module_result
 
     async def _compute_fire_engines_in_auto_mode_pi_score(self, name, rules, location_id):
         """
@@ -1068,7 +1348,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         # Filter devices for the given location
         location_devices = [
             d for d in all_devices
-            if d.get("type") == "OI" and d.get("additionalInfo", {}).get("location_id") == location_id
+            if
+            d.get("type") == "OI" and d.get("additionalInfo", {}).get("location_id") == location_id
         ]
 
         if not location_devices:
@@ -1077,12 +1358,19 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             for rule in rules.get('rules', []):
                 weightage = rule.get('weightage', 0)
                 score = round((score_percentage * weightage) / 100, 2)
-                pi_score.append({
+                result_item = {
                     "name": rule.get('name', ''),
                     "score": score,
                     "weightage": weightage,
-                    "module": rules.get('name', '')
-                })
+                    "module": rules.get('name', ''),
+                    "msg": f"No open alerts. {rule.get('name', 'Fire Engines')} system operating normally.",
+                    "details": {
+                        "score_percentage": 100,
+                        "has_local_mode_alarm": False
+                    }
+                }
+                result_item = enhance_result_with_insights(result_item, "fire_engines_auto_mode")
+                pi_score.append(result_item)
         else:
             for device in location_devices:
                 try:
@@ -1096,7 +1384,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                         alarms_data = fetch_alarm_data(device_id)
 
                         for alarm in alarms_data.get('data', []):
-                            interlock_name = alarm.get('details', {}).get('additionalInfo', {}).get('interlockName')
+                            interlock_name = alarm.get('details', {}).get('additionalInfo', {}).get(
+                                'interlockName')
                             status = alarm.get('status', '')
 
                             if interlock_name == 'Fire engine in local' and status == 'ACTIVE_UNACK':
@@ -1107,12 +1396,29 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                     for rule in rules.get('rules', []):
                         weightage = rule.get('weightage', 0)
                         score = round((score_percentage * weightage) / 100, 2)
-                        pi_score.append({
+                        
+                        # Generate appropriate message
+                        if abs(score - weightage) < 0.01:  # Full score achieved
+                            msg = f"No open alerts. {rule.get('name', 'Fire Engines')} system operating normally."
+                        else:
+                            msg = f"Fire engines auto mode status: {'Compliant' if score_percentage == 100 else 'Non-compliant - Fire engine in local mode detected'}"
+
+                        result_item = {
                             "name": rule.get('name', ''),
                             "score": score,
                             "weightage": weightage,
-                            "module": rules.get('name', '')
-                        })
+                            "module": rules.get('name', ''),
+                            "msg": msg,
+                            "details": {
+                                "score_percentage": score_percentage,
+                                "has_local_mode_alarm": score_percentage == 0
+                            }
+                        }
+
+                        # Enhance with insights
+                        result_item = enhance_result_with_insights(result_item,
+                                                                   "fire_engines_auto_mode")
+                        pi_score.append(result_item)
 
                     break  # Process only the first matching device
 
@@ -1124,13 +1430,17 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         final_score = round(sum(r['score'] for r in pi_score), 2)
         print("final_score ---> ", final_score)
 
-        return {
+        module_result = {
             "name": rules.get('name', ''),
             "score": final_score,
             "weightage": rules.get('weightage', 100),
             "results": pi_score
         }
 
+        # Add module-level summary insights
+        module_result["insights"] = generate_summary_insights(module_result)
+
+        return module_result
 
     async def _compute_hydrant_line_pi_score(self, name, rules, location_id):
         """
@@ -1156,8 +1466,9 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
         # Filter devices for given location_id
         location_devices = [
-            d for d in all_devices 
-            if d.get("type") == "OI" and d.get("additionalInfo", {}).get("location_id") == location_id
+            d for d in all_devices
+            if
+            d.get("type") == "OI" and d.get("additionalInfo", {}).get("location_id") == location_id
         ]
         if not location_devices:
             # No devices found — assign full scores manually
@@ -1193,7 +1504,9 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                             jockey_alarm_active = False
 
                             for alarm in alarms_data.get('data', []):
-                                interlock_name = alarm.get('details', {}).get('additionalInfo', {}).get('interlockName')
+                                interlock_name = alarm.get('details', {}).get('additionalInfo',
+                                                                              {}).get(
+                                    'interlockName')
                                 status = alarm.get('status', '')
                                 device_type = alarm.get('type', '')
 
@@ -1206,21 +1519,45 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                             jockey_score = 0.0 if jockey_alarm_active else 5.0
 
                         module_name = rules.get('name', '')
+                        
+                        # Generate appropriate messages
+                        if abs(pressure_score - 5.0) < 0.01:  # Full score achieved
+                            pressure_msg = f"No open alerts. Pressurized Hydrant Line system operating normally."
+                        else:
+                            pressure_msg = f"Hydrant line pressure: {'Below 7 Kg' if hydrant_alarm_active else 'Normal'}"
+                        
+                        if abs(jockey_score - 5.0) < 0.01:  # Full score achieved
+                            jockey_msg = f"No open alerts. Jockey Pump system operating normally."
+                        else:
+                            jockey_msg = f"Jockey pump: {'Not in Auto Remote' if jockey_alarm_active else 'In Auto Remote'}"
 
-                        pi_score.extend([
-                            {
-                                'name': 'Pressurized Hydrant Line',
-                                'score': pressure_score,
-                                'weightage': 5.0,
-                                'module': module_name
-                            },
-                            {
-                                'name': 'Jockey Pump',
-                                'score': jockey_score,
-                                'weightage': 5.0,
-                                'module': module_name
+                        pressure_result = {
+                            'name': 'Pressurized Hydrant Line',
+                            'score': pressure_score,
+                            'weightage': 5.0,
+                            'module': module_name,
+                            'msg': pressure_msg,
+                            'details': {
+                                'pressure_alarm_active': hydrant_alarm_active,
+                                'pressure_threshold': 7.0
                             }
-                        ])
+                        }
+                        pressure_result = enhance_result_with_insights(pressure_result,
+                                                                       "hydrant_line")
+
+                        jockey_result = {
+                            'name': 'Jockey Pump',
+                            'score': jockey_score,
+                            'weightage': 5.0,
+                            'module': module_name,
+                            'msg': jockey_msg,
+                            'details': {
+                                'jockey_alarm_active': jockey_alarm_active
+                            }
+                        }
+                        jockey_result = enhance_result_with_insights(jockey_result, "hydrant_line")
+
+                        pi_score.extend([pressure_result, jockey_result])
                         break  # Only the first matching device
                     except Exception as e:
                         print(f"Error processing device {device.get('name', '')}: {e}")
@@ -1229,13 +1566,17 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         final_score = round(sum(r['score'] for r in pi_score), 2)
         print("final_score ---> ", final_score)
 
-        return {
+        module_result = {
             "name": rules.get('name', ''),
             "score": final_score,
             "weightage": rules.get('weightage', 100),
             "results": pi_score
         }
 
+        # Add module-level summary insights
+        module_result["insights"] = generate_summary_insights(module_result)
+
+        return module_result
 
     async def _compute_emlock_pi_score(self, name, rules, location_id):
         """
@@ -1282,9 +1623,11 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             }
 
             total_vehicles = 190  # Hardcoded total
-            df = pd.read_csv('/opt/ceg/algo/orchestrator/reporting_services/vehicle_master_count_of_tt_no.csv')
+            df = pd.read_csv(os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..',
+                                          'orchestrator', 'reporting_services',
+                                          'vehicle_master_count_of_tt_no.csv'))
             df = df[df['sap_id'] == int(location_id)]
-            
+
             if not df.empty:
                 total_vehicles = df['count_of_tt_no'].sum()
             affected_vehicles = len(vehicles_with_critical_or_high)
@@ -1293,7 +1636,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
             # Compute percentage
             if total_vehicles > 0:
-                percentage_score = round(((total_vehicles - affected_vehicles) / total_vehicles) * 100, 2)
+                percentage_score = round(
+                    ((total_vehicles - affected_vehicles) / total_vehicles) * 100, 2)
             else:
                 percentage_score = 100.0
 
@@ -1301,25 +1645,45 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             print("percentage_score -->", percentage_score)
             print("scaled_score -->", scaled_score)
 
-            pi_score.append({
+            # Generate appropriate message
+            if abs(scaled_score - rule['weightage']) < 0.01:  # Full score achieved
+                msg = f"No open alerts. EMLock system operating normally."
+            else:
+                msg = f"EMLock: {affected_vehicles} vehicles with Critical/High alerts out of {total_vehicles} total vehicles"
+
+            result_item = {
                 "name": rule['name'],
                 "score": scaled_score,
                 "weightage": rule['weightage'],
-                "module": rules.get('name', '')
-            })
+                "module": rules.get('name', ''),
+                "msg": msg,
+                "details": {
+                    "affected_vehicles": affected_vehicles,
+                    "total_vehicles": total_vehicles,
+                    "percentage_score": percentage_score
+                }
+            }
+
+            # Enhance with insights
+            result_item = enhance_result_with_insights(result_item, "emlock")
+            pi_score.append(result_item)
 
         print("emlock pi_score -->", pi_score)
 
         final_score = round(sum(r['score'] for r in pi_score), 2)
         print("emlock final_score -->", final_score)
 
-        return {
+        module_result = {
             "name": rules.get('name', ''),
             "score": final_score,
             "weightage": rules['weightage'],
             "results": pi_score
         }
 
+        # Add module-level summary insights
+        module_result["insights"] = generate_summary_insights(module_result)
+
+        return module_result
 
     async def _compute_dryout_pi_score(self, name, rules, location_id):
         """
@@ -1343,7 +1707,8 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
         try:
             rule_list = rules['rules']  # Get the list inside the 'rules' key
 
-            carry_forward_weight = [r['weightage'] for r in rule_list if r['name'] == 'Carry Forward']
+            carry_forward_weight = [r['weightage'] for r in rule_list if
+                                    r['name'] == 'Carry Forward']
             carry_forward_weight = carry_forward_weight[0] if carry_forward_weight else 0
 
             dryout_weight = [r['weightage'] for r in rule_list if r['name'] == 'Cat A Dryout']
@@ -1417,25 +1782,59 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
             total_score = round(carry_forward_score + dryout_score, 2)
             print("Dryouts and Carry forward score -->", total_score)
 
-            return {
-                "name": "Dryouts and Carry forward",
-                "score": total_score,       # out of 100%
-                "weightage": rules['weightage'],  # total weightage from DRYOUT
-                "results": [
-                    {
-                        "name": "Carry Forward",
-                        "score": carry_forward_score,  # out of 50%
-                        "weightage": carry_forward_weight,
-                        "module": "Dryouts"
-                    },
-                    {
-                        "name": "Cat A Dryout",
-                        "score": dryout_score,         # out of 50%
-                        "weightage": dryout_weight,
-                        "module": "Dryouts"
-                    }
-                ]
+            # Generate appropriate messages
+            if abs(carry_forward_score - carry_forward_weight) < 0.01:  # Full score achieved
+                carry_forward_msg = f"No open alerts. Carry Forward system operating normally."
+            else:
+                carry_forward_msg = f"Carry Forward: {executed_carry_forward_count} executed out of {placed_carry_forward_count} placed"
+            
+            if abs(dryout_score - dryout_weight) < 0.01:  # Full score achieved
+                dryout_msg = f"No open alerts. Cat A Dryout system operating normally."
+            else:
+                dryout_msg = f"Cat A Dryout: {executed_dryout_score} executed out of {placed_dryout_score} placed"
+
+            carry_forward_result = {
+                "name": "Carry Forward",
+                "score": carry_forward_score,
+                "weightage": carry_forward_weight,
+                "module": "Dryouts",
+                "msg": carry_forward_msg,
+                "details": {
+                    "placed_count": placed_carry_forward_count,
+                    "executed_count": executed_carry_forward_count,
+                    "execution_rate": round(
+                        (executed_carry_forward_count / placed_carry_forward_count * 100),
+                        2) if placed_carry_forward_count > 0 else 0
+                }
             }
+            carry_forward_result = enhance_result_with_insights(carry_forward_result, "dryout")
+
+            dryout_result = {
+                "name": "Cat A Dryout",
+                "score": dryout_score,
+                "weightage": dryout_weight,
+                "module": "Dryouts",
+                "msg": dryout_msg,
+                "details": {
+                    "placed_count": placed_dryout_score,
+                    "executed_count": executed_dryout_score,
+                    "execution_rate": round((executed_dryout_score / placed_dryout_score * 100),
+                                            2) if placed_dryout_score > 0 else 0
+                }
+            }
+            dryout_result = enhance_result_with_insights(dryout_result, "dryout")
+
+            module_result = {
+                "name": "Dryouts and Carry forward",
+                "score": total_score,
+                "weightage": rules['weightage'],
+                "results": [carry_forward_result, dryout_result]
+            }
+
+            # Add module-level summary insights
+            module_result["insights"] = generate_summary_insights(module_result)
+
+            return module_result
 
         except Exception as e:
             print(traceback.format_exc())
