@@ -374,6 +374,9 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
             # **Exclude specific sap_id values**
             df = df[~df['sap_id'].isin(['1588', '1992', '1999'])]
 
+            if 'device_type' in df.columns:
+                df = df[~df['device_type'].isin(['RIMSEAL', 'Gantry override', 'Safety PLC'])]
+
             # Apply filtering if 'zone' or 'plant' is provided
             if 'zone' in df.columns and data.zone:
                 df = df[df['zone'] == data.zone]
