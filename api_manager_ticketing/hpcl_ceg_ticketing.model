@@ -116,6 +116,9 @@ Model Ticketing {
     sub_category optional list str
     remarks optional str 
     reason optional str
+    auto_ticket_close optional str
+    assignee_name optional list str
+    assignee_mail optional list str
 
 
     Action=> get_ticket {
@@ -151,7 +154,10 @@ Model Ticketing {
         sub_category optional list str
         remarks optional str 
         reason optional str
-      
+        auto_ticket_close optional str  //Configure whether a ticket should be automatically closed when the alert is closed, or remain open irrespective of the alert status.
+        assignee_name optional list str
+        assignee_mail optional list str
+
 
     }
 
@@ -187,7 +193,10 @@ Model Ticketing {
         sub_category optional list str
         remarks optional str 
         reason optional str
-      
+        auto_ticket_close optional str  //Configure whether a ticket should be automatically closed when the alert is closed, or remain open irrespective of the alert status.
+        assignee_name optional list str
+        assignee_mail optional list str
+
        
     }
     Action=> merge_ticket {
@@ -222,7 +231,8 @@ Model Ticketing {
 
     Action=> update_assignee {
         ticket_id str
-        assignee str
+        assignee_name  optional list str
+        assignee_mail optional list str
     }
     
     Action=> update_reporter {

@@ -78,6 +78,9 @@ class TicketingSchema(UrdhvaPostgresBase):
     sub_category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("sub_category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     reason: Mapped[typing.Optional[str]] = mapped_column("reason", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    auto_ticket_close: Mapped[typing.Optional[str]] = mapped_column("auto_ticket_close", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    assignee_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assignee_name", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    assignee_mail: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assignee_mail", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),)
 
@@ -126,6 +129,9 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     reason: typing.Optional[str] = pydantic.Field("", **{})
+    auto_ticket_close: typing.Optional[str] = pydantic.Field("", **{})
+    assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -179,6 +185,9 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     reason: typing.Optional[str] = pydantic.Field("", **{})
+    auto_ticket_close: typing.Optional[str] = pydantic.Field("", **{})
+    assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -231,6 +240,9 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     reason: typing.Optional[str] = pydantic.Field("", **{})
+    auto_ticket_close: typing.Optional[str] = pydantic.Field("", **{})
+    assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -273,6 +285,9 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
     reason: typing.Optional[str] = pydantic.Field("", **{})
+    auto_ticket_close: typing.Optional[str] = pydantic.Field("", **{})
+    assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -329,7 +344,8 @@ class Ticketing_Download_File_AttachmentParams(pydantic.BaseModel):
 
 class Ticketing_Update_AssigneeParams(pydantic.BaseModel):
     ticket_id: str
-    assignee: str
+    assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
