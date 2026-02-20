@@ -100,6 +100,8 @@ lpg_dashboard_actions = [
     'lpg_operations_total_plants',
     'lpg_operations_total_handled',
     'lpg_operations_daywise_productivity',
+    'lpg_operations_monthwise_productivity',
+    'lpg_operations_monthwise_rejections',
     'lpg_operations_daywise_production',
     'cdcms_current_date_pending_count',
     'cdcms_current_date_bookings_count',
@@ -119,6 +121,14 @@ lpg_dashboard_actions = [
     'overloaded_tts',
     'mfmkfactor',
     'bay_reassignment'
+    'get_total_production_today_data',
+    'get_total_productivity_today_data',
+    'get_productivity_moving_average',
+    'get_eld_old_rejections',
+    'get_eld_drill_down',
+    'get_old_drill_down',
+    'underfill_overfill_scales',
+    'under_performance_scales'
 ]
 
 # Todo:- import all widget action modules here
@@ -214,6 +224,8 @@ widget_mapping = {
     'lpg_operations_total_plants': {},
     'lpg_operations_total_handled': {},
     'lpg_operations_daywise_productivity': {},
+    'lpg_operations_monthwise_productivity': {},
+    'lpg_operations_monthwise_rejections': {},
     'lpg_operations_daywise_production': {},
     'cdcms_current_date_pending_count': {},
     'cdcms_current_date_bookings_count': {},
@@ -232,7 +244,15 @@ widget_mapping = {
     'manualfanprinted': {},
     'overloaded_tts': {},
     'mfmkfactor': {},
-    'bay_reassignment': {}
+    'bay_reassignment': {},
+    'get_total_production_today_data': {},
+    'get_total_productivity_today_data': {},
+    'get_productivity_moving_average': {},
+    'get_eld_old_rejections': {},
+    'get_eld_drill_down': {},
+    'get_old_drill_down': {},
+    'underfill_overfill_scales': {},
+    'under_performance_scales': {}
 }
 
 
