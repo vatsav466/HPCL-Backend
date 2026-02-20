@@ -3736,19 +3736,91 @@ class VTSAnalyticsActions:
                 return {"status": True, "message": "No data found", "data": [], "total_records": 0}
 
             if payload.get("download") == "true":
-                df = pd.DataFrame(resp['data'])
-                for col in df.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
-                    df[col] = df[col].dt.tz_localize(None)
+                def strip_tz(frame):
+                    for c in frame.select_dtypes(include=["datetime64[ns, UTC]", "datetimetz"]).columns:
+                        frame[c] = frame[c].dt.tz_localize(None)
+                    return frame
 
-                df = df.dropna(axis=1, how="all")
-                df = df.loc[:, (df.astype(str).apply(lambda x: x.str.strip() != "").any())]
+                def norm_id(v):
+                    try: return str(int(float(str(v).strip())))
+                    except Exception: return str(v).strip()
 
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 file_name = f"{table_name}_{timestamp}.xlsx"
+                output    = io.BytesIO()
 
-                output = io.BytesIO()
-                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                    df.to_excel(writer, index=False, sheet_name=table_name[:31])
+                if table_name == "cluster_master":
+                    # Fetch ALL cluster_master rows (no pagination limit)
+                    all_master_df = strip_tz(pd.DataFrame(
+                        (await urdhva_base.BasePostgresModel.get_aggr_data(
+                            query=VTSAnalyticsActions.apply_conditions_to_query(base_query, conditions),
+                            limit=0, skip_total=True
+                        )).get("data", [])
+                    )).dropna(axis=1, how="all")
+
+                    cluster_ids = list(dict.fromkeys(
+                        norm_id(v) for v in all_master_df.get("cluster_id", pd.Series()).dropna()
+                    ))
+
+                    # Fetch ALL clusterwise_event rows for these clusters + same date filter
+                    event_df = pd.DataFrame()
+                    if cluster_ids:
+                        ids_sql        = ", ".join(f"'{c}'" for c in cluster_ids)
+                        ev_base        = f"SELECT * FROM public.clusterwise_event WHERE cluster_id::text IN ({ids_sql})"
+                        ev_conds       = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, ev_base)
+                        vd             = payload.get("version_date", "")
+                        if vd and not any("version_date" in c for c in ev_conds):
+                            ev_conds.append(f"version_date::date = '{vd}'")
+                        event_df = strip_tz(pd.DataFrame(
+                            (await urdhva_base.BasePostgresModel.get_aggr_data(
+                                query=VTSAnalyticsActions.apply_conditions_to_query(ev_base, ev_conds),
+                                limit=0, skip_total=True
+                            )).get("data", [])
+                        ))
+                        if not event_df.empty and "cluster_id" in event_df.columns:
+                            event_df["cluster_id"] = event_df["cluster_id"].apply(norm_id)
+
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                        wb  = writer.book
+                        lnk = wb.add_format({"font_color": "#1155CC", "underline": True})
+                        bck = wb.add_format({"font_color": "#C00000", "underline": True, "bold": True, "bg_color": "#FFF2CC", "border": 1})
+                        hdr = wb.add_format({"bold": True, "bg_color": "#D9E1F2", "border": 1})
+
+                        # Summary sheet first → Tab #1, active on open
+                        all_master_df.to_excel(writer, index=False, sheet_name="Summary")
+                        sw  = writer.sheets["Summary"]
+                        sw.activate()
+                        cols = list(all_master_df.columns)
+                        sheets_written = set()
+
+                        if "cluster_id" in cols:
+                            ci = cols.index("cluster_id")
+                            sw.write(0, ci, "cluster_id", hdr)
+                            for r, v in enumerate(all_master_df["cluster_id"], 1):
+                                sn = norm_id(v)[:31]
+                                sw.write_url(r, ci, f"internal:'{sn}'!A1", lnk, norm_id(v))
+
+                        # Per-cluster sheets with ← Back to Summary
+                        if not event_df.empty and "cluster_id" in event_df.columns:
+                            for cid, sdf in event_df.groupby("cluster_id", sort=True):
+                                sn = str(cid)[:31]
+                                sdf.to_excel(writer, index=False, sheet_name=sn, startrow=1)
+                                cws = writer.sheets[sn]
+                                cws.write_url(0, 0, "internal:'Summary'!A1", bck, "← Back to Summary")
+                                cws.set_column(0, 0, 22)
+                                sheets_written.add(str(cid))
+
+                        # Replace links for clusters with no events → plain text
+                        if "cluster_id" in cols:
+                            ci = cols.index("cluster_id")
+                            for r, v in enumerate(all_master_df["cluster_id"], 1):
+                                if norm_id(v) not in sheets_written:
+                                    sw.write(r, ci, norm_id(v))
+
+                else:
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                        strip_tz(pd.DataFrame(resp['data'])).dropna(axis=1, how="all") \
+                            .to_excel(writer, index=False, sheet_name=table_name[:31])
 
                 output.seek(0)
                 headers = {"Content-Disposition": f'attachment; filename="{file_name}"'}
