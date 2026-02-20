@@ -119,6 +119,14 @@ lpg_dashboard_actions = [
     'overloaded_tts',
     'mfmkfactor',
     'bay_reassignment'
+    'get_total_production_today_data',
+    'get_total_productivity_today_data',
+    'get_productivity_moving_average',
+    'get_eld_old_rejections',
+    'get_eld_drill_down',
+    'get_old_drill_down',
+    'underfill_overfill_scales',
+    'under_performance_scales'
 ]
 
 # Todo:- import all widget action modules here
@@ -232,7 +240,15 @@ widget_mapping = {
     'manualfanprinted': {},
     'overloaded_tts': {},
     'mfmkfactor': {},
-    'bay_reassignment': {}
+    'bay_reassignment': {},
+    'get_total_production_today_data': {},
+    'get_total_productivity_today_data': {},
+    'get_productivity_moving_average': {},
+    'get_eld_old_rejections': {},
+    'get_eld_drill_down': {},
+    'get_old_drill_down': {},
+    'underfill_overfill_scales': {},
+    'under_performance_scales': {}
 }
 
 
