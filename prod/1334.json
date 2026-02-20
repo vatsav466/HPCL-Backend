@@ -13175,77 +13175,77 @@
                 },
                 {
                     "sensor_name": "All ROSOVs closed",
-                    "sensor_tag": "",
+                    "sensor_tag": "PLC.SFTPLC.ALL_ROSOV_CLOSED",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Barrier Gate opened",
-                    "sensor_tag": "",
+                    "sensor_tag": "PLC.SFTPLC.GATE_BARRIER_OPENED",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "TLF Gantry Permissive Power Off",
-                    "sensor_tag": "",
+                    "sensor_tag": "PLC.SFTPLC.TLF_GANTRY_PERMISSIVE_OFF",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "All TLF Product Pumps Stopped",
-                    "sensor_tag": "",
+                    "sensor_tag": "PLC.TASPLC.ALL_TLF_PUMP_STOPPED",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "All Tanks in Dormant Mode",
-                    "sensor_tag": "",
+                    "sensor_tag": "PLC.TASPLC.ALL_TANKS_IN_DORMANT",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "All DBBVs Closed",
-                    "sensor_tag": "",
+                    "sensor_tag": "PLC.SFTPLC.ALL_MOV_CLOSED",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "ESD Command To Process PLC",
-                    "sensor_tag": "",
+                    "sensor_tag": "PLC.SFTPLC.ESD_STATUS_TO_PROCESS_PLC",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Siren Activated",
-                    "sensor_tag": "",
+                    "sensor_tag": "PLC.SFTPLC.SIREN_ACTIVATED",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "ESD Hooter activated in control room",
-                    "sensor_tag": "",
+                    "sensor_tag": "PLC.SFTPLC.HOOTER_FOR_ESD_CR",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "Power ESD Activation after 120 Sec",
-                    "sensor_tag": "",
+                    "sensor_tag": "PLC.SFTPLC.ESD_RELAY_PCC_PANEL",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
                 },
                 {
                     "sensor_name": "TTL Dispatch in Dormant Mode",
-                    "sensor_tag": "",
+                    "sensor_tag": "PLC.TASPLC.ALL_DISPATCH_TANKS_IN_DORMANT",
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
