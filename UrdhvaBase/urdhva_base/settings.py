@@ -77,7 +77,8 @@ class Settings(pydantic_settings.BaseSettings):
     rbac_keys: typing.List[str] = ['sap_id', 'bu', 'state', 'city', 'district', 'zone']
 
     # For Logger
-    log_base_dir: str = "/var/log/ceg_logs"
+    # log_base_dir: str = "/var/log/ceg_logs"
+    log_base_dir: str = "/Users/algofusion/logs/ceg_logs"
     log_max_size: int = 10000000
     log_max_count: int = 5
 
@@ -95,7 +96,9 @@ class Settings(pydantic_settings.BaseSettings):
     download_path: str = "/opt/ceg/algo/orchestrator/masters"
     template_path: str = "/opt/ceg/algo/orchestrator/notification_templates"
     uploads: str = ""
-    downloads: str = ""
+    downloads: str = "/opt/ceg/algo/orchestrator/masters"
+    
+
     downloads_url_base: str = "/downloads"
     ticketing_attachments: str = ""
     kibana_dashboard_header: str = 'osd-xsrf'
