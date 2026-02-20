@@ -5761,7 +5761,7 @@ class GlobalAnalytics:
 
             # Complete the query
             query += """
-                GROUP BY created_date, zone, interlock_name, sap_id, location_name
+                GROUP BY created_date, zone, interlock_name, sap_id, location_name,closed_at
                 ORDER BY created_date DESC, alert_count DESC
             """
 
