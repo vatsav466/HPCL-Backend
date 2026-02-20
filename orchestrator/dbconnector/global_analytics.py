@@ -5702,7 +5702,8 @@ class GlobalAnalytics:
                 "Ups",
                 "Primary Level",
                 "Lrc Switchover",
-                "Gantry Override"
+                "Gantry Override",
+                "K Factor Main"
             ]
 
             # Modified to store equipment_name alongside alert_category
@@ -5720,7 +5721,8 @@ class GlobalAnalytics:
                 "Ups": ["UPS_Fail"],
                 "Primary Level": ["Primary Radar Guage_H alarm", "Primary Radar Guage_HH alarm"],
                 "Lrc Switchover": ["LRC Master Switchover required in 30 days"],
-                "Gantry Override": ["Gantry Permissive_Override"]
+                "Gantry Override": ["Gantry Permissive_Override"],
+                "K Factor Main": ["K Factor Change_BCU"]
             }
 
             # Create a flat list of all specified interlock names
