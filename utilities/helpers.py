@@ -9,6 +9,8 @@ import asyncio
 import hashlib
 import datetime
 import traceback
+import pandas as pd
+import numpy as np
 import urdhva_base.redispool
 from openpyxl import Workbook
 from calendar import monthrange
@@ -1436,3 +1438,33 @@ def get_interlock_name_and_instance_name_vts(interlock_name, instance_count):
     interlock_name = f"{base_name} {instance_count}{suffix}Time"
     instance_name = f"Instance - {instance_count}"
     return interlock_name, instance_name
+
+async def calculate_productivity(productivity):
+    try:
+        rows = []
+        for carousal, phases in productivity.items():
+            row = {"carousal": int(carousal)}
+            for phase, metrics in phases.items():
+                for key, value in metrics.items():
+                    row[f"{phase}_{key}"] = value
+            rows.append(row)
+        df = pd.DataFrame(rows)
+
+        net_hours_column = ["normal_net_hours", "break_net_hours", "overtime_net_hours"]
+        production_columns = ["normal_total_production", "break_total_production", "overtime_total_production"]
+        
+        for col in net_hours_column + production_columns:
+            if col in df.columns:
+                df[col] = df[col].fillna(0).astype(np.float64).abs()
+
+        df["total_net_hours"] = df["normal_net_hours"] + df["break_net_hours"] + df["overtime_net_hours"]
+        df["total_production"] = df["normal_total_production"] + df["break_total_production"] + df["overtime_total_production"]
+        df["total_productivity"] = df["total_production"] / df["total_net_hours"]
+        print("*"*20)
+        print("--- productivity ---")
+        print(df[["carousal", "total_production", "total_net_hours", "total_productivity"]])
+        print("*"*20)
+        return df
+    except Exception as e:
+        return pd.DataFrame()
+    

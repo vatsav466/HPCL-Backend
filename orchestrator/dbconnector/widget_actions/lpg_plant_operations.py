@@ -2,10 +2,13 @@ import urdhva_base
 import math
 import sys
 import asyncio
+import numpy as np
 import traceback
+import pandas as pd
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from orchestrator.dbconnector.widget_actions import lpg_config
+from utilities.helpers import calculate_productivity
 
 
 
@@ -1057,3 +1060,522 @@ class LPGOperationsActions:
             print("Exception in getting bottling summary :", str(e))
             print("Traceback :", traceback.format_exc())
             return False, "No data found"
+    
+    async def get_total_production_today_data(data: dict):
+        production_data = await LPGOperationsActions.get_productivity(data)
+        if not production_data:
+            return False, "No data found"
+        production_data = await calculate_productivity(production_data)
+        total_production = round(production_data["total_production"].sum(),2)
+        print("Production:", total_production)
+        return {"Total Production": total_production}
+
+
+    async def get_total_productivity_today_data(data: dict):
+        production_data = await LPGOperationsActions.get_productivity(data)
+        if not production_data:
+            return False, "No data found"
+        production_data = await calculate_productivity(production_data)
+        if not production_data.empty:
+            total_production = production_data['total_production'].iloc[0]
+
+            if total_production != 0:
+                total_productivity = round(production_data['total_production'].sum() / production_data['total_net_hours'].sum(),2)
+            else:
+                total_productivity = 0
+        print("Productivity:", total_productivity)
+        return {"Productivity": total_productivity}
+
+
+    async def get_productivity_raw_data(data: dict):
+        try:
+            today = datetime.now().date()
+            from_date = datetime.combine(today, datetime.min.time())
+            to_date = datetime.combine(today, datetime.max.time())
+            sap_id = data["sap_id"]
+
+            # Get carousals dynamically
+            carousal = await LPGOperationsActions.get_carousals(
+                'string', sap_id
+            )
+
+            if not carousal:
+                return []
+
+            # Get interval & avg duration from LPG operations (or set defaults internally)
+            interval = 15
+            avg_duration = 30
+
+            interval = interval if interval else 15
+            avg_duration = avg_duration if avg_duration else 30
+
+            excluded_statuses = "1296,5392,17424"
+
+            # 🔹 Dynamic SUM columns per carousal
+            dynamic_columns = []
+            for cid in carousal.split(","):
+                dynamic_columns.append(f"""
+                    SUM(CASE WHEN (system_id = {cid.strip()} AND cyl_type = 1) THEN 1
+                            WHEN (system_id = {cid.strip()} AND cyl_type = 2) THEN 1.25
+                            ELSE 0 END) AS c{cid.strip()}
+                """)
+
+            dynamic_columns_sql = ", ".join(dynamic_columns)
+
+            query = f"""
+                SELECT
+                    date_part('epoch', 
+                        date_trunc('hour', process_date) +  
+                        (((date_part('minute', process_date)::integer / {interval}) * {interval}) || ' minutes')::interval
+                    ) AS period_end,
+                    {dynamic_columns_sql}
+                FROM production_log
+                WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                AND process_id IN (2, 22)
+                AND system_id IN ({carousal})
+                AND cyl_type IN (1, 2)
+                AND process_status NOT IN ({excluded_statuses})
+                AND sap_id = {sap_id}
+                GROUP BY period_end
+                ORDER BY period_end ASC;
+            """
+
+            print("query:",query)
+            results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+
+            if results.get("data"):
+                return results["data"], avg_duration, carousal
+
+            return [], avg_duration, carousal
+
+        except Exception as e:
+            print("Exception in get_productivity_raw_data:", str(e))
+            print(traceback.format_exc())
+            return [], 30, ""
+
+
+    async def get_productivity_moving_average(data: dict):
+        try:
+            raw_data, avg_duration, carousal_string = await LPGOperationsActions.get_productivity_raw_data(data)
+
+            if not raw_data:
+                return False, "No data found"
+
+            df = pd.DataFrame(raw_data)
+            df["period_end"] = df["period_end"].astype(np.int64)
+
+
+            for col in df.columns:
+                if col != "period_end":
+                    df[col] = df[col].astype(float)
+
+            avg_duration_secs = avg_duration * 60
+            hourly_factor = 3600 / avg_duration_secs
+            adjustment_factor = 8.5 / 7.75
+
+            carousals = carousal_string.split(",")
+
+            output = {
+                "labels": [],
+                "overall": {}
+            }
+
+            for cid in carousals:
+                output[f"c{cid}_rate"] = []
+                output["overall"][f"c{cid}"] = 0
+
+            for _, row in df.iterrows():
+                current_ts = row["period_end"]
+
+                window_df = df[
+                    (df["period_end"] >= current_ts - avg_duration_secs) &
+                    (df["period_end"] < current_ts)
+                ]
+
+                output["labels"].append(
+                    datetime.fromtimestamp(current_ts).strftime("%H:%M")
+                )
+
+                for cid in carousals:
+                    col = f"c{cid}"
+                    window_sum = window_df[col].sum() if col in window_df else 0
+                    rate = round(window_sum * hourly_factor, 2)
+                    output[f"c{cid}_rate"].append(rate)
+
+            # 🔹 Overall Adjusted Productivity
+            for cid in carousals:
+                rates = [r for r in output[f"c{cid}_rate"] if r > 0]
+                if rates:
+                    output["overall"][f"c{cid}"] = round(
+                        (sum(rates) / len(rates)) * adjustment_factor,
+                        2
+                    )
+
+            print("*" * 40)
+            print("Moving Average Productivity")
+            print("Overall:", output["overall"])
+            print("*" * 40)
+
+            return output
+
+        except Exception as e:
+            print("Exception in get_productivity_moving_average:", str(e))
+            print(traceback.format_exc())
+            return False, "Error occurred"
+
+        
+    async def get_eld_old_rejections(data : dict):
+        eld_data = await LPGOperationsActions.get_gd_rejection(data)
+        old_data = await LPGOperationsActions.get_pt_rejection(data)
+
+        eld_data = eld_data if eld_data else {}
+        old_data = old_data if old_data else {}
+
+        output = {}
+        output['ELD'] = eld_data
+        output['OLD'] = old_data
+
+        return output
+
+    async def get_eld_drill_down(data: dict):
+        try:
+            from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
+            to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
+            if not data.get("carousal", None):
+                        carousal = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
+                        processId = '3,23'
+
+            query = f"""SELECT
+                        system_id,
+                        process_status,
+                        COUNT(event_log_id),
+                        device_id
+                    FROM event_log
+                    WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                        AND system_id IN ({carousal})
+                        AND process_id IN ({processId})
+                        AND sap_id = {data['sap_id']}
+                    GROUP BY  process_status, system_id,device_id """
+            print(query)
+            results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+            print(results)
+            if results['data']:
+                    results = results['data']
+            else:
+                return {}
+
+            if results:
+                carousal_wise_data = {}
+
+                for row in results:
+                    sys_id = row['system_id']
+                    device_id = row['device_id']
+
+                    # initialize system_id dict
+                    if sys_id not in carousal_wise_data:
+                        carousal_wise_data[sys_id] = {}
+
+                    # initialize device_id dict
+                    if device_id not in carousal_wise_data[sys_id]:
+                        carousal_wise_data[sys_id][device_id] = {
+                            'handled': 0,
+                            'sortout': 0
+                        }
+
+                    # update handled
+                    carousal_wise_data[sys_id][device_id]['handled'] += row['count']
+
+                    # update sortout
+                    if row['process_status'] != 0:
+                        carousal_wise_data[sys_id][device_id]['sortout'] += row['count']
+
+                return carousal_wise_data
+            return False, "No data found"
+        
+        except Exception as e:
+            print("Exception in gd_rejection :", str(e))
+            print("Traceback :", traceback.format_exc())
+            return False, "No data found"
+        
+    async def get_old_drill_down(data: dict):
+        try:
+            from_date = datetime.strptime(f"{data['from_date']} 00:00:00", "%Y-%m-%d %H:%M:%S")
+            to_date = datetime.strptime(f"{data['to_date']} 23:59:59","%Y-%m-%d %H:%M:%S")
+            if not data.get("carousal", None):
+                carousal = await LPGOperationsActions.get_carousals('string', data.get("sap_id"))
+                processId =  '4,24'
+            else:
+                carousal = '1,2'
+            query = f"""SELECT
+                        system_id,
+                        process_status,
+                        COUNT(event_log_id),
+                        device_id
+                    FROM event_log
+                    WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                        AND system_id IN ({carousal})
+                        AND process_id IN ({processId})
+                        AND sap_id = {data['sap_id']}
+                    GROUP BY  process_status, system_id,device_id """
+            print(query)
+            results = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+            print(results)
+            if results['data']:
+                    results = results['data']
+            else:
+                return {}
+
+            if results:
+                carousal_wise_data = {}
+
+                for row in results:
+                    sys_id = row['system_id']
+                    device_id = row['device_id']
+
+                    # initialize system_id dict
+                    if sys_id not in carousal_wise_data:
+                        carousal_wise_data[sys_id] = {}
+
+                    # initialize device_id dict
+                    if device_id not in carousal_wise_data[sys_id]:
+                        carousal_wise_data[sys_id][device_id] = {
+                            'handled': 0,
+                            'sortout': 0
+                        }
+
+                    # update handled
+                    carousal_wise_data[sys_id][device_id]['handled'] += row['count']
+
+                    # update sortout
+                    if row['process_status'] != 0:
+                        carousal_wise_data[sys_id][device_id]['sortout'] += row['count']
+
+                return carousal_wise_data
+            return False, "No data found"
+        
+        except Exception as e:
+            print("Exception in gd_rejection :", str(e))
+            print("Traceback :", traceback.format_exc())
+            return False, "No data found"
+        
+    
+    async def get_scale_id(row: dict) -> int:
+        return row.get("device_id") or row.get("machine_id")
+
+    async def get_scales_efficiency_data(sap_id, carousal_list, from_date, to_date):
+        query = f"""
+            WITH ScaleAggregates AS (
+                SELECT 
+                    system_id, 
+                    machine_id, 
+                    device_id, 
+                    COUNT(*) AS scale_count,
+                    MIN(process_date) as scale_first,
+                    MAX(process_date) as scale_last
+                FROM production_log
+                WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+                AND process_id IN (2, 22)
+                AND system_id IN ({carousal_list})
+                AND cyl_type IN (1, 2)
+                AND process_status NOT IN (1296, 5392, 17424)
+                AND sap_id = {sap_id}
+                GROUP BY system_id, machine_id, device_id
+            )
+            SELECT 
+                *,
+                MIN(scale_first) OVER (PARTITION BY system_id) AS first_cyl_time_overall,
+                MAX(scale_last) OVER (PARTITION BY system_id) AS last_cyl_time_overall
+            FROM ScaleAggregates
+            ORDER BY system_id ASC, machine_id ASC
+        """
+        
+        raw_data = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+        
+        meta_data = {}
+        if raw_data and raw_data.get('data'):
+            for row in raw_data['data']:
+                s_id = row["system_id"]
+                if s_id not in meta_data:
+                    meta_data[s_id] = {
+                        "first_cyl_time": row["first_cyl_time_overall"],
+                        "last_cyl_time":  row["last_cyl_time_overall"],
+                    }
+            return {"rows": raw_data['data'], "metaData": meta_data}
+        return False
+
+    async def under_performance_scales(data: dict):
+
+        if not data.get('time'):
+            today = datetime.now().date()
+            from_date = datetime.combine(today, datetime.min.time())
+            to_date = datetime.combine(today, datetime.max.time())
+        else:
+            now = datetime.now()
+            tg = data['time'].lower()
+
+            if tg.endswith('m'):  # minutes
+                delta = timedelta(minutes=int(tg[:-1]))
+            elif tg.endswith('h'):  # hours
+                delta = timedelta(hours=int(tg[:-1]))
+            elif tg.endswith('d'):  # days
+                delta = timedelta(days=int(tg[:-1]))
+            else:
+                raise ValueError("Invalid time_grain format")
+
+            from_date = now - delta
+            to_date = now
+        print(from_date,to_date)
+        sap_id = data.get("sap_id")
+        
+        carousals_data = await LPGOperationsActions.get_carousals('full', sap_id)
+        c_ids = list(carousals_data.keys())
+        carousal_list = ", ".join(map(str, c_ids))
+
+        scales_count = await LPGOperationsActions.get_scales_efficiency_data(sap_id, carousal_list, from_date, to_date)
+        
+        if not scales_count:
+            return {"rows": [], "meta": {f"car{c}Eff": "0%" for c in c_ids}}
+
+        meta_data = scales_count["metaData"]
+        raw_rows = scales_count["rows"]
+        
+        intervals = {}
+        std_output_per_head = {}
+        car_speeds = {1: 50, 2: 48, 3: 48}
+        
+        for c_id in c_ids:
+            if c_id in meta_data:
+                first_time = meta_data[c_id]["first_cyl_time"]
+                last_time = meta_data[c_id]["last_cyl_time"]
+
+                # Convert if string
+                if isinstance(first_time, str):
+                    first_time = datetime.fromisoformat(first_time)
+
+                if isinstance(last_time, str):
+                    last_time = datetime.fromisoformat(last_time)
+
+                diff = (last_time - first_time).total_seconds()
+                intervals[c_id] = diff if diff > 0 else 0.0
+            else:
+                intervals[c_id] = 0.0
+                
+            interval = intervals[c_id]
+            if c_id in carousals_data and interval > 0:
+                std_output_per_head[c_id] = (carousals_data[c_id]["stdOutput"] * (interval / 3600)) / carousals_data[c_id]["heads"]
+            elif c_id in car_speeds and interval > 0:
+                std_output_per_head[c_id] = (1 / car_speeds[c_id]) * interval
+            else:
+                std_output_per_head[c_id] = 0.0
+
+        overall_count = {c_id: 0 for c_id in c_ids}
+        processed_rows = []
+        for row in raw_rows:
+            s_id = row["system_id"]
+            denom = std_output_per_head.get(s_id, 0)
+            eff = row["scale_count"] / denom if denom > 0 else 0.0
+            
+            tag = "above-average"
+            if eff <= 0.75: tag = "below-average"
+            elif eff <= 1.0: tag = "average"
+
+            processed_rows.append({
+                "scale": await LPGOperationsActions.get_scale_id(row),
+                "carousal": s_id,
+                "efficiency": eff,
+                "efficiency_display": f"{round(eff * 100)}%",
+                "tag": tag,
+                "count": row["scale_count"]
+            })
+            overall_count[s_id] += row["scale_count"]
+
+        meta = {}
+        for c_id in c_ids:
+            key = f"car{c_id}Eff"
+            heads = carousals_data.get(c_id, {}).get("heads", 24)
+            total_std_output = std_output_per_head.get(c_id, 0) * heads
+            overall_eff = overall_count[c_id] / total_std_output if total_std_output > 0 else 0.0
+            meta[key] = f"{round(overall_eff * 100)}%"
+
+        processed_rows.sort(key=lambda x: x["efficiency"])
+        return {"rows": processed_rows[:10], "meta": meta}
+
+    async def underfill_overfill_scales(data: dict):
+
+        if not data.get('time'):
+            today = datetime.now().date()
+            from_date = datetime.combine(today, datetime.min.time())
+            to_date = datetime.combine(today, datetime.max.time())
+        else:
+            now = datetime.now()
+            tg = data['time'].lower()
+
+            if tg.endswith('m'):  # minutes
+                delta = timedelta(minutes=int(tg[:-1]))
+            elif tg.endswith('h'):  # hours
+                delta = timedelta(hours=int(tg[:-1]))
+            elif tg.endswith('d'):  # days
+                delta = timedelta(days=int(tg[:-1]))
+            else:
+                raise ValueError("Invalid time_grain format")
+
+            from_date = now - delta
+            to_date = now
+        print(from_date,to_date)
+        sap_id = data.get("sap_id")
+        carousals_data = await LPGOperationsActions.get_carousals('full', sap_id)
+        c_ids = list(carousals_data.keys())
+        c_list = ", ".join(map(str, c_ids))
+
+        query = f"""
+            SELECT system_id, machine_id, device_id, 
+                COUNT(*) as total,
+                SUM(CASE WHEN 
+                        ((cyl_type = 1) AND (ABS(check_net - 14200) > 100 AND ABS(check_net - 14200) <= 200))
+                        OR
+                        ((cyl_type = 2) AND (ABS(check_net - 19000) > 100 AND ABS(check_net - 19000) <= 200))
+                    THEN 1 ELSE 0 END) AS hundred_plus
+            FROM production_log
+            WHERE process_date BETWEEN '{from_date}' AND '{to_date}'
+            AND process_id IN (2, 22)
+            AND system_id IN ({c_list})
+            AND sap_id = {sap_id}
+            GROUP BY system_id, machine_id, device_id
+        """
+        print("query:",query)
+        res = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+        rows = res.get('data', [])
+        print(len(rows))
+        overall = {c_id: {"total": 0, "h_plus": 0} for c_id in c_ids}
+        processed_rows = []
+
+        for row in rows:
+            s_id = row["system_id"]
+            total = row["total"] or 1
+            acc = 1 - (row["hundred_plus"] / total)
+            
+            tag = "above-average"
+            if acc <= 0.97: tag = "below-average"
+            elif acc <= 1.0: tag = "average"
+
+            processed_rows.append({
+                "scale": await LPGOperationsActions.get_scale_id(row),
+                "carousal": s_id,
+                "accuracy": acc,
+                "accuracy_display": f"{round(acc * 100)}%",
+                "tag": tag,
+                "total": row["total"]
+            })
+            
+            if s_id in overall:
+                overall[s_id]["total"] += row["total"]
+                overall[s_id]["h_plus"] += row["hundred_plus"]
+
+        meta = {}
+        for c_id in c_ids:
+            denom = overall[c_id]["total"] or 1
+            overall_acc = 1 - (overall[c_id]["h_plus"] / denom)
+            meta[f"car{c_id}Acc"] = f"{(overall_acc * 100):.2f}%"
+
+        processed_rows.sort(key=lambda x: x["accuracy"])
+        return {"rows": processed_rows[:10], "meta": meta}
