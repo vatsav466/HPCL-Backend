@@ -114,7 +114,7 @@ async def fetch_host_tables_as_dfs(data):
         q=query_str,
         fields=json.dumps([
             "created_at", "bcu_number","bay_number","invoiced_qty", "location_name",
-            "bcu_net_totalizer", "mfm_net_totalizer","bcu_start_totalizer","bcu_end_totalizer"
+            "bcu_net_totalizer", "mfm_net_totalizer","bcu_start_totalizer","bcu_end_totalizer","invoiced_bcu_net_qty_diff","bcu_mfm_net_totalizer_diff"
         ])
     )
     day_end_params.limit = 0
@@ -199,8 +199,8 @@ async def fetch_host_tables_as_dfs(data):
                 pl.col("bay_number").is_in(padded_bays)
             )
 
-    if len(day_end_df) > 0 and "bcu_number" in day_end_df.columns:
-        day_end_df = day_end_df.with_columns(pl.col("bcu_number").str.extract(r"BC-(\d+)", 1).alias("bay_number_extracted"))
+    if len(day_end_df) > 0 and "bay_number" in day_end_df.columns:
+        day_end_df = day_end_df.with_columns(pl.col("bay_number").str.zfill(2).alias("bay_number_extracted"))
 
     # Rename bay_number to assigned_bay if column exists
     if len(local_loaded_df) > 0 and "bay_number" in local_loaded_df.columns:
