@@ -429,6 +429,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         "ticket_name": ticket_data['ticket_name'],
         "alert_type": selected_types,
         "alert_data": selected_alert,
+        "alert_section": tdata.get("alert_section"),  
         "reporter": user_name,
         "ticket_history": ticket_data['ticket_history'],
         "parent_id": parent_tid,
@@ -654,7 +655,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
                     break
         # ----------------------------------------------------
 
-        ticket_state = data_dict.get("ticket_state") or existing_ticket.get("ticket_state")
+        ticket_state = data_dict.get("ticket_state", existing_ticket.get("ticket_state"))
         if ticket_state not in TicketType.__members__:
             raise Exception(f"Invalid ticket_state: {ticket_state}")
 
@@ -666,27 +667,38 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
 
         
         # ---------------- FINAL STATE DECISION ----------------
-        print("========== DEBUG START ==========")
-        print("linked_alert_ids:", linked_alert_ids)
-        print("is_manual_ticket:", is_manual_ticket)
-        print("all_alerts_closed:", all_alerts_closed)
-        print("auto_close_flag:", auto_close_flag)
-        print("ticket_state_from_UI:", ticket_state)
-        print("=================================")
-
+        ticket_state_from_ui = data_dict.get("ticket_state")
 
         if is_manual_ticket:
-            final_state = ticket_state
+            final_state = ticket_state_from_ui or existing_ticket.get("ticket_state")
             action_msg = f"Ticket updated, state changed to {final_state}"
             action_type_val = action_type_enum
 
         else:
+            # Case 1: Auto close ON and alerts closed
             if all_alerts_closed and auto_close_flag:
                 final_state = "Resolved"
                 action_msg = "All linked alerts are closed, ticket auto resolved"
                 action_type_val = "TicketResolved"
+
+            # Case 2: Auto close turned OFF but no state sent from UI
+            elif not auto_close_flag and existing_ticket.get("ticket_state") == "Resolved":
+                
+                # Find last non-resolved state from history
+                previous_state = None
+                for entry in reversed(existing_history):
+                    msg = entry.get("action_msg", "")
+                    if "state changed to" in msg and "Resolved" not in msg:
+                        previous_state = msg.split("state changed to")[-1].strip()
+                        break
+
+                final_state = previous_state or "InProgress"
+                action_msg = f"Auto close disabled, state reverted to {final_state}"
+                action_type_val = action_type_enum
+
+            # Normal case
             else:
-                final_state = ticket_state
+                final_state = ticket_state_from_ui or existing_ticket.get("ticket_state")
                 action_msg = f"Ticket updated, state changed to {final_state}"
                 action_type_val = action_type_enum
 
