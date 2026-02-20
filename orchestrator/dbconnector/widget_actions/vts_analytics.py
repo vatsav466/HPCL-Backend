@@ -1028,6 +1028,68 @@ class VTSAnalyticsActions:
             print("Exception in BigNumber Chart:", str(e))
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
+        
+            
+    @staticmethod
+    async def vts_card_chart_download(filters, cross_filters, drill_state, payload):
+        try:
+            # Get base query
+            card_query = vts_query.vts_query.get(drill_state.split(",")[0])
+
+            # Build conditions
+            conditions = VTSAnalyticsActions.build_filter_conditions(
+                filters, cross_filters, card_query
+            )
+
+            final_query = VTSAnalyticsActions.apply_conditions_to_query(
+                card_query, conditions
+            )
+
+            # Execute query (assuming returns list of dicts)
+            result = await VTSAnalyticsActions.execute_query(final_query)
+
+            # Convert to Polars
+            df = pl.DataFrame(result)
+
+            # Extract employee_id and action_by from alert_history index 5
+            df = df.with_columns([
+                pl.when(pl.col("alert_history").list.len() > 5)
+                .then(pl.col("alert_history").list.get(5).struct.field("employee_id"))
+                .otherwise(None)
+                .alias("employee_id"),
+
+                pl.when(pl.col("alert_history").list.len() > 5)
+                .then(pl.col("alert_history").list.get(5).struct.field("action_by"))
+                .otherwise(None)
+                .alias("action_by"),
+
+                pl.lit("SOD").alias("bu")  # override BU
+            ])
+
+            # Select only required columns (alert_history removed)
+            res_df = df.select([
+                "bu",
+                "sap_id",
+                "location_name",
+                "unique_id",
+                "equipment_name",
+                "vehicle_number",
+                "created_at",
+                "closed_at",
+                "employee_id",
+                "action_by"
+            ])
+
+            return {
+                "status": True,
+                "message": "success",
+                "data": res_df.to_dicts()
+            }
+
+        except Exception as e:
+            print("Exception in BigNumber Chart:", str(e))
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
     
     @staticmethod
     async def vts_dashboard_card_download(filters, cross_filters, drill_state, payload):

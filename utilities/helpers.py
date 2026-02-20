@@ -805,12 +805,51 @@ async def generate_equipment_report(resp, output_file, report_type="daily", filt
                 "Equipment": {"details": [], "total": 0}
             }
 
+    # def merge_section(section_data):
+    #     for date, content in section_data.items():
+    #         init_date_entry(date)
+    #         if "Equipment" in content:
+    #             all_data[date]["Equipment"]["details"].extend(content["Equipment"]["details"])
+    #             # all_data[date]["Equipment"]["total"] += content["Equipment"]["total"]
+    #             all_data[date]["Equipment"]["open_alerts_current_carry_count"] += \
+    #                 content["Equipment"].get("open_alerts_current_carry_count", 0)
+    
     def merge_section(section_data):
         for date, content in section_data.items():
-            init_date_entry(date)
-            if "Equipment" in content:
-                all_data[date]["Equipment"]["details"].extend(content["Equipment"]["details"])
-                all_data[date]["Equipment"]["total"] += content["Equipment"]["total"]
+
+            if date not in all_data:
+                all_data[date] = {
+                    "Equipment": {
+                        "open_alerts_current_carry_count": 0,
+                        "open_alerts_current_day": 0,
+                        "close_alerts_current_day": 0,
+                        "details": []
+                    }
+                }
+
+            # Ensure keys exist (extra safety)
+            equipment_data = all_data[date]["Equipment"]
+
+            equipment_data.setdefault("open_alerts_current_carry_count", 0)
+            equipment_data.setdefault("open_alerts_current_day", 0)
+            equipment_data.setdefault("close_alerts_current_day", 0)
+            equipment_data.setdefault("details", [])
+
+            # Now safely add
+            equipment_data["open_alerts_current_carry_count"] += \
+                content["Equipment"].get("open_alerts_current_carry_count", 0)
+
+            equipment_data["open_alerts_current_day"] += \
+                content["Equipment"].get("open_alerts_current_day", 0)
+
+            equipment_data["close_alerts_current_day"] += \
+                content["Equipment"].get("close_alerts_current_day", 0)
+
+            equipment_data["details"].extend(
+                content["Equipment"].get("details", [])
+            )
+
+
 
     # ---- Merge all sections ----
     merge_section(process_data)

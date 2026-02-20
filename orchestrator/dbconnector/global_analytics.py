@@ -5299,10 +5299,17 @@ class GlobalAnalytics:
                                 "equipment_name": device_row["equipment_name"],
                                 "device_name": device_name,
                                 "sensor_id": device_row["sensor_id"],
+
                                 "open_alerts_current_carry_count": 0,
                                 "open_alerts_current_day": 0,
-                                "close_alerts_current_day": 1
+                                "close_alerts_current_day": 1,
+
+                                "count": 1,
+                                "type": "closed"
+                                
                             }
+
+
                             details.append(detail)
                         
                         # Initialize structure
@@ -5355,6 +5362,11 @@ class GlobalAnalytics:
                                 is_carry_forward = device_row["created_date"] < date
                                 is_open = device_row["created_date"] == date
                                 
+                                if is_carry_forward:
+                                    alert_flag = "carry_forward"
+                                else:
+                                    alert_flag = "open"
+
                                 detail = {
                                     "sap_id": device_row["sap_id"],
                                     "zone": device_row["zone"],
@@ -5362,9 +5374,15 @@ class GlobalAnalytics:
                                     "equipment_name": device_row["equipment_name"],
                                     "device_name": device_name,
                                     "sensor_id": device_row["sensor_id"],
+
                                     "open_alerts_current_carry_count": 1 if is_carry_forward else 0,
                                     "open_alerts_current_day": 1 if is_open else 0,
-                                    "close_alerts_current_day": 0
+                                    "close_alerts_current_day": 0,
+
+                                    # ADD THESE TWO
+                                    "count": 1,
+                                    "type": alert_flag
+                                    
                                 }
                                 details.append(detail)
                             
@@ -5524,7 +5542,13 @@ class GlobalAnalytics:
                         carry_forward_flag = 1 if device_name in carry_devices else 0
                         current_month_flag = 1 if device_name in created_and_open_devices else 0
                         closed_flag = 1 if device_name in closed_devices else 0
-                        
+                        if carry_forward_flag == 1:
+                            alert_flag = "carry_forward"
+                        elif closed_flag == 1:
+                            alert_flag = "closed"
+                        else:
+                            alert_flag = "open"
+
                         detail = {
                             "sap_id": device_row["sap_id"],
                             "zone": device_row["zone"], 
@@ -5532,11 +5556,16 @@ class GlobalAnalytics:
                             "equipment_name": device_row["equipment_name"],
                             "device_name": device_name,
                             "sensor_id": device_row["sensor_id"],
+
                             "open_alerts_current_carry_count": carry_forward_flag,
-                            "open_alerts_current_day": current_month_flag,  # This is for current month
-                            "close_alerts_current_day": closed_flag
+                            "open_alerts_current_day": current_month_flag,
+                            "close_alerts_current_day": closed_flag,
+
+                            "count": 1,
+                            "type": alert_flag
+                            
                         }
-                        details.append(detail)
+
                     
                     # Calculate final counts
                     carry_count = len(carry_devices)
@@ -5591,6 +5620,7 @@ class GlobalAnalytics:
         except Exception:
             print(traceback.format_exc())
             return {"status": False, "message": "Internal error occurred", "data": {}}
+
 
     @staticmethod
     async def tas_maintenance_fault_dropdown(filters, cross_filters, drill_state):
