@@ -786,6 +786,45 @@ async def create_vts_violation_alerts(enriched_data):
     except Exception as e:
         logger.error(f"Error creating VTS Alert : {str(e)}")
 
+async def get_delivered_location_packed(invoice_number,supply_location,vehicle_number):
+    MAX_RETRIES = 3
+    RETRY_DELAY = 10
+
+    delivery_location_resp = {}
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            # Fetching customer from TIBCO DB
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            query = f"""SELECT DISTINCT CUSTOMER AS CONSUMER_ERP_CODE FROM ZSDCV_AY_INV3_STG WHERE LOAD_NO1 = '{invoice_number}' 
+                        AND SUPPLY_LOC = '{supply_location}' AND VEHICLE_ID = '{vehicle_number}'"""
+
+            print('*'*100)
+            print('query',query)
+            print('*'*100)
+
+            delivery_location_resp = await function(query=query) 
+
+            if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
+                break
+
+        except Exception as e:
+            print(traceback.format_exc())
+            logger.error(f"Vehicle Track DB query failed for getting delivery_location : Traceback: {traceback.format_exc()}")
+            logger.error(
+                f"Vehicle Track DB query failed (attempt {attempt}/{MAX_RETRIES}) "
+                f"Invoice={invoice_number}, Location={supply_location}, Error={e}"
+                )
+            
+            if attempt < MAX_RETRIES:
+                await asyncio.sleep(RETRY_DELAY)
+    
+    ship_to_list = delivery_location_resp.get("CONSUMER_ERP_CODE") or []
+
+    return ship_to_list
+
 async def get_delivered_location(invoice_number,supply_location,vehicle_number):
     MAX_RETRIES = 3
     RETRY_DELAY = 10
@@ -891,6 +930,12 @@ async def create_vts_alerts(enriched_data):
                     entry["base_location_id"] = ship_to_list[0].lstrip("P").lstrip("00")
                 if len(ship_to_list) > 0:
                     entry['destination_code']  = ship_to_list[0].lstrip("P").lstrip("00")
+            
+            if entry['location_type'] in ['LPG'] and entry.get("tt_type", "").lower() in ["packed"]:
+                ship_to_list = await get_delivered_location_packed(entry['invoice_number'],entry['location_id'],entry['tl_number'])
+                if len(ship_to_list) > 0:
+                    entry['destination_code']  = ship_to_list[0].lstrip("P").lstrip("00")
+
 
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],
