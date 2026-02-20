@@ -211,7 +211,7 @@ async def generate_sod_engineering_location_stats(sap_id):
         'MOV', 'HCD', 'Dyke', 'Hooter', 'Primary Level', 'Jockey Pump', 'VFT',
         'PT', 'ROSOV', 'ESD', 'Pump', 'Radar', 'Fire Engine', 'Barrier Gate',
         'Gantry BCU', 'MFM', 'RIMSEAL', 'Dyke Valve', 'OI Tags', 'LRC Switchover',
-        'PLC', 'Fire Effect', 'UPS', 'Gantry override', 'Power ESD', 'ESD Effect'
+        'PLC', 'UPS', 'Power ESD', 'ESD Effect'
     )
 
     try:
@@ -261,8 +261,7 @@ async def generate_sod_engineering_location_stats(sap_id):
         DEVICE_TYPE_MAPPING = {
             "MOV": "MOV", "RIMSEAL": "RIMSEAL", "Dyke Valve": "Dyke Valve",
             "HCD": "HCD", "DYKE": "Dyke", "HOOTER": "Hooter", "PRIMARY LEVEL": "Primary Radar",
-            "LRC SWITCHOVER": "LRC Switchover", "PLC": "PLC", "JOCKEY PUMP": "Jockey Pump",
-            "FIRE EFFECT": "Fire Effect", "UPS": "UPS", "GANTRY OVERRIDE": "Gantry override",
+            "LRC SWITCHOVER": "LRC Switchover", "PLC": "PLC", "JOCKEY PUMP": "Jockey Pump", "UPS": "UPS",
             "VFT": "VFT", "PT": "PT Hydrant", "ROSOV": "Rosov", "ESD": "ESD", "PUMP": "Pumps",
             "OI TAGS": "OI Tags", "RADAR": "Secondary Radar", "FIRE ENGINE": "Fire Engine",
             "ESD EFFECT": "ESD Effect", "BARRIER GATE": "Barrier Gate", "POWER ESD": "Power ESD",
