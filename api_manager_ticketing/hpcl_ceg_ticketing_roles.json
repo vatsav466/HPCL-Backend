@@ -84,6 +84,9 @@
                 },
                 {
                     "name": "get_location_data"
+                },
+                {
+                    "name": "vts_block_trucks"
                 }
             ]
         },
@@ -189,6 +192,9 @@
                 },
                 {
                     "name": "get_location_data"
+                },
+                {
+                    "name": "vts_block_trucks"
                 }
             ]
         }
@@ -348,6 +354,10 @@
         {
             "name": "get_location_data",
             "displayName": "get_location_data"
+        },
+        {
+            "name": "vts_block_trucks",
+            "displayName": "vts_block_trucks"
         }
     ]
 }

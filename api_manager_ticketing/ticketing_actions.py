@@ -25,7 +25,8 @@ from hpcl_ceg_ticketing_model import (
     Ticketing_Delete_DescriptionParams,
     Ticketing_Attach_File_To_CommentParams,
     Ticketing_Delete_File_From_CommentParams,
-    Ticketing_Get_Location_DataParams
+    Ticketing_Get_Location_DataParams,
+    Ticketing_Vts_Block_TrucksParams
 
 )
 import os, uuid
@@ -44,6 +45,7 @@ from fastapi import APIRouter, HTTPException
 from urdhva_base.queryparams import QueryParams
 from fastapi import UploadFile, File, Form
 import utilities.minio_connector as minio_connector
+import json
 
 
 
@@ -1627,4 +1629,81 @@ async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
             "locations": locations
         }
     }
+
+
+# Action vts_block_trucks
+@router.post('/vts_block_trucks', tags=['Ticketing'])
+async def ticketing_vts_block_trucks(data: Ticketing_Vts_Block_TrucksParams):
+    results = []
+
+    # Validate trucks
+    if not data.truck_info:
+        return {
+            "status": False,
+            "message": "No trucks provided to block",
+            "results": results
+        }
+
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {
+                "status": False,
+                "message": "Session got expired, Please Re-Login",
+                "results": results
+            }
+
+        redis_queue = urdhva_base.redispool.RedisQueue("ticket_block_trucks_queue")
+
+        # Loop through each truck
+        for truck in data.truck_info:
+            try:
+                queue_payload = {
+                    "truck_number": truck.truck_number,
+                    "blocking_days": data.block_days,
+                    "remarks": data.remarks,
+                    "reason": data.reason,
+                    "bu": truck.bu or "TAS",
+                    "location_name": truck.location_name or "",
+                    "sap_id": truck.sap_id or "",
+                    "region": truck.region or "",
+                    "zone": truck.zone or "",
+                    "ticket_id": data.ticket_id,
+                    "check_ticket_close": data.check_ticket_close,
+                    "rpt": {
+                        "username": rpt.get("username", ""),
+                        "email": rpt.get("email", ""),
+                        "novex_role": rpt.get("novex_role", []),
+                    },
+                    "entity_id": urdhva_base.context.context.get("entity_id", "Novex")
+                }
+
+                await redis_queue.put(json.dumps(queue_payload))
+                results.append({
+                    "truck_number": truck.truck_number,
+                    "status": "queued",
+                    "message": "Queued for blocking"
+                })
+
+            except Exception as inner_e:
+                logger.exception(f"Error queueing truck {truck.truck_number}: {str(inner_e)}")
+                results.append({
+                    "truck_number": truck.truck_number,
+                    "status": False,
+                    "message": "Failed to queue"
+                })
+
+        return {
+            "status": True,
+            "message": "Block requests queued for processing",
+            "results": results
+        }
+
+    except Exception as e:
+        logger.exception(f"Error in Multi Truck Block Flow: {str(e)}")
+        return {
+            "status": False,
+            "message": "Failed to process truck blocking",
+            "results": results
+        }
 
