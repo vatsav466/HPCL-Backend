@@ -261,8 +261,8 @@ class AlertFactory:
                  payload['variables'].update({"waitTime": {"value": alert_data.get('waitTime', ''), "type": "String"},
                                                "bu": {"value": alert_data.get('bu', ''), "type": "String"},
                                                "auto_unblock": {"value": alert_data.get('auto_unblock', ''), "type": "String"},
-                                               "vehicle_number":{"value": alert_data.get('vehicle_number', ''), "type": "String"}})
-
+                                               "vehicle_number":{"value": alert_data.get('vehicle_number', ''), "type": "String"},
+                                               "checkTicketClose":{"value": alert_data.get('checkTicketClose', False), "type": "Boolean"}})
             # Create Interlock
             # Start workflow after creating the interlock
             if interlock_name:
