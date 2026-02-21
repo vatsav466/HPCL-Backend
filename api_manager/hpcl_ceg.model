@@ -876,6 +876,7 @@ Model Alerts {
     file_uploaded_path optional str
     block_status optional index_field BlockStatus
     image_uploaded optional bool
+    ticket_id optional str
 
     Action=> alert_action {
         bu optional str
@@ -957,6 +958,11 @@ Model Alerts {
         blocking_days int
         reason optional str
         remarks optional str
+        sap_id optional str
+        location_name optional str
+        zone optional str
+        region optional str
+        check_ticket_close optional bool
     }
 
     Action=> unblock_vts_truck {

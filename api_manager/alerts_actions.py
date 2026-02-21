@@ -427,14 +427,29 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
         if alert_data["data"]:
             return {"status": False, "message": "Truck has already been blocked"}
         
-        location_data = await get_truck_location_data(data.truck_number)
-        if not location_data:
-                location_data = {}
-        location_name = location_data.get('name', '')
-        zone = location_data.get('zone', '') 
-        sap_id = location_data.get('sap_id', '') 
-        region = location_data.get('region', '') 
-        transporter_code = location_data.get('transporter_code', '')
+        location_name = data.location_name
+        zone = data.zone
+        region = data.region
+        sap_id = data.sap_id
+        transporter_code = ""
+        if not location_name or not zone or not region or not sap_id:
+            location_data = await get_truck_location_data(data.truck_number)
+            if not location_data:
+                    location_data = {}
+            location_name = location_data.get('name', '')
+            zone = location_data.get('zone', '') 
+            sap_id = location_data.get('sap_id', '') 
+            region = location_data.get('region', '') 
+            transporter_code = location_data.get('transporter_code', '')
+        else:
+            transporter_query = f"""
+                select transporter_code
+                from vts_truck_master
+                where truck_no = '{data.truck_number}'
+            """
+            transporter_res = await urdhva_base.BasePostgresModel.get_aggr_data(transporter_query)
+            if transporter_res.get("data"):
+                transporter_code = transporter_res["data"][0].get("transporter_code", "")
         
         start_date_utc = urdhva_base.utilities.get_present_time(utc=True)
         end_date_utc = start_date_utc + relativedelta(days=data.blocking_days)
@@ -493,7 +508,8 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
             "transporter_code" : transporter_code,
             "region": region,
             "auto_unblock": "true",
-            "block_status": BlockStatus.WaitingForBlockAck
+            "block_status": BlockStatus.WaitingForBlockAck,
+            "checkTicketClose": data.check_ticket_close if data.check_ticket_close is not None else False
         }
 
         # need to trigger camunda workflow 

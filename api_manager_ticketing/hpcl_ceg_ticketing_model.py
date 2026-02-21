@@ -34,6 +34,15 @@ class Merge_HistoryCreate(pydantic.BaseModel):
     action_type: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class TruckInfoCreate(pydantic.BaseModel):
+    truck_number: str
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class TicketingSchema(UrdhvaPostgresBase):
     __tablename__ = 'ticketing'
     
@@ -444,6 +453,19 @@ class Ticketing_Get_Location_DataParams(pydantic.BaseModel):
     region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     sap_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Ticketing_Vts_Block_TrucksParams(pydantic.BaseModel):
+    ticket_id: str
+    block_days: typing.Optional[int] = pydantic.Field(0, **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    reason: typing.Optional[str] = pydantic.Field("", **{})
+    check_ticket_close: typing.Optional[bool] = pydantic.Field(False, )
+    truck_info: typing.List[TruckInfoCreate]
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
