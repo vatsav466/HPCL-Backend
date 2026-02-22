@@ -159,7 +159,7 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 "module": rules.get("name", name),
                 "msg": msg,
                 "details": {
-                    "current_value": value_rejection if rule["model"] == "percentage_rejection" else None,
+                    "current_value": float(value_rejection) if rule["model"] == "percentage_rejection" else None,
                     "threshold_min": min_val if rule["model"] == "percentage_rejection" else None,
                     "threshold_max": max_val if rule["model"] == "percentage_rejection" else None,
                     "alert_count": alert_count.get(f"{rule['interlock_name']}_count", 0) if rule["model"] == "open_alerts" else None

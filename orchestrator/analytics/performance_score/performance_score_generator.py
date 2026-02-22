@@ -40,7 +40,7 @@ async def fetch_va_score(bu):
 async def validate_locations_from_history(bu, location_ids, va_data):
 
     if not location_ids:
-        return va_data
+        return {}
 
     # Faster lookup
     va_keys = set(va_data.keys())
@@ -49,15 +49,23 @@ async def validate_locations_from_history(bu, location_ids, va_data):
     missing_in_va = [loc for loc in location_ids if loc not in va_keys]
 
     if not missing_in_va:
-        return va_data
+        return {}
 
     ids = ", ".join(f"'{loc}'" for loc in missing_in_va)
 
     query = f"""
        SELECT DISTINCT ON (sap_id) sap_id, category, created_at
-        FROM performance_score_history
+        FROM performance_score_history 
         WHERE bu = '{bu}'
         AND sap_id IN ({ids})
+        AND EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(performance_score_history.category) cat
+            JOIN jsonb_array_elements(cat->'results') res ON TRUE
+            WHERE cat->>'name' = 'VA'
+              AND res->>'name' = 'VA Portal'
+              AND (res->>'score')::numeric > 0
+        )
         ORDER BY sap_id, created_at DESC
 
     """
@@ -65,22 +73,17 @@ async def validate_locations_from_history(bu, location_ids, va_data):
     resp = await hpcl_ceg_model.PerformanceScoreHistory.get_aggr_data(query, limit=0)
     db_data = resp.get("data", [])
 
-    fallback_scores = va_data
+    fallback_scores = {}
 
     for row in db_data:
-
         sap_id = row['sap_id']
         category_data = row.get('category')
-
         if isinstance(category_data, str):
             category_data = json.loads(category_data)
-
         if not isinstance(category_data, list):
             continue
-
         for module in category_data:
             if module.get("name") == "VA":
-
                 # 👇 NEW LOGIC: fetch VA Portal score
                 for result in module.get("results", []):
                     if result.get("name") == "VA Portal":
@@ -90,9 +93,7 @@ async def validate_locations_from_history(bu, location_ids, va_data):
                         break
 
                 break  # stop after VA module
-
     return fallback_scores
-
 
 
 async def generate_performance_score(bu, location_id=None):
@@ -151,11 +152,8 @@ WHERE bu = '{bu}'
             "FALLBACK": True
         }
 
-
     logger.info(f"Fallback applied for locations: {list(fallback_scores.keys())}")
 
-
-    
     # generating performance score for every plant
     performance_score = {}
     present_timestamp = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d")
