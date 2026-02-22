@@ -3958,347 +3958,714 @@ async def cancelled_tts_dashboard(data):
             "truck_wise_summary": truck_result
         }
     }
-    
-async def host_tables_combined_data(data):
-    """
-    Get combined host tables data grouped by date, then by bay number and table name
-    Filters are handled at database level in fetch_host_tables_as_dfs
-    """
-    try:
-        combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count, unauthorised_flow_df = await tas_host_data.fetch_host_tables_as_dfs(data)
+def is_bay_empty(bay_data):
+    return (
+        bay_data.get("HostBayReAssignment", 0) == 0 and
+        bay_data.get("LocalLoading", 0) == 0 and
+        bay_data.get("OverLoading", 0) == 0 and
+        bay_data.get("Alerts_Count", 0) == 0 and
+        bay_data.get("Gantry_Permissive_off_Count", 0) == 0 and
+        bay_data.get("MFM_VS_BCU", 0) == 0 and
+        bay_data.get("BCU_VS_INVOICE", 0) == 0 and
+        bay_data.get("HostUnauthorisedFlow_count", 0) == 0
+    )
 
-        if combined_df is None or combined_df.is_empty():
-            return []
-        
-        # Extract date from created_at
-        combined_df = combined_df.with_columns(
-            pl.col("created_at").cast(pl.Datetime).dt.date().alias("date")
-        )
-        
-        # Get unique dates
-        unique_dates = combined_df.select("date").unique().sort("date")
-        
+
+def calc_unauthorised_net_totalizer(df):
+    if len(df) == 0 or "net_totalizer" not in df.columns:
+        return 0.0
+    df_with_date = df.with_columns(
+        pl.col("created_at").cast(pl.Date).alias("date")
+    )
+    latest_per_day = (
+        df_with_date.sort("created_at", descending=True)
+        .group_by("date")
+        .first()
+        .filter(pl.col("net_totalizer") > 0)
+    )
+    if len(latest_per_day) == 0:
+        return 0.0
+    return round(float(latest_per_day.select(pl.col("net_totalizer").sum()).item()), 2)
+
+
+def get_unauthorised_flow_for_bay_date(unauthorised_flow_df, date, bay_number_str):
+    unauthorised_flow_count = 0
+    unauthorised_flow_net_totalizer = 0.0
+    unauthorised_flow_details = []
+
+    if len(unauthorised_flow_df) == 0:
+        return unauthorised_flow_count, unauthorised_flow_net_totalizer, unauthorised_flow_details
+
+    filtered = unauthorised_flow_df.filter(
+        (pl.col("created_at").cast(pl.Date) == date) &
+        (pl.col("bay_number") == bay_number_str)
+    )
+
+    if len(filtered) == 0:
+        return unauthorised_flow_count, unauthorised_flow_net_totalizer, unauthorised_flow_details
+
+    unauthorised_flow_count = len(filtered)
+
+    for row in filtered.sort("created_at", descending=False).iter_rows(named=True):
+        unauthorised_flow_details.append({
+            "location_name": row.get("location_name"),
+            "bay_number": row.get("bay_number"),
+            "created_at": str(row.get("created_at")),
+            "start_totalizer": row.get("start_totalizer"),
+            "end_totalizer": row.get("end_totalizer"),
+            "net_totalizer": row.get("net_totalizer"),
+        })
+
+    unauthorised_flow_net_totalizer = calc_unauthorised_net_totalizer(filtered)
+
+    return unauthorised_flow_count, unauthorised_flow_net_totalizer, unauthorised_flow_details
+
+async def host_tables_combined_data(data):
+    try:
+        combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count, unauthorised_flow_df = \
+            await tas_host_data.fetch_host_tables_as_dfs(data)
+
+        selected_bay = None
+        if hasattr(data, "filters") and data.filters:
+            for f in data.filters:
+                if getattr(f, "key", None) == "bay":
+                    selected_bay = str(getattr(f, "value", "")).zfill(2)
+
+        combined_df_is_empty = combined_df is None or combined_df.is_empty()
+
         result = []
-        unique_truck_count = combined_df.select("truck_number").unique().height
+
         total_unauthorised_flow_count = len(unauthorised_flow_df) if len(unauthorised_flow_df) > 0 else 0
+
         total_counts = {
             "TotalBCU": total_bcu_count,
             "TotalActiveBays": total_active_bays_count,
-            "HostBayReAssignment": len(combined_df.filter(pl.col("table_name") == "HostBayReAssignment")),
-            "LocalLoading": len(combined_df.filter(pl.col("table_name") == "HostLocalLoaded")),
-            "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded")),
-            "TotalUniqueTruckNumbersCount": unique_truck_count,
+            "HostBayReAssignment": 0,
+            "LocalLoading": 0,
+            "OverLoading": 0,
+            "TotalUniqueTruckNumbersCount": 0,
             "UnauthorisedFlow": total_unauthorised_flow_count
         }
-        
-        for date_row in unique_dates.iter_rows(named=True):
-            date = date_row.get("date")
-            
-            # Filter data for this date
-            date_df = combined_df.filter(pl.col("date") == date)
-            
-            # Calculate Gantry count for THIS DATE (applies to all bays on this date)
-            gantry_count_for_date = 0
-            gantry_details_for_date = []
-            if len(alerts_df) > 0:
-                filtered_gantry_date = alerts_df.filter(
-                    (pl.col("created_at").cast(pl.Date) == date) &
-                    (pl.col("interlock_name").str.contains("Gantry Permissive Off")) &
-                    (~pl.col("interlock_name").str.contains("Fail"))
-                )
-                
-                if len(filtered_gantry_date) > 0:
-                    deduplicated_gantry = filtered_gantry_date.unique(
-                        subset=["created_at", "interlock_name"],
-                        keep="last"
-                    ).sort("created_at", descending=True)
-                    
-                    gantry_count_for_date = len(deduplicated_gantry)
-                    
-                    for alert_row in deduplicated_gantry.iter_rows(named=True):
-                        # Calculate downtime
-                        created_at = alert_row.get("created_at")
-                        closed_at = alert_row.get("closed_at")
-                        
-                        downtime_formatted = None
-                        if created_at and closed_at:
-                            # Calculate the difference
-                            time_diff = closed_at - created_at
-                            total_seconds = int(time_diff.total_seconds())
-                            
-                            # Break down into days, hours, minutes, seconds
-                            days = total_seconds // 86400  # 86400 seconds in a day
-                            hours = (total_seconds % 86400) // 3600  # 3600 seconds in an hour
-                            minutes = (total_seconds % 3600) // 60
-                            seconds = total_seconds % 60
-                            
-                            # Format the string
-                            parts = []
-                            if days > 0:
-                                parts.append(f"{days} day{'s' if days != 1 else ''}")
-                            if hours > 0:
-                                parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
-                            if minutes > 0:
-                                parts.append(f"{minutes} min{'s' if minutes != 1 else ''}")
-                            if seconds > 0 or not parts:  # Show seconds if it's the only value or if there are seconds
-                                parts.append(f"{seconds} sec{'s' if seconds != 1 else ''}")
-                            
-                            downtime_formatted = " ".join(parts)
-                        
-                        gantry_details_for_date.append({
-                            "created_at": str(alert_row.get("created_at")),
-                            "closed_at": str(alert_row.get("closed_at")) if alert_row.get("closed_at") else None,
-                            "Downtime": downtime_formatted,
-                            "interlock_name": alert_row.get("interlock_name"),
-                            "device_name": alert_row.get("device_name"),
-                            "location_name": alert_row.get("location_name"),
-                            "sap_id": alert_row.get("sap_id"),
 
-                        })
-                    
-            # Get unique bays for this date
-            unique_bays = date_df.select("assigned_bay").unique().sort("assigned_bay")
-            
-            bays_data = []
-            
-            for bay_row in unique_bays.iter_rows(named=True):
-                bay_number = bay_row.get("assigned_bay")
-                
-                # Filter data for this bay
-                bay_df = date_df.filter(pl.col("assigned_bay") == bay_number)
-                
-                # Group by table_name and prepare data
-                table_data = {}
-                
-                for table_name in ["HostBayReAssignment", "HostLocalLoaded", "HostOverLoaded"]:
-                    table_df = bay_df.filter(pl.col("table_name") == table_name)
-                    
-                    trucks = []
-                    for truck_row in table_df.iter_rows(named=True):
-                        # Build truck data dictionary based on table type
-                        if table_name == "HostBayReAssignment":
-                            truck_data = {
-                                "truck_number": truck_row.get("truck_number"),
-                                "created_at": str(truck_row.get("created_at")),
-                                "load_number": truck_row.get("load_number"),
-                                "location_name": truck_row.get("location_name"),
-                                "product_name": truck_row.get("product_name"),
-                                "required_qty": truck_row.get("required_qty"),
-                                "assigned_bay": truck_row.get("assigned_bay"),
-                                "reassigned_bay": truck_row.get("reassigned_bay")
-                            }
-                        else:  # HostLocalLoaded and HostOverLoaded
-                            truck_data = {
-                                "truck_number": truck_row.get("truck_number"),
-                                "created_at": str(truck_row.get("created_at")),
-                                "load_number": truck_row.get("load_number"),
-                                "location_name": truck_row.get("location_name"),
-                                "product_name": truck_row.get("product_name"),
-                                "required_qty": truck_row.get("required_qty"),
-                                "loaded_qty": truck_row.get("loaded_qty"),
-                                "overloaded_qty": truck_row.get("overloaded_qty"),
-                                "cumulative_loaded_qty": truck_row.get("cumulative_loaded_qty")
-                            }
-                        
-                        trucks.append(truck_data)
-                    
-                    table_data[table_name] = {
-                        "count": len(trucks),
-                        "trucks": trucks
-                    }
-                
-                # Calculate bay-level metrics (for the entire day)
-                bay_current_date = date  # Using the date from the outer loop
-                bay_number_str = str(bay_number).zfill(2)
-                
-                # Get Alerts_Count for this bay - DEDUPLICATED
-                alerts_count_bay = 0
-                alerts_count_details_bay = []
+        if not combined_df_is_empty:
+            combined_df = combined_df.with_columns(
+                pl.col("created_at").cast(pl.Utf8).str.slice(0, 10).str.to_date("%Y-%m-%d").alias("date")
+            )
+            unique_dates = combined_df.select("date").unique().sort("date")
+            unique_truck_count = combined_df.select("truck_number").unique().height
+
+            total_counts.update({
+                "HostBayReAssignment": len(combined_df.filter(pl.col("table_name") == "HostBayReAssignment")),
+                "LocalLoading": len(combined_df.filter(pl.col("table_name") == "HostLocalLoaded")),
+                "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded")),
+                "TotalUniqueTruckNumbersCount": unique_truck_count,
+            })
+
+            for date_row in unique_dates.iter_rows(named=True):
+                date = date_row.get("date")
+                date_df = combined_df.filter(pl.col("date") == date)
+
+                # ── Gantry calculation (date-level) ──────────────────────────
+                gantry_count_for_date = 0
+                gantry_details_for_date = []
                 if len(alerts_df) > 0:
-                    filtered_alerts_bay = alerts_df.filter(
-                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
-                        (pl.col("equipment_name") == "BCU") &
-                        (pl.col("bay_number") == bay_number_str)
+                    filtered_gantry_date = alerts_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == date) &
+                        (pl.col("interlock_name").str.contains("Gantry Permissive Off")) &
+                        (~pl.col("interlock_name").str.contains("Fail"))
                     )
-                    
-                    # Deduplicate by created_at and bay_number, keep latest and unique interlock_names
-                    if len(filtered_alerts_bay) > 0:
-                        deduplicated_alerts = filtered_alerts_bay.unique(
-                            subset=["created_at", "bay_number", "interlock_name"],
+                    if len(filtered_gantry_date) > 0:
+                        deduplicated_gantry = filtered_gantry_date.unique(
+                            subset=["created_at", "interlock_name"],
                             keep="last"
                         ).sort("created_at", descending=True)
-                        
-                        alerts_count_bay = len(deduplicated_alerts)
-                        
-                        for alert_row in deduplicated_alerts.iter_rows(named=True):
-                            alerts_count_details_bay.append({
+
+                        gantry_count_for_date = len(deduplicated_gantry)
+
+                        for alert_row in deduplicated_gantry.iter_rows(named=True):
+                            created_at = alert_row.get("created_at")
+                            closed_at = alert_row.get("closed_at")
+                            downtime_formatted = None
+                            if created_at and closed_at:
+                                time_diff = closed_at - created_at
+                                total_seconds = int(time_diff.total_seconds())
+                                days_td = total_seconds // 86400
+                                hours = (total_seconds % 86400) // 3600
+                                minutes = (total_seconds % 3600) // 60
+                                seconds = total_seconds % 60
+                                parts = []
+                                if days_td > 0:
+                                    parts.append(f"{days_td} day{'s' if days_td != 1 else ''}")
+                                if hours > 0:
+                                    parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+                                if minutes > 0:
+                                    parts.append(f"{minutes} min{'s' if minutes != 1 else ''}")
+                                if seconds > 0 or not parts:
+                                    parts.append(f"{seconds} sec{'s' if seconds != 1 else ''}")
+                                downtime_formatted = " ".join(parts)
+
+                            gantry_details_for_date.append({
                                 "created_at": str(alert_row.get("created_at")),
+                                "closed_at": str(alert_row.get("closed_at")) if alert_row.get("closed_at") else None,
+                                "Downtime": downtime_formatted,
                                 "interlock_name": alert_row.get("interlock_name"),
                                 "device_name": alert_row.get("device_name"),
                                 "location_name": alert_row.get("location_name"),
-                                "sap_id": alert_row.get("sap_id")
+                                "sap_id": alert_row.get("sap_id"),
                             })
-                
-                # Get MFM_VS_BCU for this bay - DEDUPLICATED
-                mfm_vs_bcu_bay = 0
-                mfm_vs_bcu_details_bay = []
-                if len(day_end_df) > 0:
-                    filtered_day_end_bay = day_end_df.filter(
-                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
-                        (pl.col("bay_number_extracted") == bay_number_str)
-                    )
-                    if len(filtered_day_end_bay) > 0:
-                        # Group by created_at and bay_number, aggregate the totals
-                        grouped_day_end = filtered_day_end_bay.group_by(["created_at", "bay_number_extracted"]).agg([
-                            pl.col("bcu_net_totalizer").sum().alias("bcu_total"),
-                            pl.col("mfm_net_totalizer").sum().alias("mfm_total"),
-                            pl.col("bcu_number").first().alias("bcu_number"),  # Representative BCU number
-                            pl.col("bay_number").first().alias("bay_number")
-                        ]).sort("created_at", descending=True)  # Latest first
-                        
-                        for day_end_row in grouped_day_end.iter_rows(named=True):
-                            difference = day_end_row.get("mfm_total") - day_end_row.get("bcu_total")
-                            if difference != 0:  # Only include if there's an actual difference
-                                mfm_vs_bcu_details_bay.append({
-                                    "created_at": str(day_end_row.get("created_at")),
-                                    "bcu_number": day_end_row.get("bcu_number"),
-                                    "bay_number": day_end_row.get("bay_number"),
-                                    "bcu_net_totalizer": day_end_row.get("bcu_total"),
-                                    "mfm_net_totalizer": day_end_row.get("mfm_total"),
-                                    "difference": difference
-                                })
-                        
-                        mfm_vs_bcu_bay = len(mfm_vs_bcu_details_bay)  # Count of entries, not sum of differences
-                
-                bcu_vs_invoice_bay = 0
-                bcu_vs_invoice_details_bay = []
 
-                if len(day_end_df) > 0:
-                    filtered_day_end_bay = day_end_df.filter(
-                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
-                        (pl.col("bay_number_extracted") == bay_number_str)
-                    )
-                    
-                    if len(filtered_day_end_bay) > 0:
-                        # Filter out records where invoiced_qty is null or 0
-                        filtered_day_end_bay = filtered_day_end_bay.filter(
-                            pl.col('invoiced_qty').is_not_null() & 
-                            (pl.col('invoiced_qty') != 0)
-                        )
-                        
-                        if len(filtered_day_end_bay) > 0:
-                            # Group by created_at and bay_number to aggregate
-                            grouped_day_end = filtered_day_end_bay.group_by(["created_at", "bay_number_extracted"]).agg([
-                                pl.col("bcu_net_totalizer").sum().alias("bcu_total"),
-                                pl.col("invoiced_qty").sum().alias("invoiced_total"), 
-                                pl.col("bcu_number").first().alias("bcu_number"),
-                                pl.col("bay_number").first().alias("bay_number")
-                            ]).sort("created_at", descending=True)
-                            
-                            for day_end_row in grouped_day_end.iter_rows(named=True):
-                                bcu_total = day_end_row.get("bcu_total")
-                                invoiced_total = day_end_row.get("invoiced_total") 
-                                difference = abs(bcu_total - invoiced_total)
-                                
-                                if difference != 0:
-                                    bcu_vs_invoice_details_bay.append({
-                                        "created_at": str(day_end_row.get("created_at")),
-                                        "bcu_number": day_end_row.get("bcu_number"),
-                                        "bay_number": day_end_row.get("bay_number"),
-                                        "bcu_net_totalizer": bcu_total,
-                                        "invoiced_qty": invoiced_total, 
-                                        "difference": difference
-                                    })
-                            
-                            bcu_vs_invoice_bay = len(bcu_vs_invoice_details_bay)
-                
-                # NEW: Get HostUnauthorisedFlow for this bay
-                unauthorised_flow_net_totalizer = 0
-                unauthorised_flow_details_bay = []
-                
-                if len(unauthorised_flow_df) > 0:
-                    # Filter by bay_number and date
-                    filtered_unauthorised = unauthorised_flow_df.filter(
-                        (pl.col("created_at").cast(pl.Date) == bay_current_date) &
-                        (pl.col("bay_number") == bay_number_str)
-                    )
-                    
-                    if len(filtered_unauthorised) > 0:
-                        # Sort by created_at descending and get the latest entry per location
-                        latest_per_location = filtered_unauthorised.sort("created_at", descending=True).group_by("location_name").first()
-                        
-                        # Filter out entries where net_totalizer is 0
-                        latest_per_location = latest_per_location.filter(
-                            pl.col("net_totalizer") > 0
-                        )
-                        
-                        # Calculate total sum of latest entries across all locations
-                        if len(latest_per_location) > 0:
-                            # unauthorised_flow_net_totalizer = latest_per_location["net_totalizer"].sum()
-                            unauthorised_flow_net_totalizer = 1
-                            
-                            # Build details for each location (only non-zero)
-                            for unauth_row in latest_per_location.iter_rows(named=True):
-                                unauthorised_flow_details_bay.append({
-                                    "location_name": unauth_row.get("location_name"),
-                                    "bay_number": unauth_row.get("bay_number"),
-                                    "net_totalizer": unauth_row.get("net_totalizer"),
-                                    "created_at": str(unauth_row.get("created_at"))
-                                })
+                # ── unique bays from combined_df ──────────────────────────────
+                if selected_bay:
+                    unique_bays = date_df.filter(
+                        pl.col("assigned_bay").cast(pl.Utf8).str.zfill(2) == selected_bay
+                    ).select("assigned_bay").unique().sort("assigned_bay")
+                else:
+                    unique_bays = date_df.select("assigned_bay").unique().sort("assigned_bay")
 
-                # Get Cross_checked_ManuallyAP_system (you can set logic here)
-                cross_checked = 0  # Default value
-                total_count = (len(bay_df) +  alerts_count_bay + gantry_count_for_date + mfm_vs_bcu_bay + bcu_vs_invoice_bay)
-                # Build bay data
-                bay_data = {
-                    "bay_number": bay_number,
-                    "total_count" : total_count,
-                    "HostBayReAssignment": table_data["HostBayReAssignment"]["count"],
-                    "HostBayReAssignment_details": table_data["HostBayReAssignment"]["trucks"],
-                    "LocalLoading": table_data["HostLocalLoaded"]["count"],
-                    "LocalLoading_details": table_data["HostLocalLoaded"]["trucks"],
-                    "OverLoading": table_data["HostOverLoaded"]["count"],
-                    "OverLoading_details": table_data["HostOverLoaded"]["trucks"],
-                    "Alerts_Count": alerts_count_bay
-                }
-                
-                # Add details only if count > 0
-                if alerts_count_bay > 0:
-                    bay_data["Alerts_Count_details"] = alerts_count_details_bay
-                
-                bay_data["Gantry_Permissive_off_Count"] = gantry_count_for_date
-                if gantry_count_for_date > 0:
-                    bay_data["Gantry_Permissive_off_Count_details"] = gantry_details_for_date
-                
-                bay_data["MFM_VS_BCU"] = mfm_vs_bcu_bay
-                if mfm_vs_bcu_bay > 0:
-                    bay_data["MFM_VS_BCU_details"] = mfm_vs_bcu_details_bay
-                
-                bay_data["BCU_VS_INVOICE"] = bcu_vs_invoice_bay
-                if bcu_vs_invoice_bay > 0:
-                    bay_data["BCU_VS_INVOICE_details"] = bcu_vs_invoice_details_bay
-                bay_data["HostUnauthorisedFlow_net_totalizer"] = unauthorised_flow_net_totalizer
-                if len(unauthorised_flow_details_bay) > 0:
-                    bay_data["HostUnauthorisedFlow_details"] = unauthorised_flow_details_bay
-                
-                bay_data["Cross_checked_ManuallyAP_system"] = cross_checked
-                
-                bays_data.append(bay_data)
-            
-            result.append({
-                "date": str(date),
-                "bays": bays_data
-            })
-        
+                # ── Filter out bay numbers > 30 ───────────────────────────────────
+                unique_bays = unique_bays.filter(
+                    pl.col("assigned_bay").cast(pl.Utf8).str.zfill(2).cast(pl.Int32, strict=False) <= 30
+                )
+
+                bays_data = []
+
+                for bay_row in unique_bays.iter_rows(named=True):
+                    bay_number = bay_row.get("assigned_bay")
+                    bay_number_str = str(bay_number).zfill(2)
+
+                    bay_df = date_df.filter(
+                        pl.col("assigned_bay").cast(pl.Utf8).str.zfill(2) == bay_number_str
+                    )
+
+                    table_data = {}
+                    for table_name in ["HostBayReAssignment", "HostLocalLoaded", "HostOverLoaded"]:
+                        table_df = bay_df.filter(pl.col("table_name") == table_name)
+                        trucks = []
+                        for truck_row in table_df.iter_rows(named=True):
+                            if table_name == "HostBayReAssignment":
+                                truck_data = {
+                                    "truck_number": truck_row.get("truck_number"),
+                                    "created_at": str(truck_row.get("created_at")),
+                                    "load_number": truck_row.get("load_number"),
+                                    "location_name": truck_row.get("location_name"),
+                                    "product_name": truck_row.get("product_name"),
+                                    "required_qty": truck_row.get("required_qty"),
+                                    "assigned_bay": truck_row.get("assigned_bay"),
+                                    "reassigned_bay": truck_row.get("reassigned_bay")
+                                }
+                            else:
+                                truck_data = {
+                                    "truck_number": truck_row.get("truck_number"),
+                                    "created_at": str(truck_row.get("created_at")),
+                                    "load_number": truck_row.get("load_number"),
+                                    "location_name": truck_row.get("location_name"),
+                                    "product_name": truck_row.get("product_name"),
+                                    "required_qty": truck_row.get("required_qty"),
+                                    "loaded_qty": truck_row.get("loaded_qty"),
+                                    "overloaded_qty": truck_row.get("overloaded_qty"),
+                                    "cumulative_loaded_qty": truck_row.get("cumulative_loaded_qty")
+                                }
+                            trucks.append(truck_data)
+                        table_data[table_name] = {"count": len(trucks), "trucks": trucks}
+
+                    # ── Alerts for this bay (Phase 1) ─────────────────────────
+                    alerts_count_bay, alerts_count_details_bay = get_alerts_for_bay_date(
+                        alerts_df, date, bay_number_str
+                    )
+
+                    unauth_count, unauth_net, unauth_details = get_unauthorised_flow_for_bay_date(
+                        unauthorised_flow_df, date, bay_number_str
+                    )
+
+                    total_count = len(bay_df) + alerts_count_bay + gantry_count_for_date
+
+                    bay_data = {
+                        "bay_number": bay_number,
+                        "total_count": total_count,
+                        "HostBayReAssignment": table_data["HostBayReAssignment"]["count"],
+                        "HostBayReAssignment_details": table_data["HostBayReAssignment"]["trucks"],
+                        "LocalLoading": table_data["HostLocalLoaded"]["count"],
+                        "LocalLoading_details": table_data["HostLocalLoaded"]["trucks"],
+                        "OverLoading": table_data["HostOverLoaded"]["count"],
+                        "OverLoading_details": table_data["HostOverLoaded"]["trucks"],
+                        "Alerts_Count": alerts_count_bay,
+                        # "Gantry_Permissive_off_Count": gantry_count_for_date,
+                        "MFM_VS_BCU": 0,
+                        "BCU_VS_INVOICE": 0,
+                        "HostUnauthorisedFlow_count": unauth_count,
+                        "Cross_checked_ManuallyAP_system": 0,
+                    }
+
+                    if alerts_count_bay > 0:
+                        bay_data["Alerts_Count_details"] = alerts_count_details_bay
+                    if gantry_count_for_date > 0:
+                        bay_data["Gantry_Permissive_off_Count_details"] = gantry_details_for_date
+                    if unauth_count > 0:
+                        bay_data["HostUnauthorisedFlow_details"] = unauth_details
+
+                    if not is_bay_empty(bay_data):
+                        bays_data.append(bay_data)
+
+                if bays_data:
+                    result.append({"date": str(date), "bays": bays_data})
+
+        # ── Phase 2: Process day_end_df ───────────────────────────────────────
+        if len(day_end_df) > 0:
+            day_end_df_with_date = day_end_df.with_columns(
+                pl.col("created_at").cast(pl.Date).alias("date")
+            )
+            unique_day_end_dates = day_end_df_with_date.select("date").unique().sort("date")
+            existing_dates = {r["date"] for r in result}
+
+            for date_row in unique_day_end_dates.iter_rows(named=True):
+                date = date_row.get("date")
+                day_end_for_date = day_end_df_with_date.filter(pl.col("date") == date)
+
+                # ── Gantry for this date ──────────────────────────────────────
+                gantry_count_for_date = 0
+                gantry_details_for_date = []
+                if len(alerts_df) > 0:
+                    filtered_gantry_date = alerts_df.filter(
+                        (pl.col("created_at").cast(pl.Date) == date) &
+                        (pl.col("interlock_name").str.contains("Gantry Permissive Off")) &
+                        (~pl.col("interlock_name").str.contains("Fail"))
+                    )
+                    if len(filtered_gantry_date) > 0:
+                        deduplicated_gantry = filtered_gantry_date.unique(
+                            subset=["created_at", "interlock_name"],
+                            keep="last"
+                        ).sort("created_at", descending=True)
+                        gantry_count_for_date = len(deduplicated_gantry)
+                        for alert_row in deduplicated_gantry.iter_rows(named=True):
+                            created_at = alert_row.get("created_at")
+                            closed_at = alert_row.get("closed_at")
+                            downtime_formatted = None
+                            if created_at and closed_at:
+                                time_diff = closed_at - created_at
+                                total_seconds = int(time_diff.total_seconds())
+                                days_td = total_seconds // 86400
+                                hours = (total_seconds % 86400) // 3600
+                                minutes = (total_seconds % 3600) // 60
+                                seconds = total_seconds % 60
+                                parts = []
+                                if days_td > 0:
+                                    parts.append(f"{days_td} day{'s' if days_td != 1 else ''}")
+                                if hours > 0:
+                                    parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+                                if minutes > 0:
+                                    parts.append(f"{minutes} min{'s' if minutes != 1 else ''}")
+                                if seconds > 0 or not parts:
+                                    parts.append(f"{seconds} sec{'s' if seconds != 1 else ''}")
+                                downtime_formatted = " ".join(parts)
+                            gantry_details_for_date.append({
+                                "created_at": str(alert_row.get("created_at")),
+                                "closed_at": str(alert_row.get("closed_at")) if alert_row.get("closed_at") else None,
+                                "Downtime": downtime_formatted,
+                                "interlock_name": alert_row.get("interlock_name"),
+                                "device_name": alert_row.get("device_name"),
+                                "location_name": alert_row.get("location_name"),
+                                "sap_id": alert_row.get("sap_id"),
+                            })
+
+                if selected_bay:
+                    unique_bays = day_end_for_date.filter(
+                        pl.col("bay_number_extracted").cast(pl.Utf8).str.zfill(2) == selected_bay
+                    ).select(pl.col("bay_number_extracted").alias("bay")).unique().sort("bay")
+                else:
+                    unique_bays = day_end_for_date.select(
+                        pl.col("bay_number_extracted").alias("bay")
+                    ).unique().sort("bay")
+
+                bays_data = []
+
+                for bay_row in unique_bays.iter_rows(named=True):
+                    bay_number_str = str(bay_row.get("bay")).zfill(2)
+
+                    # ── MFM_VS_BCU ────────────────────────────────────────────
+                    mfm_vs_bcu_bay = 0
+                    mfm_vs_bcu_details_bay = []
+                    filtered_mfm = day_end_for_date.filter(
+                        (pl.col("bay_number_extracted").cast(pl.Utf8).str.zfill(2) == bay_number_str) &
+                        pl.col('bcu_mfm_net_totalizer_diff').is_not_null() &
+                        (pl.col('bcu_mfm_net_totalizer_diff') != 0)
+                    ).sort("created_at", descending=True)
+                    for row in filtered_mfm.iter_rows(named=True):
+                        mfm_vs_bcu_details_bay.append({
+                            "created_at": str(row.get("created_at")),
+                            "bcu_number": row.get("bcu_number"),
+                            "bay_number": row.get("bay_number"),
+                            "bcu_net_totalizer": row.get("bcu_net_totalizer"),
+                            "mfm_net_totalizer": row.get("mfm_net_totalizer"),
+                            "difference": row.get("bcu_mfm_net_totalizer_diff")
+                        })
+                    mfm_vs_bcu_bay = len(mfm_vs_bcu_details_bay)
+
+                    # ── BCU_VS_INVOICE ────────────────────────────────────────
+                    bcu_vs_invoice_bay = 0
+                    bcu_vs_invoice_details_bay = []
+                    filtered_invoice = day_end_for_date.filter(
+                        (pl.col("bay_number_extracted").cast(pl.Utf8).str.zfill(2) == bay_number_str) &
+                        pl.col('invoiced_bcu_net_qty_diff').is_not_null() &
+                        (pl.col('invoiced_bcu_net_qty_diff') != 0)
+                    ).sort("created_at", descending=True)
+                    for row in filtered_invoice.iter_rows(named=True):
+                        bcu_vs_invoice_details_bay.append({
+                            "created_at": str(row.get("created_at")),
+                            "bcu_number": row.get("bcu_number"),
+                            "bay_number": row.get("bay_number"),
+                            "bcu_net_totalizer": row.get("bcu_net_totalizer"),
+                            "invoiced_qty": row.get("invoiced_qty"),
+                            "difference": row.get("invoiced_bcu_net_qty_diff")
+                        })
+                    bcu_vs_invoice_bay = len(bcu_vs_invoice_details_bay)
+
+                    # ── Alerts for this bay (Phase 2) ─────────────────────────
+                    alerts_count_bay, alerts_count_details_bay = get_alerts_for_bay_date(
+                        alerts_df, date, bay_number_str
+                    )
+
+                    # ── Unauthorised flow ─────────────────────────────────────
+                    unauth_count, unauth_net, unauth_details = get_unauthorised_flow_for_bay_date(
+                        unauthorised_flow_df, date, bay_number_str
+                    )
+
+                    bays_data.append({
+                        "bay_number": bay_number_str,
+                        "MFM_VS_BCU": mfm_vs_bcu_bay,
+                        "MFM_VS_BCU_details": mfm_vs_bcu_details_bay if mfm_vs_bcu_bay > 0 else [],
+                        "BCU_VS_INVOICE": bcu_vs_invoice_bay,
+                        "BCU_VS_INVOICE_details": bcu_vs_invoice_details_bay if bcu_vs_invoice_bay > 0 else [],
+                        "Alerts_Count": alerts_count_bay,
+                        "Alerts_Count_details": alerts_count_details_bay if alerts_count_bay > 0 else [],
+                        # "Gantry_Permissive_off_Count": gantry_count_for_date,
+                        # "Gantry_Permissive_off_Count_details": gantry_details_for_date if gantry_count_for_date > 0 else [],
+                        "HostUnauthorisedFlow_count": unauth_count,
+                        "HostUnauthorisedFlow_details": unauth_details,
+                    })
+
+                # ── Merge Phase 2 bays into existing result ───────────────────
+                if str(date) in existing_dates:
+                    for existing in result:
+                        if existing["date"] == str(date):
+                            for new_bay in bays_data:
+                                matched = next(
+                                    (b for b in existing["bays"] if str(b["bay_number"]).zfill(2) == new_bay["bay_number"]),
+                                    None
+                                )
+                                if matched:
+                                    matched["MFM_VS_BCU"] = new_bay["MFM_VS_BCU"]
+                                    matched["BCU_VS_INVOICE"] = new_bay["BCU_VS_INVOICE"]
+                                    if new_bay["MFM_VS_BCU"] > 0:
+                                        matched["MFM_VS_BCU_details"] = new_bay["MFM_VS_BCU_details"]
+                                    if new_bay["BCU_VS_INVOICE"] > 0:
+                                        matched["BCU_VS_INVOICE_details"] = new_bay["BCU_VS_INVOICE_details"]
+                                    if matched.get("HostUnauthorisedFlow_count", 0) == 0 and new_bay["HostUnauthorisedFlow_count"] > 0:
+                                        matched["HostUnauthorisedFlow_count"] = new_bay["HostUnauthorisedFlow_count"]
+                                        matched["HostUnauthorisedFlow_details"] = new_bay["HostUnauthorisedFlow_details"]
+                                    if matched.get("Alerts_Count", 0) == 0 and new_bay["Alerts_Count"] > 0:
+                                        matched["Alerts_Count"] = new_bay["Alerts_Count"]
+                                        matched["Alerts_Count_details"] = new_bay["Alerts_Count_details"]
+                                    # if matched.get("Gantry_Permissive_off_Count", 0) == 0 and new_bay["Gantry_Permissive_off_Count"] > 0:
+                                        # matched["Gantry_Permissive_off_Count"] = new_bay["Gantry_Permissive_off_Count"]
+                                        # matched["Gantry_Permissive_off_Count_details"] = new_bay["Gantry_Permissive_off_Count_details"]
+                                else:
+                                    new_entry = {
+                                        "bay_number": new_bay["bay_number"],
+                                        "total_count": (
+                                            new_bay["MFM_VS_BCU"] +
+                                            new_bay["BCU_VS_INVOICE"] +
+                                            new_bay["HostUnauthorisedFlow_count"] +
+                                            new_bay["Alerts_Count"] 
+                                            # new_bay["Gantry_Permissive_off_Count"]
+                                        ),
+                                        "HostBayReAssignment": 0,
+                                        "HostBayReAssignment_details": [],
+                                        "LocalLoading": 0,
+                                        "LocalLoading_details": [],
+                                        "OverLoading": 0,
+                                        "OverLoading_details": [],
+                                        "Alerts_Count": new_bay["Alerts_Count"],
+                                        # "Gantry_Permissive_off_Count": new_bay["Gantry_Permissive_off_Count"],
+                                        "MFM_VS_BCU": new_bay["MFM_VS_BCU"],
+                                        "MFM_VS_BCU_details": new_bay["MFM_VS_BCU_details"],
+                                        "BCU_VS_INVOICE": new_bay["BCU_VS_INVOICE"],
+                                        "BCU_VS_INVOICE_details": new_bay["BCU_VS_INVOICE_details"],
+                                        "HostUnauthorisedFlow_count": new_bay["HostUnauthorisedFlow_count"],
+                                        "Cross_checked_ManuallyAP_system": 0,
+                                    }
+                                    if new_bay["Alerts_Count"] > 0:
+                                        new_entry["Alerts_Count_details"] = new_bay["Alerts_Count_details"]
+                                    # if new_bay["Gantry_Permissive_off_Count"] > 0:
+                                        # new_entry["Gantry_Permissive_off_Count_details"] = new_bay["Gantry_Permissive_off_Count_details"]
+                                    if new_bay["HostUnauthorisedFlow_count"] > 0:
+                                        new_entry["HostUnauthorisedFlow_details"] = new_bay["HostUnauthorisedFlow_details"]
+                                    if not is_bay_empty(new_entry):
+                                        existing["bays"].append(new_entry)
+                else:
+                    new_bays = []
+                    for new_bay in bays_data:
+                        new_entry = {
+                            "bay_number": new_bay["bay_number"],
+                            "total_count": (
+                                new_bay["MFM_VS_BCU"] +
+                                new_bay["BCU_VS_INVOICE"] +
+                                new_bay["HostUnauthorisedFlow_count"] +
+                                new_bay["Alerts_Count"] 
+                                # new_bay["Gantry_Permissive_off_Count"]
+                            ),
+                            "HostBayReAssignment": 0,
+                            "HostBayReAssignment_details": [],
+                            "LocalLoading": 0,
+                            "LocalLoading_details": [],
+                            "OverLoading": 0,
+                            "OverLoading_details": [],
+                            "Alerts_Count": new_bay["Alerts_Count"],
+                            # "Gantry_Permissive_off_Count": new_bay["Gantry_Permissive_off_Count"],
+                            "MFM_VS_BCU": new_bay["MFM_VS_BCU"],
+                            "MFM_VS_BCU_details": new_bay["MFM_VS_BCU_details"],
+                            "BCU_VS_INVOICE": new_bay["BCU_VS_INVOICE"],
+                            "BCU_VS_INVOICE_details": new_bay["BCU_VS_INVOICE_details"],
+                            "HostUnauthorisedFlow_count": new_bay["HostUnauthorisedFlow_count"],
+                            "Cross_checked_ManuallyAP_system": 0,
+                        }
+                        if new_bay["Alerts_Count"] > 0:
+                            new_entry["Alerts_Count_details"] = new_bay["Alerts_Count_details"]
+                        # if new_bay["Gantry_Permissive_off_Count"] > 0:
+                            # new_entry["Gantry_Permissive_off_Count_details"] = new_bay["Gantry_Permissive_off_Count_details"]
+                        if new_bay["HostUnauthorisedFlow_count"] > 0:
+                            new_entry["HostUnauthorisedFlow_details"] = new_bay["HostUnauthorisedFlow_details"]
+                        if not is_bay_empty(new_entry):
+                            new_bays.append(new_entry)
+
+                    if new_bays:
+                        result.append({"date": str(date), "bays": new_bays})
+                        existing_dates.add(str(date))
+
+        # ── Phase 3: Handle unauthorised_flow_df - merge into existing dates OR add new ──
+        if len(unauthorised_flow_df) > 0:
+            unauthorised_flow_df_with_date = unauthorised_flow_df.with_columns(
+                pl.col("created_at").cast(pl.Date).alias("date")
+            )
+            unique_unauth_dates = unauthorised_flow_df_with_date.select("date").unique().sort("date")
+
+            for date_row in unique_unauth_dates.iter_rows(named=True):
+                date = date_row.get("date")
+
+                date_unauth_df = unauthorised_flow_df_with_date.filter(pl.col("date") == date)
+
+                if selected_bay:
+                    unique_bays = date_unauth_df.filter(
+                        pl.col("bay_number").cast(pl.Utf8).str.zfill(2) == selected_bay
+                    ).select("bay_number").unique().sort("bay_number")
+                else:
+                    unique_bays = date_unauth_df.select("bay_number").unique().sort("bay_number")
+
+                # ── Refresh existing_dates_set on each date iteration ─────────
+                existing_dates_set = {r["date"] for r in result}
+
+                new_bays = []
+                for bay_row in unique_bays.iter_rows(named=True):
+                    bay_number_str = str(bay_row.get("bay_number")).zfill(2)
+
+                    unauth_count, unauth_net, unauth_details = get_unauthorised_flow_for_bay_date(
+                        unauthorised_flow_df, date, bay_number_str
+                    )
+
+                    alerts_count_bay, alerts_count_details_bay = get_alerts_for_bay_date(
+                        alerts_df, date, bay_number_str
+                    )
+
+                    new_entry = {
+                        "bay_number": bay_number_str,
+                        "total_count": unauth_count + alerts_count_bay,
+                        "HostBayReAssignment": 0,
+                        "HostBayReAssignment_details": [],
+                        "LocalLoading": 0,
+                        "LocalLoading_details": [],
+                        "OverLoading": 0,
+                        "OverLoading_details": [],
+                        "Alerts_Count": alerts_count_bay,
+                        # "Gantry_Permissive_off_Count": 0,
+                        "MFM_VS_BCU": 0,
+                        "MFM_VS_BCU_details": [],
+                        "BCU_VS_INVOICE": 0,
+                        "BCU_VS_INVOICE_details": [],
+                        "HostUnauthorisedFlow_count": unauth_count,
+                        "Cross_checked_ManuallyAP_system": 0,
+                    }
+                    if alerts_count_bay > 0:
+                        new_entry["Alerts_Count_details"] = alerts_count_details_bay
+                    if unauth_count > 0:
+                        new_entry["HostUnauthorisedFlow_details"] = unauth_details
+
+                    if str(date) in existing_dates_set:
+                        # ── Date exists → merge bay into existing date ────────
+                        for existing in result:
+                            if existing["date"] == str(date):
+                                matched = next(
+                                    (b for b in existing["bays"] if str(b["bay_number"]).zfill(2) == bay_number_str),
+                                    None
+                                )
+                                if matched:
+                                    # Bay exists → update UnauthorisedFlow only if not already set
+                                    if matched.get("HostUnauthorisedFlow_count", 0) == 0 and unauth_count > 0:
+                                        matched["HostUnauthorisedFlow_count"] = unauth_count
+                                        matched["HostUnauthorisedFlow_details"] = unauth_details
+                                    # Also update Alerts if not already set
+                                    if matched.get("Alerts_Count", 0) == 0 and alerts_count_bay > 0:
+                                        matched["Alerts_Count"] = alerts_count_bay
+                                        matched["Alerts_Count_details"] = alerts_count_details_bay
+                                else:
+                                    # Bay not in date → add as new bay entry
+                                    if not is_bay_empty(new_entry):
+                                        existing["bays"].append(new_entry)
+                    else:
+                        # ── Date does not exist → collect for new date entry ──
+                        if not is_bay_empty(new_entry):
+                            new_bays.append(new_entry)
+
+                if new_bays and str(date) not in existing_dates_set:
+                    result.append({"date": str(date), "bays": new_bays})
+
+        # ── Phase 4: Handle alerts_df - merge into existing dates OR add new ──
+        if len(alerts_df) > 0:
+            alerts_df_with_date = alerts_df.with_columns(
+                pl.col("created_at").cast(pl.Date).alias("date")
+            )
+            unique_alert_dates = alerts_df_with_date.select("date").unique().sort("date")
+
+            for date_row in unique_alert_dates.iter_rows(named=True):
+                date = date_row.get("date")
+
+                date_alerts = alerts_df_with_date.filter(
+                    (pl.col("date") == date) &
+                    (pl.col("equipment_name") == "BCU")
+                ).with_columns(
+                    pl.col("device_name").str.extract(r"BC-(\d{2})[AB]", 1).alias("alert_bay_number")
+                )
+
+                if selected_bay:
+                    unique_bays = date_alerts.filter(
+                        pl.col("alert_bay_number") == selected_bay
+                    ).select("alert_bay_number").unique().sort("alert_bay_number")
+                else:
+                    unique_bays = date_alerts.select(
+                        "alert_bay_number"
+                    ).unique().sort("alert_bay_number")
+
+                # ── Refresh existing_dates_set on each date iteration ─────────
+                existing_dates_set = {r["date"] for r in result}
+
+                new_bays = []
+                for bay_row in unique_bays.iter_rows(named=True):
+                    bay_number_str = str(bay_row.get("alert_bay_number")).zfill(2)
+
+                    alerts_count_bay, alerts_count_details_bay = get_alerts_for_bay_date(
+                        alerts_df, date, bay_number_str
+                    )
+
+                    if alerts_count_bay == 0:
+                        continue
+
+                    new_entry = {
+                        "bay_number": bay_number_str,
+                        "total_count": alerts_count_bay,
+                        "HostBayReAssignment": 0,
+                        "HostBayReAssignment_details": [],
+                        "LocalLoading": 0,
+                        "LocalLoading_details": [],
+                        "OverLoading": 0,
+                        "OverLoading_details": [],
+                        "Alerts_Count": alerts_count_bay,
+                        "Alerts_Count_details": alerts_count_details_bay,
+                        # "Gantry_Permissive_off_Count": 0,
+                        "MFM_VS_BCU": 0,
+                        "MFM_VS_BCU_details": [],
+                        "BCU_VS_INVOICE": 0,
+                        "BCU_VS_INVOICE_details": [],
+                        "HostUnauthorisedFlow_count": 0,
+                        "Cross_checked_ManuallyAP_system": 0,
+                    }
+
+                    if str(date) in existing_dates_set:
+                        # ── Date exists → merge bay into existing date ────────
+                        for existing in result:
+                            if existing["date"] == str(date):
+                                matched = next(
+                                    (b for b in existing["bays"] if str(b["bay_number"]).zfill(2) == bay_number_str),
+                                    None
+                                )
+                                if matched:
+                                    if matched.get("Alerts_Count", 0) == 0 and alerts_count_bay > 0:
+                                        matched["Alerts_Count"] = alerts_count_bay
+                                        matched["Alerts_Count_details"] = alerts_count_details_bay
+                                else:
+                                    if not is_bay_empty(new_entry):
+                                        existing["bays"].append(new_entry)
+                    else:
+                        if not is_bay_empty(new_entry):
+                            new_bays.append(new_entry)
+
+                if new_bays and str(date) not in existing_dates_set:
+                    result.append({"date": str(date), "bays": new_bays})
+
+        # ── Final sort ────────────────────────────────────────────────────────
+        result.sort(key=lambda x: x["date"])
+
         return {
             "Counts": total_counts,
             "data": result
         }
-        
+
     except Exception as e:
         print(f"Error in host_tables_combined_data: {e}")
         traceback.print_exc()
         return []
+
+
+# ── Helper function ───────────────────────────────────────────────────────────
+def get_alerts_for_bay_date(alerts_df, date, bay_number_str):
+    """
+    Returns (alerts_count, alerts_details) for a specific bay and date.
+    Extracts bay number from device_name using regex BC-(\\d{2}) (same as get_bay_counts).
+    Deduplicates by (created_at, alert_bay_number, interlock_name).
+    """
+    alerts_count = 0
+    alerts_details = []
+
+    if len(alerts_df) == 0:
+        return alerts_count, alerts_details
+
+    filtered = alerts_df.filter(
+        (pl.col("created_at").cast(pl.Date) == date) &
+        (pl.col("equipment_name") == "BCU")
+    )
+
+    if len(filtered) > 0:
+        filtered = filtered.with_columns(
+            pl.col("device_name").str.extract(r"BC-(\d{2})[AB]", 1).alias("alert_bay_number")
+        )
+        filtered = filtered.filter(pl.col("alert_bay_number").is_not_null())
+        filtered = filtered.filter(pl.col("alert_bay_number") == bay_number_str)
+
+        if len(filtered) > 0:
+            deduplicated = filtered.unique(
+                subset=["created_at", "alert_bay_number", "interlock_name"],
+                keep="last"
+            ).sort("created_at", descending=True)
+
+            alerts_count = len(deduplicated)
+            for alert_row in deduplicated.iter_rows(named=True):
+                alerts_details.append({
+                    "created_at": str(alert_row.get("created_at")),
+                    "interlock_name": alert_row.get("interlock_name"),
+                    "device_name": alert_row.get("device_name"),
+                    "location_name": alert_row.get("location_name"),
+                    "sap_id": alert_row.get("sap_id")
+                })
+
+    return alerts_count, alerts_details
+
 
 def get_date_range_days(data) -> int:
     start_date = None
@@ -4342,15 +4709,20 @@ def get_alerts_severity(count: int, days: int) -> str:
 def calc_unauthorised_net_totalizer(df):
     if len(df) == 0 or "net_totalizer" not in df.columns:
         return 0
-    latest = (
-        df.sort("created_at", descending=True)
-        .group_by("location_name")
+    # Group by date, get latest row per day, sum net_totalizer
+    df_with_date = df.with_columns(
+        pl.col("created_at").cast(pl.Date).alias("date")
+    )
+    latest_per_day = (
+        df_with_date.sort("created_at", descending=True)
+        .group_by("date")
         .first()
         .filter(pl.col("net_totalizer") > 0)
     )
-    if len(latest) == 0:
+    if len(latest_per_day) == 0:
         return 0
-    return round(float(latest.select(pl.col("net_totalizer").sum()).item()), 2)
+    return round(float(latest_per_day.select(pl.col("net_totalizer").sum()).item()), 2)
+
 
 def get_difference_severity(difference, days: int) -> str:
     scale = days / 30
@@ -4462,8 +4834,8 @@ async def get_bay_counts(data):
         "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded")),
         "OverLoading_qty": overall_overloading_qty,
         "TotalUniqueTruckNumbersCount": overall_unique_truck_count,
-        "UnauthorisedFlow": len(unauthorised_flow_df) if len(unauthorised_flow_df) > 0 else 0,
-        "UnauthorisedFlow_net_totalizer": calc_unauthorised_net_totalizer(unauthorised_flow_df),
+        "UnauthorisedFlow": 0,                 
+        "UnauthorisedFlow_net_totalizer": 0,
         "Alerts_Count": overall_alerts_count,
         "Gantry_Permissive_off_Count": overall_gantry_count,
         "MFM_VS_BCU": overall_mfm_vs_bcu_count,
@@ -4575,9 +4947,9 @@ async def get_bay_counts(data):
             "OverLoading": len(location_combined_df.filter(pl.col("table_name") == "HostOverLoaded")),
             "OverLoading_qty": location_overloading_qty,
             "TotalUniqueTruckNumbersCount": unique_truck_count,
-            "UnauthorisedFlow": len(location_unauthorised_df) if len(location_unauthorised_df) > 0 else 0,
-            "UnauthorisedFlow_net_totalizer": calc_unauthorised_net_totalizer(location_unauthorised_df),
-            "Alerts_Count": location_alerts_count,  # Will be updated after bay calculations
+            "UnauthorisedFlow": 0,                  
+            "UnauthorisedFlow_net_totalizer": 0,
+            "Alerts_Count": location_alerts_count, 
             "Gantry_Permissive_off_Count": location_gantry_count,
             "MFM_VS_BCU": location_mfm_vs_bcu_count,
             "MFM_VS_BCU_difference": location_mfm_vs_bcu_difference,
@@ -4590,7 +4962,15 @@ async def get_bay_counts(data):
         unique_bays = pl.DataFrame({"bay": []}, schema={"bay": pl.Utf8})
         if len(location_day_end_df) > 0 and "bay_number_extracted" in location_day_end_df.columns:
             unique_bays = location_day_end_df.select(pl.col("bay_number_extracted").alias("bay")).unique().sort("bay")
-
+        elif len(location_combined_df) > 0 and "assigned_bay" in location_combined_df.columns:
+            # ── Fallback: get bays from combined_df when day_end_df is empty ──
+            unique_bays = (
+                location_combined_df
+                .select(pl.col("assigned_bay").cast(pl.Utf8).str.zfill(2).alias("bay"))
+                .filter(pl.col("bay").is_not_null() & (pl.col("bay") != ""))
+                .unique()
+                .sort("bay")
+            )
         # Calculate counts for each bay
         bays_data = []
 
@@ -4711,7 +5091,7 @@ async def get_bay_counts(data):
                     "UnauthorisedFlow_net_totalizer": calc_unauthorised_net_totalizer(bay_unauthorised_df),
                     "Alerts_Count": bay_alerts_count,
                     "Alerts_Count_severity": get_alerts_severity(bay_alerts_count, days),  
-                    "Gantry_Permissive_off_Count": bay_gantry_count,
+                    "Gantry_Permissive_off_Count":0,
                     "MFM_VS_BCU": bay_mfm_vs_bcu_count,
                     "MFM_VS_BCU_difference": bay_mfm_vs_bcu_difference,
                     "MFM_VS_BCU_severity": get_difference_severity(bay_mfm_vs_bcu_difference, days),
@@ -4725,6 +5105,12 @@ async def get_bay_counts(data):
             bays_data.append(bay_counts)
         
         # Update location_alerts_count by summing bay alerts
+        location_counts["UnauthorisedFlow"] = sum(
+            bay["counts"]["UnauthorisedFlow"] for bay in bays_data
+        )
+        location_counts["UnauthorisedFlow_net_totalizer"] = round(
+            sum(bay["counts"]["UnauthorisedFlow_net_totalizer"] for bay in bays_data), 2
+        )
         location_alerts_count = sum(bay["counts"]["Alerts_Count"] for bay in bays_data)        
         location_counts["Alerts_Count"] = location_alerts_count       
         
@@ -4733,7 +5119,14 @@ async def get_bay_counts(data):
             "counts": location_counts,
             "bays": bays_data
         })
-    
+
+    total_counts["UnauthorisedFlow"] = sum(
+        loc["counts"]["UnauthorisedFlow"] for loc in locations_result
+    )
+    total_counts["UnauthorisedFlow_net_totalizer"] = round(
+        sum(loc["counts"]["UnauthorisedFlow_net_totalizer"] for loc in locations_result), 2
+    )
+   
     return {
         "total_counts": total_counts,
         "locations": locations_result
