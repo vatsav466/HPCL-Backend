@@ -69,12 +69,13 @@ class VTSAlertsListener:
                             "sreedhar.maddipati@algofusiontech.com","venu@algofusiontech.com","moufikali@algofusiontech.com","yesu.p@algofusiontech.com"],
             bcc_recipients= [],
             html_content=True,
-            body="""
+            body=f"""
             <p>Hi Sir,</p>
 
             <p>
-            Data is not being received from the VTS <b>ingest_data API</b>.
-            Please check and resolve the issue at the earliest.
+            Data is not being received from the VTS <b>ingest_data API</b> 
+            to the server <b>{urdhva_base.settings.server_ip}</b>.
+            Kindly check and resolve the issue at the earliest.
             </p>
 
             <p>Thanks & Regards,<br>

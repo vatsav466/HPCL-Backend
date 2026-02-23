@@ -876,6 +876,7 @@ Model Alerts {
     file_uploaded_path optional str
     block_status optional index_field BlockStatus
     image_uploaded optional bool
+    tt_type optional str
     ticket_id optional str
 
     Action=> alert_action {

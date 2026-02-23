@@ -1587,6 +1587,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     file_uploaded_path: Mapped[typing.Optional[str]] = mapped_column("file_uploaded_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     block_status: Mapped[typing.Optional[typing.Any]] = mapped_column("block_status", String, index=True, nullable=True, default=None, primary_key=False, unique=False)
     image_uploaded: Mapped[typing.Optional[bool]] = mapped_column("image_uploaded", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     ticket_id: Mapped[typing.Optional[str]] = mapped_column("ticket_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
@@ -1687,6 +1688,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
     block_status: typing.Optional[hpcl_ceg_enum.BlockStatus] | None = None
     image_uploaded: typing.Optional[bool] = pydantic.Field(False, )
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
     ticket_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
@@ -1796,6 +1798,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
     block_status: typing.Optional[hpcl_ceg_enum.BlockStatus] | None = None
     image_uploaded: typing.Optional[bool] = pydantic.Field(False, )
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
     ticket_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
