@@ -57,11 +57,37 @@ def resolve_tas_with_categories(categories):
     }
 
 
+def add_filters(query_str, key, values):
+    if not values:
+        return query_str
+
+    if isinstance(values, list):
+        query_str += f" AND {key} IN {tuple(values)}"
+    else:
+        query_str += f" AND {key} = '{values}'"
+
+    return query_str
+
+
 # ================= MAIN API =================
 async def performance_score_daywise_action(data):
 
+    query_str = f"bu = '{data.bu}'"
+
+    if data.start_date:
+        query_str += f" AND created_at >= '{data.start_date}'"
+
+    if data.end_date:
+        query_str += f" AND created_at <= '{data.end_date}'"
+
+    if data.zone:
+        query_str = add_filters(query_str, "zone", data.zone)
+
+    if data.name:
+        query_str = add_filters(query_str, "name", data.name)
+
     params = urdhva_base.queryparams.QueryParams(
-        q=f"bu = '{data.bu}'",
+        q=query_str,
         limit=0
     )
 
@@ -81,20 +107,7 @@ async def performance_score_daywise_action(data):
         )
     )
 
-    if data.start_date:
-        df = df.filter(pl.col("score_date") >= datetime.strptime(data.start_date, "%Y-%m-%d").date())
-
-    if data.end_date:
-        df = df.filter(pl.col("score_date") <= datetime.strptime(data.end_date, "%Y-%m-%d").date())
-
-    if data.zone:
-        df = df.filter(pl.col("zone") == data.zone)
-
-    if data.name:
-        df = df.filter(pl.col("name") == data.name)
-
-    if df.is_empty():
-        return {"status": "success", "zones": []}
+    # ================= GROUP =================
 
     # ================= GROUP =================
     grouped = (
