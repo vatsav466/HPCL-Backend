@@ -57,10 +57,18 @@ async def sync_user_roles():
                         "title": "Supply Chain"
                     },
                     {
-                        "title": "Video Analytics"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "Video Analytics"
                     }
                 ]
             },
@@ -146,10 +154,18 @@ async def sync_user_roles():
                         "title": "Supply Chain"
                     },
                     {
-                        "title": "Video Analytics"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "Video Analytics"
                     }
                 ]
             }
@@ -194,7 +210,15 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
                         "title": "Video Analytics"
@@ -225,10 +249,18 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Video Analytics"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "Video Analytics"
                     }
                 ]
             },
@@ -256,10 +288,18 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Video Analytics"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "Video Analytics"
                     }
                 ]
             },
@@ -287,10 +327,18 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Video Analytics"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "Video Analytics"
                     }
                 ]
             },
@@ -326,10 +374,18 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Video Analytics"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "Video Analytics"
                     }
                 ]
             },
@@ -357,10 +413,18 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Video Analytics"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "Video Analytics"
                     }
                 ]
             },
@@ -584,13 +648,15 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Video Analytics"
-                    },
-                    {
-                        "title": "Terminal Automation"
-                    },
-                    {
-                        "title": "TAS Governance"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     }
                 ]
             },
@@ -733,13 +799,18 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
                         "title": "Video Analytics"
-                    },
-                    {
-                        "title": "TAS Governance"
                     }
                 ]
             },
@@ -767,10 +838,41 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "Video Analytics"
                     },
                     {
-                        "title": "Video Analytics"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            },
+                            {
+                                "title": "TAS Insights",
+                                "allowed_sub_menus": [
+                                    {
+                                        "title": "BCU Dosing Alerts"
+                                    },
+                                    {
+                                        "title": "BAY Analytics"
+                                    },
+                                    {
+                                        "title": "BCU Critical Parameter"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "Bay Caliberation Module"
+                            },
+                            {
+                                "title": "Help Desk Module"
+                            }
+                        ]
                     }
                 ]
             },
@@ -827,7 +929,15 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
                         "title": "Video Analytics"
@@ -900,7 +1010,15 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
                         "title": "Video Analytics"
@@ -931,7 +1049,15 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
                         "title": "Video Analytics"
@@ -962,7 +1088,15 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
                         "title": "Video Analytics"
@@ -993,7 +1127,15 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
                         "title": "Video Analytics"
@@ -1588,7 +1730,15 @@ async def sync_user_roles():
                         "title": "Video Analytics"
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     }
                 ]
             },
@@ -1719,7 +1869,15 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Terminal Automation"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
                     },
                     {
                         "title": "Video Analytics"
