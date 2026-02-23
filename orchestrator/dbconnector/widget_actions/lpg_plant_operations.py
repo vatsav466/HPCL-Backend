@@ -9,6 +9,13 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from orchestrator.dbconnector.widget_actions import lpg_config
 from utilities.helpers import calculate_productivity
+import math
+import glob
+import re
+import numpy as np
+import traceback
+import polars as pl
+import os
 
 
 
@@ -1629,3 +1636,548 @@ class LPGOperationsActions:
 
         processed_rows.sort(key=lambda x: x["accuracy"])
         return {"rows": processed_rows[:10], "meta": meta}
+    
+    
+    @staticmethod
+    async def plant_month_analysis(data):
+
+        CURRENT_FILE = os.path.abspath(__file__)
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(CURRENT_FILE)))
+        MASTER_PATH = os.path.join(BASE_DIR, "masters", "lpg_production_cost")
+
+
+        MONTH_ORDER = [
+            "April", "May", "June", "July",
+            "August", "September", "October",
+            "November", "December",
+            "January", "February", "March"
+        ]
+
+        MONTH_FILE_PREFIX = {
+            "January": "Jan",
+            "February": "Feb",
+            "March": "Mar",
+            "April": "April",
+            "May": "May",
+            "June": "June",
+            "July": "July",
+            "August": "Aug",
+            "September": "Sep",
+            "October": "Oct",
+            "November": "Nov",
+            "December": "Dec"
+        }
+
+        #  Define once (fixes COLUMNS error)
+        COLUMNS = [
+            "Production (MT) - CY",
+            "Production (MT) - LY",
+            "Manpower Expenses (CY)",
+            "Manpower Expenses (LY)",
+            "Other OPEX Expenses (CY)",
+            "Other OPEX Expenses (LY)",
+            "M&R CVR Expenses (CY)",
+            "M&R CVR Expenses (LY)",
+            "Depreciation Expenses (CY)",
+            "Depreciation Expenses (LY)"
+        ]
+
+        requested_sap_id = str(data.get("sap_id")).strip() if data.get("sap_id") else None
+        requested_zone = str(data.get("zone")).strip() if data.get("zone") else None
+
+        months_to_process = (
+            [data.get("month").capitalize()]
+            if data.get("month")
+            else MONTH_ORDER
+        )
+
+        # ===============================
+        # Fetch DB SAP IDs
+        # ===============================
+        query = """ SELECT DISTINCT sap_id FROM lpg_plant_operations_masters """
+        result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+
+        db_sap_ids = [
+            str(row["sap_id"]).strip()
+            for row in result.get("data", [])
+            if row.get("sap_id")
+        ]
+
+        db_df = pl.DataFrame({"sap_id": db_sap_ids})
+
+        final_results = []
+        prev_month_cost_df = None
+        april_base_cost_df = None
+        august_base_cost_df = None
+        # =====================================
+        # PRELOAD APRIL BASE (Always Load)
+        # =====================================
+        april_prefix = MONTH_FILE_PREFIX["April"]
+        april_files = glob.glob(os.path.join(MASTER_PATH, f"{april_prefix}-*.xlsx"))
+
+        if april_files:
+            april_df = pl.read_excel(april_files[0], sheet_name="Sheet1")
+
+            if "Plant" in april_df.columns:
+                april_df = april_df.with_columns(
+                    pl.col("Plant")
+                    .cast(pl.Utf8)
+                    .str.split(" - ")
+                    .list.get(0)
+                    .alias("sap_id")
+                ).join(db_df, on="sap_id", how="inner")
+
+            april_df = april_df.with_columns([
+                (
+                    (pl.col("Manpower Expenses (CY)") / pl.col("Production (MT) - CY")).fill_null(0) +
+                    (pl.col("Other OPEX Expenses (CY)") / pl.col("Production (MT) - CY")).fill_null(0) +
+                    (pl.col("M&R CVR Expenses (CY)") / pl.col("Production (MT) - CY")).fill_null(0) +
+                    (pl.col("Depreciation Expenses (CY)") / pl.col("Production (MT) - CY")).fill_null(0)
+                ).alias("Base Total Cost (CY)"),
+
+                (
+                    (pl.col("Manpower Expenses (LY)") / pl.col("Production (MT) - LY")).fill_null(0) +
+                    (pl.col("Other OPEX Expenses (LY)") / pl.col("Production (MT) - LY")).fill_null(0) +
+                    (pl.col("M&R CVR Expenses (LY)") / pl.col("Production (MT) - LY")).fill_null(0) +
+                    (pl.col("Depreciation Expenses (LY)") / pl.col("Production (MT) - LY")).fill_null(0)
+                ).alias("Base Total Cost (LY)")
+            ])
+            april_df = april_df.with_columns([
+
+                (
+                    pl.col("Base Total Cost (CY)") *
+                    pl.col("Production (MT) - CY")
+                ).alias("Base Total Prod Cost (CY)"),
+
+                (
+                    pl.col("Base Total Cost (LY)") *
+                    pl.col("Production (MT) - LY")
+                ).alias("Base Total Prod Cost (LY)")
+            ])
+            april_base_cost_df = april_df.select([
+                "sap_id",
+                "Base Total Cost (CY)",
+                "Base Total Cost (LY)",
+                "Base Total Prod Cost (CY)",
+                "Base Total Prod Cost (LY)"
+            ])
+
+
+        # =====================================
+        # PRELOAD AUGUST BASE (Always Load)
+        # =====================================
+        aug_prefix = MONTH_FILE_PREFIX["August"]
+        aug_files = glob.glob(os.path.join(MASTER_PATH, f"{aug_prefix}-*.xlsx"))
+
+        if aug_files:
+            aug_df = pl.read_excel(aug_files[0], sheet_name="Sheet1")
+
+            if "Plant" in aug_df.columns:
+                aug_df = aug_df.with_columns(
+                    pl.col("Plant")
+                    .cast(pl.Utf8)
+                    .str.split(" - ")
+                    .list.get(0)
+                    .alias("sap_id")
+                ).join(db_df, on="sap_id", how="inner")
+
+            aug_df = aug_df.with_columns([
+                (
+                    (pl.col("Manpower Expenses (CY)") / pl.col("Production (MT) - CY")).fill_null(0) +
+                    (pl.col("Other OPEX Expenses (CY)") / pl.col("Production (MT) - CY")).fill_null(0) +
+                    (pl.col("M&R CVR Expenses (CY)") / pl.col("Production (MT) - CY")).fill_null(0) +
+                    (pl.col("Depreciation Expenses (CY)") / pl.col("Production (MT) - CY")).fill_null(0)
+                ).alias("Base Total Cost (CY)"),
+
+                (
+                    (pl.col("Manpower Expenses (LY)") / pl.col("Production (MT) - LY")).fill_null(0) +
+                    (pl.col("Other OPEX Expenses (LY)") / pl.col("Production (MT) - LY")).fill_null(0) +
+                    (pl.col("M&R CVR Expenses (LY)") / pl.col("Production (MT) - LY")).fill_null(0) +
+                    (pl.col("Depreciation Expenses (LY)") / pl.col("Production (MT) - LY")).fill_null(0)
+                ).alias("Base Total Cost (LY)")
+            ])
+            aug_df = aug_df.with_columns([
+
+                (
+                    pl.col("Base Total Cost (CY)") *
+                    pl.col("Production (MT) - CY")
+                ).alias("Base Total Prod Cost (CY)"),
+
+                (
+                    pl.col("Base Total Cost (LY)") *
+                    pl.col("Production (MT) - LY")
+                ).alias("Base Total Prod Cost (LY)")
+            ])
+            august_base_cost_df = aug_df.select([
+                "sap_id",
+                "Base Total Cost (CY)",
+                "Base Total Cost (LY)",
+                "Base Total Prod Cost (CY)",
+                "Base Total Prod Cost (LY)"
+            ])
+
+        # ==========================================================
+        # LOOP THROUGH MONTHS
+        # ==========================================================
+        for month in months_to_process:
+            # =========================================
+            #  PRELOAD AUGUST BASE COST
+            # =========================================
+
+            
+            file_prefix = MONTH_FILE_PREFIX[month]
+            files = glob.glob(os.path.join(MASTER_PATH, f"{file_prefix}-*.xlsx"))
+            print("===================================")
+            print("Month:", month)
+            print("File Prefix:", file_prefix)
+            print("Search Path:", os.path.join(MASTER_PATH, f"{file_prefix}-*.xlsx"))
+            print("Files Found:", files)
+            print("===================================")
+
+            if not files:
+                continue
+
+            current_file = files[0]
+            year_match = re.search(r"-(\d+)\.xlsx$", current_file)
+            if not year_match:
+                continue
+
+            current_year = int(year_match.group(1))
+            print("DEBUG → Processing Month:", month)
+            print("DEBUG → Current Year:", current_year)
+            current_df = pl.read_excel(current_file, sheet_name="Sheet1")
+
+            # Extract sap_id
+            if "Plant" in current_df.columns:
+                current_df = current_df.with_columns(
+                    pl.col("Plant")
+                    .cast(pl.Utf8)
+                    .str.split(" - ")
+                    .list.get(0)
+                    .alias("sap_id")
+                ).join(db_df, on="sap_id", how="inner")
+
+            # ===============================
+            # SUBTRACTION LOGIC (UNCHANGED)
+            # ===============================
+            if month == "April":
+                merged = current_df
+
+            else:
+                month_index = MONTH_ORDER.index(month)
+                prev_month = MONTH_ORDER[month_index - 1]
+                prev_year = current_year - 1 if month == "January" else current_year
+
+                prev_prefix = MONTH_FILE_PREFIX[prev_month]
+                prev_pattern = os.path.join(MASTER_PATH, f"{prev_prefix}-{prev_year}.xlsx")
+
+                if os.path.exists(prev_pattern):
+
+                    prev_df = pl.read_excel(prev_pattern, sheet_name="Sheet1")
+
+                    if "Plant" in prev_df.columns:
+                        prev_df = prev_df.with_columns(
+                            pl.col("Plant")
+                            .cast(pl.Utf8)
+                            .str.split(" - ")
+                            .list.get(0)
+                            .alias("sap_id")
+                        ).join(db_df, on="sap_id", how="inner")
+
+                    merged = current_df.join(
+                        prev_df,
+                        on=["SBU", "Zone", "Regional Office", "Plant", "sap_id"],
+                        how="left",
+                        suffix="_prev"
+                    )
+
+                    for col in COLUMNS:
+                        prev_col = f"{col}_prev"
+                        if col in merged.columns and prev_col in merged.columns:
+                            merged = merged.with_columns(
+                                (pl.col(col) - pl.col(prev_col).fill_null(0)).alias(col)
+                            )
+                else:
+                    merged = current_df
+
+            # ===============================
+            # Inject missing columns (SAFE)
+            # ===============================
+            for col in COLUMNS:
+                if col not in merged.columns:
+                    merged = merged.with_columns(pl.lit(0).alias(col))
+
+            # ===============================
+            # COST CALCULATION
+            # ===============================
+            merged = merged.with_columns([
+
+                (pl.col("Manpower Expenses (CY)") / pl.col("Production (MT) - CY"))
+                    .fill_nan(0).fill_null(0).alias("Manpower Cost (CY)"),
+
+                (pl.col("Other OPEX Expenses (CY)") / pl.col("Production (MT) - CY"))
+                    .fill_nan(0).fill_null(0).alias("Other OPEX Cost (CY)"),
+
+                (pl.col("M&R CVR Expenses (CY)") / pl.col("Production (MT) - CY"))
+                    .fill_nan(0).fill_null(0).alias("M&R CVR Cost (CY)"),
+
+                (pl.col("Depreciation Expenses (CY)") / pl.col("Production (MT) - CY"))
+                    .fill_nan(0).fill_null(0).alias("Depreciation Cost (CY)"),
+
+                (pl.col("Manpower Expenses (LY)") / pl.col("Production (MT) - LY"))
+                    .fill_nan(0).fill_null(0).alias("Manpower Cost (LY)"),
+
+                (pl.col("Other OPEX Expenses (LY)") / pl.col("Production (MT) - LY"))
+                    .fill_nan(0).fill_null(0).alias("Other OPEX Cost (LY)"),
+
+                (pl.col("M&R CVR Expenses (LY)") / pl.col("Production (MT) - LY"))
+                    .fill_nan(0).fill_null(0).alias("M&R CVR Cost (LY)"),
+
+                (pl.col("Depreciation Expenses (LY)") / pl.col("Production (MT) - LY"))
+                    .fill_nan(0).fill_null(0).alias("Depreciation Cost (LY)")
+            ])
+
+            merged = merged.with_columns([
+
+                (
+                    pl.col("Manpower Cost (CY)") +
+                    pl.col("Other OPEX Cost (CY)") +
+                    pl.col("M&R CVR Cost (CY)") +
+                    pl.col("Depreciation Cost (CY)")
+                ).alias("Total Cost (CY)"),
+
+                (
+                    pl.col("Manpower Cost (LY)") +
+                    pl.col("Other OPEX Cost (LY)") +
+                    pl.col("M&R CVR Cost (LY)") +
+                    pl.col("Depreciation Cost (LY)")
+                ).alias("Total Cost (LY)")
+            ])
+            
+            # ===============================
+            # SAVINGS (Dynamic Base Logic)
+            # ===============================
+
+            if month in ["April", "May", "June", "July"] and april_base_cost_df is not None:
+
+                merged = merged.join(
+                    april_base_cost_df,
+                    on="sap_id",
+                    how="left"
+                )
+
+            elif month in ["August", "September", "October", "November", "December", "January", "February", "March"] and august_base_cost_df is not None:
+
+                merged = merged.join(
+                    august_base_cost_df,
+                    on="sap_id",
+                    how="left"
+                )
+
+            # Force April & August savings = 0
+            if month in ["April", "August"]:
+
+                merged = merged.with_columns([
+                    pl.lit(0).alias("Savings (CY)"),
+                    pl.lit(0).alias("Savings (LY)")
+                ])
+
+            else:
+
+                merged = merged.with_columns([
+
+                    (
+                        pl.col("Production (MT) - CY") *
+                        (pl.col("Base Total Cost (CY)") - pl.col("Total Cost (CY)"))
+                    ).fill_null(0).alias("Savings (CY)"),
+
+                    (
+                        pl.col("Production (MT) - LY") *
+                        (pl.col("Base Total Cost (LY)") - pl.col("Total Cost (LY)"))
+                    ).fill_null(0).alias("Savings (LY)")
+                ])
+            # ===============================
+            # TOTAL PROD COST
+            # ===============================
+            merged = merged.with_columns([
+
+                (pl.col("Total Cost (CY)") *
+                pl.col("Production (MT) - CY"))
+                .alias("Total Prod Cost (CY)"),
+
+                (pl.col("Total Cost (LY)") *
+                pl.col("Production (MT) - LY"))
+                .alias("Total Prod Cost (LY)")
+            ])
+            # ===============================
+            # NEW SAVINGS BASED ON TOTAL PROD COST
+            # ===============================
+
+            if month in ["April", "August"]:
+
+                merged = merged.with_columns([
+                    pl.lit(0).alias("savings_cy"),
+                    pl.lit(0).alias("savings_ly")
+                ])
+
+            else:
+
+                merged = merged.with_columns([
+
+                    (
+                        pl.col("Base Total Prod Cost (CY)") -
+                        pl.col("Total Prod Cost (CY)")
+                    ).fill_null(0).alias("savings_cy"),
+
+                    (
+                        pl.col("Base Total Prod Cost (LY)") -
+                        pl.col("Total Prod Cost (LY)")
+                    ).fill_null(0).alias("savings_ly")
+                ])
+            # Store for next month
+            prev_month_cost_df = merged.select([
+                "sap_id",
+                "Total Cost (CY)",
+                "Total Cost (LY)"
+            ])
+
+            
+            merged = merged.with_columns(pl.lit(month).alias("Month"))
+            float_cols = [
+                col for col, dtype in zip(merged.columns, merged.dtypes)
+                if dtype in (pl.Float32, pl.Float64)
+            ]
+
+            merged = merged.with_columns([
+                pl.col(col).round(0).cast(pl.Int64) for col in float_cols
+            ])
+            # Apply filters
+            if requested_sap_id:
+                merged = merged.filter(pl.col("sap_id") == requested_sap_id)
+
+            if requested_zone:
+                merged = merged.filter(pl.col("Zone") == requested_zone)
+
+            final_results.extend(
+                merged.select([
+                    "Month",
+                    "SBU",
+                    "Zone",
+                    "Regional Office",
+                    "Plant",
+                    "sap_id",
+                    pl.col("Production (MT) - LY").alias("production_mt_ly"),
+                    pl.col("Production (MT) - CY").alias("production_mt_cy"),
+
+                    pl.col("Manpower Cost (CY)").alias("manpower_cost_mt_cy"),
+                    pl.col("Other OPEX Cost (CY)").alias("other_opex_cost_mt_cy"),
+                    pl.col("M&R CVR Cost (CY)").alias("mr_cvr_cost_mt_cy"),
+                    pl.col("Depreciation Cost (CY)").alias("depreciation_cost_mt_cy"),
+
+                    pl.col("Manpower Cost (LY)").alias("manpower_cost_mt_ly"),
+                    pl.col("Other OPEX Cost (LY)").alias("other_opex_cost_mt_ly"),
+                    pl.col("M&R CVR Cost (LY)").alias("mr_cvr_cost_mt_ly"),
+                    pl.col("Depreciation Cost (LY)").alias("depreciation_cost_mt_ly"),
+
+                    pl.col("Total Cost (CY)").alias("total_cost_mt_cy"),
+                    pl.col("Total Cost (LY)").alias("total_cost_mt_ly"),
+
+                    pl.col("Total Prod Cost (CY)").alias("total_prod_cost_cy"),
+                    pl.col("Total Prod Cost (LY)").alias("total_prod_cost_ly"),
+
+                    pl.col("Savings (CY)").alias("savings_mt_cy"),
+                    pl.col("Savings (LY)").alias("savings_mt_ly"),
+                    pl.col("savings_cy"),
+                    pl.col("savings_ly")
+                ]).to_dicts()
+            )
+
+        # return {"data": final_results}
+        if final_results:
+
+            final_df = pl.DataFrame(final_results)
+
+            sum_columns = [
+                "production_mt_ly",
+                "production_mt_cy",
+
+                "total_prod_cost_cy",
+                "total_prod_cost_ly",
+
+                "savings_cy",
+                "savings_ly"
+            ]
+            
+            avg_columns = [
+                "manpower_cost_mt_cy",
+                "other_opex_cost_mt_cy",
+                "mr_cvr_cost_mt_cy",
+                "depreciation_cost_mt_cy",
+
+                "manpower_cost_mt_ly",
+                "other_opex_cost_mt_ly",
+                "mr_cvr_cost_mt_ly",
+                "depreciation_cost_mt_ly",
+
+                "total_cost_mt_cy",
+                "total_cost_mt_ly",
+                
+                "savings_mt_cy",
+                "savings_mt_ly",
+            ]
+            
+
+            overall_row = final_df.select([
+                pl.sum(col).round(0).alias(col) for col in sum_columns
+            ] + [pl.mean(col).round(0).alias(col) for col in avg_columns
+                ]).to_dicts()[0]
+            
+            monthly_aggregated = final_df.group_by("Month").agg(
+                [pl.sum(col).round(0).alias(col) for col in sum_columns] +
+                [pl.mean(col).round(0).alias(col) for col in avg_columns]
+            ).to_dicts()
+
+
+            # If sap_id filter applied
+            if requested_sap_id:
+                overall_row.update({
+                    
+                    "SBU": final_results[0]["SBU"],
+                    "Zone": final_results[0]["Zone"],
+                    "Regional Office": final_results[0]["Regional Office"],
+                    "Plant": final_results[0]["Plant"],
+                    "sap_id": final_results[0]["sap_id"]
+                })
+                for rec in monthly_aggregated:
+                    rec.update({
+                    "SBU": final_results[0]["SBU"],
+                    "Zone": final_results[0]["Zone"],
+                    "Regional Office": final_results[0]["Regional Office"],
+                    "Plant": final_results[0]["Plant"],
+                    "sap_id": final_results[0]["sap_id"]
+                })
+            else:
+                # No sap_id filter → sum of all plants
+                overall_row.update({
+                    "SBU": "All",
+                    "Zone": "All",
+                    "Regional Office": "All",
+                    "Plant": "All Plants",
+                    "sap_id": "All"
+                })
+                for rec in monthly_aggregated:
+                    rec.update({
+                    "SBU": "All",
+                    "Zone": "All",
+                    "Regional Office": "All",
+                    "Plant": "All Plants",
+                    "sap_id": "All"
+                })
+
+            
+
+        return {
+            "data": final_results,
+            "overall": overall_row,
+            "monthly_aggregated": monthly_aggregated
+        }
