@@ -1643,7 +1643,8 @@ class LPGOperationsActions:
 
         CURRENT_FILE = os.path.abspath(__file__)
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(CURRENT_FILE)))
-        MASTER_PATH = os.path.join(BASE_DIR, "masters")
+        MASTER_PATH = os.path.join(BASE_DIR, "masters", "lpg_production_cost")
+
 
         MONTH_ORDER = [
             "April", "May", "June", "July",
