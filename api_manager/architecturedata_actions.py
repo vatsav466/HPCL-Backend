@@ -127,6 +127,12 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                                 if keyword.lower() in sensor_name:
                                     location_counts[mapped_type].append(device_name)
                                     break
+                elif device_type in ['PLC']:
+                    # Classify PLCs
+                    if 'SFT PLC' in device_name.upper():
+                        location_counts["Safety PLC"].append(device_name)
+                    elif 'GEPLC' in device_name.upper():
+                        location_counts["Process PLC"].append(device_name)
                 else:
                     location_counts[device_type].append(device_name)
 
