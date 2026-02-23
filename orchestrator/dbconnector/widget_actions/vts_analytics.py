@@ -3153,6 +3153,10 @@ class VTSAnalyticsActions:
                 df["average_closing"] = (
                     df["total_alerts"] / df["total_unblocking_days"]
                 ).round(2)
+            
+            pl_df = pl.from_pandas(df)
+            if str(payload.get("download", "")).lower() == "true":
+                return await download_streaming_data(pl_df, filename="unblock_ageing_data")
 
             return {
                 "status": True,
