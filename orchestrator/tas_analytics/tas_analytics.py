@@ -4010,6 +4010,7 @@ def get_unauthorised_flow_for_bay_date(unauthorised_flow_df, date, bay_number_st
         unauthorised_flow_details.append({
             "location_name": row.get("location_name"),
             "bay_number": row.get("bay_number"),
+            "bcu_number": row.get("bcu_number"),
             "created_at": str(row.get("created_at")),
             "start_totalizer": row.get("start_totalizer"),
             "end_totalizer": row.get("end_totalizer"),
@@ -4541,7 +4542,7 @@ async def host_tables_combined_data(data):
                     (pl.col("date") == date) &
                     (pl.col("equipment_name") == "BCU")
                 ).with_columns(
-                    pl.col("device_name").str.extract(r"BC-(\d{2})", 1).alias("alert_bay_number")
+                    pl.col("device_name").str.extract(r"BC-(\d{2,3})[A-Za-z]?", 1).alias("alert_bay_number")
                 )
 
                 if selected_bay:
@@ -4643,7 +4644,7 @@ def get_alerts_for_bay_date(alerts_df, date, bay_number_str):
 
     if len(filtered) > 0:
         filtered = filtered.with_columns(
-            pl.col("device_name").str.extract(r"BC-(\d{2})", 1).alias("alert_bay_number")
+            pl.col("device_name").str.extract(r"BC-(\d{2,3})[A-Za-z]?", 1).alias("alert_bay_number") 
         )
         filtered = filtered.filter(pl.col("alert_bay_number").is_not_null())
         filtered = filtered.filter(pl.col("alert_bay_number") == bay_number_str)
@@ -4971,12 +4972,26 @@ async def get_bay_counts(data):
                 .unique()
                 .sort("bay")
             )
+        unique_bays_from_alerts = pl.DataFrame({"bay": []}, schema={"bay": pl.Utf8})
+        if len(alerts_df) > 0 and "bay_number" in alerts_df.columns:
+            unique_bays_from_alerts = (
+                alerts_df
+                .filter(pl.col("location_name") == location_name)
+                .select(pl.col("bay_number").alias("bay"))
+                .filter(pl.col("bay").is_not_null() & (pl.col("bay") != ""))
+                .unique()
+                .sort("bay")
+            )
+        # Merge both sources
+        unique_bays = pl.concat([unique_bays, unique_bays_from_alerts], how="diagonal_relaxed").unique().sort("bay")
+
         # Calculate counts for each bay
         bays_data = []
 
         for bay_row in unique_bays.iter_rows(named=True):
             bay_number = bay_row.get("bay")
-            bay_number_str = str(bay_number).zfill(2)
+            bay_number_str = str(bay_number).zfill(2)   # for day_end_df / combined_df filtering
+            bay_number_raw = str(bay_number)             # for alert device_name matching
 
             # Filter data for this specific bay
             bay_combined_df = location_combined_df.filter(
@@ -4993,7 +5008,7 @@ async def get_bay_counts(data):
             bay_active_bays_count = 0
             
             if len(location_day_end_df) > 0 and "bay_number_extracted" in location_day_end_df.columns:
-                bay_day_end = location_day_end_df.filter(pl.col("bay_number_extracted") == str(bay_number).zfill(2))
+                bay_day_end = location_day_end_df.filter(pl.col("bay_number_extracted") == bay_number_str)
                 
                 if len(bay_day_end) > 0:
                     bay_grouped = (bay_day_end.group_by(["bay_number", "bcu_number"]).agg([pl.col("bcu_start_totalizer").sum().alias("sum_start"),pl.col("bcu_end_totalizer").sum().alias("sum_end"),])
@@ -5009,7 +5024,6 @@ async def get_bay_counts(data):
                 bay_day_end = location_day_end_df.filter(pl.col("bay_number_extracted") == bay_number_str)
                 
                 if len(bay_day_end) > 0:
-                    # Filter out null and zero values from both columns
                     filtered_bay = bay_day_end.filter(pl.col('bcu_mfm_net_totalizer_diff').is_not_null() & (pl.col('bcu_mfm_net_totalizer_diff') != 0))
                     if len(filtered_bay) > 0:
                         bay_mfm_vs_bcu_difference = filtered_bay.select(pl.col("bcu_mfm_net_totalizer_diff").sum()).item()
@@ -5033,16 +5047,23 @@ async def get_bay_counts(data):
             # Calculate Alerts_Count for this bay (BCU alerts only)
             bay_alerts_count = 0
             if len(alerts_df) > 0:
-                bay_alerts = alerts_df.filter((pl.col("location_name") == location_name) & (pl.col("equipment_name") == "BCU"))
+                bay_alerts = alerts_df.filter(
+                    (pl.col("location_name") == location_name) & 
+                    (pl.col("equipment_name") == "BCU")
+                )
                 
-                # Extract bay_number from device_name if column exists
                 if "device_name" in bay_alerts.columns:
-                    bay_alerts = bay_alerts.with_columns(pl.col("device_name").str.extract(r"BC-(\d{2})", 1).alias("alert_bay_number"))
-                    bay_alerts = bay_alerts.filter(pl.col("alert_bay_number") == str(bay_number).zfill(2))
+                    bay_alerts = bay_alerts.with_columns(
+                        pl.col("device_name")
+                        .str.extract(r"BC-(\d{2,3})[A-Za-z]?", 1)  
+                        .alias("alert_bay_number")
+                    )
+                    bay_alerts = bay_alerts.filter(
+                        pl.col("alert_bay_number") == bay_number_raw  
+                    )
                 
                 if len(bay_alerts) > 0:
-                    # Deduplicate
-                    bay_alerts = bay_alerts.unique(subset=["created_at", "alert_bay_number", "interlock_name"],keep="last")
+                    bay_alerts = bay_alerts.unique(subset=["created_at", "alert_bay_number", "interlock_name"], keep="last")
                     bay_alerts_count = len(bay_alerts)
             
             # Note: Gantry_Permissive_off_Count is same for all bays in a location (it's location-wide)
@@ -5053,10 +5074,8 @@ async def get_bay_counts(data):
             if len(bay_combined_df) > 0:
                 bay_overloaded_records = bay_combined_df.filter(pl.col("table_name") == "HostOverLoaded")
                 if len(bay_overloaded_records) > 0:
-                    # Filter out null values
                     bay_overloaded_filtered = bay_overloaded_records.filter(pl.col('loaded_qty').is_not_null() & pl.col('required_qty').is_not_null())
                     if len(bay_overloaded_filtered) > 0:
-                        # Calculate row-by-row absolute difference, then sum (matches SQL)
                         bay_overloaded_with_diff = bay_overloaded_filtered.with_columns((pl.col("loaded_qty") - pl.col("required_qty")).abs().alias("row_difference"))
                         bay_overloading_qty = int(bay_overloaded_with_diff.select(pl.col("row_difference").sum()).item())
 
@@ -5068,7 +5087,7 @@ async def get_bay_counts(data):
                     bay_localloaded_filtered = bay_localloaded_records.filter(pl.col('loaded_qty').is_not_null() & (pl.col('loaded_qty') != 0))
                     if len(bay_localloaded_filtered) > 0:
                         bay_localloading_qty = int(bay_localloaded_filtered.select(pl.col("loaded_qty").sum()).item())
-                       
+                        
             bay_reassignment_count = len(bay_combined_df.filter(pl.col("table_name") == "HostBayReAssignment")) if len(bay_combined_df) > 0 else 0
             bay_local_count = len(bay_combined_df.filter(pl.col("table_name") == "HostLocalLoaded")) if len(bay_combined_df) > 0 else 0
             bay_over_count = len(bay_combined_df.filter(pl.col("table_name") == "HostOverLoaded")) if len(bay_combined_df) > 0 else 0
@@ -5098,7 +5117,6 @@ async def get_bay_counts(data):
                     "BCU_VS_INVOICE": bay_bcu_vs_invoice_count,
                     "BCU_VS_INVOICE_difference": bay_bcu_vs_invoice_difference,
                     "BCU_VS_INVOICE_severity": get_difference_severity(bay_bcu_vs_invoice_difference, days)
-
                 }
             }
             

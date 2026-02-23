@@ -122,7 +122,7 @@ async def fetch_host_tables_as_dfs(data):
     unauthorised_flow_params = urdhva_base.queryparams.QueryParams(
         q=query_str,
         fields=json.dumps([
-            "bay_number", "net_totalizer", "created_at", "location_name", "zone", "start_totalizer","end_totalizer"
+            "bay_number","bcu_number", "net_totalizer", "created_at", "location_name", "zone", "start_totalizer","end_totalizer"
         ])
     )
     unauthorised_flow_params.limit = 0
@@ -200,7 +200,7 @@ async def fetch_host_tables_as_dfs(data):
         alerts_df = alerts_df.unique(subset=["vehicle_number", "created_at"])
         if "device_name" in alerts_df.columns:
             alerts_df = alerts_df.with_columns(
-                pl.col("device_name").str.extract(r"BC-(\d{2})[AB]", 1).alias("bay_number")
+                pl.col("device_name").str.extract(r"BC-(\d{2,3})[A-Za-z]?", 1) .alias("bay_number")
             )
         # NEW: Filter alerts_df by bay if provided
         if bay_filter_values and "bay_number" in alerts_df.columns:
