@@ -122,7 +122,7 @@ async def fetch_host_tables_as_dfs(data):
     unauthorised_flow_params = urdhva_base.queryparams.QueryParams(
         q=query_str,
         fields=json.dumps([
-            "bay_number", "net_totalizer", "created_at", "location_name", "zone"
+            "bay_number", "net_totalizer", "created_at", "location_name", "zone", "start_totalizer","end_totalizer"
         ])
     )
     unauthorised_flow_params.limit = 0
@@ -147,9 +147,10 @@ async def fetch_host_tables_as_dfs(data):
     unauthorised_flow_data = unauthorised_flow_resp.get("data", [])
     if unauthorised_flow_data:
         for row in unauthorised_flow_data:
-            if "net_totalizer" in row and row["net_totalizer"] is not None:
-                row["net_totalizer"] = round(float(row["net_totalizer"]), 2)
-    
+            for field in ["net_totalizer", "start_totalizer", "end_totalizer"]:
+                if field in row and row[field] is not None:
+                    row[field] = round(float(row[field]), 2)
+
     unauthorised_flow_df = pl.DataFrame(unauthorised_flow_data)
 
     
@@ -160,22 +161,30 @@ async def fetch_host_tables_as_dfs(data):
             (pl.col("net_totalizer") > 0)
         )
 
+    # Filter unauthorised_flow_df by bay if bay filter provided
+    if bay_filter_values and len(unauthorised_flow_df) > 0 and "bay_number" in unauthorised_flow_df.columns:
+        padded_bays = [b.zfill(2) for b in bay_filter_values]
+        unauthorised_flow_df = unauthorised_flow_df.filter(
+            pl.col("bay_number").cast(pl.Utf8).str.zfill(2).is_in(padded_bays)
+        )
 
     total_bcu_count = 0
     total_active_bays_count = 0
 
-    day_end_df = day_end_df.with_columns([
-    pl.col("bcu_start_totalizer").cast(pl.Float64),
-    pl.col("bcu_end_totalizer").cast(pl.Float64),
-    ])
-
-    grouped_df = (day_end_df.group_by(["bay_number", "bcu_number"]).agg([
-            pl.col("bcu_start_totalizer").sum().alias("sum_start"),
-            pl.col("bcu_end_totalizer").sum().alias("sum_end"),
+    if len(day_end_df) > 0 and "bcu_start_totalizer" in day_end_df.columns and "bcu_end_totalizer" in day_end_df.columns:
+        day_end_df = day_end_df.with_columns([
+            pl.col("bcu_start_totalizer").cast(pl.Float64),
+            pl.col("bcu_end_totalizer").cast(pl.Float64),
         ])
-        .with_columns((pl.col("sum_end") - pl.col("sum_start")).abs().alias("total_difference")))
-    total_bcu_count = grouped_df.height
-    total_active_bays_count = grouped_df.filter(pl.col("total_difference") > 100).height
+        grouped_df = (
+            day_end_df.group_by(["bay_number", "bcu_number"]).agg([
+                pl.col("bcu_start_totalizer").sum().alias("sum_start"),
+                pl.col("bcu_end_totalizer").sum().alias("sum_end"),
+            ])
+            .with_columns((pl.col("sum_end") - pl.col("sum_start")).abs().alias("total_difference"))
+        )
+        total_bcu_count = grouped_df.height
+        total_active_bays_count = grouped_df.filter(pl.col("total_difference") > 100).height
 
     # Add table_name column to dataframes that have data
     if len(bay_df) > 0:
@@ -190,8 +199,9 @@ async def fetch_host_tables_as_dfs(data):
     if len(alerts_df) > 0:
         alerts_df = alerts_df.unique(subset=["vehicle_number", "created_at"])
         if "device_name" in alerts_df.columns:
-            alerts_df = alerts_df.with_columns(pl.col("device_name").str.extract(r"BC-(\d{2})", 1).alias("bay_number"))
-        
+            alerts_df = alerts_df.with_columns(
+                pl.col("device_name").str.extract(r"BC-(\d{2})[AB]", 1).alias("bay_number")
+            )
         # NEW: Filter alerts_df by bay if provided
         if bay_filter_values and "bay_number" in alerts_df.columns:
             padded_bays = [b.zfill(2) for b in bay_filter_values]
@@ -201,6 +211,13 @@ async def fetch_host_tables_as_dfs(data):
 
     if len(day_end_df) > 0 and "bay_number" in day_end_df.columns:
         day_end_df = day_end_df.with_columns(pl.col("bay_number").str.zfill(2).alias("bay_number_extracted"))
+
+    # Filter day_end_df by bay if bay filter provided
+    if bay_filter_values and len(day_end_df) > 0 and "bay_number_extracted" in day_end_df.columns:
+        padded_bays = [b.zfill(2) for b in bay_filter_values]
+        day_end_df = day_end_df.filter(
+            pl.col("bay_number_extracted").is_in(padded_bays)
+        )
 
     # Rename bay_number to assigned_bay if column exists
     if len(local_loaded_df) > 0 and "bay_number" in local_loaded_df.columns:
@@ -228,7 +245,8 @@ async def fetch_host_tables_as_dfs(data):
         if "loaded_qty" in combined_df.columns:
             combined_df = combined_df.with_columns(pl.col("loaded_qty").sum().over(["truck_number", "created_at"]).alias("cumulative_loaded_qty"))
         
-        combined_df = combined_df.unique(subset=["truck_number", "created_at"])
+        combined_df = combined_df.unique(subset=["truck_number", "created_at","table_name", "assigned_bay"])
+
 
         alerts_count_list = []
         gantry_count_list = []
@@ -272,8 +290,8 @@ async def fetch_host_tables_as_dfs(data):
                     (pl.col("bay_number_extracted") == current_bay)
                 )
                 if len(filtered) > 0:
-                    bcu_sum = filtered["bcu_net_totalizer"].sum()
-                    mfm_sum = filtered["mfm_net_totalizer"].sum()
+                    bcu_sum = filtered.select(pl.col("bcu_net_totalizer").cast(pl.Float64, strict=False).sum()).item() or 0.0
+                    mfm_sum = filtered.select(pl.col("mfm_net_totalizer").cast(pl.Float64, strict=False).sum()).item() or 0.0
                     difference = mfm_sum - bcu_sum
             mfm_vs_bcu_list.append(difference)
 
@@ -290,15 +308,16 @@ async def fetch_host_tables_as_dfs(data):
                         (pl.col("bay_number_extracted") == current_bay)
                     )
                     if len(filtered) > 0:
-                        bcu_sum = filtered["bcu_net_totalizer"].sum()
+                        bcu_sum = filtered.select(pl.col("bcu_net_totalizer").cast(pl.Float64, strict=False).sum()).item() or 0.0
                         bcu_vs_invoice_difference = bcu_sum - (current_invoiced_qty if current_invoiced_qty else 0)
             bcu_vs_invoice_list.append(bcu_vs_invoice_difference)
         
         # Add all calculated columns
-        combined_df = combined_df.with_columns(pl.Series("Alerts_Count", alerts_count_list))
-        combined_df = combined_df.with_columns(pl.Series("Gantry_Permissive_off_Count", gantry_count_list))
-        combined_df = combined_df.with_columns(pl.Series("MFM_VS_BCU", mfm_vs_bcu_list))
-        combined_df = combined_df.with_columns(pl.Series("BCU_VS_INVOICE", bcu_vs_invoice_list))
+        # Add all calculated columns
+        combined_df = combined_df.with_columns(pl.Series("Alerts_Count", alerts_count_list, dtype=pl.Int64))
+        combined_df = combined_df.with_columns(pl.Series("Gantry_Permissive_off_Count", gantry_count_list, dtype=pl.Int64))
+        combined_df = combined_df.with_columns(pl.Series("MFM_VS_BCU", [float(v) for v in mfm_vs_bcu_list], dtype=pl.Float64))
+        combined_df = combined_df.with_columns(pl.Series("BCU_VS_INVOICE", [float(v) for v in bcu_vs_invoice_list], dtype=pl.Float64))
         combined_df = combined_df.with_columns(pl.lit('NO').alias('Cross checked ManuallyAP system'))   
 
         if "table_name" in combined_df.columns and "loaded_qty" in combined_df.columns and "required_qty" in combined_df.columns:
@@ -310,9 +329,12 @@ async def fetch_host_tables_as_dfs(data):
                 pl.col("created_at").cast(pl.Date).alias("created_date")
             )
             
-            combined_df = combined_df.filter(pl.col("assigned_bay").is_not_null() & (pl.col("assigned_bay") != ""))            
+            combined_df = combined_df.filter(pl.col("assigned_bay").is_not_null() & (pl.col("assigned_bay") != ""))
+            
+            # Sort first to make keep="first" deterministic
+            combined_df = combined_df.sort(["table_name", "created_date", "truck_number", "load_number", "assigned_bay", "created_at"])
             combined_df = combined_df.unique(
-                subset=["table_name", "created_date", "truck_number", "load_number"],
+                subset=["table_name", "created_date", "truck_number", "load_number", "assigned_bay"],
                 keep="first"
             ).drop("created_date")
             
