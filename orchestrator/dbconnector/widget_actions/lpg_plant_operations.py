@@ -1862,6 +1862,10 @@ class LPGOperationsActions:
             # ===============================
             if month == "April":
                 merged = current_df
+                merged = merged.with_columns([
+                    pl.lit(0).alias("Manpower Expenses (LY)"),
+                    pl.lit(0).alias("Manpower Expenses (CY)")
+                ])
 
             else:
                 month_index = MONTH_ORDER.index(month)
@@ -1890,6 +1894,10 @@ class LPGOperationsActions:
                         how="left",
                         suffix="_prev"
                     )
+                    merged = merged.with_columns([
+                    pl.lit(0).alias("Manpower Expenses (LY)"),
+                    pl.lit(0).alias("Manpower Expenses (CY)")
+                ])
 
                     for col in COLUMNS:
                         prev_col = f"{col}_prev"
@@ -1899,6 +1907,10 @@ class LPGOperationsActions:
                             )
                 else:
                     merged = current_df
+                    merged = merged.with_columns([
+                    pl.lit(0).alias("Manpower Expenses (LY)"),
+                    pl.lit(0).alias("Manpower Expenses (CY)")
+                ])
 
             # ===============================
             # Inject missing columns (SAFE)
@@ -1936,6 +1948,9 @@ class LPGOperationsActions:
                 (pl.col("Depreciation Expenses (LY)") / pl.col("Production (MT) - LY"))
                     .fill_nan(0).fill_null(0).alias("Depreciation Cost (LY)")
             ])
+            # ===============================
+            # FORCE OTHER OPEX COST = 0
+            # # ===============================
 
             merged = merged.with_columns([
 
@@ -1973,6 +1988,10 @@ class LPGOperationsActions:
                     on="sap_id",
                     how="left"
                 )
+                merged = merged.with_columns([
+                    pl.lit(0).alias("Manpower Expenses (LY)"),
+                    pl.lit(0).alias("Manpower Expenses (CY)")
+                ])
 
             # Force April & August savings = 0
             if month in ["April", "August"]:
@@ -2091,6 +2110,9 @@ class LPGOperationsActions:
                     pl.col("savings_ly")
                 ]).to_dicts()
             )
+            
+        overall_row = {}
+        monthly_aggregated = []
 
         # return {"data": final_results}
         if final_results:
@@ -2130,12 +2152,26 @@ class LPGOperationsActions:
             overall_row = final_df.select([
                 pl.sum(col).round(0).alias(col) for col in sum_columns
             ] + [pl.mean(col).round(0).alias(col) for col in avg_columns
-                ]).to_dicts()[0]
+                ])
+
+            overall_row = overall_row.with_columns([
+                (pl.col("total_prod_cost_cy") / pl.col("production_mt_cy"))
+                    .fill_nan(0).fill_null(0).alias("total_cost_mt_cy"),
+                (pl.col("total_prod_cost_ly") / pl.col("production_mt_ly"))
+                .fill_nan(0).fill_null(0).alias("total_cost_mt_ly")
+            ]).to_dicts()[0]
             
             monthly_aggregated = final_df.group_by("Month").agg(
                 [pl.sum(col).round(0).alias(col) for col in sum_columns] +
                 [pl.mean(col).round(0).alias(col) for col in avg_columns]
-            ).to_dicts()
+            )
+
+            monthly_aggregated = monthly_aggregated.with_columns([
+                (pl.col("total_prod_cost_cy") / pl.col("production_mt_cy"))
+                .fill_nan(0).fill_null(0).alias("total_cost_mt_cy"),
+                (pl.col("total_prod_cost_ly") / pl.col("production_mt_cy"))
+                .fill_nan(0).fill_null(0).alias("total_cost_mt_ly")
+            ]).to_dicts()
 
 
             # If sap_id filter applied
