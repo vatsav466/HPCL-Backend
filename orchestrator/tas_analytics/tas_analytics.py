@@ -4541,7 +4541,7 @@ async def host_tables_combined_data(data):
                     (pl.col("date") == date) &
                     (pl.col("equipment_name") == "BCU")
                 ).with_columns(
-                    pl.col("device_name").str.extract(r"BC-(\d{2})[AB]", 1).alias("alert_bay_number")
+                    pl.col("device_name").str.extract(r"BC-(\d{2})", 1).alias("alert_bay_number")
                 )
 
                 if selected_bay:
@@ -4643,7 +4643,7 @@ def get_alerts_for_bay_date(alerts_df, date, bay_number_str):
 
     if len(filtered) > 0:
         filtered = filtered.with_columns(
-            pl.col("device_name").str.extract(r"BC-(\d{2})[AB]", 1).alias("alert_bay_number")
+            pl.col("device_name").str.extract(r"BC-(\d{2})", 1).alias("alert_bay_number")
         )
         filtered = filtered.filter(pl.col("alert_bay_number").is_not_null())
         filtered = filtered.filter(pl.col("alert_bay_number") == bay_number_str)
