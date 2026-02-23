@@ -1065,28 +1065,78 @@ class LPGOperationsActions:
         production_data = await LPGOperationsActions.get_productivity(data)
         if not production_data:
             return False, "No data found"
+
         production_data = await calculate_productivity(production_data)
-        total_production = round(production_data["total_production"].sum(),2)
+        total_production = round(production_data["total_production"].sum(), 2)
+
+        today_date = datetime.strptime(data["from_date"], "%Y-%m-%d")
+        yesterday_date = today_date - timedelta(days=1)
+
+        yesterday_payload = {
+            "sap_id": data["sap_id"],
+            "from_date": yesterday_date.strftime("%Y-%m-%d"),
+            "to_date": yesterday_date.strftime("%Y-%m-%d")
+        }
+
+        yesterday_data = await LPGOperationsActions.get_productivity(yesterday_payload)
+
+        if yesterday_data:
+            yesterday_data = await calculate_productivity(yesterday_data)
+            yesterday_total = round(yesterday_data["total_production"].sum(), 2)
+        else:
+            yesterday_total = 0
+
+        change_percent = round(((total_production / yesterday_total) - 1) * 100, 2) if yesterday_total > 0 else 0
+
         print("Production:", total_production)
-        return {"Total Production": total_production}
+
+        return {
+            "Total Production": total_production,
+            "Yesterday Production": yesterday_total,
+            "Change (%)": change_percent
+        }
 
 
     async def get_total_productivity_today_data(data: dict):
         production_data = await LPGOperationsActions.get_productivity(data)
         if not production_data:
             return False, "No data found"
+
         production_data = await calculate_productivity(production_data)
-        if not production_data.empty:
-            total_production = production_data['total_production'].iloc[0]
 
-            if total_production != 0:
-                total_productivity = round(production_data['total_production'].sum() / production_data['total_net_hours'].sum(),2)
-            else:
-                total_productivity = 0
+        total_production = production_data["total_production"].sum()
+        total_hours = production_data["total_net_hours"].sum()
+        total_productivity = round(total_production / total_hours, 2) if total_hours > 0 else 0
+
+        today_date = datetime.strptime(data["from_date"], "%Y-%m-%d")
+        yesterday_date = today_date - timedelta(days=1)
+
+        yesterday_payload = {
+            "sap_id": data["sap_id"],
+            "from_date": yesterday_date.strftime("%Y-%m-%d"),
+            "to_date": yesterday_date.strftime("%Y-%m-%d")
+        }
+
+        yesterday_data = await LPGOperationsActions.get_productivity(yesterday_payload)
+
+        if yesterday_data:
+            yesterday_data = await calculate_productivity(yesterday_data)
+            y_total_prod = yesterday_data["total_production"].sum()
+            y_total_hours = yesterday_data["total_net_hours"].sum()
+            yesterday_productivity = round(y_total_prod / y_total_hours, 2) if y_total_hours > 0 else 0
+        else:
+            yesterday_productivity = 0
+
+        change_percent = round(((total_productivity / yesterday_productivity) - 1) * 100, 2) if yesterday_productivity > 0 else 0
+
         print("Productivity:", total_productivity)
-        return {"Productivity": total_productivity}
 
-
+        return {
+            "Productivity": total_productivity,
+            "Yesterday Productivity": yesterday_productivity,
+            "Change (%)": change_percent
+        }
+    
     async def get_productivity_raw_data(data: dict):
         try:
             today = datetime.now().date()
@@ -1173,8 +1223,8 @@ class LPGOperationsActions:
             hourly_factor = 3600 / avg_duration_secs
             adjustment_factor = 8.5 / 7.75
 
-            carousals = carousal_string.split(",")
-
+            carousals = [c.strip() for c in carousal_string.split(",")]
+            
             output = {
                 "labels": [],
                 "overall": {}
