@@ -1119,20 +1119,47 @@ class VTSAnalyticsActions:
                 download_card_query, conditions
             )
 
-            df = await VTSAnalyticsActions.execute_query(final_query, engine="polars")
+            # df = await VTSAnalyticsActions.execute_query(final_query, engine="polars")
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=final_query, limit=0)
+            data = resp.get("data", [])
+            if not data:
+                return {"status": False, "message": "No data found", "data": []}
+            
+            for row in data:
+                for key, value in row.items():
+                    if value == "" or value == "[]":
+                        row[key] = None
 
-            # 2. Extract creator_id and approver_id from alert_history (JSONB)
+
+            df = pl.DataFrame(data, infer_schema_length=len(data))
+            
             df = df.with_columns([
-                    # Creator ID → first employee_id where action_type == Justification
-                    pl.col("alert_history").list.eval(pl.element().struct.field("employee_id").filter(
-                            pl.element().struct.field("action_type") == "Justification")
-                    ).list.first().alias("creator_id"),
+                   pl.col("alert_history").fill_null([])
+             ])
 
-                    # Approver ID → first employee_id where action_type == Approved
-                    pl.col("alert_history").list.eval(pl.element().struct.field("employee_id").filter(
-                            pl.element().struct.field("action_type") == "Approved")
-                    ).list.first().alias("approver_id"),
-                ])
+            df = df.with_columns([
+                pl.when(pl.col("alert_history").list.len() > 0)
+                .then(
+                    pl.col("alert_history").list.eval(
+                        pl.element().struct.field("employee_id").filter(
+                            pl.element().struct.field("action_type") == "Justification"
+                        )
+                    ).list.first()
+                )
+                .otherwise(pl.lit(None))
+                .alias("creator_id"),
+
+                pl.when(pl.col("alert_history").list.len() > 0)
+                .then(
+                    pl.col("alert_history").list.eval(
+                        pl.element().struct.field("employee_id").filter(
+                            pl.element().struct.field("action_type") == "Approved"
+                        )
+                    ).list.first()
+                )
+                .otherwise(pl.lit(None))
+                .alias("approver_id"),
+            ])
 
 
             # 3. Select required columns for Excel
