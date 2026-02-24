@@ -1081,11 +1081,8 @@ class VTSAnalyticsActions:
                 "action_by"
             ])
 
-            return {
-                "status": True,
-                "message": "success",
-                "data": res_df.to_dicts()
-            }
+            return await download_streaming_data(res_df, filename=f'{drill_state}')
+
 
         except Exception as e:
             print("Exception in BigNumber Chart:", str(e))
