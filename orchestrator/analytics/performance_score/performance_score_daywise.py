@@ -1,5 +1,4 @@
 import urdhva_base
-import polars as pl
 import json
 from datetime import datetime
 from decimal import Decimal
@@ -86,39 +85,25 @@ async def performance_score_daywise_action(data):
     if data.name:
         query_str = add_filters(query_str, "name", data.name)
 
-    params = urdhva_base.queryparams.QueryParams(
-        q=query_str,
-        limit=0
-    )
+    where_clause = query_str
 
-    resp = await PerformanceScoreHistory.get_all(params, resp_type="plain")
-    records = sanitize_records(resp.get("data", []))
+    query = f"""
+        SELECT DISTINCT ON (zone, name, created_at::date)
+            zone,
+            name,
+            created_at::date AS score_date,
+            score AS db_score,
+            category
+        FROM performance_score_history
+        WHERE {where_clause}
+        ORDER BY zone, name, created_at::date, created_at DESC;
+    """
 
-    if not records:
+    resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+    grouped = sanitize_records(resp.get("data", []))
+
+    if not grouped:
         return {"status": "success", "zones": []}
-
-    df = (
-        pl.DataFrame(records, strict=False)
-        .with_columns(
-            pl.col("created_at")
-            .cast(pl.Datetime)
-            .dt.date()
-            .alias("score_date")
-        )
-    )
-
-    # ================= GROUP =================
-
-    # ================= GROUP =================
-    grouped = (
-        df.sort("created_at")
-        .group_by(["zone", "name", "score_date"])
-        .agg(
-            pl.col("score").last().alias("db_score"),
-            pl.col("category").last()
-        )
-        .to_dicts()
-    )
 
     zones_map = {}
 

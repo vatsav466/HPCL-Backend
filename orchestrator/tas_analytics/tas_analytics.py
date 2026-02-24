@@ -1,7 +1,7 @@
 import urdhva_base
 import polars as pl
 from datetime import datetime
-import json 
+import json
 import os
 import math
 import hpcl_ceg_model
@@ -57,7 +57,7 @@ async def check_run_time_fire_engine(data):
             zone=zone,
             fire_engine_on_datetime=fire_engine_on_datetime,
         ).create()
-        
+
         return
 
     if engine_status in ["OFF"]:
@@ -72,7 +72,7 @@ async def check_run_time_fire_engine(data):
                 f"AND fire_engine_off_datetime IS NULL"
             ),
             limit=1,
-            sort=json.dumps({"created_at": "desc"}) 
+            sort=json.dumps({"created_at": "desc"})
         )
 
         records = await hpcl_ceg_model.TasFireEngineTest.get_all(
@@ -111,7 +111,7 @@ async def create_tas_faulty(data, certificate_file=None):
     try:
         # Convert to dict at the start
         data = data.dict()
-        
+
         sap_id = data['sap_id']
         device_type = data['device_type']
         equipment_name = data['equipment_name']
@@ -119,9 +119,9 @@ async def create_tas_faulty(data, certificate_file=None):
         location_name = data['name']
         user_remarks = data['user_remarks']
         faulty = data['faulty']
-        
+
         print("sap_id:", sap_id)
-        
+
         # Set default status
         data['status'] = "Open"
 
@@ -239,13 +239,13 @@ async def update_tas_faulty(data):
         resolved = bool(data.resolved)
 
         # ---------------- FETCH RECORD ----------------
-        record = await hpcl_ceg_model.TasFaulty.get_all(urdhva_base.queryparams.QueryParams(q=f"id={transaction_id}", limit=1), 
+        record = await hpcl_ceg_model.TasFaulty.get_all(urdhva_base.queryparams.QueryParams(q=f"id={transaction_id}", limit=1),
                                                         resp_type="plain")
         row = record.get("data")
 
         if not row:
             return {"status": False, "message": "No faulty record found", "data": {}}
-        
+
         row = row[0]
         process_instance_id = row["workflow_instance_id"]
         if not process_instance_id:
@@ -337,7 +337,6 @@ async def get_info_tas_faulty(data):
     }
 
 
-
 def create_valid_vehicle_filter(column_name: str, min_length: int = 9) -> pl.Expr:
     """Validate vehicle/truck numbers: min length, contains A-Z and 0-9, alphanumeric only."""
     return pl.when(
@@ -349,555 +348,427 @@ def create_valid_vehicle_filter(column_name: str, min_length: int = 9) -> pl.Exp
 
 
 async def top_repeat_alerts(data):
-
-    alert_query = """
-        alert_section = 'TAS'
-        AND interlock_name NOT IN ('BCU Permissive Off','BCU Permissive Off_Fail')
-    """
-
-
-    alert_query += (
-        f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
-    )
-
-
-    if data.alert_status:
-        alert_query += f" AND alert_status = '{data.alert_status}'"
-
-    if data.location_name:
-        alert_query += f" AND location_name = '{data.location_name}'"
-
-    if data.interlock_name:
-        alert_query += f" AND interlock_name = '{data.interlock_name}'"
-
-    if data.alert_severity:
-        if isinstance(data.alert_severity, list):
-            clean_severity = [s for s in data.alert_severity if s]
-
-            if clean_severity:
-                severity_vals = ", ".join(f"'{s}'" for s in clean_severity)
-                alert_query += f" AND severity IN ({severity_vals})"
-        else:
-            if data.alert_severity.strip():
-                alert_query += f" AND severity = '{data.alert_severity}'"
-
-    print("FINAL alert_query >>>", alert_query)
-
-
-    alert_params = urdhva_base.queryparams.QueryParams(
-        q=alert_query,
-        limit=0
-    )
-
-    # Fields needed for both cases
-    alert_params.fields = [
-        "unique_id",
-        "alert_status",
-        "severity",
-        "interlock_name",
-        "location_name",
-        "device_name",
-        "created_at"
-    ]
-
-    alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
-    alert_data = alerts_resp.get("data", [])
-
-    if not alert_data:
-        return []
-
-    df = pl.DataFrame(alert_data)
- 
-    # CASE 2: INTERLOCK SELECTED → DETAIL LIST
-    
-    if data.interlock_name:
-
-        now = datetime.utcnow()
-
-        # Add ageing_days column
-        df = df.with_columns(
-            (
-                (pl.lit(now) - pl.col("created_at"))
-                .dt.total_days()
-                .cast(pl.Int64)
-            ).alias("ageing_days")
-        )
-
-        # Create ageing bucket
-        df = df.with_columns(
-            pl.when(pl.col("ageing_days") == 1)
-            .then(pl.lit("1 Day"))
-            .when(pl.col("ageing_days") == 2)
-            .then(pl.lit("2 Days"))
-            .when(pl.col("ageing_days") == 3)
-            .then(pl.lit("3 Days"))
-            .when(pl.col("ageing_days") == 4)
-            .then(pl.lit("4 Days"))
-            .when(pl.col("ageing_days") == 5)
-            .then(pl.lit("5 Days"))
-            .when((pl.col("ageing_days") >= 6) & (pl.col("ageing_days") <= 10))
-            .then(pl.lit("6-10 Days"))
-            .when((pl.col("ageing_days") >= 11) & (pl.col("ageing_days") <= 15))
-            .then(pl.lit("11-15 Days"))
-            .when((pl.col("ageing_days") >= 16) & (pl.col("ageing_days") <= 30))
-            .then(pl.lit("16-30 Days"))
-            .when((pl.col("ageing_days") >= 31) & (pl.col("ageing_days") <= 60))
-            .then(pl.lit("31-60 Days"))
-            .otherwise(pl.lit("60+ Days"))
-            .alias("ageing_bucket")
-        )
-
-        # Detail list (your existing data)
-        detail_df = (
-            df
-            .with_columns(
-                pl.col("created_at")
-                .dt.strftime("%Y-%m-%dT%H:%M:%S")
-            )
-            .select([
-                "unique_id",
-                "alert_status",  
-                "severity",  
-                "interlock_name",
-                "location_name",
-                "device_name",
-                "created_at",
-                "ageing_days"
-            ])
-            .sort("ageing_days", descending=True)
-        )
-
-        # Ageing bucket location summary
-        bucket_summary = (
-            df
-            .group_by(["ageing_bucket", "location_name"])
-            .agg(pl.len().alias("alert_count"))
-        )
-
-        # Define correct order manually
-        ordered_buckets = [
-            "1 Day",
-            "2 Days",
-            "3 Days",
-            "4 Days",
-            "5 Days",
-            "6-10 Days",
-            "11-15 Days",
-            "16-30 Days",
-            "31-60 Days",
-            "60+ Days"
+    try:
+        # 1. BUILD WHERE CLAUSE
+        where_conditions = [
+            "alert_section = 'TAS'",
+            "interlock_name NOT IN ('BCU Permissive Off', 'BCU Permissive Off_Fail')"
         ]
 
-        bucket_result = []
+        if data.start_date and data.end_date:
+            where_conditions.append(f"created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'")
 
-        for bucket in ordered_buckets:
+        if data.alert_status:
+            where_conditions.append(f"alert_status = '{data.alert_status}'")
 
-            bucket_df = bucket_summary.filter(
-                pl.col("ageing_bucket") == bucket
-            )
+        if data.location_name:
+            where_conditions.append(f"location_name = '{data.location_name}'")
 
-            if bucket_df.height == 0:
-                continue
+        if data.alert_severity:
+            if isinstance(data.alert_severity, list):
+                clean_severity = [s for s in data.alert_severity if s]
+                if clean_severity:
+                    severity_vals = ", ".join(f"'{s}'" for s in clean_severity)
+                    where_conditions.append(f"severity IN ({severity_vals})")
+            elif data.alert_severity.strip():
+                where_conditions.append(f"severity = '{data.alert_severity}'")
 
-            total_count = bucket_df["alert_count"].sum()
+        # 2. HANDLE INTERLOCK-SPECIFIC OR GENERAL QUERY
+        if data.interlock_name:
+            where_conditions.append(f"interlock_name = '{data.interlock_name}'")
+            where_clause = " AND ".join(where_conditions)
 
-            bucket_result.append({
-                "ageing_range": bucket,
-                "total_alerts": total_count,
-                "locations": bucket_df.select([
-                    "location_name",
-                    "alert_count"
-                ]).to_dicts()
-            })
+            # Query for detail list
+            detail_query = f"""
+                SELECT
+                    unique_id, alert_status, severity, interlock_name, location_name, device_name,
+                    TO_CHAR(created_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS created_at,
+                    FLOOR(EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400) AS ageing_days
+                FROM Alerts
+                WHERE {where_clause}
+                ORDER BY ageing_days DESC;
+            """
+            detail_list = await hpcl_ceg_model.Alerts.get_aggr_data(detail_query, limit=0)
+            detail_list = detail_list.get("data", [])
 
-        return {
-            "detail_list": detail_df.to_dicts(),
-            "ageing_analysis": bucket_result
-        }
+            # Query for ageing analysis
+            ageing_query = f"""
+                WITH ageing_data AS (
+                    SELECT
+                        FLOOR(EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400) AS ageing_days,
+                        location_name
+                    FROM Alerts
+                    WHERE {where_clause}
+                ),
+                bucketed_data AS (
+                    SELECT
+                        location_name,
+                        CASE
+                            WHEN ageing_days = 1 THEN '1 Day'
+                            WHEN ageing_days = 2 THEN '2 Days'
+                            WHEN ageing_days = 3 THEN '3 Days'
+                            WHEN ageing_days = 4 THEN '4 Days'
+                            WHEN ageing_days = 5 THEN '5 Days'
+                            WHEN ageing_days BETWEEN 6 AND 10 THEN '6-10 Days'
+                            WHEN ageing_days BETWEEN 11 AND 15 THEN '11-15 Days'
+                            WHEN ageing_days BETWEEN 16 AND 30 THEN '16-30 Days'
+                            WHEN ageing_days BETWEEN 31 AND 60 THEN '31-60 Days'
+                            ELSE '60+ Days'
+                        END AS ageing_bucket
+                    FROM ageing_data
+                )
+                SELECT ageing_bucket, location_name, COUNT(*) as alert_count
+                FROM bucketed_data
+                GROUP BY ageing_bucket, location_name
+                ORDER BY MIN(CASE 
+                    WHEN ageing_bucket = '1 Day' THEN 1
+                    WHEN ageing_bucket = '2 Days' THEN 2
+                    WHEN ageing_bucket = '3 Days' THEN 3
+                    WHEN ageing_bucket = '4 Days' THEN 4
+                    WHEN ageing_bucket = '5 Days' THEN 5
+                    WHEN ageing_bucket = '6-10 Days' THEN 6
+                    WHEN ageing_bucket = '11-15 Days' THEN 11
+                    WHEN ageing_bucket = '16-30 Days' THEN 16
+                    WHEN ageing_bucket = '31-60 Days' THEN 31
+                    ELSE 61
+                END);
+            """
+            ageing_summary_raw = await hpcl_ceg_model.Alerts.get_aggr_data(ageing_query, limit=0)
+            ageing_summary_raw = ageing_summary_raw.get("data", [])
 
-    # CASE 1: NO INTERLOCK → TOP 5 REPEATED
+            # Process ageing summary
+            bucket_result = []
+            if ageing_summary_raw:
+                ageing_df = pl.DataFrame(ageing_summary_raw)
+                ordered_buckets = [
+                    "1 Day", "2 Days", "3 Days", "4 Days", "5 Days",
+                    "6-10 Days", "11-15 Days", "16-30 Days", "31-60 Days", "60+ Days"
+                ]
+                for bucket in ordered_buckets:
+                    bucket_df = ageing_df.filter(pl.col("ageing_bucket") == bucket)
+                    if not bucket_df.is_empty():
+                        total_count = bucket_df["alert_count"].sum()
+                        bucket_result.append({
+                            "ageing_range": bucket,
+                            "total_alerts": total_count,
+                            "locations": bucket_df.select(["location_name", "alert_count"]).to_dicts()
+                        })
 
-    top_alarms_df = (
-        df
-        .group_by("interlock_name")
-        .agg(pl.len().alias("count"))
-        .sort("count", descending=True)
-        .head(5)
-    )
+            return {
+                "status": True,
+                "message": "Top repeat alerts processed successfully",
+                "data": {
+                    "detail_list": detail_list,
+                    "ageing_analysis": bucket_result
+                }
+            }
 
-    return top_alarms_df.to_dicts()
+        else:
+            where_clause = " AND ".join(where_conditions)
+            query = f"""
+                SELECT interlock_name, COUNT(*) AS count
+                FROM Alerts
+                WHERE {where_clause}
+                GROUP BY interlock_name
+                ORDER BY count DESC
+                LIMIT 5;
+            """
+            result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            result = result.get("data", [])
+            return {"status": True, "message": "Top repeat alerts processed successfully", "data": result}
+
+    except Exception as e:
+        print(f"Error in top_repeat_alerts: {e}")
+        return {"status": False, "message": f"Error processing top repeat alerts: {e}", "data": []}
+
 
 async def tas_severity_summary(data):
+    try:
+        where_conditions = ["alert_section = 'TAS'"]
 
-    # -----------------------------
-    # Build alert query
-    # -----------------------------
-    alert_query = "alert_section = 'TAS'"
-
-    alert_query += (
-        f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
-    )
-
-    if data.zone:
-        alert_query += f" AND zone = '{data.zone}'"
-    
-    if data.alert_status:
-        alert_query += f" AND alert_status = '{data.alert_status}'"
-
-    if data.location_name:
-        alert_query += f" AND location_name = '{data.location_name}'"
-
-    print("FINAL alert_query >>>", alert_query)
-
-    alert_params = urdhva_base.queryparams.QueryParams(
-        q=alert_query,
-        limit=0
-    )
-
-    alert_params.fields = [
-        "zone", "location_name",
-        "severity", "interlock_name", "equipment_name", "created_at" ]
-
-    alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
-    alert_data = alerts_resp.get("data", [])
-
-    if not alert_data:
-        return []
-
-    df = pl.DataFrame(alert_data)
-
-    # CASE 2: location_name specified → DETAIL VIEW
-    if data.location_name:
-        detail_df = (
-            df
-            .with_columns(
-                pl.col("created_at")
-                .dt.strftime("%Y-%m-%dT%H:%M:%S")
-                .alias("created_at")
+        if data.start_date and data.end_date:
+            where_conditions.append(
+                f"created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
             )
-            .select([
-                "interlock_name",
-                "equipment_name",
-                "created_at"
-            ])
-            .sort("created_at", descending=True)
-        )
 
-        return detail_df.to_dicts()
+        if data.zone:
+            where_conditions.append(f"zone = '{data.zone}'")
 
-    # Extract interlock names
-    maintenance_terms = [
-        i["interlock_name"].lower() for i in analog_mapping.Maintenance if i.get("interlock_name")]
+        if data.alert_status:
+            where_conditions.append(f"alert_status = '{data.alert_status}'")
 
-    fault_terms = [
-        i["interlock_name"].lower() for i in analog_mapping.Fault if i.get("interlock_name")]
+        if data.location_name:
+            where_conditions.append(f"location_name = '{data.location_name}'")
 
-    normal_terms = [
-        i["interlock_name"].lower() for i in analog_mapping.Normal if i.get("interlock_name")]
+        where_clause = " AND ".join(where_conditions)
 
+        if data.location_name:
+            detail_query = f"""
+                SELECT
+                    interlock_name,
+                    equipment_name,
+                    TO_CHAR(created_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS created_at
+                FROM Alerts
+                WHERE {where_clause}
+                ORDER BY created_at DESC;
+            """
+            detail_result = await hpcl_ceg_model.Alerts.get_aggr_data(detail_query, limit=0)
+            detail_data = detail_result.get("data", [])
+            return {
+                "status": True,
+                "message": "TAS severity detail processed successfully",
+                "data": detail_data,
+            }
 
-    # Categorize each alert
-    df = df.with_columns(pl
-        .when(
-            pl.any_horizontal([ pl.col("interlock_name").str.to_lowercase().str.contains(t)
-                for t in maintenance_terms])) .then(pl.lit("maintenance"))
-
-        .when(
-            pl.any_horizontal([
-                pl.col("interlock_name").str.to_lowercase().str.contains(t)
-                for t in fault_terms])) .then(pl.lit("fault"))
-        
-        .when(
-            pl.any_horizontal([
-                pl.col("interlock_name").str.to_lowercase().str.contains(t)
-                for t in normal_terms])) .then(pl.lit("normal")) 
-
-        .otherwise(pl.lit("other")) .alias("interlock_category"))
-    
-    # Aggregate summary counts
-    summary_df = (
-        df.group_by(["zone", "location_name"]) .agg([
-            (pl.col("interlock_category") == "maintenance"). cast(pl.Int64).sum().alias("under_maintenance_count"),
-            (pl.col("interlock_category") == "fault").cast(pl.Int64).sum().alias("fault_count")
-
-        ]))
-
-    return summary_df.to_dicts()
-
-async def location_alert_critical(data):
-
-    zone = data.zone or None
-    location_name = data.location_name or None
-    alert_status = data.alert_status or None
-    severity_filter = data.alert_severity or []
-
-    is_download = str(getattr(data, "download", "")).lower() == "true"
-
-    
-    # 2. BASE QUERY
-    alert_query = "alert_section = 'TAS'"
-    alert_query += (
-        f" AND created_at::date BETWEEN "
-        f"'{data.start_date}' AND '{data.end_date}'"
-    )
-
-    if zone:
-        alert_query += f" AND zone = '{zone}'"
-        
-
-    if alert_status:
-        alert_query += f" AND alert_status = '{alert_status}'"
-
-    if location_name:
-        alert_query += f" AND location_name = '{location_name}'"
-
-    print("FINAL alert_query >>>", alert_query)
-    #FETCH DATA
-    params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
-    params.fields = [
-        "unique_id",
-        "zone",
-        "alert_status",
-        "severity",
-        "interlock_name",
-        "location_name",
-        "created_at"
-    ]
-
-    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
-    rows = resp.get("data", [])
-
-    if not rows:
-        return []
-    df = pl.DataFrame(rows)
-
-    # 4. SEVERITY FILTER
-    if isinstance(severity_filter, list):
-        severity_filter = [
-            s.strip().lower()
-            for s in severity_filter
-            if s and isinstance(s, str)
+        maintenance_terms = [
+            i["interlock_name"].lower()
+            for i in analog_mapping.Maintenance
+            if i.get("interlock_name")
         ]
 
-    if severity_filter:
-        df = df.filter(
-            pl.col("severity")
-            .str.to_lowercase()
-            .is_in(severity_filter)
-        )
+        fault_terms = [
+            i["interlock_name"].lower()
+            for i in analog_mapping.Fault
+            if i.get("interlock_name")
+        ]
 
+        normal_terms = [
+            i["interlock_name"].lower()
+            for i in analog_mapping.Normal
+            if i.get("interlock_name")
+        ]
 
-    # 5. DOWNLOAD MODE → RAW ALERTS (ALL OR ONE LOCATION)
-    if is_download:
-        now = datetime.utcnow()
+        def build_contains_condition(terms):
+            conditions = []
+            for term in terms:
+                if not term:
+                    continue
+                term_escaped = term.replace("'", "''")
+                conditions.append(
+                    f"LOWER(interlock_name) LIKE '%{term_escaped}%'"
+                )
+            return "(" + " OR ".join(conditions) + ")" if conditions else "FALSE"
 
-        download_df = (
-            df.with_columns([
-                pl.col("created_at")
-                  .dt.strftime("%Y-%m-%dT%H:%M:%S")
-                  .alias("created_at"),
-                (
-                    (pl.lit(now) - pl.col("created_at"))
-                    .dt.total_days()
-                    .cast(pl.Int64)
-                ).alias("ageing_days")
-            ])
-            .select([
-                "unique_id",
-                "zone",
-                "severity",
-                "alert_status",
-                "interlock_name",
-                "location_name",
-                "created_at",
-                "ageing_days"
-            ])
-            .sort("ageing_days", descending=True)
-        )
+        maintenance_condition = build_contains_condition(maintenance_terms)
+        fault_condition = build_contains_condition(fault_terms)
+        normal_condition = build_contains_condition(normal_terms)
 
-        print("DOWNLOAD RAW ROW COUNT >>>", download_df.height)
+        summary_query = f"""
+            WITH categorized AS (
+                SELECT
+                    zone,
+                    location_name,
+                    CASE
+                        WHEN {maintenance_condition} THEN 'maintenance'
+                        WHEN {fault_condition} THEN 'fault'
+                        WHEN {normal_condition} THEN 'normal'
+                        ELSE 'other'
+                    END AS interlock_category
+                FROM Alerts
+                WHERE {where_clause}
+            )
+            SELECT
+                zone,
+                location_name,
+                SUM(CASE WHEN interlock_category = 'maintenance' THEN 1 ELSE 0 END)
+                    AS under_maintenance_count,
+                SUM(CASE WHEN interlock_category = 'fault' THEN 1 ELSE 0 END)
+                    AS fault_count
+            FROM categorized
+            GROUP BY zone, location_name
+            ORDER BY zone, location_name;
+        """
 
+        summary_result = await hpcl_ceg_model.Alerts.get_aggr_data(summary_query, limit=0)
+        summary_data = summary_result.get("data", [])
         return {
-            "download": True,
-            "download_type": "raw_alerts",
-            "data": download_df.to_dicts()
+            "status": True,
+            "message": "TAS severity summary processed successfully",
+            "data": summary_data,
+        }
+    except Exception as e:
+        print(f"Error in tas_severity_summary: {e}")
+        return {
+            "status": False,
+            "message": f"Error processing TAS severity summary: {e}",
+            "data": [],
         }
 
-    # 6. DRILL-DOWN (LOCATION SELECTED, NON-DOWNLOAD)
-    if location_name:
-        now = datetime.utcnow()
 
-        result = (
-            df.with_columns([
-                pl.col("created_at")
-                  .dt.strftime("%Y-%m-%dT%H:%M:%S")
-                  .alias("created_at"),
-                (
-                    (pl.lit(now) - pl.col("created_at"))
-                    .dt.total_days()
-                    .cast(pl.Int64)
-                ).alias("ageing_days")
-            ])
-            .select([
-                "unique_id",
-                "zone",
-                "severity",
-                "alert_status",
-                "interlock_name",
-                "location_name",
-                "created_at",
-                "ageing_days"
-            ])
-            .sort("ageing_days", descending=True)
-        )
+async def location_alert_critical(data):
+    try:
+        # 1. EXTRACT PARAMETERS
+        zone = data.zone or None
+        location_name = data.location_name or None
+        alert_status = data.alert_status or None
+        severity_filter = data.alert_severity or []
+        is_download = str(getattr(data, "download", "")).lower() == "true"
 
-        print("DETAIL VIEW ROW COUNT >>>", result.height)
-        return result.to_dicts()
+        # 2. BUILD WHERE CLAUSE
+        where_conditions = [
+            "alert_section = 'TAS'",
+            f"created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
+        ]
 
-    # 7. CLEAN INVALID LOCATIONS
-    df = df.filter(
-        (pl.col("location_name").is_not_null()) &
-        (pl.col("location_name").str.strip_chars() != "")
-    )
+        if zone:
+            where_conditions.append(f"zone = '{zone}'")
+        if alert_status:
+            where_conditions.append(f"alert_status = '{alert_status}'")
+        if location_name and not is_download and not location_name.lower() == "true":
+            where_conditions.append(f"location_name = '{location_name}'")
 
-    # 8. INTERLOCK + SEVERITY COUNTS
-    base_df = (
-        df.group_by([
-            "zone",
-            "location_name",
-            "interlock_name",
-            "severity"
-        ])
-        .agg(pl.len().alias("count"))
-    )
+        if isinstance(severity_filter, list) and severity_filter:
+            severity_values = ", ".join(f"'{s.strip().lower()}'" for s in severity_filter if s and isinstance(s, str))
+            if severity_values:
+                where_conditions.append(f"LOWER(severity) IN ({severity_values})")
 
-    # 9. TOTAL ALERTS PER LOCATION
-    totals_df = (
-        base_df.group_by(["zone", "location_name"])
-        .agg(pl.sum("count").alias("total_alerts"))
-    )
+        where_clause = " AND ".join(where_conditions)
 
-    # 10. NORMAL SUMMARY RESPONSE (DASHBOARD)
-    result_df = (
-        totals_df
-        .join(base_df, on=["zone", "location_name"])
-        .group_by(["zone", "location_name"])
-        .agg([
-            pl.first("total_alerts").alias("total_alerts"),
-            pl.struct(
-                ["interlock_name", "severity", "count"]
-            ).alias("interlocks")
-        ])
-        .sort("total_alerts", descending=True)
-    )
+        # 3. DETERMINE QUERY TYPE (DOWNLOAD, DETAIL, OR SUMMARY)
 
-    print("TOTAL LOCATIONS RETURNED >>>", result_df.height)
+        # DOWNLOAD OR DETAIL VIEW
+        if is_download or location_name:
+            query = f"""
+                SELECT
+                    unique_id,
+                    zone,
+                    severity,
+                    alert_status,
+                    interlock_name,
+                    location_name,
+                    TO_CHAR(created_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS created_at,
+                    FLOOR(EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400) AS ageing_days
+                FROM Alerts
+                WHERE {where_clause}
+                ORDER BY ageing_days DESC;
+            """
+            result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+            result_data = result.get("data", [])
 
-    return result_df.to_dicts()
+            if is_download:
+                return {
+                    "download": True,
+                    "download_type": "raw_alerts",
+                    "data": result_data
+                }
+            return {"status": True, "message": "Critical alert details processed successfully", "data": result_data}
+
+        # SUMMARY VIEW (DASHBOARD)
+        else:
+            summary_query = f"""
+                WITH base_alerts AS (
+                    SELECT
+                        zone,
+                        location_name,
+                        interlock_name,
+                        severity
+                    FROM Alerts
+                    WHERE {where_clause} AND location_name IS NOT NULL AND location_name != ''
+                ),
+                interlock_counts AS (
+                    SELECT
+                        zone,
+                        location_name,
+                        interlock_name,
+                        severity,
+                        COUNT(*) as count
+                    FROM base_alerts
+                    GROUP BY zone, location_name, interlock_name, severity
+                ),
+                total_counts AS (
+                    SELECT
+                        zone,
+                        location_name,
+                        SUM(count) as total_alerts
+                    FROM interlock_counts
+                    GROUP BY zone, location_name
+                )
+                SELECT
+                    t.zone,
+                    t.location_name,
+                    t.total_alerts,
+                    json_agg(json_build_object('interlock_name', i.interlock_name, 'severity', i.severity, 'count', i.count)) as interlocks
+                FROM total_counts t
+                JOIN interlock_counts i ON t.zone = i.zone AND t.location_name = i.location_name
+                GROUP BY t.zone, t.location_name, t.total_alerts
+                ORDER BY t.total_alerts DESC;
+            """
+            result = await hpcl_ceg_model.Alerts.get_aggr_data(summary_query, limit=0)
+            result = result.get("data", [])
+            return {"status": True, "message": "Critical alert summary processed successfully", "data": result}
+
+    except Exception as e:
+        print(f"Error in location_alert_critical: {e}")
+        return {"status": False, "message": f"Error processing critical alerts: {e}", "data": []}
 
 
 async def critical_alerts_by_equipment(data):
-    alert_query = """
-        alert_section = 'TAS'
-        AND severity = 'Critical'
-    """
+    try:
+        # 1. BUILD WHERE CLAUSE
+        where_conditions = [
+            "alert_section = 'TAS'",
+            "severity = 'Critical'",
+            "equipment_type IS NOT NULL",
+            "equipment_type != ''"
+        ]
 
-    # Add alert_status filter based on payload
-    if data.alert_status and data.alert_status.strip():
-        alert_query += f" AND alert_status = '{data.alert_status}'"
+        if data.alert_status and data.alert_status.strip():
+            where_conditions.append(f"alert_status = '{data.alert_status}'")
 
-    # Add date filter only if both dates are provided, not empty, and not "string"
-    if (
-        data.start_date and data.end_date
-        and data.start_date.strip() and data.end_date.strip()
-        and data.start_date.lower() != "string"
-        and data.end_date.lower() != "string"
-    ):
-        alert_query += (
-            f" AND created_at::date BETWEEN "
-            f"'{data.start_date}' AND '{data.end_date}'"
-        )
+        if (
+                data.start_date and data.end_date and
+                data.start_date.strip() and data.end_date.strip() and
+                data.start_date.lower() != "string" and data.end_date.lower() != "string"
+        ):
+            where_conditions.append(f"created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'")
 
-    # Add location_name filter if provided (and not empty/not "true")
-    if data.location_name and data.location_name.strip() and data.location_name.lower() != "true":
-        alert_query += f" AND location_name = '{data.location_name}'"
+        if data.location_name and data.location_name.strip() and data.location_name.lower() != "true":
+            where_conditions.append(f"location_name = '{data.location_name}'")
 
-    if data.zone and data.zone.strip():
-        alert_query += f" AND zone = '{data.zone}'"
+        if data.zone and data.zone.strip():
+            where_conditions.append(f"zone = '{data.zone}'")
 
-    # Add equipment_type filter if provided
-    if data.equipment_type:
-        alert_query += f" AND equipment_type = '{data.equipment_type}'"
+        if data.equipment_type:
+            where_conditions.append(f"equipment_type = '{data.equipment_type}'")
 
-    alert_params = urdhva_base.queryparams.QueryParams(q=alert_query)
-    alert_params.limit = 0
+        where_clause = " AND ".join(where_conditions)
 
-    alert_params.fields = ["equipment_type","alert_status", "zone"]
+        # 2. DETERMINE GROUPING AND AGGREGATION
+        if not data.alert_status or not data.alert_status.strip():
+            query = f"""
+                SELECT
+                    location_name,
+                    SUM(CASE WHEN alert_status = 'Open' THEN 1 ELSE 0 END) AS open_critical_count,
+                    SUM(CASE WHEN alert_status = 'Close' THEN 1 ELSE 0 END) AS close_critical_count
+                FROM Alerts
+                WHERE {where_clause}
+                GROUP BY location_name
+                ORDER BY open_critical_count DESC;
+            """
+        else:
+            group_by_field = "location_name" if (
+                                                            data.location_name and data.location_name.lower() == "true") or data.equipment_type else "equipment_type"
+            query = f"""
+                SELECT
+                    {group_by_field},
+                    COUNT(*) AS critical_count
+                FROM Alerts
+                WHERE {where_clause}
+                GROUP BY {group_by_field}
+                ORDER BY critical_count DESC;
+            """
 
-    if (
-        (data.location_name and data.location_name.lower() == "true")
-        or data.equipment_type
-    ):
-        alert_params.fields.append("location_name")
+        # 3. FETCH DATA
+        result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+        result = result.get("data", [])
+        return {"status": True, "message": "Critical alerts processed successfully", "data": result}
 
-    alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
-    alert_data = alerts_resp.get("data", [])
+    except Exception as e:
+        print(f"Error in critical_alerts_by_equipment: {e}")
+        return {"status": False, "message": f"Error processing critical alerts: {e}", "data": []}
 
-    if not alert_data:
-        return []
-
-    alerts_df = pl.DataFrame(alert_data)
-    
-    if alerts_df.is_empty():
-        return []
-    
-    # Filter out rows where equipment_type is null or empty
-    alerts_df = alerts_df.filter(
-        (pl.col("equipment_type").is_not_null()) & 
-        (pl.col("equipment_type").str.strip_chars() != "")
-    )
-
-    if alerts_df.is_empty():
-        return []
-    if not data.alert_status or not data.alert_status.strip():
-        critical_alerts_df = (
-            alerts_df
-            .group_by("location_name")
-            .agg([pl.when(pl.col("alert_status") == "Open")
-                  .then(1).otherwise(0).sum().alias("open_critical_count"),
-                pl.when(pl.col("alert_status") == "Close").then(1).otherwise(0).sum().alias("close_critical_count"),])
-            .sort("open_critical_count", descending=True))
-
-        return critical_alerts_df.to_dicts()
-    if data.equipment_type and (
-        not data.location_name or data.location_name.lower() != "true"
-    ):
-        critical_alerts_df = (
-            alerts_df
-            .group_by("location_name")
-            .agg(pl.len().alias("critical_count"))
-            .sort("critical_count", descending=True)
-        )
-        return critical_alerts_df.to_dicts()
-    if data.location_name and data.location_name.lower() == "true":
-        critical_alerts_df = (
-            alerts_df
-            .group_by("location_name")
-            .agg(pl.len().alias("critical_count"))
-            .sort("critical_count", descending=True)
-        )
-    else:
-        critical_alerts_df = (
-            alerts_df
-            .group_by("equipment_type")
-            .agg(pl.len().alias("critical_count"))
-            .sort("critical_count", descending=True)
-        )
-
-    return critical_alerts_df.to_dicts()
 
 async def tas_alerts_exception_report(data):
-
     q = "alert_section = 'TAS'"
     if data.start_date and data.end_date and data.start_date.lower() != "string":
         q += (
@@ -905,28 +776,29 @@ async def tas_alerts_exception_report(data):
             f" AND created_at <  '{data.end_date} 23:59:59'"
         )
 
-    params = urdhva_base.queryparams.QueryParams(q=q, fields=json.dumps(["location_name", "sap_id", "interlock_name","created_at", "vehicle_number", "device_name"]))
+    params = urdhva_base.queryparams.QueryParams(q=q, fields=json.dumps(
+        ["location_name", "sap_id", "interlock_name", "created_at", "vehicle_number", "device_name"]))
     params.limit = 0
 
     alerts = (await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")).get("data", [])
     if not alerts:
         return []
     df = (pl.DataFrame(alerts)
-        .with_columns([
-            pl.col("vehicle_number").str.strip_chars(),
-            pl.col("interlock_name")
-                .str.to_lowercase()
-                .str.replace_all(" ", "")
-                .alias("interlock_norm"),
-            pl.col("created_at").dt.date().alias("created_date"),
-            pl.col("created_at").dt.truncate("1h").alias("created_at_hour")
-        ])
-        .with_columns([
-            create_valid_vehicle_filter("vehicle_number").alias("is_valid_vehicle")
-        ])
-        .filter(pl.col("is_valid_vehicle") == True)
-        .drop("is_valid_vehicle")
-    )
+          .with_columns([
+        pl.col("vehicle_number").str.strip_chars(),
+        pl.col("interlock_name")
+        .str.to_lowercase()
+        .str.replace_all(" ", "")
+        .alias("interlock_norm"),
+        pl.col("created_at").dt.date().alias("created_date"),
+        pl.col("created_at").dt.truncate("1h").alias("created_at_hour")
+    ])
+          .with_columns([
+        create_valid_vehicle_filter("vehicle_number").alias("is_valid_vehicle")
+    ])
+          .filter(pl.col("is_valid_vehicle") == True)
+          .drop("is_valid_vehicle")
+          )
     df = df.unique(subset=["vehicle_number", "created_at_hour", "interlock_norm"])
 
     mfm = await hpcl_ceg_model.HostMFMFactor.get_all(
@@ -939,7 +811,7 @@ async def tas_alerts_exception_report(data):
         if r.get("last_k_factor") is not None
     }
 
-    df = df.filter(~((pl.col("interlock_norm") == "mfmkfactorchange")& (~pl.col("sap_id").is_in(valid_sap_ids))))
+    df = df.filter(~((pl.col("interlock_norm") == "mfmkfactorchange") & (~pl.col("sap_id").is_in(valid_sap_ids))))
     INTERLOCK_MAP = {
         "bayreassignment": "Bay reassignment",
         "unauthorizedflow_bcu": "Unauthorized flow_BCU",
@@ -963,7 +835,8 @@ async def tas_alerts_exception_report(data):
         "BCU vs MFM totalizer mismatch alarm"
     }
 
-    df = (df.filter(pl.col("interlock_norm").is_in(list(INTERLOCK_MAP.keys()))).with_columns(pl.col("interlock_norm").replace(INTERLOCK_MAP).alias("interlock")))
+    df = (df.filter(pl.col("interlock_norm").is_in(list(INTERLOCK_MAP.keys()))).with_columns(
+        pl.col("interlock_norm").replace(INTERLOCK_MAP).alias("interlock")))
     date_q = (
         f"created_at >= '{data.start_date} 00:00:00'"
         f" AND created_at < '{data.end_date} 23:59:59'"
@@ -1048,56 +921,56 @@ async def tas_alerts_exception_report(data):
             if interlock == "Bay reassignment":
                 details.extend(
                     i_df.select(["vehicle_number", "created_date"])
-                        .unique()
-                        .join(
-                            bay_df,
-                            left_on=["vehicle_number", "created_date"],
-                            right_on=["truck_number", "created_date"],
-                            how="left"
-                        )
-                        .filter(
-                            (pl.col("load_number").is_not_null()) |
-                            (pl.col("assigned_bay").is_not_null()) |
-                            (pl.col("reassigned_bay").is_not_null())
-                        )
-                        .select([
-                            "vehicle_number", "created_date",
-                            "load_number", "assigned_bay", "reassigned_bay"
-                        ])
-                        .to_dicts()
+                    .unique()
+                    .join(
+                        bay_df,
+                        left_on=["vehicle_number", "created_date"],
+                        right_on=["truck_number", "created_date"],
+                        how="left"
+                    )
+                    .filter(
+                        (pl.col("load_number").is_not_null()) |
+                        (pl.col("assigned_bay").is_not_null()) |
+                        (pl.col("reassigned_bay").is_not_null())
+                    )
+                    .select([
+                        "vehicle_number", "created_date",
+                        "load_number", "assigned_bay", "reassigned_bay"
+                    ])
+                    .to_dicts()
                 )
 
             elif interlock == "BCU Local Loading":
                 joined_data = (
                     i_df.select(["vehicle_number", "created_date"])
-                        .unique()
-                        .join(
-                            local_df,
-                            left_on=["vehicle_number", "created_date"],
-                            right_on=["truck_number", "created_date"],
-                            how="left"
-                        )
-                        .select([
-                            "vehicle_number", "created_date",
-                            "bcu_number", "loaded_qty", "recipe_name"
-                        ])
+                    .unique()
+                    .join(
+                        local_df,
+                        left_on=["vehicle_number", "created_date"],
+                        right_on=["truck_number", "created_date"],
+                        how="left"
+                    )
+                    .select([
+                        "vehicle_number", "created_date",
+                        "bcu_number", "loaded_qty", "recipe_name"
+                    ])
                 )
-                
+
                 # Add records with at least one non-null value
                 non_null_records = joined_data.filter(
                     (pl.col("bcu_number").is_not_null()) |
                     (pl.col("loaded_qty").is_not_null()) |
                     (pl.col("recipe_name").is_not_null())
                 ).to_dicts()
-                
+
                 if non_null_records:
                     details.extend(non_null_records)
                 else:
                     # If all joined records are null, add vehicle count summary with null fields
                     vehicle_counts = (
                         i_df.group_by(["vehicle_number", "created_date"])
-                            .agg(pl.count().alias("count"))
-                            .to_dicts()
+                        .agg(pl.count().alias("count"))
+                        .to_dicts()
                     )
                     for vc in vehicle_counts:
                         vc["bcu_number"] = None
@@ -1108,23 +981,23 @@ async def tas_alerts_exception_report(data):
             elif interlock == "Cancel TT Reported":
                 details.extend(
                     i_df.select(["vehicle_number", "created_date"])
-                        .unique()
-                        .join(
-                            cancel_df,
-                            left_on=["vehicle_number", "created_date"],
-                            right_on=["truck_number", "created_date"],
-                            how="left"
-                        )
-                        .filter(
-                            (pl.col("load_number").is_not_null()) |
-                            (pl.col("required_qty").is_not_null()) |
-                            (pl.col("product_name").is_not_null())
-                        )
-                        .select([
-                            "vehicle_number", "created_date",
-                            "load_number", "required_qty", "product_name"
-                        ])
-                        .to_dicts()
+                    .unique()
+                    .join(
+                        cancel_df,
+                        left_on=["vehicle_number", "created_date"],
+                        right_on=["truck_number", "created_date"],
+                        how="left"
+                    )
+                    .filter(
+                        (pl.col("load_number").is_not_null()) |
+                        (pl.col("required_qty").is_not_null()) |
+                        (pl.col("product_name").is_not_null())
+                    )
+                    .select([
+                        "vehicle_number", "created_date",
+                        "load_number", "required_qty", "product_name"
+                    ])
+                    .to_dicts()
                 )
 
             else:
@@ -1134,8 +1007,8 @@ async def tas_alerts_exception_report(data):
 
                 details.extend(
                     i_df.group_by(group_cols)
-                        .agg(pl.count().alias("count"))
-                        .to_dicts()
+                    .agg(pl.count().alias("count"))
+                    .to_dicts()
                 )
 
             row[f"{interlock}_detail"] = details
@@ -1149,18 +1022,19 @@ async def tas_alerts_exception_report(data):
 
     return result
 
+
 async def equipment_location_wise_count(data):
     """
     Get location-wise counts with Success/Fail breakdown for specific interlocks
     Supports ESD, VFT, RADAR, BCU, and Fire Effect equipment types
     """
-    
+
     # Determine which equipment types to process
     equipment_types = []
-    
+
     if data.equipment_name:
         equipment_name_str = data.equipment_name.strip()
-        
+
         # Check if it's an array-like string format like "[VFT,ESD,RADAR,BCU,Fire Effect]"
         if equipment_name_str.startswith('[') and equipment_name_str.endswith(']'):
             # Remove brackets and split by comma
@@ -1172,9 +1046,9 @@ async def equipment_location_wise_count(data):
     else:
         # If no equipment_name provided, process all five
         equipment_types = tas_queries.DEFAULT_EQUIPMENT_TYPES.copy()
-    
+
     final_combined_result = []
-    
+
     for equipment_type in equipment_types:
         if equipment_type == 'ESD':
             result = await process_esd_data(data)
@@ -1196,15 +1070,14 @@ async def equipment_location_wise_count(data):
             result = await process_fire_effect_data(data)
             if result:
                 final_combined_result.extend(result)
-    
-    
+
     return final_combined_result
 
 
 async def process_esd_data(data):
     """
     Optimized ESD equipment data processing with unique_id matching
-    Logic: For each base alert, check if corresponding "_Fail" alert exists 
+    Logic: For each base alert, check if corresponding "_Fail" alert exists
     within 1 minute WITH THE SAME unique_id
     """
     # Build ESD Pushbutton query
@@ -1225,11 +1098,11 @@ async def process_esd_data(data):
     esd_device_activations = {}  # Track activation times per device
     if len(esd_pushbutton_data) > 0:
         esd_pushbutton_df = pl.DataFrame(esd_pushbutton_data)
-        
+
         esd_pushbutton_df = esd_pushbutton_df.with_columns(
             pl.col("created_at").dt.strftime("%Y-%m-%dT%H:%M:%S").alias("created_at")
         )
-        
+
         for row in esd_pushbutton_df.to_dicts():
             key = (row["sap_id"], row["location_name"])
             device_name = row.get("device_name", "")
@@ -1264,7 +1137,7 @@ async def process_esd_data(data):
     # Get unique locations from pushbutton data
     if not esd_pushbutton_data:
         return []
-    
+
     unique_locations = {}
     for record in esd_pushbutton_data:
         key = (record['sap_id'], record['location_name'])
@@ -1273,29 +1146,29 @@ async def process_esd_data(data):
                 'sap_id': record['sap_id'],
                 'location_name': record['location_name']
             }
-    
+
     sap_ids = list(set(loc['sap_id'] for loc in unique_locations.values()))
-    
+
     # Build batch query for all interlocks using templat
     sap_ids_str = tas_queries.format_sap_ids_for_query(sap_ids)
-    
+
     all_interlocks_query = tas_queries.ESD_QUERIES["all_interlocks_template"].format(
         sap_ids=sap_ids_str
     )
-    
+
     if (data.start_date and data.end_date and
             data.start_date.strip() and data.end_date.strip() and
             data.start_date.lower() != "string" and data.end_date.lower() != "string"):
         all_interlocks_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
-    
+
     if data.location_name and data.location_name.strip():
         all_interlocks_query += f" AND location_name = '{data.location_name}'"
-    
+
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
     interlock_params.fields = tas_queries.ESD_FIELDS["interlocks"] + ["device_name"]  # Add device_name
 
     interlock_resp = await hpcl_ceg_model.Alerts.get_all(interlock_params, resp_type="plain")
-    all_interlock_alerts = interlock_resp.get("data", [])   
+    all_interlock_alerts = interlock_resp.get("data", [])
     if not all_interlock_alerts:
         result = []
         for key, details in esd_activated_details.items():
@@ -1306,7 +1179,7 @@ async def process_esd_data(data):
                 "no_of_esd_activated": len(details),
                 "esd_activated_details": details[:10]
             }
-            
+
             # Initialize categories from configuration
             for category in tas_queries.ESD_CATEGORIES.keys():
                 result_item[category] = [{"success": 0, "failed": 0}]
@@ -1318,7 +1191,7 @@ async def process_esd_data(data):
 
     # Organize alerts by unique_id and category (keeping original logic)
     alerts_by_unique_id = {}
-    
+
     for alert in all_interlock_alerts:
         unique_id = alert['unique_id']
         sap_id = alert['sap_id']
@@ -1332,25 +1205,25 @@ async def process_esd_data(data):
             if re.search(pattern, interlock_name):
                 category = cat
                 break
-        
+
         if not category:
             continue
-        
+
         key = (unique_id, sap_id, location_name, category)
-        
+
         if key not in alerts_by_unique_id:
             alerts_by_unique_id[key] = []
-        
+
         try:
             created_at = alert['created_at']
             if isinstance(created_at, str):
                 alert_time = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
             else:
                 alert_time = created_at
-                   
+
             # Check if this is a Fail alert
             is_fail = any(pattern in interlock_name for pattern in tas_queries.FAIL_PATTERNS)
-            
+
             alerts_by_unique_id[key].append({
                 'id': alert.get('id'),
                 'time': alert_time,
@@ -1360,20 +1233,20 @@ async def process_esd_data(data):
             })
         except Exception as e:
             print(f"Error parsing ESD alert time: {e}")
-    
+
     # Sort alerts by time for efficient searching
     for key in alerts_by_unique_id:
         alerts_by_unique_id[key].sort(key=lambda x: x['time'])
-        
+
     # Initialize results structure
     location_results = {}
-    
+
     for key, loc_info in unique_locations.items():
         sap_id = loc_info['sap_id']
         location_name = loc_info['location_name']
-        
+
         alarm_details = esd_activated_details.get(key, [])
-        
+
         location_results[key] = {
             "sap_id": sap_id,
             "location_name": location_name,
@@ -1382,7 +1255,7 @@ async def process_esd_data(data):
             "esd_activated_details": alarm_details,
             "device_activations": esd_device_activations.get(key, {})
         }
-        
+
         # Initialize categories from configuration
         for category in tas_queries.ESD_CATEGORIES.keys():
             location_results[key][category] = {"success": 0, "failed": 0}
@@ -1395,39 +1268,39 @@ async def process_esd_data(data):
 
     for key, alerts in alerts_by_unique_id.items():
         unique_id, sap_id, location_name, category = key
-        
+
         matching_key = None
         for result_key, loc_info in unique_locations.items():
             if loc_info['sap_id'] == sap_id and loc_info['location_name'] == location_name:
                 matching_key = result_key
                 break
-        
+
         if not matching_key:
             continue
-        
+
         # Separate alerts into base and fail alerts
         base_alerts = [a for a in alerts if not a['is_fail']]
         fail_alerts = [a for a in alerts if a['is_fail']]
-        
+
         # For each base alert, check if there's a corresponding fail alert within 1 minute
         for base_alert in base_alerts:
             if base_alert['id'] in processed_base_ids:
                 continue
-            
+
             base_time = base_alert['time']
             base_device = base_alert.get('device_name', '')
             time_start = base_time
             time_end = base_time + timedelta(minutes=1)
-            
+
             found_fail = False
-            
+
             # Check fail alerts WITH THE SAME unique_id
             for fail_alert in fail_alerts:
                 fail_time = fail_alert['time']
-                
+
                 if fail_time < time_start:
                     continue
-                
+
                 if time_start <= fail_time <= time_end:
                     found_fail = True
                     processed_base_ids.add(base_alert['id'])
@@ -1545,11 +1418,12 @@ async def process_esd_data(data):
         # Add location-level category counts
         for category in tas_queries.ESD_CATEGORIES.keys():
             result_item[category] = [value[category]]
-        
+
         final_result.append(result_item)
-    
+
     final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))
     return final_result
+
 
 async def process_vft_data(data):
     """
@@ -1581,16 +1455,16 @@ async def process_vft_data(data):
     alert_params.fields = tas_queries.VFT_FIELDS["other_interlocks"]
 
     alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
-    alert_data = alerts_resp.get("data", [])    
+    alert_data = alerts_resp.get("data", [])
     # Process VFT HHH data with details
     vft_activated_details = {}
     if len(vft_hhh_data) > 0:
         vft_hhh_df = pl.DataFrame(vft_hhh_data)
-        
+
         vft_hhh_df = vft_hhh_df.with_columns(
             pl.col("created_at").dt.strftime("%Y-%m-%dT%H:%M:%S").alias("created_at")
         )
-        
+
         for row in vft_hhh_df.to_dicts():
             key = (row["sap_id"], row["location_name"])
             if key not in vft_activated_details:
@@ -1599,11 +1473,11 @@ async def process_vft_data(data):
                 "created_at": row["created_at"],
                 "device_name": row.get("device_name", "")
             })
-    
+
     if not vft_hhh_data and not alert_data:
         print("WARNING: No VFT data found!")
         return []
-    
+
     if not alert_data and vft_hhh_data:
         result = {}
         for key, details in vft_activated_details.items():
@@ -1614,50 +1488,50 @@ async def process_vft_data(data):
                 "no_of_vft_activated": len(details),
                 "vft_activated_details": details
             }
-            
+
             # Initialize categories from configuration
             for category in tas_queries.VFT_CATEGORIES.keys():
                 result[key][category] = [{"success": 0, "failed": 0}]
-        
+
         final_result = list(result.values())
         final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))
-              
+
         return final_result
 
     # Organize alerts by unique_id and category
     alerts_by_unique_id = {}
-    
+
     for alert in alert_data:
         unique_id = alert['unique_id']
         sap_id = alert['sap_id']
         location_name = alert.get('location_name', '')
         interlock_name = alert.get('interlock_name', '')
-        
+
         # Determine category
         category = None
         for cat, pattern in tas_queries.VFT_CATEGORIES.items():
             if re.search(pattern, interlock_name):
                 category = cat
                 break
-        
+
         if not category:
             continue
-        
+
         key = (unique_id, sap_id, location_name, category)
-        
+
         if key not in alerts_by_unique_id:
             alerts_by_unique_id[key] = []
-        
+
         try:
             created_at = alert['created_at']
             if isinstance(created_at, str):
                 alert_time = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
             else:
                 alert_time = created_at
-            
+
             # Check if this is a Fail alert
             is_fail = "Fail" in interlock_name
-            
+
             alerts_by_unique_id[key].append({
                 'id': alert.get('id'),
                 'time': alert_time,
@@ -1666,11 +1540,11 @@ async def process_vft_data(data):
             })
         except Exception as e:
             print(f"Error parsing VFT alert time: {e}")
-    
+
     # Sort alerts by time
     for key in alerts_by_unique_id:
-        alerts_by_unique_id[key].sort(key=lambda x: x['time'])    
-    # Get unique locations
+        alerts_by_unique_id[key].sort(key=lambda x: x['time'])
+        # Get unique locations
     unique_locations = {}
     for alert in alert_data:
         key = (alert['sap_id'], alert['location_name'])
@@ -1679,16 +1553,16 @@ async def process_vft_data(data):
                 'sap_id': alert['sap_id'],
                 'location_name': alert['location_name']
             }
-    
+
     # Initialize results structure
     location_results = {}
-    
+
     for key, loc_info in unique_locations.items():
         sap_id = loc_info['sap_id']
         location_name = loc_info['location_name']
-        
+
         alarm_details = vft_activated_details.get(key, [])
-        
+
         location_results[key] = {
             "sap_id": sap_id,
             "location_name": location_name,
@@ -1696,47 +1570,47 @@ async def process_vft_data(data):
             "no_of_vft_activated": len(alarm_details),
             "vft_activated_details": alarm_details
         }
-        
+
         # Initialize categories from configuration
         for category in tas_queries.VFT_CATEGORIES.keys():
             location_results[key][category] = {"success": 0, "failed": 0}
-    
+
     # Process alerts with 1-minute window + unique_id matching
     processed_count = 0
     success_count = 0
     failed_count = 0
     processed_base_ids = set()
-    
+
     for key, alerts in alerts_by_unique_id.items():
         unique_id, sap_id, location_name, category = key
-        
+
         matching_key = (sap_id, location_name)
-        
+
         if matching_key not in location_results:
             continue
-        
+
         # Separate alerts into base and fail alerts
         base_alerts = [a for a in alerts if not a['is_fail']]
         fail_alerts = [a for a in alerts if a['is_fail']]
-        
+
         # For each base alert, check if there's a corresponding fail alert within 1 minute
         for base_alert in base_alerts:
             if base_alert['id'] in processed_base_ids:
                 continue
-            
+
             base_time = base_alert['time']
             time_start = base_time
             time_end = base_time + timedelta(minutes=1)
-            
+
             found_fail = False
-            
+
             # Check fail alerts WITH THE SAME unique_id
             for fail_alert in fail_alerts:
                 fail_time = fail_alert['time']
-                
+
                 if fail_time < time_start:
                     continue
-                
+
                 if time_start <= fail_time <= time_end:
                     found_fail = True
                     processed_base_ids.add(base_alert['id'])
@@ -1744,22 +1618,22 @@ async def process_vft_data(data):
                     break
                 elif fail_time > time_end:
                     break
-            
+
             if found_fail:
                 location_results[matching_key][category]["failed"] += 1
                 failed_count += 1
             else:
                 location_results[matching_key][category]["success"] += 1
                 success_count += 1
-            
+
             if base_alert['id'] not in processed_base_ids:
                 processed_base_ids.add(base_alert['id'])
-            
+
             processed_count += 1
-            
+
             if processed_count % 100 == 0:
                 print(f"  Processed {processed_count} alerts... (Success: {success_count}, Failed: {failed_count})")
-        
+
         # Process any unmatched fail alerts as failures
         for fail_alert in fail_alerts:
             if fail_alert['id'] not in processed_base_ids:
@@ -1768,7 +1642,6 @@ async def process_vft_data(data):
                 processed_base_ids.add(fail_alert['id'])
                 processed_count += 1
 
-    
     # Convert to list format
     final_result = []
     for key, value in location_results.items():
@@ -1779,16 +1652,16 @@ async def process_vft_data(data):
             "no_of_vft_activated": value["no_of_vft_activated"],
             "vft_activated_details": value["vft_activated_details"]
         }
-        
+
         for category in tas_queries.VFT_CATEGORIES.keys():
             result_item[category] = [value[category]]
-        
+
         final_result.append(result_item)
-    
+
     final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))
-    
-    
+
     return final_result
+
 
 async def process_radar_data(data):
     """
@@ -1821,18 +1694,18 @@ async def process_radar_data(data):
 
     alerts_resp = await hpcl_ceg_model.Alerts.get_all(alert_params, resp_type="plain")
     alert_data = alerts_resp.get("data", [])
-    
+
     print(f"RADAR other interlocks data count: {len(alert_data)}")
-    
+
     # Process RADAR Activated data with details
     radar_activated_details = {}
     if len(radar_activated_data) > 0:
         radar_activated_df = pl.DataFrame(radar_activated_data)
-        
+
         radar_activated_df = radar_activated_df.with_columns(
             pl.col("created_at").dt.strftime("%Y-%m-%dT%H:%M:%S").alias("created_at")
         )
-        
+
         for row in radar_activated_df.to_dicts():
             key = (row["sap_id"], row["location_name"])
             if key not in radar_activated_details:
@@ -1841,11 +1714,11 @@ async def process_radar_data(data):
                 "created_at": row["created_at"],
                 "device_name": row.get("device_name", "")
             })
-    
+
     if not radar_activated_data and not alert_data:
         print("WARNING: No RADAR data found!")
         return []
-    
+
     if not alert_data and radar_activated_data:
         print("No other RADAR interlock data found, returning RADAR Activated counts only")
         result = {}
@@ -1857,49 +1730,49 @@ async def process_radar_data(data):
                 "no_of_radar_activated": len(details),
                 "radar_activated_details": details
             }
-            
+
             # Initialize categories from configuration
             for category in tas_queries.RADAR_CATEGORIES.keys():
                 result[key][category] = [{"success": 0, "failed": 0}]
-        
+
         final_result = list(result.values())
-        final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))               
+        final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))
         return final_result
 
     # Organize alerts by unique_id and category
     alerts_by_unique_id = {}
-    
+
     for alert in alert_data:
         unique_id = alert['unique_id']
         sap_id = alert['sap_id']
         location_name = alert.get('location_name', '')
         interlock_name = alert.get('interlock_name', '')
-        
+
         # Determine category
         category = None
         for cat, pattern in tas_queries.RADAR_CATEGORIES.items():
             if re.search(pattern, interlock_name):
                 category = cat
                 break
-        
+
         if not category:
             continue
-        
+
         key = (unique_id, sap_id, location_name, category)
-        
+
         if key not in alerts_by_unique_id:
             alerts_by_unique_id[key] = []
-        
+
         try:
             created_at = alert['created_at']
             if isinstance(created_at, str):
                 alert_time = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
             else:
                 alert_time = created_at
-            
+
             # Check if this is a Fail alert
             is_fail = "Fail" in interlock_name
-            
+
             alerts_by_unique_id[key].append({
                 'id': alert.get('id'),
                 'time': alert_time,
@@ -1908,11 +1781,11 @@ async def process_radar_data(data):
             })
         except Exception as e:
             print(f"Error parsing RADAR alert time: {e}")
-    
+
     # Sort alerts by time
     for key in alerts_by_unique_id:
-        alerts_by_unique_id[key].sort(key=lambda x: x['time'])    
-    # Get unique locations
+        alerts_by_unique_id[key].sort(key=lambda x: x['time'])
+        # Get unique locations
     unique_locations = {}
     for alert in alert_data:
         key = (alert['sap_id'], alert['location_name'])
@@ -1921,16 +1794,16 @@ async def process_radar_data(data):
                 'sap_id': alert['sap_id'],
                 'location_name': alert['location_name']
             }
-    
+
     # Initialize results structure
     location_results = {}
-    
+
     for key, loc_info in unique_locations.items():
         sap_id = loc_info['sap_id']
         location_name = loc_info['location_name']
-        
+
         alarm_details = radar_activated_details.get(key, [])
-        
+
         location_results[key] = {
             "sap_id": sap_id,
             "location_name": location_name,
@@ -1938,47 +1811,47 @@ async def process_radar_data(data):
             "no_of_radar_activated": len(alarm_details),
             "radar_activated_details": alarm_details
         }
-        
+
         # Initialize categories from configuration
         for category in tas_queries.RADAR_CATEGORIES.keys():
             location_results[key][category] = {"success": 0, "failed": 0}
-    
+
     # Process alerts with 1-minute window + unique_id matching
     processed_count = 0
     success_count = 0
     failed_count = 0
     processed_base_ids = set()
-    
+
     for key, alerts in alerts_by_unique_id.items():
         unique_id, sap_id, location_name, category = key
-        
+
         matching_key = (sap_id, location_name)
-        
+
         if matching_key not in location_results:
             continue
-        
+
         # Separate alerts into base and fail alerts
         base_alerts = [a for a in alerts if not a['is_fail']]
         fail_alerts = [a for a in alerts if a['is_fail']]
-        
+
         # For each base alert, check if there's a corresponding fail alert within 1 minute
         for base_alert in base_alerts:
             if base_alert['id'] in processed_base_ids:
                 continue
-            
+
             base_time = base_alert['time']
             time_start = base_time
             time_end = base_time + timedelta(minutes=1)
-            
+
             found_fail = False
-            
+
             # Check fail alerts WITH THE SAME unique_id
             for fail_alert in fail_alerts:
                 fail_time = fail_alert['time']
-                
+
                 if fail_time < time_start:
                     continue
-                
+
                 if time_start <= fail_time <= time_end:
                     found_fail = True
                     processed_base_ids.add(base_alert['id'])
@@ -1986,22 +1859,22 @@ async def process_radar_data(data):
                     break
                 elif fail_time > time_end:
                     break
-            
+
             if found_fail:
                 location_results[matching_key][category]["failed"] += 1
                 failed_count += 1
             else:
                 location_results[matching_key][category]["success"] += 1
                 success_count += 1
-            
+
             if base_alert['id'] not in processed_base_ids:
                 processed_base_ids.add(base_alert['id'])
-            
+
             processed_count += 1
-            
+
             if processed_count % 100 == 0:
                 print(f"  Processed {processed_count} alerts... (Success: {success_count}, Failed: {failed_count})")
-        
+
         # Process any unmatched fail alerts as failures
         for fail_alert in fail_alerts:
             if fail_alert['id'] not in processed_base_ids:
@@ -2009,7 +1882,7 @@ async def process_radar_data(data):
                 failed_count += 1
                 processed_base_ids.add(fail_alert['id'])
                 processed_count += 1
-    
+
     # Convert to list format
     final_result = []
     for key, value in location_results.items():
@@ -2020,19 +1893,20 @@ async def process_radar_data(data):
             "no_of_radar_activated": value["no_of_radar_activated"],
             "radar_activated_details": value["radar_activated_details"]
         }
-        
+
         for category in tas_queries.RADAR_CATEGORIES.keys():
             result_item[category] = [value[category]]
-        
+
         final_result.append(result_item)
-    
-    final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))    
+
+    final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))
     return final_result
+
 
 async def process_bcu_data(data):
     """
     Optimized BCU equipment data processing with unique_id matching
-    Logic: For each interlock alert, check if BCU Permissive Off_Fail exists 
+    Logic: For each interlock alert, check if BCU Permissive Off_Fail exists
     within 1 minute WITH THE SAME unique_id
     """
     # Build BCU alarm query
@@ -2045,33 +1919,33 @@ async def process_bcu_data(data):
 
     bcu_alarm_params = urdhva_base.queryparams.QueryParams(q=bcu_alarm_query, limit=0)
     bcu_alarm_params.fields = tas_queries.BCU_FIELDS["bcu_alarm"]
-    
+
     bcu_alarm_resp = await hpcl_ceg_model.Alerts.get_all(bcu_alarm_params, resp_type="plain")
     bcu_alarm_data = bcu_alarm_resp.get("data", [])
-    
+
     if not bcu_alarm_data:
         return []
 
     # Process BCU alarm data with details - LIMIT TO configured value
     bcu_alarm_details = {}
     bcu_alarm_counts = {}
-    
+
     bcu_alarm_df = pl.DataFrame(bcu_alarm_data)
-    
+
     bcu_alarm_df = bcu_alarm_df.with_columns(
         pl.col("created_at").dt.strftime("%Y-%m-%dT%H:%M:%S").alias("created_at")
     )
-    
+
     for row in bcu_alarm_df.to_dicts():
         key = (row["sap_id"], row["location_name"])
-        
+
         if key not in bcu_alarm_counts:
             bcu_alarm_counts[key] = 0
         bcu_alarm_counts[key] += 1
-        
+
         if key not in bcu_alarm_details:
             bcu_alarm_details[key] = []
-        
+
         if len(bcu_alarm_details[key]) < tas_queries.BCU_ALARM_DETAILS_LIMIT:
             bcu_alarm_details[key].append({
                 "created_at": row["created_at"],
@@ -2087,64 +1961,63 @@ async def process_bcu_data(data):
                 'sap_id': record['sap_id'],
                 'location_name': record['location_name']
             }
-    
+
     sap_ids = list(set(loc['sap_id'] for loc in unique_locations.values()))
-        
+
     # Build batch query for all interlocks using template
     interlocks_str = tas_queries.format_interlocks_for_query(tas_queries.BCU_INTERLOCKS)
     sap_ids_str = tas_queries.format_sap_ids_for_query(sap_ids)
-    
+
     all_interlocks_query = tas_queries.BCU_QUERIES["all_interlocks_template"].format(
         sap_ids=sap_ids_str,
         interlocks=interlocks_str
     )
-    
+
     if (data.start_date and data.end_date and
             data.start_date.strip() and data.end_date.strip() and
             data.start_date.lower() != "string" and data.end_date.lower() != "string"):
         all_interlocks_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
-    
+
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
     interlock_params.fields = tas_queries.BCU_FIELDS["interlocks"]
-    
+
     interlock_resp = await hpcl_ceg_model.Alerts.get_all(interlock_params, resp_type="plain")
     all_interlock_alerts = interlock_resp.get("data", [])
-    
-    
+
     # Build batch query for BCU Permissive Off using template
     permissive_query = tas_queries.BCU_QUERIES["permissive_off_template"].format(
         sap_ids=sap_ids_str
     )
-    
+
     if (data.start_date and data.end_date and
             data.start_date.strip() and data.end_date.strip() and
             data.start_date.lower() != "string" and data.end_date.lower() != "string"):
         permissive_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
-    
+
     permissive_params = urdhva_base.queryparams.QueryParams(q=permissive_query, limit=0)
     permissive_params.fields = tas_queries.BCU_FIELDS["permissive_off"]
-    
+
     permissive_resp = await hpcl_ceg_model.Alerts.get_all(permissive_params, resp_type="plain")
     all_permissive_alerts = permissive_resp.get("data", [])
-        
+
     # Create efficient lookup structure organized by unique_id
     permissive_by_unique_id = {}
     for alert in all_permissive_alerts:
         unique_id = alert['unique_id']
-        
+
         if unique_id not in permissive_by_unique_id:
             permissive_by_unique_id[unique_id] = []
-        
+
         try:
             created_at = alert['created_at']
             if isinstance(created_at, str):
                 alert_time = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
             else:
                 alert_time = created_at
-            
+
             interlock_name = alert.get('interlock_name', '')
             is_fail = any(pattern in interlock_name for pattern in tas_queries.FAIL_PATTERNS)
-            
+
             permissive_by_unique_id[unique_id].append({
                 'id': alert.get('id'),
                 'time': alert_time,
@@ -2153,21 +2026,21 @@ async def process_bcu_data(data):
             })
         except Exception as e:
             print(f"Error parsing permissive alert time: {e}")
-    
+
     # Sort permissive alerts by time
     for unique_id in permissive_by_unique_id:
         permissive_by_unique_id[unique_id].sort(key=lambda x: x['time'])
-        
+
     # Initialize results structure
     location_results = {}
-    
+
     for key, loc_info in unique_locations.items():
         sap_id = loc_info['sap_id']
         location_name = loc_info['location_name']
-        
+
         alarm_details = bcu_alarm_details.get(key, [])
         alarm_count = bcu_alarm_counts.get(key, 0)
-        
+
         location_results[key] = {
             "sap_id": sap_id,
             "location_name": location_name,
@@ -2175,75 +2048,75 @@ async def process_bcu_data(data):
             "no_of_bcu_alarm": alarm_count,
             "bcu_alarm_details": alarm_details
         }
-        
+
         # Initialize all interlocks from configuration
         for interlock in tas_queries.BCU_INTERLOCKS:
             location_results[key][interlock] = {"success": 0, "failed": 0}
-    
+
     # Process each interlock alert with 1-minute window logic + unique_id matching
     processed_count = 0
     success_count = 0
     failed_count = 0
-    
+
     for alert in all_interlock_alerts:
         sap_id = alert['sap_id']
         unique_id = alert['unique_id']
         interlock_name = alert['interlock_name']
         created_at = alert['created_at']
-        
+
         matching_key = None
         for key, loc_info in unique_locations.items():
             if loc_info['sap_id'] == sap_id:
                 matching_key = key
                 break
-        
+
         if not matching_key:
             continue
-        
+
         try:
             if isinstance(created_at, str):
                 alert_time = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
             else:
                 alert_time = created_at
-            
+
             time_start = alert_time
             time_end = alert_time + timedelta(minutes=1)
-            
+
             is_failed = False
-            
+
             # Check permissive alerts WITH THE SAME unique_id
             if unique_id in permissive_by_unique_id:
                 for perm_alert in permissive_by_unique_id[unique_id]:
                     perm_time = perm_alert['time']
-                    
+
                     if perm_time < time_start:
                         continue
-                    
+
                     if time_start <= perm_time <= time_end:
                         if perm_alert['is_fail']:
                             is_failed = True
                             break
                     elif perm_time > time_end:
                         break
-            
+
             if is_failed:
                 location_results[matching_key][interlock_name]["failed"] += 1
                 failed_count += 1
             else:
                 location_results[matching_key][interlock_name]["success"] += 1
                 success_count += 1
-            
+
             processed_count += 1
             if processed_count % 1000 == 0:
-                print(f"  Processed {processed_count}/{len(all_interlock_alerts)} alerts... (Success: {success_count}, Failed: {failed_count})")
-                
+                print(
+                    f"  Processed {processed_count}/{len(all_interlock_alerts)} alerts... (Success: {success_count}, Failed: {failed_count})")
+
         except Exception as e:
             print(f"  Error processing alert: {e}")
             if matching_key:
                 location_results[matching_key][interlock_name]["success"] += 1
                 success_count += 1
-    
-    
+
     # Convert to list format
     final_result = []
     for key, value in location_results.items():
@@ -2254,19 +2127,20 @@ async def process_bcu_data(data):
             "no_of_bcu_alarm": value["no_of_bcu_alarm"],
             "bcu_alarm_details": value["bcu_alarm_details"]
         }
-        
+
         for interlock in tas_queries.BCU_INTERLOCKS:
             result_item[interlock] = [value[interlock]]
-        
+
         final_result.append(result_item)
-    
-    final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))    
+
+    final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))
     return final_result
+
 
 async def process_fire_effect_data(data):
     """
     Optimized Fire Effect equipment data processing with unique_id matching
-    Logic: For each interlock alert, check if corresponding "_Fail" alert exists 
+    Logic: For each interlock alert, check if corresponding "_Fail" alert exists
     within 1 minute WITH THE SAME unique_id
     """
     # Build Fire Effect alarm query
@@ -2277,13 +2151,11 @@ async def process_fire_effect_data(data):
         data.location_name
     )
 
-
     fire_effect_alarm_params = urdhva_base.queryparams.QueryParams(q=fire_effect_alarm_query, limit=0)
     fire_effect_alarm_params.fields = tas_queries.FIRE_EFFECT_FIELDS["fire_effect_alarm"]
-    
+
     fire_effect_alarm_resp = await hpcl_ceg_model.Alerts.get_all(fire_effect_alarm_params, resp_type="plain")
     fire_effect_alarm_data = fire_effect_alarm_resp.get("data", [])
-    
 
     if not fire_effect_alarm_data:
         return []
@@ -2291,11 +2163,11 @@ async def process_fire_effect_data(data):
     # Process Fire Effect alarm data with details
     fire_effect_alarm_details = {}
     fire_effect_alarm_df = pl.DataFrame(fire_effect_alarm_data)
-    
+
     fire_effect_alarm_df = fire_effect_alarm_df.with_columns(
         pl.col("created_at").dt.strftime("%Y-%m-%dT%H:%M:%S").alias("created_at")
     )
-    
+
     for row in fire_effect_alarm_df.to_dicts():
         key = (row["sap_id"], row["location_name"])
         if key not in fire_effect_alarm_details:
@@ -2314,27 +2186,27 @@ async def process_fire_effect_data(data):
                 'sap_id': record['sap_id'],
                 'location_name': record['location_name']
             }
-    
+
     sap_ids = list(set(loc['sap_id'] for loc in unique_locations.values()))
-        
+
     # Build batch query for all interlocks using template
     sap_ids_str = tas_queries.format_sap_ids_for_query(sap_ids)
-    
+
     all_interlocks_query = tas_queries.FIRE_EFFECT_QUERIES["all_interlocks_template"].format(
         sap_ids=sap_ids_str
     )
-    
+
     if (data.start_date and data.end_date and
             data.start_date.strip() and data.end_date.strip() and
             data.start_date.lower() != "string" and data.end_date.lower() != "string"):
         all_interlocks_query += f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
-    
+
     interlock_params = urdhva_base.queryparams.QueryParams(q=all_interlocks_query, limit=0)
     interlock_params.fields = tas_queries.FIRE_EFFECT_FIELDS["interlocks"]
-    
+
     interlock_resp = await hpcl_ceg_model.Alerts.get_all(interlock_params, resp_type="plain")
     all_interlock_alerts = interlock_resp.get("data", [])
-        
+
     if not all_interlock_alerts:
         result = []
         for key, details in fire_effect_alarm_details.items():
@@ -2345,48 +2217,48 @@ async def process_fire_effect_data(data):
                 "no_of_fire_effect_alarm": len(details),
                 "fire_effect_alarm_details": details
             }
-            
+
             # Initialize categories from configuration
             for interlock in tas_queries.FIRE_EFFECT_INTERLOCKS:
                 result_item[interlock] = [{"success": 0, "failed": 0}]
-            
+
             result.append(result_item)
         return result
-    
+
     # Organize alerts by unique_id and category
     alerts_by_unique_id = {}
-    
+
     for alert in all_interlock_alerts:
         unique_id = alert['unique_id']
         sap_id = alert['sap_id']
         location_name = alert.get('location_name', '')
         interlock_name = alert.get('interlock_name', '')
-        
+
         # Determine category
         category = None
         for interlock in tas_queries.FIRE_EFFECT_INTERLOCKS:
             if interlock.lower().replace(' ', '') in interlock_name.lower().replace(' ', ''):
                 category = interlock
                 break
-        
+
         if not category:
             continue
-        
+
         key = (unique_id, sap_id, location_name, category)
-        
+
         if key not in alerts_by_unique_id:
             alerts_by_unique_id[key] = []
-        
+
         try:
             created_at = alert['created_at']
             if isinstance(created_at, str):
                 alert_time = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
             else:
                 alert_time = created_at
-            
+
             # Check if this is a Fail alert
             is_fail = any(pattern in interlock_name for pattern in tas_queries.FAIL_PATTERNS)
-            
+
             alerts_by_unique_id[key].append({
                 'id': alert.get('id'),
                 'time': alert_time,
@@ -2395,21 +2267,20 @@ async def process_fire_effect_data(data):
             })
         except Exception as e:
             print(f"Error parsing Fire Effect alert time: {e}")
-    
+
     # Sort alerts by time for efficient searching
     for key in alerts_by_unique_id:
         alerts_by_unique_id[key].sort(key=lambda x: x['time'])
-    
-    
+
     # Initialize results structure
     location_results = {}
-    
+
     for key, loc_info in unique_locations.items():
         sap_id = loc_info['sap_id']
         location_name = loc_info['location_name']
-        
+
         alarm_details = fire_effect_alarm_details.get(key, [])
-        
+
         location_results[key] = {
             "sap_id": sap_id,
             "location_name": location_name,
@@ -2417,52 +2288,52 @@ async def process_fire_effect_data(data):
             "no_of_fire_effect_alarm": len(alarm_details),
             "fire_effect_alarm_details": alarm_details
         }
-        
+
         # Initialize categories from configuration
         for interlock in tas_queries.FIRE_EFFECT_INTERLOCKS:
             location_results[key][interlock] = {"success": 0, "failed": 0}
-    
+
     # Process alerts with 1-minute window logic + unique_id matching
     processed_count = 0
     success_count = 0
     failed_count = 0
     processed_base_ids = set()
-    
+
     for key, alerts in alerts_by_unique_id.items():
         unique_id, sap_id, location_name, category = key
-        
+
         matching_key = None
         for result_key, loc_info in unique_locations.items():
             if loc_info['sap_id'] == sap_id and loc_info['location_name'] == location_name:
                 matching_key = result_key
                 break
-        
+
         if not matching_key:
             continue
-        
+
         # Separate alerts into base and fail alerts
         base_alerts = [a for a in alerts if not a['is_fail']]
         fail_alerts = [a for a in alerts if a['is_fail']]
-        
+
         # For each base alert, check if there's a corresponding fail alert within 1 minute
         # WITH THE SAME unique_id (already grouped by unique_id)
         for base_alert in base_alerts:
             if base_alert['id'] in processed_base_ids:
                 continue
-            
+
             base_time = base_alert['time']
             time_start = base_time
             time_end = base_time + timedelta(minutes=1)
-            
+
             found_fail = False
-            
+
             # Check fail alerts WITH THE SAME unique_id
             for fail_alert in fail_alerts:
                 fail_time = fail_alert['time']
-                
+
                 if fail_time < time_start:
                     continue
-                
+
                 if time_start <= fail_time <= time_end:
                     found_fail = True
                     processed_base_ids.add(base_alert['id'])
@@ -2470,22 +2341,22 @@ async def process_fire_effect_data(data):
                     break
                 elif fail_time > time_end:
                     break
-            
+
             if found_fail:
                 location_results[matching_key][category]["failed"] += 1
                 failed_count += 1
             else:
                 location_results[matching_key][category]["success"] += 1
                 success_count += 1
-            
+
             if base_alert['id'] not in processed_base_ids:
                 processed_base_ids.add(base_alert['id'])
-            
+
             processed_count += 1
-            
+
             if processed_count % 100 == 0:
                 print(f"  Processed {processed_count} alerts... (Success: {success_count}, Failed: {failed_count})")
-        
+
         # Process any unmatched fail alerts as failures
         for fail_alert in fail_alerts:
             if fail_alert['id'] not in processed_base_ids:
@@ -2493,8 +2364,7 @@ async def process_fire_effect_data(data):
                 failed_count += 1
                 processed_base_ids.add(fail_alert['id'])
                 processed_count += 1
-    
-    
+
     # Convert to list format
     final_result = []
     for key, value in location_results.items():
@@ -2505,16 +2375,16 @@ async def process_fire_effect_data(data):
             "no_of_fire_effect_alarm": value["no_of_fire_effect_alarm"],
             "fire_effect_alarm_details": value["fire_effect_alarm_details"]
         }
-        
+
         for interlock in tas_queries.FIRE_EFFECT_INTERLOCKS:
             result_item[interlock] = [value[interlock]]
-        
+
         final_result.append(result_item)
-    
+
     final_result = sorted(final_result, key=lambda x: (x["sap_id"], x["location_name"]))
-    
-    
+
     return final_result
+
 
 async def location_wise_total_loaded_qty(data):
     """
@@ -2541,8 +2411,9 @@ async def location_wise_total_loaded_qty(data):
         params = urdhva_base.queryparams.QueryParams(q=query, limit=0)
 
         # Use fields from config
-        fields_to_fetch = tas_queries.HOST_LOCAL_LOADED_TTS_FIELDS.copy() if isinstance(tas_queries.HOST_LOCAL_LOADED_TTS_FIELDS,
-                                                                            list) else list(
+        fields_to_fetch = tas_queries.HOST_LOCAL_LOADED_TTS_FIELDS.copy() if isinstance(
+            tas_queries.HOST_LOCAL_LOADED_TTS_FIELDS,
+            list) else list(
             tas_queries.HOST_LOCAL_LOADED_TTS_FIELDS)
         params.fields = fields_to_fetch
 
@@ -2646,7 +2517,7 @@ async def location_wise_total_loaded_qty(data):
         df = df.with_columns([
             pl.col("created_at_dt").dt.hour().alias("load_hour"),
             pl.col("created_at_dt").dt.strftime("%Y-%m-%d %H:00:00").alias("hour_window")
-        ])        
+        ])
         # Get unique truck numbers from the filtered data (already cleaned - no spaces)
         unique_trucks = df.filter(pl.col("truck_number_clean") != "").select(
             "truck_number_clean").unique().to_series().to_list()
@@ -2737,7 +2608,7 @@ async def location_wise_total_loaded_qty(data):
                 if indent_conditions:
                     # Build the query for IMS_SAP.INDENT_REQUEST
                     indent_query_conditions = " OR ".join(indent_conditions)
-                    
+
                     # Use the same pattern as your example
                     indent_query = f"""
                         SELECT
@@ -2746,65 +2617,66 @@ async def location_wise_total_loaded_qty(data):
                             "USER_ID"
                         FROM "IMS_SAP"."INDENT_REQUEST"
                         WHERE {indent_query_conditions}
-                    """                    
+                    """
                     # Set connection parameters
                     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
                     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "execute_query"
-                    
+
                     # Get the function
                     function = await charts_actions.charts_connection_vault_routing(
                         dashboard_studio_model.Charts_Connection_Vault_RoutingParams
                     )
-                    
+
                     # Execute the query
                     indent_results = await function(query=indent_query)
-                    
+
                     # Convert to list of dicts if it's a DataFrame or other format
                     if hasattr(indent_results, 'to_dict'):
                         indent_results = indent_results.to_dict('records')
                     elif not isinstance(indent_results, list):
                         indent_results = list(indent_results)
-                    
+
                     # Process indent results
                     user_ids = set()
                     for indent_row in indent_results:
                         # Handle both dict and asyncpg.Record format
                         truck_regno = indent_row.get("truck_regno") or indent_row.get("TRUCK_REGNO", "")
                         truck_regno = str(truck_regno).strip().replace(" ", "").upper()
-                        
+
                         indent_date = indent_row.get("indent_date") or indent_row.get("INDENT_DATE")
                         user_id = indent_row.get("user_id") or indent_row.get("USER_ID", "")
-                        
+
                         # Extract date from INDENT_DATE
                         if isinstance(indent_date, str):
                             indent_date_obj = pl.Series([indent_date]).str.to_datetime().to_list()[0]
                         else:
                             indent_date_obj = indent_date
-                        
-                        indent_date_only = indent_date_obj.date() if hasattr(indent_date_obj, 'date') else indent_date_obj
-                        
+
+                        indent_date_only = indent_date_obj.date() if hasattr(indent_date_obj,
+                                                                             'date') else indent_date_obj
+
                         # Remove leading "00" from USER_ID if present
                         if user_id and user_id.startswith("00"):
                             user_id = user_id[2:]
-                        
+
                         # Store in indent_data
                         key = (truck_regno, str(indent_date_only))
                         indent_data[key] = user_id
                         user_ids.add(user_id)
-                    
+
                     # Now fetch location_master data for these USER_IDs
                     if user_ids:
                         # Build query for location_master table
                         user_ids_list = list(user_ids)
                         user_ids_str = "', '".join([uid.replace("'", "''") for uid in user_ids_list])
                         location_query = f"sap_id IN ('{user_ids_str}')"
-                        
+
                         location_params = urdhva_base.queryparams.QueryParams(q=location_query, limit=0)
                         location_params.fields = ["sap_id", "name"]
-                        
+
                         location_resp = await hpcl_ceg_model.LocationMaster.get_all(location_params, resp_type="plain")
                         location_result_data = location_resp.get("data", [])
-                        
+
                         # Build lookup dictionary
                         for loc_record in location_result_data:
                             sap_id_val = loc_record.get("sap_id")
@@ -2823,9 +2695,9 @@ async def location_wise_total_loaded_qty(data):
                 pl.col("tank_truck_qty").sum().alias("tank_truck"),
                 pl.col("prover_qty").sum().alias("prover"),
                 (
-                    pl.col("dg_qty") +
-                    pl.col("tank_truck_qty") +
-                    pl.col("prover_qty")
+                        pl.col("dg_qty") +
+                        pl.col("tank_truck_qty") +
+                        pl.col("prover_qty")
                 ).sum().alias("total_loaded_qty")
             ])
             .sort(["sap_id", "location_name"])
@@ -2852,7 +2724,7 @@ async def location_wise_total_loaded_qty(data):
 
             local_loading_repeated = False
             local_loading_repeated_details = []
-            
+
             if "hour_window" in location_df.columns:
                 # Group by load_date first, then find trucks within 2-hour window
                 unique_dates = location_df.select(pl.col("load_date").unique()).to_series().to_list()
@@ -2919,8 +2791,10 @@ async def location_wise_total_loaded_qty(data):
                         for r in window_trucks:
                             truck = r["truck_number_clean"]
                             created_at = r["created_at_dt"]
-                            date_with_time = created_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(created_at, 'strftime') else str(created_at)
-                            
+                            date_with_time = created_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(created_at,
+                                                                                                 'strftime') else str(
+                                created_at)
+
                             unique_key = (truck, date_with_time)
                             if unique_key in seen_combinations:
                                 continue
@@ -2960,7 +2834,7 @@ async def location_wise_total_loaded_qty(data):
 
             particular_time_of_day = False
             particular_time_of_day_details = []
-            
+
             if "load_hour" in location_df.columns and "load_date" in location_df.columns:
                 unique_dates = location_df.select(pl.col("load_date").unique()).to_series().to_list()
 
@@ -2977,10 +2851,10 @@ async def location_wise_total_loaded_qty(data):
                         if most_frequent_hour_count >= max(min_days_for_pattern,
                                                            len(unique_dates) * min_occurrence_ratio):
                             pattern_detected = True
-                            
+
                             # Get the most frequent hour
                             most_frequent_hour = hour_frequency.select(pl.first("load_hour")).item()
-                            
+
                             # Collect details for trucks at that hour - ONLY VALID TANK TRUCKS
                             time_pattern_trucks = location_df.filter(
                                 pl.col("load_hour") == most_frequent_hour
@@ -2992,37 +2866,39 @@ async def location_wise_total_loaded_qty(data):
 
                             pattern_dates = []
                             temp_details = []
-                            
+
                             for truck_row in time_pattern_trucks.iter_rows(named=True):
                                 truck = truck_row.get("truck_number_clean")
                                 created_at = truck_row.get("created_at_dt")
                                 load_date = truck_row.get("load_date")
-                                
+
                                 if not truck or not created_at:
                                     continue
-                                
+
                                 # Filter: Skip PROVER (starts with P, no digits) and DG trucks
                                 is_prover = truck.startswith('P') and not any(c.isdigit() for c in truck)
                                 is_dg = 'DG' in truck
-                                
+
                                 # Validate proper vehicle registration format (must have both letters AND digits)
                                 has_letters = any(c.isalpha() for c in truck)
                                 has_digits = any(c.isdigit() for c in truck)
                                 is_valid_vehicle_format = has_letters and has_digits
-                                
+
                                 # Only include valid tank trucks (vehicle registration format)
                                 if is_prover or is_dg or not is_valid_vehicle_format:
                                     continue
-                                
+
                                 # Format datetime as string
-                                date_with_time = created_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(created_at, 'strftime') else str(created_at)
-                                
+                                date_with_time = created_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(created_at,
+                                                                                                     'strftime') else str(
+                                    created_at)
+
                                 particular_time_of_day_details.append({
                                     "truck_number": truck,
                                     "date_with_time": date_with_time
                                 })
                                 pattern_dates.append(load_date)
-                            
+
                             # Only set flag to true if we have valid truck details
                             if temp_details and has_consecutive_dates(pattern_dates, min_days_for_pattern):
                                 particular_time_of_day_details = temp_details
@@ -3030,7 +2906,7 @@ async def location_wise_total_loaded_qty(data):
 
             particular_product = False
             particular_product_details = []
-            
+
             if "recipe_name" in location_df.columns:
                 unique_recipes = (
                     location_df.filter(pl.col("recipe_name").is_not_null())
@@ -3042,7 +2918,7 @@ async def location_wise_total_loaded_qty(data):
                 unique_recipes = [r for r in unique_recipes if r and str(r).strip() != ""]
 
                 pattern_detected = len(unique_recipes) == unique_product_count
-                
+
                 # If pattern detected, collect details - ONLY VALID TANK TRUCKS
                 if pattern_detected and unique_recipes:
                     product_trucks = location_df.filter(
@@ -3052,34 +2928,34 @@ async def location_wise_total_loaded_qty(data):
                         "load_date",
                         "recipe_name"
                     ]).unique()
-                    
+
                     for truck_row in product_trucks.iter_rows(named=True):
                         truck = truck_row.get("truck_number_clean")
                         load_date = truck_row.get("load_date")
                         recipe = truck_row.get("recipe_name")
-                        
+
                         if not truck:
                             continue
-                        
+
                         # Filter: Skip PROVER (starts with P, no digits) and DG trucks
                         is_prover = truck.startswith('P') and not any(c.isdigit() for c in truck)
                         is_dg = 'DG' in truck
-                        
+
                         # Validate proper vehicle registration format (must have both letters AND digits)
                         has_letters = any(c.isalpha() for c in truck)
                         has_digits = any(c.isdigit() for c in truck)
                         is_valid_vehicle_format = has_letters and has_digits
-                        
+
                         # Only include valid tank trucks (vehicle registration format)
                         if is_prover or is_dg or not is_valid_vehicle_format:
                             continue
-                        
+
                         particular_product_details.append({
                             "truck_number": truck,
                             "date": str(load_date),
                             "recipe_name": recipe
                         })
-                    
+
                     # Only set flag to true if we have valid truck details
                     particular_product = len(particular_product_details) > 0
 
@@ -3113,7 +2989,7 @@ async def location_wise_total_loaded_qty(data):
                     .otherwise(pl.lit(""))
                     .alias("bay_number_clean")
                 ])
-                
+
                 # Also clean bcu_number
                 location_trucks_with_bay = location_trucks_with_bay.with_columns([
                     pl.when(pl.col("bcu_number").is_not_null())
@@ -3126,17 +3002,17 @@ async def location_wise_total_loaded_qty(data):
                     .otherwise(pl.lit(""))
                     .alias("bcu_number_clean")
                 ])
-                
+
                 # Filter out empty bay_numbers
                 location_trucks_with_bay = location_trucks_with_bay.filter(
                     pl.col("bay_number_clean") != ""
                 )
-                
+
                 # Remove duplicates based on truck_number and created_at (with time)
                 location_trucks_with_bay = location_trucks_with_bay.unique(
                     subset=["truck_number_clean", "created_at_dt"]
                 )
-                
+
                 if not location_trucks_with_bay.is_empty():
                     # Group by bay_number to find bays with 2+ trucks
                     bay_groups = (
@@ -3150,73 +3026,75 @@ async def location_wise_total_loaded_qty(data):
                         ])
                         .filter(pl.col("truck_count") >= 2)  # Only bays with 2+ trucks
                     )
-                    
+
                     if not bay_groups.is_empty():
                         # Collect details for all trucks at these particular bays
                         temp_details = []
-                        
+
                         for bay_row in bay_groups.iter_rows(named=True):
                             bay_number = bay_row.get("bay_number_clean")
                             trucks_list = bay_row.get("trucks", [])
                             bcus_list = bay_row.get("bcus", [])
                             timestamps_list = bay_row.get("timestamps", [])
                             dates_list = bay_row.get("dates", [])
-                            
+
                             # Add each truck's details - with validation
                             valid_trucks_in_bay = []
                             seen_combinations = set()  # Track unique truck+timestamp combinations
-                            
+
                             for i, truck in enumerate(trucks_list):
                                 if not truck:
                                     continue
-                                
+
                                 timestamp = timestamps_list[i] if i < len(timestamps_list) else None
                                 if not timestamp:
                                     continue
-                                
+
                                 # Create unique key with truck and timestamp
-                                date_with_time = timestamp.strftime("%Y-%m-%d %H:%M:%S") if hasattr(timestamp, 'strftime') else str(timestamp)
+                                date_with_time = timestamp.strftime("%Y-%m-%d %H:%M:%S") if hasattr(timestamp,
+                                                                                                    'strftime') else str(
+                                    timestamp)
                                 unique_key = (truck, date_with_time)
-                                
+
                                 # Skip if already processed
                                 if unique_key in seen_combinations:
                                     continue
-                                
+
                                 seen_combinations.add(unique_key)
-                                
+
                                 # ===== ADDITIONAL VALIDATION =====
                                 # Filter: Skip PROVER (starts with P, no digits) and DG trucks
                                 is_prover = truck.startswith('P') and not any(c.isdigit() for c in truck)
                                 is_dg = 'DG' in truck
-                                
+
                                 # Validate proper vehicle registration format (must have both letters AND digits)
                                 has_letters = any(c.isalpha() for c in truck)
                                 has_digits = any(c.isdigit() for c in truck)
                                 is_valid_vehicle_format = has_letters and has_digits
-                                
+
                                 # Skip invalid patterns like "ENTERDATAIT" (all letters, no digits)
                                 # Skip test/dummy data patterns
                                 invalid_patterns = ['ENTERDATAIT', 'ENTERDATA', 'TEST', 'DUMMY', 'NODATA']
                                 is_invalid_pattern = any(pattern in truck.upper() for pattern in invalid_patterns)
-                                
+
                                 # Only include valid tank trucks (vehicle registration format)
                                 if is_prover or is_dg or not is_valid_vehicle_format or is_invalid_pattern:
                                     continue
-                                
+
                                 bcu = bcus_list[i] if i < len(bcus_list) else ""
                                 date = dates_list[i] if i < len(dates_list) else None
-                                
+
                                 valid_trucks_in_bay.append({
                                     "truck_number": truck,
                                     "bay_number": bay_number,
                                     "bcu_number": bcu,
                                     "date": date_with_time  # Include full timestamp
                                 })
-                            
+
                             # Only add to temp_details if this bay has 2+ VALID trucks
                             if len(valid_trucks_in_bay) >= 2:
                                 temp_details.extend(valid_trucks_in_bay)
-                        
+
                         # Only set flag if we have valid results
                         if temp_details:
                             # Sort by bay_number, truck_number, and date for consistency
@@ -3226,10 +3104,9 @@ async def location_wise_total_loaded_qty(data):
                             )
                             assigned_at_particular_bay = True
 
-
             # 5. NEW: Get indent request details with location names
             indent_details = []
-            
+
             # Get unique valid trucks for this location
             valid_trucks_for_location = location_df.filter(
                 (pl.col("is_valid_truck") == True) &
@@ -3248,7 +3125,7 @@ async def location_wise_total_loaded_qty(data):
                 if key in indent_data:
                     user_id = indent_data[key]
                     location_name_from_master = location_master_data.get(user_id, None)
-                    
+
                     indent_details.append({
                         "truck_number": truck,
                         "date": str(load_date),
@@ -3284,103 +3161,71 @@ async def location_wise_total_loaded_qty(data):
         return []
 
 
-
 async def top_five_alerts(data):
-    
-    # 1. BASE QUERY
-    alert_query = "alert_section = 'TAS'"
+    try:
+        # 1. BASE QUERY
+        where_clause = "alert_section = 'TAS'"
 
-    alert_query += (
-        f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
-        " AND interlock_name NOT IN ('BCU Permissive Off', 'BCU Permissive Off_Fail')"
-    )
-
-    if data.alert_status:
-        alert_query += f" AND alert_status = '{data.alert_status}'"
-
-    if data.location_name:
-        alert_query += f" AND location_name = '{data.location_name}'"
-
-    if data.interlock_name:
-        alert_query += f" AND interlock_name = '{data.interlock_name}'"
-
-    if data.alert_severity:
-        if isinstance(data.alert_severity, list):
-            clean_severity = [s for s in data.alert_severity if s]
-            if clean_severity:
-                vals = ", ".join(f"'{s}'" for s in clean_severity)
-                alert_query += f" AND severity IN ({vals})"
-        else:
-            alert_query += f" AND severity = '{data.alert_severity}'"
-
-    print("FINAL alert_query >>>",alert_query)
-    
-
-    # 2. FETCH DATA
-    params = urdhva_base.queryparams.QueryParams(q=alert_query, limit=0)
-    params.fields = [
-        "unique_id",
-        "zone",
-        "alert_status",
-        "severity",
-        "interlock_name",
-        "location_name",
-        "created_at"
-    ]
-
-    resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")
-    rows = resp.get("data", [])
-
-    if not rows:
-        return []
-
-    df = pl.DataFrame(rows)
-    
-    # 3. DRILL-DOWN (INTERLOCK CLICK)
-    if data.interlock_name:
-        now = datetime.utcnow()
-
-        detail_df = (
-            df
-            .with_columns([
-                pl.col("created_at")
-                  .dt.strftime("%Y-%m-%dT%H:%M:%S")
-                  .alias("created_at"),
-                (
-                    (pl.lit(now) - pl.col("created_at"))
-                    .dt.total_days()
-                    .cast(pl.Int64)
-                ).alias("ageing_days")
-            ])
-            .select([
-                "unique_id",
-                "zone",
-                "location_name",
-                "interlock_name",
-                "severity",
-                "alert_status",
-                "created_at",
-                "ageing_days"
-            ])
-            .sort("ageing_days", descending=True)
+        where_clause += (
+            f" AND created_at::date BETWEEN '{data.start_date}' AND '{data.end_date}'"
         )
 
-        print("DETAIL VIEW ROW COUNT >>>", detail_df.height)
-        return detail_df.to_dicts()
+        if data.alert_status:
+            where_clause += f" AND alert_status = '{data.alert_status}'"
 
-    # 4. TOP 5 ALERTS (NORMAL)
-    top_5_df = (
-        df
-        .group_by("interlock_name")
-        .agg(pl.len().alias("count"))
-        .sort("count", descending=True)
-        .head(5)
-    )
+        if data.location_name:
+            where_clause += f" AND location_name = '{data.location_name}'"
 
-    return top_5_df.to_dicts()
+        if data.alert_severity:
+            if isinstance(data.alert_severity, list):
+                clean_severity = [s for s in data.alert_severity if s]
+                if clean_severity:
+                    vals = ", ".join(f"'{s}'" for s in clean_severity)
+                    where_clause += f" AND severity IN ({vals})"
+            else:
+                where_clause += f" AND severity = '{data.alert_severity}'"
+
+        # 2. DRILL-DOWN (INTERLOCK CLICK)
+        if data.interlock_name:
+            where_clause += f" AND interlock_name = '{data.interlock_name}'"
+            query = f"""
+                SELECT
+                    unique_id,
+                    zone,
+                    location_name,
+                    interlock_name,
+                    severity,
+                    alert_status,
+                    TO_CHAR(created_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS created_at,
+                    FLOOR(EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400) AS ageing_days
+                FROM Alerts
+                WHERE {where_clause}
+                ORDER BY ageing_days DESC;
+            """
+        # 3. TOP 5 ALERTS (NORMAL)
+        else:
+            where_clause += " AND interlock_name NOT IN ('BCU Permissive Off', 'BCU Permissive Off_Fail')"
+            query = f"""
+                SELECT
+                    interlock_name,
+                    COUNT(*) AS count
+                FROM Alerts
+                WHERE {where_clause}
+                GROUP BY interlock_name
+                ORDER BY count DESC
+                LIMIT 5;
+            """
+
+        # 4. FETCH DATA
+        result = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+        result = result.get("data", [])
+        return {"status": True, "message": "Top five alerts processed successfully", "data": result}
+    except Exception as e:
+        print(f"Error in top_five_alerts: {e}")
+        return {"status": False, "message": f"Error in top_five_alerts: {e}", "data": []}
+
 
 async def bcu_totalizer_diff_alert(data):
-
     # 1. BUILD QUERY
     conditions = []
 
@@ -3418,7 +3263,7 @@ async def bcu_totalizer_diff_alert(data):
         "bcu_net_totalizer",
         "mfm_net_totalizer",
         "invoiced_qty",
-        "invoiced_total_tl_qty_diff"  
+        "invoiced_total_tl_qty_diff"
     ]
 
     # 3. FETCH DATA
@@ -3440,9 +3285,9 @@ async def bcu_totalizer_diff_alert(data):
             "date": pl.Date,
             "bcu_mfm_net_totalizer_diff": pl.Int64,
             "bcu_net_totalizer": pl.Int64,
-            "mfm_net_totalizer":pl.Int64,
-            "invoiced_qty":pl.Int64,
-            "invoiced_total_tl_qty_diff": pl.Int64,  
+            "mfm_net_totalizer": pl.Int64,
+            "invoiced_qty": pl.Int64,
+            "invoiced_total_tl_qty_diff": pl.Int64,
         },
         strict=False
     )
@@ -3486,7 +3331,7 @@ async def bcu_totalizer_diff_alert(data):
                 "Invoice_VS_BCU_Totalizer_Diff"
             ).alias("max_diff")
         )
-        .sort("max_diff", descending=True)   # sort by difference value
+        .sort("max_diff", descending=True)  # sort by difference value
         .select([
             "sap_id",
             "bcu_number",
@@ -3513,7 +3358,6 @@ async def bcu_totalizer_diff_alert(data):
 
 
 async def unauthorized_flow_dashboard(data):
-
     # BASE QUERY (RAW ALERTS)
     alert_query = """
         alert_section = 'TAS'
@@ -3531,7 +3375,7 @@ async def unauthorized_flow_dashboard(data):
 
     if data.alert_status:
         alert_query += f" AND alert_status = '{data.alert_status}'"
-    
+
     if data.zone:
         alert_query += f" AND zone = '{data.zone}'"
 
@@ -3590,7 +3434,6 @@ async def unauthorized_flow_dashboard(data):
         .sort("count", descending=True)
     )
 
-
     locations = []
 
     for loc in locations_df.to_dicts():
@@ -3600,9 +3443,9 @@ async def unauthorized_flow_dashboard(data):
         devices = (
             repeated_df
             .filter(
-            (pl.col("location_name") == location) &
-            (pl.col("zone") == zone)
-        )
+                (pl.col("location_name") == location) &
+                (pl.col("zone") == zone)
+            )
             .select(["device_name", "date", "cnt"])
             .sort(["device_name", "date"])
             .to_dicts()
@@ -3620,22 +3463,22 @@ async def unauthorized_flow_dashboard(data):
         locations.append({
             "location_name": location,
             "count": loc["count"],
-            "zone": zone,               
+            "zone": zone,
             "devices": formatted_devices
         })
 
     # FINAL RESPONSE (ALL DATA)
     return {
-            "status": "success",
-            "message": "unauthorized flow counts",
-            "data": {
-                "repeated_unauthorized_flow_count": repeated_unauthorized_flow_count,
-                "locations": locations
-            }
+        "status": "success",
+        "message": "unauthorized flow counts",
+        "data": {
+            "repeated_unauthorized_flow_count": repeated_unauthorized_flow_count,
+            "locations": locations
+        }
     }
-    
-async def host_bay_reassignment_alert(data):
 
+
+async def host_bay_reassignment_alert(data):
     # 1. BUILD QUERY
     conditions = []
 
@@ -3671,7 +3514,7 @@ async def host_bay_reassignment_alert(data):
         "zone",
         "date"
     ]
-    
+
     # 3. FETCH DATA
     resp = await hpcl_ceg_model.HostBayReAssignment.get_all(
         params,
@@ -3718,20 +3561,20 @@ async def host_bay_reassignment_alert(data):
 
     # 6. IDENTIFY GROUPS WITH DISTINCT FAN_NUMBER >= 2
     valid_groups = (
-    df.group_by([
-        "sap_id",
-        "location_name",
-        "date",
-        "reassigned_bay",
-        "truck_number"
-    ])
-    .agg(
-        pl.col("fan_number")
-          .n_unique()
-          .alias("distinct_fan_count")
+        df.group_by([
+            "sap_id",
+            "location_name",
+            "date",
+            "reassigned_bay",
+            "truck_number"
+        ])
+        .agg(
+            pl.col("fan_number")
+            .n_unique()
+            .alias("distinct_fan_count")
+        )
+        .filter(pl.col("distinct_fan_count") >= 2)
     )
-    .filter(pl.col("distinct_fan_count") >= 2)
-)
 
     if valid_groups.is_empty():
         return {
@@ -3744,27 +3587,27 @@ async def host_bay_reassignment_alert(data):
 
     # 7. FETCH RAW RECORDS FOR THOSE GROUPS
     final_df = (
-    df.join(
-        valid_groups,
-        on=[
+        df.join(
+            valid_groups,
+            on=[
+                "sap_id",
+                "location_name",
+                "date",
+                "reassigned_bay",
+                "truck_number"
+            ],
+            how="inner"
+        )
+        .unique(subset=[
             "sap_id",
             "location_name",
             "date",
             "reassigned_bay",
-            "truck_number"
-        ],
-        how="inner"
+            "truck_number",
+            "fan_number"
+        ])
+        .sort(["date", "reassigned_bay"])
     )
-    .unique(subset=[
-        "sap_id",
-        "location_name",
-        "date",
-        "reassigned_bay",
-        "truck_number",
-        "fan_number"
-    ])
-    .sort(["date", "reassigned_bay"])
-)
     # 8. BUILD RESPONSE (RAW ROWS)
     response = final_df.to_dicts()
 
@@ -3776,8 +3619,9 @@ async def host_bay_reassignment_alert(data):
             "location_based_reassignment": response
         }
     }
+
+
 async def cancelled_tts_dashboard(data):
-    
     # BUILD WHERE CONDITIONS
     conditions = []
 
@@ -3958,16 +3802,18 @@ async def cancelled_tts_dashboard(data):
             "truck_wise_summary": truck_result
         }
     }
+
+
 def is_bay_empty(bay_data):
     return (
-        bay_data.get("HostBayReAssignment", 0) == 0 and
-        bay_data.get("LocalLoading", 0) == 0 and
-        bay_data.get("OverLoading", 0) == 0 and
-        bay_data.get("Alerts_Count", 0) == 0 and
-        bay_data.get("Gantry_Permissive_off_Count", 0) == 0 and
-        bay_data.get("MFM_VS_BCU", 0) == 0 and
-        bay_data.get("BCU_VS_INVOICE", 0) == 0 and
-        bay_data.get("HostUnauthorisedFlow_count", 0) == 0
+            bay_data.get("HostBayReAssignment", 0) == 0 and
+            bay_data.get("LocalLoading", 0) == 0 and
+            bay_data.get("OverLoading", 0) == 0 and
+            bay_data.get("Alerts_Count", 0) == 0 and
+            bay_data.get("Gantry_Permissive_off_Count", 0) == 0 and
+            bay_data.get("MFM_VS_BCU", 0) == 0 and
+            bay_data.get("BCU_VS_INVOICE", 0) == 0 and
+            bay_data.get("HostUnauthorisedFlow_count", 0) == 0
     )
 
 
@@ -4020,6 +3866,7 @@ def get_unauthorised_flow_for_bay_date(unauthorised_flow_df, date, bay_number_st
     unauthorised_flow_net_totalizer = calc_unauthorised_net_totalizer(filtered)
 
     return unauthorised_flow_count, unauthorised_flow_net_totalizer, unauthorised_flow_details
+
 
 async def host_tables_combined_data(data):
     try:
@@ -4350,7 +4197,8 @@ async def host_tables_combined_data(data):
                         if existing["date"] == str(date):
                             for new_bay in bays_data:
                                 matched = next(
-                                    (b for b in existing["bays"] if str(b["bay_number"]).zfill(2) == new_bay["bay_number"]),
+                                    (b for b in existing["bays"] if
+                                     str(b["bay_number"]).zfill(2) == new_bay["bay_number"]),
                                     None
                                 )
                                 if matched:
@@ -4360,23 +4208,25 @@ async def host_tables_combined_data(data):
                                         matched["MFM_VS_BCU_details"] = new_bay["MFM_VS_BCU_details"]
                                     if new_bay["BCU_VS_INVOICE"] > 0:
                                         matched["BCU_VS_INVOICE_details"] = new_bay["BCU_VS_INVOICE_details"]
-                                    if matched.get("HostUnauthorisedFlow_count", 0) == 0 and new_bay["HostUnauthorisedFlow_count"] > 0:
+                                    if matched.get("HostUnauthorisedFlow_count", 0) == 0 and new_bay[
+                                        "HostUnauthorisedFlow_count"] > 0:
                                         matched["HostUnauthorisedFlow_count"] = new_bay["HostUnauthorisedFlow_count"]
-                                        matched["HostUnauthorisedFlow_details"] = new_bay["HostUnauthorisedFlow_details"]
+                                        matched["HostUnauthorisedFlow_details"] = new_bay[
+                                            "HostUnauthorisedFlow_details"]
                                     if matched.get("Alerts_Count", 0) == 0 and new_bay["Alerts_Count"] > 0:
                                         matched["Alerts_Count"] = new_bay["Alerts_Count"]
                                         matched["Alerts_Count_details"] = new_bay["Alerts_Count_details"]
                                     # if matched.get("Gantry_Permissive_off_Count", 0) == 0 and new_bay["Gantry_Permissive_off_Count"] > 0:
-                                        # matched["Gantry_Permissive_off_Count"] = new_bay["Gantry_Permissive_off_Count"]
-                                        # matched["Gantry_Permissive_off_Count_details"] = new_bay["Gantry_Permissive_off_Count_details"]
+                                    # matched["Gantry_Permissive_off_Count"] = new_bay["Gantry_Permissive_off_Count"]
+                                    # matched["Gantry_Permissive_off_Count_details"] = new_bay["Gantry_Permissive_off_Count_details"]
                                 else:
                                     new_entry = {
                                         "bay_number": new_bay["bay_number"],
                                         "total_count": (
-                                            new_bay["MFM_VS_BCU"] +
-                                            new_bay["BCU_VS_INVOICE"] +
-                                            new_bay["HostUnauthorisedFlow_count"] +
-                                            new_bay["Alerts_Count"] 
+                                                new_bay["MFM_VS_BCU"] +
+                                                new_bay["BCU_VS_INVOICE"] +
+                                                new_bay["HostUnauthorisedFlow_count"] +
+                                                new_bay["Alerts_Count"]
                                             # new_bay["Gantry_Permissive_off_Count"]
                                         ),
                                         "HostBayReAssignment": 0,
@@ -4397,9 +4247,10 @@ async def host_tables_combined_data(data):
                                     if new_bay["Alerts_Count"] > 0:
                                         new_entry["Alerts_Count_details"] = new_bay["Alerts_Count_details"]
                                     # if new_bay["Gantry_Permissive_off_Count"] > 0:
-                                        # new_entry["Gantry_Permissive_off_Count_details"] = new_bay["Gantry_Permissive_off_Count_details"]
+                                    # new_entry["Gantry_Permissive_off_Count_details"] = new_bay["Gantry_Permissive_off_Count_details"]
                                     if new_bay["HostUnauthorisedFlow_count"] > 0:
-                                        new_entry["HostUnauthorisedFlow_details"] = new_bay["HostUnauthorisedFlow_details"]
+                                        new_entry["HostUnauthorisedFlow_details"] = new_bay[
+                                            "HostUnauthorisedFlow_details"]
                                     if not is_bay_empty(new_entry):
                                         existing["bays"].append(new_entry)
                 else:
@@ -4408,10 +4259,10 @@ async def host_tables_combined_data(data):
                         new_entry = {
                             "bay_number": new_bay["bay_number"],
                             "total_count": (
-                                new_bay["MFM_VS_BCU"] +
-                                new_bay["BCU_VS_INVOICE"] +
-                                new_bay["HostUnauthorisedFlow_count"] +
-                                new_bay["Alerts_Count"] 
+                                    new_bay["MFM_VS_BCU"] +
+                                    new_bay["BCU_VS_INVOICE"] +
+                                    new_bay["HostUnauthorisedFlow_count"] +
+                                    new_bay["Alerts_Count"]
                                 # new_bay["Gantry_Permissive_off_Count"]
                             ),
                             "HostBayReAssignment": 0,
@@ -4432,7 +4283,7 @@ async def host_tables_combined_data(data):
                         if new_bay["Alerts_Count"] > 0:
                             new_entry["Alerts_Count_details"] = new_bay["Alerts_Count_details"]
                         # if new_bay["Gantry_Permissive_off_Count"] > 0:
-                            # new_entry["Gantry_Permissive_off_Count_details"] = new_bay["Gantry_Permissive_off_Count_details"]
+                        # new_entry["Gantry_Permissive_off_Count_details"] = new_bay["Gantry_Permissive_off_Count_details"]
                         if new_bay["HostUnauthorisedFlow_count"] > 0:
                             new_entry["HostUnauthorisedFlow_details"] = new_bay["HostUnauthorisedFlow_details"]
                         if not is_bay_empty(new_entry):
@@ -4644,7 +4495,7 @@ def get_alerts_for_bay_date(alerts_df, date, bay_number_str):
 
     if len(filtered) > 0:
         filtered = filtered.with_columns(
-            pl.col("device_name").str.extract(r"BC-(\d{2,3})[A-Za-z]?", 1).alias("alert_bay_number") 
+            pl.col("device_name").str.extract(r"BC-(\d{2,3})[A-Za-z]?", 1).alias("alert_bay_number")
         )
         filtered = filtered.filter(pl.col("alert_bay_number").is_not_null())
         filtered = filtered.filter(pl.col("alert_bay_number") == bay_number_str)
@@ -4685,6 +4536,7 @@ def get_date_range_days(data) -> int:
             return 30
     return 30
 
+
 def get_bay_metric_severity(count: int, days: int) -> str:
     scale = days / 30
     if count > 20 * scale:
@@ -4696,6 +4548,7 @@ def get_bay_metric_severity(count: int, days: int) -> str:
     else:
         return "low"
 
+
 def get_alerts_severity(count: int, days: int) -> str:
     scale = days / 30
     if count > 120 * scale:
@@ -4705,8 +4558,9 @@ def get_alerts_severity(count: int, days: int) -> str:
     elif count >= 30 * scale:
         return "medium"
     else:
-        return "low" 
-    
+        return "low"
+
+
 def calc_unauthorised_net_totalizer(df):
     if len(df) == 0 or "net_totalizer" not in df.columns:
         return 0
@@ -4737,6 +4591,7 @@ def get_difference_severity(difference, days: int) -> str:
     else:
         return "low"
 
+
 async def get_bay_counts(data):
     """
     Get location-wise counts with bay-wise breakdown for ALL locations.
@@ -4756,50 +4611,51 @@ async def get_bay_counts(data):
     days = get_date_range_days(data)
     combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count, unauthorised_flow_df = \
         await tas_host_data.fetch_host_tables_as_dfs(data)
-    
-    
+
     if combined_df is None or combined_df.is_empty():
         return {"total_counts": {}, "locations": []}
-    
+
     # Calculate OVERALL MFM_VS_BCU count and difference
     overall_mfm_vs_bcu_count = 0
     overall_mfm_vs_bcu_difference = 0
     if len(day_end_df) > 0:
         filtered_overall = day_end_df.filter(
-            pl.col('bcu_mfm_net_totalizer_diff').is_not_null() & 
+            pl.col('bcu_mfm_net_totalizer_diff').is_not_null() &
             (pl.col('bcu_mfm_net_totalizer_diff') != 0)
         )
         if len(filtered_overall) > 0:
-            overall_mfm_vs_bcu_difference = filtered_overall.select(pl.col("bcu_mfm_net_totalizer_diff").sum()).item() 
-            overall_mfm_vs_bcu_count = len(filtered_overall)  
+            overall_mfm_vs_bcu_difference = filtered_overall.select(pl.col("bcu_mfm_net_totalizer_diff").sum()).item()
+            overall_mfm_vs_bcu_count = len(filtered_overall)
 
-    # Calculate OVERALL BCU_VS_INVOICE count and difference
+            # Calculate OVERALL BCU_VS_INVOICE count and difference
     overall_bcu_vs_invoice_count = 0
     overall_bcu_vs_invoice_difference = 0
     if len(day_end_df) > 0:
         filtered_overall = day_end_df.filter(
-            pl.col('invoiced_bcu_net_qty_diff').is_not_null() & 
+            pl.col('invoiced_bcu_net_qty_diff').is_not_null() &
             (pl.col('invoiced_bcu_net_qty_diff') != 0)
         )
         if len(filtered_overall) > 0:
-            overall_bcu_vs_invoice_difference = filtered_overall.select(pl.col("invoiced_bcu_net_qty_diff").sum()).item()  
-            overall_bcu_vs_invoice_count = len(filtered_overall) 
-        
-    # Calculate OVERALL total counts (all locations combined)
+            overall_bcu_vs_invoice_difference = filtered_overall.select(
+                pl.col("invoiced_bcu_net_qty_diff").sum()).item()
+            overall_bcu_vs_invoice_count = len(filtered_overall)
+
+            # Calculate OVERALL total counts (all locations combined)
     overall_alerts_count = 0
     if len(alerts_df) > 0:
         overall_alerts = alerts_df.filter(pl.col("equipment_name") == "BCU")
         if len(overall_alerts) > 0:
-            overall_alerts = overall_alerts.unique(subset=["created_at", "device_name", "interlock_name"],keep="last")
+            overall_alerts = overall_alerts.unique(subset=["created_at", "device_name", "interlock_name"], keep="last")
             overall_alerts_count = len(overall_alerts)
-    
+
     overall_gantry_count = 0
     if len(alerts_df) > 0:
-        overall_gantry = alerts_df.filter((pl.col("interlock_name").str.contains("Gantry Permissive Off")) & (~pl.col("interlock_name").str.contains("Fail")))
+        overall_gantry = alerts_df.filter((pl.col("interlock_name").str.contains("Gantry Permissive Off")) & (
+            ~pl.col("interlock_name").str.contains("Fail")))
         if len(overall_gantry) > 0:
-            overall_gantry = overall_gantry.unique(subset=["created_at", "interlock_name"],keep="last")
+            overall_gantry = overall_gantry.unique(subset=["created_at", "interlock_name"], keep="last")
             overall_gantry_count = len(overall_gantry)
-    
+
     overall_unique_truck_count = combined_df.select("truck_number").unique().height
 
     # Calculate OVERALL OverLoading quantity difference
@@ -4808,10 +4664,12 @@ async def get_bay_counts(data):
         overloaded_records = combined_df.filter(pl.col("table_name") == "HostOverLoaded")
         if len(overloaded_records) > 0:
             # Filter out null values
-            overloaded_filtered = overloaded_records.filter(pl.col('loaded_qty').is_not_null() & pl.col('required_qty').is_not_null())
+            overloaded_filtered = overloaded_records.filter(
+                pl.col('loaded_qty').is_not_null() & pl.col('required_qty').is_not_null())
             if len(overloaded_filtered) > 0:
                 # Calculate row-by-row absolute difference, then sum (matches SQL)
-                overloaded_with_diff = overloaded_filtered.with_columns((pl.col("loaded_qty") - pl.col("required_qty")).abs().alias("row_difference"))
+                overloaded_with_diff = overloaded_filtered.with_columns(
+                    (pl.col("loaded_qty") - pl.col("required_qty")).abs().alias("row_difference"))
                 overall_overloading_qty = int(overloaded_with_diff.select(pl.col("row_difference").sum()).item())
 
     # Calculate OVERALL LocalLoading quantity
@@ -4820,7 +4678,7 @@ async def get_bay_counts(data):
         localloaded_records = combined_df.filter(pl.col("table_name") == "HostLocalLoaded")
         if len(localloaded_records) > 0:
             localloaded_filtered = localloaded_records.filter(
-                pl.col('loaded_qty').is_not_null() & 
+                pl.col('loaded_qty').is_not_null() &
                 (pl.col('loaded_qty') != 0)
             )
             if len(localloaded_filtered) > 0:
@@ -4835,7 +4693,7 @@ async def get_bay_counts(data):
         "OverLoading": len(combined_df.filter(pl.col("table_name") == "HostOverLoaded")),
         "OverLoading_qty": overall_overloading_qty,
         "TotalUniqueTruckNumbersCount": overall_unique_truck_count,
-        "UnauthorisedFlow": 0,                 
+        "UnauthorisedFlow": 0,
         "UnauthorisedFlow_net_totalizer": 0,
         "Alerts_Count": overall_alerts_count,
         "Gantry_Permissive_off_Count": overall_gantry_count,
@@ -4845,30 +4703,30 @@ async def get_bay_counts(data):
         "BCU_VS_INVOICE_difference": overall_bcu_vs_invoice_difference,
 
     }
-    
+
     # Get unique locations
     unique_locations = combined_df.select("location_name").unique().sort("location_name")
-    
+
     locations_result = []
-    
+
     for loc_row in unique_locations.iter_rows(named=True):
         location_name = loc_row.get("location_name")
-        
+
         # Filter all dataframes for this location
         location_combined_df = combined_df.filter(pl.col("location_name") == location_name)
-        
+
         location_unauthorised_df = unauthorised_flow_df
         if len(unauthorised_flow_df) > 0 and "location_name" in unauthorised_flow_df.columns:
             location_unauthorised_df = unauthorised_flow_df.filter(pl.col("location_name") == location_name)
-        
+
         location_day_end_df = day_end_df
         if len(day_end_df) > 0 and "location_name" in day_end_df.columns:
             location_day_end_df = day_end_df.filter(pl.col("location_name") == location_name)
-        
+
         # Calculate location-level BCU counts
         location_bcu_count = 0
         location_active_bays_count = 0
-        
+
         if len(location_day_end_df) > 0:
             location_grouped = (
                 location_day_end_df.group_by(["bay_number", "bcu_number"]).agg([
@@ -4877,43 +4735,48 @@ async def get_bay_counts(data):
                 ])
                 .with_columns((pl.col("sum_end") - pl.col("sum_start")).alias("total_difference"))
             )
-            
+
             location_bcu_count = location_grouped.height
             location_active_bays_count = location_grouped.filter(pl.col("total_difference") > 100).height
-        
+
         # Calculate location-level MFM_VS_BCU count and difference
         location_mfm_vs_bcu_count = 0
         location_mfm_vs_bcu_difference = 0
         if len(location_day_end_df) > 0:
             # Filter out null and zero values from both columns
-            filtered_location = location_day_end_df.filter(pl.col('bcu_mfm_net_totalizer_diff').is_not_null() & (pl.col('bcu_mfm_net_totalizer_diff') != 0))
+            filtered_location = location_day_end_df.filter(
+                pl.col('bcu_mfm_net_totalizer_diff').is_not_null() & (pl.col('bcu_mfm_net_totalizer_diff') != 0))
             if len(filtered_location) > 0:
-                location_mfm_vs_bcu_difference = filtered_location.select(pl.col("bcu_mfm_net_totalizer_diff").sum()).item()
+                location_mfm_vs_bcu_difference = filtered_location.select(
+                    pl.col("bcu_mfm_net_totalizer_diff").sum()).item()
                 location_mfm_vs_bcu_count = len(filtered_location)
-        
+
         # Calculate location-level BCU_VS_INVOICE count and difference
         location_bcu_vs_invoice_count = 0
         location_bcu_vs_invoice_difference = 0
         if len(location_day_end_df) > 0:
             # Filter out null/zero invoiced_qty and null/zero bcu_net_totalizer
-            filtered_location = location_day_end_df.filter(pl.col('invoiced_bcu_net_qty_diff').is_not_null() & (pl.col('invoiced_bcu_net_qty_diff') != 0))
+            filtered_location = location_day_end_df.filter(
+                pl.col('invoiced_bcu_net_qty_diff').is_not_null() & (pl.col('invoiced_bcu_net_qty_diff') != 0))
             if len(filtered_location) > 0:
-                location_bcu_vs_invoice_difference = filtered_location.select(pl.col("invoiced_bcu_net_qty_diff").sum()).item()
+                location_bcu_vs_invoice_difference = filtered_location.select(
+                    pl.col("invoiced_bcu_net_qty_diff").sum()).item()
                 location_bcu_vs_invoice_count = len(filtered_location)
 
-        
         # Calculate Gantry_Permissive_off_Count for this location
         location_gantry_count = 0
         if len(alerts_df) > 0:
-            location_gantry = alerts_df.filter((pl.col("location_name") == location_name) &(pl.col("interlock_name").str.contains("Gantry Permissive Off")) &(~pl.col("interlock_name").str.contains("Fail")))
+            location_gantry = alerts_df.filter((pl.col("location_name") == location_name) & (
+                pl.col("interlock_name").str.contains("Gantry Permissive Off")) & (
+                                                   ~pl.col("interlock_name").str.contains("Fail")))
             if len(location_gantry) > 0:
                 # Deduplicate by created_at and interlock_name
-                location_gantry = location_gantry.unique(subset=["created_at", "interlock_name"],keep="last")
+                location_gantry = location_gantry.unique(subset=["created_at", "interlock_name"], keep="last")
                 location_gantry_count = len(location_gantry)
-        
+
         # Calculate location-level counts
         unique_truck_count = location_combined_df.select("truck_number").unique().height
-        
+
         # Placeholder for location_alerts_count (will be calculated from bays)
         location_alerts_count = 0
 
@@ -4923,22 +4786,26 @@ async def get_bay_counts(data):
             location_overloaded_records = location_combined_df.filter(pl.col("table_name") == "HostOverLoaded")
             if len(location_overloaded_records) > 0:
                 # Filter out null values
-                location_overloaded_filtered = location_overloaded_records.filter(pl.col('loaded_qty').is_not_null() & pl.col('required_qty').is_not_null())
+                location_overloaded_filtered = location_overloaded_records.filter(
+                    pl.col('loaded_qty').is_not_null() & pl.col('required_qty').is_not_null())
                 if len(location_overloaded_filtered) > 0:
                     # Calculate row-by-row absolute difference, then sum (matches SQL)
-                    location_overloaded_with_diff = location_overloaded_filtered.with_columns((pl.col("loaded_qty") - pl.col("required_qty")).abs().alias("row_difference"))
-                    location_overloading_qty = int(location_overloaded_with_diff.select(pl.col("row_difference").sum()).item())
+                    location_overloaded_with_diff = location_overloaded_filtered.with_columns(
+                        (pl.col("loaded_qty") - pl.col("required_qty")).abs().alias("row_difference"))
+                    location_overloading_qty = int(
+                        location_overloaded_with_diff.select(pl.col("row_difference").sum()).item())
 
         # Calculate location-level LocalLoading quantity
         location_localloading_qty = 0
         if len(location_combined_df) > 0:
             location_localloaded_records = location_combined_df.filter(pl.col("table_name") == "HostLocalLoaded")
             if len(location_localloaded_records) > 0:
-                location_localloaded_filtered = location_localloaded_records.filter(pl.col('loaded_qty').is_not_null() & (pl.col('loaded_qty') != 0))
+                location_localloaded_filtered = location_localloaded_records.filter(
+                    pl.col('loaded_qty').is_not_null() & (pl.col('loaded_qty') != 0))
                 if len(location_localloaded_filtered) > 0:
-                    location_localloading_qty = int(location_localloaded_filtered.select(pl.col("loaded_qty").sum()).item())
+                    location_localloading_qty = int(
+                        location_localloaded_filtered.select(pl.col("loaded_qty").sum()).item())
 
-        
         location_counts = {
             "TotalBCU": location_bcu_count,
             "TotalActiveBays": location_active_bays_count,
@@ -4948,9 +4815,9 @@ async def get_bay_counts(data):
             "OverLoading": len(location_combined_df.filter(pl.col("table_name") == "HostOverLoaded")),
             "OverLoading_qty": location_overloading_qty,
             "TotalUniqueTruckNumbersCount": unique_truck_count,
-            "UnauthorisedFlow": 0,                  
+            "UnauthorisedFlow": 0,
             "UnauthorisedFlow_net_totalizer": 0,
-            "Alerts_Count": location_alerts_count, 
+            "Alerts_Count": location_alerts_count,
             "Gantry_Permissive_off_Count": location_gantry_count,
             "MFM_VS_BCU": location_mfm_vs_bcu_count,
             "MFM_VS_BCU_difference": location_mfm_vs_bcu_difference,
@@ -4958,7 +4825,7 @@ async def get_bay_counts(data):
             "BCU_VS_INVOICE_difference": location_bcu_vs_invoice_difference,
 
         }
-        
+
         # Get unique bay numbers for this location
         unique_bays = pl.DataFrame({"bay": []}, schema={"bay": pl.Utf8})
         if len(location_day_end_df) > 0 and "bay_number_extracted" in location_day_end_df.columns:
@@ -4990,82 +4857,90 @@ async def get_bay_counts(data):
 
         for bay_row in unique_bays.iter_rows(named=True):
             bay_number = bay_row.get("bay")
-            bay_number_str = str(bay_number).zfill(2)   # for day_end_df / combined_df filtering
-            bay_number_raw = str(bay_number)             # for alert device_name matching
+            bay_number_str = str(bay_number).zfill(2)  # for day_end_df / combined_df filtering
+            bay_number_raw = str(bay_number)  # for alert device_name matching
 
             # Filter data for this specific bay
             bay_combined_df = location_combined_df.filter(
                 pl.col("assigned_bay").cast(pl.Utf8).str.zfill(2) == bay_number_str
             )
-            
+
             # Filter unauthorised flow for this bay
             bay_unauthorised_df = location_unauthorised_df
             if len(location_unauthorised_df) > 0 and "bay_number" in location_unauthorised_df.columns:
                 bay_unauthorised_df = location_unauthorised_df.filter(pl.col("bay_number") == str(bay_number).zfill(2))
-            
+
             # Calculate bay-specific BCU counts
             bay_bcu_count = 0
             bay_active_bays_count = 0
-            
+
             if len(location_day_end_df) > 0 and "bay_number_extracted" in location_day_end_df.columns:
                 bay_day_end = location_day_end_df.filter(pl.col("bay_number_extracted") == bay_number_str)
-                
+
                 if len(bay_day_end) > 0:
-                    bay_grouped = (bay_day_end.group_by(["bay_number", "bcu_number"]).agg([pl.col("bcu_start_totalizer").sum().alias("sum_start"),pl.col("bcu_end_totalizer").sum().alias("sum_end"),])
-                        .with_columns((pl.col("sum_end") - pl.col("sum_start")).alias("total_difference")))
-                    
+                    bay_grouped = (bay_day_end.group_by(["bay_number", "bcu_number"]).agg(
+                        [pl.col("bcu_start_totalizer").sum().alias("sum_start"),
+                         pl.col("bcu_end_totalizer").sum().alias("sum_end"), ])
+                                   .with_columns((pl.col("sum_end") - pl.col("sum_start")).alias("total_difference")))
+
                     bay_bcu_count = bay_grouped.height
                     bay_active_bays_count = bay_grouped.filter(pl.col("total_difference") > 100).height
-            
+
             # Calculate bay-specific MFM_VS_BCU count and difference
             bay_mfm_vs_bcu_count = 0
             bay_mfm_vs_bcu_difference = 0
             if len(location_day_end_df) > 0 and "bay_number_extracted" in location_day_end_df.columns:
                 bay_day_end = location_day_end_df.filter(pl.col("bay_number_extracted") == bay_number_str)
-                
+
                 if len(bay_day_end) > 0:
-                    filtered_bay = bay_day_end.filter(pl.col('bcu_mfm_net_totalizer_diff').is_not_null() & (pl.col('bcu_mfm_net_totalizer_diff') != 0))
+                    filtered_bay = bay_day_end.filter(pl.col('bcu_mfm_net_totalizer_diff').is_not_null() & (
+                                pl.col('bcu_mfm_net_totalizer_diff') != 0))
                     if len(filtered_bay) > 0:
-                        bay_mfm_vs_bcu_difference = filtered_bay.select(pl.col("bcu_mfm_net_totalizer_diff").sum()).item()
+                        bay_mfm_vs_bcu_difference = filtered_bay.select(
+                            pl.col("bcu_mfm_net_totalizer_diff").sum()).item()
                         bay_mfm_vs_bcu_count = len(filtered_bay)
-            
+
             # Calculate bay-specific BCU_VS_INVOICE count and difference
             bay_bcu_vs_invoice_count = 0
             bay_bcu_vs_invoice_difference = 0
             if len(location_day_end_df) > 0 and "bay_number_extracted" in location_day_end_df.columns:
                 bay_day_end = location_day_end_df.filter(pl.col("bay_number_extracted") == bay_number_str)
-                
+
                 if len(bay_day_end) > 0:
-                    filtered_bay = bay_day_end.filter(pl.col('invoiced_bcu_net_qty_diff').is_not_null() & (pl.col('invoiced_bcu_net_qty_diff') != 0))
+                    filtered_bay = bay_day_end.filter(
+                        pl.col('invoiced_bcu_net_qty_diff').is_not_null() & (pl.col('invoiced_bcu_net_qty_diff') != 0))
                     if len(filtered_bay) > 0:
-                        bay_bcu_vs_invoice_difference = filtered_bay.select(pl.col("invoiced_bcu_net_qty_diff").sum()).item()
+                        bay_bcu_vs_invoice_difference = filtered_bay.select(
+                            pl.col("invoiced_bcu_net_qty_diff").sum()).item()
                         bay_bcu_vs_invoice_count = len(filtered_bay)
-            
+
             # Calculate unique trucks for this bay
-            bay_unique_truck_count = bay_combined_df.select("truck_number").unique().height if len(bay_combined_df) > 0 else 0
-            
+            bay_unique_truck_count = bay_combined_df.select("truck_number").unique().height if len(
+                bay_combined_df) > 0 else 0
+
             # Calculate Alerts_Count for this bay (BCU alerts only)
             bay_alerts_count = 0
             if len(alerts_df) > 0:
                 bay_alerts = alerts_df.filter(
-                    (pl.col("location_name") == location_name) & 
+                    (pl.col("location_name") == location_name) &
                     (pl.col("equipment_name") == "BCU")
                 )
-                
+
                 if "device_name" in bay_alerts.columns:
                     bay_alerts = bay_alerts.with_columns(
                         pl.col("device_name")
-                        .str.extract(r"BC-(\d{2,3})[A-Za-z]?", 1)  
+                        .str.extract(r"BC-(\d{2,3})[A-Za-z]?", 1)
                         .alias("alert_bay_number")
                     )
                     bay_alerts = bay_alerts.filter(
-                        pl.col("alert_bay_number") == bay_number_raw  
+                        pl.col("alert_bay_number") == bay_number_raw
                     )
-                
+
                 if len(bay_alerts) > 0:
-                    bay_alerts = bay_alerts.unique(subset=["created_at", "alert_bay_number", "interlock_name"], keep="last")
+                    bay_alerts = bay_alerts.unique(subset=["created_at", "alert_bay_number", "interlock_name"],
+                                                   keep="last")
                     bay_alerts_count = len(bay_alerts)
-            
+
             # Note: Gantry_Permissive_off_Count is same for all bays in a location (it's location-wide)
             bay_gantry_count = location_gantry_count
 
@@ -5074,23 +4949,30 @@ async def get_bay_counts(data):
             if len(bay_combined_df) > 0:
                 bay_overloaded_records = bay_combined_df.filter(pl.col("table_name") == "HostOverLoaded")
                 if len(bay_overloaded_records) > 0:
-                    bay_overloaded_filtered = bay_overloaded_records.filter(pl.col('loaded_qty').is_not_null() & pl.col('required_qty').is_not_null())
+                    bay_overloaded_filtered = bay_overloaded_records.filter(
+                        pl.col('loaded_qty').is_not_null() & pl.col('required_qty').is_not_null())
                     if len(bay_overloaded_filtered) > 0:
-                        bay_overloaded_with_diff = bay_overloaded_filtered.with_columns((pl.col("loaded_qty") - pl.col("required_qty")).abs().alias("row_difference"))
-                        bay_overloading_qty = int(bay_overloaded_with_diff.select(pl.col("row_difference").sum()).item())
+                        bay_overloaded_with_diff = bay_overloaded_filtered.with_columns(
+                            (pl.col("loaded_qty") - pl.col("required_qty")).abs().alias("row_difference"))
+                        bay_overloading_qty = int(
+                            bay_overloaded_with_diff.select(pl.col("row_difference").sum()).item())
 
             # Calculate bay-specific LocalLoading quantity
             bay_localloading_qty = 0
             if len(bay_combined_df) > 0:
                 bay_localloaded_records = bay_combined_df.filter(pl.col("table_name") == "HostLocalLoaded")
                 if len(bay_localloaded_records) > 0:
-                    bay_localloaded_filtered = bay_localloaded_records.filter(pl.col('loaded_qty').is_not_null() & (pl.col('loaded_qty') != 0))
+                    bay_localloaded_filtered = bay_localloaded_records.filter(
+                        pl.col('loaded_qty').is_not_null() & (pl.col('loaded_qty') != 0))
                     if len(bay_localloaded_filtered) > 0:
                         bay_localloading_qty = int(bay_localloaded_filtered.select(pl.col("loaded_qty").sum()).item())
-                        
-            bay_reassignment_count = len(bay_combined_df.filter(pl.col("table_name") == "HostBayReAssignment")) if len(bay_combined_df) > 0 else 0
-            bay_local_count = len(bay_combined_df.filter(pl.col("table_name") == "HostLocalLoaded")) if len(bay_combined_df) > 0 else 0
-            bay_over_count = len(bay_combined_df.filter(pl.col("table_name") == "HostOverLoaded")) if len(bay_combined_df) > 0 else 0
+
+            bay_reassignment_count = len(bay_combined_df.filter(pl.col("table_name") == "HostBayReAssignment")) if len(
+                bay_combined_df) > 0 else 0
+            bay_local_count = len(bay_combined_df.filter(pl.col("table_name") == "HostLocalLoaded")) if len(
+                bay_combined_df) > 0 else 0
+            bay_over_count = len(bay_combined_df.filter(pl.col("table_name") == "HostOverLoaded")) if len(
+                bay_combined_df) > 0 else 0
 
             bay_counts = {
                 "bay_number": str(bay_number).zfill(2),
@@ -5100,7 +4982,7 @@ async def get_bay_counts(data):
                     "HostBayReAssignment": bay_reassignment_count,
                     "HostBayReAssignment_severity": get_bay_metric_severity(bay_reassignment_count, days),
                     "LocalLoading": bay_local_count,
-                    "LocalLoading_severity": get_bay_metric_severity(bay_local_count, days), 
+                    "LocalLoading_severity": get_bay_metric_severity(bay_local_count, days),
                     "LocalLoading_qty": bay_localloading_qty,
                     "OverLoading": bay_over_count,
                     "OverLoading_severity": get_bay_metric_severity(bay_over_count, days),
@@ -5109,8 +4991,8 @@ async def get_bay_counts(data):
                     "UnauthorisedFlow": len(bay_unauthorised_df) if len(bay_unauthorised_df) > 0 else 0,
                     "UnauthorisedFlow_net_totalizer": calc_unauthorised_net_totalizer(bay_unauthorised_df),
                     "Alerts_Count": bay_alerts_count,
-                    "Alerts_Count_severity": get_alerts_severity(bay_alerts_count, days),  
-                    "Gantry_Permissive_off_Count":0,
+                    "Alerts_Count_severity": get_alerts_severity(bay_alerts_count, days),
+                    "Gantry_Permissive_off_Count": 0,
                     "MFM_VS_BCU": bay_mfm_vs_bcu_count,
                     "MFM_VS_BCU_difference": bay_mfm_vs_bcu_difference,
                     "MFM_VS_BCU_severity": get_difference_severity(bay_mfm_vs_bcu_difference, days),
@@ -5119,9 +5001,9 @@ async def get_bay_counts(data):
                     "BCU_VS_INVOICE_severity": get_difference_severity(bay_bcu_vs_invoice_difference, days)
                 }
             }
-            
+
             bays_data.append(bay_counts)
-        
+
         # Update location_alerts_count by summing bay alerts
         location_counts["UnauthorisedFlow"] = sum(
             bay["counts"]["UnauthorisedFlow"] for bay in bays_data
@@ -5129,9 +5011,9 @@ async def get_bay_counts(data):
         location_counts["UnauthorisedFlow_net_totalizer"] = round(
             sum(bay["counts"]["UnauthorisedFlow_net_totalizer"] for bay in bays_data), 2
         )
-        location_alerts_count = sum(bay["counts"]["Alerts_Count"] for bay in bays_data)        
-        location_counts["Alerts_Count"] = location_alerts_count       
-        
+        location_alerts_count = sum(bay["counts"]["Alerts_Count"] for bay in bays_data)
+        location_counts["Alerts_Count"] = location_alerts_count
+
         locations_result.append({
             "location_name": location_name,
             "counts": location_counts,
@@ -5144,12 +5026,12 @@ async def get_bay_counts(data):
     total_counts["UnauthorisedFlow_net_totalizer"] = round(
         sum(loc["counts"]["UnauthorisedFlow_net_totalizer"] for loc in locations_result), 2
     )
-   
+
     return {
         "total_counts": total_counts,
         "locations": locations_result
     }
-    
+
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
@@ -5165,7 +5047,7 @@ AnalyticsModelMapping = {
     "Cancelled Report tts":cancelled_tts_dashboard,
     "Host Tables Combined Data":host_tables_combined_data,
     "get bay counts":get_bay_counts
-    
+
 }
 
 
