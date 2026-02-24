@@ -1959,6 +1959,12 @@ class LPGOperationsActions:
                             merged = merged.with_columns(
                                 (pl.col(col) - pl.col(prev_col).fill_null(0)).alias(col)
                             )
+                        # FORCE MANPOWER TO ZERO AFTER SUBTRACTION
+                        merged = merged.with_columns([
+                            pl.lit(0).alias("Manpower Expenses (CY)"),
+                            pl.lit(0).alias("Manpower Expenses (LY)")
+                        ])
+
                 else:
                     merged = current_df
                     merged = merged.with_columns([
