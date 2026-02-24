@@ -75,7 +75,9 @@ class SendNotification:
         return [
             "alert_id", "BU", "interlock_name", "interlock_id", "messagetype",
             "msg_subject", "mqofrole", "location_type", "location_device_id", "va_level",
-            "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail"
+            "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail",
+            "days_remaining"
+
         ]
     
     async def check_sap_id_empty(self):
@@ -260,6 +262,10 @@ class SendNotification:
             subject_template = f"VTS Alert: Unblocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
             return subject_template
         
+        if self.params.get('messagetype', '') in ['vts_device_expiry']:
+            subject_template = f"VTS Alert: Device Expiry Alert for truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get('location_name', '')};"
+            return subject_template
+        
     async def get_subject_for_ro(self):
         if self.params.get('messagetype','') in ['notify'] and self.alert_data.get('interlock_name') in ['Restroom Cleaning Evidence Missing']:
             subject_template = f"Outlet Blocked"
@@ -412,7 +418,8 @@ class SendNotification:
                 self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
             self.vts_assigned_role = "Location In-Charge SOD" if self.alert_data.get('violation_type','') not in ['device_tamper_count','main_supply_removal_count'] else (await self._role_configuration_mqofrole() or "")
             if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
-                self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
+               if self.alert_data.get('interlock_name') != 'VTS Device Expiry Alert':               
+                     self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
 
         self.base_alert_data = {
             "alert_id": self.params.get("alert_id"),
@@ -430,7 +437,11 @@ class SendNotification:
             "block_end_date": self.alert_data['vehicle_blocked_end_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_blocked_end_date'] else None,
             "unblock_date": self.alert_data['vehicle_unblocked_date'].strftime("%d.%m.%Y") if self.alert_data['vehicle_unblocked_date'] else None,
             "vts_assigned_role": self.vts_assigned_role if self.vts_assigned_role else "",
-            "asset_id": self.alert_data.get("device_name", self.alert_data["location_name"]) # this should be location_id
+            "asset_id": self.alert_data.get("device_name", self.alert_data["location_name"]), # this should be location_id
+            "vehicle_number": self.alert_data.get("vehicle_number", ""),
+            "location_name": self.alert_data.get("location_name", ""),
+            "contract_valid_upto": self.alert_data.get("contract_valid_upto", "").strftime("%d.%m.%Y") if self.alert_data.get("contract_valid_upto") else "",
+            "days_remaining": int(self.params.get("days_remaining", 0)),
         }
         return self.base_alert_data
 
@@ -590,7 +601,8 @@ class SendNotification:
             "justified": self._process_justified,
             "resolved": self._process_resolved,
             "senditback": self._process_senditback,
-            "accept": self._process_accept
+            "accept": self._process_accept,
+            "vts_device_expiry": self._process_active,  # Assuming VTS Device Expiry is treated as active
         }
         processor = processors.get(message_type)  # Retrieve the function
         if processor:
@@ -643,6 +655,8 @@ class SendNotification:
             await self._send_resolved_notification()
         elif message_type == 'Resolved':
             await self._send_other_notification()
+        elif message_type == 'vts_device_expiry':
+            await self._send_vts_device_expiry_notification()
         else:
             await self._send_standard_notification()
     
@@ -778,7 +792,21 @@ class SendNotification:
         except Exception as e:
             logger.error(f"TAS recipient error: {e}")
             return []
-
+   
+    async def _send_vts_device_expiry_notification(self):
+        notification_module = await notification_factory.get_notification_module(module_type="email")
+        print("self.mail_recipients: ", self.mail_recipients)
+        await self.update_notication_audit_log()
+        if self.mail_recipients:
+            res = await notification_module.publish_message(
+                recipients=self.mail_recipients,
+                subject=self.subject,
+                body=self.body,
+                force_send=True,
+                html_content=True
+            )
+            return res
+    
     async def _send_active_notification(self):
         """
         Send notifications for LPG/TAS active messages
