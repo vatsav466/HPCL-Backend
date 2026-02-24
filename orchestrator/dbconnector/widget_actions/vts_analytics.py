@@ -3722,7 +3722,35 @@ class VTSAnalyticsActions:
             for key in ["zone", "location_name", "transporter_name"]:
                 if payload.get(key):
                     violation_filtered_df = violation_filtered_df[violation_filtered_df[key] == payload[key]]
-            
+           # --- DATE-WISE AGGREGATION (move here!) ---
+            date_wise = payload.get("date_wise") or payload.get("payload", {}).get("date_wise")
+            if date_wise is True or date_wise == "true":
+                violation_filtered_df['created_at'] = pd.to_datetime(violation_filtered_df['created_at'])
+                ist = pytz.timezone("Asia/Kolkata")
+                if violation_filtered_df['created_at'].dt.tz is None:
+                    violation_filtered_df['created_at'] = violation_filtered_df['created_at'].dt.tz_localize('UTC').dt.tz_convert(ist)
+                else:
+                    violation_filtered_df['created_at'] = violation_filtered_df['created_at'].dt.tz_convert(ist)
+                
+                violation_filtered_df['date'] = violation_filtered_df['created_at'].dt.strftime("%Y-%m-%d")
+                
+                date_wise_df = (
+                    violation_filtered_df.groupby('date')
+                    .agg(
+                        invoice_count=('invoice_number', 'nunique'),
+                        violation_count_more_than_6=(violation_type, 'count'),
+                        total_violations=(violation_type, 'sum'),
+                        vehicle_count=('tl_number', 'nunique')
+                    )
+                    .reset_index()
+                    .sort_values('date')
+                )
+                
+                return {
+                    "status": True,
+                    "message": f"{violation_type} date-wise data",
+                    "data": date_wise_df.to_dict(orient='records')
+                } 
             if violation_filtered_df.empty:
                 return {"status": True, "message": "No data found for the applied filters", "data": []}
             
