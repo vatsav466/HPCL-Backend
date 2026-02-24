@@ -20,6 +20,7 @@ from orchestrator.analytics import lpg_plant_analysis
 from orchestrator.analytics import industry_performance
 from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.dbconnector.connector_factory as connector_factory
+import orchestrator.analytics.lpg_monthwise_analytics as lpg_monthwise_analytics
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 from collections import defaultdict
 import utilities.analog_data_mapping as category_mapping
@@ -3749,7 +3750,73 @@ class GlobalAnalytics:
         except Exception as e:
             print("-- Exception in zone wise filled cylinder --")
             print("traceback :", traceback.format_exc())
-        
+
+
+    @staticmethod
+    async def lpg_operations_monthwise_productivity(filters, cross_filters, drill_state):
+        try:
+            # Extract date range from cross_filters
+            _filters, daterange = await generate_cross_filter(cross_filters)
+            start_date = None
+            end_date = None
+            if daterange:
+                # Extract start and end dates from daterange string like "'2024-01-01 00:00:00' AND '2024-12-31 23:59:59'"
+                import re
+                date_matches = re.findall(r"'(\d{4}-\d{2}-\d{2})", daterange)
+                if len(date_matches) >= 2:
+                    start_date = date_matches[0]
+                    end_date = date_matches[1]
+                elif len(date_matches) == 1:
+                    start_date = date_matches[0]
+                    end_date = date_matches[0]
+            
+            # Extract zones and locations from filters
+            zones = None
+            locations = None
+            zone_level_req = True
+            location_level_req = True
+            
+            if filters:
+                for rec in filters:
+                    key_lower = rec.key.lower().replace('"', '').strip()
+                    if key_lower == "zone":
+                        zones = rec.value.split(",") if isinstance(rec.value, str) else rec.value
+                        zones = [z.strip() for z in zones] if isinstance(zones, list) else [zones]
+                    elif key_lower in ["sap_id", "location", "location_id"]:
+                        locations = rec.value.split(",") if isinstance(rec.value, str) else rec.value
+                        locations = [l.strip() for l in locations] if isinstance(locations, list) else [locations]
+                    elif key_lower == "zone_level_req":
+                        zone_level_req = rec.value.lower() in ["true", "1", "yes"] if isinstance(rec.value, str) else bool(rec.value)
+                    elif key_lower == "location_level_req":
+                        location_level_req = rec.value.lower() in ["true", "1", "yes"] if isinstance(rec.value, str) else bool(rec.value)
+            
+            # Determine aggregation_level based on filters (for backward compatibility)
+            aggregation_level = "overall"
+            if filters:
+                filter_keys = [rec.key.lower().replace('"', '').strip() for rec in filters]
+                if "zone" in filter_keys and "sap_id" not in filter_keys and "location" not in filter_keys:
+                    aggregation_level = "zone"
+                elif "sap_id" in filter_keys or "location" in filter_keys or "location_id" in filter_keys:
+                    aggregation_level = "location"
+            
+            # Call the monthwise productivity function
+            result = await lpg_monthwise_analytics.lpg_operations_monthwise_productivity(
+                start_date=start_date,
+                end_date=end_date,
+                zones=zones,
+                locations=locations,
+                aggregation_level=aggregation_level,
+                zone_level_req=zone_level_req,
+                location_level_req=location_level_req
+            )
+            
+            return result
+        except Exception as e:
+            print("-- Exception in monthwise productivity widget --")
+            print("traceback :", traceback.format_exc())
+            return {"status": False, "message": f"Error: {e}"}
+
+
     @staticmethod
     async def lpg_operations_daywise_productivity(filters, cross_filters, drill_state):
         daywise_productivity_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_productivity")
@@ -3821,8 +3888,78 @@ class GlobalAnalytics:
             print(traceback.format_exc())
             print(f"Error executing query: {e}")
             return {"status": False, "message": f"Error: {e}"}
-    
-    
+
+    @staticmethod
+    async def lpg_operations_monthwise_rejections(filters, cross_filters, drill_state):
+        try:
+            # Extract date range from cross_filters
+            _filters, daterange = await generate_cross_filter(cross_filters)
+            start_date = None
+            end_date = None
+            if daterange:
+                # Extract start and end dates from daterange string like "'2024-01-01 00:00:00' AND '2024-12-31 23:59:59'"
+                import re
+                date_matches = re.findall(r"'(\d{4}-\d{2}-\d{2})", daterange)
+                if len(date_matches) >= 2:
+                    start_date = date_matches[0]
+                    end_date = date_matches[1]
+                elif len(date_matches) == 1:
+                    start_date = date_matches[0]
+                    end_date = date_matches[0]
+            
+            # Extract zones and locations from filters
+            zones = None
+            locations = None
+            zone_level_req = True
+            location_level_req = True
+            rejection_type = "all"  # Default to all
+            
+            if filters:
+                for rec in filters:
+                    key_lower = rec.key.lower().replace('"', '').strip()
+                    if key_lower == "zone":
+                        zones = rec.value.split(",") if isinstance(rec.value, str) else rec.value
+                        zones = [z.strip() for z in zones] if isinstance(zones, list) else [zones]
+                    elif key_lower in ["sap_id", "location", "location_id"]:
+                        locations = rec.value.split(",") if isinstance(rec.value, str) else rec.value
+                        locations = [l.strip() for l in locations] if isinstance(locations, list) else [locations]
+                    elif key_lower == "rejection_type":
+                        rejection_type = rec.value.lower().strip() if isinstance(rec.value, str) else str(rec.value).lower()
+                        # Map to valid types: cs, pt, gd, all
+                        if rejection_type not in ["cs", "pt", "gd", "all"]:
+                            rejection_type = "all"
+                    elif key_lower == "zone_level_req":
+                        zone_level_req = rec.value.lower() in ["true", "1", "yes"] if isinstance(rec.value, str) else bool(rec.value)
+                    elif key_lower == "location_level_req":
+                        location_level_req = rec.value.lower() in ["true", "1", "yes"] if isinstance(rec.value, str) else bool(rec.value)
+            
+            # Determine aggregation_level based on filters (for backward compatibility)
+            aggregation_level = "overall"
+            if filters:
+                filter_keys = [rec.key.lower().replace('"', '').strip() for rec in filters]
+                if "zone" in filter_keys and "sap_id" not in filter_keys and "location" not in filter_keys:
+                    aggregation_level = "zone"
+                elif "sap_id" in filter_keys or "location" in filter_keys or "location_id" in filter_keys:
+                    aggregation_level = "location"
+            
+            # Call the monthwise rejections function
+            result = await lpg_monthwise_analytics.lpg_operations_monthwise_rejections(
+                start_date=start_date,
+                end_date=end_date,
+                zones=zones,
+                locations=locations,
+                aggregation_level=aggregation_level,
+                rejection_type=rejection_type,
+                zone_level_req=zone_level_req,
+                location_level_req=location_level_req
+            )
+            
+            return result
+        except Exception as e:
+            print("-- Exception in monthwise rejections widget --")
+            print("traceback :", traceback.format_exc())
+            return {"status": False, "message": f"Error: {e}"}
+
     @staticmethod
     async def lpg_operations_daywise_production(filters ,cross_filters, drill_state):
         daywise_production_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_production")        
@@ -5162,10 +5299,17 @@ class GlobalAnalytics:
                                 "equipment_name": device_row["equipment_name"],
                                 "device_name": device_name,
                                 "sensor_id": device_row["sensor_id"],
+
                                 "open_alerts_current_carry_count": 0,
                                 "open_alerts_current_day": 0,
-                                "close_alerts_current_day": 1
+                                "close_alerts_current_day": 1,
+
+                                "count": 1,
+                                "type": "closed"
+                                
                             }
+
+
                             details.append(detail)
                         
                         # Initialize structure
@@ -5218,6 +5362,11 @@ class GlobalAnalytics:
                                 is_carry_forward = device_row["created_date"] < date
                                 is_open = device_row["created_date"] == date
                                 
+                                if is_carry_forward:
+                                    alert_flag = "carry_forward"
+                                else:
+                                    alert_flag = "open"
+
                                 detail = {
                                     "sap_id": device_row["sap_id"],
                                     "zone": device_row["zone"],
@@ -5225,9 +5374,15 @@ class GlobalAnalytics:
                                     "equipment_name": device_row["equipment_name"],
                                     "device_name": device_name,
                                     "sensor_id": device_row["sensor_id"],
+
                                     "open_alerts_current_carry_count": 1 if is_carry_forward else 0,
                                     "open_alerts_current_day": 1 if is_open else 0,
-                                    "close_alerts_current_day": 0
+                                    "close_alerts_current_day": 0,
+
+                                    # ADD THESE TWO
+                                    "count": 1,
+                                    "type": alert_flag
+                                    
                                 }
                                 details.append(detail)
                             
@@ -5387,7 +5542,13 @@ class GlobalAnalytics:
                         carry_forward_flag = 1 if device_name in carry_devices else 0
                         current_month_flag = 1 if device_name in created_and_open_devices else 0
                         closed_flag = 1 if device_name in closed_devices else 0
-                        
+                        if carry_forward_flag == 1:
+                            alert_flag = "carry_forward"
+                        elif closed_flag == 1:
+                            alert_flag = "closed"
+                        else:
+                            alert_flag = "open"
+
                         detail = {
                             "sap_id": device_row["sap_id"],
                             "zone": device_row["zone"], 
@@ -5395,9 +5556,14 @@ class GlobalAnalytics:
                             "equipment_name": device_row["equipment_name"],
                             "device_name": device_name,
                             "sensor_id": device_row["sensor_id"],
+
                             "open_alerts_current_carry_count": carry_forward_flag,
-                            "open_alerts_current_day": current_month_flag,  # This is for current month
-                            "close_alerts_current_day": closed_flag
+                            "open_alerts_current_day": current_month_flag,
+                            "close_alerts_current_day": closed_flag,
+
+                            "count": 1,
+                            "type": alert_flag
+                            
                         }
                         details.append(detail)
                     
@@ -5454,6 +5620,7 @@ class GlobalAnalytics:
         except Exception:
             print(traceback.format_exc())
             return {"status": False, "message": "Internal error occurred", "data": {}}
+
 
     @staticmethod
     async def tas_maintenance_fault_dropdown(filters, cross_filters, drill_state):
@@ -5565,7 +5732,8 @@ class GlobalAnalytics:
                 "Ups",
                 "Primary Level",
                 "Lrc Switchover",
-                "Gantry Override"
+                "Gantry Override",
+                "K Factor Main"
             ]
 
             # Modified to store equipment_name alongside alert_category
@@ -5583,7 +5751,8 @@ class GlobalAnalytics:
                 "Ups": ["UPS_Fail"],
                 "Primary Level": ["Primary Radar Guage_H alarm", "Primary Radar Guage_HH alarm"],
                 "Lrc Switchover": ["LRC Master Switchover required in 30 days"],
-                "Gantry Override": ["Gantry Permissive_Override"]
+                "Gantry Override": ["Gantry Permissive_Override"],
+                "K Factor Main": ["K Factor Change_BCU"]
             }
 
             # Create a flat list of all specified interlock names
@@ -5622,7 +5791,7 @@ class GlobalAnalytics:
 
             # Complete the query
             query += """
-                GROUP BY created_date, zone, interlock_name, sap_id, location_name
+                GROUP BY created_date, zone, interlock_name, sap_id, location_name,closed_at
                 ORDER BY created_date DESC, alert_count DESC
             """
 

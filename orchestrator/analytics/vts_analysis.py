@@ -459,8 +459,8 @@ async def last_opened_at(tt_number: str):
         return created_at, vts_alert_data['data'][0]['id']
     return None, None
 
-async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
-    vts_map = vts_mapping.vts_interlock_mapping[bu]
+async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str, tt_type: str):
+    vts_map = vts_mapping.vts_interlock_mapping[bu][tt_type.lower()]
     instance_mapping = vts_instance_mapping.instance_mapping
     start_date, end_date = await va_analysis.get_period_datetime(period='fortnight')
     start_date = start_date.strftime("%Y-%m-%d")
@@ -494,7 +494,7 @@ async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
     instance = {}
     violation_name = ""
     current_instance = await get_instance(tt_number,sap_id,bu)
-    instance_data = instance_mapping[bu].get(current_instance,{})
+    instance_data = instance_mapping[bu][tt_type.lower()].get(current_instance,{})
     for key, violation_data in instance_data.items():
         if key in violation_counts.keys() and violation_counts[key] > violation_data['violation_count']:
             if key in ['device_tamper_count', 'main_supply_removal_count'] and bu in ['TAS']:
@@ -509,8 +509,8 @@ async def get_updated_vts_instance(tt_number: str, sap_id: str, bu: str):
             violation_name = key
     return instance, violation_name, violations_ids, alert_id
 
-async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
-    vts_map = vts_mapping.vts_interlock_mapping[bu]
+async def get_vts_instance(tt_number: str, sap_id: str, bu: str, tt_type: str):
+    vts_map = vts_mapping.vts_interlock_mapping[bu][tt_type.lower()]
     instance_mapping = vts_instance_mapping.instance_mapping
     start_date, end_date = await va_analysis.get_period_datetime(period='fortnight')
     start_date = start_date.strftime("%Y-%m-%d")
@@ -544,7 +544,7 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
     instance = {}
     violation_name = ""
     current_instance = await get_instance(tt_number,sap_id,bu)
-    instance_data = instance_mapping[bu].get(current_instance,{})
+    instance_data = instance_mapping[bu][tt_type.lower()].get(current_instance,{})
     for key, violation_data in instance_data.items():
         if key in violation_counts.keys() and violation_counts[key] > violation_data['violation_count']:
             if key in ['device_tamper_count', 'main_supply_removal_count'] and bu in ['TAS']:
@@ -596,7 +596,7 @@ async def get_vts_instance(tt_number: str, sap_id: str, bu: str):
 
 async def update_vts_instance(alert_data):
     vts_end_datetime = alert_data.get('vts_end_datetime',None)
-    instance_data, violation_name, vts_alert_history_ids, alert_id = await get_updated_vts_instance(alert_data['tl_number'],alert_data['base_location_id'],alert_data['location_type'])
+    instance_data, violation_name, vts_alert_history_ids, alert_id = await get_updated_vts_instance(alert_data['tl_number'],alert_data['base_location_id'],alert_data['location_type'],alert_data['tt_type'])
     if not instance_data:
         logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
         return
@@ -786,6 +786,45 @@ async def create_vts_violation_alerts(enriched_data):
     except Exception as e:
         logger.error(f"Error creating VTS Alert : {str(e)}")
 
+async def get_delivered_location_packed(invoice_number,supply_location,vehicle_number):
+    MAX_RETRIES = 3
+    RETRY_DELAY = 10
+
+    delivery_location_resp = {}
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            # Fetching customer from TIBCO DB
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 6
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            query = f"""SELECT DISTINCT CUSTOMER AS CONSUMER_ERP_CODE FROM ZSDCV_AY_INV3_STG WHERE LOAD_NO1 = '{invoice_number}' 
+                        AND SUPPLY_LOC = '{supply_location}' AND VEHICLE_ID = '{vehicle_number}'"""
+
+            print('*'*100)
+            print('query',query)
+            print('*'*100)
+
+            delivery_location_resp = await function(query=query) 
+
+            if len(delivery_location_resp.get('CONSUMER_ERP_CODE',[])):
+                break
+
+        except Exception as e:
+            print(traceback.format_exc())
+            logger.error(f"Vehicle Track DB query failed for getting delivery_location : Traceback: {traceback.format_exc()}")
+            logger.error(
+                f"Vehicle Track DB query failed (attempt {attempt}/{MAX_RETRIES}) "
+                f"Invoice={invoice_number}, Location={supply_location}, Error={e}"
+                )
+            
+            if attempt < MAX_RETRIES:
+                await asyncio.sleep(RETRY_DELAY)
+    
+    ship_to_list = delivery_location_resp.get("CONSUMER_ERP_CODE") or []
+
+    return ship_to_list
+
 async def get_delivered_location(invoice_number,supply_location,vehicle_number):
     MAX_RETRIES = 3
     RETRY_DELAY = 10
@@ -861,7 +900,7 @@ async def create_vts_alerts(enriched_data):
             # Moving counts got from VTS route deviation into _orig key, 
             # Validating VTS Route Deviation DB to verify Invoices > 15 minutes
             entry['route_deviation_count_orig'] = entry.get("route_deviation_count", 0)
-            if entry.get("route_deviation_count"):
+            if entry.get("route_deviation_count") and entry.get("tt_type", "").lower() in ["bulk"]:
                 # Fetching voilations from VTS DB
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 5
                 dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -885,12 +924,18 @@ async def create_vts_alerts(enriched_data):
             if entry['location_type'] == 'TAS':
                 entry['base_location_id'] = base_location_data.get(entry['tl_number'], "")
 
-            if entry['location_type'] in ['LPG','TAS']:
+            if entry['location_type'] in ['LPG','TAS'] and entry.get("tt_type", "").lower() in ["bulk"]:
                 ship_to_list = await get_delivered_location(entry['invoice_number'],entry['location_id'],entry['tl_number'])
                 if len(ship_to_list) > 0 and entry['location_type'] in ['LPG']:
                     entry["base_location_id"] = ship_to_list[0].lstrip("P").lstrip("00")
                 if len(ship_to_list) > 0:
                     entry['destination_code']  = ship_to_list[0].lstrip("P").lstrip("00")
+            
+            if entry['location_type'] in ['LPG'] and entry.get("tt_type", "").lower() in ["packed"]:
+                ship_to_list = await get_delivered_location_packed(entry['invoice_number'],entry['location_id'],entry['tl_number'])
+                if len(ship_to_list) > 0:
+                    entry['destination_code']  = ship_to_list[0].lstrip("P").lstrip("00")
+
 
             _, location_data = await cache_api_actions.get_location_data(
                 bu=entry["location_type"],
@@ -921,6 +966,7 @@ async def create_vts_alerts(enriched_data):
             entry["region"] = location_data.get("region")
             entry["zone"] = location_data.get("zone")
             entry["location_name"] = location_data.get("name")
+            entry['tt_type'] = entry.get("tt_type", "").lower()
 
 
             await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()
@@ -1108,7 +1154,7 @@ async def post_lpg_tt(payload):
                 logger.error(f"All retry attempts failed while posting block/unblock details to SAP {payload}")
                 return sap_response, error_msg
 
-async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_section:str):
+async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_section:str, tt_type:str):
     vts_mapping = vts_role_mapping.vts_unblocking_matrix[alert_section]
     lpg_vts_with_one_officer = vts_role_mapping.lpg_locations_with_one_officer
     lpg_vts_with_no_officer = vts_role_mapping.lpg_locations_with_no_officer
@@ -1119,6 +1165,8 @@ async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_
         vts_mapping = vts_role_mapping.lpg_one_officer_unblocking_matrix[alert_section]
     elif sap_id in lpg_vts_with_no_officer or sap_id.startswith('4'):
         vts_mapping = vts_role_mapping.lpg_no_officer_unblocking_matrix[alert_section]
+    elif tt_type.lower() in ["packed"]:
+        vts_mapping = vts_role_mapping.lpg_packed_unblocking_matrix[alert_section]
         
     if bu in vts_mapping.keys():
         query = (f"""select count(*) as "count" from alerts """
@@ -1137,7 +1185,7 @@ async def get_vts_alerts_count(bu: str, vehicle_number: str, sap_id: str, alert_
             return resp.get("count", 0)
     return 0
 
-async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_section:str):
+async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_section:str, tt_type:str):
     vts_mapping = vts_role_mapping.vts_unblocking_matrix[alert_section]
     lpg_vts_with_one_officer = vts_role_mapping.lpg_locations_with_one_officer
     lpg_vts_with_no_officer = vts_role_mapping.lpg_locations_with_no_officer
@@ -1148,21 +1196,23 @@ async def get_vts_levels(bu: str, vehicle_number: str, sap_id: str, alert_sectio
         vts_mapping = vts_role_mapping.lpg_one_officer_unblocking_matrix[alert_section]
     elif sap_id in lpg_vts_with_no_officer or sap_id.startswith('4'):
         vts_mapping = vts_role_mapping.lpg_no_officer_unblocking_matrix[alert_section]
+    elif tt_type.lower() in ["packed"]:
+        vts_mapping = vts_role_mapping.lpg_packed_unblocking_matrix[alert_section]
 
     if bu in vts_mapping.keys():
         vts_level_data = vts_mapping[bu]
-        vts_alert_count = await get_vts_alerts_count(bu=bu, vehicle_number=vehicle_number, sap_id=sap_id, alert_section=alert_section)
+        vts_alert_count = await get_vts_alerts_count(bu=bu, vehicle_number=vehicle_number, sap_id=sap_id, alert_section=alert_section, tt_type=tt_type)
         previous_count = 0
         for key, value in vts_level_data.items():
             if value['condition'] == "<":
                 if int(vts_alert_count) <= int(value['value']):
-                    return "level - 1"
+                    return key
             if value['condition'] == "<>":
                 if int(previous_count) < vts_alert_count <= int(value['value']):
-                    return "level - 2"
+                    return key
             if value['condition'] == ">":
                 if vts_alert_count > int(value['value']):
-                    return "level - 3"
+                    return key
             previous_count = value['value']
     return ""
 

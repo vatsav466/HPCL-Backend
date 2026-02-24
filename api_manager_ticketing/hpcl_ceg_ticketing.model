@@ -31,6 +31,39 @@ Enum Severity str {
     Low='Low'
 }
 
+Enum Category str {
+    TransportationDiscipline = 'Transportation Discipline'
+    InventoryManagement = 'Inventory Management'
+    SafetyPerformance = 'Safety Performance'
+    AssetIntegrity = 'Asset Integrity'
+    VTSLiveTracking = 'VTS Live Tracking'
+}
+
+Enum SubCategory str {
+    RouteCorrection = 'Route Correction'
+    CombinationOfAlerts = 'Combination of Alerts'
+    GovernanceITDG = 'Governance – ITDG'
+    EMLockingExceptions = 'EM Locking Exceptions'
+    TTShortages = 'TT Shortages'
+    AutoReco = 'Auto Reco'
+    AIMHold = 'AIM Hold'
+    AbnormalGainLoss = 'Abnormal Gain Loss'
+    NoVTSNoLoad = 'No VTS No Load'
+    PMOrders = 'PM Orders'
+    FireEngine = 'Fire Engine'
+    FireWaterAvailability = 'Fire Water Availability'
+    FoamAvailability = 'Foam Availability'
+    CCTVVAAnalytics = 'CCTV VA Analytics'
+    RouteDeviationWithStoppage = 'Route Deviation with Stoppage'
+    RouteDeviationWithoutStoppage = 'Route Deviation without Stoppage'
+    StoppageWithoutRouteDeviation = 'Stoppage without Route Deviation'
+    NightDriving = 'Night Driving'
+    TASVsReconcileDipMonthend = 'Difference in TAS vs Reconcile Dip - Monthend'
+    PowerDisconnectAnalysis = 'Power Disconnect Analysis'
+    MultipleTTStoppageAtSameSpot = 'Multiple TT Stoppage at Same Spot'
+}
+
+
 Enum Assignee str {
     NovexSupport='NovexSupport'
     TechSupport='TechSupport'
@@ -72,6 +105,15 @@ Enum ContextType str{
     DataValidation = 'DataValidation'
     
 
+}
+
+Model TruckInfo internal {
+    truck_number str
+    bu optional str
+    sap_id optional str
+    location_name optional str
+    zone optional str
+    region optional str
 }
 
 Model Ticketing {
@@ -292,6 +334,16 @@ Model Ticketing {
         region optional list str
         sales_area optional list str
         sap_id optional list str
+    }
+
+    Action=> vts_block_trucks {
+        ticket_id str 
+        block_days optional int
+        remarks optional str 
+        reason optional str
+        check_ticket_close optional bool
+        truck_info list TruckInfo
+
     }
 
 

@@ -5,12 +5,37 @@ This module provides helper functions to generate insights, reasons, and actiona
 for performance score results.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
+import numpy as np
+
+
+def convert_numpy_types(obj: Any) -> Any:
+    """
+    Recursively convert numpy types to Python native types.
+    
+    Args:
+        obj: Object that may contain numpy types
+        
+    Returns:
+        Object with numpy types converted to Python types
+    """
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(round(obj, 2))
+    elif isinstance(obj, np.ndarray):
+        return [convert_numpy_types(item) for item in obj.tolist()]
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return type(obj)([convert_numpy_types(item) for item in obj])
+    else:
+        return obj
 
 
 def calculate_score_gap(current_score: float, max_score: float) -> float:
     """Calculate the gap between current score and maximum possible score."""
-    return max(0, max_score - current_score)
+    return float(round(max(0, max_score - current_score), 2))
 
 
 def get_priority_level(score_gap: float, weightage: float, max_total_score: float = 100) -> str:
@@ -27,7 +52,7 @@ def get_priority_level(score_gap: float, weightage: float, max_total_score: floa
         return "NONE"
     
     # Calculate gap as percentage of weightage
-    gap_percentage_of_weightage = (score_gap / weightage * 100) if weightage > 0 else 0
+    gap_percentage_of_weightage = float(round((score_gap / weightage * 100) if weightage > 0 else 0, 2))
     
     # Use both absolute gap and percentage of weightage
     if score_gap > 5 or gap_percentage_of_weightage > 50:
@@ -55,22 +80,24 @@ def generate_reason_for_score(score: float, weightage: float, msg: str = "",
         Dictionary with reason details
     """
     score_gap = calculate_score_gap(score, weightage)
-    percentage_achieved = (score / weightage * 100) if weightage > 0 else 0
+    percentage_achieved = float(round((score / weightage * 100) if weightage > 0 else 0, 2))
     
     reason = {
-        "score_achieved": round(score, 2),
-        "max_possible": round(weightage, 2),
-        "score_gap": round(score_gap, 2),
-        "percentage_achieved": round(percentage_achieved, 2),
-        "section_score": round(score, 2),  # Score within its section
-        "section_weightage": round(weightage, 2),  # Weightage within its section
+        "score_achieved": float(round(score, 2)),
+        "max_possible": float(round(weightage, 2)),
+        "score_gap": float(round(score_gap, 2)),
+        "percentage_achieved": float(round(percentage_achieved, 2)),
+        "section_score": float(round(score, 2)),  # Score within its section
+        "section_weightage": float(round(weightage, 2)),  # Weightage within its section
         "explanation": msg or "No specific reason provided",
         "priority": get_priority_level(score_gap, weightage)
     }
     # Note: contribution_to_overall_score will be calculated later when we know parent/category weightages
     
     if details:
-        reason.update(details)
+        # Convert numpy types in details before updating
+        converted_details = convert_numpy_types(details)
+        reason.update(converted_details)
     
     return reason
 
@@ -108,7 +135,7 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
             "action": "Resolve open alerts immediately",
             "priority": reason.get("priority", "HIGH"),
             "description": f"Close all open alerts for {rule_name} to restore full score. Review alert history and take corrective action.",
-            "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+            "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
         })
         actions.append({
             "action": "Review alert root causes",
@@ -126,8 +153,8 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
             actions.append({
                 "action": "Reduce rejection percentage",
                 "priority": reason.get("priority", "CRITICAL"),
-                "description": f"Current rejection rate ({current_value}%) exceeds maximum threshold ({threshold_max}%). Take immediate action to improve quality control.",
-                "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+                "description": f"Current rejection rate ({float(round(current_value, 2))}%) exceeds maximum threshold ({float(round(threshold_max, 2))}%). Take immediate action to improve quality control.",
+                "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
             })
             actions.append({
                 "action": "Review quality control processes",
@@ -139,7 +166,7 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
             actions.append({
                 "action": "Maintain current rejection levels",
                 "priority": "LOW",
-                "description": f"Rejection rate ({current_value}%) is below minimum threshold ({threshold_min}%). Continue current practices.",
+                "description": f"Rejection rate ({float(round(current_value, 2))}%) is below minimum threshold ({float(round(threshold_min, 2))}%). Continue current practices.",
                 "impact": "Maintains current score"
             })
             
@@ -148,7 +175,7 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
             "action": "Improve VA Portal score",
             "priority": reason.get("priority", "MEDIUM"),
             "description": f"Work on improving overall VA Portal score. Review VA dashboard metrics and address identified issues.",
-            "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+            "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
         })
         actions.append({
             "action": "Address VA alert severity issues",
@@ -162,7 +189,7 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
             "action": "Increase production output",
             "priority": reason.get("priority", "HIGH"),
             "description": f"Yesterday's production was below weekly average. Review production schedules and equipment efficiency.",
-            "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+            "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
         })
         actions.append({
             "action": "Optimize production planning",
@@ -176,7 +203,7 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
             "action": "Improve filling head productivity",
             "priority": reason.get("priority", "HIGH"),
             "description": f"Productivity is below optimal levels. Review carousel operations, operator efficiency, and equipment maintenance.",
-            "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+            "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
         })
         actions.append({
             "action": "Optimize carousel operations",
@@ -190,7 +217,7 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
             "action": "Reduce breakdown hours",
             "priority": reason.get("priority", "CRITICAL"),
             "description": f"Breakdown hours are affecting uptime. Implement preventive maintenance and quick response protocols.",
-            "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+            "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
         })
         actions.append({
             "action": "Implement preventive maintenance",
@@ -210,15 +237,15 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
                     "action": "Resolve interlock alerts",
                     "priority": reason.get("priority", "CRITICAL"),
                     "description": f"{unhealthy_count} out of {total_devices} devices have active alerts. Resolve these immediately for safety compliance.",
-                    "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+                    "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
                 })
             else:
                 # Score gap exists but no unhealthy devices - might be a configuration issue
                 actions.append({
                     "action": "Review interlock configuration",
                     "priority": reason.get("priority", "MEDIUM"),
-                    "description": f"Score gap of {round(score_gap, 2)} points exists but no unhealthy devices detected. Review configuration and calculation logic.",
-                    "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+                    "description": f"Score gap of {float(round(score_gap, 2))} points exists but no unhealthy devices detected. Review configuration and calculation logic.",
+                    "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
                 })
         
         # Only add maintenance review if there are devices
@@ -239,15 +266,15 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
             actions.append({
                 "action": "Refill immediately",
                 "priority": "CRITICAL",
-                "description": f"Available quantity ({available}) is below required threshold ({required}). Refill immediately for safety compliance.",
-                "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+                "description": f"Available quantity ({float(round(available, 2))}) is below required threshold ({float(round(required, 2))}). Refill immediately for safety compliance.",
+                "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
             })
         elif available < target:
             actions.append({
                 "action": "Top up to target level",
                 "priority": "MEDIUM",
-                "description": f"Available quantity ({available}) is below target ({target}). Top up to optimal level.",
-                "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+                "description": f"Available quantity ({float(round(available, 2))}) is below target ({float(round(target, 2))}). Top up to optimal level.",
+                "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
             })
             
     elif module_type == "fire_engines_auto_mode":
@@ -255,7 +282,7 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
             "action": "Switch fire engines to auto mode",
             "priority": "CRITICAL",
             "description": "Fire engines detected in local mode. Switch to auto mode immediately for safety compliance.",
-            "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+            "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
         })
         
     elif module_type == "hydrant_line":
@@ -263,7 +290,7 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
             "action": "Check hydrant line pressure",
             "priority": reason.get("priority", "HIGH"),
             "description": "Ensure hydrant line pressure is maintained above 7 Kg. Check jockey pump status.",
-            "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+            "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
         })
         actions.append({
             "action": "Verify jockey pump auto mode",
@@ -283,15 +310,15 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
                     "action": "Resolve vehicle interlock issues",
                     "priority": reason.get("priority", "HIGH"),
                     "description": f"{affected_count} out of {total_count} vehicles have active interlock alerts. Resolve these to restore compliance.",
-                    "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+                    "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
                 })
             else:
                 # Score gap exists but no active alerts - might be a configuration or calculation issue
                 actions.append({
                     "action": "Review vehicle interlock configuration",
                     "priority": reason.get("priority", "MEDIUM"),
-                    "description": f"Score gap of {round(score_gap, 2)} points exists but no active alerts detected. Review configuration and calculation logic.",
-                    "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+                    "description": f"Score gap of {float(round(score_gap, 2))} points exists but no active alerts detected. Review configuration and calculation logic.",
+                    "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
                 })
         
         # Only add maintenance review if there are vehicles
@@ -308,7 +335,7 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
             "action": "Execute carry forwards and dryouts",
             "priority": reason.get("priority", "HIGH"),
             "description": "Improve execution rate of placed carry forwards and dryouts. Review execution processes.",
-            "impact": f"Can recover up to {round(score_gap, 2)} points on overall score"
+            "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score"
         })
         actions.append({
             "action": "Reduce carry forward placement",
@@ -321,30 +348,30 @@ def generate_actions_for_improvement(module_name: str, rule_name: str, score: fl
     if not actions:
         priority = reason.get("priority", get_priority_level(score_gap, weightage))
         # score_gap is already the impact on global score (out of 100)
-        global_impact_pct = round((score_gap / 100) * 100, 2) if score_gap > 0 else 0
+        global_impact_pct = float(round((score_gap / 100) * 100, 2) if score_gap > 0 else 0)
         actions.append({
             "action": f"Review {rule_name} performance",
             "priority": priority,
-            "description": f"Current score is {round(score, 2)} out of {round(weightage, 2)} (achieved {round((score/weightage*100), 2) if weightage > 0 else 0}%). Review performance metrics and identify improvement areas.",
-            "impact": f"Can recover up to {round(score_gap, 2)} points on overall score ({global_impact_pct}% of total score)"
+            "description": f"Current score is {float(round(score, 2))} out of {float(round(weightage, 2))} (achieved {float(round((score/weightage*100), 2) if weightage > 0 else 0)}%). Review performance metrics and identify improvement areas.",
+            "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score ({float(round(global_impact_pct, 2))}% of total score)"
         })
         
         # Add more specific actions based on score gap
         # score_gap is already the impact on global score (out of 100)
-        global_impact_pct = round((score_gap / 100) * 100, 2) if score_gap > 0 else 0
+        global_impact_pct = float(round((score_gap / 100) * 100, 2) if score_gap > 0 else 0)
         if score_gap > 5:
             actions.append({
                 "action": f"Immediate action required for {rule_name}",
                 "priority": "CRITICAL",
-                "description": f"Large score gap of {round(score_gap, 2)} points indicates significant performance issues. Conduct root cause analysis.",
-                "impact": f"Can recover up to {round(score_gap, 2)} points on overall score ({global_impact_pct}% of total score)"
+                "description": f"Large score gap of {float(round(score_gap, 2))} points indicates significant performance issues. Conduct root cause analysis.",
+                "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score ({float(round(global_impact_pct, 2))}% of total score)"
             })
         elif score_gap > 2:
             actions.append({
                 "action": f"Prioritize improvements for {rule_name}",
                 "priority": "HIGH",
-                "description": f"Score gap of {round(score_gap, 2)} points requires attention. Review processes and implement corrective measures.",
-                "impact": f"Can recover up to {round(score_gap, 2)} points on overall score ({global_impact_pct}% of total score)"
+                "description": f"Score gap of {float(round(score_gap, 2))} points requires attention. Review processes and implement corrective measures.",
+                "impact": f"Can recover up to {float(round(score_gap, 2))} points on overall score ({float(round(global_impact_pct, 2))}% of total score)"
             })
     
     return actions
@@ -361,8 +388,11 @@ def enhance_result_with_insights(result: Dict, module_type: str = "general") -> 
     Returns:
         Enhanced result dictionary
     """
-    score = result.get("score", 0)
-    weightage = result.get("weightage", 0)
+    # Convert numpy types in result before processing
+    result = convert_numpy_types(result)
+    
+    score = float(result.get("score", 0))
+    weightage = float(result.get("weightage", 0))
     msg = result.get("msg", "")
     
     # Generate reason
@@ -379,8 +409,8 @@ def enhance_result_with_insights(result: Dict, module_type: str = "general") -> 
     )
     
     # Calculate nested contribution if parent/category weightages are available
-    parent_weightage = result.get("parent_weightage", 0)
-    category_weightage = result.get("category_weightage", 0)
+    parent_weightage = float(result.get("parent_weightage", 0))
+    category_weightage = float(result.get("category_weightage", 0))
     
     if parent_weightage > 0 or category_weightage > 0:
         if parent_weightage == 0:
@@ -395,6 +425,10 @@ def enhance_result_with_insights(result: Dict, module_type: str = "general") -> 
     result["reason"] = reason
     result["actions"] = actions
     result["priority"] = reason["priority"]
+    
+    # Ensure score and weightage are Python floats
+    result["score"] = float(round(score, 2))
+    result["weightage"] = float(round(weightage, 2))
     
     return result
 
@@ -411,9 +445,12 @@ def generate_summary_insights(module_results: Dict, parent_weightage: float = 0,
     Returns:
         Summary insights dictionary
     """
+    # Convert numpy types in module_results before processing
+    module_results = convert_numpy_types(module_results)
+    
     results = module_results.get("results", [])
-    module_score = module_results.get("score", 0)
-    module_weightage = module_results.get("weightage", 0)
+    module_score = float(module_results.get("score", 0))
+    module_weightage = float(module_results.get("weightage", 0))
     
     # Calculate module's contribution to overall score
     if parent_weightage > 0:
@@ -431,13 +468,13 @@ def generate_summary_insights(module_results: Dict, parent_weightage: float = 0,
     
     if not results:
         return {
-            "total_score_gap": 0,
-            "contribution_to_overall_score": round(module_actual_contribution, 4),
-            "max_contribution_to_overall_score": round(module_max_contribution, 4),
-            "module_score": round(module_score, 2),
-            "module_weightage": round(module_weightage, 2),
-            "contribution_percentage": round((module_actual_contribution / 100) * 100, 4),
-            "max_contribution_percentage": round((module_max_contribution / 100) * 100, 4),
+            "total_score_gap": float(0),
+            "contribution_to_overall_score": float(round(module_actual_contribution, 2)),
+            "max_contribution_to_overall_score": float(round(module_max_contribution, 2)),
+            "module_score": float(round(module_score, 2)),
+            "module_weightage": float(round(module_weightage, 2)),
+            "contribution_percentage": float(round((module_actual_contribution / 100) * 100, 4)),
+            "max_contribution_percentage": float(round((module_max_contribution / 100) * 100, 4)),
             "critical_issues": [],
             "high_priority_actions": [],
             "quick_wins": []
@@ -454,8 +491,10 @@ def generate_summary_insights(module_results: Dict, parent_weightage: float = 0,
         effective_parent_weightage = module_weightage  # Use module's own weightage as fallback
     
     for result in results:
-        score = result.get("score", 0)
-        weightage = result.get("weightage", 0)
+        # Convert numpy types in result
+        result = convert_numpy_types(result)
+        score = float(result.get("score", 0))
+        weightage = float(result.get("weightage", 0))
         gap = calculate_score_gap(score, weightage)
         total_score_gap += gap
         
@@ -470,15 +509,15 @@ def generate_summary_insights(module_results: Dict, parent_weightage: float = 0,
         if priority == "CRITICAL":
             critical_issues.append({
                 "rule": result.get("name", ""),
-                "score_gap": round(gap, 2),
-                "section_score": round(score, 2),
-                "section_weightage": round(weightage, 2),
-                "contribution_to_overall_score": result_nested_contribution["actual_contribution_to_overall"],
-                "max_contribution_to_overall_score": result_nested_contribution["max_contribution_to_overall"],
-                "contribution_percentage": result_nested_contribution["contribution_percentage"],
-                "max_contribution_percentage": result_nested_contribution["max_contribution_percentage"],
-                "contribution_gap": result_nested_contribution["contribution_gap"],
-                "contribution_gap_percentage": result_nested_contribution["contribution_gap_percentage"],
+                "score_gap": float(round(gap, 2)),
+                "section_score": float(round(score, 2)),
+                "section_weightage": float(round(weightage, 2)),
+                "contribution_to_overall_score": float(result_nested_contribution["actual_contribution_to_overall"]),
+                "max_contribution_to_overall_score": float(result_nested_contribution["max_contribution_to_overall"]),
+                "contribution_percentage": float(result_nested_contribution["contribution_percentage"]),
+                "max_contribution_percentage": float(result_nested_contribution["max_contribution_percentage"]),
+                "contribution_gap": float(result_nested_contribution["contribution_gap"]),
+                "contribution_gap_percentage": float(result_nested_contribution["contribution_gap_percentage"]),
                 "actions": [a.get("action") for a in actions[:2]]  # Top 2 actions
             })
         
@@ -489,24 +528,24 @@ def generate_summary_insights(module_results: Dict, parent_weightage: float = 0,
         if gap > 1 and priority in ["MEDIUM", "LOW"]:
             quick_wins.append({
                 "rule": result.get("name", ""),
-                "score_gap": round(gap, 2),
-                "section_score": round(score, 2),
-                "section_weightage": round(weightage, 2),
-                "contribution_to_overall_score": result_nested_contribution["actual_contribution_to_overall"],
-                "max_contribution_to_overall_score": result_nested_contribution["max_contribution_to_overall"],
-                "contribution_percentage": result_nested_contribution["contribution_percentage"],
-                "contribution_gap": result_nested_contribution["contribution_gap"],
+                "score_gap": float(round(gap, 2)),
+                "section_score": float(round(score, 2)),
+                "section_weightage": float(round(weightage, 2)),
+                "contribution_to_overall_score": float(result_nested_contribution["actual_contribution_to_overall"]),
+                "max_contribution_to_overall_score": float(result_nested_contribution["max_contribution_to_overall"]),
+                "contribution_percentage": float(result_nested_contribution["contribution_percentage"]),
+                "contribution_gap": float(result_nested_contribution["contribution_gap"]),
                 "action": actions[0].get("action") if actions else "Review and improve"
             })
     
     return {
-        "total_score_gap": round(total_score_gap, 2),
-        "contribution_to_overall_score": round(module_actual_contribution, 4),
-        "max_contribution_to_overall_score": round(module_max_contribution, 4),
-        "module_score": round(module_score, 2),
-        "module_weightage": round(module_weightage, 2),
-        "contribution_percentage": round((module_actual_contribution / 100) * 100, 4),
-        "max_contribution_percentage": round((module_max_contribution / 100) * 100, 4),
+        "total_score_gap": float(round(total_score_gap, 2)),
+        "contribution_to_overall_score": float(round(module_actual_contribution, 4)),
+        "max_contribution_to_overall_score": float(round(module_max_contribution, 4)),
+        "module_score": float(round(module_score, 2)),
+        "module_weightage": float(round(module_weightage, 2)),
+        "contribution_percentage": float(round((module_actual_contribution / 100) * 100, 4)),
+        "max_contribution_percentage": float(round((module_max_contribution / 100) * 100, 4)),
         "critical_issues": critical_issues[:5],  # Top 5 critical issues
         "high_priority_actions": high_priority_actions[:10],  # Top 10 actions
         "quick_wins": quick_wins[:5]  # Top 5 quick wins
@@ -559,39 +598,45 @@ def calculate_nested_contribution(score: float, weightage: float, parent_weighta
     max_gap_contribution = max_contribution - actual_contribution
     
     return {
-        "max_contribution_to_overall": round(max_contribution, 4),
-        "actual_contribution_to_overall": round(actual_contribution, 4),
-        "contribution_percentage": round((actual_contribution / max_total_score) * 100, 4),
-        "max_contribution_percentage": round((max_contribution / max_total_score) * 100, 4),
-        "contribution_gap": round(max_gap_contribution, 4),
-        "contribution_gap_percentage": round((max_gap_contribution / max_total_score) * 100, 4)
+        "max_contribution_to_overall": float(round(max_contribution, 2)),
+        "actual_contribution_to_overall": float(round(actual_contribution, 2)),
+        "contribution_percentage": float(round((actual_contribution / max_total_score) * 100, 2)),
+        "max_contribution_percentage": float(round((max_contribution / max_total_score) * 100, 2)),
+        "contribution_gap": float(round(max_gap_contribution, 2)),
+        "contribution_gap_percentage": float(round((max_gap_contribution / max_total_score) * 100, 2))
     }
 
 
 def extract_results_from_category(category: Dict) -> List[Dict]:
     """Recursively extract all result items from a category (handles nested results)."""
     results = []
-    category_weightage = category.get("weightage", 0)
+    # Convert numpy types in category
+    category = convert_numpy_types(category)
+    category_weightage = float(category.get("weightage", 0))
     
     # Get direct results
     direct_results = category.get("results", [])
     for result in direct_results:
+        # Convert numpy types in result
+        result = convert_numpy_types(result)
         # Check if this result has nested results (like TAS module)
         if "results" in result and isinstance(result["results"], list):
             # This is a parent module with nested results (e.g., TAS > Safety_Interlocks)
-            parent_weightage = result.get("weightage", 0)
+            parent_weightage = float(result.get("weightage", 0))
             for nested_result in result["results"]:
+                # Convert numpy types in nested_result
+                nested_result = convert_numpy_types(nested_result)
                 nested_result["parent_module"] = category.get("name", "")
                 nested_result["parent_result"] = result.get("name", "")
-                nested_result["parent_weightage"] = parent_weightage
-                nested_result["category_weightage"] = category_weightage
+                nested_result["parent_weightage"] = float(parent_weightage)
+                nested_result["category_weightage"] = float(category_weightage)
                 results.append(nested_result)
         else:
             # Regular result (direct child of category)
             result["parent_module"] = category.get("name", "")
             result["parent_result"] = None
-            result["parent_weightage"] = 0  # No parent, so use category weightage directly
-            result["category_weightage"] = category_weightage
+            result["parent_weightage"] = float(0)  # No parent, so use category weightage directly
+            result["category_weightage"] = float(category_weightage)
             results.append(result)
     
     return results
@@ -607,8 +652,11 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
     Returns:
         Overall insights dictionary
     """
+    # Convert numpy types in performance_score before processing
+    performance_score = convert_numpy_types(performance_score)
+    
     categories = performance_score.get("category", [])
-    total_score = performance_score.get("score", 0)
+    total_score = float(performance_score.get("score", 0))
     max_possible = 100
     
     overall_gap = calculate_score_gap(total_score, max_possible)
@@ -623,18 +671,20 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
     module_gaps = []
     
     for category in categories:
+        # Convert numpy types in category
+        category = convert_numpy_types(category)
         category_name = category.get("name", "")
-        category_score = category.get("score", 0)
-        category_weightage = category.get("weightage", 0)
+        category_score = float(category.get("score", 0))
+        category_weightage = float(category.get("weightage", 0))
         category_gap = calculate_score_gap(category_score, category_weightage)
         
         module_gaps.append({
             "module": category_name,
-            "score": round(category_score, 2),
-            "weightage": round(category_weightage, 2),
-            "gap": round(category_gap, 2),
-            "contribution_to_overall_score": round(category_score, 2),  # Actual contribution to overall score (out of 100)
-            "contribution_percentage": round((category_score / max_possible) * 100, 2),  # Percentage of total score
+            "score": float(round(category_score, 2)),
+            "weightage": float(round(category_weightage, 2)),
+            "gap": float(round(category_gap, 2)),
+            "contribution_to_overall_score": float(round(category_score, 2)),  # Actual contribution to overall score (out of 100)
+            "contribution_percentage": float(round((category_score / max_possible) * 100, 2)),  # Percentage of total score
             "priority": get_priority_level(category_gap, category_weightage)
         })
         
@@ -651,8 +701,10 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
     all_medium_priority_actions = []
     
     for result in all_results:
-        score = result.get("score", 0)
-        weightage = result.get("weightage", 0)
+        # Convert numpy types in result
+        result = convert_numpy_types(result)
+        score = float(result.get("score", 0))
+        weightage = float(result.get("weightage", 0))
         gap = calculate_score_gap(score, weightage)
         
         # Skip if no weightage (invalid result)
@@ -660,8 +712,8 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
             continue
         
         # Calculate nested contribution to overall score
-        parent_weightage = result.get("parent_weightage", 0)
-        category_weightage = result.get("category_weightage", 0)
+        parent_weightage = float(result.get("parent_weightage", 0))
+        category_weightage = float(result.get("category_weightage", 0))
         
         # If parent_weightage is 0, it means this is a direct child of category
         # In that case, use category_weightage as the parent
@@ -684,7 +736,7 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
             # Try to determine module type from context
             module_type = "general"
             rule_name = result.get("name", "").lower()
-            parent_result_name = result.get("parent_result", "").lower()
+            parent_result_name = f"{result['parent_result']}".lower() if result.get("parent_result") else ""
             
             if "alert" in rule_name or "alert" in parent_result_name:
                 module_type = "open_alerts"
@@ -732,19 +784,19 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
             all_critical.append({
                 "rule": full_name,
                 "module": parent_module or result.get("module", ""),
-                "score_gap": round(gap, 2),
-                "current_score": round(score, 2),
-                "max_score": round(weightage, 2),
-                "section_score": round(score, 2),  # Score within its section
-                "section_weightage": round(weightage, 2),  # Weightage within its section
-                "contribution_to_overall_score": nested_contribution["actual_contribution_to_overall"],  # Actual contribution to overall score (out of 100)
-                "max_contribution_to_overall_score": nested_contribution["max_contribution_to_overall"],  # Max possible contribution
-                "contribution_percentage": nested_contribution["contribution_percentage"],  # Percentage of total score (actual)
-                "max_contribution_percentage": nested_contribution["max_contribution_percentage"],  # Max percentage possible
-                "contribution_gap": nested_contribution["contribution_gap"],  # Gap in contribution to overall score
-                "contribution_gap_percentage": nested_contribution["contribution_gap_percentage"],  # Gap as percentage of total
-                "percentage_achieved": reason_obj.get("percentage_achieved", round((score/weightage*100), 2)),
-                "explanation": result.get("msg", reason_obj.get("explanation", f"Score is {round(score, 2)} out of {round(weightage, 2)}")),
+                "score_gap": float(round(gap, 2)),
+                "current_score": float(round(score, 2)),
+                "max_score": float(round(weightage, 2)),
+                "section_score": float(round(score, 2)),  # Score within its section
+                "section_weightage": float(round(weightage, 2)),  # Weightage within its section
+                "contribution_to_overall_score": float(nested_contribution["actual_contribution_to_overall"]),  # Actual contribution to overall score (out of 100)
+                "max_contribution_to_overall_score": float(nested_contribution["max_contribution_to_overall"]),  # Max possible contribution
+                "contribution_percentage": float(nested_contribution["contribution_percentage"]),  # Percentage of total score (actual)
+                "max_contribution_percentage": float(nested_contribution["max_contribution_percentage"]),  # Max percentage possible
+                "contribution_gap": float(nested_contribution["contribution_gap"]),  # Gap in contribution to overall score
+                "contribution_gap_percentage": float(nested_contribution["contribution_gap_percentage"]),  # Gap as percentage of total
+                "percentage_achieved": float(reason_obj.get("percentage_achieved", round((score/weightage*100), 2))),
+                "explanation": result.get("msg", reason_obj.get("explanation", f"Score is {float(round(score, 2))} out of {float(round(weightage, 2))}")),
                 "actions": [a.get("action") for a in result.get("actions", [])[:2]]  # Top 2 actions
             })
         
@@ -772,38 +824,38 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
                         action_copy["module"] = result.get("parent_module", result.get("module", ""))
                         action_copy["rule"] = result.get("name", "")
                         # score_gap is already the global impact (rule weightage is part of module weightage which is part of total 100)
-                        action_copy["score_gap"] = round(gap, 2)
-                        action_copy["global_impact"] = round(gap, 2)  # Same value, but clearer naming
-                        action_copy["global_impact_percentage"] = round((gap / 100) * 100, 2)  # Percentage of total score
+                        action_copy["score_gap"] = float(round(gap, 2))
+                        action_copy["global_impact"] = float(round(gap, 2))  # Same value, but clearer naming
+                        action_copy["global_impact_percentage"] = float(round((gap / 100) * 100, 2))  # Percentage of total score
                         # Add contribution fields
-                        action_copy["contribution_to_overall_score"] = nested_contribution["actual_contribution_to_overall"]
-                        action_copy["contribution_gap"] = nested_contribution["contribution_gap"]
-                        action_copy["overall_gap"] = round(overall_gap, 2)
+                        action_copy["contribution_to_overall_score"] = float(nested_contribution["actual_contribution_to_overall"])
+                        action_copy["contribution_gap"] = float(nested_contribution["contribution_gap"])
+                        action_copy["overall_gap"] = float(round(overall_gap, 2))
                         # Update impact text to clarify it's global impact
                         if "impact" in action_copy:
                             if "points" in action_copy["impact"] and "overall score" not in action_copy["impact"]:
                                 action_copy["impact"] = action_copy["impact"].replace("points", "points on overall score")
                             # Add percentage if not already present
                             if "%" not in action_copy["impact"] and gap > 0:
-                                pct = round((gap / 100) * 100, 2)
+                                pct = float(round((gap / 100) * 100, 2))
                                 action_copy["impact"] += f" ({pct}% of total score)"
                         all_high_priority_actions.append(action_copy)
             else:
                 # Generate default action if none exists
-                global_impact_pct = round((gap / 100) * 100, 2) if gap > 0 else 0
+                global_impact_pct = float(round((gap / 100) * 100, 2) if gap > 0 else 0)
                 default_action = {
                     "action": f"Review and improve {result.get('name', 'rule')} performance",
                     "priority": priority,
-                    "description": f"Current score is {round(score, 2)} out of {round(weightage, 2)}. Review metrics and identify improvement areas.",
-                    "impact": f"Can recover up to {round(gap, 2)} points on overall score ({global_impact_pct}% of total score)",
+                    "description": f"Current score is {float(round(score, 2))} out of {float(round(weightage, 2))}. Review metrics and identify improvement areas.",
+                    "impact": f"Can recover up to {float(round(gap, 2))} points on overall score ({global_impact_pct}% of total score)",
                     "module": result.get("parent_module", result.get("module", "")),
                     "rule": result.get("name", ""),
-                    "score_gap": round(gap, 2),
-                    "global_impact": round(gap, 2),
+                    "score_gap": float(round(gap, 2)),
+                    "global_impact": float(round(gap, 2)),
                     "global_impact_percentage": global_impact_pct,
-                    "contribution_to_overall_score": nested_contribution["actual_contribution_to_overall"],
-                    "contribution_gap": nested_contribution["contribution_gap"],
-                    "overall_gap": round(overall_gap, 2)
+                    "contribution_to_overall_score": float(nested_contribution["actual_contribution_to_overall"]),
+                    "contribution_gap": float(nested_contribution["contribution_gap"]),
+                    "overall_gap": float(round(overall_gap, 2))
                 }
                 all_high_priority_actions.append(default_action)
         
@@ -814,7 +866,7 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
                 action_copy = actions[0].copy()
                 action_copy["module"] = result.get("parent_module", result.get("module", ""))
                 action_copy["rule"] = result.get("name", "")
-                action_copy["score_gap"] = round(gap, 2)
+                action_copy["score_gap"] = float(round(gap, 2))
                 all_medium_priority_actions.append(action_copy)
     
     # Sort critical issues by score gap
@@ -835,11 +887,13 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
         
         # Find top results in this module
         module_results = [r for r in all_results if r.get("parent_module") == module_name or r.get("module") == module_name]
-        module_results.sort(key=lambda x: calculate_score_gap(x.get("score", 0), x.get("weightage", 0)), reverse=True)
+        module_results.sort(key=lambda x: calculate_score_gap(float(x.get("score", 0)), float(x.get("weightage", 0))), reverse=True)
         
         top_issues = []
         for result in module_results[:5]:  # Top 5 issues in this module
-            result_gap = calculate_score_gap(result.get("score", 0), result.get("weightage", 0))
+            # Convert numpy types in result
+            result = convert_numpy_types(result)
+            result_gap = calculate_score_gap(float(result.get("score", 0)), float(result.get("weightage", 0)))
             if result_gap > 0:
                 # Ensure result has insights
                 if "reason" not in result or "actions" not in result:
@@ -855,10 +909,10 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
                         module_type = "vts"
                     result = enhance_result_with_insights(result, module_type)
                 
-                result_score = result.get("score", 0)
+                result_score = float(result.get("score", 0))
                 # Calculate nested contribution for this result
-                result_parent_weightage = result.get("parent_weightage", 0)
-                result_category_weightage = result.get("category_weightage", 0)
+                result_parent_weightage = float(result.get("parent_weightage", 0))
+                result_category_weightage = float(result.get("category_weightage", 0))
                 if result_parent_weightage == 0:
                     result_parent_weightage = result_category_weightage
                 
@@ -869,17 +923,17 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
                 
                 top_issues.append({
                     "rule": result.get("name", ""),
-                    "score_gap": round(result_gap, 2),
-                    "current_score": round(result_score, 2),
-                    "max_score": round(result.get("weightage", 0), 2),
-                    "section_score": round(result_score, 2),  # Score within its section
-                    "section_weightage": round(result.get("weightage", 0), 2),  # Weightage within its section
-                    "contribution_to_overall_score": result_nested_contribution["actual_contribution_to_overall"],  # Actual contribution to overall score (out of 100)
-                    "max_contribution_to_overall_score": result_nested_contribution["max_contribution_to_overall"],  # Max possible contribution
-                    "contribution_percentage": result_nested_contribution["contribution_percentage"],  # Percentage of total score (actual)
-                    "max_contribution_percentage": result_nested_contribution["max_contribution_percentage"],  # Max percentage possible
-                    "contribution_gap": result_nested_contribution["contribution_gap"],  # Gap in contribution to overall score
-                    "contribution_gap_percentage": result_nested_contribution["contribution_gap_percentage"],  # Gap as percentage of total
+                    "score_gap": float(round(result_gap, 2)),
+                    "current_score": float(round(result_score, 2)),
+                    "max_score": float(round(result.get("weightage", 0), 2)),
+                    "section_score": float(round(result_score, 2)),  # Score within its section
+                    "section_weightage": float(round(result.get("weightage", 0), 2)),  # Weightage within its section
+                    "contribution_to_overall_score": float(result_nested_contribution["actual_contribution_to_overall"]),  # Actual contribution to overall score (out of 100)
+                    "max_contribution_to_overall_score": float(result_nested_contribution["max_contribution_to_overall"]),  # Max possible contribution
+                    "contribution_percentage": float(result_nested_contribution["contribution_percentage"]),  # Percentage of total score (actual)
+                    "max_contribution_percentage": float(result_nested_contribution["max_contribution_percentage"]),  # Max percentage possible
+                    "contribution_gap": float(result_nested_contribution["contribution_gap"]),  # Gap in contribution to overall score
+                    "contribution_gap_percentage": float(result_nested_contribution["contribution_gap_percentage"]),  # Gap as percentage of total
                     "priority": result.get("priority", get_priority_level(result_gap, result.get("weightage", 0))),
                     "explanation": result.get("msg", result.get("reason", {}).get("explanation", "")),
                     "top_action": result.get("actions", [{}])[0].get("action", "") if result.get("actions") else "",
@@ -903,31 +957,34 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
         
         focus_areas.append({
             "module": module_name,
-            "module_gap": round(module_gap, 2),
+            "module_gap": float(round(module_gap, 2)),
             "module_priority": mg["priority"],
-            "module_score": round(mg["score"], 2),
-            "module_weightage": round(mg["weightage"], 2),
-            "contribution_to_overall_score": round(mg["score"], 2),  # Actual contribution to overall score (out of 100)
-            "contribution_percentage": round((mg["score"] / max_possible) * 100, 2),  # Percentage of total score
-            "reason": f"Score gap of {round(module_gap, 2)} points ({mg['priority']} priority) - {round((module_gap/max_possible)*100, 2)}% of total score. Current: {round(mg['score'], 2)}/{round(mg['weightage'], 2)}. Contributes {round(mg['score'], 2)} points to overall score ({round((mg['score']/max_possible)*100, 2)}%).",
-            "potential_impact": f"Can improve overall score by {round((module_gap/max_possible)*100, 2)}%",
+            "module_score": float(round(mg["score"], 2)),
+            "module_weightage": float(round(mg["weightage"], 2)),
+            "contribution_to_overall_score": float(round(mg["score"], 2)),  # Actual contribution to overall score (out of 100)
+            "contribution_percentage": float(round((mg["score"] / max_possible) * 100, 2)),  # Percentage of total score
+            "reason": f"Score gap of {float(round(module_gap, 2))} points ({mg['priority']} priority) - {float(round((module_gap/max_possible)*100, 2))}% of total score. Current: {float(round(mg['score'], 2))}/{float(round(mg['weightage'], 2))}. Contributes {float(round(mg['score'], 2))} points to overall score ({float(round((mg['score']/max_possible)*100, 2))}%).",
+            "potential_impact": f"Can improve overall score by {float(round((module_gap/max_possible)*100, 2))}%",
             "key_issues": top_issues,
             "immediate_actions": immediate_actions[:5],  # Top 5 immediate actions
-            "summary": f"Focus on {len(top_issues)} key issues in {module_name} module. Currently contributes {round(mg['score'], 2)} points ({round((mg['score']/max_possible)*100, 2)}%) to overall score. Priority actions include: {', '.join([a['action'] for a in immediate_actions[:3]])}"
+            "summary": f"Focus on {len(top_issues)} key issues in {module_name} module. Currently contributes {float(round(mg['score'], 2))} points ({float(round((mg['score']/max_possible)*100, 2))}%) to overall score. Priority actions include: {', '.join([a['action'] for a in immediate_actions[:3]])}"
         })
     
     # Update module-level insights with parent weightage information
     # This ensures nested modules (like Safety_Interlocks within TAS) have correct contribution calculations
     for category in categories:
-        category_weightage = category.get("weightage", 0)
+        category = convert_numpy_types(category)
+        category_weightage = float(category.get("weightage", 0))
         category_results = category.get("results", [])
         
         for module_result in category_results:
+            # Convert numpy types in module_result
+            module_result = convert_numpy_types(module_result)
             # Check if this module has nested results (like TAS > Safety_Interlocks)
             if "results" in module_result and isinstance(module_result.get("results"), list):
                 module_name = module_result.get("name", "")
-                module_score = module_result.get("score", 0)
-                module_weightage = module_result.get("weightage", 0)
+                module_score = float(module_result.get("score", 0))
+                module_weightage = float(module_result.get("weightage", 0))
                 
                 # Calculate module's contribution to overall score
                 module_max_contribution = (module_weightage / 100) * category_weightage
@@ -937,10 +994,10 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
                 if "insights" in module_result:
                     insights = module_result["insights"]
                     # Update with correct contribution values
-                    insights["contribution_to_overall_score"] = round(module_actual_contribution, 4)
-                    insights["max_contribution_to_overall_score"] = round(module_max_contribution, 4)
-                    insights["contribution_percentage"] = round((module_actual_contribution / max_possible) * 100, 4)
-                    insights["max_contribution_percentage"] = round((module_max_contribution / max_possible) * 100, 4)
+                    insights["contribution_to_overall_score"] = float(round(module_actual_contribution, 4))
+                    insights["max_contribution_to_overall_score"] = float(round(module_max_contribution, 4))
+                    insights["contribution_percentage"] = float(round((module_actual_contribution / max_possible) * 100, 4))
+                    insights["max_contribution_percentage"] = float(round((module_max_contribution / max_possible) * 100, 4))
                     
                     # Update critical_issues and quick_wins with nested contributions
                     for issue in insights.get("critical_issues", []):
@@ -956,14 +1013,14 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
                             rule_nested_contribution = calculate_nested_contribution(
                                 rule_score, rule_weightage, module_weightage, category_weightage, max_possible
                             )
-                            issue["contribution_to_overall_score"] = rule_nested_contribution["actual_contribution_to_overall"]
-                            issue["max_contribution_to_overall_score"] = rule_nested_contribution["max_contribution_to_overall"]
-                            issue["contribution_percentage"] = rule_nested_contribution["contribution_percentage"]
-                            issue["max_contribution_percentage"] = rule_nested_contribution["max_contribution_percentage"]
-                            issue["contribution_gap"] = rule_nested_contribution["contribution_gap"]
-                            issue["contribution_gap_percentage"] = rule_nested_contribution["contribution_gap_percentage"]
-                            issue["section_score"] = round(rule_score, 2)
-                            issue["section_weightage"] = round(rule_weightage, 2)
+                            issue["contribution_to_overall_score"] = float(rule_nested_contribution["actual_contribution_to_overall"])
+                            issue["max_contribution_to_overall_score"] = float(rule_nested_contribution["max_contribution_to_overall"])
+                            issue["contribution_percentage"] = float(rule_nested_contribution["contribution_percentage"])
+                            issue["max_contribution_percentage"] = float(rule_nested_contribution["max_contribution_percentage"])
+                            issue["contribution_gap"] = float(rule_nested_contribution["contribution_gap"])
+                            issue["contribution_gap_percentage"] = float(rule_nested_contribution["contribution_gap_percentage"])
+                            issue["section_score"] = float(round(rule_score, 2))
+                            issue["section_weightage"] = float(round(rule_weightage, 2))
                     
                     for quick_win in insights.get("quick_wins", []):
                         rule_name = quick_win.get("rule", "")
@@ -972,17 +1029,18 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
                             None
                         )
                         if matching_result:
-                            rule_score = matching_result.get("score", 0)
-                            rule_weightage = matching_result.get("weightage", 0)
+                            matching_result = convert_numpy_types(matching_result)
+                            rule_score = float(matching_result.get("score", 0))
+                            rule_weightage = float(matching_result.get("weightage", 0))
                             rule_nested_contribution = calculate_nested_contribution(
                                 rule_score, rule_weightage, module_weightage, category_weightage, max_possible
                             )
-                            quick_win["contribution_to_overall_score"] = rule_nested_contribution["actual_contribution_to_overall"]
-                            quick_win["max_contribution_to_overall_score"] = rule_nested_contribution["max_contribution_to_overall"]
-                            quick_win["contribution_percentage"] = rule_nested_contribution["contribution_percentage"]
-                            quick_win["contribution_gap"] = rule_nested_contribution["contribution_gap"]
-                            quick_win["section_score"] = round(rule_score, 2)
-                            quick_win["section_weightage"] = round(rule_weightage, 2)
+                            quick_win["contribution_to_overall_score"] = float(rule_nested_contribution["actual_contribution_to_overall"])
+                            quick_win["max_contribution_to_overall_score"] = float(rule_nested_contribution["max_contribution_to_overall"])
+                            quick_win["contribution_percentage"] = float(rule_nested_contribution["contribution_percentage"])
+                            quick_win["contribution_gap"] = float(rule_nested_contribution["contribution_gap"])
+                            quick_win["section_score"] = float(round(rule_score, 2))
+                            quick_win["section_weightage"] = float(round(rule_weightage, 2))
                 
                 # Also regenerate insights with parent weightage if not already done
                 elif module_result.get("results"):
@@ -993,9 +1051,9 @@ def generate_overall_insights(performance_score: Dict) -> Dict:
                     )
     
     return {
-        "overall_score": round(total_score, 2),
-        "overall_gap": round(overall_gap, 2),
-        "improvement_potential": round((overall_gap / max_possible) * 100, 2),
+        "overall_score": float(round(total_score, 2)),
+        "overall_gap": float(round(overall_gap, 2)),
+        "improvement_potential": float(round((overall_gap / max_possible) * 100, 2)),
         "top_priority_modules": module_gaps[:5],  # Top 5 modules with highest gaps
         "critical_issues": all_critical[:10],  # Top 10 critical issues across all modules
         "recommended_actions": all_high_priority_actions[:20],  # Top 20 recommended actions

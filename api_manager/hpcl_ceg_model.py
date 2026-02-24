@@ -1587,6 +1587,8 @@ class AlertsSchema(UrdhvaPostgresBase):
     file_uploaded_path: Mapped[typing.Optional[str]] = mapped_column("file_uploaded_path", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     block_status: Mapped[typing.Optional[typing.Any]] = mapped_column("block_status", String, index=True, nullable=True, default=None, primary_key=False, unique=False)
     image_uploaded: Mapped[typing.Optional[bool]] = mapped_column("image_uploaded", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    ticket_id: Mapped[typing.Optional[str]] = mapped_column("ticket_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1686,6 +1688,8 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
     block_status: typing.Optional[hpcl_ceg_enum.BlockStatus] | None = None
     image_uploaded: typing.Optional[bool] = pydantic.Field(False, )
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    ticket_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1794,6 +1798,8 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     file_uploaded_path: typing.Optional[str] = pydantic.Field("", **{})
     block_status: typing.Optional[hpcl_ceg_enum.BlockStatus] | None = None
     image_uploaded: typing.Optional[bool] = pydantic.Field(False, )
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    ticket_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1948,6 +1954,11 @@ class Alerts_Block_Vts_TruckParams(pydantic.BaseModel):
     blocking_days: int
     reason: typing.Optional[str] = pydantic.Field("", **{})
     remarks: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    check_ticket_close: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

@@ -904,6 +904,65 @@ vts_unblocking_matrix = {
     }
 }
 
+lpg_packed_unblocking_matrix = {
+    "VTS":{
+        "LPG": {
+            "level - 1": {
+                "rolemailto": {
+                    "0": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Creator LPG",
+                    "1": "Location In-Charge LPG,Approver LPG",
+                    "2": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Location In-Charge LPG,Creator LPG,Approver LPG"
+                },
+                "mqof": {
+                    "0": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Creator LPG",
+                    "1": "Location In-Charge LPG,Approver LPG"
+                },
+                "condition": "<",
+                "value": 2
+            },
+            "level - 2": {
+                "rolemailto": {
+                    "0": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Location In-Charge LPG,Creator LPG",
+                    "1": "Regional Manager LPG,Approver LPG",
+                    "2": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Location In-Charge LPG,Regional Manager LPG,Creator LPG,Approver LPG"
+                },
+                "mqof": {
+                    "0": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Location In-Charge LPG,Creator LPG",
+                    "1": "Regional Manager LPG,Approver LPG"
+                },
+                "condition": "<>",
+                "value": 4
+            },
+            "level - 3": {
+                "rolemailto": {
+                    "0": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Location In-Charge LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG",
+                    "2": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Location In-Charge LPG,Zonal Operations LPG,Creator LPG,Approver LPG"
+                },
+                "mqof": {
+                    "0": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Location In-Charge LPG,Creator LPG",
+                    "1": "Zonal Operations LPG,Approver LPG"
+                },
+                "condition": "<>",
+                "value": 6
+            },
+            "level - 4": {
+                "rolemailto": {
+                    "0": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Location In-Charge LPG,Creator LPG",
+                    "1": "Zonal Head LPG,Approver LPG",
+                    "2": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Location In-Charge LPG,Zonal Head LPG,Creator LPG,Approver LPG"
+                },
+                "mqof": {
+                    "0": "Safety Officer LPG,Maintenance Officer LPG,Planning Officer LPG,Location In-Charge LPG,Creator LPG",
+                    "1": "Zonal Head LPG,Approver LPG"
+                },
+                "condition": ">",
+                "value": 6
+            }
+        }
+    }
+}
+
 vts_sod_top_unblocking_matrix = {
     "VTS":{
         "TAS": {

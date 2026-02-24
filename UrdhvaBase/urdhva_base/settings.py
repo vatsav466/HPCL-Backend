@@ -96,6 +96,8 @@ class Settings(pydantic_settings.BaseSettings):
     template_path: str = "/opt/ceg/algo/orchestrator/notification_templates"
     uploads: str = ""
     downloads: str = ""
+    
+
     downloads_url_base: str = "/downloads"
     ticketing_attachments: str = ""
     kibana_dashboard_header: str = 'osd-xsrf'

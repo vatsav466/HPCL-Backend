@@ -25,7 +25,8 @@ from hpcl_ceg_ticketing_model import (
     Ticketing_Delete_DescriptionParams,
     Ticketing_Attach_File_To_CommentParams,
     Ticketing_Delete_File_From_CommentParams,
-    Ticketing_Get_Location_DataParams
+    Ticketing_Get_Location_DataParams,
+    Ticketing_Vts_Block_TrucksParams
 
 )
 import os, uuid
@@ -44,6 +45,7 @@ from fastapi import APIRouter, HTTPException
 from urdhva_base.queryparams import QueryParams
 from fastapi import UploadFile, File, Form
 import utilities.minio_connector as minio_connector
+import json
 
 
 
@@ -429,6 +431,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         "ticket_name": ticket_data['ticket_name'],
         "alert_type": selected_types,
         "alert_data": selected_alert,
+        "alert_section": tdata.get("alert_section"),  
         "reporter": user_name,
         "ticket_history": ticket_data['ticket_history'],
         "parent_id": parent_tid,
@@ -654,7 +657,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
                     break
         # ----------------------------------------------------
 
-        ticket_state = data_dict.get("ticket_state") or existing_ticket.get("ticket_state")
+        ticket_state = data_dict.get("ticket_state", existing_ticket.get("ticket_state"))
         if ticket_state not in TicketType.__members__:
             raise Exception(f"Invalid ticket_state: {ticket_state}")
 
@@ -666,27 +669,38 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
 
         
         # ---------------- FINAL STATE DECISION ----------------
-        print("========== DEBUG START ==========")
-        print("linked_alert_ids:", linked_alert_ids)
-        print("is_manual_ticket:", is_manual_ticket)
-        print("all_alerts_closed:", all_alerts_closed)
-        print("auto_close_flag:", auto_close_flag)
-        print("ticket_state_from_UI:", ticket_state)
-        print("=================================")
-
+        ticket_state_from_ui = data_dict.get("ticket_state")
 
         if is_manual_ticket:
-            final_state = ticket_state
+            final_state = ticket_state_from_ui or existing_ticket.get("ticket_state")
             action_msg = f"Ticket updated, state changed to {final_state}"
             action_type_val = action_type_enum
 
         else:
+            # Case 1: Auto close ON and alerts closed
             if all_alerts_closed and auto_close_flag:
                 final_state = "Resolved"
                 action_msg = "All linked alerts are closed, ticket auto resolved"
                 action_type_val = "TicketResolved"
+
+            # Case 2: Auto close turned OFF but no state sent from UI
+            elif not auto_close_flag and existing_ticket.get("ticket_state") == "Resolved":
+                
+                # Find last non-resolved state from history
+                previous_state = None
+                for entry in reversed(existing_history):
+                    msg = entry.get("action_msg", "")
+                    if "state changed to" in msg and "Resolved" not in msg:
+                        previous_state = msg.split("state changed to")[-1].strip()
+                        break
+
+                final_state = previous_state or "InProgress"
+                action_msg = f"Auto close disabled, state reverted to {final_state}"
+                action_type_val = action_type_enum
+
+            # Normal case
             else:
-                final_state = ticket_state
+                final_state = ticket_state_from_ui or existing_ticket.get("ticket_state")
                 action_msg = f"Ticket updated, state changed to {final_state}"
                 action_type_val = action_type_enum
 
@@ -1615,4 +1629,81 @@ async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
             "locations": locations
         }
     }
+
+
+# Action vts_block_trucks
+@router.post('/vts_block_trucks', tags=['Ticketing'])
+async def ticketing_vts_block_trucks(data: Ticketing_Vts_Block_TrucksParams):
+    results = []
+
+    # Validate trucks
+    if not data.truck_info:
+        return {
+            "status": False,
+            "message": "No trucks provided to block",
+            "results": results
+        }
+
+    try:
+        rpt = urdhva_base.context.context.get('rpt', {})
+        if not rpt:
+            return {
+                "status": False,
+                "message": "Session got expired, Please Re-Login",
+                "results": results
+            }
+
+        redis_queue = urdhva_base.redispool.RedisQueue("ticket_block_trucks_queue")
+
+        # Loop through each truck
+        for truck in data.truck_info:
+            try:
+                queue_payload = {
+                    "truck_number": truck.truck_number,
+                    "blocking_days": data.block_days,
+                    "remarks": data.remarks,
+                    "reason": data.reason,
+                    "bu": truck.bu or "TAS",
+                    "location_name": truck.location_name or "",
+                    "sap_id": truck.sap_id or "",
+                    "region": truck.region or "",
+                    "zone": truck.zone or "",
+                    "ticket_id": data.ticket_id,
+                    "check_ticket_close": data.check_ticket_close,
+                    "rpt": {
+                        "username": rpt.get("username", ""),
+                        "email": rpt.get("email", ""),
+                        "novex_role": rpt.get("novex_role", []),
+                    },
+                    "entity_id": urdhva_base.context.context.get("entity_id", "Novex")
+                }
+
+                await redis_queue.put(json.dumps(queue_payload))
+                results.append({
+                    "truck_number": truck.truck_number,
+                    "status": "queued",
+                    "message": "Queued for blocking"
+                })
+
+            except Exception as inner_e:
+                logger.exception(f"Error queueing truck {truck.truck_number}: {str(inner_e)}")
+                results.append({
+                    "truck_number": truck.truck_number,
+                    "status": False,
+                    "message": "Failed to queue"
+                })
+
+        return {
+            "status": True,
+            "message": "Block requests queued for processing",
+            "results": results
+        }
+
+    except Exception as e:
+        logger.exception(f"Error in Multi Truck Block Flow: {str(e)}")
+        return {
+            "status": False,
+            "message": "Failed to process truck blocking",
+            "results": results
+        }
 
