@@ -706,7 +706,7 @@ vts_query = {
                         FROM 
                             alerts 
                         WHERE 
-                            alert_status='Close' AND alert_section='VTS' AND bu='TAS' """,
+                            alert_status='Close' AND alert_section='VTS' """,
     
     "unblocked_tt_shortage": """
                             SELECT 
