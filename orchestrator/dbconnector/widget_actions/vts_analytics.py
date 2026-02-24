@@ -1054,17 +1054,22 @@ class VTSAnalyticsActions:
 
             # Extract employee_id and action_by from alert_history index 5
             df = df.with_columns([
-                pl.when(pl.col("alert_history").list.len() > 5)
-                .then(pl.col("alert_history").list.get(5).struct.field("employee_id"))
-                .otherwise(None)
+                # Safe extraction from alert_history
+                pl.col("alert_history")
+                .list.get(5, null_on_oob=True)
+                .struct.field("employee_id")
                 .alias("employee_id"),
 
-                pl.when(pl.col("alert_history").list.len() > 5)
-                .then(pl.col("alert_history").list.get(5).struct.field("action_by"))
-                .otherwise(None)
+                pl.col("alert_history")
+                .list.get(5, null_on_oob=True)
+                .struct.field("action_by")
                 .alias("action_by"),
 
-                pl.lit("SOD").alias("bu")  # override BU
+                # Conditional BU override
+                pl.when(pl.col("bu") == "TAS")
+                .then(pl.lit("SOD"))
+                .otherwise(pl.col("bu"))
+                .alias("bu")
             ])
 
             # Select only required columns (alert_history removed)
