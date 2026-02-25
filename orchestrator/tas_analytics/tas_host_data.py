@@ -169,7 +169,6 @@ async def fetch_host_tables_as_dfs(data):
     # ---------------------------
     bay_df = pl.DataFrame(bay_resp.get("data", []))
     local_loaded_df = pl.DataFrame(local_loaded_resp.get("data", []))
-    print('local_loaded_df:--------->', local_loaded_df)
     over_loaded_df = pl.DataFrame(over_loaded_resp.get("data", []))
     day_end_df = pl.DataFrame(day_end_resp.get("data", []))
     alerts_df = pl.DataFrame(alerts_resp.get("data", []))
@@ -286,9 +285,7 @@ async def fetch_host_tables_as_dfs(data):
                 pl.col("loaded_qty").sum().over(["truck_number", "created_at"]).alias("cumulative_loaded_qty")
             )
 
-        print(len(combined_df))
         combined_df = combined_df.unique(subset=["truck_number", "created_at", "table_name", "assigned_bay"])
-        print(len(combined_df))
 
         if len(alerts_df) > 0 and "bay_number" in alerts_df.columns:
             bcu_alerts = (
@@ -376,7 +373,5 @@ async def fetch_host_tables_as_dfs(data):
         combined_df = combined_df[['truck_number', 'created_at', 'zone', 'sap_id', 'location_name', 'load_number','product_name', 'required_qty', 'loaded_qty', 'overloaded_qty', 'cumulative_loaded_qty',
             'assigned_bay', 'reassigned_bay', 'Alerts_Count', 'Gantry_Permissive_off_Count','MFM_VS_BCU', 'BCU_VS_INVOICE', 'Cross checked ManuallyAP system', 'table_name']]
         
-        combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_tesinggantry.csv")
-
 
     return combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count, unauthorised_flow_df
