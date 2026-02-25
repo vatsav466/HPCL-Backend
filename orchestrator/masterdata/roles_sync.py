@@ -912,6 +912,14 @@ async def sync_user_roles():
                         "title": "Alert Manager"
                     }
                 ]
+            },
+            {
+                "menu_name": "CEMS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "CEMS Dashboard"
+                    }
+                ]
             }
         ],
         "name": "SOD",
