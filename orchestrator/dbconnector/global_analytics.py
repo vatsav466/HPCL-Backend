@@ -7767,17 +7767,86 @@ class GlobalAnalytics:
 
     @staticmethod
     async def dry_out_analysis_count(filters, cross_filters, drill_state):
+        # resp_dict = {}
+        # query = (f"SELECT COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1') AS dryout_total, "
+        #          f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate = 1) AS dryout_indent_not_raised, "
+        #          f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate IN (2, 3)) AS dryout_pending_indent, "
+        #          f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate > 3) AS dryout_indent_wip, "
+        #          f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2') AS intra_dryout_total, "
+        #          f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate = 1) AS intra_indent_not_raised, "
+        #          f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate IN (2, 3)) AS intra_pending_indent, "
+        #          f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate > 3) AS intra_indent_wip "
+        #          f"FROM public.alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' and "
+        #          f"alert_status != 'Close' and mark_as_false = true ")
+
+        # data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
+        # data = data.get("data")[0] if data.get("data", {}) else {}
+        # resp_dict['dryoutData'] = {
+        #     "Indent Not Raised": data.get("dryout_indent_not_raised", 0),
+        #     "Pending Indent": data.get("dryout_pending_indent", 0),
+        #     "Indent WIP": data.get("dryout_indent_wip", 0),
+        # }
+
+        # resp_dict['intraDryoutData'] = {
+        #     "Indent Not Raised": data.get("intra_indent_not_raised", 0),
+        #     "Pending Indent": data.get("intra_pending_indent", 0),
+        #     "Indent WIP": data.get("intra_indent_wip", 0),
+        # }
+        # carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
+        # carry_fwd_data = pd.DataFrame(carry_fwd_data)
+        # if carry_fwd_data.empty:
+        #     carry_fwd_data = pd.DataFrame({"dry_out_in_days": [], "category": []})
+        # resp_dict['carryForwardData'] = {
+        #     "Carry Fwd DryOut Indents": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
+        #     "Carry Fwd IntraDay DryOut Indents": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
+        #     "Carry Fwd CATA Indents": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']) if len(carry_fwd_data) else 0,
+        # }
+
+        # resp_dict['totalCount'] = {
+        #     "dryoutData": data.get("dryout_total", 0),
+        #     "intraDryoutData": data.get("intra_dryout_total", 0),
+        #     "carryForwardData": len(carry_fwd_data),
+        # }
+        # resp_dict['carryForwardData']['Other Carry Fwd Indents'] = (resp_dict['totalCount']['carryForwardData'] -
+        #                                                     resp_dict['carryForwardData']['Carry Fwd DryOut Indents'] -
+        #                                                     resp_dict['carryForwardData']['Carry Fwd IntraDay DryOut Indents'] -
+        #                                                     resp_dict['carryForwardData']['Carry Fwd CATA Indents'])
+        # return {"status": True, "message": "Success", "data": resp_dict}
+
         resp_dict = {}
+        filter_map = defaultdict(list)
+        where_clauses = []
+
+        if cross_filters:
+            for filter in cross_filters:
+                filter_map[filter.key].append(filter.value)
+
+        if filters:
+            for filter in filters:
+                filter_map[filter.key].append(filter.value)
+        
+        for key, values in filter_map.items():
+            if len(values) > 1:
+                where_clauses.append(f" {key} IN ({', '.join([f"'{v}'" for v in values])})")
+            else:
+                where_clauses.append(f" {key} = '{values[0]}'")
+        
+        dynamic_where = ""
+        if where_clauses:
+            dynamic_where =" AND " + " AND ".join(where_clauses)
+        
         query = (f"SELECT COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1') AS dryout_total, "
-                 f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate = 1) AS dryout_indent_not_raised, "
-                 f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate IN (2, 3)) AS dryout_pending_indent, "
-                 f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate > 3) AS dryout_indent_wip, "
-                 f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2') AS intra_dryout_total, "
-                 f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate = 1) AS intra_indent_not_raised, "
-                 f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate IN (2, 3)) AS intra_pending_indent, "
-                 f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate > 3) AS intra_indent_wip "
-                 f"FROM public.alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' and "
-                 f"alert_status != 'Close' and mark_as_false = true ")
+                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate = 1) AS dryout_indent_not_raised, "
+                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate IN (2, 3)) AS dryout_pending_indent, "
+                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '1' AND progress_rate > 3) AS dryout_indent_wip, "
+                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2') AS intra_dryout_total, "
+                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate = 1) AS intra_indent_not_raised, "
+                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate IN (2, 3)) AS intra_pending_indent, "
+                f"COUNT(DISTINCT sap_id) FILTER (WHERE dry_out_in_days = '2' AND progress_rate > 3) AS intra_indent_wip "
+                f"FROM public.alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND "
+                f"alert_status != 'Close' and mark_as_false = true {dynamic_where} ")
+        
+        print("dry_out_analysis_count_query-------------", query)
 
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = data.get("data")[0] if data.get("data", {}) else {}
@@ -7792,25 +7861,29 @@ class GlobalAnalytics:
             "Pending Indent": data.get("intra_pending_indent", 0),
             "Indent WIP": data.get("intra_indent_wip", 0),
         }
+        
         carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
-        carry_fwd_data = pd.DataFrame(carry_fwd_data)
-        if carry_fwd_data.empty:
-            carry_fwd_data = pd.DataFrame({"dry_out_in_days": [], "category": []})
-        resp_dict['carryForwardData'] = {
-            "Carry Fwd DryOut Indents": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
-            "Carry Fwd IntraDay DryOut Indents": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
-            "Carry Fwd CATA Indents": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']) if len(carry_fwd_data) else 0,
-        }
+        carry_fwd_df = pl.DataFrame(carry_fwd_data)
+        if carry_fwd_df.is_empty():
+            carry_fwd_df = pl.DataFrame(schema={ "dry_out_in_days": pl.Utf8,"category": pl.Utf8,})
+        
+        carry_fwd_dryout = carry_fwd_df.filter(pl.col("dry_out_in_days").fill_null("") == "1").height
+        carry_fwd_intraday = carry_fwd_df.filter(pl.col("dry_out_in_days").fill_null("") == "1").height
+        carry_fwd_cata = carry_fwd_df.filter(pl.col("category").fill_null("") != "").height if carry_fwd_df.height else 0
 
-        resp_dict['totalCount'] = {
-            "dryoutData": data.get("dryout_total", 0),
-            "intraDryoutData": data.get("intra_dryout_total", 0),
-            "carryForwardData": len(carry_fwd_data),
-        }
-        resp_dict['carryForwardData']['Other Carry Fwd Indents'] = (resp_dict['totalCount']['carryForwardData'] -
-                                                            resp_dict['carryForwardData']['Carry Fwd DryOut Indents'] -
-                                                            resp_dict['carryForwardData']['Carry Fwd IntraDay DryOut Indents'] -
-                                                            resp_dict['carryForwardData']['Carry Fwd CATA Indents'])
+        resp_dict["carryForwardData"] = { "Carry Fwd DryOut Indents": carry_fwd_dryout,
+                                         "Carry Fwd IntraDay DryOut Indents": carry_fwd_intraday,
+                                         "Carry Fwd CATA Indents": carry_fwd_cata,}
+        
+        resp_dict["totalCount"] = {"dryoutData": data.get("dryout_total", 0),
+                                    "intraDryoutData": data.get("intra_dryout_total", 0),
+                                    "carryForwardData": carry_fwd_df.height,}
+        
+        resp_dict["carryForwardData"]["Other Carry Fwd Indents"] = (resp_dict["totalCount"]["carryForwardData"]- 
+                                                                    resp_dict["carryForwardData"]["Carry Fwd DryOut Indents"]- 
+                                                                    resp_dict["carryForwardData"]["Carry Fwd IntraDay DryOut Indents"]- 
+                                                                    resp_dict["carryForwardData"]["Carry Fwd CATA Indents"])
+        
         return {"status": True, "message": "Success", "data": resp_dict}
 
     @staticmethod
