@@ -152,6 +152,7 @@ class SolarCapacity:
             "get_total_installed_capacity": cls.get_total_installed_capacity,
             "get_energy_generated": cls.get_energy_generated,
             "get_active_total_plants": cls.get_active_total_plants,
+            "get_active_inactive_total_plants": cls.get_active_inactive_total_plants,
             "get_solar_summary": cls.get_solar_summary,
             "get_efficiency": cls.get_efficiency,
             "get_efficiency_last_30_days": cls.get_efficiency_last_30_days,
@@ -1354,11 +1355,20 @@ class SolarCapacity:
             }
 
     @classmethod
-    @with_solar_cache("solar_solar_summary", 900)
-    async def get_solar_summary(cls, data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
+    @with_solar_cache("solar_active_inactive_total_plants", 900)
+    async def get_active_inactive_total_plants(
+            cls,
+            data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams
+    ):
         """
-        Get solar summary including bu, zone, sap_id, name, Plant capacity, estimated energy, actual energy, efficiency, status.
+        Get active, inactive, and total plants count.
+
+        Total plants: unique sap_id count from Excel (capacity summed per plant)
+        Active plants: distinct PLANT_CD from database table for a given date range
+        Inactive plants: distinct PLANT_CD from database table but not for a given date range
+        Not connected plants: sap_id present in Excel but not in the database
         """
+
         try:
             bu_code = getattr(data, 'bu', None)
             if not bu_code:
@@ -1371,9 +1381,252 @@ class SolarCapacity:
             filters = getattr(data, 'filters', None)
             drill_state = getattr(data, 'drill_state', '') or ''
 
-            # Date range logic
+            # -------------------------------
+            # Fetch Excel Data
+            # -------------------------------
+            solar = await SolarHelpers.get_solar_master_data(
+                filters=filters,
+                drill_state=drill_state
+            )
+
+            solar = solar.filter(
+                pl.col('Monitoring')
+                .cast(pl.Utf8)
+                .str.strip_chars()
+                .str.to_lowercase() == 'yes'
+            )
+
+            if "DOC" in solar.columns:
+                solar = solar.filter(
+                    pl.col("DOC")
+                    .cast(pl.Utf8)
+                    .str.strip_chars()
+                    .str.to_lowercase() != "pending"
+                )
+
+            if filters:
+                solar = SolarHelpers.apply_filters_to_dataframe(solar, filters)
+
+            bu_code_column = 'BU Code'
+
+            if bu_code_column not in solar.columns:
+                return {
+                    "status": "error",
+                    "message": "BU Code column not found in Excel file",
+                    "error": f"Available columns: {list(solar.columns)}"
+                }
+
+            # -------------------------------
+            # CLEAN + GROUP + SUM CAPACITY
+            # -------------------------------
+
+            # Clean plant code
+            solar = solar.with_columns(
+                pl.col(bu_code_column)
+                .map_elements(lambda x: SolarHelpers._clean_plant_code(x))
+                .alias("CLEAN_PLANT_CD")
+            )
+
+            # Ensure capacity is numeric
+            if "Plant Capacity" in solar.columns:
+                solar = solar.with_columns(
+                    pl.col("Plant Capacity")
+                    .cast(pl.Float64, strict=False)
+                    .fill_null(0.0)
+                )
+            else:
+                solar = solar.with_columns(
+                    pl.lit(0.0).alias("Plant Capacity")
+                )
+
+            # Group by cleaned plant code and sum capacity
+            grouped_solar = (
+                solar
+                .filter(pl.col("CLEAN_PLANT_CD").is_not_null())
+                .group_by("CLEAN_PLANT_CD")
+                .agg([
+                    pl.col("Plant Capacity").sum().alias("Total_Plant_Capacity"),
+                    pl.col("name").first().alias("LocationName")
+                ])
+            )
+
+            excel_sap_ids = set()
+            total_plants_list = []
+
+            for row in grouped_solar.iter_rows(named=True):
+                plant_cd = row.get("CLEAN_PLANT_CD")
+                if plant_cd:
+                    excel_sap_ids.add(plant_cd)
+                    total_plants_list.append({
+                        "PLANT_CD": plant_cd,
+                        "LocationName": row.get("LocationName") or "",
+                        "Plant_Capacity": row.get("Total_Plant_Capacity") or 0.0
+                    })
+
+            total_plants = len(excel_sap_ids)
+
+            # -------------------------------
+            # DATABASE FETCH
+            # -------------------------------
+
+            if not excel_sap_ids:
+                return {
+                    "status": "success",
+                    "bu": bu_code,
+                    "total_plants": 0,
+                    "active_plants": 0,
+                    "inactive_plants": 0,
+                    "not_connected_plants": 0,
+                    "active_plants_list": [],
+                    "inactive_plants_list": [],
+                    "not_connected_plants_list": [],
+                    "total_plants_list": []
+                }
+
+            conn = SolarHelpers.get_db_connection(bu=bu_code)
+            cursor = conn.cursor()
+
+            plant_list_sql = "', '".join(excel_sap_ids)
+
+            # 1️All DB Plants (Ever Connected)
+            all_db_plants_query = f"""
+                SELECT DISTINCT PLANT_CD
+                FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
+                WHERE PLANT_CD IN ('{plant_list_sql}')
+            """
+
+            all_db_plants_df = await SolarHelpers.fetch_data(
+                cursor,
+                all_db_plants_query,
+                getData=True,
+                enrich_with_location=False
+            )
+
+            all_db_plant_cds = set()
+
+            if all_db_plants_df is not None and not all_db_plants_df.is_empty():
+                all_db_plant_cds = {
+                    SolarHelpers._clean_plant_code(cd)
+                    for cd in all_db_plants_df["PLANT_CD"].to_list()
+                    if cd is not None
+                }
+
+            # Active Plants (Date Filter Applied)
+            filter_start_date, filter_end_date = \
+                SolarHelpers.extract_date_range_from_filters(filters)
+
+            date_filter_sql = ""
+
+            if filter_start_date:
+                date_filter_sql += f"""
+                    AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE)
+                    >= '{filter_start_date}'
+                """
+
+            if filter_end_date:
+                date_filter_sql += f"""
+                    AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE)
+                    <= '{filter_end_date}'
+                """
+
+            active_plants_query = f"""
+                SELECT DISTINCT PLANT_CD
+                FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
+                WHERE QuantityID = '129'
+                AND LOWER(SourceName) NOT LIKE '%total%'
+                AND PLANT_CD IN ('{plant_list_sql}')
+                {date_filter_sql}
+            """
+
+            active_plants_df = await SolarHelpers.fetch_data(
+                cursor,
+                active_plants_query,
+                getData=True,
+                enrich_with_location=False
+            )
+
+            cursor.close()
+            conn.close()
+
+            active_plant_cds = set()
+
+            if active_plants_df is not None and not active_plants_df.is_empty():
+                active_plant_cds = {
+                    SolarHelpers._clean_plant_code(cd)
+                    for cd in active_plants_df["PLANT_CD"].to_list()
+                    if cd is not None
+                }
+
+            # -------------------------------
+            # Categorization
+            # -------------------------------
+
+            active_plants = []
+            inactive_plants = []
+            not_connected_plants = []
+
+            for plant in total_plants_list:
+                plant_cd = plant["PLANT_CD"]
+
+                if plant_cd in active_plant_cds:
+                    plant["status"] = "Active"
+                    active_plants.append(plant)
+
+                elif plant_cd in all_db_plant_cds:
+                    plant["status"] = "Inactive"
+                    inactive_plants.append(plant)
+
+                else:
+                    plant["status"] = "Not connected"
+                    not_connected_plants.append(plant)
+
+            return {
+                "status": "success",
+                "bu": bu_code,
+                "total_plants": total_plants,
+                "active_plants": len(active_plants),
+                "inactive_plants": len(inactive_plants),
+                "not_connected_plants": len(not_connected_plants),
+                "active_plants_list": active_plants,
+                "inactive_plants_list": inactive_plants,
+                "not_connected_plants_list": not_connected_plants,
+                "total_plants_list": total_plants_list
+            }
+
+        except Exception as e:
+            print(f"Error in SolarCapacity.get_active_inactive_total_plants: {e}")
+            traceback.print_exc()
+
+            return {
+                "status": "error",
+                "error": str(e)
+            }
+    @classmethod
+    @with_solar_cache("solar_solar_summary", 900)
+    async def get_solar_summary(
+            cls,
+            data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams
+    ):
+        """
+        Get solar summary including:
+        bu, zone, sap_id, name, Plant capacity,
+        estimated energy, actual energy, efficiency,
+        status (Active / Inactive / Not connected)
+        """
+
+        try:
+            bu_code = getattr(data, 'bu', None)
+            if not bu_code:
+                return {
+                    "status": "error",
+                    "message": "BU code is required",
+                    "error": "BU parameter is missing"
+                }
+
+            filters = getattr(data, 'filters', None)
+            drill_state = getattr(data, 'drill_state', '') or ''
+
             filter_start_date, filter_end_date = SolarHelpers.extract_date_range_from_filters(filters)
-            # If start date is provided but end date is missing, assume up to today
             if filter_start_date and not filter_end_date:
                 filter_end_date = datetime.date.today()
 
@@ -1381,8 +1634,14 @@ class SolarCapacity:
             year = getattr(data, 'year', None) or now.year
             month = getattr(data, 'month', None) or now.month
 
-            # Get Excel data
-            solar = await SolarHelpers.get_solar_master_data(filters=filters, drill_state=drill_state)
+            # ---------------------------
+            # EXCEL DATA
+            # ---------------------------
+            solar = await SolarHelpers.get_solar_master_data(
+                filters=filters,
+                drill_state=drill_state
+            )
+
             if "Monitoring" in solar.columns:
                 solar = solar.filter(
                     pl.col("Monitoring")
@@ -1404,167 +1663,129 @@ class SolarCapacity:
             if bu_code_column not in solar.columns:
                 return {"status": "error", "message": "BU Code column not found"}
 
-            sap_ids = []
+            # Aggregate capacity per sap_id
+            plant_capacities = {}
+            plant_details = {}
 
-            # Use unique based on BU Code
-            if not solar.is_empty():
-                unique_solar = solar.unique(subset=[bu_code_column])
-                for row in unique_solar.iter_rows(named=True):
-                    sap_id = SolarHelpers._clean_plant_code(row.get(bu_code_column))
-                    if sap_id:
-                        sap_ids.append(sap_id)
+            for row in solar.iter_rows(named=True):
+                sap_id = SolarHelpers._clean_plant_code(row.get(bu_code_column))
+                if not sap_id:
+                    continue
+
+                try:
+                    capacity_val = float(row.get("Plant Capacity") or 0.0)
+                except:
+                    capacity_val = 0.0
+
+                plant_capacities[sap_id] = \
+                    plant_capacities.get(sap_id, 0.0) + capacity_val
+
+                if sap_id not in plant_details:
+                    plant_details[sap_id] = {
+                        "bu": row.get("BU") or bu_code,
+                        "zone": row.get("Zone") or row.get("zone") or "",
+                        "name": row.get("name") or ""
+                    }
+
+            sap_ids = list(plant_capacities.keys())
 
             if not sap_ids:
                 return {"status": "success", "summary": []}
 
-            # Fetch Actual Energy from DB
+            # ---------------------------
+            # DATABASE CONNECTION
+            # ---------------------------
             conn = SolarHelpers.get_db_connection(bu=bu_code)
             cursor = conn.cursor()
 
-            # Query 1: Check connectivity (existence in DB irrespective of date)
-            # This replicates the logic in get_active_total_plants
             sap_ids_sql = "', '".join(sap_ids)
+
+            # Plants ever connected (exist in DB)
             query_connected = f"""
-                SELECT DISTINCT
-                    PLANT_CD
+                SELECT DISTINCT PLANT_CD
                 FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
-                WHERE QuantityID = '129' 
-                  AND LOWER(SourceName) NOT LIKE '%total%'
-                  AND PLANT_CD IN ('{sap_ids_sql}')
+                WHERE PLANT_CD IN ('{sap_ids_sql}')
             """
 
-            connected_plants_df = await SolarHelpers.fetch_data(cursor, query_connected, getData=True, enrich_with_location=False)
+            connected_df = await SolarHelpers.fetch_data(
+                cursor, query_connected, getData=True, enrich_with_location=False
+            )
 
             connected_sap_ids = set()
-            if connected_plants_df is not None and not connected_plants_df.is_empty():
-                 for row in connected_plants_df.iter_rows(named=True):
-                    p_cd = SolarHelpers._clean_plant_code(row["PLANT_CD"])
-                    if p_cd:
-                        connected_sap_ids.add(p_cd)
+            if connected_df is not None and not connected_df.is_empty():
+                for row in connected_df.iter_rows(named=True):
+                    cd = SolarHelpers._clean_plant_code(row["PLANT_CD"])
+                    if cd:
+                        connected_sap_ids.add(cd)
 
-            # Query 2: Get Energy Data (Date Filtered)
-            # Date filtering for SQL query
+            #  Generation in selected date range (Active)
             date_filter_sql = ""
             if filter_start_date:
-                date_filter_sql += (
-                    " AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) "
-                    f">= '{filter_start_date}'"
-                )
+                date_filter_sql += \
+                    f" AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) >= '{filter_start_date}'"
             if filter_end_date:
-                date_filter_sql += (
-                    " AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) "
-                    f"<= '{filter_end_date}'"
-                )
+                date_filter_sql += \
+                    f" AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) <= '{filter_end_date}'"
 
-            query = f"""
+            query_energy = f"""
                 {cls._get_solar_generation_base_query(sap_ids_sql, date_filter_sql)}
 
                 SELECT
                     PLANT_CD,
-                    MIN(TimestampUTC) AS TimestampUTC, 
                     SUM(SolarGen_kWh_entry) AS generated_solar_value
                 FROM calc1
-                GROUP BY
-                    DayKey_IST,
-                    PLANT_CD
+                GROUP BY PLANT_CD
             """
 
-            result_df = await SolarHelpers.fetch_data(cursor, query, getData=True, enrich_with_location=False)
+            result_df = await SolarHelpers.fetch_data(
+                cursor, query_energy, getData=True, enrich_with_location=False
+            )
+
             cursor.close()
             conn.close()
 
-            # Calculate days for estimated energy AND actual energy (Consistent Logic)
+            actual_map = {}
+
+            if result_df is not None and not result_df.is_empty():
+                for row in result_df.iter_rows(named=True):
+                    cd = SolarHelpers._clean_plant_code(row["PLANT_CD"])
+                    val = row["generated_solar_value"] or 0.0
+                    if cd:
+                        actual_map[cd] = val
+
+            active_sap_ids = set(actual_map.keys())
+
+            # ---------------------------
+            # DAYS CALCULATION
+            # ---------------------------
             _, default_days = calendar.monthrange(int(year), int(month))
-            days_count = default_days  # Default fallback
+            days_count = default_days
 
             if filter_start_date and filter_end_date:
                 days_count = (filter_end_date - filter_start_date).days + 1
-            elif result_df is not None and not result_df.is_empty() and "TimestampUTC" in result_df.columns:
-                try:
-                    dates_df = result_df.select(pl.col("TimestampUTC").cast(pl.Date).alias("date")).drop_nulls()
-                    if not dates_df.is_empty():
-                        min_date = dates_df.select(pl.col("date").min()).item()
-                        max_date = dates_df.select(pl.col("date").max()).item()
-                        if min_date and max_date:
-                            if isinstance(min_date, datetime.datetime):
-                                min_date = min_date.date()
-                            if isinstance(max_date, datetime.datetime):
-                                max_date = max_date.date()
-                            days_count = (max_date - min_date).days + 1
-                        else:
-                            unique_dates = dates_df.select(pl.col("date").unique())
-                            days_count = unique_dates.height if not unique_dates.is_empty() else default_days
-                except Exception as e:
-                    print(f"Error calculating days from DB: {e}")
-                    pass
 
-            actual_map = {}  # sap_id -> actual_mwh
-            # connected_sap_ids is already populated above
-
-            if result_df is not None and not result_df.is_empty():
-                # Enrich and apply filters to match get_energy_generated logic
-                result_df = await SolarHelpers.enrich_with_location_master(
-                    result_df,
-                    join_column="PLANT_CD",
-                    filters=filters,
-                    drill_state=drill_state
-                )
-
-                if not result_df.is_empty():
-                    grouped = result_df.group_by("PLANT_CD").agg(pl.col("generated_solar_value").sum())
-
-                    for row in grouped.iter_rows(named=True):
-                        p_cd = SolarHelpers._clean_plant_code(row["PLANT_CD"])
-                        val = row["generated_solar_value"]
-                        if p_cd:
-                            if p_cd in actual_map:
-                                actual_map[p_cd] += val 
-                            else:
-                                actual_map[p_cd] = val
-
-            # Build Summary List
+            # ---------------------------
+            # BUILD SUMMARY
+            # ---------------------------
             summary_list = []
-            total_estimated_energy = 0.0
-            total_actual_energy = 0.0
 
-            # Aggregate capacity from the solar data
-            plant_capacities = {}
-            plant_details = {}
-            if not solar.is_empty():
-                for row in solar.iter_rows(named=True):
-                    sap_id = SolarHelpers._clean_plant_code(row.get(bu_code_column))
-                    if sap_id:
-                        capacity = row.get('Plant Capacity')
-                        try:
-                            capacity_val = float(capacity) if capacity is not None else 0.0
-                            plant_capacities[sap_id] = plant_capacities.get(sap_id, 0.0) + capacity_val
-                            if sap_id not in plant_details:
-                                plant_details[sap_id] = {
-                                    "bu": row.get("BU") or bu_code,
-                                    "zone": row.get("Zone") or row.get("zone") or "",
-                                    "name": row.get("name") or "",
-                                }
-                        except (ValueError, TypeError):
-                            continue
-
-            # Process aggregated data
             for sap_id, capacity_val in plant_capacities.items():
-                # Estimated Energy Calculation: Capacity * 4 * days_count
+
                 estimated_val = capacity_val * 4 * days_count
                 actual = actual_map.get(sap_id, 0.0)
 
-                total_estimated_energy += estimated_val
-                total_actual_energy += actual
+                efficiency = (actual / estimated_val) * 100 if estimated_val > 0 else 0.0
 
-                efficiency = 0.0
-                if estimated_val > 0:
-                    efficiency = (actual / estimated_val) * 100
-
-                status = "Not connected"
-                if sap_id in connected_sap_ids:
-                    status = "Connected"
+                # STATUS LOGIC
+                if sap_id in active_sap_ids:
+                    status = "Online"
+                elif sap_id in connected_sap_ids:
+                    status = "Offline"
+                else:
+                    status = "Not connected"
 
                 details = plant_details.get(sap_id, {})
+
                 summary_list.append({
                     "bu": details.get("bu"),
                     "zone": details.get("zone"),
@@ -1577,13 +1798,9 @@ class SolarCapacity:
                     "status": status
                 })
 
-            total_efficiency_percentage = 0.0
-            if total_estimated_energy > 0:
-                total_efficiency_percentage = (total_actual_energy / total_estimated_energy) * 100
-
             return {
                 "status": "success",
-                "summary": summary_list,
+                "summary": summary_list
             }
 
         except Exception as e:
