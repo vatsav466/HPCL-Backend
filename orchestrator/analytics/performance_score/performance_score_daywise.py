@@ -1,5 +1,4 @@
 import urdhva_base
-import polars as pl
 import json
 from datetime import datetime
 from decimal import Decimal
@@ -57,55 +56,54 @@ def resolve_tas_with_categories(categories):
     }
 
 
+def add_filters(query_str, key, values):
+    if not values:
+        return query_str
+
+    if isinstance(values, list):
+        query_str += f" AND {key} IN {tuple(values)}"
+    else:
+        query_str += f" AND {key} = '{values}'"
+
+    return query_str
+
+
 # ================= MAIN API =================
 async def performance_score_daywise_action(data):
 
-    params = urdhva_base.queryparams.QueryParams(
-        q=f"bu = '{data.bu}'",
-        limit=0
-    )
-
-    resp = await PerformanceScoreHistory.get_all(params, resp_type="plain")
-    records = sanitize_records(resp.get("data", []))
-
-    if not records:
-        return {"status": "success", "zones": []}
-
-    df = (
-        pl.DataFrame(records, strict=False)
-        .with_columns(
-            pl.col("created_at")
-            .cast(pl.Datetime)
-            .dt.date()
-            .alias("score_date")
-        )
-    )
+    query_str = f"bu = '{data.bu}'"
 
     if data.start_date:
-        df = df.filter(pl.col("score_date") >= datetime.strptime(data.start_date, "%Y-%m-%d").date())
+        query_str += f" AND created_at >= '{data.start_date}'"
 
     if data.end_date:
-        df = df.filter(pl.col("score_date") <= datetime.strptime(data.end_date, "%Y-%m-%d").date())
+        query_str += f" AND created_at <= '{data.end_date}'"
 
     if data.zone:
-        df = df.filter(pl.col("zone") == data.zone)
+        query_str = add_filters(query_str, "zone", data.zone)
 
     if data.name:
-        df = df.filter(pl.col("name") == data.name)
+        query_str = add_filters(query_str, "name", data.name)
 
-    if df.is_empty():
+    where_clause = query_str
+
+    query = f"""
+        SELECT DISTINCT ON (zone, name, created_at::date)
+            zone,
+            name,
+            created_at::date AS score_date,
+            score AS db_score,
+            category
+        FROM performance_score_history
+        WHERE {where_clause}
+        ORDER BY zone, name, created_at::date, created_at DESC;
+    """
+
+    resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+    grouped = sanitize_records(resp.get("data", []))
+
+    if not grouped:
         return {"status": "success", "zones": []}
-
-    # ================= GROUP =================
-    grouped = (
-        df.sort("created_at")
-        .group_by(["zone", "name", "score_date"])
-        .agg(
-            pl.col("score").last().alias("db_score"),
-            pl.col("category").last()
-        )
-        .to_dicts()
-    )
 
     zones_map = {}
 
