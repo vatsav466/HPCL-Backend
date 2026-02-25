@@ -23,4 +23,4 @@ class CheckVTSBlocked:
             
          except Exception as e:
                 logger.error(f"Error while checking and creating alerts for extended contract: {str(e)}")
-                return {"status": False, "message": "Error while checking and creating alerts for extended contract"}
+                return False, {"status": False, "message": "Error while checking and creating alerts for extended contract"}
