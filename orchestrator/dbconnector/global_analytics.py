@@ -7674,23 +7674,33 @@ class GlobalAnalytics:
     @staticmethod
     async def carry_forward_analysis(filters, cross_filters, drill_state):
         start_date, end_date = await va_analysis.get_period_datetime(period='oneweek')
+        filter_map = defaultdict(list)
         _filters = []
-        daterange = f""" created_at::date BETWEEN '{start_date.strftime("%Y-%m-%d")}' AND '{end_date.strftime("%Y-%m-%d")}' """
+        daterange = f""" c.created_at::date BETWEEN '{start_date.strftime("%Y-%m-%d")}' AND '{end_date.strftime("%Y-%m-%d")}' """
 
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
                     start_date, end_date = filter.value.split(",")[0], filter.value.split(",")[-1]
                     if start_date == end_date:
-                        daterange = f""" created_at::date = '{start_date}' """
+                        daterange = f""" c.created_at::date = '{start_date}' """
                     else:
-                        daterange = f""" created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+                        daterange = f""" c.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
                     continue
-                _filters.append(f"{filter.key} = '{filter.value}'")
+                #_filters.append(f"{filter.key} = '{filter.value}'")
+                filter_map[filter.key].append(filter.value)
 
         if filters:
             for filter in filters:
-                _filters.append(f"{filter.key} = '{filter.value}'")
+                filter_map[filter.key].append(filter.value)
+                #_filters.append(f"{filter.key} = '{filter.value}'")
+        
+        for key, values in filter_map.items():
+            if len(values) > 1:
+                _filters.append(f"a.{key} IN ({', '.join([f"'{v}'" for v in values])})")
+            else:
+                _filters.append(f"a.{key} = '{values[0]}'")
+
 
         # Construct WHERE clause
         where_clauses = [daterange]
@@ -7699,24 +7709,60 @@ class GlobalAnalytics:
 
         where_clause = " AND ".join(where_clauses)
 
-        query = (f"SELECT DATE(created_at) AS date, COUNT(*) AS cf_indents, "
-                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '1') AS dryout_count, "
-                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '2') AS intra_day_dry_count, "
-                 f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
-                 f"FROM public.carry_fwd_indent where {where_clause} "
-                 f"GROUP BY DATE(created_at) ORDER BY date")
+        query = (
+            f"""
+            SELECT
+                DATE(c.created_at) AS date,
+                COUNT(*) AS cf_indents,
+                COUNT(*) FILTER (WHERE c.dry_out_in_days = '1') AS dryout_count,
+                COUNT(*) FILTER (WHERE c.dry_out_in_days = '2') AS intra_day_dry_count,
+                COUNT(*) FILTER (WHERE c.category = 'R01') AS category_a_count
+            FROM public.carry_fwd_indent c
+            INNER JOIN public.alerts a
+                ON c.sap_id = a.sap_id
+            WHERE {where_clause} AND a.indent_no=c.indent_no
+            GROUP BY DATE(c.created_at)
+            ORDER BY date
+            """
+        )
+
+        print("CARRY FORWARD QUERY -->", query)
+
+        # query = (f"SELECT DATE(created_at) AS date, COUNT(*) AS cf_indents, "
+        #          f"COUNT(*) FILTER (WHERE dry_out_in_days = '1') AS dryout_count, "
+        #          f"COUNT(*) FILTER (WHERE dry_out_in_days = '2') AS intra_day_dry_count, "
+        #          f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
+        #          f"FROM public.carry_fwd_indent where {where_clause} "
+        #          f"GROUP BY DATE(created_at) ORDER BY date")
         data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
-        data = pd.DataFrame(data.get('data', []))
-        if not data.empty:
-            data['date'] = pd.to_datetime(data['date'])
-            full_range = pd.date_range(start=data['date'].min(), end=data['date'].max(), freq='D')
-            data = data.set_index('date').reindex(full_range).fillna(0).rename_axis('date').reset_index()
-            cols_to_int = ['cf_indents', 'dryout_count', 'intra_day_dry_count', 'category_a_count']
-            data[cols_to_int] = data[cols_to_int].astype(int)
-            data['date'] = data['date'].dt.strftime('%Y-%b-%d')
-            data['other_cf_indents'] = data['cf_indents'] - (data['dryout_count'] + data['intra_day_dry_count'] + data['category_a_count'])
-            print(data)
-            return {"status": True, "message": "Success", "data": data.to_dict(orient='records')}
+        df = pl.DataFrame(data.get("data", []))
+        #data = pd.DataFrame(data.get('data', []))
+        # if not data.empty:
+        #     data['date'] = pd.to_datetime(data['date'])
+        #     full_range = pd.date_range(start=data['date'].min(), end=data['date'].max(), freq='D')
+        #     data = data.set_index('date').reindex(full_range).fillna(0).rename_axis('date').reset_index()
+        #     cols_to_int = ['cf_indents', 'dryout_count', 'intra_day_dry_count', 'category_a_count']
+        #     data[cols_to_int] = data[cols_to_int].astype(int)
+        #     data['date'] = data['date'].dt.strftime('%Y-%b-%d')
+        #     data['other_cf_indents'] = data['cf_indents'] - (data['dryout_count'] + data['intra_day_dry_count'] + data['category_a_count'])
+        #     print(data)
+        #     return {"status": True, "message": "Success", "data": data.to_dict(orient='records')}
+        if not df.is_empty():
+            df = df.with_columns(pl.col("date").cast(pl.Date))
+            full_df = pl.select(pl.date_range(start=df["date"].min(), end=df["date"].max(), interval="1d").alias("date"))
+            df = full_df.join(df, on="date", how="left").fill_null(0)
+            df = df.with_columns([
+                pl.col("cf_indents").cast(pl.Int64),
+                pl.col("dryout_count").cast(pl.Int64),
+                pl.col("intra_day_dry_count").cast(pl.Int64),
+                pl.col("category_a_count").cast(pl.Int64),
+            ])
+            df = df.with_columns([
+                pl.col("date").dt.strftime('%Y-%b-%d').alias("date"),
+                (pl.col("cf_indents") - (pl.col("dryout_count") + pl.col("intra_day_dry_count") + pl.col("category_a_count"))).alias("other_cf_indents")
+            ])
+            return {"status": True, "message": "Success", "data": df.to_dicts()}
+
         return {"status": False, "message": "No Data Found", "data": []}
 
     @staticmethod
