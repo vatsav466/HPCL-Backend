@@ -19,21 +19,20 @@ class CheckVTSDeviceExpiry:
     async def get_vts_truck_device_expiry_records(self):
         try:
             query = """
-                SELECT
-                    sap_tt_no AS vehicle_number,
-                    sap_id,
-                    location AS location_name,
-                    select_business AS bu,
-                    zone,
-                    id AS device_installation_id,
-                    tibco_expiry_date
-                FROM device_installation
-                WHERE TO_DATE(tibco_expiry_date, 'DD-MM-YYYY') > CURRENT_DATE
-                AND TO_DATE(tibco_expiry_date, 'DD-MM-YYYY')
-                    < CURRENT_DATE + INTERVAL '30 days'
-                AND (expiry_alert_created IS NULL OR expiry_alert_created = false)
-                ORDER BY created_at DESC;
-            """
+                        SELECT
+                            sap_tt_no AS vehicle_number,
+                            sap_id,
+                            location AS location_name,
+                            select_business AS bu,
+                            zone,
+                            id AS device_installation_id,
+                            tibco_expiry_date
+                        FROM device_installation
+                        WHERE TO_DATE(tibco_expiry_date, 'DD-MM-YYYY') 
+                            = CURRENT_DATE + INTERVAL '29 days'
+                        AND (expiry_alert_created IS NULL OR expiry_alert_created = false)
+                        ORDER BY created_at DESC;
+                   """
 
             result = await urdhva_base.BasePostgresModel.get_aggr_data(
                 query=query,
