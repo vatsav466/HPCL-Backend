@@ -15,7 +15,7 @@ class CheckVTSBlocked:
          
          try:
            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
-           if alert_data['block_status'] == hpcl_ceg_enum.BlockStatus.BLOCKED.value:
+           if alert_data.block_status == 'Blocked':
                return True , {"vtsBlocked": True}
             
            logger.info(f"No records found")

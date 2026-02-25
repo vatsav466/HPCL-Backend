@@ -266,7 +266,7 @@ class AlertFactory:
                                                "vehicle_number":{"value": alert_data.get('vehicle_number', ''), "type": "String"},
                                                "checkTicketClose":{"value": alert_data.get('checkTicketClose', False), "type": "Boolean"}})
                  
-            if alert_data.get("interlock_name") == 'VTS Device Expiry Alert':
+            if alert_data.get("interlock_name") == 'Truck Contract Validity Status':
                 payload['variables'].update({"contract_valid_upto": {"value": alert_data.get('contract_valid_upto', ''), "type": "String"},
                                              "bu": {"value": alert_data.get('bu', ''), "type": "String"},
                                              "vehicle_number":{"value": alert_data.get('vehicle_number', ''), "type": "String"},

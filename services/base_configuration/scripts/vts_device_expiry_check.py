@@ -4,6 +4,8 @@ import hpcl_ceg_enum
 import asyncio
 import orchestrator.alerting.alert_factory as alert_factory
 import utilities.helpers as helpers
+import datetime
+import dateutil.relativedelta
 
 
 logger = urdhva_base.logger.Logger.getInstance("vts_truck_device_expiry_check")
@@ -51,17 +53,22 @@ class CheckVTSDeviceExpiry:
         try:
             records = await self.get_vts_truck_device_expiry_records()
             logger.info(f"Found {len(records)} expiry records")
-
+            
             for record in records:
                 bu = record.get("bu")
                 sap_id = record.get("sap_id")
 
                 # HARD GUARD: required for alert + camunda
                 if not bu or not sap_id:
-                    logger.warning(
-                        f"Skipping record due to missing bu/sap_id: {record}"
-                    )
+                    logger.warning(f"Skipping record due to missing bu/sap_id: {record}")
                     continue
+                
+                expiry_str = record.get("tibco_expiry_date")
+                expiry_date = datetime.datetime.strptime(expiry_str, "%d-%m-%Y")
+                vehicle_blocked_start_date = expiry_date
+                
+                # default block duration is 5 years, can be changed as per requirement
+                vehicle_blocked_end_date = (expiry_date + dateutil.relativedelta.relativedelta(years=5))
 
                 alert_data = {
                     "vehicle_number": record.get("vehicle_number"),
@@ -69,10 +76,12 @@ class CheckVTSDeviceExpiry:
                     "sop_id": "SOP001E",
                     "location_name": record.get("location_name"),
                     "device_installation_id": record.get("device_installation_id"),
-                    "contract_valid_upto": record.get("tibco_expiry_date"),
+                    "contract_valid_upto": expiry_str,
+                    "vehicle_blocked_start_date": vehicle_blocked_start_date.isoformat(),
+                    "vehicle_blocked_end_date": vehicle_blocked_end_date.isoformat(),
                     "bu": bu,
                     "alert_section": "VTS",
-                    "interlock_name": "VTS Device Expiry Alert",
+                    "interlock_name": "Truck Contract Validity Status",
                     "severity": hpcl_ceg_enum.Severity.High.value,
                     "zone": record.get("zone"),
                 }
@@ -85,6 +94,7 @@ class CheckVTSDeviceExpiry:
                     )
 
                     cls = alert_factory.AlertFactory()
+                    print(alert_data["bu"])
                     status, msg =await cls.create_alert(alert_data, camunda_url)
                     print(f"Alert creation status: {status}, message: {msg}")
 

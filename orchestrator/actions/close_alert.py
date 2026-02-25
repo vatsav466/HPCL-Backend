@@ -15,7 +15,7 @@ class CloseAlert:
         Returns:
             list: A list of strings representing the required variables.
         """
-        return ["alert_id", "sap_id", "sop_id", "bu", "close", "interlock_name", "interlock_id", "va_level", "BU"]
+        return ["alert_id", "sap_id", "sop_id", "bu", "close", "interlock_name", "interlock_id", "va_level", "BU", "device_installation_id"]
     
     async def closealert(self, params):
         """
@@ -49,6 +49,11 @@ class CloseAlert:
             if "_sa_instance_state" in alert_data.keys():
                 del alert_data["_sa_instance_state"]
             
+            if alert_data.get("interlock_name", "") in ['Truck Contract Validity Status']:
+                await hpcl_ceg_model.DeviceInstallation(
+                        id=params.get("device_installation_id"),
+                        expiry_alert_created=False,
+                    ).modify()
             
             if alert_data.get("alert_section","") in ["VTS"] and alert_data.get("alert_status","") == 'Close':
                 return True, { "message": "Alert Already Closed"}

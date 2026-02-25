@@ -418,8 +418,7 @@ class SendNotification:
                 self.interlock_name = ' '.join(self.alert_data.get('interlock_name', '').split()[:2])
             self.vts_assigned_role = "Location In-Charge SOD" if self.alert_data.get('violation_type','') not in ['device_tamper_count','main_supply_removal_count'] else (await self._role_configuration_mqofrole() or "")
             if not await vts_analysis.is_vehicle_blacklisted(self.alert_data['vehicle_number']):
-               if self.alert_data.get('interlock_name') != 'VTS Device Expiry Alert':               
-                     self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
+                  self.days = (self.alert_data['vehicle_blocked_end_date'] - self.alert_data['vehicle_blocked_start_date']).days
 
         self.base_alert_data = {
             "alert_id": self.params.get("alert_id"),
@@ -1028,7 +1027,7 @@ class SendNotification:
             })
         else:
             self.update_alert.update({
-                    "action_type": hpcl_ceg_model.AlertActionType.Escalated.value,
+                    "action_type": hpcl_ceg_enum.AlertActionType.Escalated.value,
                     "action_msg": self.params.get("msg_subject"),
                     "assigned_user_roles": assigning_roles,
                     # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])

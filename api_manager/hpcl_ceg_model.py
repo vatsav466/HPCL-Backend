@@ -10570,6 +10570,8 @@ class DeviceInstallationSchema(UrdhvaPostgresBase):
     aot_status: Mapped[typing.Optional[str]] = mapped_column("aot_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     aot_sap_tt_no: Mapped[typing.Optional[str]] = mapped_column("aot_sap_tt_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     aot_request_type: Mapped[typing.Optional[str]] = mapped_column("aot_request_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    expiry_alert_created: Mapped[typing.Optional[bool]] = mapped_column("expiry_alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    tibco_expiry_date: Mapped[typing.Optional[str]] = mapped_column("tibco_expiry_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class DeviceInstallationCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -10602,6 +10604,8 @@ class DeviceInstallationCreate(urdhva_base.postgresmodel.BasePostgresModel):
     aot_status: typing.Optional[str] = pydantic.Field("", **{})
     aot_sap_tt_no: typing.Optional[str] = pydantic.Field("", **{})
     aot_request_type: typing.Optional[str] = pydantic.Field("", **{})
+    expiry_alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    tibco_expiry_date: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -10642,6 +10646,8 @@ class DeviceInstallation(urdhva_base.postgresmodel.PostgresModel):
     aot_status: typing.Optional[str] = pydantic.Field("", **{})
     aot_sap_tt_no: typing.Optional[str] = pydantic.Field("", **{})
     aot_request_type: typing.Optional[str] = pydantic.Field("", **{})
+    expiry_alert_created: typing.Optional[bool] = pydantic.Field(False, )
+    tibco_expiry_date: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
