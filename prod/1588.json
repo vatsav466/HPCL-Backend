@@ -156,20 +156,6 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
-                    "sensor_name": "MOV STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-03.OPEN_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-03",
-                    "sensor_type": "MOV IL2"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-03.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-03",
-                    "sensor_type": "MOV IL2"
-                },
-                {
                     "sensor_name": "MOV STATUS OL",
                     "sensor_tag": "MOV.DBBV-02.OPEN_STATUS",
                     "normal_value": "0",
@@ -182,20 +168,6 @@
                     "normal_value": "1",
                     "sensor_id": "DBBV-02",
                     "sensor_type": "MOV OL"
-                },
-                {
-                    "sensor_name": "MOV STATUS OL1",
-                    "sensor_tag": "MOV.DBBV-04.CLOSE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-04",
-                    "sensor_type": "MOV OL1"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS OL1",
-                    "sensor_tag": "MOV.DBBV-04.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-04",
-                    "sensor_type": "MOV OL1"
                 },
                 {
                     "sensor_name": "MOV STATUS RCL",
@@ -369,34 +341,6 @@
                     "sensor_type": "ROSOV FAILED RCL"
                 },
                 {
-                    "sensor_name": "MOV STATUS IL1",
-                    "sensor_tag": "MOV.DBBV-05.OPEN_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-05",
-                    "sensor_type": "MOV IL1"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS IL1",
-                    "sensor_tag": "MOV.DBBV-05.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-05",
-                    "sensor_type": "MOV IL1"
-                },
-                {
-                    "sensor_name": "MOV STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-07.OPEN_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-07",
-                    "sensor_type": "MOV IL2"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-07.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-07",
-                    "sensor_type": "MOV IL2"
-                },
-                {
                     "sensor_name": "MOV STATUS OL",
                     "sensor_tag": "MOV.DBBV-06.OPEN_STATUS",
                     "normal_value": "0",
@@ -409,20 +353,6 @@
                     "normal_value": "1",
                     "sensor_id": "DBBV-06",
                     "sensor_type": "MOV OL"
-                },
-                {
-                    "sensor_name": "MOV STATUS OL1",
-                    "sensor_tag": "MOV.DBBV-08.CLOSE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-08",
-                    "sensor_type": "MOV OL1"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS OL1",
-                    "sensor_tag": "MOV.DBBV-08.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-08",
-                    "sensor_type": "MOV OL1"
                 },
                 {
                     "sensor_name": "MOV STATUS RCL",
@@ -837,20 +767,6 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
-                    "sensor_name": "MOV STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-15.OPEN_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-15",
-                    "sensor_type": "MOV IL2"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-15.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-15",
-                    "sensor_type": "MOV IL2"
-                },
-                {
                     "sensor_name": "MOV STATUS OL",
                     "sensor_tag": "MOV.DBBV-14.OPEN_STATUS",
                     "normal_value": "0",
@@ -863,20 +779,6 @@
                     "normal_value": "1",
                     "sensor_id": "DBBV-14",
                     "sensor_type": "MOV OL"
-                },
-                {
-                    "sensor_name": "MOV STATUS OL1",
-                    "sensor_tag": "MOV.DBBV-16.CLOSE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-16",
-                    "sensor_type": "MOV OL1"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS OL1",
-                    "sensor_tag": "MOV.DBBV-16.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-16",
-                    "sensor_type": "MOV OL1"
                 },
                 {
                     "sensor_name": "MOV STATUS RCL",
@@ -2199,20 +2101,6 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
-                    "sensor_name": "MOV STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-40.OPEN_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-40",
-                    "sensor_type": "MOV IL2"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-40.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-40",
-                    "sensor_type": "MOV IL2"
-                },
-                {
                     "sensor_name": "MOV STATUS OL",
                     "sensor_tag": "MOV.DBBV-38.OPEN_STATUS",
                     "normal_value": "0",
@@ -2424,20 +2312,6 @@
                     "normal_value": "1",
                     "sensor_id": "DBBV-41",
                     "sensor_type": "MOV IL1"
-                },
-                {
-                    "sensor_name": "MOV STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-44.OPEN_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-44",
-                    "sensor_type": "MOV IL2"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-44.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-44",
-                    "sensor_type": "MOV IL2"
                 },
                 {
                     "sensor_name": "MOV STATUS OL",
@@ -2653,20 +2527,6 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
-                    "sensor_name": "MOV STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-48.OPEN_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-48",
-                    "sensor_type": "MOV IL2"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-48.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-48",
-                    "sensor_type": "MOV IL2"
-                },
-                {
                     "sensor_name": "MOV STATUS OL",
                     "sensor_tag": "MOV.DBBV-46.OPEN_STATUS",
                     "normal_value": "0",
@@ -2693,20 +2553,6 @@
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
-                },
-                {
-                    "sensor_name": "MOV STATUS RCL",
-                    "sensor_tag": "MOV.DBBV-47.CLOSE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-47",
-                    "sensor_type": "MOV RCL"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS  RCL",
-                    "sensor_tag": "MOV.DBBV-47.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-47",
-                    "sensor_type": "MOV RCL"
                 },
                 {
                     "sensor_name": "RIMSEAL FIRE ALARM",
@@ -2880,20 +2726,6 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
-                    "sensor_name": "MOV STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-52.OPEN_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-52",
-                    "sensor_type": "MOV IL2"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS IL2",
-                    "sensor_tag": "MOV.DBBV-52.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-52",
-                    "sensor_type": "MOV IL2"
-                },
-                {
                     "sensor_name": "MOV STATUS OL",
                     "sensor_tag": "MOV.DBBV-50.OPEN_STATUS",
                     "normal_value": "0",
@@ -2920,20 +2752,6 @@
                     "normal_value": "0",
                     "sensor_id": "",
                     "sensor_type": ""
-                },
-                {
-                    "sensor_name": "MOV STATUS RCL",
-                    "sensor_tag": "MOV.DBBV-51.CLOSE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-51",
-                    "sensor_type": "MOV RCL"
-                },
-                {
-                    "sensor_name": "MOV REMOTE STATUS  RCL",
-                    "sensor_tag": "MOV.DBBV-51.REMOTE_STATUS",
-                    "normal_value": "1",
-                    "sensor_id": "DBBV-51",
-                    "sensor_type": "MOV RCL"
                 },
                 {
                     "sensor_name": "RIMSEAL FIRE ALARM",
@@ -5545,30 +5363,6 @@
             ]
         },
         {
-            "device_name": "TOBV-05_BIOHSD@Vashi",
-            "device_id": "8aabcf70-08e3-11f1-a599-bd16d92a3728",
-            "device_type": "HDR Line MOV",
-            "device_key": "0FYaanNUWTjIue5kJs8c",
-            "entity_id": "cd26f4b0-db34-11f0-9883-236d77163572",
-            "sensors": [
-                {
-                    "sensor_name": "HDR MOV STATUS",
-                    "sensor_tag": "MOV.TOBV-05.OPEN_STATUS",
-                    "normal_value": "True"
-                },
-                {
-                    "sensor_name": "HDR MOV REMOTE STATUS",
-                    "sensor_tag": "MOV.TOBV-05.REMOTE_STATUS",
-                    "normal_value": "True"
-                },
-                {
-                    "sensor_name": "HDR MOV MAINTENANCE STATUS",
-                    "sensor_tag": "MOV.TOBV-05.MAINTENANCE_STATUS",
-                    "normal_value": "False"
-                }
-            ]
-        },
-        {
             "device_name": "TOBV-06_ATF@Vashi",
             "device_id": "8ab98b10-08e3-11f1-a599-bd16d92a3728",
             "device_type": "HDR Line MOV",
@@ -5822,13 +5616,6 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
-                    "sensor_name": "MOV MAINTENANCE IL2",
-                    "sensor_tag": "MOV.DBBV-03.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-03",
-                    "sensor_type": "MOV IL2"
-                },
-                {
                     "sensor_name": "MOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -5841,13 +5628,6 @@
                     "normal_value": "0",
                     "sensor_id": "DBBV-02",
                     "sensor_type": "MOV OL"
-                },
-                {
-                    "sensor_name": "MOV MAINTENANCE OL1",
-                    "sensor_tag": "MOV.DBBV-04.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-04",
-                    "sensor_type": "MOV OL1"
                 },
                 {
                     "sensor_name": "RIM SEAL MAINTENANCE STATUS",
@@ -5911,20 +5691,6 @@
                     "sensor_type": "ROSOV RCL"
                 },
                 {
-                    "sensor_name": "MOV MAINTENANCE IL1",
-                    "sensor_tag": "MOV.DBBV-05.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-05",
-                    "sensor_type": "MOV IL1"
-                },
-                {
-                    "sensor_name": "MOV MAINTENANCE IL2",
-                    "sensor_tag": "MOV.DBBV-07.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-07",
-                    "sensor_type": "MOV IL2"
-                },
-                {
                     "sensor_name": "MOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -5937,13 +5703,6 @@
                     "normal_value": "0",
                     "sensor_id": "DBBV-06",
                     "sensor_type": "MOV OL"
-                },
-                {
-                    "sensor_name": "MOV MAINTENANCE OL1",
-                    "sensor_tag": "MOV.DBBV-08.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-08",
-                    "sensor_type": "MOV OL1"
                 },
                 {
                     "sensor_name": "RIM SEAL MAINTENANCE STATUS",
@@ -6110,13 +5869,6 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
-                    "sensor_name": "MOV MAINTENANCE IL2",
-                    "sensor_tag": "MOV.DBBV-15.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-15",
-                    "sensor_type": "MOV IL2"
-                },
-                {
                     "sensor_name": "MOV MAINTENANCE RCL",
                     "sensor_tag": "",
                     "normal_value": "0",
@@ -6129,13 +5881,6 @@
                     "normal_value": "0",
                     "sensor_id": "DBBV-14",
                     "sensor_type": "MOV OL"
-                },
-                {
-                    "sensor_name": "MOV MAINTENANCE OL1",
-                    "sensor_tag": "MOV.DBBV-16.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-16",
-                    "sensor_type": "MOV OL1"
                 },
                 {
                     "sensor_name": "RIM SEAL MAINTENANCE STATUS",
@@ -6686,13 +6431,6 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
-                    "sensor_name": "MOV MAINTENANCE IL2",
-                    "sensor_tag": "MOV.DBBV-40.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-40",
-                    "sensor_type": "MOV IL2"
-                },
-                {
                     "sensor_name": "MOV MAINTENANCE RCL",
                     "sensor_tag": "MOV.DBBV-39.MAINTENANCE_STATUS",
                     "normal_value": "0",
@@ -6780,13 +6518,6 @@
                     "normal_value": "0",
                     "sensor_id": "DBBV-41",
                     "sensor_type": "MOV IL1"
-                },
-                {
-                    "sensor_name": "MOV MAINTENANCE IL2",
-                    "sensor_tag": "MOV.DBBV-44.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-44",
-                    "sensor_type": "MOV IL2"
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE RCL",
@@ -6878,20 +6609,6 @@
                     "sensor_type": "MOV IL1"
                 },
                 {
-                    "sensor_name": "MOV MAINTENANCE IL2",
-                    "sensor_tag": "MOV.DBBV-48.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-48",
-                    "sensor_type": "MOV IL2"
-                },
-                {
-                    "sensor_name": "MOV MAINTENANCE RCL",
-                    "sensor_tag": "MOV.DBBV-47.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-47",
-                    "sensor_type": "MOV RCL"
-                },
-                {
                     "sensor_name": "MOV MAINTENANCE OL",
                     "sensor_tag": "MOV.DBBV-46.MAINTENANCE_STATUS",
                     "normal_value": "0",
@@ -6972,20 +6689,6 @@
                     "normal_value": "0",
                     "sensor_id": "DBBV-49",
                     "sensor_type": "MOV IL1"
-                },
-                {
-                    "sensor_name": "MOV MAINTENANCE IL2",
-                    "sensor_tag": "MOV.DBBV-52.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-52",
-                    "sensor_type": "MOV IL2"
-                },
-                {
-                    "sensor_name": "MOV MAINTENANCE RCL",
-                    "sensor_tag": "MOV.DBBV-51.MAINTENANCE_STATUS",
-                    "normal_value": "0",
-                    "sensor_id": "DBBV-51",
-                    "sensor_type": "MOV RCL"
                 },
                 {
                     "sensor_name": "MOV MAINTENANCE OL",
@@ -10912,64 +10615,6 @@
             ]
         },
         {
-            "device_name": "UPS-03_Control Room@Vashi",
-            "device_id": "d06b2330-db34-11f0-9883-236d77163572",
-            "device_type": "UPS",
-            "device_key": "NWcB2Y5UvG9KxC7uomph",
-            "entity_id": "cd26f4b0-db34-11f0-9883-236d77163572",
-            "sensors": [
-                {
-                    "sensor_name": "UPS FAIL",
-                    "sensor_tag": "",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "LOW BATTERY",
-                    "sensor_tag": "",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "UPS ON",
-                    "sensor_tag": "UPS.UPS-03.UPS_ON",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "UPS MAIN AC FAIL",
-                    "sensor_tag": "UPS.UPS-03.MAIN_AC_FAIL",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "UPS-04_Control Room@Vashi",
-            "device_id": "d07387a0-db34-11f0-9883-236d77163572",
-            "device_type": "UPS",
-            "device_key": "QkXIeHI3xoVOcSInBp3l",
-            "entity_id": "cd26f4b0-db34-11f0-9883-236d77163572",
-            "sensors": [
-                {
-                    "sensor_name": "UPS FAIL",
-                    "sensor_tag": "",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "LOW BATTERY",
-                    "sensor_tag": "",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "UPS ON",
-                    "sensor_tag": "UPS.UPS-04.UPS_ON",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "UPS MAIN AC FAIL",
-                    "sensor_tag": "UPS.UPS-04.MAIN_AC_FAIL",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
             "device_name": "GEPLC_Process PLC@Vashi",
             "device_id": "d07b01b0-db34-11f0-9883-236d77163572",
             "device_type": "PLC",
@@ -11094,45 +10739,6 @@
                     "normal_value": "0",
                     "sensor_id": "SFTPLC",
                     "sensor_type": "PLC B"
-                }
-            ]
-        },
-        {
-            "device_name": "HDS_01_OPEN PATH_OLD PUMP HOUSE@Vashi",
-            "device_id": "d09196f0-db34-11f0-9883-236d77163572",
-            "device_type": "HCD",
-            "device_key": "khP1hrwBv398h8eazCcf",
-            "entity_id": "cd26f4b0-db34-11f0-9883-236d77163572",
-            "sensors": [
-                {
-                    "sensor_name": "HCD 40 % ALARM",
-                    "sensor_tag": "GDS.HDS_01.HYDROCARBON_40_PCT_LEL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD 20 % ALARM",
-                    "sensor_tag": "GDS.HDS_01.HYDROCARBON_20_PCT_LEL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD FAULT",
-                    "sensor_tag": "GDS.HDS_01.CRITICAL_FAULT_ALARM",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "MISALIGNMENT FAULT",
-                    "sensor_tag": "GDS.HDS_01.MISALIGNMENT_FAULT_ALARM",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HDS_01.MAINTENANCE_CALL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD Hooter Activated",
-                    "sensor_tag": "PLC.SFTPLC.EFFECT_HOOTER_FOR_HC_CR",
-                    "normal_value": "0"
                 }
             ]
         },
@@ -11293,45 +10899,6 @@
             ]
         },
         {
-            "device_name": "HDS_06_POINT TYPE_OLD PUMP HOUSE@Vashi",
-            "device_id": "d0cfb160-db34-11f0-9883-236d77163572",
-            "device_type": "HCD",
-            "device_key": "vNiFqbKWugAblvEvPefw",
-            "entity_id": "cd26f4b0-db34-11f0-9883-236d77163572",
-            "sensors": [
-                {
-                    "sensor_name": "HCD 40 % ALARM",
-                    "sensor_tag": "GDS.HDS_06.HYDROCARBON_40_PCT_LEL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD 20 % ALARM",
-                    "sensor_tag": "GDS.HDS_06.HYDROCARBON_20_PCT_LEL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD FAULT",
-                    "sensor_tag": "GDS.HDS_06.CRITICAL_FAULT_ALARM",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "MISALIGNMENT FAULT",
-                    "sensor_tag": "GDS.HDS_06.MISALIGNMENT_FAULT_ALARM",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HDS_06.MAINTENANCE_CALL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD Hooter Activated",
-                    "sensor_tag": "PLC.SFTPLC.EFFECT_HOOTER_FOR_HC_CR",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
             "device_name": "HDS_07_POINT TYPE_TK-103 POINT TYPE@Vashi",
             "device_id": "d0d72b70-db34-11f0-9883-236d77163572",
             "device_type": "HCD",
@@ -11361,45 +10928,6 @@
                 {
                     "sensor_name": "HCD MAINTENANCE",
                     "sensor_tag": "GDS.HDS_07.MAINTENANCE_CALL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD Hooter Activated",
-                    "sensor_tag": "PLC.SFTPLC.EFFECT_HOOTER_FOR_HC_CR",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "HDS_22_OPEN PATH_OLD PUMP HOUSE@Vashi",
-            "device_id": "d0de3050-db34-11f0-9883-236d77163572",
-            "device_type": "HCD",
-            "device_key": "FqwZSBXe1Az5MNx2NGxS",
-            "entity_id": "cd26f4b0-db34-11f0-9883-236d77163572",
-            "sensors": [
-                {
-                    "sensor_name": "HCD 40 % ALARM",
-                    "sensor_tag": "GDS.HDS_22.HYDROCARBON_40_PCT_LEL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD 20 % ALARM",
-                    "sensor_tag": "GDS.HDS_22.HYDROCARBON_20_PCT_LEL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD FAULT",
-                    "sensor_tag": "GDS.HDS_22.CRITICAL_FAULT_ALARM",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "MISALIGNMENT FAULT",
-                    "sensor_tag": "GDS.HDS_22.MISALIGNMENT_FAULT_ALARM",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HDS_22.MAINTENANCE_CALL",
                     "normal_value": "0"
                 },
                 {
@@ -11595,45 +11123,6 @@
                 {
                     "sensor_name": "HCD MAINTENANCE",
                     "sensor_tag": "GDS.HDS_27.MAINTENANCE_CALL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD Hooter Activated",
-                    "sensor_tag": "PLC.SFTPLC.EFFECT_HOOTER_FOR_HC_CR",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "HDS_28_POINT TYPE_ETP AREA-POINT-TYPE@Vashi",
-            "device_id": "d1148290-db34-11f0-9883-236d77163572",
-            "device_type": "HCD",
-            "device_key": "Z93J31zBuyI7pDIUSYu9",
-            "entity_id": "cd26f4b0-db34-11f0-9883-236d77163572",
-            "sensors": [
-                {
-                    "sensor_name": "HCD 40 % ALARM",
-                    "sensor_tag": "GDS.HDS_28.HYDROCARBON_40_PCT_LEL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD 20 % ALARM",
-                    "sensor_tag": "GDS.HDS_28.HYDROCARBON_20_PCT_LEL",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD FAULT",
-                    "sensor_tag": "GDS.HDS_28.CRITICAL_FAULT_ALARM",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "MISALIGNMENT FAULT",
-                    "sensor_tag": "GDS.HDS_28.MISALIGNMENT_FAULT_ALARM",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "HCD MAINTENANCE",
-                    "sensor_tag": "GDS.HDS_28.MAINTENANCE_CALL",
                     "normal_value": "0"
                 },
                 {
