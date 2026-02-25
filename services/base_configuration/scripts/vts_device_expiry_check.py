@@ -67,6 +67,15 @@ class CheckVTSDeviceExpiry:
                 expiry_date = datetime.datetime.strptime(expiry_str, "%d-%m-%Y")
                 vehicle_blocked_start_date = expiry_date
                 
+                vehicle_number = record.get("vehicle_number", "")
+                
+                query = f"select transporter_code from vts_truck_master where truck_no = '{vehicle_number}' "
+                transporter_result = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=1)
+                if transporter_result.get("data"):
+                    transporter_code = transporter_result.get("data", [{}])[0].get("transporter_code")
+                else:
+                    transporter_code = ""
+
                 # default block duration is 5 years, can be changed as per requirement
                 vehicle_blocked_end_date = (expiry_date + dateutil.relativedelta.relativedelta(years=5))
 
@@ -80,6 +89,7 @@ class CheckVTSDeviceExpiry:
                     "vehicle_blocked_start_date": vehicle_blocked_start_date.isoformat(),
                     "vehicle_blocked_end_date": vehicle_blocked_end_date.isoformat(),
                     "bu": bu,
+                    "transporter_code": transporter_code,
                     "alert_section": "VTS",
                     "interlock_name": "Truck Contract Validity Status",
                     "severity": hpcl_ceg_enum.Severity.High.value,

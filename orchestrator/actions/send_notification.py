@@ -261,11 +261,7 @@ class SendNotification:
         if self.params.get('messagetype','') in ['resolved']:
             subject_template = f"VTS Alert: Unblocking of truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get("location_name", "")};"
             return subject_template
-        
-        if self.params.get('messagetype', '') in ['vts_device_expiry']:
-            subject_template = f"VTS Alert: Device Expiry Alert for truck {self.alert_data.get('vehicle_number', '')} at {self.alert_data.get('location_name', '')};"
-            return subject_template
-        
+   
     async def get_subject_for_ro(self):
         if self.params.get('messagetype','') in ['notify'] and self.alert_data.get('interlock_name') in ['Restroom Cleaning Evidence Missing']:
             subject_template = f"Outlet Blocked"
@@ -658,7 +654,7 @@ class SendNotification:
             await self._send_vts_device_expiry_notification()
         else:
             await self._send_standard_notification()
-    
+
     async def get_ro_recipients(self):
         dealer_mail = f"{self.alert_data.get("sap_id")}@retail.co.in"
         mail_recipients = []
@@ -733,6 +729,64 @@ class SendNotification:
         await hpcl_ceg_model.NotificationAuditLogCreate(**notification_record).create()
 
 
+    async def _send_vts_device_expiry_notification(self):
+        """
+        Send VTS device contract expiry notification to transporter and location officers.
+
+        Called from _send_notifications_with_sms() when messagetype is 'vts_device_expiry'.
+        Uses self.alert_data (already populated) to fetch recipients and render the template.
+
+        alert_data expected keys:
+            - transporter_code, sap_id, vehicle_number, location_name, contract_valid_upto
+        """
+        try:
+            # Fetch TO (transporter) and CC (location officers) using the existing helper
+            mail_recipients, cc_recipients, from_url = await self.get_vts_recipients()
+
+            if not mail_recipients:
+                logger.warning(
+                    f"_send_vts_device_expiry_notification: No recipients found for "
+                    f"transporter_code={self.alert_data.get('transporter_code')}, "
+                    f"sap_id={self.params.get('sap_id')}"
+                )
+                return
+
+            # Render email subject
+            subject = (
+                f"Contract Expiry Intimation - Vehicle {self.alert_data['vehicle_number']} "
+                f"at {self.alert_data['location_name']} "
+                f"(Valid Upto: {self.params['contract_valid_upto']})"
+            )
+
+            # Read and render the HTML template
+            template_filename = "vts_device_expiry.html"
+            template_content = await self.read_template(template_filename)
+            body = Template(template_content).render(
+                location_name=self.alert_data["location_name"],
+                contract_valid_upto=self.params["contract_valid_upto"],
+            )
+
+            # Send email
+            notification_module = await notification_factory.get_notification_module(module_type="email")
+            res = await notification_module.publish_message(
+                from_url=from_url,
+                recipients=mail_recipients,
+                cc_recipients=cc_recipients,
+                subject=subject,
+                body=body,
+                force_send=True,
+                html_content=True,
+            )
+            logger.info(
+                f"_send_vts_device_expiry_notification: Email sent to {mail_recipients}, "
+                f"CC: {cc_recipients}. Response: {res}"
+            )
+            return res
+
+        except Exception as e:
+            logger.error(f"_send_vts_device_expiry_notification error: {str(e)}")
+            logger.error(traceback.format_exc())
+
     async def get_tas_recipients(self):
         try:
             sap_id = self.alert_data.get("sap_id")
@@ -791,21 +845,7 @@ class SendNotification:
         except Exception as e:
             logger.error(f"TAS recipient error: {e}")
             return []
-   
-    async def _send_vts_device_expiry_notification(self):
-        notification_module = await notification_factory.get_notification_module(module_type="email")
-        print("self.mail_recipients: ", self.mail_recipients)
-        await self.update_notication_audit_log()
-        if self.mail_recipients:
-            res = await notification_module.publish_message(
-                recipients=self.mail_recipients,
-                subject=self.subject,
-                body=self.body,
-                force_send=True,
-                html_content=True
-            )
-            return res
-    
+       
     async def _send_active_notification(self):
         """
         Send notifications for LPG/TAS active messages
