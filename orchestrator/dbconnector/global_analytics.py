@@ -7861,7 +7861,7 @@ class GlobalAnalytics:
             "Pending Indent": data.get("intra_pending_indent", 0),
             "Indent WIP": data.get("intra_indent_wip", 0),
         }
-        
+
         carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
         carry_fwd_df = pl.DataFrame(carry_fwd_data)
         if carry_fwd_df.is_empty():
@@ -7966,6 +7966,7 @@ class GlobalAnalytics:
     @staticmethod
     async def dry_out_trends(filters, cross_filters, drill_state):
         _filters = []
+        filter_map = defaultdict(list)
         daterange = f""" created_at::date = '{urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")}' """
 
         if cross_filters:
@@ -7977,11 +7978,19 @@ class GlobalAnalytics:
                     else:
                         daterange = f""" created_at::date BETWEEN '{start_date}' AND '{end_date}' """
                     continue
-                _filters.append(f"{filter.key} = '{filter.value}'")
+                #_filters.append(f"{filter.key} = '{filter.value}'")
+                filter_map[filter.key].append(filter.value)
 
         if filters:
             for filter in filters:
-                _filters.append(f"{filter.key} = '{filter.value}'")
+                filter_map[filter.key].append(filter.value)
+                #_filters.append(f"{filter.key} = '{filter.value}'")
+        
+        for key, values in filter_map.items():
+            if len(values) > 1:
+                _filters.append(f"{key} IN ({', '.join([f"'{v}'" for v in values])})")
+            else:
+                _filters.append(f"{key} = '{values[0]}'")
 
         # Construct WHERE clause
         where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')", daterange, "mark_as_false = 'true'"]
