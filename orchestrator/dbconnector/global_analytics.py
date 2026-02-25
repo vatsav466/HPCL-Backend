@@ -5565,7 +5565,7 @@ class GlobalAnalytics:
                             "type": alert_flag
                             
                         }
-
+                        details.append(detail)
                     
                     # Calculate final counts
                     carry_count = len(carry_devices)

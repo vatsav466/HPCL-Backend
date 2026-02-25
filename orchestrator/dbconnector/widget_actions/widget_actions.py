@@ -128,7 +128,8 @@ lpg_dashboard_actions = [
     'get_eld_drill_down',
     'get_old_drill_down',
     'underfill_overfill_scales',
-    'under_performance_scales'
+    'under_performance_scales',
+    'plant_month_analysis'
 ]
 
 # Todo:- import all widget action modules here
@@ -252,7 +253,8 @@ widget_mapping = {
     'get_eld_drill_down': {},
     'get_old_drill_down': {},
     'underfill_overfill_scales': {},
-    'under_performance_scales': {}
+    'under_performance_scales': {},
+    'plant_month_analysis':{}
 }
 
 
