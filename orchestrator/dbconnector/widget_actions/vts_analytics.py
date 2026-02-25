@@ -1054,17 +1054,22 @@ class VTSAnalyticsActions:
 
             # Extract employee_id and action_by from alert_history index 5
             df = df.with_columns([
-                pl.when(pl.col("alert_history").list.len() > 5)
-                .then(pl.col("alert_history").list.get(5).struct.field("employee_id"))
-                .otherwise(None)
+                # Safe extraction from alert_history
+                pl.col("alert_history")
+                .list.get(5, null_on_oob=True)
+                .struct.field("employee_id")
                 .alias("employee_id"),
 
-                pl.when(pl.col("alert_history").list.len() > 5)
-                .then(pl.col("alert_history").list.get(5).struct.field("action_by"))
-                .otherwise(None)
+                pl.col("alert_history")
+                .list.get(5, null_on_oob=True)
+                .struct.field("action_by")
                 .alias("action_by"),
 
-                pl.lit("SOD").alias("bu")  # override BU
+                # Conditional BU override
+                pl.when(pl.col("bu") == "TAS")
+                .then(pl.lit("SOD"))
+                .otherwise(pl.col("bu"))
+                .alias("bu")
             ])
 
             # Select only required columns (alert_history removed)
@@ -1081,11 +1086,8 @@ class VTSAnalyticsActions:
                 "action_by"
             ])
 
-            return {
-                "status": True,
-                "message": "success",
-                "data": res_df.to_dicts()
-            }
+            return await download_streaming_data(res_df, filename=f'{drill_state}')
+
 
         except Exception as e:
             print("Exception in BigNumber Chart:", str(e))
@@ -3720,7 +3722,35 @@ class VTSAnalyticsActions:
             for key in ["zone", "location_name", "transporter_name"]:
                 if payload.get(key):
                     violation_filtered_df = violation_filtered_df[violation_filtered_df[key] == payload[key]]
-            
+           # --- DATE-WISE AGGREGATION (move here!) ---
+            date_wise = payload.get("date_wise") or payload.get("payload", {}).get("date_wise")
+            if date_wise is True or date_wise == "true":
+                violation_filtered_df['created_at'] = pd.to_datetime(violation_filtered_df['created_at'])
+                ist = pytz.timezone("Asia/Kolkata")
+                if violation_filtered_df['created_at'].dt.tz is None:
+                    violation_filtered_df['created_at'] = violation_filtered_df['created_at'].dt.tz_localize('UTC').dt.tz_convert(ist)
+                else:
+                    violation_filtered_df['created_at'] = violation_filtered_df['created_at'].dt.tz_convert(ist)
+                
+                violation_filtered_df['date'] = violation_filtered_df['created_at'].dt.strftime("%Y-%m-%d")
+                
+                date_wise_df = (
+                    violation_filtered_df.groupby('date')
+                    .agg(
+                        invoice_count=('invoice_number', 'nunique'),
+                        violation_count_more_than_6=(violation_type, 'count'),
+                        total_violations=(violation_type, 'sum'),
+                        vehicle_count=('tl_number', 'nunique')
+                    )
+                    .reset_index()
+                    .sort_values('date')
+                )
+                
+                return {
+                    "status": True,
+                    "message": f"{violation_type} date-wise data",
+                    "data": date_wise_df.to_dict(orient='records')
+                } 
             if violation_filtered_df.empty:
                 return {"status": True, "message": "No data found for the applied filters", "data": []}
             

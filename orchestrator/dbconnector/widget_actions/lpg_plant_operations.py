@@ -19,9 +19,84 @@ import os
 
 
 class LPGOperationsActions:
-    async def plants_dropdown(data: dict):
-        query = """ select * from lpg_plant_operations_masters """
+    # async def plants_dropdown(data: dict):
+    #     query = """ select * from lpg_plant_operations_masters """
+    #     try:
+    #         result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+
+    #         plants = []
+    #         zones = set()
+    #         regions = set()
+
+    #         if result and "data" in result and result["data"]:
+    #             for row in result["data"]:
+    #                 plants.append({
+    #                     "sap_id": str(row["sap_id"]),
+    #                     "plant": row["plant_name"]
+    #                 })
+    #                 if not row["zone"] is None:
+    #                     zones.add(row["zone"])
+    #                 if not row["region"] is None:
+    #                     regions.add(row["region"])
+
+    #         return {
+    #             "status": True,
+    #             "message": "Success",
+    #             "data": {
+    #                 "plant": plants,
+    #                 "zone": list(zones),
+    #                 "region": list(regions),
+    #                 "carousel_type": ["12H", "24H", "48H", "72H"]
+    #             }
+    #         }
+
+    #     except Exception:
+    #         print("Exception in plants_dropdown")
+    #         print("traceback :", traceback.format_exc())
+
+    @staticmethod
+    async def plants_dropdown(data=None):
+
+        print("DATA RECEIVED:", data)
+
+        query = """
+            select DISTINCT sap_id, plant_name, zone, region 
+            from lpg_plant_operations_masters
+        """
+
         try:
+            print("coming in try")
+            where_conditions = []
+
+            filters = None
+
+            #  data will now be dictionary (because you wrapped inside payload)
+            if isinstance(data, dict):
+                filters = data.get("filters")
+
+            print("filters:", filters)
+
+            if filters:
+                print("Applying filters...")
+
+                for f in filters:
+
+                    # Now filters are dictionaries
+                    key = f.get("key", "").replace('"', '').strip()
+                    value = f.get("value")
+
+                    if key.lower() == "zone" and value:
+                        where_conditions.append(f"zone = '{value}'")
+
+                    if key.lower() == "sap_id" and value:
+                        where_conditions.append(f"sap_id = '{value}'")
+
+            #  Attach WHERE condition
+            if where_conditions:
+                query += " WHERE " + " AND ".join(where_conditions)
+
+            print("Final Query:", query)
+
             result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
 
             plants = []
@@ -34,9 +109,11 @@ class LPGOperationsActions:
                         "sap_id": str(row["sap_id"]),
                         "plant": row["plant_name"]
                     })
-                    if not row["zone"] is None:
+
+                    if row.get("zone"):
                         zones.add(row["zone"])
-                    if not row["region"] is None:
+
+                    if row.get("region"):
                         regions.add(row["region"])
 
             return {
@@ -44,15 +121,16 @@ class LPGOperationsActions:
                 "message": "Success",
                 "data": {
                     "plant": plants,
-                    "zone": list(zones),
-                    "region": list(regions),
+                    "zone": sorted(list(zones)),
+                    "region": sorted(list(regions)),
                     "carousel_type": ["12H", "24H", "48H", "72H"]
                 }
             }
 
-        except Exception:
-            print("Exception in plants_dropdown")
-            print("traceback :", traceback.format_exc())
+        except Exception as e:
+            print("Exception in plants_dropdown:", str(e))
+            raise
+
 
     async def get_breaks(plant_id, carousal_id):
         query = f"""SELECT start_time, stop_time FROM public.breaks WHERE plant_id = {plant_id} AND carousal_id = {carousal_id}"""
