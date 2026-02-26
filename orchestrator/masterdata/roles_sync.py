@@ -1184,6 +1184,46 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            },
+                            {
+                                "title": "TAS Insights",
+                                "allowed_sub_menus": [
+                                    {
+                                        "title": "BCU Dosing Alerts"
+                                    },
+                                    {
+                                        "title": "BAY Analytics"
+                                    },
+                                    {
+                                        "title": "BCU Critical Parameter"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "Bay Caliberation Module"
+                            },
+                            {
+                                "title": "Help Desk Module"
+                            }
+                        ]
                     }
                 ]
             }
