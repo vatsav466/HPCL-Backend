@@ -783,7 +783,7 @@ async def tas_alerts_exception_report(data):
     alerts = (await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")).get("data", [])
     if not alerts:
         return []
-    df = (pl.DataFrame(alerts)
+    df = (pl.DataFrame(alerts, infer_schema_length=None)
           .with_columns([
         pl.col("vehicle_number").str.strip_chars(),
         pl.col("interlock_name")
@@ -890,7 +890,8 @@ async def tas_alerts_exception_report(data):
             (await hpcl_ceg_model.HostCancelledTts.get_all(
                 urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
                 resp_type="plain"
-            )).get("data", [])
+            )).get("data", []),
+            infer_schema_length=None
         )
         .with_columns(pl.col("created_at").dt.date().alias("created_date"))
         .group_by(["truck_number", "created_date"])
