@@ -62,22 +62,21 @@ class CheckVTSDeviceExpiry:
                     expiry_str = record.get("tibco_expiry_date")
                     expiry_date = datetime.datetime.strptime(expiry_str, "%d-%m-%Y").date()
 
-                    days_remaining = (expiry_date - today).days
+                    days_remaining = (expiry_date - today).days + 1 # Adding 1 to include the expiry day itself
 
                     if days_remaining == 30:
                         before30days = True
-                        total_wait_time_minutes = 30 * 24 * 60
+                        total_wait_time_days = days_remaining
 
                     elif 1 <= days_remaining < 30:
                         before30days = False
-                        total_wait_time_minutes = days_remaining * 24 * 60
-
+                        total_wait_time_days = days_remaining 
                     else:
                         # today or already expired
                         before30days = False
-                        total_wait_time_minutes = 0
+                        total_wait_time_days = 0
 
-                    totalWaitTime = f"PT{total_wait_time_minutes}M"
+                    totalWaitTime = f"P{total_wait_time_days}D"
 
                     # Vehicle block dates
                     vehicle_blocked_start_date = expiry_date
