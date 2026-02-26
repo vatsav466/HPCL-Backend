@@ -22,10 +22,12 @@ from dateutil.relativedelta import relativedelta
 from fastapi.responses import JSONResponse, FileResponse
 import pytz
 import math
+import charts_actions
 from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.dbconnector.widget_actions.vts_query as vts_query
 import orchestrator.dbconnector.credential_loader as credential_loader
 import orchestrator.sync_services.vts.vts_ongoing_trips as vts_ongoing_trips
+import utilities.connection_mapping as connection_mapping
 
 
 async def generate_cross_filter(cross_filters):
@@ -4179,50 +4181,112 @@ class VTSAnalyticsActions:
         except Exception as e:
             return {"status": False, "message": str(e), "data": None}
 
+    
     @staticmethod
     async def adding_device(filters, cross_filters, drill_state, payload):
-            try:
-                sap_tt_val = payload.get("sap_tt_no")
-                print(sap_tt_val)
+        try:
+            # Constants
+            BLOCKED_CODES = {"0000010001", "00"}
+            COLUMN_MAPPING = {
+                "TRUCK_REGNNO": "SAP TT No.",
+                "LOCN_CODE": "sap_id",
+                "TRANS_ID": "Transporter",
+                "bu": "Select Business",
+                "name": "Location"
+            }
+            
+            sap_tt_val = payload.get("sap_tt_no")
+            safe_val = str(sap_tt_val).replace("'", "''")
 
-                if sap_tt_val:
-                    safe_val = str(sap_tt_val).replace("'", "''")
-                    query = f"""
-                        SELECT  truck_no, location_name, transporter_code, transporter_name, bu
-                        FROM vts_truck_master
-                        WHERE truck_no = '{safe_val}'
-                        LIMIT 1
-                    """
-                    print("Query", query)
-                    df = await VTSAnalyticsActions.execute_query(query)
+            # Fetch truck records
+            truck_query = f"""
+                SELECT TRUCK_REGNNO, LOCN_CODE, TRANS_ID
+                FROM "IMS_SAP"."TRUCK_DETAILS"
+                WHERE TRUCK_REGNNO = '{safe_val}'
+            """
 
-                    if df.empty:
-                        return {"status": False, "message": f"No data found  SAP TT No. {sap_tt_val}", "data": []}
-    
+            charts_ins = dashboard_studio_model.Charts_Connection_Vault_RoutingParams(
+                connection_id=connection_mapping.connection_mapping.get("ims", "1"),
+                action="execute_query"
+            )
 
-                # transporter_code 
-                if "transporter_code" in df.columns and "transporter_name" in df.columns:
-                    df["Transporter"] = (
-                            df["transporter_code"].astype(str).replace(["nan", "None", ""], "None")  + " : " +
-                            df["transporter_name"].astype(str).replace(["nan", "None", ""], "None")
-                        )
-                else:
-                    df["Transporter"] = ""
+            function = await charts_actions.charts_connection_vault_routing(charts_ins)
+            truck_result = await function(query=truck_query)
 
-                df = df.rename(columns={"truck_no": "SAP TT No.","bu": "Select Business","location_name": "Location"})
+            truck_df = pl.DataFrame(truck_result, schema={
+                "TRUCK_REGNNO": pl.String,
+                "LOCN_CODE": pl.String,
+                "TRANS_ID": pl.String,
+            })
 
-                df.drop(columns=["transporter_code", "transporter_name"], inplace=True, errors="ignore")
-                df = df.replace([np.nan, np.inf, -np.inf], None)
-                print(df)
-
-                # return matched single row
+            if truck_df.height == 0:
                 return {
-                    "status": True,"message": f"Data found for SAP TT No. {sap_tt_val}","data": df.to_dict(orient="records")}
+                    "status": False,
+                    "message": "No truck details found for given SAP TT No",
+                    "data": {}
+                }
 
-            except Exception as e:
-                print("Exception in adding_device:", str(e))
-                print("traceback:", traceback.format_exc())
-                return {"status": False, "message": str(e), "data": []}
+            # Filter blocked transporters
+            truck_df = truck_df.filter(
+                ~pl.col("TRANS_ID").cast(pl.String).str.strip_chars().is_in(BLOCKED_CODES)
+            )
+
+            if truck_df.height == 0:
+                return {
+                    "status": False,
+                    "message": "trucks is blocked",
+                    "data": {}
+                }
+
+            # Get unique SAP IDs for bulk fetch
+            sap_ids = truck_df.select("LOCN_CODE").unique().to_series().to_list()
+            sap_ids_string = ",".join(f"'{x}'" for x in sap_ids)
+
+            # Fetch locations in bulk
+            location_query = f"""
+                SELECT sap_id,bu,name,zone
+                FROM LOCATION_MASTER
+                WHERE sap_id IN ({sap_ids_string})
+            """
+            location_result = await VTSAnalyticsActions.execute_query(location_query)
+            location_df = pl.DataFrame(location_result, schema={
+                "sap_id": pl.String,
+                "bu": pl.String,
+                "name": pl.String,
+                "zone":pl.String
+            })
+
+            if location_df.height == 0:
+                return {
+                    "status": False,
+                    "message": "No matching locations found",
+                    "data": {}
+                }
+
+            # Join and rename
+            final_df = truck_df.join(location_df, left_on="LOCN_CODE", right_on="sap_id", how="inner")
+            
+            if final_df.height == 0:
+                return {
+                    "status": False,
+                    "message": "No valid truck-location mapping found","data": {}
+                }
+
+            final_df = final_df.rename(COLUMN_MAPPING)
+            # print('fina_df',final_df)
+
+            return {
+                "status": True, "message": "Data fetched successfully",
+                "data": final_df.to_dicts()
+            }
+
+        except Exception as e:
+            print("Exception:", str(e))
+            return {
+                "status": False,
+                "message": f"Failed to fetch SAP truck details: {str(e)}",
+                "data": {}
+            }
     
     @staticmethod
     async def device_commissioning_table(filters, cross_filters, drill_state, payload):

@@ -314,6 +314,7 @@ Model Users {
 
     Config=> {
         crud_operations='read'
+        search_fields='employee_id'
     }
 
 }
@@ -3859,7 +3860,7 @@ Model NoticesVTS {
 }
 
 Model DeviceInstallation{
-    sap_tt_no  str  
+    sap_tt_no index_field optional  str  
     tt_chassis_no optional str  
     tt_engine_no optional str  
     select_business optional str  
@@ -3876,7 +3877,7 @@ Model DeviceInstallation{
     remarks optional str
     reason_for_cancel optional str
     status_decommissioning optional str
-    sap_id optional str
+    sap_id index_field optional str
     commissioning_status optional str
     commissioning_status_code optional str
     commissioning_responses optional str
@@ -3886,8 +3887,8 @@ Model DeviceInstallation{
     AOT_status optional str
     AOT_sap_tt_no optional str
     AOT_request_type optional str
-    expiry_alert_created optional bool
-    tibco_expiry_date optional str
+    expiry_alert_created  index_field optional  bool
+    tibco_expiry_date index_field optional  str
 
     Action=> update_device_installation {
             sap_tt_no  str  
