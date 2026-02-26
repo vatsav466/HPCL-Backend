@@ -372,7 +372,7 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
             df['mf_count'] = pd.to_numeric(df['mf_count'], errors='coerce').fillna(0).astype(int)
 
             # **Exclude specific sap_id values**
-            df = df[~df['sap_id'].isin(['1588', '1992', '1999'])]
+            df = df[~df['sap_id'].isin(['1992', '1999'])]
 
             if 'device_type' in df.columns:
                 df = df[~df['device_type'].isin(['Gantry override','Fire Effect'])]
