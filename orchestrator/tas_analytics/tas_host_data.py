@@ -93,7 +93,7 @@ async def fetch_host_tables_as_dfs(data):
     params = urdhva_base.queryparams.QueryParams(q=query_str, limit=0)
 
     alerts_query = (
-        "alert_section = 'TAS'"
+        "alert_section = 'TAS' "
         "AND interlock_name NOT ILIKE '%BCU Permissive Off%'"
     )
     if conditions:
@@ -113,8 +113,9 @@ async def fetch_host_tables_as_dfs(data):
     day_end_params = urdhva_base.queryparams.QueryParams(
         q=query_str,
         fields=json.dumps([
-            "created_at", "bcu_number","bay_number","invoiced_qty", "location_name",
-            "bcu_net_totalizer", "mfm_net_totalizer","bcu_start_totalizer","bcu_end_totalizer","invoiced_bcu_net_qty_diff","bcu_mfm_net_totalizer_diff"
+            "created_at", "bcu_number", "bay_number", "invoiced_qty", "location_name",
+            "bcu_net_totalizer", "mfm_net_totalizer", "bcu_start_totalizer",
+            "bcu_end_totalizer", "invoiced_bcu_net_qty_diff", "bcu_mfm_net_totalizer_diff"
         ])
     )
     day_end_params.limit = 0
@@ -122,43 +123,68 @@ async def fetch_host_tables_as_dfs(data):
     unauthorised_flow_params = urdhva_base.queryparams.QueryParams(
         q=query_str,
         fields=json.dumps([
-            "bay_number","bcu_number", "net_totalizer", "created_at", "location_name", "zone", "start_totalizer","end_totalizer"
+            "bay_number", "bcu_number", "net_totalizer", "created_at",
+            "location_name", "zone", "start_totalizer", "end_totalizer"
         ])
     )
     unauthorised_flow_params.limit = 0
 
+    local_loaded_params = urdhva_base.queryparams.QueryParams(
+        q=query_str,
+        fields=json.dumps([
+            "bay_number", "bcu_number", "recipe_name",
+            "truck_number", "loaded_qty", "location_name", "created_at"
+        ])
+    )
+    local_loaded_params.limit = 0
+
     # ---------------------------
-    # Fetch Data (UNCHANGED)
+    # Fetch Data
     # ---------------------------
-    bay_resp = await hpcl_ceg_model.HostBayReAssignment.get_all(params, resp_type="plain")
-    local_loaded_resp = await hpcl_ceg_model.HostLocalLoadedTts.get_all(params, resp_type="plain")
-    over_loaded_resp = await hpcl_ceg_model.HostOverLoadedTts.get_all(params, resp_type="plain")
-    day_end_resp = await hpcl_ceg_model.HostDayEndDetails.get_all(day_end_params, resp_type="plain")
-    alerts_resp = await hpcl_ceg_model.Alerts.get_all(alerts_params, resp_type="plain")
-    unauthorised_flow_resp = await hpcl_ceg_model.HostUnauthorisedFlow.get_all(unauthorised_flow_params, resp_type="plain")
+    # bay_resp = await hpcl_ceg_model.HostBayReAssignment.get_all(params, resp_type="plain")
+    # local_loaded_resp = await hpcl_ceg_model.HostLocalLoadedTts.get_all(params, resp_type="plain")
+    # over_loaded_resp = await hpcl_ceg_model.HostOverLoadedTts.get_all(params, resp_type="plain")
+    # day_end_resp = await hpcl_ceg_model.HostDayEndDetails.get_all(day_end_params, resp_type="plain")
+    # alerts_resp = await hpcl_ceg_model.Alerts.get_all(alerts_params, resp_type="plain")
+    # unauthorised_flow_resp = await hpcl_ceg_model.HostUnauthorisedFlow.get_all(unauthorised_flow_params, resp_type="plain")
 
+    (
+        bay_resp,
+        local_loaded_resp,
+        over_loaded_resp,
+        day_end_resp,
+        alerts_resp,
+        unauthorised_flow_resp,
+    ) = await asyncio.gather(
+        hpcl_ceg_model.HostBayReAssignment.get_all(params, resp_type="plain"),
+        hpcl_ceg_model.HostLocalLoadedTts.get_all(local_loaded_params, resp_type="plain"),
+        hpcl_ceg_model.HostOverLoadedTts.get_all(params, resp_type="plain"),
+        hpcl_ceg_model.HostDayEndDetails.get_all(day_end_params, resp_type="plain"),
+        hpcl_ceg_model.Alerts.get_all(alerts_params, resp_type="plain"),
+        hpcl_ceg_model.HostUnauthorisedFlow.get_all(unauthorised_flow_params, resp_type="plain"),
+    )
 
-
+    # ---------------------------
+    # Build DataFrames
+    # ---------------------------
     bay_df = pl.DataFrame(bay_resp.get("data", []))
     local_loaded_df = pl.DataFrame(local_loaded_resp.get("data", []))
     over_loaded_df = pl.DataFrame(over_loaded_resp.get("data", []))
     day_end_df = pl.DataFrame(day_end_resp.get("data", []))
     alerts_df = pl.DataFrame(alerts_resp.get("data", []))
+
     unauthorised_flow_data = unauthorised_flow_resp.get("data", [])
     if unauthorised_flow_data:
         for row in unauthorised_flow_data:
             for field in ["net_totalizer", "start_totalizer", "end_totalizer"]:
                 if field in row and row[field] is not None:
                     row[field] = round(float(row[field]), 2)
-
     unauthorised_flow_df = pl.DataFrame(unauthorised_flow_data)
 
-    
     # Filter out rows where net_totalizer is 0 or null
     if len(unauthorised_flow_df) > 0 and "net_totalizer" in unauthorised_flow_df.columns:
         unauthorised_flow_df = unauthorised_flow_df.filter(
-            (pl.col("net_totalizer").is_not_null()) & 
-            (pl.col("net_totalizer") > 0)
+            pl.col("net_totalizer").is_not_null() & (pl.col("net_totalizer") > 0)
         )
 
     # Filter unauthorised_flow_df by bay if bay filter provided
@@ -168,6 +194,9 @@ async def fetch_host_tables_as_dfs(data):
             pl.col("bay_number").cast(pl.Utf8).str.zfill(2).is_in(padded_bays)
         )
 
+    # ---------------------------
+    # BCU / Active Bay Counts
+    # ---------------------------
     total_bcu_count = 0
     total_active_bays_count = 0
 
@@ -186,12 +215,20 @@ async def fetch_host_tables_as_dfs(data):
         total_bcu_count = grouped_df.height
         total_active_bays_count = grouped_df.filter(pl.col("total_difference") > 100).height
 
-    # Add table_name column to dataframes that have data
+    # ---------------------------
+    # Enrich DataFrames
+    # ---------------------------
     if len(bay_df) > 0:
         bay_df = bay_df.with_columns(pl.lit('HostBayReAssignment').alias("table_name"))
         bay_df = bay_df.filter(pl.col("reassigned_bay").is_not_null() & (pl.col("reassigned_bay") != ""))
+
     if len(local_loaded_df) > 0:
         local_loaded_df = local_loaded_df.with_columns(pl.lit('HostLocalLoaded').alias("table_name"))
+        if "truck_number" in local_loaded_df.columns:
+            local_loaded_df = local_loaded_df.with_columns(
+                pl.col("truck_number").str.strip_chars().str.replace_all(r"\s+", "").alias("truck_number")
+            )
+
     if len(over_loaded_df) > 0:
         over_loaded_df = over_loaded_df.with_columns(pl.lit('HostOverLoaded').alias("table_name"))
 
@@ -199,43 +236,44 @@ async def fetch_host_tables_as_dfs(data):
     if len(alerts_df) > 0:
         alerts_df = alerts_df.unique(subset=["vehicle_number", "created_at"])
         if "device_name" in alerts_df.columns:
-            alerts_df = alerts_df.with_columns(
-                pl.col("device_name").str.extract(r"BC-(\d{2,3})[A-Za-z]?", 1) .alias("bay_number")
-            )
-        # NEW: Filter alerts_df by bay if provided
+            alerts_df = alerts_df.with_columns(pl.col("device_name").str.extract(r"BC-(\d{2,3})[A-Za-z]?", 1).alias("bay_number"))
         if bay_filter_values and "bay_number" in alerts_df.columns:
             padded_bays = [b.zfill(2) for b in bay_filter_values]
-            alerts_df = alerts_df.filter(
-                pl.col("bay_number").is_in(padded_bays)
-            )
+            alerts_df = alerts_df.filter(pl.col("bay_number").is_in(padded_bays))
 
+    # Process day_end_df
     if len(day_end_df) > 0 and "bay_number" in day_end_df.columns:
         day_end_df = day_end_df.with_columns(pl.col("bay_number").str.zfill(2).alias("bay_number_extracted"))
-
-    # Filter day_end_df by bay if bay filter provided
     if bay_filter_values and len(day_end_df) > 0 and "bay_number_extracted" in day_end_df.columns:
         padded_bays = [b.zfill(2) for b in bay_filter_values]
-        day_end_df = day_end_df.filter(
-            pl.col("bay_number_extracted").is_in(padded_bays)
-        )
+        day_end_df = day_end_df.filter(pl.col("bay_number_extracted").is_in(padded_bays))
 
-    # Rename bay_number to assigned_bay if column exists
+    # Rename columns before concat
     if len(local_loaded_df) > 0 and "bay_number" in local_loaded_df.columns:
         local_loaded_df = local_loaded_df.rename({'bay_number': 'assigned_bay', 'recipe_name': 'product_name'})
     if len(over_loaded_df) > 0 and "bay_number" in over_loaded_df.columns:
         over_loaded_df = over_loaded_df.rename({'bay_number': 'assigned_bay'})
 
-    # Combine dataframes
+    # ---------------------------
+    # Combine DataFrames
+    # ---------------------------
     combined_df = pl.concat([bay_df, local_loaded_df, over_loaded_df], how="diagonal_relaxed")
 
-    # Only proceed with processing if combined_df has data
     if len(combined_df) > 0:
-        
-        if "truck_number" in combined_df.columns:
-            combined_df = combined_df.filter((pl.col("truck_number").str.len_chars() >= 9) & pl.col("truck_number").str.contains(r"[A-Z]") & 
-                pl.col("truck_number").str.contains(r"[0-9]") & pl.col("truck_number").str.contains(r"^[A-Z0-9]+$"))
 
-        # NEW: Filter combined_df by bay if provided
+        # Truck number validation
+        if "truck_number" in combined_df.columns:
+            combined_df = combined_df.with_columns(
+                pl.col("truck_number").str.strip_chars().str.replace_all(r"\s+", "").alias("truck_number")  # ← strip before validate
+            )
+            combined_df = combined_df.filter(
+                (pl.col("truck_number").str.len_chars() >= 9) &
+                pl.col("truck_number").str.contains(r"[A-Z]") &
+                pl.col("truck_number").str.contains(r"[0-9]") &
+                pl.col("truck_number").str.contains(r"^[A-Z0-9]+$")
+            )
+
+        # Bay filter on combined_df
         if bay_filter_values and "assigned_bay" in combined_df.columns:
             padded_bays = [b.zfill(2) for b in bay_filter_values]
             combined_df = combined_df.filter(
@@ -243,118 +281,97 @@ async def fetch_host_tables_as_dfs(data):
             )
 
         if "loaded_qty" in combined_df.columns:
-            combined_df = combined_df.with_columns(pl.col("loaded_qty").sum().over(["truck_number", "created_at"]).alias("cumulative_loaded_qty"))
-        
-        combined_df = combined_df.unique(subset=["truck_number", "created_at","table_name", "assigned_bay"])
+            combined_df = combined_df.with_columns(
+                pl.col("loaded_qty").sum().over(["truck_number", "created_at"]).alias("cumulative_loaded_qty")
+            )
 
+        combined_df = combined_df.unique(subset=["truck_number", "created_at", "table_name", "assigned_bay"])
 
-        alerts_count_list = []
-        gantry_count_list = []
-        bay_alerts_count_list = []
-        mfm_vs_bcu_list = []
-        bcu_vs_invoice_list = []
-        
-        for i in range(len(combined_df)):
-            current_time = combined_df[i, "created_at"]
-            current_date = current_time.date()  # Extract only the date
-            current_bay = str(combined_df[i, "assigned_bay"]).zfill(2) 
-            
-            # Calculate Alerts_Count
-            if len(alerts_df) > 0:
-                filtered = alerts_df.filter(
-                    (pl.col("created_at").cast(pl.Date) == current_date) &
-                    (pl.col("equipment_name") == "BCU") &
-                    (pl.col("bay_number") == current_bay)
-                )
-                alerts_count_list.append(len(filtered))
-            else:
-                alerts_count_list.append(0)
-            
-            # Calculate Gantry Permissive off Count
-            if len(alerts_df) > 0:
-                filtered = alerts_df.filter(
-                    (pl.col("created_at").cast(pl.Date) == current_date) &
-                    (pl.col("interlock_name").str.contains("Gantry Permissive Off")) &
-                    (~pl.col("interlock_name").str.contains("Fail"))
-                )
-                gantry_count_list.append(len(filtered))
-            else:
-                gantry_count_list.append(0)
-            
-            
-            # Calculate MFM VS BCU
-            difference = 0
-            if len(day_end_df) > 0:
-                filtered = day_end_df.filter(
-                    (pl.col("created_at").cast(pl.Date) == current_date) &
-                    (pl.col("bay_number_extracted") == current_bay)
-                )
-                if len(filtered) > 0:
-                    bcu_sum = filtered.select(pl.col("bcu_net_totalizer").cast(pl.Float64, strict=False).sum()).item() or 0.0
-                    mfm_sum = filtered.select(pl.col("mfm_net_totalizer").cast(pl.Float64, strict=False).sum()).item() or 0.0
-                    difference = mfm_sum - bcu_sum
-            mfm_vs_bcu_list.append(difference)
+        if len(alerts_df) > 0 and "bay_number" in alerts_df.columns:
+            bcu_alerts = (
+                alerts_df
+                .filter(pl.col("equipment_name") == "BCU")
+                .with_columns(pl.col("created_at").cast(pl.Date).alias("_date"))
+                .unique(subset=["created_at", "bay_number", "interlock_name"])
+                .group_by(["_date", "bay_number"])
+                .agg(pl.len().alias("Alerts_Count"))
+                .rename({"bay_number": "_bay"})
+            )
+            combined_df = (
+                combined_df
+                .with_columns([
+                    pl.col("created_at").cast(pl.Date).alias("_date"),
+                    pl.col("assigned_bay").cast(pl.Utf8).str.zfill(2).alias("_bay")
+                ])
+                .join(bcu_alerts, on=["_date", "_bay"], how="left")
+                .with_columns(pl.col("Alerts_Count").fill_null(0).cast(pl.Int64))
+                .drop(["_date", "_bay"])
+            )
+        else:
+            combined_df = combined_df.with_columns(pl.lit(0).cast(pl.Int64).alias("Alerts_Count"))
 
-             # Calculate BCU VS INVOICE
-            bcu_vs_invoice_difference = 0
-            if len(combined_df) > 0 and "invoiced_qty" in combined_df.columns:
-                # Get invoiced_qty for current truck
-                current_invoiced_qty = combined_df[i, "invoiced_qty"] if "invoiced_qty" in combined_df.columns else 0
-                
-                # Get BCU totalizer for current bay and date
-                if len(day_end_df) > 0:
-                    filtered = day_end_df.filter(
-                        (pl.col("created_at").cast(pl.Date) == current_date) &
-                        (pl.col("bay_number_extracted") == current_bay)
-                    )
-                    if len(filtered) > 0:
-                        bcu_sum = filtered.select(pl.col("bcu_net_totalizer").cast(pl.Float64, strict=False).sum()).item() or 0.0
-                        bcu_vs_invoice_difference = bcu_sum - (current_invoiced_qty if current_invoiced_qty else 0)
-            bcu_vs_invoice_list.append(bcu_vs_invoice_difference)
-        
-        # Add all calculated columns
-        # Add all calculated columns
-        combined_df = combined_df.with_columns(pl.Series("Alerts_Count", alerts_count_list, dtype=pl.Int64))
-        combined_df = combined_df.with_columns(pl.Series("Gantry_Permissive_off_Count", gantry_count_list, dtype=pl.Int64))
-        combined_df = combined_df.with_columns(pl.Series("MFM_VS_BCU", [float(v) for v in mfm_vs_bcu_list], dtype=pl.Float64))
-        combined_df = combined_df.with_columns(pl.Series("BCU_VS_INVOICE", [float(v) for v in bcu_vs_invoice_list], dtype=pl.Float64))
-        combined_df = combined_df.with_columns(pl.lit('NO').alias('Cross checked ManuallyAP system'))   
+        if len(alerts_df) > 0:
+            gantry_by_date = (
+                alerts_df
+                .filter(
+                    pl.col("interlock_name").str.contains("Gantry Permissive Off") &
+                    ~pl.col("interlock_name").str.contains("Fail")
+                )
+                .with_columns(pl.col("created_at").cast(pl.Date).alias("_date"))
+                .unique(subset=["created_at", "interlock_name"])
+                .group_by("_date")
+                .agg(pl.len().alias("Gantry_Permissive_off_Count"))
+            )
+            combined_df = (
+                combined_df
+                .with_columns(pl.col("created_at").cast(pl.Date).alias("_date"))
+                .join(gantry_by_date, on="_date", how="left")
+                .with_columns(pl.col("Gantry_Permissive_off_Count").fill_null(0).cast(pl.Int64))
+                .drop("_date")
+            )
+        else:
+            combined_df = combined_df.with_columns(pl.lit(0).cast(pl.Int64).alias("Gantry_Permissive_off_Count"))
+
+        if len(day_end_df) > 0 and "bay_number_extracted" in day_end_df.columns:
+            mfm_by_bay_date = (
+                day_end_df
+                .with_columns(pl.col("created_at").cast(pl.Date).alias("_date"))
+                .group_by(["_date", "bay_number_extracted"])
+                .agg((pl.col("mfm_net_totalizer").cast(pl.Float64).sum() - pl.col("bcu_net_totalizer").cast(pl.Float64).sum()).alias("MFM_VS_BCU")).rename({"bay_number_extracted": "_bay"}))
+            combined_df = (
+                combined_df
+                .with_columns([
+                    pl.col("created_at").cast(pl.Date).alias("_date"),
+                    pl.col("assigned_bay").cast(pl.Utf8).str.zfill(2).alias("_bay")
+                ])
+                .join(mfm_by_bay_date, on=["_date", "_bay"], how="left")
+                .with_columns(pl.col("MFM_VS_BCU").fill_null(0.0).cast(pl.Float64))
+                .drop(["_date", "_bay"])
+            )
+        else:
+            combined_df = combined_df.with_columns(pl.lit(0.0).cast(pl.Float64).alias("MFM_VS_BCU"))
+
+        # BCU_VS_INVOICE already computed in day_end_df as invoiced_bcu_net_qty_diff
+        combined_df = combined_df.with_columns(pl.lit(0.0).cast(pl.Float64).alias("BCU_VS_INVOICE"))
+        combined_df = combined_df.with_columns(pl.lit('NO').alias('Cross checked ManuallyAP system'))
 
         if "table_name" in combined_df.columns and "loaded_qty" in combined_df.columns and "required_qty" in combined_df.columns:
             combined_df = combined_df.with_columns(pl.when(pl.col('table_name') == 'HostOverLoaded').then(pl.col('loaded_qty') - pl.col('required_qty'))
                 .otherwise(None).alias('overloaded_qty'))
 
-        if len(combined_df) > 0:
-            combined_df = combined_df.with_columns(
-                pl.col("created_at").cast(pl.Date).alias("created_date")
-            )
-            
-            combined_df = combined_df.filter(pl.col("assigned_bay").is_not_null() & (pl.col("assigned_bay") != ""))
-            
-            # Sort first to make keep="first" deterministic
-            combined_df = combined_df.sort(["table_name", "created_date", "truck_number", "load_number", "assigned_bay", "created_at"])
-            combined_df = combined_df.unique(
-                subset=["table_name", "created_date", "truck_number", "load_number", "assigned_bay"],
-                keep="first"
-            ).drop("created_date")
-            
-        required_columns = [
-            'truck_number', 'created_at', 'zone', 'sap_id', 'location_name', 'load_number',
-            'product_name', 'required_qty', 'loaded_qty', 'overloaded_qty', 
-            'cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 'table_name']
+        combined_df = combined_df.with_columns(pl.col("created_at").cast(pl.Date).alias("created_date"))
+        combined_df = combined_df.filter(pl.col("assigned_bay").is_not_null() & (pl.col("assigned_bay") != ""))
+        combined_df = combined_df.sort(["table_name", "created_date", "truck_number", "load_number", "assigned_bay", "created_at"])
+        combined_df = combined_df.unique(subset=["table_name", "created_date", "truck_number", "load_number", "assigned_bay"],keep="first").drop("created_date")
 
+        required_columns = ['truck_number', 'created_at', 'zone', 'sap_id', 'location_name', 'load_number','product_name', 'required_qty', 
+                            'loaded_qty', 'overloaded_qty','cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 'table_name']
         for col in required_columns:
             if col not in combined_df.columns:
                 combined_df = combined_df.with_columns(pl.lit(None).alias(col))
 
-        combined_df = combined_df[['truck_number', 'created_at', 'zone' ,'sap_id', 'location_name','load_number', 'product_name', 'required_qty', 'loaded_qty','overloaded_qty','cumulative_loaded_qty', 'assigned_bay', 'reassigned_bay', 
-                                'Alerts_Count', 'Gantry_Permissive_off_Count', 'MFM_VS_BCU','BCU_VS_INVOICE', 'Cross checked ManuallyAP system', 'table_name']]
-   
-
+        combined_df = combined_df[['truck_number', 'created_at', 'zone', 'sap_id', 'location_name', 'load_number','product_name', 'required_qty', 'loaded_qty', 'overloaded_qty', 'cumulative_loaded_qty',
+            'assigned_bay', 'reassigned_bay', 'Alerts_Count', 'Gantry_Permissive_off_Count','MFM_VS_BCU', 'BCU_VS_INVOICE', 'Cross checked ManuallyAP system', 'table_name']]
+        
 
     return combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count, unauthorised_flow_df
-
-# combined_df.write_csv("/Users/algofusion/Downloads/all_data_after_tesinggantry.csv")
-
-# if __name__ == "__main__":
-#   asyncio.run(fetch_host_tables_as_dfs(SimpleNamespace(filters=[])))
