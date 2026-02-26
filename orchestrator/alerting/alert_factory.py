@@ -271,6 +271,9 @@ class AlertFactory:
                                              "bu": {"value": alert_data.get('bu', ''), "type": "String"},
                                              "vehicle_number":{"value": alert_data.get('vehicle_number', ''), "type": "String"},
                                              "device_installation_id":{"value": alert_data.get('device_installation_id', ''), "type": "String"},
+                                             "before30days":{"value": alert_data.get('before30days', False), "type": "Boolean"},
+                                             "waitTime":{"value": alert_data.get('waitTime', ''), "type": "String"},
+                                             "days_remaining":{"value": alert_data.get('days_remaining', ''), "type": "String"}
                                              })
             # Create Interlock
             # Start workflow after creating the interlock
