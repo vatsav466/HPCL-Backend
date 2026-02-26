@@ -749,13 +749,13 @@ async def location_alert_critical(data):
                     if (loc.get("zone") or "").strip() == zone
                 ]
 
-            # Existing location names from summary result
-            result_location_names = {
-                (row.get("location_name") or "").strip().upper()
+            # Normalize DB result for easy lookup
+            summary_lookup = {
+                (row.get("location_name") or "").strip().upper(): row
                 for row in summary_data
             }
 
-            final_response = summary_data.copy()
+            final_response = []
 
             for loc in all_locations:
                 loc_name = (loc.get("name") or "").strip()
@@ -764,8 +764,17 @@ async def location_alert_critical(data):
                 if not loc_name:
                     continue
 
-                # If location not in DB result → append zero row
-                if loc_name.upper() not in result_location_names:
+                normalized_name = loc_name.upper()
+
+                if normalized_name in summary_lookup:
+                    # Use real DB row
+                    row = summary_lookup[normalized_name]
+                    # Ensure zone always comes from master
+                    row["zone"] = loc_zone
+                    final_response.append(row)
+
+                else:
+                    # Add zero row
                     final_response.append({
                         "zone": loc_zone,
                         "location_name": loc_name,
@@ -784,7 +793,6 @@ async def location_alert_critical(data):
                 "message": "Critical alert summary processed successfully",
                 "data": final_response
             }
-
 
     except Exception as e:
         print(f"Error in location_alert_critical: {e}")
@@ -869,7 +877,7 @@ async def get_all_onboarded_locations():
         q="location_onboard='true'",
         limit=0
     )
-    location_params.fields = ["name"]
+    location_params.fields = ["name", "zone"]
     resp = await hpcl_ceg_model.LocationMaster.get_all(location_params, resp_type="plain")
     return resp.get("data", [])
 
