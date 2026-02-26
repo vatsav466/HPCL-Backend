@@ -766,6 +766,19 @@ async def critical_alerts_by_equipment(data):
     except Exception as e:
         print(f"Error in critical_alerts_by_equipment: {e}")
         return {"status": False, "message": f"Error processing critical alerts: {e}", "data": []}
+    
+async def get_all_onboarded_locations():
+    """
+    Fetch all onboarded TAS locations from location_master.
+    Returns a list of dicts with 'name' (location_name) and 'zone'.
+    """
+    location_params = urdhva_base.queryparams.QueryParams(
+        q="location_onboard='true'",
+        limit=0
+    )
+    location_params.fields = ["name"]
+    resp = await hpcl_ceg_model.LocationMaster.get_all(location_params, resp_type="plain")
+    return resp.get("data", [])
 
 
 async def tas_alerts_exception_report(data):
@@ -783,7 +796,7 @@ async def tas_alerts_exception_report(data):
     alerts = (await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")).get("data", [])
     if not alerts:
         return []
-    df = (pl.DataFrame(alerts)
+    df = (pl.DataFrame(alerts, infer_schema_length=None)
           .with_columns([
         pl.col("vehicle_number").str.strip_chars(),
         pl.col("interlock_name")
@@ -890,7 +903,8 @@ async def tas_alerts_exception_report(data):
             (await hpcl_ceg_model.HostCancelledTts.get_all(
                 urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
                 resp_type="plain"
-            )).get("data", [])
+            )).get("data", []),
+            infer_schema_length=None
         )
         .with_columns(pl.col("created_at").dt.date().alias("created_date"))
         .group_by(["truck_number", "created_date"])
@@ -1014,6 +1028,23 @@ async def tas_alerts_exception_report(data):
             row[f"{interlock}_detail"] = details
 
         result.append(row)
+
+    # ── Ensure ALL onboarded locations appear in result ──────────────────
+    all_locations = await get_all_onboarded_locations()
+
+    result_location_names = {row["Location"] for row in result}
+
+    for loc_record in all_locations:
+        loc_name = loc_record.get("name", "")
+        if not loc_name or loc_name in result_location_names:
+            continue
+        zero_row = {"Location": loc_name}
+        for interlock in INTERLOCK_MAP.values():
+            zero_row[interlock] = 0
+            zero_row[f"{interlock}_detail"] = []
+        result.append(zero_row)
+
+    result.sort(key=lambda x: x["Location"])
 
     if str(data.download).lower() == "true":
         return await vts_analytics.download_streaming_data(
