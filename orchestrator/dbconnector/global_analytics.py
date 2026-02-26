@@ -8039,11 +8039,35 @@ class GlobalAnalytics:
 
     @staticmethod
     async def permanent_dry_out_trends(filters, cross_filters, drill_state):
+        filter_map = defaultdict(list)
+        _filters = []
+        where_clauses = []
+
+        if cross_filters:
+            for filter in cross_filters:
+                filter_map[filter.key].append(filter.value)
+        
+        if filters:
+            for filter in filters:
+                filter_map[filter.key].append(filter.value)
+        
+        for key, values in filter_map.items():
+            if len(values) > 1:
+                _filters.append(f"{key} IN ({', '.join([f"'{v}'" for v in values])})")
+            else:
+                _filters.append(f"{key} = '{values[0]}'")
+        
+        if _filters:
+            where_clauses.extend(_filters)
+
+        where_clause = " AND " + " AND ".join(where_clauses)
+
         query = (f"SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS month, sap_id, product_code, "
                  f"COUNT(*) AS total_count FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' "
                  f"AND alert_status = 'Open' AND created_at <= NOW() - INTERVAL '5 days' AND "
-                 f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
+                 f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' {where_clause} "
                  f"GROUP BY month, sap_id, product_code ORDER BY month, sap_id, product_code")
+        
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
         if data.empty:
@@ -8071,7 +8095,30 @@ class GlobalAnalytics:
 
     @staticmethod
     async def frequently_dry_out_trends(filters, cross_filters, drill_state):
-        query = """WITH product_level_dryouts AS (
+        filter_map = defaultdict(list)
+        _filters = []
+        where_clauses = []
+
+        if cross_filters:
+            for filter in cross_filters:
+                filter_map[filter.key].append(filter.value)
+        
+        if filters:
+            for filter in filters:
+                filter_map[filter.key].append(filter.value)
+        
+        for key, values in filter_map.items():
+            if len(values) > 1:
+                _filters.append(f"{key} IN ({', '.join([f"'{v}'" for v in values])})")
+            else:
+                _filters.append(f"{key} = '{values[0]}'")
+        
+        if _filters:
+            where_clauses.extend(_filters)
+
+        where_clause = " AND " + " AND ".join(where_clauses)
+
+        query = f"""WITH product_level_dryouts AS (
                       SELECT DISTINCT
                         sap_id,
                         product_code,
@@ -8080,7 +8127,7 @@ class GlobalAnalytics:
                         TO_CHAR(created_at, 'YYYY-Mon') AS month
                       FROM alerts
                       WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' and indent_status not in ('Cancelled', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')
-                        AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months'
+                        AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' {where_clause}
                     )
                     
                     SELECT
