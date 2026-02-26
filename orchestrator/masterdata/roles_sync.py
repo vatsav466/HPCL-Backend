@@ -2422,6 +2422,116 @@ async def sync_user_roles():
         "name": "LPG",
         "status": True
     },
+    "HQO TICKETING": {
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            },
+                            {
+                                "title": "TAS Insights",
+                                "allowed_sub_menus": [
+                                    {
+                                        "title": "BCU Dosing Alerts"
+                                    },
+                                    {
+                                        "title": "BAY Analytics"
+                                    },
+                                    {
+                                        "title": "BCU Critical Parameter"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "Bay Caliberation Module"
+                            },
+                            {
+                                "title": "Help Desk Module"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            },
+                            {
+                            "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Alert Manager"
+                    }
+                ]
+            },
+            {
+                "menu_name": "CEMS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "CEMS Dashboard"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Tickets"
+                    },
+                    {
+                        "title": "Create Ticket"
+                    }
+                ]
+            }
+        ],
+        "name": "SOD",
+        "status": True
+    },
     "Zonal Officer RO": {
         "allowed_pages": [
             {
