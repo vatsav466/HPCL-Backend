@@ -693,8 +693,9 @@ async def location_alert_critical(data):
                 }
             return {"status": True, "message": "Critical alert details processed successfully", "data": result_data}
 
-        # SUMMARY VIEW (DASHBOARD)
+        #  SUMMARY VIEW (Dashboard)
         else:
+
             summary_query = f"""
                 WITH base_alerts AS (
                     SELECT
@@ -733,13 +734,65 @@ async def location_alert_critical(data):
                 GROUP BY t.zone, t.location_name, t.total_alerts
                 ORDER BY t.total_alerts DESC;
             """
+
             result = await hpcl_ceg_model.Alerts.get_aggr_data(summary_query, limit=0)
-            result = result.get("data", [])
-            return {"status": True, "message": "Critical alert summary processed successfully", "data": result}
+            summary_data = result.get("data", [])
+
+            # Merge with all onboarded locations
+            all_locations = await get_all_onboarded_locations()
+            print("Total onboarded locations:", len(all_locations))
+
+            # Apply zone filter if provided
+            if zone:
+                all_locations = [
+                    loc for loc in all_locations
+                    if (loc.get("zone") or "").strip() == zone
+                ]
+
+            # Existing location names from summary result
+            result_location_names = {
+                (row.get("location_name") or "").strip().upper()
+                for row in summary_data
+            }
+
+            final_response = summary_data.copy()
+
+            for loc in all_locations:
+                loc_name = (loc.get("name") or "").strip()
+                loc_zone = loc.get("zone")
+
+                if not loc_name:
+                    continue
+
+                # If location not in DB result → append zero row
+                if loc_name.upper() not in result_location_names:
+                    final_response.append({
+                        "zone": loc_zone,
+                        "location_name": loc_name,
+                        "total_alerts": 0,
+                        "interlocks": []
+                    })
+
+            # Sort by total_alerts descending
+            final_response.sort(
+                key=lambda x: x.get("total_alerts", 0),
+                reverse=True
+            )
+
+            return {
+                "status": True,
+                "message": "Critical alert summary processed successfully",
+                "data": final_response
+            }
+
 
     except Exception as e:
         print(f"Error in location_alert_critical: {e}")
-        return {"status": False, "message": f"Error processing critical alerts: {e}", "data": []}
+        return {
+            "status": False,
+            "message": f"Error processing critical alerts: {e}",
+            "data": []
+        }
 
 
 async def critical_alerts_by_equipment(data):
