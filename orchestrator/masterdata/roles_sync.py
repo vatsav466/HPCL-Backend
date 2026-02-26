@@ -8,7 +8,7 @@ async def sync_user_roles():
     "Zonal Operations SOD": {
         "allowed_pages": [
             {
-                "menu_name": "LPG",
+                "menu_name": "SOD Terminal",
                 "allowed_sub_menus": [
                     {
                         "title": "Supply Chain"
@@ -18,6 +18,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             }
@@ -38,6 +52,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             }
@@ -666,6 +694,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -694,6 +736,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -722,6 +778,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -750,6 +820,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -806,6 +890,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -834,6 +932,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -861,6 +973,9 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
+                        "title": "Video Analytics"
+                    },
+                    {
                         "title": "TAS",
                         "allowed_sub_menus": [
                             {
@@ -868,6 +983,9 @@ async def sync_user_roles():
                             },
                             {
                                 "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
                             }
                         ]
                     }
@@ -898,6 +1016,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -926,6 +1058,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -953,10 +1099,21 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Dashboard"
+                        "title": "Video Analytics"
                     },
                     {
-                        "title": "Video Analytics"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -1184,6 +1341,46 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            },
+                            {
+                                "title": "TAS Insights",
+                                "allowed_sub_menus": [
+                                    {
+                                        "title": "BCU Dosing Alerts"
+                                    },
+                                    {
+                                        "title": "BAY Analytics"
+                                    },
+                                    {
+                                        "title": "BCU Critical Parameter"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "Bay Caliberation Module"
+                            },
+                            {
+                                "title": "Help Desk Module"
+                            }
+                        ]
                     }
                 ]
             }
