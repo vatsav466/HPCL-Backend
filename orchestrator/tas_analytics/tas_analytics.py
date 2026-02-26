@@ -502,6 +502,14 @@ async def tas_severity_summary(data):
 
         where_clause = " AND ".join(where_conditions)
 
+        location_params = urdhva_base.queryparams.QueryParams(
+            q="location_onboard='true'",
+            limit=0
+        )
+        location_params.fields = ["zone", "name"]
+        all_location_resp = await hpcl_ceg_model.LocationMaster.get_all(location_params, resp_type="plain")
+        all_locations = all_location_resp.get("data", [])
+
         if data.location_name:
             detail_query = f"""
                 SELECT
@@ -514,6 +522,23 @@ async def tas_severity_summary(data):
             """
             detail_result = await hpcl_ceg_model.Alerts.get_aggr_data(detail_query, limit=0)
             detail_data = detail_result.get("data", [])
+                        
+            if not detail_data:
+                # Return all locations with zero counts when No data is there
+                result = []
+                for loc in all_locations:
+                    result.append({
+                        "zone": loc.get("zone", ""),
+                        "location_name": loc.get("name", ""),
+                        "under_maintenance_count": 0,
+                        "fault_count": 0
+                    })
+                return {
+                    "status": True,
+                    "message": "TAS severity detail processed successfully",
+                    "data": result,
+                }
+            
             return {
                 "status": True,
                 "message": "TAS severity detail processed successfully",
@@ -581,6 +606,21 @@ async def tas_severity_summary(data):
 
         summary_result = await hpcl_ceg_model.Alerts.get_aggr_data(summary_query, limit=0)
         summary_data = summary_result.get("data", [])
+
+        # Add locations with zero counts if they don't have any alerts
+        alert_locations = {(r["zone"], r["location_name"]) for r in summary_data}
+        
+        for loc in all_locations:
+            zone = loc.get("zone", "")
+            location_name = loc.get("name", "")
+            if (zone, location_name) not in alert_locations:
+                summary_data.append({
+                    "zone": zone,
+                    "location_name": location_name,
+                    "under_maintenance_count": 0,
+                    "fault_count": 0
+                })
+
         return {
             "status": True,
             "message": "TAS severity summary processed successfully",
