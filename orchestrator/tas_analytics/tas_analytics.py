@@ -500,6 +500,7 @@ async def tas_severity_summary(data):
         if data.location_name:
             where_conditions.append(f"location_name = '{data.location_name}'")
 
+ 
         where_clause = " AND ".join(where_conditions)
 
         location_params = urdhva_base.queryparams.QueryParams(
@@ -509,41 +510,6 @@ async def tas_severity_summary(data):
         location_params.fields = ["zone", "name"]
         all_location_resp = await hpcl_ceg_model.LocationMaster.get_all(location_params, resp_type="plain")
         all_locations = all_location_resp.get("data", [])
-
-        if data.location_name:
-            detail_query = f"""
-                SELECT
-                    interlock_name,
-                    equipment_name,
-                    TO_CHAR(created_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS created_at
-                FROM Alerts
-                WHERE {where_clause}
-                ORDER BY created_at DESC;
-            """
-            detail_result = await hpcl_ceg_model.Alerts.get_aggr_data(detail_query, limit=0)
-            detail_data = detail_result.get("data", [])
-                        
-            if not detail_data:
-                # Return all locations with zero counts when No data is there
-                result = []
-                for loc in all_locations:
-                    result.append({
-                        "zone": loc.get("zone", ""),
-                        "location_name": loc.get("name", ""),
-                        "under_maintenance_count": 0,
-                        "fault_count": 0
-                    })
-                return {
-                    "status": True,
-                    "message": "TAS severity detail processed successfully",
-                    "data": result,
-                }
-            
-            return {
-                "status": True,
-                "message": "TAS severity detail processed successfully",
-                "data": detail_data,
-            }
 
         maintenance_terms = [
             i["interlock_name"].lower()
@@ -576,7 +542,59 @@ async def tas_severity_summary(data):
 
         maintenance_condition = build_contains_condition(maintenance_terms)
         fault_condition = build_contains_condition(fault_terms)
-        normal_condition = build_contains_condition(normal_terms)
+
+        # Build category condition for filtering
+        category_condition = ""
+        if  data.interlock_category:
+            if data.interlock_category.lower() == 'maintenance_count':
+                category_condition = f"AND ({maintenance_condition})"
+            elif data.interlock_category.lower() == 'fault_count':
+                category_condition = f"AND ({fault_condition})"
+            elif data.interlock_category.lower() == 'both':
+                category_condition = f"AND (({maintenance_condition}) OR ({fault_condition}))"
+           
+
+        if data.location_name:
+            detail_query = f"""
+                SELECT
+                    interlock_name,
+                    equipment_name,
+                    TO_CHAR(created_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS created_at,
+                    CASE
+                        WHEN {maintenance_condition} THEN 'maintenance'
+                        WHEN {fault_condition} THEN 'fault'
+                        ELSE 'other'
+                    END AS interlock_category
+                FROM Alerts
+                WHERE {where_clause} {category_condition}
+                ORDER BY created_at DESC;
+            """            
+            
+            detail_result = await hpcl_ceg_model.Alerts.get_aggr_data(detail_query, limit=0)
+            detail_data = detail_result.get("data", [])
+
+            if not detail_data  and not data.interlock_category:
+                # Return all locations with zero counts when No data is there
+                result = []
+                for loc in all_locations:
+                    result.append({
+                        "zone": loc.get("zone", ""),
+                        "location_name": loc.get("name", ""),
+                        "under_maintenance_count": 0,
+                        "fault_count": 0
+                    })
+                return {
+                    "status": True,
+                    "message": "TAS severity detail processed successfully",
+                    "data": result,
+                }
+            
+            return {
+                "status": True,
+                "message": "TAS severity detail processed successfully",
+                "data": detail_data,
+            }
+           
 
         summary_query = f"""
             WITH categorized AS (
@@ -586,7 +604,6 @@ async def tas_severity_summary(data):
                     CASE
                         WHEN {maintenance_condition} THEN 'maintenance'
                         WHEN {fault_condition} THEN 'fault'
-                        WHEN {normal_condition} THEN 'normal'
                         ELSE 'other'
                     END AS interlock_category
                 FROM Alerts

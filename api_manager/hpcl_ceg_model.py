@@ -2076,6 +2076,7 @@ class Tasanalytics_Tas_AnalyticsParams(pydantic.BaseModel):
     download: typing.Optional[str] = pydantic.Field("", **{})
     truck_number: typing.Optional[str] = pydantic.Field("", **{})
     filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    interlock_category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
