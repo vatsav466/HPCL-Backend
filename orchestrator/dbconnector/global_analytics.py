@@ -5006,6 +5006,7 @@ class GlobalAnalytics:
 
             else:
                 # Monthly aggregation
+                resp_df = resp_df.with_columns( pl.col("created_date").dt.strftime("%b-%Y").alias("month_year") ).sort("created_date")
                 resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
 
                 # Determine grouping level based on filters
@@ -6229,13 +6230,15 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly aggregation - create month_year column once
-                resp_df = resp_df.with_columns(
-                    pl.col("created_date").dt.strftime("%b").alias("month_year"))
-                
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
+                resp_df = resp_df.with_columns([
+                    pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),
+                    pl.col("created_date").dt.truncate("1mo").alias("month_sort")
+                ])
+
+                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "bcu_number"]
                 grouped_df = resp_df.group_by(group_cols).agg(agg_ops)
 
-                grouped_df = grouped_df.sort("month_year", descending=False)
+                grouped_df = grouped_df.sort("month_sort", descending=False)
                 
                 # Create result dictionary efficiently
                 result = {}
@@ -6374,13 +6377,16 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly aggregation - create month_year column once
-                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
-                
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number", "total_net_totalizer"]
+                # resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                resp_df = resp_df.with_columns([
+                    pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),
+                    pl.col("created_date").dt.truncate("1mo").alias("month_sort")
+                ])
+
+                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "bcu_number", "total_net_totalizer"]
                 grouped_df = resp_df.group_by(group_cols).agg(agg_ops)
-                
-                # Sort by sort_key
-                grouped_df = grouped_df.sort("month_year", descending=False)
+
+                grouped_df = grouped_df.sort("month_sort", descending=False)
                 
                 # Convert to result format efficiently
                 result = {}
@@ -6537,15 +6543,19 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly Data Aggregation
-                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                # resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                resp_df = resp_df.with_columns([
+                    pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),
+                    pl.col("created_date").dt.truncate("1mo").alias("month_sort")
+                ])
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "bcu_number"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity"),
                     pl.sum("total_loaded_qty").alias("total_loaded_quantity")
                 )
-                grouped_df = grouped_df.sort("month_year", descending=False)
+                grouped_df = grouped_df.sort("month_sort", descending=False)
 
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
@@ -6721,14 +6731,18 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result, "graph_data": graph_dict}
             else:
                 # Create month_year column once
-                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
-                resp_df = resp_df.sort("month_year", descending=False)
+                # resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                # resp_df = resp_df.sort("month_year", descending=False)
+                resp_df = resp_df.with_columns([
+                    pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),
+                    pl.col("created_date").dt.truncate("1mo").alias("month_sort")
+                ])
                 # Create graph data for monthly view
-                graph_data = resp_df.group_by("month_year").agg([
+                graph_data = resp_df.group_by(["month_year", "month_sort"]).agg([
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_qty")
-                ])
-                
+                ]).sort("month_sort", descending=False)
+
                 # Create graph_data dictionary
                 graph_dict = {
                     row["month_year"]: {
@@ -6737,15 +6751,14 @@ class GlobalAnalytics:
                     }
                     for row in graph_data.iter_rows(named=True)
                 }
-                
+
                 # Monthly aggregation
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "truck_number", "load_number"]
+                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "truck_number", "load_number"]
                 grouped_df = resp_df.group_by(group_cols).agg([
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity")
                 ])
-                # Sort by sort_key
-                grouped_df = grouped_df.sort("month_year", descending=False)
+                grouped_df = grouped_df.sort("month_sort", descending=False)
                 # Create result dictionary efficiently
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
@@ -6891,13 +6904,17 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly Data Aggregation
-                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                # resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                resp_df = resp_df.with_columns([
+                    pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),
+                    pl.col("created_date").dt.truncate("1mo").alias("month_sort")
+                ])
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "bcu_number"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
-                grouped_df = grouped_df.sort("sortmonth_year_key", descending=False)
+                grouped_df = grouped_df.sort("month_sort", descending=False)
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
                     month = row["month_year"]
@@ -7179,15 +7196,19 @@ class GlobalAnalytics:
             
             else:
                 # Monthly Data Aggregation
-                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                # resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                resp_df = resp_df.with_columns([
+                    pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),
+                    pl.col("created_date").dt.truncate("1mo").alias("month_sort")
+                ])
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "manual_fan_percentage"]
+                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "manual_fan_percentage"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_manual_fan_count").alias("total_manual_fan_count"),
                     pl.sum("total_count").alias("total_count")
                 )
-                grouped_df = grouped_df.sort("month_year", descending=False)
+                grouped_df = grouped_df.sort("month_sort", descending=False)
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
                     month = row["month_year"]
@@ -7345,16 +7366,20 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly Data Aggregation
-                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                # resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                resp_df = resp_df.with_columns([
+                    pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),
+                    pl.col("created_date").dt.truncate("1mo").alias("month_sort")
+                ])
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "bcu_number"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity"),
                     pl.sum("total_loaded_qty").alias("total_loaded_quantity"),
                     pl.sum("qty_difference").alias("total_quantity_difference")
                 )
-                grouped_df = grouped_df.sort("month_year", descending=False)
+                grouped_df = grouped_df.sort("month_sort", descending=False)
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
                     month = row["month_year"]
@@ -7487,13 +7512,15 @@ class GlobalAnalytics:
 
             else:
                 # Monthly aggregation
+                # df = df.with_columns([pl.col("created_date").dt.strftime("%b").alias("month_year")])
                 df = df.with_columns([
-                    pl.col("created_date").dt.strftime("%b").alias("month_year")
+                    pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),
+                    pl.col("created_date").dt.truncate("1mo").alias("month_sort")
                 ])
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "bcu_number"]
                 grouped = df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
-                ).sort("month_year")
+                ).sort("month_sort", descending=False)
 
                 result = {}
                 for row in grouped.iter_rows(named=True):
@@ -7644,14 +7671,18 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly Data Aggregation
-                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                # resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                resp_df = resp_df.with_columns([
+                    pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),
+                    pl.col("created_date").dt.truncate("1mo").alias("month_sort")
+                ])
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "load_number", "assigned_bay"]
+                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "load_number", "assigned_bay"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
 
-                grouped_df = grouped_df.sort("month_year", descending=False)
+                grouped_df = grouped_df.sort("month_sort", descending=False)
 
                 result = {}
                 for row in grouped_df.iter_rows(named=True):

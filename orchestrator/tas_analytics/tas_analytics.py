@@ -915,17 +915,53 @@ async def tas_alerts_exception_report(data):
           )
     df = df.unique(subset=["vehicle_number", "created_at_hour", "interlock_norm"])
 
+
+    mfm_q = (
+        f"last_k_factor_change_date IS NOT NULL"
+        f" AND last_k_factor_change_date != ''"
+        f" AND last_k_factor_change_date >= '{data.start_date}'"
+        f" AND last_k_factor_change_date <= '{data.end_date}'"
+    )
     mfm = await hpcl_ceg_model.HostMFMFactor.get_all(
-        urdhva_base.queryparams.QueryParams(limit=0),
+        urdhva_base.queryparams.QueryParams(q=mfm_q, limit=0),
         resp_type="plain"
     )
+    mfm_data = mfm.get("data", [])
 
-    valid_sap_ids = {
-        r["sap_id"] for r in mfm.get("data", [])
-        if r.get("last_k_factor") is not None
-    }
+    mfm_data = [
+        {k: (round(float(v), 2) if isinstance(v, decimal.Decimal) else v) for k, v in r.items()}
+        for r in mfm_data
+    ]
 
-    df = df.filter(~((pl.col("interlock_norm") == "mfmkfactorchange") & (~pl.col("sap_id").is_in(valid_sap_ids))))
+    mfm_df = (
+        pl.DataFrame(mfm_data, infer_schema_length=None)
+        .select(["sap_id", "location_name", "last_k_factor_change_date", "current_k_factor", "last_k_factor"])
+    ) if mfm_data else pl.DataFrame({"sap_id": [], "location_name": [], "last_k_factor_change_date": [], "current_k_factor": [], "last_k_factor": []})
+
+    # ADD after mfm_df block:
+    meter_q = (
+        f"last_meter_factor_change_date IS NOT NULL"
+        f" AND last_meter_factor_change_date != ''"
+        f" AND created_at >= '{data.start_date} 00:00:00'"
+        f" AND created_at <= '{data.end_date} 23:59:59'"
+    )
+    meter = await hpcl_ceg_model.HostMFMFactor.get_all(
+        urdhva_base.queryparams.QueryParams(q=meter_q, limit=0),
+        resp_type="plain"
+    )
+    meter_data = meter.get("data", [])
+
+    meter_data = [
+        {k: (round(float(v), 2) if isinstance(v, decimal.Decimal) else v) for k, v in r.items()}
+        for r in meter_data
+    ]
+
+    meter_df = (
+        pl.DataFrame(meter_data, infer_schema_length=None)
+        .select(["sap_id", "location_name", "last_meter_factor_change_date", "current_meter_factor", "last_meter_factor"])
+    ) if meter_data else pl.DataFrame({"sap_id": [], "location_name": [], "last_meter_factor_change_date": [], "current_meter_factor": [], "last_meter_factor": []})
+
+
     INTERLOCK_MAP = {
         "bayreassignment": "Bay reassignment",
         "unauthorizedflow_bcu": "Unauthorized flow_BCU",
@@ -933,6 +969,7 @@ async def tas_alerts_exception_report(data):
         "cancelttreported": "Cancel TT Reported",
         "unauthorizedflowalarmblend_bcu": "Unauthorized Flow Alarm Blend_BCU",
         "mfmkfactorchange": "MFM K Factor Change",
+        "mfmmeterfactorchange": "MFM Meter Factor Change",
         "sickttreported": "Sick TT Reported",
         "bculocalloading": "BCU Local Loading",
         "kfactorchange_bcu": "K Factor Change_BCU",
@@ -1024,7 +1061,22 @@ async def tas_alerts_exception_report(data):
         for interlock in INTERLOCK_MAP.values():
             i_df = loc_df.filter(pl.col("interlock") == interlock)
             row[interlock] = i_df.height
-            details = []
+
+            if interlock == "MFM K Factor Change":
+                loc_mfm = mfm_df.filter(pl.col("location_name") == loc)
+                row[interlock] = loc_mfm.height
+                row[f"{interlock}_detail"] = loc_mfm.select([
+                    "sap_id", "last_k_factor_change_date", "current_k_factor", "last_k_factor"
+                ]).to_dicts()
+                continue
+
+            if interlock == "MFM Meter Factor Change":
+                loc_meter = meter_df.filter(pl.col("location_name") == loc)
+                row[interlock] = loc_meter.height
+                row[f"{interlock}_detail"] = loc_meter.select([
+                    "sap_id", "last_meter_factor_change_date", "current_meter_factor", "last_meter_factor"
+                ]).to_dicts()
+                continue
 
             if i_df.is_empty():
                 row[f"{interlock}_detail"] = []
@@ -1116,15 +1168,25 @@ async def tas_alerts_exception_report(data):
                 )
 
             else:
-                group_cols = ["vehicle_number", "created_date"]
-                if interlock in DEVICE_INTERLOCKS:
-                    group_cols.append("device_name")
+                if interlock == "MFM K Factor Change":
+                    loc_mfm = mfm_df.filter(pl.col("location_name") == loc)
+                    row[interlock] = loc_mfm.height
+                    details.extend(
+                        loc_mfm.select([
+                            "sap_id", "last_k_factor_change_date", "current_k_factor", "last_k_factor"
+                        ])
+                        .to_dicts()
+                    )
+                else:
+                    group_cols = ["vehicle_number", "created_date"]
+                    if interlock in DEVICE_INTERLOCKS:
+                        group_cols.append("device_name")
 
-                details.extend(
-                    i_df.group_by(group_cols)
-                    .agg(pl.count().alias("count"))
-                    .to_dicts()
-                )
+                    details.extend(
+                        i_df.group_by(group_cols)
+                        .agg(pl.count().alias("count"))
+                        .to_dicts()
+                    )
 
             row[f"{interlock}_detail"] = details
 
