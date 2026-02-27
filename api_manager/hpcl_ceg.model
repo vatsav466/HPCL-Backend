@@ -1046,7 +1046,7 @@ Model TasAnalytics crud_disable {
         download        optional str
         truck_number optional str
         filters optional list WidgetFilters
-        
+        interlock_category optional str
     }
 
 }
