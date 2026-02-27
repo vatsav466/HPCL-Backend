@@ -89,6 +89,9 @@ async def validate_locations_from_history(bu, location_ids, va_data):
                     if result.get("name") == "VA Portal":
                         score = float(result.get("score", 0))
                         if score > 0:
+                            if score > result.get('weightage', 1):
+                                score = result.get('weightage', 1)/10
+                            score = (score * 100) / (10 * result.get('weightage', 1))
                             fallback_scores[sap_id] = score
                         break
 
