@@ -18,8 +18,6 @@ def convert_date_format(date_str: str) -> Optional[str]:
     """
     Convert TIBCO date format YYYYMMDD to DD-MM-YYYY
     
-    Args:
-        date_str: Date in YYYYMMDD format (e.g., '20261106')
     
     Returns:
         Date in DD-MM-YYYY format (e.g., '16-11-2026') or None if invalid
@@ -38,10 +36,7 @@ def convert_date_format(date_str: str) -> Optional[str]:
 async def fetch_from_tibco(query: str) -> List[Dict]:
     """
     Fetch data from TIBCO using MySQL interface
-    
-    Args:
-        query: SQL query to execute
-    
+        
     Returns: 
         List of dictionaries containing query results 
     """  
@@ -80,9 +75,7 @@ async def sync_aot_expiry_dates():
     
     Process:
     1. Fetch transporter contract data from TIBCO
-    2. Convert date format YYYYMMDD → DD-MM-YYYY
-    3. Match truck_no with device_installation.sap_tt_no using asyncpg
-    4. Batch update device_installation table
+    2. Batch update device_installation table
     """
     conn: Optional[asyncpg.Connection] = None
 
