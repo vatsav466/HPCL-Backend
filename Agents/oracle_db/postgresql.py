@@ -446,12 +446,13 @@ class Postgresql:
                 query = f"""select * from "{table_db_name}" where alert_created = false and sap_id = '{sap_id}' and net_totalizer > 0"""
 
             if table_db_name == 'host_mfm_factor':
-                # Process MFM factor records
-                # Query to get records with non-zero last_k_factor
                 query = f"""SELECT * FROM "{table_db_name}" 
                             WHERE last_k_factor IS NOT NULL
                             AND current_k_factor::text IS DISTINCT FROM last_k_factor::text
-                            AND date::DATE = '{to_date}'
+                            AND (
+                                NULLIF(last_k_factor_change_date, '')::DATE = '{to_date}'
+                                OR NULLIF(last_meter_factor_change_date, '')::DATE = '{to_date}'
+                            )
                             AND sap_id = '{sap_id}' 
                             AND alert_created = false 
                             ORDER BY created_at ASC
