@@ -633,7 +633,7 @@ async def generate_filters(data):
 
             if resp["data"]:
                 sales_areas = await flatten_sales_area(resp["data"])
-                filters.setdefault("SALES_AREA", []).extend(sales_areas)
+                filters.setdefault("RSALES_AREA", []).extend(sales_areas)
 
         elif key == "zone":
             zones = "', '".join(value)
@@ -646,7 +646,7 @@ async def generate_filters(data):
 
             if resp["data"]:
                 sales_areas = await flatten_sales_area(resp["data"])
-                filters.setdefault("SALES_AREA", []).extend(sales_areas)
+                filters.setdefault("ZSALES_AREA", []).extend(sales_areas)
 
     # Remove duplicates
     return [
@@ -691,6 +691,12 @@ async def sync_carry_fwd_indent(insert_to_db: bool, filters=None):
             elif condition_key == 'PROD':
                 product_code = "', '".join(condition_value)
                 ims_clause.append(f"""b."PROD" IN ('{product_code}')""")
+            elif condition_key == 'RSALES_AREA':
+                rsales_area = "', '".join(condition_value)
+                ims_clause.append(f"""dd."SAREA_DESC" IN ('{rsales_area}')""")
+            elif condition_key == 'ZSALES_AREA':
+                zsales_area = "', '".join(condition_value)
+                ims_clause.append(f"""dd."SAREA_DESC" IN ('{zsales_area}')""")
     
     ims_query = ""
     if ims_clause:
