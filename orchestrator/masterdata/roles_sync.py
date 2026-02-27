@@ -8,7 +8,7 @@ async def sync_user_roles():
     "Zonal Operations SOD": {
         "allowed_pages": [
             {
-                "menu_name": "LPG",
+                "menu_name": "SOD Terminal",
                 "allowed_sub_menus": [
                     {
                         "title": "Supply Chain"
@@ -18,6 +18,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             }
@@ -38,6 +52,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             }
@@ -99,7 +127,220 @@ async def sync_user_roles():
         "status": True
     },
     "C&MD":{
-        "allowed_pages": [],
+        "allowed_pages": [
+            {
+                "menu_name": "Performance",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Industry",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "Retail Industry Performance"
+                            },
+                            {
+                                "title": "Lpg Industry Performance"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Sales Performance",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "Retail Insights"
+                            },
+                            {
+                                "title": "LPG Insights"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            },
+                            {
+                                "title": "TAS Insights",
+                                "allowed_sub_menus": [
+                                    {
+                                        "title": "BCU Dosing Alerts"
+                                    },
+                                    {
+                                        "title": "BAY Analytics"
+                                    },
+                                    {
+                                        "title": "BCU Critical Parameter"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "Bay Caliberation Module"
+                            },
+                            {
+                                "title": "Help Desk Module"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Retail Outlet",
+                "allowed_sub_menus": [
+                    {
+                        "title": "RO Home"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "Retail Governance",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "Sanitation Compliance"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "LPG",
+                "allowed_sub_menus": [
+                    {
+                        "title": "LPG Operations"
+                    },
+                    {
+                        "title": "LPG Plant"
+                    },
+                    {
+                        "title": "Pro Dash"
+                    },
+                    {
+                        "title": "LPG Inventory"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "LPG Analytics"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Direct Sales",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS Insights"
+                    },
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "I&C Insights"
+                    },
+                    {
+                        "title": "I&C Campaign"
+                    }
+                ]
+            },
+            {
+                "menu_name": "VA",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VA Home"
+                    },
+                    {
+                        "title": "SOD Video Analytics"
+                    },
+                    {
+                        "title": "LPG Video Analytics"
+                    },
+                    {
+                        "title": "RO Video Analytics"
+                    }
+                ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            },
+                            {
+                            "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Alert Manager"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Pipeline",
+                "allowed_sub_menus": []
+            },
+            {
+                "menu_name": "Settings",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Users"
+                    },
+                    {
+                        "title": "Locations"
+                    },
+                    {
+                        "title": "RO Esc Matrix"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Collapse Sidebar",
+            }
+        ],
         "status": True
     },
     "IS User":{
@@ -453,6 +694,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -481,6 +736,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -509,6 +778,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -537,6 +820,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -593,6 +890,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -621,6 +932,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -648,6 +973,9 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
+                        "title": "Video Analytics"
+                    },
+                    {
                         "title": "TAS",
                         "allowed_sub_menus": [
                             {
@@ -655,6 +983,9 @@ async def sync_user_roles():
                             },
                             {
                                 "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
                             }
                         ]
                     }
@@ -685,6 +1016,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -713,6 +1058,20 @@ async def sync_user_roles():
                     },
                     {
                         "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -740,10 +1099,21 @@ async def sync_user_roles():
                         "title": "Terminal Home"
                     },
                     {
-                        "title": "Dashboard"
+                        "title": "Video Analytics"
                     },
                     {
-                        "title": "Video Analytics"
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
                     }
                 ]
             },
@@ -912,6 +1282,14 @@ async def sync_user_roles():
                         "title": "Alert Manager"
                     }
                 ]
+            },
+            {
+                "menu_name": "CEMS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "CEMS Dashboard"
+                    }
+                ]
             }
         ],
         "name": "SOD",
@@ -963,6 +1341,46 @@ async def sync_user_roles():
                 "allowed_sub_menus": [
                     {
                         "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            },
+                            {
+                                "title": "TAS Insights",
+                                "allowed_sub_menus": [
+                                    {
+                                        "title": "BCU Dosing Alerts"
+                                    },
+                                    {
+                                        "title": "BAY Analytics"
+                                    },
+                                    {
+                                        "title": "BCU Critical Parameter"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "Bay Caliberation Module"
+                            },
+                            {
+                                "title": "Help Desk Module"
+                            }
+                        ]
                     }
                 ]
             }
@@ -2159,6 +2577,116 @@ async def sync_user_roles():
             }
         ],
         "name": "LPG",
+        "status": True
+    },
+    "HQO TICKETING": {
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            },
+                            {
+                                "title": "TAS Insights",
+                                "allowed_sub_menus": [
+                                    {
+                                        "title": "BCU Dosing Alerts"
+                                    },
+                                    {
+                                        "title": "BAY Analytics"
+                                    },
+                                    {
+                                        "title": "BCU Critical Parameter"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "Bay Caliberation Module"
+                            },
+                            {
+                                "title": "Help Desk Module"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS ITDG Alert Home"
+                    },
+                    {
+                        "title": "VTS Governance",
+                        "allowed_sub_menus": [
+                            {
+                            "title": "VTS Dashboard"
+                            },
+                            {
+                            "title": "VTS Insights"
+                            },
+                            {
+                            "title": "Compliance"
+                            },
+                            {
+                            "title": "VTS Unblocking"
+                            },
+                            {
+                            "title": "VTS Live"
+                            },
+                            {
+                            "title": "Admin Module"
+                            },
+                            {
+                            "title": "Risk Score"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Alert Manager"
+                    }
+                ]
+            },
+            {
+                "menu_name": "CEMS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "CEMS Dashboard"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Tickets"
+                    },
+                    {
+                        "title": "Create Ticket"
+                    }
+                ]
+            }
+        ],
+        "name": "SOD",
         "status": True
     },
     "Zonal Officer RO": {

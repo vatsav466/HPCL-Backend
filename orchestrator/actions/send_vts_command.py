@@ -82,6 +82,10 @@ class SendVtsCommand:
                     return True, {"blocked": False}
 
             if alert_data['bu'] in ['LPG']:
+
+                if alert_data.get('tt_type','').lower() in ['packed']:
+                    return True, {"blocked": False}
+                
                 payload = {
                     "Request":{
                         "Request_ID": str(alert_data['id'])+"1",
@@ -170,6 +174,10 @@ class SendVtsCommand:
                     return True, {"unblocked": False}
 
             if alert_data['bu'] in ['LPG']:
+
+                if alert_data.get('tt_type','').lower() in ['packed']:
+                    return True, {"unblocked": False}
+                
                 payload = {
                     "Request":{
                     "Request_ID": str(alert_data['id'])+"0",
