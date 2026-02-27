@@ -4643,8 +4643,25 @@ async def get_bay_counts(data):
     combined_df, alerts_df, day_end_df, total_bcu_count, total_active_bays_count, unauthorised_flow_df = \
         await tas_host_data.fetch_host_tables_as_dfs(data)
 
+    all_onboarded = await get_all_onboarded_locations()
+
     if combined_df is None or combined_df.is_empty():
-        return {"total_counts": {}, "locations": []}
+        zero_counts = {
+            "TotalBCU": 0, "TotalActiveBays": 0, "HostBayReAssignment": 0,
+            "LocalLoading": 0, "LocalLoading_qty": 0, "OverLoading": 0,
+            "OverLoading_qty": 0, "TotalUniqueTruckNumbersCount": 0,
+            "UnauthorisedFlow": 0, "UnauthorisedFlow_net_totalizer": 0,
+            "Alerts_Count": 0, "Gantry_Permissive_off_Count": 0,
+            "MFM_VS_BCU": 0, "MFM_VS_BCU_difference": 0,
+            "BCU_VS_INVOICE": 0, "BCU_VS_INVOICE_difference": 0,
+        }
+        return {
+            "total_counts": zero_counts,
+            "locations": [
+                {"location_name": loc["name"], "counts": zero_counts.copy(), "bays": []}
+                for loc in all_onboarded if loc.get("name")
+            ]
+        }
 
     # Calculate OVERALL MFM_VS_BCU count and difference
     overall_mfm_vs_bcu_count = 0
@@ -4736,14 +4753,35 @@ async def get_bay_counts(data):
     }
 
     # Get unique locations
-    unique_locations = combined_df.select("location_name").unique().sort("location_name")
+    # Get locations that exist in combined_df
+    locations_with_data = set(
+        combined_df.select("location_name").unique().to_series().to_list()
+    )
 
     locations_result = []
 
-    for loc_row in unique_locations.iter_rows(named=True):
-        location_name = loc_row.get("location_name")
+    for loc_record in all_onboarded:
+        location_name = loc_record.get("name")
+        if not location_name:
+            continue
 
-        # Filter all dataframes for this location
+        if location_name not in locations_with_data:
+            locations_result.append({
+                "location_name": location_name,
+                "counts": {
+                    "TotalBCU": 0, "TotalActiveBays": 0, "HostBayReAssignment": 0,
+                    "LocalLoading": 0, "LocalLoading_qty": 0, "OverLoading": 0,
+                    "OverLoading_qty": 0, "TotalUniqueTruckNumbersCount": 0,
+                    "UnauthorisedFlow": 0, "UnauthorisedFlow_net_totalizer": 0,
+                    "Alerts_Count": 0, "Gantry_Permissive_off_Count": 0,
+                    "MFM_VS_BCU": 0, "MFM_VS_BCU_difference": 0,
+                    "BCU_VS_INVOICE": 0, "BCU_VS_INVOICE_difference": 0,
+                },
+                "bays": []
+            })
+            continue
+
+        # Location has data in combined_df → existing processing runs normally
         location_combined_df = combined_df.filter(pl.col("location_name") == location_name)
 
         location_unauthorised_df = unauthorised_flow_df
@@ -5063,6 +5101,155 @@ async def get_bay_counts(data):
         "locations": locations_result
     }
 
+async def gantry_override_analysis(data):
+    """
+    For each 'Gantry Permissive_Override' alert in the date range,
+    check if any 'Gantry Permissive Off' alert existed BEFORE it on the same day.
+    Returns location-wise grouped results. All override alerts included even if no permissive off found.
+    """
+    try:
+        # ── Build conditions same as tas_host_data ────────────────────────────
+        conditions = []
+
+        if data.filters:
+            for f in data.filters:
+
+                if not f.value:
+                    continue
+
+                if f.key == "bay":
+                    continue
+
+                if f.key == "start_date":
+                    start_date = f.value if isinstance(f.value, str) else f.value[0]
+                    end_date_obj = next(
+                        (x.value for x in data.filters if x.key == "end_date" and x.value),
+                        None
+                    )
+                    end_date = (
+                        end_date_obj if isinstance(end_date_obj, str)
+                        else end_date_obj[0] if end_date_obj else None
+                    )
+                    if start_date and end_date:
+                        conditions.append(
+                            f"created_at::date BETWEEN '{start_date}' AND '{end_date}'"
+                        )
+                    continue
+
+                if f.key == "end_date":
+                    continue
+
+                if isinstance(f.value, str):
+                    clean_values = [v.strip() for v in f.value.split(",")] if "," in f.value else [f.value]
+                else:
+                    clean_values = [v for v in f.value if v]
+
+                if not clean_values:
+                    continue
+
+                if f.cond == "=":
+                    if len(clean_values) == 1:
+                        conditions.append(f"{f.key} = '{clean_values[0]}'")
+                    else:
+                        values = ", ".join(f"'{v}'" for v in clean_values)
+                        conditions.append(f"{f.key} IN ({values})")
+
+                elif f.cond == "!=":
+                    if len(clean_values) == 1:
+                        conditions.append(f"{f.key} != '{clean_values[0]}'")
+                    else:
+                        values = ", ".join(f"'{v}'" for v in clean_values)
+                        conditions.append(f"{f.key} NOT IN ({values})")
+
+        # ── Step 1: Fetch Gantry Permissive_Override alerts ───────────────────
+        override_conditions = ["alert_section = 'TAS'", "interlock_name = 'Gantry Permissive_Override'"]
+        if conditions:
+            override_conditions.extend(conditions)
+
+        override_query = " AND ".join(override_conditions)
+        override_params = urdhva_base.queryparams.QueryParams(q=override_query, limit=0)
+        override_params.fields = json.dumps([
+            "location_name", "device_name", "equipment_name",
+            "interlock_name", "created_at"
+        ])
+
+        override_resp = await hpcl_ceg_model.Alerts.get_all(override_params, resp_type="plain")
+        override_data = override_resp.get("data", [])
+
+        if not override_data:
+            return []
+
+        override_df = pl.DataFrame(override_data).with_columns(
+            pl.col("created_at").dt.date().alias("alert_date")
+        )
+
+        # ── Step 2: Fetch Gantry Permissive Off alerts (same date filter) ─────
+        permissive_off_conditions = ["alert_section = 'TAS'", "interlock_name = 'Gantry Permissive Off'"]
+        if conditions:
+            permissive_off_conditions.extend(conditions)
+
+        permissive_off_query = " AND ".join(permissive_off_conditions)
+        permissive_off_params = urdhva_base.queryparams.QueryParams(q=permissive_off_query, limit=0)
+        permissive_off_params.fields = json.dumps([
+            "location_name", "device_name", "equipment_name",
+            "interlock_name", "created_at"
+        ])
+
+        permissive_off_resp = await hpcl_ceg_model.Alerts.get_all(permissive_off_params, resp_type="plain")
+        permissive_off_data = permissive_off_resp.get("data", [])
+
+        permissive_off_df = pl.DataFrame(permissive_off_data).with_columns(
+            pl.col("created_at").dt.date().alias("alert_date")
+        ) if permissive_off_data else None
+
+        # ── Step 3: Match override → permissive off before it on same day ─────
+        location_wise_result = {}
+
+        for row in override_df.iter_rows(named=True):
+            loc = row["location_name"]
+            override_time = row["created_at"]
+            alert_date = row["alert_date"]
+
+            # Find matching permissive off alerts (empty list if none found)
+            matching = []
+            if permissive_off_df is not None:
+                matching = permissive_off_df.filter(
+                    (pl.col("location_name") == loc) &
+                    (pl.col("alert_date") == alert_date) &
+                    (pl.col("created_at") < override_time)
+                ).select([
+                    "created_at", "device_name", "interlock_name", "equipment_name"
+                ]).with_columns(
+                    pl.col("created_at").cast(pl.Utf8).alias("created_at")
+                ).to_dicts()
+
+            if loc not in location_wise_result:
+                location_wise_result[loc] = []
+
+            location_wise_result[loc].append({
+                "override_alert": {
+                    "created_at": str(override_time),
+                    "device_name": row["device_name"],
+                    "interlock_name": row["interlock_name"],
+                    "equipment_name": row["equipment_name"],
+                },
+                "permissive_off_before_override": matching  # empty list if no match
+            })
+
+        # ── Step 4: Build final response ──────────────────────────────────────
+        return [
+            {
+                "location_name": loc,
+                "override_count": len(records),
+                "records": records
+            }
+            for loc, records in sorted(location_wise_result.items())
+        ]
+
+    except Exception as e:
+        print(f"Error in gantry_override_analysis: {e}")
+        return []
+    
 AnalyticsModelMapping = {
     "Top Repeated Alerts": top_repeat_alerts,
     "Tas Severity Summary": tas_severity_summary,
@@ -5077,7 +5264,8 @@ AnalyticsModelMapping = {
     "Hostbay Reassignment Alerts":host_bay_reassignment_alert,
     "Cancelled Report tts":cancelled_tts_dashboard,
     "Host Tables Combined Data":host_tables_combined_data,
-    "get bay counts":get_bay_counts
+    "get bay counts":get_bay_counts,
+    "Gantry Override Analysis": gantry_override_analysis,
 
 }
 
