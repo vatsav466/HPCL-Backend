@@ -572,6 +572,7 @@ Model SolarPanelCleaning crud_disable {
         limit optional int
         time_grain optional str
         category optional str
+        is_download optional bool
     }
 
 

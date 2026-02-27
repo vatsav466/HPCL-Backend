@@ -7893,7 +7893,7 @@ class GlobalAnalytics:
             "Indent WIP": data.get("intra_indent_wip", 0),
         }
 
-        carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
+        carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False, filters=filters)
         carry_fwd_df = pl.DataFrame(carry_fwd_data)
         if carry_fwd_df.is_empty():
             carry_fwd_df = pl.DataFrame(schema={ "dry_out_in_days": pl.Utf8,"category": pl.Utf8,})

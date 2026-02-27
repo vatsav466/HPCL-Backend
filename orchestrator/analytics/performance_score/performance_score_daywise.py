@@ -92,7 +92,6 @@ async def performance_score_daywise_action(data):
             zone,
             name,
             created_at::date AS score_date,
-            score AS db_score,
             category
         FROM performance_score_history
         WHERE {where_clause}
@@ -119,17 +118,27 @@ async def performance_score_daywise_action(data):
         zone = row["zone"]
         plant = row["name"]
         score_date = str(row["score_date"])
-        score_val = row["db_score"]
         category = row["category"]
 
         if isinstance(category, str):
             category = json.loads(category)
 
+        # Extract ONLY TAS score from category JSON
+        tas_entry = next(
+            (c for c in category if c.get("name") == "TAS"),
+            None
+        )
+
+        if not tas_entry:
+            continue
+
+        score_val = tas_entry.get("score", 0)
+
         score_data = {
             "date": score_date,
             "name": "TAS",
             "score": score_val,
-            "categories": resolve_tas_with_categories(category or {}).get("categories", [])
+            "categories": resolve_tas_with_categories(category).get("categories", [])
         }
 
         zones_map.setdefault(zone, {}).setdefault(plant, []).append(score_data)
