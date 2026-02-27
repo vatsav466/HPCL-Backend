@@ -599,7 +599,62 @@ async def get_category_sync():
         conflict_columns=["DEALER_CODE"]
     )
 
-async def sync_carry_fwd_indent(insert_to_db: bool):
+async def generate_filters(data):
+    filters = {}
+
+    for record in data:
+        key = record.key
+        value = record.value
+
+        if not value:
+            continue
+
+        # Always treat values as list
+        if not isinstance(value, list):
+            value = [value]
+
+        if key == "dealer_id":
+            filters.setdefault("DEALER_CODE", []).extend(value)
+
+        elif key == "sales_area":
+            filters.setdefault("SALES_AREA", []).extend(value)
+
+        elif key == "product_code":
+            filters.setdefault("PROD", []).extend(value)
+
+        elif key == "region":
+            regions = "', '".join(value)
+            query = f"""
+                SELECT DISTINCT sales_area
+                FROM location_master
+                WHERE region IN ('{regions}') AND bu='RO'
+            """
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+
+            if resp["data"]:
+                sales_areas = await flatten_sales_area(resp["data"])
+                filters.setdefault("SALES_AREA", []).extend(sales_areas)
+
+        elif key == "zone":
+            zones = "', '".join(value)
+            query = f"""
+                SELECT DISTINCT sales_area
+                FROM location_master
+                WHERE zone IN ('{zones}') AND bu='RO'
+            """
+            resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+
+            if resp["data"]:
+                sales_areas = await flatten_sales_area(resp["data"])
+                filters.setdefault("SALES_AREA", []).extend(sales_areas)
+
+    # Remove duplicates
+    return [
+        {"key": k, "value": list(set(v))}
+        for k, v in filters.items()
+    ]
+
+async def sync_carry_fwd_indent(insert_to_db: bool, filters=None):
     conditions = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
     where_clause = []
     for rec in conditions:
@@ -620,6 +675,27 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
         where_clause = ""
         combined_query = ""
         cd_query = ""
+
+    ims_clause = []
+    if filters:
+        ims_conditions = await generate_filters(filters)
+        for condition in ims_conditions:
+            condition_key = condition['key']
+            condition_value = condition['value']
+            if condition_key == 'DEALER_CODE':
+                dealers = "', '".join(condition_value)
+                ims_clause.append(f"""SUBSTR(a."DEALER_CODE",3,8) IN ('{dealers}')""")
+            elif condition_key == 'SALES_AREA':
+                sales_area = "', '".join(condition_value)
+                ims_clause.append(f"""dd."SAREA_DESC" IN ('{sales_area}')""")
+            elif condition_key == 'PROD':
+                product_code = "', '".join(condition_value)
+                ims_clause.append(f"""b."PROD" IN ('{product_code}')""")
+    
+    ims_query = ""
+    if ims_clause:
+        ims_query +=  ' AND ' + ' AND '.join(ims_clause)
+
     query = f"""WITH INDENT_DATA AS (
                     SELECT DISTINCT 
                         SUBSTR(a."DEALER_CODE", 3, 8) AS sap_id, 
@@ -628,15 +704,18 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                         a."LOCN_CODE" AS locn_code
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST" a,
-                        "IMS_SAP"."INDENT_PRODUCTS" b
+                        "IMS_SAP"."INDENT_PRODUCTS" b,
+                        "IMS_SAP"."DEALER_DETAILS" dd
                     WHERE 
                         a."PROD_REQD_DT" < CURRENT_DATE AND a."PROD_REQD_DT" >= CURRENT_DATE - INTERVAL '5 days'
                         AND a."LOCN_CODE" = b."LOCN_CODE" AND a."INDENT_NO" = b."INDENT_NO"
                         AND a."TRUCK_REGNO" IS NULL
+                        AND a."DEALER_CODE" = dd."DEALER_CODE"
                         AND a."CANCEL_INDENT" IS NULL
                         AND a."VALID_INDENT" IN ('Y', 'H')
                         AND SUBSTR(a."DEALER_CODE", 11, 7) = '7000111'
                         AND b."PROD" in ('2811000','2812000','3912000','2822000', '3672000','2816000','3373000')
+                        {ims_query}
                 ),
                 ALERT_DATA AS (
                     SELECT DISTINCT ON (sap_id, 
