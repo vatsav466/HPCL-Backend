@@ -6,6 +6,7 @@ import time
 import ast
 import requests
 import asyncio
+import traceback
 import pandas as pd
 import polars as pl
 import hpcl_ceg_model
@@ -1627,12 +1628,18 @@ async def get_ro_count_less_50(condition):
         "port": creds['port'],
         "connection_type": "mssql"
     }
-    conn = get_db_connection(params)
-    cursor = conn.cursor()
-    cursor.execute(query)
-    data = cursor.fetchall()
-    columns = [column[0] for column in cursor.description]
-    data = pd.DataFrame.from_records(data, columns=columns)
+    try:
+        conn = get_db_connection(params)
+        cursor = conn.cursor()
+        cursor.execute(query)
+        data = cursor.fetchall()
+        columns = [column[0] for column in cursor.description]
+        data = pd.DataFrame.from_records(data, columns=columns)
+        if data.empty:
+            data = pd.DataFrame(columns=['CUST_CD'])
+    except Exception as ex:
+        print(f"Exception while fetching data from TIBCO: {ex}\nTraceback: {traceback.format_exc()}")
+        data = pd.DataFrame(columns=['CUST_CD'])
     data['CUST_CD'] = data['CUST_CD'].astype(str)
 
     query = (f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} "
