@@ -4,13 +4,15 @@ import traceback
 import hashlib
 import json
 import functools
+import io
+import pandas as pd
 import urdhva_base
 import polars as pl
 import dashboard_studio_model
+from fastapi.responses import StreamingResponse
 from urdhva_base.ttl_cache import InMemTTLCache
 
 from orchestrator.analytics.solar_helpers import SolarHelpers
-
 
 SOLAR_CACHE_INSTANCES = {}
 def with_solar_cache(key_prefix: str, expiration: int = 900):
@@ -47,7 +49,7 @@ def with_solar_cache(key_prefix: str, expiration: int = 900):
                         ttl_seconds=expiration,
                         fetch_function=fetch_data
                     )
-                
+
                 # Retrieve from cache
                 # use a static key "result" because the uniqueness is handled by the instance_key
                 cache = SOLAR_CACHE_INSTANCES[instance_key]
@@ -77,15 +79,15 @@ class SolarCapacity:
                     PLANT_CD,
                     SourceID,
                     TimestampUTC,
-            
+
                     -- combine cumulative energy PER SOURCE
                     SUM(CASE WHEN QuantityID = 129 THEN Value END) AS Energy_Cumulative_kWh,
-            
+
                     -- instantaneous values
                     MAX(CASE WHEN QuantityID = 544 THEN Value END) AS Solar_kW,
                     MAX(CASE WHEN QuantityID = 540 THEN Value END) AS Grid_Freq_Hz,
                     MAX(LocationName) AS LocationName
-            
+
                 FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
                 WHERE PLANT_CD IN ('{plant_codes_sql}')
                     AND LOWER(SourceName) NOT LIKE '%total%'
@@ -96,39 +98,39 @@ class SolarCapacity:
                     SourceID,
                     TimestampUTC
             ),
-            
+
             w AS (
                 SELECT
                     b.*,
                     DATEADD(MINUTE, 330, b.TimestampUTC) AS TimestampIST,
                     CAST(DATEADD(MINUTE, 330, b.TimestampUTC) AS DATE) AS DayKey_IST,
-            
+
                     LAG(b.Energy_Cumulative_kWh)
                         OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
                         AS Prev_Energy_Cumulative_kWh,
-            
+
                     LAG(b.Solar_kW)
                         OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
                         AS Prev_Solar_kW,
-            
+
                     LEAD(b.TimestampUTC)
                         OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
                         AS NextTimestampUTC
                 FROM base b
             ),
-            
+
             calc1 AS (
                 SELECT
                     *,
-            
+
                     CASE
                         -- IGNORE energy during power outage
                         WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 0
-            
+
                         WHEN Energy_Cumulative_kWh IS NULL THEN 0
                         WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
                         WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
-            
+
                         ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
                     END AS SolarGen_kWh_entry
                 FROM w
@@ -1107,8 +1109,8 @@ class SolarCapacity:
                 generation_kwh = date_to_generation.get(current_date, 0.0)
 
                 # Calculate estimated energy for this day
-                # Estimated = Capacity (KW) * 4 (kWh per KW per day) 
-                
+                # Estimated = Capacity (KW) * 4 (kWh per KW per day)
+
                 # Get the list of plants that have generation data for the current date
                 plants_with_generation = generation_df.filter(
                     pl.col("reading_date") == current_date
@@ -1124,7 +1126,7 @@ class SolarCapacity:
                     pl.col("Plant Capacity").sum()
                 ).item() or 0.0
                 print("total_capacity_kw: ",total_capacity_kw)
-                
+
                 estimated_kwh = (total_capacity_kw * 4) if total_capacity_kw else 0.0
                 print("generation_kwh: ",generation_kwh)
                 print("estimated_kwh: ",estimated_kwh)
@@ -1798,6 +1800,40 @@ class SolarCapacity:
                     "status": status
                 })
 
+            if getattr(data, 'is_download', False):
+                df_pd = pd.DataFrame(summary_list)
+
+                # Format column names for Excel
+                df_pd = df_pd.rename(columns={
+                    "bu": "BU",
+                    "zone": "Zone",
+                    "sap_id": "SAP ID",
+                    "name": "Name",
+                    "Plant_Capacity": "Plant Capacity (kW)",
+                    "estimated_energy": "Estimated Energy (kWh)",
+                    "actual_energy": "Actual Energy (kWh)",
+                    "efficiency": "Efficiency (%)",
+                    "status": "Status"
+                })
+
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"Solar_Summary_{timestamp}.xlsx"
+
+                output = io.BytesIO()
+                # Use openpyxl as it's in requirements.txt
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df_pd.to_excel(writer, index=False, sheet_name='Solar Summary')
+
+                output.seek(0)
+                headers = {
+                    "Content-Disposition": f'attachment; filename="{file_name}"'
+                }
+                return StreamingResponse(
+                    output,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers=headers
+                )
+
             return {
                 "status": "success",
                 "summary": summary_list
@@ -1923,7 +1959,7 @@ class SolarCapacity:
                         PLANT_CD,
                         SourceID,
                         TimestampUTC,
-                
+
                         -- combine cumulative energy PER SOURCE
                         SUM(CASE WHEN QuantityID = 129 THEN Value END) AS Energy_Cumulative_kWh,
                         -- MAX(CASE WHEN QuantityID = 544 THEN Value END) AS Solar_kW,
@@ -1936,9 +1972,10 @@ class SolarCapacity:
                             MAX(CASE WHEN QuantityID = 516 THEN NULLIF(ABS(Value),0) END),
                             MAX(CASE WHEN QuantityID = 517 THEN NULLIF(ABS(Value),0) END)
                         ) AS Solar_kW,
-                        
-                        MAX(CASE WHEN QuantityID = 540 THEN Value END) AS Grid_Freq_Hz
-                
+
+                        MAX(CASE WHEN QuantityID = 540 THEN Value END) AS Grid_Freq_Hz,
+                        MAX(LocationName) AS LocationName
+
                     FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
                     WHERE   PLANT_CD IN ('{bu_codes_sql}')
                         AND LOWER(SourceName) NOT LIKE '%total%'
@@ -1951,32 +1988,32 @@ class SolarCapacity:
                         SourceID,
                         TimestampUTC
                 ),
-                
+
                 w AS (
                     SELECT
                         b.*,
                         DATEADD(MINUTE, 330, b.TimestampUTC) AS TimestampIST,
                         CAST(DATEADD(MINUTE, 330, b.TimestampUTC) AS DATE) AS DayKey_IST,
                         CAST(DATEADD(MINUTE,330,b.TimestampUTC) AS TIME) AS TimeIST,
-                
+
                         LAG(b.Energy_Cumulative_kWh)
                             OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
                             AS Prev_Energy_Cumulative_kWh,
-                
+
                         LAG(b.Solar_kW)
                             OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
                             AS Prev_Solar_kW,
-                
+
                         LEAD(b.TimestampUTC)
                             OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
                             AS NextTimestampUTC
                     FROM base b
                 ),
-                
+
                 calc1 AS (
                     SELECT
                         *,
-                
+
                         CASE
                             -- IGNORE energy during power outage
                             WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 0
@@ -1987,12 +2024,12 @@ class SolarCapacity:
 
                             ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
                         END AS SolarGen_kWh_entry,
-                
+
                         CASE
                             WHEN NextTimestampUTC IS NULL THEN 0.0
                             ELSE DATEDIFF(SECOND, TimestampUTC, NextTimestampUTC) / 3600.0
                         END AS IntervalHours,
-                
+
                         CASE
                             WHEN COUNT(Solar_kW)
                                  OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) > 0
@@ -2000,21 +2037,21 @@ class SolarCapacity:
                         END AS SolarKW_Available_Flag
                     FROM w
                 ),
-                
+
                 calc AS (
                     SELECT
                         *,
-                
+
                         CASE
                             WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 1 ELSE 0
                         END AS PowerOutageFlag,
-                
+
                         CASE
                             WHEN SolarKW_Available_Flag = 1 AND Solar_kW > 0.6 THEN 1
                             WHEN SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0 THEN 1
                             ELSE 0
                         END AS SolarWindowFlag,
-                
+
                         CASE
                             WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
                              AND (
@@ -2023,7 +2060,7 @@ class SolarCapacity:
                                  )
                             THEN 1 ELSE 0
                         END AS SolarGeneratingFlag,
-                
+
                         CASE
                             WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
                              AND (
@@ -2032,36 +2069,36 @@ class SolarCapacity:
                                  )
                             THEN 1 ELSE 0
                         END AS SolarZeroWhileGridOnFlag,
-                
+
                         CASE
                             WHEN SolarKW_Available_Flag = 1
                                  AND ISNULL(Prev_Solar_kW, 0) <= 0.25
                                  AND Solar_kW > 0.05
                             THEN 1
-                
+
                             WHEN SolarKW_Available_Flag = 0
                                  AND ISNULL(SolarGen_kWh_entry, 0) > 0                             
                                  AND LAG(ISNULL(SolarGen_kWh_entry, 0))
                                      OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) = 0
                             THEN 1
-                
+
                             ELSE 0
                         END AS SolarStartFlag,
-                
+
                         CASE
                             WHEN SolarKW_Available_Flag = 1
                                  AND ISNULL(Prev_Solar_kW, 0) > 0.05
                                  AND ISNULL(Solar_kW, 0) <= 0.25
-                                 
+
                             THEN 1
-                
+
                             WHEN SolarKW_Available_Flag = 0
                                  AND ISNULL(SolarGen_kWh_entry, 0) < 0.25
-                                 
+
                                  AND LAG(ISNULL(SolarGen_kWh_entry, 0))
                                      OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) > 0
                             THEN 1
-                
+
                             ELSE 0
                         END AS SolarEndFlag
                     FROM calc1
@@ -2089,6 +2126,7 @@ class SolarCapacity:
                     SourceID,
                     TimestampUTC,
                     TimestampIST,
+                    LocationName,
                     Energy_Cumulative_kWh,
                     Solar_kW,
                     Grid_Freq_Hz,
@@ -2147,6 +2185,13 @@ class SolarCapacity:
 
             for plant_cd in result_df.select(pl.col("PLANT_CD").unique()).to_series().to_list():
                 plant_df = result_df.filter(pl.col("PLANT_CD") == plant_cd)
+
+                location_name = (
+                        plant_df
+                        .select(pl.col("LocationName").first())
+                        .item() or ""
+                )
+
                 # solar_window_hours_list = (
                 #     plant_df
                 #     .select(pl.col("SolarWindowHours_IST").cast(pl.Float64).unique())
@@ -2165,7 +2210,6 @@ class SolarCapacity:
                 )
 
                 actual_energy = float(plant_df.select(pl.col("SolarGen_kWh_entry").sum()).item() or 0)
-
 
                 generation_hours = float(plant_df.select(pl.col("SolarGenHours_entry").sum()).item() or 0)
                 # power_outage_hours = float(plant_df.select(pl.col("OutageDuringSolarHours_day").sum()).item() or 0)
@@ -2193,7 +2237,8 @@ class SolarCapacity:
                 export_available_hour = abs(solar_window_hours - power_outage_hours)
 
                 if solar_window_hours is not None and solar_window_hours > 0:
-                    grid_availability_percentage = ((solar_window_hours - power_outage_hours) / solar_window_hours) * 100
+                    grid_availability_percentage = ((
+                                                                solar_window_hours - power_outage_hours) / solar_window_hours) * 100
                     loss_of_power_outage = estimated_energy * (power_outage_hours / solar_window_hours)
                     adjusted_expected = estimated_energy * (
                             export_available_hour / solar_window_hours
@@ -2244,6 +2289,7 @@ class SolarCapacity:
 
                 insights.append({
                     "sap_id": str(plant_cd),
+                    "LocationName": location_name,
                     "actual_energy": round(actual_energy, 2),
                     "estimated_energy": round(estimated_energy, 2),
                     "energy_generation_hours": round(SolarGenHours_day_mean, 2),
@@ -2259,6 +2305,44 @@ class SolarCapacity:
                     "grid_availability_percentage": round(grid_availability_percentage, 2)
                 })
 
+            if getattr(data, 'is_download', False):
+                df_pd = pd.DataFrame(insights)
+
+                # Format column names for Excel
+                df_pd = df_pd.rename(columns={
+                    "sap_id": "SAP ID",
+                    "LocationName": "Location Name",
+                    "actual_energy": "Actual Energy (kWh)",
+                    "estimated_energy": "Estimated Energy (kWh)",
+                    "energy_generation_hours": "Energy Generation Hours",
+                    "solar_window_hours": "Solar Window Hours",
+                    "export_available_hour": "Export Available Hour",
+                    "power_outage": "Power Outage (Hours)",
+                    "adjusted_expected": "Adjusted Expected (kWh)",
+                    "loss_of_power_outage": "Loss of Power Outage (kWh)",
+                    "loss_of_power_outage_percentage": "Loss of Power Outage (%)",
+                    "efficiency_estimated_actual_percentage": "Efficiency (%)",
+                    "loss_dust_soil_percentage": "Loss Dust/Soil (%)",
+                    "total_loss": "Total Loss (%)",
+                    "grid_availability_percentage": "Grid Availability (%)"
+                })
+
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"Solar_Insights_{timestamp}.xlsx"
+
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df_pd.to_excel(writer, index=False, sheet_name='Solar Insights')
+
+                output.seek(0)
+                headers = {
+                    "Content-Disposition": f'attachment; filename="{file_name}"'
+                }
+                return StreamingResponse(
+                    output,
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers=headers
+                )
             return {
                 "status": "success",
                 "data": insights
@@ -2270,7 +2354,7 @@ class SolarCapacity:
                 "status": "error",
                 "error": str(e)
             }
-        
+
     @classmethod
     @with_solar_cache("solar_overall_insights", 900)
     async def get_overall_insights(cls, data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
@@ -2592,9 +2676,9 @@ class SolarCapacity:
             # -------------------------------------------------
             # Final calculations (FLOAT SAFE)
             # -------------------------------------------------
-            
+
             plant_df = result_df
-            
+
             power_outage_hours_list = (
                 plant_df
                 .filter(pl.col("OutageDuringSolarHours_day") > 0)  # keep only > 0
@@ -2605,7 +2689,6 @@ class SolarCapacity:
             )
 
             actual_energy = float(plant_df.select(pl.col("SolarGen_kWh_entry").sum()).item() or 0)
-
 
             generation_hours = float(plant_df.select(pl.col("SolarGenHours_entry").sum()).item() or 0)
             # power_outage_hours = float(plant_df.select(pl.col("OutageDuringSolarHours_day").sum()).item() or 0)

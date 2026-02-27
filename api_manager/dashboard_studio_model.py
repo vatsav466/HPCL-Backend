@@ -915,6 +915,7 @@ class Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams(pydantic.BaseModel):
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     time_grain: typing.Optional[str] = pydantic.Field("", **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
+    is_download: typing.Optional[bool] = pydantic.Field(False, **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
