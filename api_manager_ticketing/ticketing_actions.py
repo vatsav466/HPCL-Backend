@@ -858,24 +858,27 @@ async def ticketing_attach_file(
         if not resp:
             return {"status": False, "message": "Ticket not found"}
 
-        # ---------------- MINIO UPLOAD (DIRECT) ----------------
-
-        base_folder = "ticketing"
+        # ---------------- MINIO UPLOAD ----------------
 
         unique_filename = f"{uuid.uuid4()}_{uploadfile.filename}"
 
-        # final object structure
-        object_name = f"{ticket_id}/{tid}/{unique_filename}"
+        # Save file temporarily
+        temp_path = f"/tmp/{unique_filename}"
 
-        # read file bytes
-        file_bytes = await uploadfile.read()
+        with open(temp_path, "wb") as f:
+            f.write(await uploadfile.read())
 
-        status, minio_path = minio_connector.upload_bytes_to_minio(
-            base_folder,          # folder name
-            object_name,          # object path inside folder
-            file_bytes,
-            uploadfile.content_type
+        # Upload using existing minio function
+        status, minio_path = minio_connector.upload_to_minio(
+            "ticketing",   # bu
+            ticket_id,     # section
+            str(tid),      # unique_id (safe to pass as string)
+            temp_path
         )
+
+        # Remove temp file
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
         if not status:
             return {

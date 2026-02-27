@@ -502,6 +502,14 @@ async def tas_severity_summary(data):
 
         where_clause = " AND ".join(where_conditions)
 
+        location_params = urdhva_base.queryparams.QueryParams(
+            q="location_onboard='true'",
+            limit=0
+        )
+        location_params.fields = ["zone", "name"]
+        all_location_resp = await hpcl_ceg_model.LocationMaster.get_all(location_params, resp_type="plain")
+        all_locations = all_location_resp.get("data", [])
+
         if data.location_name:
             detail_query = f"""
                 SELECT
@@ -514,6 +522,23 @@ async def tas_severity_summary(data):
             """
             detail_result = await hpcl_ceg_model.Alerts.get_aggr_data(detail_query, limit=0)
             detail_data = detail_result.get("data", [])
+                        
+            if not detail_data:
+                # Return all locations with zero counts when No data is there
+                result = []
+                for loc in all_locations:
+                    result.append({
+                        "zone": loc.get("zone", ""),
+                        "location_name": loc.get("name", ""),
+                        "under_maintenance_count": 0,
+                        "fault_count": 0
+                    })
+                return {
+                    "status": True,
+                    "message": "TAS severity detail processed successfully",
+                    "data": result,
+                }
+            
             return {
                 "status": True,
                 "message": "TAS severity detail processed successfully",
@@ -581,6 +606,21 @@ async def tas_severity_summary(data):
 
         summary_result = await hpcl_ceg_model.Alerts.get_aggr_data(summary_query, limit=0)
         summary_data = summary_result.get("data", [])
+
+        # Add locations with zero counts if they don't have any alerts
+        alert_locations = {(r["zone"], r["location_name"]) for r in summary_data}
+        
+        for loc in all_locations:
+            zone = loc.get("zone", "")
+            location_name = loc.get("name", "")
+            if (zone, location_name) not in alert_locations:
+                summary_data.append({
+                    "zone": zone,
+                    "location_name": location_name,
+                    "under_maintenance_count": 0,
+                    "fault_count": 0
+                })
+
         return {
             "status": True,
             "message": "TAS severity summary processed successfully",
@@ -653,8 +693,9 @@ async def location_alert_critical(data):
                 }
             return {"status": True, "message": "Critical alert details processed successfully", "data": result_data}
 
-        # SUMMARY VIEW (DASHBOARD)
+        #  SUMMARY VIEW (Dashboard)
         else:
+
             summary_query = f"""
                 WITH base_alerts AS (
                     SELECT
@@ -693,13 +734,73 @@ async def location_alert_critical(data):
                 GROUP BY t.zone, t.location_name, t.total_alerts
                 ORDER BY t.total_alerts DESC;
             """
+
             result = await hpcl_ceg_model.Alerts.get_aggr_data(summary_query, limit=0)
-            result = result.get("data", [])
-            return {"status": True, "message": "Critical alert summary processed successfully", "data": result}
+            summary_data = result.get("data", [])
+
+            # Merge with all onboarded locations
+            all_locations = await get_all_onboarded_locations()
+            print("Total onboarded locations:", len(all_locations))
+
+            # Apply zone filter if provided
+            if zone:
+                all_locations = [
+                    loc for loc in all_locations
+                    if (loc.get("zone") or "").strip() == zone
+                ]
+
+            # Normalize DB result for easy lookup
+            summary_lookup = {
+                (row.get("location_name") or "").strip().upper(): row
+                for row in summary_data
+            }
+
+            final_response = []
+
+            for loc in all_locations:
+                loc_name = (loc.get("name") or "").strip()
+                loc_zone = loc.get("zone")
+
+                if not loc_name:
+                    continue
+
+                normalized_name = loc_name.upper()
+
+                if normalized_name in summary_lookup:
+                    # Use real DB row
+                    row = summary_lookup[normalized_name]
+                    # Ensure zone always comes from master
+                    row["zone"] = loc_zone
+                    final_response.append(row)
+
+                else:
+                    # Add zero row
+                    final_response.append({
+                        "zone": loc_zone,
+                        "location_name": loc_name,
+                        "total_alerts": 0,
+                        "interlocks": []
+                    })
+
+            # Sort by total_alerts descending
+            final_response.sort(
+                key=lambda x: x.get("total_alerts", 0),
+                reverse=True
+            )
+
+            return {
+                "status": True,
+                "message": "Critical alert summary processed successfully",
+                "data": final_response
+            }
 
     except Exception as e:
         print(f"Error in location_alert_critical: {e}")
-        return {"status": False, "message": f"Error processing critical alerts: {e}", "data": []}
+        return {
+            "status": False,
+            "message": f"Error processing critical alerts: {e}",
+            "data": []
+        }
 
 
 async def critical_alerts_by_equipment(data):
@@ -766,6 +867,19 @@ async def critical_alerts_by_equipment(data):
     except Exception as e:
         print(f"Error in critical_alerts_by_equipment: {e}")
         return {"status": False, "message": f"Error processing critical alerts: {e}", "data": []}
+    
+async def get_all_onboarded_locations():
+    """
+    Fetch all onboarded TAS locations from location_master.
+    Returns a list of dicts with 'name' (location_name) and 'zone'.
+    """
+    location_params = urdhva_base.queryparams.QueryParams(
+        q="location_onboard='true'",
+        limit=0
+    )
+    location_params.fields = ["name", "zone"]
+    resp = await hpcl_ceg_model.LocationMaster.get_all(location_params, resp_type="plain")
+    return resp.get("data", [])
 
 
 async def tas_alerts_exception_report(data):
@@ -783,7 +897,7 @@ async def tas_alerts_exception_report(data):
     alerts = (await hpcl_ceg_model.Alerts.get_all(params, resp_type="plain")).get("data", [])
     if not alerts:
         return []
-    df = (pl.DataFrame(alerts)
+    df = (pl.DataFrame(alerts, infer_schema_length=None)
           .with_columns([
         pl.col("vehicle_number").str.strip_chars(),
         pl.col("interlock_name")
@@ -890,7 +1004,8 @@ async def tas_alerts_exception_report(data):
             (await hpcl_ceg_model.HostCancelledTts.get_all(
                 urdhva_base.queryparams.QueryParams(q=date_q, limit=0),
                 resp_type="plain"
-            )).get("data", [])
+            )).get("data", []),
+            infer_schema_length=None
         )
         .with_columns(pl.col("created_at").dt.date().alias("created_date"))
         .group_by(["truck_number", "created_date"])
@@ -1014,6 +1129,23 @@ async def tas_alerts_exception_report(data):
             row[f"{interlock}_detail"] = details
 
         result.append(row)
+
+    # ── Ensure ALL onboarded locations appear in result ──────────────────
+    all_locations = await get_all_onboarded_locations()
+
+    result_location_names = {row["Location"] for row in result}
+
+    for loc_record in all_locations:
+        loc_name = loc_record.get("name", "")
+        if not loc_name or loc_name in result_location_names:
+            continue
+        zero_row = {"Location": loc_name}
+        for interlock in INTERLOCK_MAP.values():
+            zero_row[interlock] = 0
+            zero_row[f"{interlock}_detail"] = []
+        result.append(zero_row)
+
+    result.sort(key=lambda x: x["Location"])
 
     if str(data.download).lower() == "true":
         return await vts_analytics.download_streaming_data(
