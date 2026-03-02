@@ -95,13 +95,14 @@ async def sync_device_to_tank_truck_master():
                 NULL
             FROM device_installation VE
             WHERE VE.aot_status = 'PENDING'
+                        AND NOT EXISTS (
+                SELECT 1
+                FROM tank_truck_master TM
+                WHERE TM.truck_number = VE.sap_tt_no
+            )
         """
         
-#         AND NOT EXISTS (
-#     SELECT 1
-#     FROM tank_truck_master TM
-#     WHERE TM.truck_number = VE.sap_tt_no
-# )
+
 
         result = await conn.execute(sync_query)
         print(f"Synced {result} records to tank_truck_master")
