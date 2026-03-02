@@ -96,8 +96,9 @@ async def publish_daily_novex_status_email():
         template_name="seg1.html",
         to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
         subject="Novex Daily Report",
-        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com","vamsi.c@algofusiontech.com"],
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
+        bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
+                        "pawann.k@algofusiontech.com", "mohith.p@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -110,8 +111,9 @@ async def publish_daily_novex_status_email():
         template_name="seg2.html",
         to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
         subject="Novex Daily Report: Retail",
-        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com","vamsi.c@algofusiontech.com"],
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
+        bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
+                        "pawann.k@algofusiontech.com", "mohith.p@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "dry_out_lost": f"{status_data.get('chart_path')}",
@@ -124,8 +126,9 @@ async def publish_daily_novex_status_email():
         template_name="seg3.html",
         to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
         subject="Novex Daily Report: LPG",
-        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com","vamsi.c@algofusiontech.com"],
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
+        bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
+                        "pawann.k@algofusiontech.com", "mohith.p@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "monthly_score_path": f"{status_data.get('lpg_monthyl_score_path')}",
@@ -137,8 +140,9 @@ async def publish_daily_novex_status_email():
         template_name="seg4.html",
         to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in"],
         subject="Novex Daily Report: SOD",
-        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com","vamsi.c@algofusiontech.com"],
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
+        bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
+                        "pawann.k@algofusiontech.com", "mohith.p@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "monthly_score_path_sod": f"{status_data.get('sod_monthly_score_path')}",
@@ -152,8 +156,9 @@ async def publish_daily_novex_status_email():
         template_name="ro_va_cleanliness.html",
         to_recipients=["sachinkwarghane@hpcl.in","purushm@hpcl.in","adityapandey@hpcl.in"],
         subject=f"Clean Toilet Picture upload | MIS | Date : {status_data.get('yesterday_date')}",
-        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com","vamsi.c@algofusiontech.com"],
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
+        bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
+                        "pawann.k@algofusiontech.com", "mohith.p@algofusiontech.com"],
         notification_data=status_data
     )
 
@@ -161,8 +166,9 @@ async def publish_daily_novex_status_email():
         template_name="seg5.html",
         to_recipients=["sreedhar.maddipati@algofusiontech.com"],
         subject="Novex Daily Report",
-        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
-        bcc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com","gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com","poojitha.gumma@algofusiontech.com","vamsi.c@algofusiontech.com"],
+        cc_recipients=["venu@algofusiontech.com", "moufikali@algofusiontech.com", "aditya@algofusiontech.com", "yesu.p@algofusiontech.com", "manohar.v@algofusiontech.com"],
+        bcc_recipients=["gayathri.m@algofusiontech.com", "jayaprakash.v@algofusiontech.com", "poojitha.gumma@algofusiontech.com", "vamsi.c@algofusiontech.com", 
+                        "pawann.k@algofusiontech.com", "mohith.p@algofusiontech.com"],
         notification_data=status_data,
         inline_images={
             "dry_out_lost": f"{status_data.get('chart_path')}",

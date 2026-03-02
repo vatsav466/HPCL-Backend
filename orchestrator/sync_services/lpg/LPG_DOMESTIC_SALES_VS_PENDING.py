@@ -5,6 +5,7 @@ import uuid
 import pyodbc
 import psycopg2
 import datetime
+from zoneinfo import ZoneInfo
 import pandas as pd
 import polars as pl
 from dateutil.relativedelta import relativedelta
@@ -492,7 +493,7 @@ def get_pending_vs_delivered_data():
             }
     
     data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))
-    data = data.with_columns(pl.lit(datetime.datetime.now() - relativedelta(days=1)).alias("Execution_Date"))
+    data = data.with_columns(pl.lit((datetime.datetime.now(ZoneInfo("Asia/Kolkata")) - relativedelta(days=1))).alias("Execution_Date"))
     data = data.with_columns(pl.col("Execution_Date").dt.strftime("%B").alias("Execution_Month"))
     data = data.with_columns(pl.col("Execution_Date").dt.strftime("%Y").alias("Execution_Year"))
     data = data.with_columns(pl.col("Execution_Date").dt.strftime("%b-%Y").alias("Month-Year"))
@@ -1548,8 +1549,8 @@ def get_dbc_enrollment():
         if col.endswith("_y"):
             data = data.drop(col)
 
-    # trunc_query = """ TRUNCATE lpg_cdcms_dbc_enrollment_data; """
-    # fetch_data(cursor, trunc_query, getData=False, params=params)
+    trunc_query = """ TRUNCATE lpg_cdcms_dbc_enrollment_data; """
+    fetch_data(cursor, trunc_query, getData=False, params=params)
     insertToDB(data, "lpg_cdcms_dbc_enrollment_data", indexing_col=("ZOName", "MonthYear"))
     
 
@@ -1735,3 +1736,4 @@ if __name__=="__main__":
     get_subsidy_state_stats()
     get_subsidy_central_stats()
     get_subsidy_exception_failure_data()
+    get_dbc_enrollment()
