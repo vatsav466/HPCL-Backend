@@ -1277,7 +1277,10 @@ async def get_parameters_summary():
         "MFM Factor Changes": total_mfm_factor_tt
     }])
     df = pd.concat([df, total_row], ignore_index=True)
-    df.drop(columns=["Valid Trucks","sap_id"], inplace=True)
+    for key in ["Valid Trucks","sap_id"]:
+        if key in df.columns:
+            df.drop(key, axis=1, inplace=True)
+    # df.drop(columns=["Valid Trucks","sap_id"], inplace=True)
     print('*'*200)
     print('tas_parameters_summary',tas_parameters_summary)
     print('tas_parameters_query_resp',df)

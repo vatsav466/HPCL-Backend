@@ -1162,12 +1162,16 @@ class LPGOperationsActions:
             for row in rawData:
                 timeLow = row['hour']
                 timeHigh = row['hour'] + timedelta(hours=1)
+
                 label = timeLow.strftime('%H') + '00 - ' + timeHigh.strftime('%H') + '00'
                 labels.append(label)
-                count1 = math.floor(row['c1_t1'] + 0.5)
-                count2 = math.floor(row['c2_t2'] + 0.5)
+
+                count1 = row['c1_t1'] + row['c1_t2']
+                count2 = row['c2_t1'] + row['c2_t2']
+
                 total1 += count1
                 total2 += count2
+
                 car1Data.append(count1)
                 car2Data.append(count2)
 

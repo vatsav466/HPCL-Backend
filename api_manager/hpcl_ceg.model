@@ -1047,7 +1047,7 @@ Model TasAnalytics crud_disable {
         download        optional str
         truck_number optional str
         filters optional list WidgetFilters
-        
+        interlock_category optional str
     }
 
 }
@@ -2563,7 +2563,7 @@ Model TagsData {
     sap_id optional unique_field str
     name optional unique_field str
     device_type optional unique_field str
-    count optional unique_field str
+    count optional str
     device_count optional str
     zone optional unique_field str
     system optional unique_field str
@@ -2605,7 +2605,7 @@ Model ArchitectureData{
     sap_id optional unique_field str
     name optional unique_field str
     device_type optional unique_field str
-    count optional unique_field str
+    count optional str
     zone optional str
     system optional str
     equipment_name optional str
