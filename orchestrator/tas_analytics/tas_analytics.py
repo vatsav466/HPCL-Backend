@@ -959,8 +959,8 @@ async def tas_alerts_exception_report(data):
     meter_q = (
         f"last_meter_factor_change_date IS NOT NULL"
         f" AND last_meter_factor_change_date != ''"
-        f" AND created_at >= '{data.start_date} 00:00:00'"
-        f" AND created_at <= '{data.end_date} 23:59:59'"
+        f" AND last_meter_factor_change_date >= '{data.start_date} 00:00:00'"
+        f" AND last_meter_factor_change_date <= '{data.end_date} 23:59:59'"
     )
     meter = await hpcl_ceg_model.HostMFMFactor.get_all(
         urdhva_base.queryparams.QueryParams(q=meter_q, limit=0),
