@@ -3924,6 +3924,7 @@ Model DeviceInstallation{
 
     Config=> {
         access_key_mapping='sap_tt_no'
+        search_fields='sap_tt_no,sap_id,location,status,status_decommissioning,AOT_status'
     }
 }
 

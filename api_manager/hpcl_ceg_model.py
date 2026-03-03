@@ -10616,6 +10616,7 @@ class DeviceInstallationCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = DeviceInstallationSchema
         upsert_keys = []
+        search_fields = ['sap_tt_no', 'sap_id', 'location', 'status', 'status_decommissioning', 'AOT_status']
         access_key_mapping = ['sap_tt_no']
 
 
@@ -10658,6 +10659,7 @@ class DeviceInstallation(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = DeviceInstallationSchema
         upsert_keys = []
+        search_fields = ['sap_tt_no', 'sap_id', 'location', 'status', 'status_decommissioning', 'AOT_status']
         access_key_mapping = ['sap_tt_no']
 
 
