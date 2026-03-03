@@ -351,3 +351,17 @@ Model Ticketing {
         crud_operations='read'
     }
 }
+
+Model TicketUserMails {
+    level str
+    sap_id index_field optional str
+    role index_field str
+    location_name index_field optional str
+    zone index_field str
+    employee_name optional str
+    email_id optional str
+
+    Config=> {
+        crud_operations='read'
+    }
+}

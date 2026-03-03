@@ -16,3 +16,13 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await Ticketing.get_all(params, skip_secrets=True)
 
+
+@router.get('/ticketusermails/{id}', response_model=TicketUserMails, tags=['TicketUserMails'])
+async def get(id: str):
+    return await TicketUserMails.get(id, skip_secrets=True)
+
+
+@router.get('/ticketusermails', response_model=TicketUserMailsGetResp, tags=['TicketUserMails'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TicketUserMails.get_all(params, skip_secrets=True)
+

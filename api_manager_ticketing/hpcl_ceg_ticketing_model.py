@@ -470,3 +470,59 @@ class Ticketing_Vts_Block_TrucksParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class TicketUserMailsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'ticket_user_mails'
+    
+    level: Mapped[str] = mapped_column("level", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    role: Mapped[str] = mapped_column("role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    employee_name: Mapped[typing.Optional[str]] = mapped_column("employee_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    email_id: Mapped[typing.Optional[str]] = mapped_column("email_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class TicketUserMailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'ticket_user_mails'
+    
+    level: str
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    role: str
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: str
+    employee_name: typing.Optional[str] = pydantic.Field("", **{})
+    email_id: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TicketUserMailsSchema
+        upsert_keys = []
+
+
+class TicketUserMails(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'ticket_user_mails'
+    
+    level: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    role: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] | None = None
+    employee_name: typing.Optional[str] = pydantic.Field("", **{})
+    email_id: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TicketUserMailsSchema
+        upsert_keys = []
+
+
+class TicketUserMailsGetResp(pydantic.BaseModel):
+    data: typing.List[TicketUserMails]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

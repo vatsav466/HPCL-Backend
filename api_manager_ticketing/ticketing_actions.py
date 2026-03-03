@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 from fastapi import Form, File, UploadFile
 from hpcl_ceg_ticketing_model import (
     Ticketing,
+    TicketUserMails,
     TicketingCreate,
     Ticketing_Get_TicketParams,
     Ticketing_Create_TicketParams,
@@ -46,11 +47,136 @@ from urdhva_base.queryparams import QueryParams
 from fastapi import UploadFile, File, Form
 import utilities.minio_connector as minio_connector
 import json
+import orchestrator.alerting.alert_manager as alert_manager
+import orchestrator.notification_manager.notify_email as notify_email
+import datetime
 
 
 
 router = fastapi.APIRouter(prefix='/ticketing')
 logger = logging.getLogger(__name__)
+
+
+
+CATEGORY_FUNCTIONAL_MAP = {
+    "Transportation Discipline": "Transportation & Bio-fuels",
+    "VTS Live Tracking":         "Transportation & Bio-fuels",
+    "Inventory Management":      "Operations & Automation",
+    "Safety Performance":        "HSE, M&I and Projects",
+    "Asset Integrity":           "HSE, M&I and Projects",
+}
+
+TICKET_EMAIL_TEMPLATE = "/Users/manohar/Documents/GitHub/dnc_backend_v2/orchestrator/notification_templates/create_ticket.html"
+
+
+async def send_ticket_creation_mail(ticket_data: dict) -> None:
+
+    category_raw     = ticket_data.get("category") or []
+    sub_category_raw = ticket_data.get("sub_category") or []
+    
+    category     = category_raw[0]  if isinstance(category_raw, list)  else (category_raw or "")
+    sub_category = sub_category_raw[0] if isinstance(sub_category_raw, list) else (sub_category_raw or "")
+    functional_area = CATEGORY_FUNCTIONAL_MAP.get(category)
+
+    # sap_ids
+    sap_ids = ticket_data.get("sap_id", [])
+    if not isinstance(sap_ids, list):
+        sap_ids = [sap_ids]
+    sap_ids = [str(s) for s in sap_ids if s]
+
+    # location_name string
+    loc_names = ticket_data.get("location_name", [])
+    if not isinstance(loc_names, list):
+        loc_names = [loc_names]
+    location_name_str = ", ".join([l for l in loc_names if l])
+
+    # response_days = ticket_end_date - start_date
+    response_days = None
+    _end   = ticket_data.get("ticket_end_date")
+    _start = ticket_data.get("startdate") or ticket_data.get("start_date")
+    if _end and _start:
+        try:
+            _e = _end.date()   if hasattr(_end,   'date') else _end
+            _s = _start.date() if hasattr(_start, 'date') else _start
+            response_days = (_e - _s).days
+        except Exception:
+            response_days = None
+
+    # ── TO: Location In-Charge by sap_id ──────────────────────────────────
+    to_emails  = []
+    zones_seen = set()
+
+    if sap_ids:
+        sap_in = ",".join([f"'{s}'" for s in sap_ids])
+        p_loc  = urdhva_base.queryparams.QueryParams(
+            q=f"sap_id IN ({sap_in}) and level='Location'",
+            limit=0
+        )
+        p_loc.fields = ["email_id", "zone"]
+        loc_recs = ((await TicketUserMails.get_all(p_loc, resp_type="plain")) or {}).get("data", [])
+
+        print(f"[ticket_email] loc_recs={loc_recs}")
+
+        for rec in loc_recs:
+            email = (rec.get("email_id") or "").strip()
+            if email and email not in to_emails:
+                to_emails.append(email)
+            z = (rec.get("zone") or "").strip()
+            if z:
+                zones_seen.add(z)
+
+    print(f"[ticket_email] zones_seen={zones_seen} | functional_area={functional_area}")
+
+    # ── CC: Zonal Functional by role ───────────────────────────────────────
+    # role format in DB: "NCZ-Transportation & Bio-fuels"
+    # zones_seen will have e.g. {"NCZ"} from location record
+    cc_emails = []
+
+    if functional_area and zones_seen:
+        # build exact role list from zones_seen + functional_area
+        roles    = [f"{z}-{functional_area}" for z in zones_seen]
+        roles_in = ",".join([f"'{r}'" for r in roles])
+
+        p_cc = urdhva_base.queryparams.QueryParams(
+            q=f"role IN ({roles_in})",
+            limit=0
+        )
+        p_cc.fields = ["email_id", "role"]
+        cc_recs = ((await TicketUserMails.get_all(p_cc, resp_type="plain")) or {}).get("data", [])
+
+        print(f"[ticket_email] cc_recs={cc_recs}")
+
+        for rec in cc_recs:
+            email = (rec.get("email_id") or "").strip()
+            if email and email not in to_emails and email not in cc_emails:
+                cc_emails.append(email)
+
+    print(f"[ticket_email] TO={to_emails} | CC={cc_emails}")
+
+    if not to_emails and not cc_emails:
+        print(f"[ticket_email] No recipients for {ticket_data.get('ticket_id')} — skipping")
+        return
+
+    template_data = {
+        "ticket_id":     ticket_data.get("ticket_id", ""),
+        "location_name": location_name_str,
+        "category":      category,
+        "sub_category":  sub_category,
+        "response_days": response_days,
+    }
+
+    notify_ins = notify_email.NotifyEMail()
+    await notify_ins.publish_message(
+        recipients   = to_emails or cc_emails,
+        cc_recipients  = cc_emails if to_emails else [],
+        subject      = f"Open Ticket {ticket_data.get('ticket_id')} | {category} | {location_name_str}",
+        body         = alert_manager.read_template(TICKET_EMAIL_TEMPLATE, data=template_data),
+        html_content = True,
+        force_send   = True,
+    )
+    print(f"[ticket_email] Sent {ticket_data.get('ticket_id')} | TO={to_emails} | CC={cc_emails}")
+
+
 
 # ----------------------------------------------------
 # Common helper for create_ticket & update_ticket
@@ -342,7 +468,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
 
 
     # Append first history entry
-    processed_time = datetime.now()
+    processed_time = datetime.datetime.now()
     ticket_data['ticket_history'].append({
         "processed_time": processed_time.isoformat(),
         "allocated_time": startdate.isoformat() if startdate else processed_time.isoformat(),
@@ -356,6 +482,12 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     # Create the ticket
     print("ticket_data",ticket_data)
     ticket_resp = await TicketingCreate(**ticket_data).create()
+    try:
+        await send_ticket_creation_mail(ticket_data)
+    except Exception as e:
+        print(f"Error sending ticket creation mail for {ticket_data['ticket_id']}: {e}")
+        print(traceback.format_exc())
+
     params = urdhva_base.queryparams.QueryParams()
     params.q = f"ticket_id='{ticket_data['ticket_id']}'"
     params.limit = 1

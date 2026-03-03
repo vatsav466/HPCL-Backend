@@ -197,6 +197,69 @@
                     "name": "vts_block_trucks"
                 }
             ]
+        },
+        {
+            "name": "ticketusermails",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TicketUserMails",
+            "attributes": {},
+            "uris": [
+                "/api/ticketusermails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "ticketusermails_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TicketUserMails_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/ticketusermails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "ticketusermails_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TicketUserMails_admin",
+            "attributes": {},
+            "uris": [
+                "/api/ticketusermails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
