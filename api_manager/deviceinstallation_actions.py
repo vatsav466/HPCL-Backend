@@ -7,14 +7,22 @@ from hpcl_ceg_model import *
 from fastapi import UploadFile, File, Depends
 import urdhva_base.queryparams as queryparams
 import utilities.minio_connector as minio_connector
+import utilities.zone_code_mapping as zone_code_mapping
 import fastapi
+import datetime
 
 router = fastapi.APIRouter(prefix="/deviceinstallation", tags=["DeviceInstallation"])
 
 
-def _format_date(value): 
-    if isinstance(value, datetime):
+
+
+def _format_date(value):
+    if isinstance(value, datetime.datetime):
         return value.strftime("%Y-%m-%d")
+    elif isinstance(value, datetime.date):
+        return value.strftime("%Y-%m-%d")
+    elif isinstance(value, str):
+        return value
     return None
 
 
@@ -168,13 +176,16 @@ async def update_device_installation(
 
         sap_tt_no = payload.get("sap_tt_no")
         sap_id = payload.get("sap_id")
+        zone = payload.get("zone")
 
-        # Fetch existing record
+        # Get zone_code from zone_code_mapp
+        zone_code = zone_code_mapping.get_zone_code(sap_id, zone) if zone else ""
+
         params = urdhva_base.queryparams.QueryParams()
         params.q = (
             f"sap_id='{sap_id}' "
             f"AND sap_tt_no='{sap_tt_no}' "
-            f"AND commissioning_status = 'SUCCESS'"
+            f"AND commissioning_status = 'SUCCESS' "
         )
         params.limit = 1
         params.fields = []
@@ -183,9 +194,9 @@ async def update_device_installation(
         rows = result.get("data", [])
         
         if not rows:
-                return {
-                    "status": False, "message": "validation Required and No data found"
-                }
+            return {
+                "status": False, "message": "validation Required and No data found"
+            }
 
         device_id = rows[0]["id"]
         
@@ -223,6 +234,10 @@ async def update_device_installation(
         for key, value in payload.items():
             if value is not None:
                 update_data[key] = value
+
+        # Add zone_code if available
+        if zone_code:
+            update_data["zone_code"] = zone_code
 
         # Update record
         await DeviceInstallation(**update_data).modify()
@@ -366,7 +381,6 @@ async def deviceinstallation_action_decommissioning(payload: dict):
 
             data_dict["reason_for_cancel"] = reason_for_cancel
             data_dict["status_decommissioning"] = "Request For Approval"
-            data_dict["status"]="Decommissioning Request"
 
             record = DeviceInstallationCreate(**data_dict)
             new_record = await record.create()
@@ -443,7 +457,7 @@ async def deviceinstallation_action_decommissioning(payload: dict):
                 await DeviceInstallation(**{
                     "id": device_id,
                     "de_commissioning_responses": status_messages,
-                    "status_decommissioning": "Failed"
+                    "status_decommissioning": "Approved"
                 }).modify()
 
                 return {

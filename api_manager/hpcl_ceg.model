@@ -3889,6 +3889,7 @@ Model DeviceInstallation{
     AOT_request_type optional str
     expiry_alert_created  index_field optional  bool
     tibco_expiry_date index_field optional  str
+    zone_code optional  str
 
     Action=> update_device_installation {
             sap_tt_no  str  
