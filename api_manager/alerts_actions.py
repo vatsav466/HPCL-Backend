@@ -496,6 +496,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
             "blocked_by": rpt["username"],
             "remarks": data.remarks,
             "blocked_date": start_date_utc,
+            "tt_type": "bulk",
             "blocking_status": "blocked",
             "blocking_flag": "Y",
             "transaction_number": transaction_number,
