@@ -77,11 +77,14 @@ async def sync_device_to_tank_truck_master():
                 END,
                 NULL,
                 CASE
-                    WHEN TRIM(VE.sap_id) ~ '^[0-9]+$'
-                    THEN VE.sap_id::BIGINT
-                END,
-                NULL,
-                'A',
+                     WHEN TRIM(VE.sap_id) ~ '^[0-9]+$'
+                     THEN VE.sap_id::BIGINT
+                 END,
+                 CASE
+                     WHEN TRIM(VE.zone_code) ~ '^[0-9]+$'
+                     THEN VE.zone_code::BIGINT
+                 END,
+                 'A',
                 'ALGF',
                 NULL,
                 TO_CHAR(NOW(), 'YYYY-MM-DD'),
@@ -94,8 +97,8 @@ async def sync_device_to_tank_truck_master():
                 NULL,
                 NULL
             FROM device_installation VE
-            WHERE VE.aot_status = 'PENDING'
-                        AND NOT EXISTS (
+            WHERE VE.aot_status = 'PENDING',VE.status='Approved'
+                AND NOT EXISTS (
                 SELECT 1
                 FROM tank_truck_master TM
                 WHERE TM.truck_number = VE.sap_tt_no
