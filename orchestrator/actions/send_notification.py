@@ -1154,9 +1154,9 @@ class SendNotification:
         alert_section = self.alert_data.get("alert_section","")
         if self.alert_data.get("alert_section","") in ["VTS"]:
             if self.alert_data['bu'] in ['LPG']:
-                if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer:
+                if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer and self.alert_data.get('tt_type','') in ['bulk']:
                     rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
-                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4'):
+                elif (self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4')) and self.alert_data.get('tt_type','') in ['bulk']:
                     rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 elif self.alert_data.get('tt_type','') in ['packed']:
                     rolemapping = role_configuration.lpg_packed_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
@@ -1197,9 +1197,9 @@ class SendNotification:
             interlock_name = self.alert_data.get("interlock_name","")
             alert_section = self.alert_data.get("alert_section","")
             if self.alert_data['bu'] in ['LPG']:
-                if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer:
+                if self.alert_data['sap_id'] in role_configuration.lpg_locations_with_one_officer and self.alert_data.get('tt_type','') in ['bulk']:
                     rolemapping = role_configuration.lpg_one_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
-                elif self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4'):
+                elif (self.alert_data['sap_id'] in role_configuration.lpg_locations_with_no_officer or self.alert_data['sap_id'].startswith('4')) and self.alert_data.get('tt_type','') in ['bulk']:
                     rolemapping = role_configuration.lpg_no_officer_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
                 elif self.alert_data.get('tt_type','') in ['packed']:
                     rolemapping = role_configuration.lpg_packed_unblocking_matrix[alert_section][self.alert_data.get("bu","")][self.params.get('va_level','level - 1')]
