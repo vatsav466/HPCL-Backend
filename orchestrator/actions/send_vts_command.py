@@ -36,7 +36,11 @@ class SendVtsCommand:
         if params.get("interrupt").lower() == 'block':         
             # Blocking in IMS blockingFlag="Y"
             blocking_status = None
-            if alert_data['bu'] in ['TAS']:
+            if (alert_data['bu'] in ['TAS'] and alert_data.get('tt_type','').lower() in ['bulk']) or (alert_data['bu'] in ['LPG'] and alert_data.get('tt_type','').lower() in ['packed']):
+
+                if alert_data.get('tt_type','').lower() in ['packed']:
+                    return True, {"blocked": False}
+                
                 payload = [{
                     "transactNo": str(alert_data['id']) + "1",
                     "truckRegNo": alert_data['vehicle_number'],
@@ -81,11 +85,8 @@ class SendVtsCommand:
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"blocked": False}
 
-            if alert_data['bu'] in ['LPG']:
+            if alert_data['bu'] in ['LPG'] and alert_data.get('tt_type','').lower() in ['bulk']:
 
-                if alert_data.get('tt_type','').lower() in ['packed']:
-                    return True, {"blocked": False}
-                
                 payload = {
                     "Request":{
                         "Request_ID": str(alert_data['id'])+"1",
@@ -105,7 +106,11 @@ class SendVtsCommand:
                     alert_data["action_type"] = "BlockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"blocked": False}
-                if blocking_status and blocking_status.get("Response", {}).get("Status") not in ['S']:
+                if (
+                    blocking_status 
+                    and blocking_status.get("Response", {}).get("Status") not in ['S']
+                    and blocking_status.get("Response", {}).get("Remark") not in ['Request already processed with the given Request ID']
+                ):
                     logger.error(f"Blocking Payload Not posted to SAP {alert_data}")
                     alert_message = (
                         f"{blocking_status.get("Response", {}).get("Remark")}"
@@ -128,7 +133,11 @@ class SendVtsCommand:
         if params.get("interrupt").lower() == 'unblock':
             # UnBlocking in IMS blockingFlag="N"
             unblocking_status = None
-            if alert_data['bu'] in ['TAS']:
+            if (alert_data['bu'] in ['TAS'] and alert_data.get('tt_type','').lower() in ['bulk']) or (alert_data['bu'] in ['LPG'] and alert_data.get('tt_type','').lower() in ['packed']):
+
+                if alert_data.get('tt_type','').lower() in ['packed']:
+                    return True, {"unblocked": False}
+                
                 payload = [{
                     "transactNo": str(alert_data['id']) + "0",
                     "truckRegNo": alert_data['vehicle_number'],
@@ -173,10 +182,7 @@ class SendVtsCommand:
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
 
-            if alert_data['bu'] in ['LPG']:
-
-                if alert_data.get('tt_type','').lower() in ['packed']:
-                    return True, {"unblocked": False}
+            if alert_data['bu'] in ['LPG'] and alert_data.get('tt_type','').lower() in ['bulk']:
                 
                 payload = {
                     "Request":{
@@ -197,7 +203,11 @@ class SendVtsCommand:
                     alert_data["action_type"] = "UnblockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
-                if unblocking_status and unblocking_status.get("Response", {}).get("Status") not in ['S']:
+                if (
+                    unblocking_status 
+                    and unblocking_status.get("Response", {}).get("Status") not in ['S']
+                    and unblocking_status.get("Response", {}).get("Remark") not in ['Request already processed with the given Request ID']
+                ):
                     logger.error(f"UnBlocking Payload Not posted to SAP {alert_data['unique_id']} {alert_data['id']}")
                     alert_message = (
                         f"{unblocking_status.get("Response", {}).get("Remark")}"
