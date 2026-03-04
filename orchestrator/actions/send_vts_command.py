@@ -105,7 +105,11 @@ class SendVtsCommand:
                     alert_data["action_type"] = "BlockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"blocked": False}
-                if blocking_status and blocking_status.get("Response", {}).get("Status") not in ['S']:
+                if (
+                    blocking_status 
+                    and blocking_status.get("Response", {}).get("Status") not in ['S']
+                    and blocking_status.get("Response", {}).get("Remark") not in ['Request already processed with the given Request ID']
+                ):
                     logger.error(f"Blocking Payload Not posted to SAP {alert_data}")
                     alert_message = (
                         f"{blocking_status.get("Response", {}).get("Remark")}"
@@ -197,7 +201,11 @@ class SendVtsCommand:
                     alert_data["action_type"] = "UnblockFailed"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
-                if unblocking_status and unblocking_status.get("Response", {}).get("Status") not in ['S']:
+                if (
+                    unblocking_status 
+                    and unblocking_status.get("Response", {}).get("Status") not in ['S']
+                    and unblocking_status.get("Response", {}).get("Remark") not in ['Request already processed with the given Request ID']
+                ):
                     logger.error(f"UnBlocking Payload Not posted to SAP {alert_data['unique_id']} {alert_data['id']}")
                     alert_message = (
                         f"{unblocking_status.get("Response", {}).get("Remark")}"
