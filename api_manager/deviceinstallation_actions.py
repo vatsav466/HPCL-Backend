@@ -379,6 +379,11 @@ async def deviceinstallation_action_decommissioning(payload: dict):
             data_dict = dict(row)
             data_dict.pop("id", None)
 
+            columns_to_clear = ["aot_request_type","aot_status","certificate","expiry_alert_created","contract_valid_upto","vehcile_installation_date"]
+            for column in columns_to_clear:
+                if column in data_dict:
+                    data_dict.pop(column)
+
             data_dict["reason_for_cancel"] = reason_for_cancel
             data_dict["status_decommissioning"] = "Request For Approval"
 
