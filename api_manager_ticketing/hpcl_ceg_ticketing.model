@@ -15,13 +15,12 @@ Enum Status str {
 }
 
 Enum State str {
-    ToDo='ToDo'
-    InProgress='InProgress'
-    Cancelled='Cancelled'
-    Resolved='Resolved'
-    OnHold='OnHold'
-    ReOpen='ReOpen'
-    OnCompleted='OnCompleted'
+    Open='Open'
+    EscalatedL1 ='Escalated L1'
+    EscalatedL2 ='Escalated L2'
+    UpdatedByInitiator='Updated By Initiator'
+    ReturnedByOcc='Returned By OCC'
+    ReviewedByOcc ='Reviewed By OCC'
 }
 
 Enum Severity str {
@@ -360,6 +359,12 @@ Model TicketUserMails {
     zone index_field str
     employee_name optional str
     email_id optional str
+
+    Action=> get_ticket_mails {
+        sap_id optional list str
+        zone str
+        category str
+    }
 
     Config=> {
         crud_operations='read'

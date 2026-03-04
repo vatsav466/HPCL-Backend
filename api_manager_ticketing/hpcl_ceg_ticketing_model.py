@@ -526,3 +526,13 @@ class TicketUserMailsGetResp(pydantic.BaseModel):
     data: typing.List[TicketUserMails]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class Ticketusermails_Get_Ticket_MailsParams(pydantic.BaseModel):
+    sap_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: str
+    category: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

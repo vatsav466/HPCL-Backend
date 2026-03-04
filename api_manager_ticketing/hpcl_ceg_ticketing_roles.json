@@ -219,6 +219,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_ticket_mails"
                 }
             ]
         },
@@ -234,6 +237,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_ticket_mails"
                 }
             ]
         },
@@ -258,6 +264,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_ticket_mails"
                 }
             ]
         }
@@ -421,6 +430,10 @@
         {
             "name": "vts_block_trucks",
             "displayName": "vts_block_trucks"
+        },
+        {
+            "name": "get_ticket_mails",
+            "displayName": "get_ticket_mails"
         }
     ]
 }

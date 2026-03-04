@@ -39,7 +39,7 @@ import api_manager
 import hpcl_ceg_model
 from dateutil import parser
 from datetime import datetime
-from hpcl_ceg_enum import AlertActionType
+# from hpcl_ceg_enum import AlertActionType
 from fastapi import UploadFile, File, Depends
 from orchestrator.alerting import alert_helper
 from fastapi import APIRouter, HTTPException
@@ -58,6 +58,18 @@ logger = logging.getLogger(__name__)
 
 
 
+
+BASE_TEMPLATE_PATH = "/Users/manohar/Documents/GitHub/dnc_backend_v2/orchestrator/notification_templates"
+
+TEMPLATE_MAP = {
+    "Open": "create_ticket.html",
+    "Escalated L1": "escalated_ticket.html",
+    "Escalated L2": "escalated_ticket.html",
+    "Updated By Initiator": "updated_ticket.html",
+    "Returned by OCC": "returned_ticket.html",
+    "Reviewed by OCC": "reviewed_ticket.html",
+}
+
 CATEGORY_FUNCTIONAL_MAP = {
     "Transportation Discipline": "Transportation & Bio-fuels",
     "VTS Live Tracking":         "Transportation & Bio-fuels",
@@ -66,115 +78,114 @@ CATEGORY_FUNCTIONAL_MAP = {
     "Asset Integrity":           "HSE, M&I and Projects",
 }
 
-TICKET_EMAIL_TEMPLATE = "/Users/manohar/Documents/GitHub/dnc_backend_v2/orchestrator/notification_templates/create_ticket.html"
 
+async def send_ticket_mail(ticket_data: dict) -> None:
 
-async def send_ticket_creation_mail(ticket_data: dict) -> None:
+    category_list = ticket_data.get("category") or []
+    sub_category_list = ticket_data.get("sub_category") or []
 
-    category_raw     = ticket_data.get("category") or []
-    sub_category_raw = ticket_data.get("sub_category") or []
-    
-    category     = category_raw[0]  if isinstance(category_raw, list)  else (category_raw or "")
-    sub_category = sub_category_raw[0] if isinstance(sub_category_raw, list) else (sub_category_raw or "")
+    category = category_list[0] if category_list else ""
+    sub_category = sub_category_list[0] if sub_category_list else ""
+
     functional_area = CATEGORY_FUNCTIONAL_MAP.get(category)
 
-    # sap_ids
-    sap_ids = ticket_data.get("sap_id", [])
+    ticket_state = ticket_data["ticket_state"]
+
+    template_file = TEMPLATE_MAP[ticket_state]
+    template_path = os.path.join(BASE_TEMPLATE_PATH, template_file)
+
+    sap_ids = ticket_data.get("sap_id") or []
     if not isinstance(sap_ids, list):
         sap_ids = [sap_ids]
-    sap_ids = [str(s) for s in sap_ids if s]
 
-    # location_name string
-    loc_names = ticket_data.get("location_name", [])
+    sap_ids = list(set(str(s) for s in sap_ids if s))   
+
+    loc_names = ticket_data.get("location_name") or []
     if not isinstance(loc_names, list):
         loc_names = [loc_names]
-    location_name_str = ", ".join([l for l in loc_names if l])
 
-    # response_days = ticket_end_date - start_date
+    loc_names = list(set(l for l in loc_names if l))
+    location_name_str = ", ".join(loc_names)   
+
     response_days = None
-    _end   = ticket_data.get("ticket_end_date")
-    _start = ticket_data.get("startdate") or ticket_data.get("start_date")
-    if _end and _start:
-        try:
-            _e = _end.date()   if hasattr(_end,   'date') else _end
-            _s = _start.date() if hasattr(_start, 'date') else _start
-            response_days = (_e - _s).days
-        except Exception:
-            response_days = None
+    start = ticket_data["start_date"]
+    end = ticket_data["ticket_end_date"]
 
-    # ── TO: Location In-Charge by sap_id ──────────────────────────────────
-    to_emails  = []
+    if start and end:
+        try:
+            response_days = (end.date() - start.date()).days
+        except Exception as e:
+            logger.warning(f"Error calculating response_days: {e}")
+
+    to_emails = set()
     zones_seen = set()
 
     if sap_ids:
-        sap_in = ",".join([f"'{s}'" for s in sap_ids])
-        p_loc  = urdhva_base.queryparams.QueryParams(
-            q=f"sap_id IN ({sap_in}) and level='Location'",
-            limit=0
-        )
-        p_loc.fields = ["email_id", "zone"]
-        loc_recs = ((await TicketUserMails.get_all(p_loc, resp_type="plain")) or {}).get("data", [])
+        sap_in = ",".join(f"'{s}'" for s in sap_ids)
 
-        print(f"[ticket_email] loc_recs={loc_recs}")
+        params = urdhva_base.queryparams.QueryParams(q=f"sap_id IN ({sap_in}) and level='Location'", limit=0)
+        params.fields = ["email_id", "zone"]
 
-        for rec in loc_recs:
+        records = ((await TicketUserMails.get_all(params, resp_type="plain")) or {}).get("data", [])
+
+        for rec in records:
             email = (rec.get("email_id") or "").strip()
-            if email and email not in to_emails:
-                to_emails.append(email)
-            z = (rec.get("zone") or "").strip()
-            if z:
-                zones_seen.add(z)
+            zone = (rec.get("zone") or "").strip()
+            if email:
+                to_emails.add(email)   
+            if zone:
+                zones_seen.add(zone)
 
-    print(f"[ticket_email] zones_seen={zones_seen} | functional_area={functional_area}")
-
-    # ── CC: Zonal Functional by role ───────────────────────────────────────
-    # role format in DB: "NCZ-Transportation & Bio-fuels"
-    # zones_seen will have e.g. {"NCZ"} from location record
-    cc_emails = []
+   
+    cc_emails = set()
 
     if functional_area and zones_seen:
-        # build exact role list from zones_seen + functional_area
-        roles    = [f"{z}-{functional_area}" for z in zones_seen]
-        roles_in = ",".join([f"'{r}'" for r in roles])
+        roles = [f"{z}-{functional_area}" for z in zones_seen]
+        roles_in = ",".join(f"'{r}'" for r in roles)
 
-        p_cc = urdhva_base.queryparams.QueryParams(
-            q=f"role IN ({roles_in})",
-            limit=0
-        )
-        p_cc.fields = ["email_id", "role"]
-        cc_recs = ((await TicketUserMails.get_all(p_cc, resp_type="plain")) or {}).get("data", [])
+        params = urdhva_base.queryparams.QueryParams(q=f"role IN ({roles_in})",limit=0)
+        params.fields = ["email_id"]
 
-        print(f"[ticket_email] cc_recs={cc_recs}")
+        records = ((await TicketUserMails.get_all(params, resp_type="plain")) or {}).get("data", [])
 
-        for rec in cc_recs:
+        for rec in records:
             email = (rec.get("email_id") or "").strip()
-            if email and email not in to_emails and email not in cc_emails:
-                cc_emails.append(email)
 
-    print(f"[ticket_email] TO={to_emails} | CC={cc_emails}")
+            if email and email not in to_emails:
+                cc_emails.add(email)
+
+   
+    to_emails = list(to_emails)
+    cc_emails = list(cc_emails)
 
     if not to_emails and not cc_emails:
-        print(f"[ticket_email] No recipients for {ticket_data.get('ticket_id')} — skipping")
+        print(f"No recipients for ticket {ticket_data.get('ticket_id')}")
         return
 
+    
     template_data = {
-        "ticket_id":     ticket_data.get("ticket_id", ""),
-        "location_name": location_name_str,
-        "category":      category,
-        "sub_category":  sub_category,
+        "ticket_id": ticket_data.get("ticket_id"),
+        "ticket_state": ticket_state,
+        "location_name": location_name_str,  
+        "category": category,
+        "sub_category": sub_category,
         "response_days": response_days,
     }
 
+    subject = f"[{ticket_state}] Ticket {ticket_data.get('ticket_id')} | {category} | {location_name_str}"
+
     notify_ins = notify_email.NotifyEMail()
+
     await notify_ins.publish_message(
-        recipients   = to_emails or cc_emails,
-        cc_recipients  = cc_emails if to_emails else [],
-        subject      = f"Open Ticket {ticket_data.get('ticket_id')} | {category} | {location_name_str}",
-        body         = alert_manager.read_template(TICKET_EMAIL_TEMPLATE, data=template_data),
-        html_content = True,
-        force_send   = True,
+        recipients=to_emails or cc_emails,
+        cc_recipients=cc_emails if to_emails else [],
+        subject=subject,
+        body=alert_manager.read_template(template_path, data=template_data),
+        html_content=True,
+        force_send=False,
     )
-    print(f"[ticket_email] Sent {ticket_data.get('ticket_id')} | TO={to_emails} | CC={cc_emails}")
+
+    print(f"Mail Sent | State={ticket_state} | TO={to_emails} | CC={cc_emails}")
 
 
 
@@ -229,12 +240,10 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
 
     if not tdata.get("subtask_id"):
             tdata["subtask_id"] = []
-            
 
     # Build the alert query
     sap_values = ",".join([f"'{x}'" for x in tdata.get("sap_id", [])])
     loc_values = ",".join([f"'{x}'" for x in tdata.get("location_name", [])])
-
     query = (
         f"bu='{tdata['bu']}' "
         f"and alert_section='{tdata['alert_section']}' "
@@ -463,8 +472,10 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     ticket_data['parent_id'] = tdata.get('parent_id')
 
         
-    action_type_str = TicketType[ticket_state_str].value
-    action_type = AlertActionType(action_type_str)
+    # action_type_str = TicketType[ticket_state_str].value
+
+    action_type_str = ticket_state_str
+    # action_type = AlertActionType(action_type_str)
 
 
     # Append first history entry
@@ -483,10 +494,10 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     print("ticket_data",ticket_data)
     ticket_resp = await TicketingCreate(**ticket_data).create()
     try:
-        await send_ticket_creation_mail(ticket_data)
+        await send_ticket_mail(ticket_data)
     except Exception as e:
-        print(f"Error sending ticket creation mail for {ticket_data['ticket_id']}: {e}")
-        print(traceback.format_exc())
+        logger.warning(f"Error sending ticket mail for {ticket_data['ticket_id']}: {e}")
+        logger.warning(traceback.format_exc())
 
     params = urdhva_base.queryparams.QueryParams()
     params.q = f"ticket_id='{ticket_data['ticket_id']}'"
@@ -536,8 +547,9 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         for lr in linked_res:
             if lr.get("interlock_name") in selected_types:
                 alert_hist = lr.get("alert_history") or []
-                action_type_str = TicketType[ticket_state_str].value  
-                action_type = AlertActionType(action_type_str)
+                #action_type_str = TicketType[ticket_state_str].value
+                action_type = ticket_state_str  
+                # action_type = AlertActionType(action_type_str)
 
                 processed_time = datetime.now()
 
@@ -792,9 +804,10 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         ticket_state = data_dict.get("ticket_state", existing_ticket.get("ticket_state"))
         if ticket_state not in TicketType.__members__:
             raise Exception(f"Invalid ticket_state: {ticket_state}")
-
-        action_type_str = TicketType[ticket_state].value
-        action_type_enum = AlertActionType(action_type_str).value
+        
+        action_type_str = ticket_state
+        # action_type_str = TicketType[ticket_state].value
+        # action_type_enum = AlertActionType(action_type_str).value
 
         rpt = urdhva_base.context.context.get('rpt', None)
         employee_id = rpt.get('employee_id') if rpt else None

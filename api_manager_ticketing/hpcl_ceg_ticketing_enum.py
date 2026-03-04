@@ -30,13 +30,12 @@ class Status(str, enum.Enum):
 
 
 class State(str, enum.Enum):
-    ToDo = 'ToDo'
-    InProgress = 'InProgress'
-    Cancelled = 'Cancelled'
-    Resolved = 'Resolved'
-    OnHold = 'OnHold'
-    ReOpen = 'ReOpen'
-    OnCompleted = 'OnCompleted'
+    Open = 'Open'
+    EscalatedL1 = 'Escalated L1'
+    EscalatedL2 = 'Escalated L2'
+    UpdatedByInitiator = 'Updated By Initiator'
+    ReturnedByOcc = 'Returned By OCC'
+    ReviewedByOcc = 'Reviewed By OCC'
 
 
 
