@@ -6910,7 +6910,7 @@ class TagsDataSchema(UrdhvaPostgresBase):
     equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     mf_count: Mapped[typing.Optional[str]] = mapped_column("mf_count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(sap_id, name, device_type, count, zone, system, name="tags_data_sap_id_name_device_type_count_zone_system"),)
+    __table_args__ = (UniqueConstraint(sap_id, name, device_type, zone, system, name="tags_data_sap_id_name_device_type_zone_system"),)
 
 
 class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -6931,7 +6931,7 @@ class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TagsDataSchema
-        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'zone', 'system']
+        upsert_keys = ['sap_id', 'name', 'device_type', 'zone', 'system']
         search_fields = ['sap_id', 'name', 'device_type', 'zone', 'system']
 
 
@@ -6953,7 +6953,7 @@ class TagsData(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TagsDataSchema
-        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'zone', 'system']
+        upsert_keys = ['sap_id', 'name', 'device_type', 'zone', 'system']
         search_fields = ['sap_id', 'name', 'device_type', 'zone', 'system']
 
 
@@ -7058,7 +7058,7 @@ class ArchitectureDataSchema(UrdhvaPostgresBase):
     equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     total_tank_count: Mapped[typing.Optional[int]] = mapped_column("total_tank_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(sap_id, name, device_type, count, total_tank_count, name="architecture_data_sapid_name_devic_count_total"),)
+    __table_args__ = (UniqueConstraint(sap_id, name, device_type, total_tank_count, name="architecture_data_sap_id_name_device_type_total_tank_count"),)
 
 
 class ArchitectureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -7078,7 +7078,7 @@ class ArchitectureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = ArchitectureDataSchema
-        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'total_tank_count']
+        upsert_keys = ['sap_id', 'name', 'device_type', 'total_tank_count']
 
 
 class ArchitectureData(urdhva_base.postgresmodel.PostgresModel):
@@ -7098,7 +7098,7 @@ class ArchitectureData(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = ArchitectureDataSchema
-        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'total_tank_count']
+        upsert_keys = ['sap_id', 'name', 'device_type', 'total_tank_count']
 
 
 class ArchitectureDataGetResp(pydantic.BaseModel):
