@@ -36,7 +36,11 @@ class SendVtsCommand:
         if params.get("interrupt").lower() == 'block':         
             # Blocking in IMS blockingFlag="Y"
             blocking_status = None
-            if alert_data['bu'] in ['TAS']:
+            if (alert_data['bu'] in ['TAS'] and alert_data.get('tt_type','').lower() in ['bulk']) or (alert_data['bu'] in ['LPG'] and alert_data.get('tt_type','').lower() in ['packed']):
+
+                if alert_data.get('tt_type','').lower() in ['packed']:
+                    return True, {"blocked": False}
+                
                 payload = [{
                     "transactNo": str(alert_data['id']) + "1",
                     "truckRegNo": alert_data['vehicle_number'],
@@ -81,11 +85,8 @@ class SendVtsCommand:
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"blocked": False}
 
-            if alert_data['bu'] in ['LPG']:
+            if alert_data['bu'] in ['LPG'] and alert_data.get('tt_type','').lower() in ['bulk']:
 
-                if alert_data.get('tt_type','').lower() in ['packed']:
-                    return True, {"blocked": False}
-                
                 payload = {
                     "Request":{
                         "Request_ID": str(alert_data['id'])+"1",
@@ -132,7 +133,11 @@ class SendVtsCommand:
         if params.get("interrupt").lower() == 'unblock':
             # UnBlocking in IMS blockingFlag="N"
             unblocking_status = None
-            if alert_data['bu'] in ['TAS']:
+            if (alert_data['bu'] in ['TAS'] and alert_data.get('tt_type','').lower() in ['bulk']) or (alert_data['bu'] in ['LPG'] and alert_data.get('tt_type','').lower() in ['packed']):
+
+                if alert_data.get('tt_type','').lower() in ['packed']:
+                    return True, {"unblocked": False}
+                
                 payload = [{
                     "transactNo": str(alert_data['id']) + "0",
                     "truckRegNo": alert_data['vehicle_number'],
@@ -177,10 +182,7 @@ class SendVtsCommand:
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     return True, {"unblocked": False}
 
-            if alert_data['bu'] in ['LPG']:
-
-                if alert_data.get('tt_type','').lower() in ['packed']:
-                    return True, {"unblocked": False}
+            if alert_data['bu'] in ['LPG'] and alert_data.get('tt_type','').lower() in ['bulk']:
                 
                 payload = {
                     "Request":{
