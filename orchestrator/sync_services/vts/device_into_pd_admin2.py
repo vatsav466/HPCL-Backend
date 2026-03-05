@@ -71,10 +71,9 @@ async def sync_device_to_tank_truck_master():
                 END,
                 VE.vehicle_installation_date,
                 NULL,
-                CASE
-                    WHEN VE.vehicle_installation_date ~ '^\d{4}-\d{2}-\d{2}$'
-                    THEN TO_CHAR(VE.vehicle_installation_date::DATE, 'YYYYDDD')::BIGINT
-                END,
+                ((1 * 100000) +
+                ((EXTRACT(YEAR FROM VE.vehicle_installation_date::DATE)::INT % 100) * 1000) +
+                TO_CHAR(VE.vehicle_installation_date::DATE,'DDD')::INT)::BIGINT,
                 NULL,
                 CASE
                      WHEN TRIM(VE.sap_id) ~ '^[0-9]+$'
@@ -89,7 +88,9 @@ async def sync_device_to_tank_truck_master():
                 NULL,
                 TO_CHAR(NOW(), 'YYYY-MM-DD'),
                 TO_CHAR(NOW(), 'HH24:MI:SS'),
-                TO_CHAR(NOW(), 'YYYYDDD')::BIGINT,
+                ((1 * 100000) +
+                ((EXTRACT(YEAR FROM NOW())::INT % 100) * 1000) +
+                TO_CHAR(NOW(),'DDD')::INT)::BIGINT,
                 NULL,
                 'N',
                 NULL,
