@@ -17,6 +17,31 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await Ticketing.get_all(params, skip_secrets=True)
 
 
+@router.post('/ticketcomment', response_model=TicketComment, tags=['TicketComment'])
+async def create(inputObj: TicketCommentCreate):
+    return await inputObj.create()
+
+
+@router.put('/ticketcomment', response_model=TicketComment, tags=['TicketComment'])
+async def update(inputObj: TicketComment):
+    return await inputObj.modify()
+
+
+@router.get('/ticketcomment/{id}', response_model=TicketComment, tags=['TicketComment'])
+async def get(id: str):
+    return await TicketComment.get(id, skip_secrets=True)
+
+
+@router.get('/ticketcomment', response_model=TicketCommentGetResp, tags=['TicketComment'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TicketComment.get_all(params, skip_secrets=True)
+
+
+@router.delete('/ticketcomment/{id}', tags=['TicketComment'])
+async def delete(id: str):
+    return await TicketComment.delete(id)
+
+
 @router.get('/ticketusermails/{id}', response_model=TicketUserMails, tags=['TicketUserMails'])
 async def get(id: str):
     return await TicketUserMails.get(id, skip_secrets=True)

@@ -87,13 +87,11 @@ Model Merge_History internal {
 
 
 Enum TicketType str{
-    ToDo = 'TicketRaised'
-    InProgress = 'TicketInProgress'
-    Cancelled = 'TicketCancelled'
-    Resolved = 'TicketResolved'
-    OnHold = 'TicketOnHold'
-    ReOpen = 'TicketReOpen'
-    OnCompleted = 'TicketOnCompleted'
+    Open = 'TicketRaised'
+    Escalated ='TicketEscalated'
+    UpdatedByInitiator='TicketOnCompleted'
+    ReturnedByOcc='TicketReOpen'
+    ReviewedByOcc ='TicketResolved'
 
 }
 
@@ -159,6 +157,7 @@ Model Ticketing {
     auto_ticket_close optional str
     assignee_name optional list str
     assignee_mail optional list str
+    escalation_level optional str
 
 
     Action=> get_ticket {
@@ -197,6 +196,8 @@ Model Ticketing {
         auto_ticket_close optional str  //Configure whether a ticket should be automatically closed when the alert is closed, or remain open irrespective of the alert status.
         assignee_name optional list str
         assignee_mail optional list str
+        reporter optional str
+        escalation_level optional str
 
 
     }
@@ -236,6 +237,8 @@ Model Ticketing {
         auto_ticket_close optional str  //Configure whether a ticket should be automatically closed when the alert is closed, or remain open irrespective of the alert status.
         assignee_name optional list str
         assignee_mail optional list str
+        reporter optional str
+        escalation_level optional str
 
        
     }
@@ -344,9 +347,48 @@ Model Ticketing {
 
     }
 
+    Action=> process_escalations {
+    }
+
 
     Config=> {
         crud_operations='read'
+    }
+}
+
+
+Model TicketComment {
+    ticket_id index_field str
+    created_by index_field str
+    content str
+    documents optional list str
+    update_history optional list str
+
+    Action=> add_comment_to_ticket {
+        ticket_id str
+        content str
+        documents optional list str
+    }
+
+    Action=> edit_comment {
+        ticket_id str
+        content str
+        comment_id str
+        documents optional list str
+
+    }
+
+    Action=> delete_comment {
+        ticket_id str
+        comment_id str
+
+    }
+
+    Action=> attach_file_to_comment {
+        ticket_id str
+        comment_id str
+        file_path optional str
+
     }
 }
 
