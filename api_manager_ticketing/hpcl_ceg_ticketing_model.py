@@ -475,7 +475,7 @@ class Ticketing_Vts_Block_TrucksParams(pydantic.BaseModel):
 class TicketUserMailsSchema(UrdhvaPostgresBase):
     __tablename__ = 'ticket_user_mails'
     
-    level: Mapped[str] = mapped_column("level", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    level: Mapped[typing.Optional[str]] = mapped_column("level", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     role: Mapped[str] = mapped_column("role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=True, nullable=True, default="", primary_key=False, unique=False)
@@ -487,7 +487,7 @@ class TicketUserMailsSchema(UrdhvaPostgresBase):
 class TicketUserMailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'ticket_user_mails'
     
-    level: str
+    level: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     role: str
     location_name: typing.Optional[str] = pydantic.Field("", **{})
@@ -506,7 +506,7 @@ class TicketUserMailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 class TicketUserMails(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'ticket_user_mails'
     
-    level: typing.Optional[str] | None = None
+    level: typing.Optional[str] = pydantic.Field("", **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     role: typing.Optional[str] | None = None
     location_name: typing.Optional[str] = pydantic.Field("", **{})

@@ -31,8 +31,7 @@ class Status(str, enum.Enum):
 
 class State(str, enum.Enum):
     Open = 'Open'
-    EscalatedL1 = 'Escalated L1'
-    EscalatedL2 = 'Escalated L2'
+    Escalated = 'Escalated'
     UpdatedByInitiator = 'Updated By Initiator'
     ReturnedByOcc = 'Returned By OCC'
     ReviewedByOcc = 'Reviewed By OCC'

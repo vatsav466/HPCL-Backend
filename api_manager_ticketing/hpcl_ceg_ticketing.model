@@ -16,8 +16,7 @@ Enum Status str {
 
 Enum State str {
     Open='Open'
-    EscalatedL1 ='Escalated L1'
-    EscalatedL2 ='Escalated L2'
+    Escalated ='Escalated'
     UpdatedByInitiator='Updated By Initiator'
     ReturnedByOcc='Returned By OCC'
     ReviewedByOcc ='Reviewed By OCC'
@@ -352,7 +351,7 @@ Model Ticketing {
 }
 
 Model TicketUserMails {
-    level str
+    level optional str
     sap_id index_field optional str
     role index_field str
     location_name index_field optional str
