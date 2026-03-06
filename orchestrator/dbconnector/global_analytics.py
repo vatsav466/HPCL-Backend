@@ -6449,6 +6449,7 @@ class GlobalAnalytics:
                         zone,
                         location_name,
                         sap_id,
+                        load_number,
                         bcu_number,
                         SUM(required_qty) AS total_required_qty,
                         SUM(loaded_qty) AS total_loaded_qty
@@ -6472,7 +6473,7 @@ class GlobalAnalytics:
             # Complete the query with proper GROUP BY
             query += """
                     GROUP BY 
-                        DATE(created_at), zone, location_name, sap_id, bcu_number
+                        DATE(created_at), zone, location_name, sap_id, bcu_number, load_number
                 )
                 SELECT 
                     h.created_date,
@@ -6480,6 +6481,7 @@ class GlobalAnalytics:
                     h.location_name,
                     h.sap_id,
                     h.bcu_number,
+                    h.load_number,
                     (SELECT COUNT(*) 
                     FROM alerts a 
                     WHERE a.device_name = h.bcu_number 
@@ -6520,7 +6522,7 @@ class GlobalAnalytics:
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number", "load_number"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity"),
@@ -6534,6 +6536,7 @@ class GlobalAnalytics:
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
+                        "load_number": row["load_number"],
                         "bcu_number": row["bcu_number"],
                         "total_alerts": row["total_alerts"],
                         "total_required_qty": row["total_required_quantity"],
@@ -6549,7 +6552,7 @@ class GlobalAnalytics:
                     pl.col("created_date").dt.truncate("1mo").alias("month_sort")
                 ])
 
-                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "bcu_number", "load_number"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity"),
@@ -6565,6 +6568,7 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "bcu_number": row["bcu_number"],
+                        "load_number": row["load_number"],
                         "total_alerts": row["total_alerts"],
                         "total_required_qty": row["total_required_quantity"],
                         "total_loaded_qty": row["total_loaded_quantity"]
