@@ -4186,6 +4186,11 @@ class VTSAnalyticsActions:
     async def adding_device(filters, cross_filters, drill_state, payload):
         try:
             # Constants
+            rpt = urdhva_base.context.context.get('rpt', {})
+            sap_id = rpt.get("sap_id")
+            print(f'sap_id: {sap_id}')
+            sap_id = sap_id[0] 
+            
             BLOCKED_CODES = {"0000010001", "00"}
             COLUMN_MAPPING = {
                 "TRUCK_REGNNO": "SAP TT No.",
@@ -4202,7 +4207,7 @@ class VTSAnalyticsActions:
             truck_query = f"""
                 SELECT TRUCK_REGNNO, LOCN_CODE, TRANS_ID
                 FROM "IMS_SAP"."TRUCK_DETAILS"
-                WHERE TRUCK_REGNNO = '{safe_val}'
+                WHERE TRUCK_REGNNO = '{safe_val}' and LOCN_CODE = '{sap_id}'
             """
 
             charts_ins = dashboard_studio_model.Charts_Connection_Vault_RoutingParams(
