@@ -10619,7 +10619,7 @@ class DeviceInstallationCreate(urdhva_base.postgresmodel.BasePostgresModel):
         schema_class = DeviceInstallationSchema
         upsert_keys = []
         search_fields = ['sap_tt_no', 'sap_id', 'location', 'status', 'status_decommissioning', 'AOT_status']
-        access_key_mapping = ['sap_tt_no']
+        access_key_mapping = ['select_business:bu', 'sap_id']
 
 
 class DeviceInstallation(urdhva_base.postgresmodel.PostgresModel):
@@ -10663,7 +10663,7 @@ class DeviceInstallation(urdhva_base.postgresmodel.PostgresModel):
         schema_class = DeviceInstallationSchema
         upsert_keys = []
         search_fields = ['sap_tt_no', 'sap_id', 'location', 'status', 'status_decommissioning', 'AOT_status']
-        access_key_mapping = ['sap_tt_no']
+        access_key_mapping = ['select_business:bu', 'sap_id']
 
 
 class DeviceInstallationGetResp(pydantic.BaseModel):
