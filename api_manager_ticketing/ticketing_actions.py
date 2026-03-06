@@ -945,8 +945,8 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             "Open": "Open",
             "Escalated": "Escalated",
             "Updated By Initiator": "UpdatedByInitiator",
-            "Returned By OCC": "ReturnedByOcc",
-            "Reviewed By OCC": "ReviewedByOcc"
+            "Returned By Occ": "ReturnedByOcc",
+            "Reviewed By Occ": "ReviewedByOcc"
         }
 
         ticket_state = data_dict.get("ticket_state", existing_ticket.get("ticket_state"))
@@ -973,18 +973,19 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         else:
             # Case 1: Auto close ON and alerts closed
             if all_alerts_closed and auto_close_flag:
-                final_state = "ReviewedByOcc"
+                final_state = "Reviewed By Occ"
                 action_msg = "All linked alerts are closed, ticket auto resolved"
                 action_type_val = "TicketResolved"
 
+
             # Case 2: Auto close turned OFF but no state sent from UI
-            elif not auto_close_flag and existing_ticket.get("ticket_state") == "ReviewedByOcc":
+            elif not auto_close_flag and existing_ticket.get("ticket_state") == "Reviewed By Occ":
                 
                 # Find last non-resolved state from history
                 previous_state = None
                 for entry in reversed(existing_history):
                     msg = entry.get("action_msg", "")
-                    if "state changed to" in msg and "ReviewedByOcc" not in msg:
+                    if "state changed to" in msg and "Reviewed By Occ" not in msg:
                         previous_state = msg.split("state changed to")[-1].strip()
                         break
 
@@ -1000,9 +1001,11 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
 
         # APPLY FINAL STATE
         data_dict["ticket_state"] = final_state
+        print("final_state: ",final_state)
 
-        if final_state in ["ReviewedByOcc", "Cancelled"]:
+        if final_state in ["Reviewed By Occ", "Cancelled"]:
             data_dict["ticket_status"] = Status.Close.value
+            print("ticket_status set to Close",data_dict["ticket_status"])
         else:
             data_dict["ticket_status"] = Status.Open.value
         

@@ -33,8 +33,8 @@ class State(str, enum.Enum):
     Open = 'Open'
     Escalated = 'Escalated'
     UpdatedByInitiator = 'Updated By Initiator'
-    ReturnedByOcc = 'Returned By OCC'
-    ReviewedByOcc = 'Reviewed By OCC'
+    ReturnedByOcc = 'Returned By Occ'
+    ReviewedByOcc = 'Reviewed By Occ'
 
 
 
