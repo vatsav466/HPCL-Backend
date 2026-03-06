@@ -383,7 +383,18 @@ async def top_repeat_alerts(data):
                 SELECT
                     unique_id, alert_status, severity, interlock_name, location_name, device_name,
                     TO_CHAR(created_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS created_at,
-                    FLOOR(EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400) AS ageing_days
+                    TO_CHAR(updated_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS updated_at,
+                    FLOOR(
+                        EXTRACT(
+                            EPOCH FROM (
+                                CASE
+                                    WHEN alert_status = 'Close' 
+                                    THEN updated_at - created_at
+                                    ELSE NOW() - created_at
+                                END
+                            )
+                        ) / 86400
+                    ) AS ageing_days
                 FROM Alerts
                 WHERE {where_clause}
                 ORDER BY ageing_days DESC;
@@ -394,16 +405,27 @@ async def top_repeat_alerts(data):
             # Query for ageing analysis
             ageing_query = f"""
                 WITH ageing_data AS (
-                    SELECT
-                        FLOOR(EXTRACT(EPOCH FROM (NOW() - created_at)) / 86400) AS ageing_days,
-                        location_name
-                    FROM Alerts
+                SELECT
+                    FLOOR(
+                        EXTRACT(
+                            EPOCH FROM (
+                                CASE
+                                    WHEN alert_status = 'Close' 
+                                    THEN updated_at - created_at
+                                    ELSE NOW() - created_at
+                                END
+                            )
+                        ) / 86400
+                    ) AS ageing_days,
+                    location_name
+                FROM Alerts
                     WHERE {where_clause}
                 ),
                 bucketed_data AS (
                     SELECT
                         location_name,
                         CASE
+                            WHEN ageing_days = 0 THEN '0 Day'
                             WHEN ageing_days = 1 THEN '1 Day'
                             WHEN ageing_days = 2 THEN '2 Days'
                             WHEN ageing_days = 3 THEN '3 Days'
@@ -413,7 +435,7 @@ async def top_repeat_alerts(data):
                             WHEN ageing_days BETWEEN 11 AND 15 THEN '11-15 Days'
                             WHEN ageing_days BETWEEN 16 AND 30 THEN '16-30 Days'
                             WHEN ageing_days BETWEEN 31 AND 60 THEN '31-60 Days'
-                            ELSE '60+ Days'
+                            WHEN ageing_days > 60 THEN '60+ Days'
                         END AS ageing_bucket
                     FROM ageing_data
                 )
