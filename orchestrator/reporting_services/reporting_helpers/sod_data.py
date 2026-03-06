@@ -1100,10 +1100,9 @@ async def get_parameters_summary():
     query = f"""SELECT
                     'SOD' AS "SBU",
 
-                    COUNT(CASE
-                        WHEN interlock_name = 'SickTT Reported'
-                        THEN 1
-                    END) AS "Sick TT",
+                    (SELECT COUNT(DISTINCT (load_number, truck_number))
+                    FROM host_sick_tts WHERE {date_filter}
+                    ) AS "Sick TT",
 
                     COUNT(CASE
                         WHEN interlock_name = 'BCU Local Loading'
@@ -1123,7 +1122,6 @@ async def get_parameters_summary():
                 FROM alerts
                 WHERE 
                 interlock_name IN (
-                'SickTT Reported',
                 'BCU Local Loading',
                 'K Factor Change_BCU',
                 'MFM K Factor Change'
@@ -1163,6 +1161,11 @@ async def get_parameters_summary():
         f"AND a.created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     )
 
+    hst_date_filter = (
+        f"hst.created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND hst.created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
     if valid_trucks_df.is_empty():
         valid_trucks_pd = pd.DataFrame(
             columns=["Location Name", "overall_valid_truck_count"]
@@ -1177,10 +1180,9 @@ async def get_parameters_summary():
     tas_parameters_query = f"""SELECT
                                     lm.name AS "Location Name",
 
-                                    COUNT(CASE
-                                        WHEN a.interlock_name = 'SickTT Reported'
-                                        THEN 1
-                                    END) AS "Sick TT",
+                                    COUNT(DISTINCT (hst.load_number, hst.truck_number)) FILTER (
+                                    WHERE {hst_date_filter}
+                                    )  AS "Sick TT",
 
                                     COUNT(CASE
                                         WHEN a.interlock_name = 'BCU Local Loading'
@@ -1201,12 +1203,15 @@ async def get_parameters_summary():
                                 LEFT JOIN alerts a
                                     ON a.sap_id = lm.sap_id
                                     AND a.interlock_name IN (
-                                        'SickTT Reported',
                                         'BCU Local Loading',
                                         'K Factor Change_BCU',
                                         'MFM K Factor Change'
                                     )
                                     AND {date_filter}
+                                
+                                LEFT JOIN host_sick_tts hst
+                                    ON hst.sap_id = lm.sap_id
+                                    AND {hst_date_filter}
 
                                 WHERE lm.location_onboard = TRUE
 
@@ -1214,7 +1219,7 @@ async def get_parameters_summary():
 
                                 ORDER BY
                                     (
-                                        COUNT(CASE WHEN a.interlock_name = 'SickTT Reported' THEN 1 END) +
+                                        COUNT(DISTINCT (hst.load_number, hst.truck_number)) +
                                         COUNT(CASE WHEN a.interlock_name = 'BCU Local Loading' THEN 1 END) +
                                         COUNT(CASE WHEN a.interlock_name = 'K Factor Change_BCU' THEN 1 END) +
                                         COUNT(CASE WHEN a.interlock_name = 'MFM K Factor Change' THEN 1 END)
