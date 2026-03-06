@@ -1084,7 +1084,7 @@ async def fetch_access_token():
     for attempt in range(1, max_retries + 1):
         try:
             logger.info(f"Fetching token… Attempt {attempt}/{max_retries}")
-            response = requests.post(urdhva_base.settings.lpg_vts_auth_url, headers=headers, data=data, timeout=10, verify=False)
+            response = requests.post(urdhva_base.settings.lpg_vts_auth_url, headers=headers, data=data, timeout=30, verify=False)
             response.raise_for_status()
             token_data = response.json()
             token = token_data.get("access_token")
@@ -1120,7 +1120,7 @@ async def post_lpg_tt(payload):
         try:
             logger.info(f"Attempt {attempt} to publish LPG TT...")
             response = requests.post(urdhva_base.settings.lpg_publish_url, headers=headers, data=json.dumps(payload),
-                                     timeout=15, verify=False)
+                                     timeout=30, verify=False)
             response.raise_for_status()
             post_sap_response = {
                 "request_id": str(response.json().get("Response", {}).get("Request_ID")),
