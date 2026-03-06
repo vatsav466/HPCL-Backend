@@ -13,8 +13,8 @@
 <body>
 <div class="wrapper">
   <div class="main-message">
-    OCC has reviewed ticket (<strong>{{ ticket_id }}</strong>) pertaining to location 
-    (<strong>{{ location_name }}</strong>) for
+    OCC has reviewed ticket (<strong>{{ ticket_id }}</strong>) pertaining to {{ "location" if location_name else "zone" }}
+    (<strong>{{ location_name or zone_name }}</strong>) for
     <strong>"{{ category }}"</strong> — <strong>"{{ sub_category }}"</strong>. Ticket is closed.
 
   </div>

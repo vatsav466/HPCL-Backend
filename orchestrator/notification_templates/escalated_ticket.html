@@ -14,7 +14,8 @@
 <div class="wrapper">
   <div class="main-message">
     An unattended ticket (<strong>{{ ticket_id }}</strong>) has been escalated by OCC team 
-    pertaining to location  (<strong>{{ location_name }}</strong>) for 
+    pertaining to {{ "location" if location_name else "zone" }}
+    (<strong>{{ location_name or zone_name }}</strong>) for 
     <strong>"{{ category }}"</strong> — <strong>"{{ sub_category }}"</strong>.
     Attend the same on priority. After doing necessary detailed investigation, 
     update your analysis  &amp; response within <strong>{{ response_days }} Day(s)</strong> 

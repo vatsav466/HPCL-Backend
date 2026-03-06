@@ -274,11 +274,13 @@ async def send_ticket_mail(ticket_data: dict) -> None:
             response_days = (end.date() - start.date()).days
         except Exception as exc:
             print(f"response_days calc failed: {exc}")
-
+    
+    zone_name_str = next(iter(zones_seen)) if zones_seen else ""
     template_data = {
         "ticket_id":        ticket_data.get("ticket_id"),
         "ticket_state":     ticket_state,
         "location_name":    location_name_str,
+        "zone_name": zone_name_str,
         "category":         category,
         "sub_category":     sub_category,
         "response_days":    response_days,
