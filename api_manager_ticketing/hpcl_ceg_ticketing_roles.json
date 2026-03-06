@@ -87,6 +87,9 @@
                 },
                 {
                     "name": "vts_block_trucks"
+                },
+                {
+                    "name": "process_escalations"
                 }
             ]
         },
@@ -195,6 +198,168 @@
                 },
                 {
                     "name": "vts_block_trucks"
+                },
+                {
+                    "name": "process_escalations"
+                }
+            ]
+        },
+        {
+            "name": "ticketcomment",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TicketComment",
+            "attributes": {},
+            "uris": [
+                "/api/ticketcomment/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "add_comment_to_ticket"
+                },
+                {
+                    "name": "edit_comment"
+                },
+                {
+                    "name": "delete_comment"
+                },
+                {
+                    "name": "attach_file_to_comment"
+                }
+            ]
+        },
+        {
+            "name": "ticketcomment_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TicketComment_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/ticketcomment/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "ticketcomment_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TicketComment_admin",
+            "attributes": {},
+            "uris": [
+                "/api/ticketcomment/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "add_comment_to_ticket"
+                },
+                {
+                    "name": "edit_comment"
+                },
+                {
+                    "name": "delete_comment"
+                },
+                {
+                    "name": "attach_file_to_comment"
+                }
+            ]
+        },
+        {
+            "name": "ticketusermails",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TicketUserMails",
+            "attributes": {},
+            "uris": [
+                "/api/ticketusermails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_ticket_mails"
+                }
+            ]
+        },
+        {
+            "name": "ticketusermails_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TicketUserMails_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/ticketusermails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_ticket_mails"
+                }
+            ]
+        },
+        {
+            "name": "ticketusermails_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TicketUserMails_admin",
+            "attributes": {},
+            "uris": [
+                "/api/ticketusermails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_ticket_mails"
                 }
             ]
         }
@@ -358,6 +523,30 @@
         {
             "name": "vts_block_trucks",
             "displayName": "vts_block_trucks"
+        },
+        {
+            "name": "process_escalations",
+            "displayName": "process_escalations"
+        },
+        {
+            "name": "add_comment_to_ticket",
+            "displayName": "add_comment_to_ticket"
+        },
+        {
+            "name": "edit_comment",
+            "displayName": "edit_comment"
+        },
+        {
+            "name": "delete_comment",
+            "displayName": "delete_comment"
+        },
+        {
+            "name": "attach_file_to_comment",
+            "displayName": "attach_file_to_comment"
+        },
+        {
+            "name": "get_ticket_mails",
+            "displayName": "get_ticket_mails"
         }
     ]
 }

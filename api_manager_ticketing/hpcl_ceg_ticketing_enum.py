@@ -30,13 +30,11 @@ class Status(str, enum.Enum):
 
 
 class State(str, enum.Enum):
-    ToDo = 'ToDo'
-    InProgress = 'InProgress'
-    Cancelled = 'Cancelled'
-    Resolved = 'Resolved'
-    OnHold = 'OnHold'
-    ReOpen = 'ReOpen'
-    OnCompleted = 'OnCompleted'
+    Open = 'Open'
+    Escalated = 'Escalated'
+    UpdatedByInitiator = 'Updated By Initiator'
+    ReturnedByOcc = 'Returned By Occ'
+    ReviewedByOcc = 'Reviewed By Occ'
 
 
 
@@ -109,13 +107,11 @@ class Assignee(str, enum.Enum):
 
 
 class TicketType(str, enum.Enum):
-    ToDo = 'TicketRaised'
-    InProgress = 'TicketInProgress'
-    Cancelled = 'TicketCancelled'
-    Resolved = 'TicketResolved'
-    OnHold = 'TicketOnHold'
-    ReOpen = 'TicketReOpen'
-    OnCompleted = 'TicketOnCompleted'
+    Open = 'TicketRaised'
+    Escalated = 'TicketEscalated'
+    UpdatedByInitiator = 'TicketOnCompleted'
+    ReturnedByOcc = 'TicketReOpen'
+    ReviewedByOcc = 'TicketResolved'
 
 
 
