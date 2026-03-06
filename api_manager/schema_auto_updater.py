@@ -183,7 +183,7 @@ async def sync_check_table_columns(table_name, schema_name, module_path):
 
 
 async def sync_db_model():
-    modules = [ "api_manager.hpcl_ceg_model", "api_manager.dashboard_studio_model"]
+    modules = ["api_manager.hpcl_ceg_model", "api_manager.dashboard_studio_model"]
     for module_path in modules:
         print(f"Running db schema updater for {module_path}")
         module = importlib.import_module(module_path)
