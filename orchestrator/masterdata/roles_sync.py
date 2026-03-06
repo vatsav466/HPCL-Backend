@@ -742,6 +742,11 @@ async def sync_user_roles():
                         "title": "VTS ITDG Alert Home"
                     }
                 ]
+            },
+            {
+                "menu_name": "Ticketing2",
+                "allowed_sub_menus": [
+                ]
             }
         ],
         "name": "SOD",
@@ -871,6 +876,11 @@ async def sync_user_roles():
                     {
                         "title": "Pro Dash"
                     }
+                ]
+            },
+            {
+                "menu_name": "Ticketing2",
+                "allowed_sub_menus": [
                 ]
             }
         ],

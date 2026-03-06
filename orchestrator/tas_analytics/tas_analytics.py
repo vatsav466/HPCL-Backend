@@ -463,7 +463,7 @@ async def top_repeat_alerts(data):
             if ageing_summary_raw:
                 ageing_df = pl.DataFrame(ageing_summary_raw)
                 ordered_buckets = [
-                    "1 Day", "2 Days", "3 Days", "4 Days", "5 Days",
+                    "0 Day","1 Day", "2 Days", "3 Days", "4 Days", "5 Days",
                     "6-10 Days", "11-15 Days", "16-30 Days", "31-60 Days", "60+ Days"
                 ]
                 for bucket in ordered_buckets:
@@ -4036,7 +4036,191 @@ async def cancelled_tts_dashboard(data):
         }
     }
 
+async def sick_tts_dashboard(data):
 
+    # BUILD WHERE CONDITIONS
+    conditions = []
+
+    if data.filters:
+        for f in data.filters:
+
+            if not f.value:
+                continue
+
+            # Handle date range
+            if f.key == "start_date":
+                start_date = f.value if isinstance(f.value, str) else None
+                end_date = next(
+                    (x.value for x in data.filters if x.key == "end_date"),
+                    None
+                )
+
+                if start_date and end_date:
+                    conditions.append(
+                        f"DATE(created_at) BETWEEN '{start_date}' AND '{end_date}'"
+                    )
+                continue
+
+            if f.key == "end_date":
+                continue
+
+            if isinstance(f.value, str):
+
+                if "," in f.value:
+                    clean_values = [v.strip() for v in f.value.split(",") if v.strip()]
+                else:
+                    clean_values = [f.value]
+
+            else:
+                clean_values = []
+
+            if not clean_values:
+                continue
+
+            if f.cond == "=":
+                if len(clean_values) == 1:
+                    conditions.append(f"{f.key} = '{clean_values[0]}'")
+                else:
+                    values = ", ".join(f"'{v}'" for v in clean_values)
+                    conditions.append(f"{f.key} IN ({values})")
+
+            elif f.cond == "!=":
+                if len(clean_values) == 1:
+                    conditions.append(f"{f.key} != '{clean_values[0]}'")
+                else:
+                    values = ", ".join(f"'{v}'" for v in clean_values)
+                    conditions.append(f"{f.key} NOT IN ({values})")
+
+    where_clause = ""
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+    # TOTAL COUNT (ALL LOCATIONS)
+    total_query = f"""
+        SELECT
+            COUNT(DISTINCT load_number) AS total_sick_tts
+        FROM host_sick_tts
+        {where_clause}
+    """
+
+    # COMMON CTE FOR TOP 10 LOCATIONS
+    common_cte = f"""
+        WITH base_data AS (
+            SELECT *
+            FROM host_sick_tts
+            {where_clause}
+        ),
+
+        location_totals AS (
+            SELECT
+                location_name,
+                COUNT(DISTINCT load_number) AS total_location_raw_count
+            FROM base_data
+            GROUP BY location_name
+            ORDER BY total_location_raw_count DESC
+            LIMIT 10
+        )
+    """
+
+    # LOCATION WISE SUMMARY (TOP 10)
+    location_query = common_cte + """
+        SELECT
+            b.sap_id,
+            b.location_name,
+            STRING_AGG(DISTINCT b.load_number::text, ', ') AS load_number,
+            COUNT(DISTINCT b.load_number) AS location_sick_count,
+            lt.total_location_raw_count
+        FROM base_data b
+        JOIN location_totals lt
+            ON b.location_name = lt.location_name
+        GROUP BY
+            b.sap_id,
+            b.location_name,
+            lt.total_location_raw_count
+        ORDER BY
+            lt.total_location_raw_count DESC
+    """
+
+    # VEHICLE WISE SUMMARY (ONLY TOP LOCATIONS)
+    vehicle_query = common_cte + """
+        SELECT
+            b.location_name,
+            b.truck_number,
+            STRING_AGG(DISTINCT b.load_number::text, ', ') AS load_number,
+            COUNT(DISTINCT b.load_number) AS vehicle_load_count
+        FROM base_data b
+        JOIN location_totals lt
+            ON b.location_name = lt.location_name
+        GROUP BY
+            b.location_name,
+            b.truck_number
+        ORDER BY
+            vehicle_load_count DESC
+    """
+
+    # RECORDS (ONLY TOP LOCATIONS)
+    records_query = common_cte + """
+        SELECT DISTINCT ON (b.load_number)
+            b.load_number,
+            b.truck_number,
+            b.created_at,
+            b.remarks,
+            b.sap_id,
+            b.zone,
+            b.location_name,
+            b.customer_name
+        FROM base_data b
+        JOIN location_totals lt
+            ON b.location_name = lt.location_name
+        ORDER BY
+            b.load_number,
+            b.created_at DESC
+    """
+
+    # EXECUTE QUERIES
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
+
+    total_result = await function(query=total_query)
+    location_result = await function(query=location_query)
+    vehicle_result = await function(query=vehicle_query)
+    records_result = await function(query=records_query)
+
+    # CLEAN NaN VALUES
+    def clean_nan(data_list):
+        return [
+            {
+                k: (None if isinstance(v, float) and math.isnan(v) else v)
+                for k, v in row.items()
+            }
+            for row in (data_list or [])
+        ]
+
+    location_result = clean_nan(location_result)
+    vehicle_result = clean_nan(vehicle_result)
+    records_result = clean_nan(records_result)
+
+    # SAFE TOTAL FETCH
+    total_sick_tts = 0
+    if total_result and len(total_result) > 0:
+        total_sick_tts = total_result[0].get("total_sick_tts", 0)
+
+    # FINAL RESPONSE
+    return {
+        "status": "success",
+        "message": "Sick TTS dashboard data fetched successfully",
+        "data": {
+            "total_sick_tts": total_sick_tts,
+            "location_wise_summary": location_result,
+            "vehicle_wise_summary": vehicle_result,
+            "records": records_result
+        }
+    }
+    
 def is_bay_empty(bay_data):
     return (
             bay_data.get("HostBayReAssignment", 0) == 0 and
@@ -5465,6 +5649,7 @@ AnalyticsModelMapping = {
     "Unauthorized Alerts":unauthorized_flow_dashboard,
     "Hostbay Reassignment Alerts":host_bay_reassignment_alert,
     "Cancelled Report tts":cancelled_tts_dashboard,
+    "Sick Report tts":sick_tts_dashboard,
     "Host Tables Combined Data":host_tables_combined_data,
     "get bay counts":get_bay_counts,
     "Gantry Override Analysis": gantry_override_analysis,
