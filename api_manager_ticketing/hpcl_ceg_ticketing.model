@@ -112,6 +112,12 @@ Model TruckInfo internal {
     region optional str
 }
 
+Model CommentHistory internal {
+    updated_by optional str
+    updated_time optional str
+    ticket_msg optional str
+}
+
 Model Ticketing {
     ticket_name str
     ticket_id index_field unique_field str
@@ -158,6 +164,7 @@ Model Ticketing {
     assignee_name optional list str
     assignee_mail optional list str
     escalation_level optional str
+    comment_history optional list CommentHistory
 
 
     Action=> get_ticket {
@@ -198,6 +205,7 @@ Model Ticketing {
         assignee_mail optional list str
         reporter optional str
         escalation_level optional str
+        comment_history optional list CommentHistory
 
 
     }
@@ -239,6 +247,7 @@ Model Ticketing {
         assignee_mail optional list str
         reporter optional str
         escalation_level optional str
+        comment_history optional list CommentHistory
 
        
     }

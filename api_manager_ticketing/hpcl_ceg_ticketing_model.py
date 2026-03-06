@@ -43,6 +43,12 @@ class TruckInfoCreate(pydantic.BaseModel):
     region: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class CommentHistoryCreate(pydantic.BaseModel):
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+    updated_time: typing.Optional[str] = pydantic.Field("", **{})
+    ticket_msg: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class TicketingSchema(UrdhvaPostgresBase):
     __tablename__ = 'ticketing'
     
@@ -91,6 +97,7 @@ class TicketingSchema(UrdhvaPostgresBase):
     assignee_name: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assignee_name", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     assignee_mail: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assignee_mail", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     escalation_level: Mapped[typing.Optional[str]] = mapped_column("escalation_level", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    comment_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("comment_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),)
 
@@ -143,6 +150,7 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     escalation_level: typing.Optional[str] = pydantic.Field("", **{})
+    comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -200,6 +208,7 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     escalation_level: typing.Optional[str] = pydantic.Field("", **{})
+    comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -257,6 +266,7 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     reporter: typing.Optional[str] = pydantic.Field("", **{})
     escalation_level: typing.Optional[str] = pydantic.Field("", **{})
+    comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -304,6 +314,7 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     reporter: typing.Optional[str] = pydantic.Field("", **{})
     escalation_level: typing.Optional[str] = pydantic.Field("", **{})
+    comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

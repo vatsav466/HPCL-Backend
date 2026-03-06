@@ -585,6 +585,12 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
 
     ticket_data["auto_ticket_close"] = "Yes" if auto_close_flag else "No"
 
+    ticket_data["comment_history"] = [{
+        "updated_by": user_name,
+        "updated_time": datetime.now().isoformat(),
+        "ticket_msg": ticket_data.get("ticket_state")
+    }]
+
     # print("ticket_data['ticket_state']:", ticket_data.get('ticket_state'))
 
     # Defaults
@@ -633,6 +639,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         "employee_id": employee_id
 
     })
+
 
     # Create the ticket
     # print("ticket_data", ticket_data)
@@ -887,7 +894,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         params.fields = [
                     "id", "ticket_id", "ticket_state", "ticket_history", "linked_alert_id",
                     "sap_id", "location_name", "zone", "category", "sub_category",
-                    "escalation_level", "start_date", "ticket_end_date"
+                    "escalation_level", "start_date", "ticket_end_date","comment_history"
                 ]
         resp = await Ticketing.get_all(params, resp_type='plain')
 
@@ -1004,6 +1011,28 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         # APPLY FINAL STATE
         data_dict["ticket_state"] = final_state
         print("final_state: ",final_state)
+
+        # ---------------- COMMENT HISTORY ----------------
+
+        previous_state = existing_ticket.get("ticket_state")
+
+        rpt = urdhva_base.context.context.get('rpt', None)
+        user_name = rpt.get('username') if rpt else None
+
+        existing_comment_history = existing_ticket.get("comment_history", []) or []
+        print("existing_comment_history: ",existing_comment_history)
+
+        # If state changed → append new entry
+        if previous_state != final_state:
+            new_comment_entry = {
+                "updated_by": user_name,
+                "updated_time": datetime.now().isoformat(),
+                "ticket_msg": f"{previous_state} -> {final_state}"
+            }
+            existing_comment_history.append(new_comment_entry)
+        data_dict["comment_history"] = existing_comment_history
+
+        # -------------------------------------------------
 
         if final_state in ["Reviewed By Occ", "Cancelled"]:
             data_dict["ticket_status"] = Status.Close.value
