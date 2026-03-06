@@ -742,6 +742,55 @@ async def sync_user_roles():
                         "title": "VTS ITDG Alert Home"
                     }
                 ]
+            },
+            {
+                "menu_name": "Ticketing2",
+                "allowed_sub_menus": [
+                ]
+            }
+        ],
+        "name": "SOD",
+        "status": True
+    },
+    "Location In-Charge Ticketing": {
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Video Analytics"
+                    }
+                ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS ITDG Alert Home"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing2",
+                "allowed_sub_menus": [
+                ]
             }
         ],
         "name": "SOD",
@@ -827,6 +876,63 @@ async def sync_user_roles():
                     {
                         "title": "Pro Dash"
                     }
+                ]
+            },
+            {
+                "menu_name": "Ticketing2",
+                "allowed_sub_menus": [
+                ]
+            }
+        ],
+        "name": "SOD",
+        "status": True
+    },
+    "Plant In-Charge Ticketing": {
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Video Analytics"
+                    }
+                ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS ITDG Alert Home"
+                    }
+                ]
+            },
+            {
+                "menu_name": "LPG",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Pro Dash"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing2",
+                "allowed_sub_menus": [
                 ]
             }
         ],
@@ -2905,14 +3011,8 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Ticketing",
+                "menu_name": "Ticketing2",
                 "allowed_sub_menus": [
-                    {
-                        "title": "Tickets"
-                    },
-                    {
-                        "title": "Create Ticket"
-                    }
                 ]
             }
         ],
