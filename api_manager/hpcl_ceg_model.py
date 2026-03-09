@@ -10698,6 +10698,7 @@ class Deviceinstallation_Validate_Aot_DetailsParams(pydantic.BaseModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     transporter: typing.Optional[str] = pydantic.Field("", **{})
     contract_valid_upto: typing.Optional[str] = pydantic.Field("", **{})
+    select_business: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

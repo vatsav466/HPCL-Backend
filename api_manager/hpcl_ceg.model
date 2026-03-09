@@ -3912,7 +3912,8 @@ Model DeviceInstallation{
         sap_tt_no optional str 
         sap_id optional str 
         transporter optional str 
-        contract_valid_upto optional str 
+        contract_valid_upto optional str
+        select_business optional str
     }
    
     Action=> action_device_vts{
