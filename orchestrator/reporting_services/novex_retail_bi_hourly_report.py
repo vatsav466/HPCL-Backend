@@ -22,7 +22,7 @@ def dict_to_object(d):
 
 
 async def publish_bi_hourly_report():
-    zone_order = ['CZ', 'ECZ', 'EZ', 'NCZ', 'NFZ', 'NWFZ', 'NWZ', 'NZ', 'SCZ', 'SWZ', 'SZ', 'WZ']
+    zone_order = ['CEN', 'ECZ', 'EZ', 'NCZ', 'NFZ', 'NWFZ', 'NWZ', 'NZ', 'SCZ', 'SWZ', 'SZ', 'WZ']
     today_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
     hour = urdhva_base.utilities.get_present_time().strftime("%H:00")
     intra_dryout_status = await retail_data.get_bi_hourly_intra_dryout()
@@ -67,11 +67,14 @@ async def publish_bi_hourly_report():
 
     await send_notification(
         template_name="retail_bi_hourly.html",
-        to_recipients=["venu@algofusiontech.com"],
-        subject="Novex Dryout Report",
-        cc_recipients=[],
+        to_recipients=["adityapandey@hpcl.in", "venu@algofusiontech.com"],
+        subject="Novex Dryout Summary Report",
+        cc_recipients=["yesu.p@algofusiontech.com","manohar.v@algofusiontech.com",
+                       "gayathri.m@algofusiontech.com","jayaprakash.v@algofusiontech.com",
+                       "poojitha.gumma@algofusiontech.com","vamsi.c@algofusiontech.com",
+                       "moufikali@algofusiontech.com", "aditya@algofusiontech.com"],
         bcc_recipients=[],
-        notification_data={"summary": summary,
+        notification_data={"summary": summary, "time": hour,
                            "zone_summary": [indent_summary[z] for z in zone_order if z in indent_summary]},
         inline_images={
         },
