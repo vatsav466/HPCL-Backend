@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<style>
+
+body{
+font-family: Arial;
+margin:20px;
+}
+
+table{
+width:100%;
+border-collapse: collapse;
+margin-top:20px;
+}
+
+th{
+background:#003366;
+color:white;
+padding:6px;
+font-size:13px;
+}
+
+td{
+border:1px solid #ddd;
+padding:6px;
+font-size:12px;
+text-align:center;
+}
+
+h2{
+color:#003366;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Bi-Hourly Dry Out & Nozzle Sales Report</h2>
+
+<hr>
+
+<h4>1. Summary for the day</h4>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Time</th>
+<th>Connected RO</th>
+<th>Partial Dry Out</th>
+<th>ROs &lt;6hr Stock</th>
+<th>ROs &lt;12hr Stock</th>
+<th>ROs &lt;24hr Stock</th>
+<th>ROs &gt;24hr Stock</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for row in summary %}
+
+<tr>
+<td>{{row.time}}</td>
+<td>{{row.online}}</td>
+<td>{{row.partial_dryout}}</td>
+<td>{{row.hr_0_6}}</td>
+<td>{{row.hr_6_12}}</td>
+<td>{{row.hr_12_24}}</td>
+<td>{{row.hr_24_72}}</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+
+<h4>2. Zone Wise Summary at {{time}}</h4>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Zone</th>
+<th>Dry Out Count</th>
+<th>Indent Not Raised</th>
+<th>Indent Raised</th>
+<th>Indent On Hold</th>
+<th>Pending Indents</th>
+<th>Valid Indents</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for row in zone_summary %}
+
+<tr>
+<td>{{row.zone}}</td>
+<td>{{row.dry_out}}</td>
+<td>{{row.indents_not_raised}}</td>
+<td>{{row.indents_raised}}</td>
+<td>{{row.indents_on_hold}}</td>
+<td>{{row.pending_indents}}</td>
+<td>{{row.valid_indents}}</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</body>
+
+</html>
