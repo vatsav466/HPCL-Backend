@@ -19,7 +19,7 @@ import orchestrator.notification_manager.notification_factory as notification_fa
 from orchestrator.reporting_services.reporting_helpers import get_alert_data, lpg_data, retail_data, sales_data, sod_data, ro_va_cleanliness
 
 # Single Redis key per day: one record per day, updated with latest bi-hourly slot and used for email
-REDIS_REPORT_KEY_PREFIX = "dry_out_bi_hourly_report"
+REDIS_BI_HOURLY_REPORT_KEY = "dry_out_bi_hourly_report"
 
 
 def dict_to_object(d):
@@ -83,9 +83,8 @@ async def publish_bi_hourly_report():
         )
 
     # Single Redis record per day: key = dry_out_bi_hourly_report:{date}
-    redis_key = f"{REDIS_REPORT_KEY_PREFIX}:{today_date}"
     redis_ins = await urdhva_base.redispool.get_redis_connection()
-    raw = await redis_ins.get(redis_key)
+    raw = await redis_ins.hget(REDIS_BI_HOURLY_REPORT_KEY, today_date)
     if not raw:
         existing_data = {}
     else:
@@ -140,7 +139,7 @@ async def publish_bi_hourly_report():
     )
 
     # Persist the updated record back to Redis for next run
-    await redis_ins.set(redis_key, json.dumps(existing_data))
+    await redis_ins.hset(REDIS_BI_HOURLY_REPORT_KEY, today_date, json.dumps(existing_data))
 
 
 async def send_notification(template_name, to_recipients, subject, cc_recipients=None, bcc_recipients=None, notification_data=None, inline_images=None, attachments=None):
