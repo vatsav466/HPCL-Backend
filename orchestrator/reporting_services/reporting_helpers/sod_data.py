@@ -1162,8 +1162,8 @@ async def get_parameters_summary():
     )
 
     hst_date_filter = (
-        f"hst.created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
-        f"AND hst.created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     )
 
     if valid_trucks_df.is_empty():
@@ -1180,9 +1180,10 @@ async def get_parameters_summary():
     tas_parameters_query = f"""SELECT
                                     lm.name AS "Location Name",
 
-                                    COUNT(DISTINCT (hst.load_number, hst.truck_number)) FILTER (
-                                    WHERE {hst_date_filter}
-                                    )  AS "Sick TT",
+                                    CASE 
+                                        WHEN hst.sick_tt IS NULL THEN 0 
+                                        ELSE hst.sick_tt 
+                                    END AS "Sick TT",
 
                                     COUNT(CASE
                                         WHEN a.interlock_name = 'BCU Local Loading'
@@ -1209,17 +1210,23 @@ async def get_parameters_summary():
                                     )
                                     AND {date_filter}
                                 
-                                LEFT JOIN host_sick_tts hst
-                                    ON hst.sap_id = lm.sap_id
-                                    AND {hst_date_filter}
+                                LEFT JOIN (
+                                    SELECT
+                                        sap_id,
+                                        COUNT(DISTINCT (load_number, truck_number)) AS sick_tt
+                                    FROM host_sick_tts
+                                    WHERE {hst_date_filter}
+                                    GROUP BY sap_id
+                                ) hst
+                                ON hst.sap_id = lm.sap_id
 
                                 WHERE lm.location_onboard = TRUE
 
-                                GROUP BY lm.name
+                                GROUP BY lm.name, hst.sick_tt
 
                                 ORDER BY
                                     (
-                                        COUNT(DISTINCT (hst.load_number, hst.truck_number)) +
+                                        CASE WHEN hst.sick_tt IS NULL THEN 0 ELSE hst.sick_tt END +
                                         COUNT(CASE WHEN a.interlock_name = 'BCU Local Loading' THEN 1 END) +
                                         COUNT(CASE WHEN a.interlock_name = 'K Factor Change_BCU' THEN 1 END) +
                                         COUNT(CASE WHEN a.interlock_name = 'MFM K Factor Change' THEN 1 END)

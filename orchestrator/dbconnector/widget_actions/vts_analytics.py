@@ -884,7 +884,7 @@ class VTSAnalyticsActions:
             return f"invoice_date::DATE BETWEEN '{start}' AND '{end}'"
         
         if "completed_trips_risk_score" in query.lower():
-            return f"scheduled_trip_start_datetime BETWEEN '{start}' AND '{end}'"
+            return f"insert_datetime BETWEEN '{start}' AND '{end}'"
         
         if any(term in query.lower() for term in ["cluster_master", "transporter_risk_score", "tt_risk_score","clusterwise_event"]):
             return f"version_date BETWEEN '{start}' AND '{end}'"
@@ -3820,6 +3820,11 @@ class VTSAnalyticsActions:
         Fetch paginated data from the specified risk score table and also support downloading.
         """
         try:
+            if hasattr(payload, "dict"):
+                payload = payload.dict()
+            elif not isinstance(payload, dict):
+                payload = dict(payload) if hasattr(payload, "__iter__") else {}
+            
             table_name = payload.get("table_name")
             columns = payload.get("columns")
             limit = 0 if payload.get("download") == "true" else payload.get("page_size", 100)
@@ -3885,20 +3890,28 @@ class VTSAnalyticsActions:
                     violation_types = [col for col in violation_columns_map.keys() if col in df.columns]
 
                     # Group by date and sum violations
-                    grouped_df = df.group_by('violation_date_formatted').agg(
-                        [pl.col(vtype).sum().cast(pl.Int64) for vtype in violation_types]
-                    ).sort('violation_date_formatted')
+                    agg_cols = [pl.col(vtype).sum().cast(pl.Int64) for vtype in violation_types]
+                    if 'risk_score' in df.columns:
+                        agg_cols.append(pl.col('risk_score').first())
+
+                    grouped_df = df.group_by('violation_date_formatted').agg(agg_cols).sort('violation_date_formatted')
 
                     # Transform to nested structure
                     grouped_data = []
                     for row in grouped_df.iter_rows(named=True):
                         date = row.pop('violation_date_formatted')
+                        risk_score = row.pop('risk_score', None)
                         violations = [
                             {"violation_type": k, "count": int(row[k]) if row[k] is not None else 0}
                             for k in violation_types
                         ]
                         violations.sort(key=lambda x: x['violation_type'])
-                        grouped_data.append({"date": date, "records": violations})
+                        
+                        record_entry = {"date": date, "records": violations}
+                        if risk_score is not None:
+                            record_entry["risk_score"] = float(risk_score) if risk_score is not None else 0.0
+                            
+                        grouped_data.append(record_entry)
                 else:
                     grouped_data = []
 
@@ -3989,6 +4002,11 @@ class VTSAnalyticsActions:
 
             # Build and apply conditions
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, base_query)
+
+            # Add version_date filter if a specific version date is provided
+            vd = payload.get("version_date")
+            if vd and not any("version_date" in str(c).lower() for c in conditions):
+                conditions.append(f"version_date::date = '{vd}'")
 
             # Add search filter condition if a search term is provided
             search_term = payload.get("search")
@@ -4152,7 +4170,6 @@ class VTSAnalyticsActions:
             print("Exception in risk_score:", str(e))
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": [], "total_records": 0}
-
     @staticmethod
     async def risk_score_trends(filters, cross_filters, drill_state, payload):
         """
