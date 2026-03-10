@@ -244,6 +244,19 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
         "category": [],
         "rca_reason": []
     }
+
+    system_roles = rpt.get("novex_role", [])
+
+    # If both alert_role and system_role was empty return default data
+    if not alert_role and not system_roles:
+        return close_alert_details
+
+    # Checking whether logged-in user has access to get alert closure reasons or not
+    if alert_role:
+        # One role should match between two roles
+        if not any(x in system_roles for x in alert_role):
+            return close_alert_details
+
     action_data = connection_mapping.alert_action.get(data.bu)[data.alert_section]
 
     close_alert_details['category'] = list(action_data.get("category", {"Others": "Others"}).keys())
@@ -496,6 +509,7 @@ async def alerts_block_vts_truck(data: Alerts_Block_Vts_TruckParams):
             "blocked_by": rpt["username"],
             "remarks": data.remarks,
             "blocked_date": start_date_utc,
+            "tt_type": "bulk",
             "blocking_status": "blocked",
             "blocking_flag": "Y",
             "transaction_number": transaction_number,

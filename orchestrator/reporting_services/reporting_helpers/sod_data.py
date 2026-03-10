@@ -1100,10 +1100,9 @@ async def get_parameters_summary():
     query = f"""SELECT
                     'SOD' AS "SBU",
 
-                    COUNT(CASE
-                        WHEN interlock_name = 'SickTT Reported'
-                        THEN 1
-                    END) AS "Sick TT",
+                    (SELECT COUNT(DISTINCT (load_number, truck_number))
+                    FROM host_sick_tts WHERE {date_filter}
+                    ) AS "Sick TT",
 
                     COUNT(CASE
                         WHEN interlock_name = 'BCU Local Loading'
@@ -1123,7 +1122,6 @@ async def get_parameters_summary():
                 FROM alerts
                 WHERE 
                 interlock_name IN (
-                'SickTT Reported',
                 'BCU Local Loading',
                 'K Factor Change_BCU',
                 'MFM K Factor Change'
@@ -1163,6 +1161,11 @@ async def get_parameters_summary():
         f"AND a.created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
     )
 
+    hst_date_filter = (
+        f"created_at::DATE >= '{month_start.strftime('%Y-%m-%d')}' "
+        f"AND created_at::DATE <= '{date_yes.strftime('%Y-%m-%d')}'"
+    )
+
     if valid_trucks_df.is_empty():
         valid_trucks_pd = pd.DataFrame(
             columns=["Location Name", "overall_valid_truck_count"]
@@ -1177,10 +1180,10 @@ async def get_parameters_summary():
     tas_parameters_query = f"""SELECT
                                     lm.name AS "Location Name",
 
-                                    COUNT(CASE
-                                        WHEN a.interlock_name = 'SickTT Reported'
-                                        THEN 1
-                                    END) AS "Sick TT",
+                                    CASE 
+                                        WHEN hst.sick_tt IS NULL THEN 0 
+                                        ELSE hst.sick_tt 
+                                    END AS "Sick TT",
 
                                     COUNT(CASE
                                         WHEN a.interlock_name = 'BCU Local Loading'
@@ -1201,20 +1204,29 @@ async def get_parameters_summary():
                                 LEFT JOIN alerts a
                                     ON a.sap_id = lm.sap_id
                                     AND a.interlock_name IN (
-                                        'SickTT Reported',
                                         'BCU Local Loading',
                                         'K Factor Change_BCU',
                                         'MFM K Factor Change'
                                     )
                                     AND {date_filter}
+                                
+                                LEFT JOIN (
+                                    SELECT
+                                        sap_id,
+                                        COUNT(DISTINCT (load_number, truck_number)) AS sick_tt
+                                    FROM host_sick_tts
+                                    WHERE {hst_date_filter}
+                                    GROUP BY sap_id
+                                ) hst
+                                ON hst.sap_id = lm.sap_id
 
                                 WHERE lm.location_onboard = TRUE
 
-                                GROUP BY lm.name
+                                GROUP BY lm.name, hst.sick_tt
 
                                 ORDER BY
                                     (
-                                        COUNT(CASE WHEN a.interlock_name = 'SickTT Reported' THEN 1 END) +
+                                        CASE WHEN hst.sick_tt IS NULL THEN 0 ELSE hst.sick_tt END +
                                         COUNT(CASE WHEN a.interlock_name = 'BCU Local Loading' THEN 1 END) +
                                         COUNT(CASE WHEN a.interlock_name = 'K Factor Change_BCU' THEN 1 END) +
                                         COUNT(CASE WHEN a.interlock_name = 'MFM K Factor Change' THEN 1 END)
@@ -1277,7 +1289,10 @@ async def get_parameters_summary():
         "MFM Factor Changes": total_mfm_factor_tt
     }])
     df = pd.concat([df, total_row], ignore_index=True)
-    df.drop(columns=["Valid Trucks","sap_id"], inplace=True)
+    for key in ["Valid Trucks","sap_id"]:
+        if key in df.columns:
+            df.drop(key, axis=1, inplace=True)
+    # df.drop(columns=["Valid Trucks","sap_id"], inplace=True)
     print('*'*200)
     print('tas_parameters_summary',tas_parameters_summary)
     print('tas_parameters_query_resp',df)
