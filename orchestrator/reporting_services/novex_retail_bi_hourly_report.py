@@ -66,7 +66,9 @@ async def publish_bi_hourly_report():
         "Pending Indents": "pending_indents",
         "Valid \\ WIP Indents": "valid_indents",
     }
+
     indent_summary = {}
+
     for zone, details in indent_data.get("zone_data", {}).items():
         indent_summary[zone] = {"zone": zone}
         for indent_status in details:
@@ -75,12 +77,15 @@ async def publish_bi_hourly_report():
         indent_summary[zone]["dry_out"] = (
             indent_summary[zone].get("indents_not_raised", 0) + indent_summary[zone].get("indents_raised", 0)
         )
+
     for zone in zone_order:
         if zone not in indent_summary:
             indent_summary[zone] = {"zone": zone, **{v: 0 for v in indent_key_mapping.values()}}
         indent_summary[zone]["dry_out"] = (
             indent_summary[zone].get("indents_not_raised", 0) + indent_summary[zone].get("indents_raised", 0)
         )
+
+    intra_dryout_status['partial_dryout'] = sum(rec.get('dry_out', 0) for rec in indent_summary.values())
 
     # Single Redis record per day: key = dry_out_bi_hourly_report:{date}
     redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -120,6 +125,7 @@ async def publish_bi_hourly_report():
         if key == 'zone':
             continue
         total[key] = sum(v.get(key, 0) for v in indent_summary.values())
+
     notification_data['zone_summary'].append(total)
 
     await send_notification(
