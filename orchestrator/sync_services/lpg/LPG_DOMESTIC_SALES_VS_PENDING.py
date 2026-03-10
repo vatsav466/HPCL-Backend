@@ -161,12 +161,29 @@ def insertToDB(data, table_name, indexing_col=()):
             )
     table_create_sql = ''
     cur = pg_conn.cursor()
-    dtype_dict = {'String':str('text'),'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'), 'Float64': str('double precision'),'Float32': str('double precision'),
-                  'Object': str('text'), 'Datetime': str('timestamp'), 'Utf8': str('text'), "Datetime(time_unit='us', time_zone=None)": str('timestamp'), "Datetime(time_unit='ns', time_zone=None)":str('timestamp'), "Decimal(precision=5, scale=2)": str('double precision')}
+    # Polars dtype -> PostgreSQL type; include Date and Datetime variants (with/without timezone)
+    dtype_dict = {
+        'String': 'text', 'Int64': 'bigint', 'Int32': 'bigint', 'Boolean': 'text',
+        'Float64': 'double precision', 'Float32': 'double precision', 'Object': 'text',
+        'Datetime': 'timestamp', 'Date': 'date', 'Utf8': 'text',
+        "Datetime(time_unit='us', time_zone=None)": 'timestamp',
+        "Datetime(time_unit='ns', time_zone=None)": 'timestamp',
+        "Datetime(time_unit='ms', time_zone=None)": 'timestamp',
+        "Datetime(time_unit='us', time_zone='Asia/Kolkata')": 'timestamp',
+        "Datetime(time_unit='ns', time_zone='Asia/Kolkata')": 'timestamp',
+        "Decimal(precision=5, scale=2)": 'double precision',
+    }
     col_dtype = {col: data[col].dtype for col in data.columns}
     for col, dty in col_dtype.items():
-        dty = dtype_dict.get(str(dty))
-        table_create_sql += f'"{col}" {dty},'
+        pg_type = dtype_dict.get(str(dty))
+        # Fallback when Polars dtype not in map (e.g. Datetime with other timezone) -> avoid "None" in SQL
+        if pg_type is None:
+            dty_str = str(dty)
+            if dty_str.startswith("Datetime") or dty_str.startswith("Date") or dty in (pl.Datetime, pl.Date):
+                pg_type = 'timestamp'
+            else:
+                pg_type = 'text'
+        table_create_sql += f'"{col}" {pg_type},'
     table_create_sql = table_create_sql[:-1]
         
     columns_formatted = ", ".join(f'"{col}"' for col in indexing_col)
