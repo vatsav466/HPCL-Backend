@@ -212,8 +212,8 @@ async def process_plant_concurrent(plant, semaphore):
 
                 params = {
                     "sap_id": str(plant["erp_id"]),
-                    "from_date": current_date.strftime("%Y-%m-%d"),
-                    "to_date": current_date.strftime("%Y-%m-%d")
+                    "from_date": (current_date - timedelta(days=1) if current_date.weekday() == 6 else current_date).strftime("%Y-%m-%d"),
+                    "to_date": (current_date - timedelta(days=1) if current_date.weekday() == 6 else current_date).strftime("%Y-%m-%d")
                 }
                 
                 ins = GenerateLPGSummary(**params)
@@ -243,6 +243,7 @@ async def main_concurrent():
     await urdhva_base.BasePostgresModel.execute_query(reset_id_query)
 
     plants = pd.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
+    plants = plants[plants['erp_id']=='2663']
     print(f"Processing {len(plants)} plants concurrently...")
     
     # Create semaphore to limit concurrent operations (adjust based on your system capacity)
