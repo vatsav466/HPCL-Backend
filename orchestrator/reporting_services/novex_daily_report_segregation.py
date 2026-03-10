@@ -90,7 +90,7 @@ async def publish_daily_novex_status_email():
     # print("-------->status_data",status_data)
     await send_notification(
         template_name="seg1.html",
-        to_recipients=["debeshp@hpcl.in","sanjayk@hpcl.in"],
+        to_recipients=["debeshp@hpcl.in","sanjayk@hpcl.in","georget@hpcl.in"],
         subject="Novex Daily Report",
         cc_recipients=["gargam@hpcl.in","vikas.kaushal@hpcl.in","amitra@hpcl.in","arvindsingh@hpcl.in","garimasingh@hpcl.in"],
         bcc_recipients=["cvmallinath@hpcl.in","amarnathsahu@hpcl.in","adityapandey@hpcl.in"],
