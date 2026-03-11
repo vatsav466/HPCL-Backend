@@ -71,20 +71,19 @@ MAIL_TRIGGER_STATES = {
 }
 
 TEMPLATE_MAP = {
-    State.Open.value:                 "create_ticket.html",
-    State.Escalated.value:            "escalated_ticket.html",
-    State.UpdatedByInitiator.value:   "updated_ticket.html",
-    State.ReturnedByOcc.value:        "returned_ticket.html",
-    State.ReviewedByOcc.value:        "reviewed_ticket.html",
+    State.Open.value: "create_ticket.html",
+    State.Escalated.value: "escalated_ticket.html",
+    State.UpdatedByInitiator.value: "updated_ticket.html",
+    State.ReturnedByOcc.value: "returned_ticket.html",
+    State.ReviewedByOcc.value: "reviewed_ticket.html",
 }
-
 
 CATEGORY_FUNCTIONAL_MAP = {
     "Transportation Discipline": "Transportation & Bio-fuels",
-    "VTS Live Tracking":         "Transportation & Bio-fuels",
-    "Inventory Management":      "Operations & Automation",
-    "Safety Performance":        "HSE, M&I and Projects",
-    "Asset Integrity":           "HSE, M&I and Projects",
+    "VTS Live Tracking": "Transportation & Bio-fuels",
+    "Inventory Management": "Operations & Automation",
+    "Safety Performance": "HSE, M&I and Projects",
+    "Asset Integrity": "HSE, M&I and Projects",
 }
 
 
@@ -113,10 +112,11 @@ async def _location_incharge_data(sap_ids: list[str]) -> tuple[set[str], set[str
 
     return emails, zones
 
+
 async def _fetch_role_emails(
-    zonal_functionary_roles: list[str],
-    zonal_head_roles: list[str],
-    hqo_roles: list[str],
+        zonal_functionary_roles: list[str],
+        zonal_head_roles: list[str],
+        hqo_roles: list[str],
 ) -> tuple[set[str], set[str], set[str]]:
     """
     Single IN query for all roles combined.
@@ -136,20 +136,20 @@ async def _fetch_role_emails(
     params.fields = ["email_id", "role"]
 
     records = (
-        (await TicketUserMails.get_all(params, resp_type="plain")) or {}
+            (await TicketUserMails.get_all(params, resp_type="plain")) or {}
     ).get("data", [])
 
-    zf_set  = set(zonal_functionary_roles)
-    zh_set  = set(zonal_head_roles)
+    zf_set = set(zonal_functionary_roles)
+    zh_set = set(zonal_head_roles)
     hqo_set = set(hqo_roles)
 
     zonal_functionary_emails: set[str] = set()
-    zonal_head_emails:        set[str] = set()
-    hqo_emails:               set[str] = set()
+    zonal_head_emails: set[str] = set()
+    hqo_emails: set[str] = set()
 
     for rec in records:
         email = (rec.get("email_id") or "").strip()
-        role  = (rec.get("role")     or "").strip()
+        role = (rec.get("role") or "").strip()
         if not email:
             continue
         if role in zf_set:
@@ -163,23 +163,21 @@ async def _fetch_role_emails(
 
 
 async def send_ticket_mail(ticket_data: dict) -> None:
-  
     ticket_state: str = ticket_data.get("ticket_state", "")
     try:
         state_enum = State(ticket_state)
     except ValueError:
-        print(f"send_ticket_mail: unknown ticket_state '{ticket_state}' " 
-                       f"for ticket {ticket_data.get('ticket_id')}: mail skipped")
+        print(f"send_ticket_mail: unknown ticket_state '{ticket_state}' "
+              f"for ticket {ticket_data.get('ticket_id')}: mail skipped")
         return
 
     escalation_level: str = (ticket_data.get("escalation_level") or "").strip()
 
-    category_list     = ticket_data.get("category")     or []
+    category_list = ticket_data.get("category") or []
     sub_category_list = ticket_data.get("sub_category") or []
-    category     = category_list[0]     if category_list     else ""
+    category = category_list[0] if category_list else ""
     sub_category = sub_category_list[0] if sub_category_list else ""
     functional_area: str = CATEGORY_FUNCTIONAL_MAP.get(category, "")
-
 
     sap_ids = ticket_data.get("sap_id") or []
     if not isinstance(sap_ids, list):
@@ -191,32 +189,30 @@ async def send_ticket_mail(ticket_data: dict) -> None:
         loc_names = [loc_names]
     location_name_str = ", ".join(sorted({l for l in loc_names if l}))
 
-  
     location_emails, zones_seen = await _location_incharge_data(sap_ids)
 
     if not zones_seen:
-         zone_raw = ticket_data.get("zone") or []
-         if not isinstance(zone_raw, list):
-             zone_raw = [zone_raw]
-         zones_seen = {z.strip() for z in zone_raw if (z or "").strip()}
-         if zones_seen:
-             print(
+        zone_raw = ticket_data.get("zone") or []
+        if not isinstance(zone_raw, list):
+            zone_raw = [zone_raw]
+        zones_seen = {z.strip() for z in zone_raw if (z or "").strip()}
+        if zones_seen:
+            print(
                 f"send_ticket_mail: sap_id absent for ticket "
                 f"{ticket_data.get('ticket_id')} - using zone from ticket_data: {zones_seen}"
             )
 
     zonal_functionary_roles: list[str] = []
-    zonal_head_roles:        list[str] = []
-    hqo_roles:               list[str] = ["HQO"]
+    zonal_head_roles: list[str] = []
+    hqo_roles: list[str] = ["HQO"]
 
     if zones_seen and functional_area:
         zonal_functionary_roles = [f"{z}-{functional_area}" for z in zones_seen]
-        zonal_head_roles        = [f"{z}-ZonalHead"        for z in zones_seen]
+        zonal_head_roles = [f"{z}-ZonalHead" for z in zones_seen]
 
+    zonal_functionary_emails, zonal_head_emails, hqo_emails = (
+        await _fetch_role_emails(zonal_functionary_roles, zonal_head_roles, hqo_roles))
 
-    zonal_functionary_emails, zonal_head_emails, hqo_emails = (await _fetch_role_emails(zonal_functionary_roles, zonal_head_roles, hqo_roles))
-
- 
     to_emails: set[str] = set()
     cc_emails: set[str] = set()
 
@@ -253,7 +249,6 @@ async def send_ticket_mail(ticket_data: dict) -> None:
             to_emails = zonal_functionary_emails
             cc_emails = set.union(zonal_head_emails, hqo_emails)
 
-
     cc_emails -= to_emails
 
     if not to_emails and not cc_emails:
@@ -268,22 +263,22 @@ async def send_ticket_mail(ticket_data: dict) -> None:
 
     response_days = None
     start = ticket_data.get("start_date")
-    end   = ticket_data.get("ticket_end_date")
+    end = ticket_data.get("ticket_end_date")
     if start and end:
         try:
             response_days = (end.date() - start.date()).days
         except Exception as exc:
             print(f"response_days calc failed: {exc}")
-    
+
     zone_name_str = next(iter(zones_seen)) if zones_seen else ""
     template_data = {
-        "ticket_id":        ticket_data.get("ticket_id"),
-        "ticket_state":     ticket_state,
-        "location_name":    location_name_str,
+        "ticket_id": ticket_data.get("ticket_id"),
+        "ticket_state": ticket_state,
+        "location_name": location_name_str,
         "zone_name": zone_name_str,
-        "category":         category,
-        "sub_category":     sub_category,
-        "response_days":    response_days,
+        "category": category,
+        "sub_category": sub_category,
+        "response_days": response_days,
         "escalation_level": escalation_level or None,
     }
 
@@ -291,7 +286,6 @@ async def send_ticket_mail(ticket_data: dict) -> None:
     if escalation_level:
         subject = f"[{ticket_state} - {escalation_level}] Ticket {ticket_data.get('ticket_id')} | {category} | {location_name_str}"
 
-  
     to_list = list(to_emails)
     cc_list = list(cc_emails)
 
@@ -302,7 +296,7 @@ async def send_ticket_mail(ticket_data: dict) -> None:
         subject=subject,
         body=alert_manager.read_template(template_path, data=template_data),
         html_content=True,
-        force_send=True,
+        force_send=False,
     )
 
     print(
@@ -310,7 +304,6 @@ async def send_ticket_mail(ticket_data: dict) -> None:
         f"| State={ticket_state} | EscLevel={escalation_level or 'None'} "
         f"| TO={to_list} | CC={cc_list}"
     )
-
 
 
 # ----------------------------------------------------
@@ -325,6 +318,8 @@ def clean_list(value):
     if str(value).strip():
         return [str(value)]
     return []
+
+
 # ----------------------------------------------------
 
 # Action get_ticket
@@ -335,7 +330,7 @@ async def ticketing_get_ticket(data: Ticketing_Get_TicketParams):
     """
     try:
         id = data.ticket_id
-        result = await Ticketing.get(int(id))            
+        result = await Ticketing.get(int(id))
         return result
     except Exception as e:
         print(traceback.format_exc())
@@ -350,9 +345,10 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     Create a new ticket
     """
     rpt = urdhva_base.context.context.get('rpt', None)
-    print("rpt",rpt)
+    print("rpt", rpt)
     user_name = rpt.get('username') if rpt else None
-    employee_id = rpt.get('employee_id') if rpt else None
+    employee_id = data.employee_id
+    print("employee_id: ",employee_id)
 
     tdata = data.model_dump()
     frontend_reporter = tdata.get("reporter")
@@ -365,7 +361,6 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
 
     if not tdata.get("subtask_id"):
         tdata["subtask_id"] = []
-
 
     conditions = [
         f"bu='{tdata['bu']}'",
@@ -576,12 +571,12 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     ticket_state_str = ticket_data.get('ticket_state')
     if isinstance(ticket_state_str, State):
         ticket_state_str = ticket_state_str.name
-
-    if alert_status and alert_status.strip().lower() == "close" and all_alerts_closed and clean_linked_ids:
-        # print("enter clean_linked_ids and all_alerts_closed")
-
+    if auto_close_flag:
         ticket_state_str = "ReviewedByOcc"
-        ticket_data['ticket_state'] = "ReviewedByOcc"
+        ticket_data["ticket_state"] = "ReviewedByOcc"
+    else:
+        ticket_state_str = "Open"
+        ticket_data["ticket_state"] = "Open"
 
     ticket_data["auto_ticket_close"] = "Yes" if auto_close_flag else "No"
 
@@ -639,7 +634,7 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         "employee_id": employee_id
 
     })
-
+    ticket_data['employee_id']= employee_id
 
     # Create the ticket
     # print("ticket_data", ticket_data)
@@ -752,10 +747,12 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
 
     }
 
+
 # Action close_ticket
 @router.post('/close_ticket', tags=['Ticketing'])
 async def ticketing_close_ticket(data: Ticketing_Close_TicketParams):
-    await Ticketing(**{"id": data.close_id, "ticket_status": Status.Close.value, "ticket_state": State.Resolved.value, "end_date": data.end_date}).modify()
+    await Ticketing(**{"id": data.close_id, "ticket_status": Status.Close.value, "ticket_state": State.Resolved.value,
+                       "end_date": data.end_date}).modify()
     return {"status": True, "message": "Ticket closed successfully", "data": data.close_id}
 
 
@@ -871,9 +868,9 @@ async def ticketing_close_ticket(data: Ticketing_Close_TicketParams):
 async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
     try:
         data_dict = data.model_dump()
-    
+
         # ---------------- SAFE NORMALIZATION ----------------
-        list_fields = ["truck_no","category","sub_category","linked_alert_id","subtask_id","alert_type"]
+        list_fields = ["truck_no", "category", "sub_category", "linked_alert_id", "subtask_id", "alert_type"]
         for f in list_fields:
             if f in data_dict:
                 data_dict[f] = clean_list(data_dict.get(f))
@@ -892,10 +889,10 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         params.q = f"id='{ticket_id}'"
         params.limit = 1
         params.fields = [
-                    "id", "ticket_id", "ticket_state", "ticket_history", "linked_alert_id",
-                    "sap_id", "location_name", "zone", "category", "sub_category",
-                    "escalation_level", "start_date", "ticket_end_date","comment_history"
-                ]
+            "id", "ticket_id", "ticket_state", "ticket_history", "linked_alert_id",
+            "sap_id", "location_name", "zone", "category", "sub_category",
+            "start_date", "ticket_end_date", "comment_history"
+        ]
         resp = await Ticketing.get_all(params, resp_type='plain')
 
         if not resp or not resp.get("data"):
@@ -964,13 +961,12 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             raise Exception(f"Invalid ticket_state: {ticket_state}")
 
         action_type_str = TicketType[ticket_state].value
-        print("action_type_str: ",action_type_str)
+        print("action_type_str: ", action_type_str)
         action_type_enum = AlertActionType(action_type_str).value
 
         rpt = urdhva_base.context.context.get('rpt', None)
         employee_id = rpt.get('employee_id') if rpt else None
 
-        
         # ---------------- FINAL STATE DECISION ----------------
         ticket_state_from_ui = data_dict.get("ticket_state")
 
@@ -989,7 +985,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
 
             # Case 2: Auto close turned OFF but no state sent from UI
             elif not auto_close_flag and existing_ticket.get("ticket_state") == "Reviewed By Occ":
-                
+
                 # Find last non-resolved state from history
                 previous_state = None
                 for entry in reversed(existing_history):
@@ -1010,7 +1006,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
 
         # APPLY FINAL STATE
         data_dict["ticket_state"] = final_state
-        print("final_state: ",final_state)
+        print("final_state: ", final_state)
 
         # ---------------- COMMENT HISTORY ----------------
 
@@ -1020,7 +1016,7 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         user_name = rpt.get('username') if rpt else None
 
         existing_comment_history = existing_ticket.get("comment_history", []) or []
-        print("existing_comment_history: ",existing_comment_history)
+        print("existing_comment_history: ", existing_comment_history)
 
         # If state changed → append new entry
         if previous_state != final_state:
@@ -1036,10 +1032,10 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
 
         if final_state in ["Reviewed By Occ", "Cancelled"]:
             data_dict["ticket_status"] = Status.Close.value
-            print("ticket_status set to Close",data_dict["ticket_status"])
+            print("ticket_status set to Close", data_dict["ticket_status"])
         else:
             data_dict["ticket_status"] = Status.Open.value
-        
+
         ticket_update_entry = {
             "action_msg": action_msg,
             "action_type": action_type_val,
@@ -1051,8 +1047,6 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         }
 
         updated_history = existing_history + [ticket_update_entry]
-
-
 
         data_dict["ticket_history"] = updated_history
         data_dict["auto_ticket_close"] = auto_close_flag
@@ -1120,11 +1114,11 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
                 for entry in reversed(alert_history):
                     if entry.get("action_type") in [
                         "TicketRaised", "TicketInProgress", "TicketCancelled",
-                        "TicketResolved", "TicketOnHold","TicketReOpen","TicketOnCompleted"
+                        "TicketResolved", "TicketOnHold", "TicketReOpen", "TicketOnCompleted"
                     ]:
                         last_alloc = entry.get("processed_time", processed_time.isoformat())
                         break
-                    
+
                 new_alert_entry = {
                     "action_msg": f"Ticket updated, state changed to {final_state}",
                     "action_type": action_type_val,
@@ -1142,16 +1136,16 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
             try:
                 # Build a slim ticket_data dict for send_ticket_mail
                 mail_payload = {
-                    "ticket_id":        existing_ticket.get("ticket_id") or ticket_id,
-                    "ticket_state":     final_state,
+                    "ticket_id": existing_ticket.get("ticket_id") or ticket_id,
+                    "ticket_state": final_state,
                     "escalation_level": existing_ticket.get("escalation_level"),
-                    "sap_id":           existing_ticket.get("sap_id"),
-                    "location_name":    existing_ticket.get("location_name"),
-                    "category":         data_dict.get("category") or existing_ticket.get("category"),
-                    "sub_category":     data_dict.get("sub_category") or existing_ticket.get("sub_category"),
-                    "start_date":       existing_ticket.get("start_date"),
-                    "zone":             existing_ticket.get("zone"), 
-                    "ticket_end_date":  existing_ticket.get("ticket_end_date"),
+                    "sap_id": existing_ticket.get("sap_id"),
+                    "location_name": existing_ticket.get("location_name"),
+                    "category": data_dict.get("category") or existing_ticket.get("category"),
+                    "sub_category": data_dict.get("sub_category") or existing_ticket.get("sub_category"),
+                    "start_date": existing_ticket.get("start_date"),
+                    "zone": existing_ticket.get("zone"),
+                    "ticket_end_date": existing_ticket.get("ticket_end_date"),
                 }
                 await send_ticket_mail(mail_payload)
             except Exception as e:
@@ -1173,7 +1167,6 @@ async def ticketing_update_ticket(data: Ticketing_Update_TicketParams):
         return {"status": False, "message": str(e)}
 
 
-
 # Action delete_ticket
 @router.post('/delete_ticket', tags=['Ticketing'])
 async def ticketing_delete_ticket(data: Ticketing_Delete_TicketParams):
@@ -1184,9 +1177,9 @@ async def ticketing_delete_ticket(data: Ticketing_Delete_TicketParams):
 # Action attach_file
 @router.post('/attach_file', tags=['Ticketing'])
 async def ticketing_attach_file(
-    ticket_id: Optional[str] = Form(None),
-    tid: Optional[str] = Form(None),
-    uploadfile: UploadFile = File(None)
+        ticket_id: Optional[str] = Form(None),
+        tid: Optional[str] = Form(None),
+        uploadfile: UploadFile = File(None)
 ):
     try:
         if not uploadfile:
@@ -1219,9 +1212,9 @@ async def ticketing_attach_file(
 
         # Upload using existing minio function
         status, minio_path = minio_connector.upload_to_minio(
-            "ticketing",   # bu
-            ticket_id,     # section
-            str(tid),      # unique_id (safe to pass as string)
+            "ticketing",  # bu
+            ticket_id,  # section
+            str(tid),  # unique_id (safe to pass as string)
             temp_path
         )
 
@@ -1260,7 +1253,6 @@ async def ticketing_attach_file(
         return {"status": False, "message": f"Error saving file: {str(e)}"}
 
 
-
 # Action delete_file_attachment
 @router.post('/delete_file_attachment', tags=['Ticketing'])
 async def ticketing_delete_file_attachment(data: Ticketing_Delete_File_AttachmentParams):
@@ -1286,7 +1278,6 @@ async def ticketing_delete_file_attachment(data: Ticketing_Delete_File_Attachmen
         if file_path and os.path.exists(file_path):
             os.remove(file_path)
 
-    
     update_payload = {
         "file_attachment": [],
         "file_attachment_name": "",
@@ -1300,10 +1291,11 @@ async def ticketing_delete_file_attachment(data: Ticketing_Delete_File_Attachmen
         "message": "File attachment deleted successfully",
         "data": ticket_id
     }
+
+
 # Action download_file_attachment
 @router.post('/download_file_attachment', tags=['Ticketing'])
 async def ticketing_download_file_attachment(data: Ticketing_Download_File_AttachmentParams):
-
     ticket_id = data.ticket_id
     requested_file_name = data.file_attachment_name
 
@@ -1350,11 +1342,11 @@ async def ticketing_download_file_attachment(data: Ticketing_Download_File_Attac
         filename=requested_file_name,
         media_type="application/octet-stream"
     )
-    
+
+
 # Action update_assignee
 @router.post('/update_assignee', tags=['Ticketing'])
 async def ticketing_update_assignee(data: Ticketing_Update_AssigneeParams):
-
     ticket_id = data.ticket_id
     assignee_name = data.assignee_name or []
     assignee_mail = data.assignee_mail or []
@@ -1382,7 +1374,6 @@ async def ticketing_update_assignee(data: Ticketing_Update_AssigneeParams):
             "assignee_mail": assignee_mail
         }
     }
-
 
 
 # Action update_reporter
@@ -1414,6 +1405,7 @@ async def ticketing_update_reporter(data: Ticketing_Update_ReporterParams):
             "reporter": new_reporter
         }
     }
+
 
 # Action update_priority
 @router.post('/update_priority', tags=['Ticketing'])
@@ -1722,6 +1714,7 @@ async def ticketing_delete_file_from_comment(data: Ticketing_Delete_File_From_Co
             "message": f"Error clearing attachment from comment: {str(e)}"
         }
 
+
 # Action merge_ticket
 @router.post('/merge_ticket', tags=['Ticketing'])
 async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
@@ -1734,10 +1727,10 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
     params.q = f"id='{ticket_id}'"
     params.limit = 1
     main_resp = await Ticketing.get_all(params, resp_type="plain")
-    
+
     if not main_resp or len(main_resp.get("data", [])) == 0:
         raise HTTPException(status_code=404, detail="Main ticket not found")
-    
+
     main_ticket = main_resp["data"][0]
     if "merge_history" not in main_ticket:
         main_ticket["merge_history"] = []
@@ -1752,10 +1745,10 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
         merge_params.q = f"ticket_id='{merge_ticket_id}'"
         merge_params.limit = 1
         merge_resp = await Ticketing.get_all(merge_params, resp_type="plain")
-        
+
         if not merge_resp or len(merge_resp.get("data", [])) == 0:
             continue  # skip if merge ticket not found
-        
+
         merge_ticket = merge_resp["data"][0]
 
         # Determine if SAP IDs or ticket_status differ
@@ -1816,7 +1809,9 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
         merge_ticket["ticket_history"].append(merge_ticket_history_entry)
         merge_ticket["merge_status"] = "Merged"
 
-        await Ticketing(id=merge_ticket["id"], merge_history=merge_ticket["merge_history"], ticket_history=merge_ticket["ticket_history"],merge_status=merge_ticket["merge_status"]).modify()
+        await Ticketing(id=merge_ticket["id"], merge_history=merge_ticket["merge_history"],
+                        ticket_history=merge_ticket["ticket_history"],
+                        merge_status=merge_ticket["merge_status"]).modify()
 
         # ----- NEW: Update ticket_history also -----
         ticket_history_entry = {
@@ -1846,17 +1841,18 @@ async def ticketing_merge_ticket(data: Ticketing_Merge_TicketParams):
         print("coming")
 
     # Save main ticket with updated merge_history and ticket_history
-    await Ticketing(id=main_ticket["id"], merge_history=main_ticket["merge_history"], ticket_history=main_ticket["ticket_history"], merge_status=None).modify()
+    await Ticketing(id=main_ticket["id"], merge_history=main_ticket["merge_history"],
+                    ticket_history=main_ticket["ticket_history"], merge_status=None).modify()
 
     return {
         "message": "Tickets merged successfully",
         "ticket": main_ticket
     }
 
+
 # Action get_location_data
 @router.post('/get_location_data', tags=['Ticketing'])
 async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
-
     # ------------------ BUILD FILTERS ------------------
     filters = []
 
@@ -1874,7 +1870,6 @@ async def ticketing_get_location_data(data: Ticketing_Get_Location_DataParams):
         else:
             if value not in ("", None):
                 filters.append(f"{field} = '{value}'")
-
 
     add_filter("bu", data.bu)
     add_filter("zone", data.zone)
@@ -2032,6 +2027,7 @@ async def ticketing_vts_block_trucks(data: Ticketing_Vts_Block_TrucksParams):
             "results": results
         }
 
+
 async def get_escalation_config() -> List[Dict]:
     return [
         {
@@ -2050,7 +2046,6 @@ async def get_escalation_config() -> List[Dict]:
 # Action process_escalations
 @router.post('/process_escalations', tags=['Ticketing'])
 async def ticketing_process_escalations():
-
     try:
 
         now = datetime.now(ZoneInfo("Asia/Kolkata"))
@@ -2064,10 +2059,10 @@ async def ticketing_process_escalations():
             params.q = rule["query"]
             params.limit = 100000
             params.fields = [
-                    "id", "ticket_id", "start_date", "ticket_end_date",
-                    "ticket_history", "escalation_level",
-                    "sap_id", "location_name", "zone", "category", "sub_category"
-                ]
+                "id", "ticket_id", "start_date", "ticket_end_date",
+                "ticket_history", "escalation_level",
+                "sap_id", "location_name", "zone", "category", "sub_category"
+            ]
 
             resp = await Ticketing.get_all(params, resp_type="plain")
             tickets = resp.get("data", [])
@@ -2087,18 +2082,61 @@ async def ticketing_process_escalations():
                     continue
 
                 # SLA days
-                sla_days = (end_date - start_date).days
+                # sla_days = (end_date - start_date).days
+                sla_days = max(1, abs((end_date - start_date).days))
                 open_days = (now - start_date).days
+                print("open_days: ", open_days)
+                print("sla_days: ", sla_days)
+                category_list = ticket.get("category") or []
+                category = category_list[0] if isinstance(category_list, list) and category_list else category_list
 
-                if sla_days <= 0:
+                functional_area = CATEGORY_FUNCTIONAL_MAP.get(category)
+                if not functional_area:
                     continue
 
-                # Dynamic escalation check
-                limit_days = sla_days * rule["multiplier"]
+                print("functional_area:", functional_area, category)
+                ticket_zone = ticket.get("zone")
+                location_name = ticket.get("location_name")
+                zones = ",".join([f"'{z}'" for z in ticket_zone])
 
-                if open_days > limit_days:
-                    await escalate_ticket(ticket, rule["level"])
+                print("ticket_zone: ",ticket_zone)
+                # If zone available but location missing → direct L2
+                if ticket_zone and not location_name:
+                    rule_level = "L2"
+                else:
+                    rule_level = rule["level"]
+
+                if rule_level == "L2":
+                    role_condition = "role LIKE '%Zonal Head%'"
+                else:
+                    role_condition = f"role LIKE '%{functional_area}%'"
+
+                query = f"""
+                select zone, employee_id 
+                from ticket_user_mails 
+                where {role_condition}
+                and zone in ({zones})
+                ORDER BY zone DESC
+                """
+                users_rec = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+                users = users_rec.get("data", [])
+                print("users: ",users)
+                # users = users_rec.get("data", [])
+                employee_ids = [u.get("employee_id") for u in users if u.get("employee_id")]
+                print("employee_ids: ",employee_ids)
+
+                # if sla_days <= 0:
+                #    continue
+
+                # Dynamic escalation check
+                limit_days = abs(sla_days) * rule["multiplier"]
+                print("ticket.get", ticket.get("escalation_level"))
+                print("rule: ", rule["level"])
+
+                if open_days > limit_days and ticket.get("escalation_level") != rule["level"]:
+                    await escalate_ticket(ticket, rule_level,employee_ids)
                     escalated_count += 1
+                print("rule level: ",rule["level"])
 
         return {
             "status": True,
@@ -2112,8 +2150,8 @@ async def ticketing_process_escalations():
             "message": str(e)
         }
 
-async def escalate_ticket(ticket: Dict, level: str):
 
+async def escalate_ticket(ticket: Dict, level: str,employee_ids: List[str]):
     now = datetime.now(ZoneInfo("Asia/Kolkata"))
     history = ticket.get("ticket_history") or []
 
@@ -2123,26 +2161,28 @@ async def escalate_ticket(ticket: Dict, level: str):
         "action_msg": f"Ticket auto escalated to {level}",
         "action_type": f"AutoEscalation {level}"
     })
+    employee_id = employee_ids if employee_ids else []
 
     await Ticketing(
         id=ticket["id"],
         ticket_state="Escalated",
         escalation_level=level,
+        employee_id=employee_id,
         ticket_history=history
     ).modify()
 
     try:
         mail_payload = {
-            "ticket_id":        ticket.get("ticket_id"),
-            "ticket_state":     State.Escalated.value,   # "Escalated"
-            "escalation_level": level,                   # "L1" or "L2"
-            "sap_id":           ticket.get("sap_id"),
-            "location_name":    ticket.get("location_name"),
-            "category":         ticket.get("category"),
-            "sub_category":     ticket.get("sub_category"),
-            "start_date":       ticket.get("start_date"),
-            "zone":             ticket.get("zone"), 
-            "ticket_end_date":  ticket.get("ticket_end_date"),
+            "ticket_id": ticket.get("ticket_id"),
+            "ticket_state": State.Escalated.value,  # "Escalated"
+            "escalation_level": level,  # "L1" or "L2"
+            "sap_id": ticket.get("sap_id"),
+            "location_name": ticket.get("location_name"),
+            "category": ticket.get("category"),
+            "sub_category": ticket.get("sub_category"),
+            "start_date": ticket.get("start_date"),
+            "zone": ticket.get("zone"),
+            "ticket_end_date": ticket.get("ticket_end_date"),
         }
         await send_ticket_mail(mail_payload)
     except Exception as e:
