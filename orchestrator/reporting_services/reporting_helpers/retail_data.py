@@ -522,72 +522,79 @@ async def fetch_retail_sales():
     return all_data
 
 
+async def get_dry_out_count():
+    query = """
+                    WITH dates AS (
+                    SELECT CURRENT_DATE::date AS report_date
+                    ),
+                    distinct_alerts AS (
+                    SELECT DISTINCT ON (a.sap_id)
+                        a.id,
+                        a.sap_id,
+                        COALESCE(a.zone, lm.zone) AS raw_zone,
+                        a.created_at::date AS created_date
+                    FROM alerts a
+                    LEFT JOIN location_master lm ON a.sap_id = lm.sap_id
+                    WHERE a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                        AND a.mark_as_false = true
+                        AND a.product_code IN ('2811000','2812000','2822000')
+                        AND a.dry_out_in_days = '1'
+                        AND a.indent_status NOT IN ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')
+                    ORDER BY a.sap_id, a.progress_rate ASC, a.id
+                    ),
+                    normalized AS (
+                    SELECT
+                        id,
+                        sap_id,
+                        created_date,
+                        CASE
+                        WHEN raw_zone IN ('CEN','CZ') THEN 'CZ'
+                        WHEN raw_zone = 'ECZ' THEN 'ECZ'
+                        WHEN raw_zone = 'EZ' THEN 'EZ'
+                        WHEN raw_zone IN ('NCR','NCZ') THEN 'NCZ'
+                        WHEN raw_zone = 'NFZ' THEN 'NFZ'
+                        WHEN raw_zone = 'NWF' THEN 'NWFZ'
+                        WHEN raw_zone IN ('NWR','NWZ') THEN 'NWZ'
+                        WHEN raw_zone = 'NZ' THEN 'NZ'
+                        WHEN raw_zone IN ('SCR','SCZ') THEN 'SCZ'
+                        WHEN raw_zone = 'SWZ' THEN 'SWZ'
+                        WHEN raw_zone = 'SZ' THEN 'SZ'
+                        WHEN raw_zone = 'WZ' THEN 'WZ'
+                        ELSE 'OTHERS'
+                        END AS zone
+                    FROM distinct_alerts
+                    )
+                    SELECT
+                    d.report_date AS "report_date",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'CZ')  AS "CZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'ECZ') AS "ECZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'EZ')  AS "EZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NCZ') AS "NCZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NFZ') AS "NFZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NWFZ') AS "NWFZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NWZ') AS "NWZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NZ')  AS "NZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SCZ') AS "SCZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SWZ') AS "SWZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SZ')  AS "SZ",
+                    COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'WZ')  AS "WZ",
+                    COUNT(DISTINCT n.sap_id) AS "Grand Total",
+                    ARRAY_AGG(n.id) AS all_ids
+                    FROM dates d
+                    LEFT JOIN normalized n ON n.created_date <= d.report_date
+                    GROUP BY d.report_date
+                    ORDER BY d.report_date
+                """
+    dry_out_report_count = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+    return dry_out_report_count
+
+
 async def fetch_dryout_data(WRITE_TO_DB=False):
     global zone_wise_pdf_path
     # global WRITE_TO_DB
-    query = """
-                WITH dates AS (
-                SELECT CURRENT_DATE::date AS report_date
-                ),
-                distinct_alerts AS (
-                SELECT DISTINCT ON (a.sap_id)
-                    a.id,
-                    a.sap_id,
-                    COALESCE(a.zone, lm.zone) AS raw_zone,
-                    a.created_at::date AS created_date
-                FROM alerts a
-                LEFT JOIN location_master lm ON a.sap_id = lm.sap_id
-                WHERE a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
-                    AND a.mark_as_false = true
-                    AND a.product_code IN ('2811000','2812000','2822000')
-                    AND a.dry_out_in_days = '1'
-                    AND a.indent_status NOT IN ('Cancelled', 'Completed', 'TempClosed', 'ProductLowLevel', 'OfflineOrFalseAlarm', 'NotAvailable')
-                ORDER BY a.sap_id, a.progress_rate ASC, a.id
-                ),
-                normalized AS (
-                SELECT
-                    id,
-                    sap_id,
-                    created_date,
-                    CASE
-                    WHEN raw_zone IN ('CEN','CZ') THEN 'CZ'
-                    WHEN raw_zone = 'ECZ' THEN 'ECZ'
-                    WHEN raw_zone = 'EZ' THEN 'EZ'
-                    WHEN raw_zone IN ('NCR','NCZ') THEN 'NCZ'
-                    WHEN raw_zone = 'NFZ' THEN 'NFZ'
-                    WHEN raw_zone = 'NWF' THEN 'NWFZ'
-                    WHEN raw_zone IN ('NWR','NWZ') THEN 'NWZ'
-                    WHEN raw_zone = 'NZ' THEN 'NZ'
-                    WHEN raw_zone IN ('SCR','SCZ') THEN 'SCZ'
-                    WHEN raw_zone = 'SWZ' THEN 'SWZ'
-                    WHEN raw_zone = 'SZ' THEN 'SZ'
-                    WHEN raw_zone = 'WZ' THEN 'WZ'
-                    ELSE 'OTHERS'
-                    END AS zone
-                FROM distinct_alerts
-                )
-                SELECT
-                d.report_date AS "report_date",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'CZ')  AS "CZ",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'ECZ') AS "ECZ",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'EZ')  AS "EZ",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NCZ') AS "NCZ",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NFZ') AS "NFZ",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NWFZ') AS "NWFZ",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NWZ') AS "NWZ",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'NZ')  AS "NZ",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SCZ') AS "SCZ",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SWZ') AS "SWZ",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'SZ')  AS "SZ",
-                COUNT(DISTINCT n.sap_id) FILTER (WHERE n.zone = 'WZ')  AS "WZ",
-                COUNT(DISTINCT n.sap_id) AS "Grand Total",
-                ARRAY_AGG(n.id) AS all_ids
-                FROM dates d
-                LEFT JOIN normalized n ON n.created_date <= d.report_date
-                GROUP BY d.report_date
-                ORDER BY d.report_date
-            """
-    dry_out_report_count = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+
+    dry_out_report_count = await get_dry_out_count()
+
     if dry_out_report_count.get("data", []):
         report_data = dry_out_report_count["data"][0]
         report_date = str(report_data["report_date"])
@@ -984,3 +991,84 @@ async def get_ro_alerts():
         if key not in data.keys():
             data.update({key: 0})
     return data
+
+
+async def get_bi_hourly_intra_dryout():
+    """ Reading Intra Day Dryout details from CRIS DB"""
+    intra_dryout_query = """
+        WITH base_data AS (
+        SELECT
+            site_id,
+            rosapcode,
+            product_grp,
+            SUM(GREATEST(pumpable_stock,0)) AS pumpable_stock,
+            SUM(avgsales_7days)/7/24 AS hourly_sales,
+            CASE
+                WHEN SUM(GREATEST(pumpable_stock,0)) <= 0 THEN 0
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*6 THEN 1
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*12 THEN 2
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*24 THEN 3
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*72 THEN 4
+                ELSE 5
+            END AS status
+        FROM "HPCL_HOS".sch_inventory_forecast_dashboard sch
+        WHERE sch.volume > 0
+        AND product_grp IN ('MS','HSD','E20')
+        GROUP BY site_id, rosapcode, product_grp
+    ),
+
+    site_status AS (
+        SELECT
+            rosapcode,
+            MIN(status) AS status
+        FROM base_data
+        GROUP BY rosapcode
+    )
+    SELECT
+        CASE
+            WHEN status = 0 THEN 'no_stock'
+            WHEN status = 1 THEN 'hr_0_6'
+            WHEN status = 2 THEN 'hr_6_12'
+            WHEN status = 3 THEN 'hr_12_24'
+            WHEN status = 4 THEN 'hr_24_72'
+            ELSE 'Others'
+        END AS stock_status,
+        COUNT(*) AS site_count
+    FROM site_status
+    GROUP BY status
+    ORDER BY status;
+    """
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=intra_dryout_query)
+    resp = {rec['stock_status']: rec['site_count'] for rec in resp}
+    resp['partial_dryout'] = sum([resp[key] for key in ['hr_0_6', 'hr_6_12', 'hr_12_24']])
+    resp['online'] = resp['offline'] = 0
+    location_status = await get_ro_location_status()
+    for rec in location_status:
+        if rec['ro_status'] == 'Online':
+            resp['online'] = rec['count']
+        elif rec['ro_status'] == 'Offline':
+            resp['offline'] = rec['count']
+    return resp
+
+
+async def get_ro_location_status():
+    """
+    Fetching ro locations status count online/offline from CRIS database
+    :return: list of dictionaries containing status
+    Ex:- [{'count': 4383, 'ro_status': 'Offline'}, {'count': 20823, 'ro_status': 'Online'}]
+    """
+    query = """SELECT COUNT(DISTINCT site_id),
+CASE 
+    WHEN enable THEN 'Online'
+    ELSE 'Offline' 
+    END AS ro_status 
+FROM "HPCL_HOS".ms_site WHERE  "tempclose" IN (NULL, 'false') group by enable"""
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
+        "cris", "2")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+    return resp
