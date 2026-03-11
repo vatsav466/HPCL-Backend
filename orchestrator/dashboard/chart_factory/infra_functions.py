@@ -207,7 +207,7 @@ async def get_sod_lpg_info(filters, cross_filters, drill_state, limit, time_grai
 
 
 
-async def get_distinct_sod_lpg_info(sbu: str = "", zone=None, state=None, district=None, company=None, location_name=None):
+async def get_distinct_sod_lpg_info(sbu=None, zone=None, state=None, district=None, company=None, location_name=None):
     try:
         sbu_tables = ["sod_infra", "lpg_infra", "aviation_infra", "lubes_infra"]
         select_columns = "sbu, zone, state, district, company, location_name"
@@ -216,65 +216,93 @@ async def get_distinct_sod_lpg_info(sbu: str = "", zone=None, state=None, distri
         union_block = "\nUNION\n".join(union_queries)
 
         query = f'''
-            DISTINCT {select_columns}
+            SELECT DISTINCT {select_columns}
             FROM (
                 {union_block}
             ) AS combined_infra
         '''
 
-        conditions = []
-
-        if sbu:
-            conditions.append(f"sbu = '{sbu}'")
-        if zone:
-            zone_str = "', '".join(zone)
-            conditions.append(f"zone IN ('{zone_str}')")
-        if state:
-            state_str = "', '".join(state)
-            conditions.append(f"state IN ('{state_str}')")
-        if district:
-            district_str = "', '".join(district)
-            conditions.append(f"district IN ('{district_str}')")
-        if company:
-            company_str = "', '".join(company)
-            conditions.append(f"company IN ('{company_str}')")
-        if location_name:
-            location_str = "', '".join(location_name)
-            conditions.append(f"location_name IN ('{location_str}')")
-
-        if conditions:
-            query += " WHERE " + " AND ".join(conditions)
-
         result = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0, skip=0)
         rows = result.get("data", [])
 
-        def add_if_valid(val, target_set):
-            if val and val.strip():
-                target_set.add(val.strip())
+        if not rows:
+             return {
+                 "status": True,
+                 "message": "success",
+                 "data": {
+                     "sbu": ["SOD", "LPG", "AVIATION", "LUBES"],
+                     "company": [],
+                     "zone": [],
+                     "state": [],
+                     "district": [],
+                     "location_name": []
+                 }
+             }
 
-        sbu_set, zone_set, state_set, district_set, company_set, location_name_set = set(), set(), set(), set(), set(), set()
+        df = pl.DataFrame(rows)
 
-        for row in rows:
-            add_if_valid(row.get("sbu"), sbu_set)
-            add_if_valid(row.get("zone"), zone_set)
-            add_if_valid(row.get("state"), state_set)
-            add_if_valid(row.get("district"), district_set)
-            add_if_valid(row.get("company"), company_set)
-            add_if_valid(row.get("location_name"), location_name_set)
+        def to_list(val):
+            if val is None:
+                return []
+            if isinstance(val, str):
+                return [val] if val.strip() else []
+            if isinstance(val, (list, tuple)):
+                return [v for v in val if isinstance(v, str) and v.strip()]
+            return []
 
-        sbu_values = {"SOD", "LPG", "AVIATION", "LUBES"}
-        sbu_set = sbu_set.union(sbu_values)
+        sbu_in = to_list(sbu)
+        zone_in = to_list(zone)
+        state_in = to_list(state)
+        district_in = to_list(district)
+        company_in = to_list(company)
+        
+        # Helper to get sorted unique non-empty values
+        def get_options(dataframe, col_name):
+            vals = dataframe[col_name].unique().to_list()
+            return sorted([v for v in vals if v and str(v).strip()])
+
+        # Level 0: SBU, Company, Zone (Independent or Global)
+        sbu_res = get_options(df, "sbu")
+        sbu_res = sorted(list(set(sbu_res).union({"SOD", "LPG", "AVIATION", "LUBES"})))
+        
+        company_res = get_options(df, "company")
+        zone_res = get_options(df, "zone")
+
+        # Level 1: Filter Context for State (depends on SBU, Company, Zone)
+        ctx_state = df
+        if sbu_in:
+            ctx_state = ctx_state.filter(pl.col("sbu").is_in(sbu_in))
+        if company_in:
+            ctx_state = ctx_state.filter(pl.col("company").is_in(company_in))
+        if zone_in:
+            ctx_state = ctx_state.filter(pl.col("zone").is_in(zone_in))
+            
+        state_res = get_options(ctx_state, "state")
+
+        # Level 2: Filter Context for District (depends on Level 1 + State)
+        ctx_district = ctx_state
+        if state_in:
+            ctx_district = ctx_district.filter(pl.col("state").is_in(state_in))
+            
+        district_res = get_options(ctx_district, "district")
+
+        # Level 3: Filter Context for Location (depends on Level 2 + District)
+        ctx_location = ctx_district
+        if district_in:
+            ctx_location = ctx_location.filter(pl.col("district").is_in(district_in))
+            
+        location_res = get_options(ctx_location, "location_name")
 
         return {
             "status": True,
             "message": "success",
             "data": {
-                "sbu": sorted(sbu_set),
-                "company": sorted(company_set),
-                "zone": sorted(zone_set),
-                "state": sorted(state_set),
-                "district": sorted(district_set),
-                "location_name": sorted(location_name_set)
+                "sbu": sbu_res,
+                "company": company_res,
+                "zone": zone_res,
+                "state": state_res,
+                "district": district_res,
+                "location_name": location_res
             }
         }
 
@@ -323,10 +351,21 @@ async def get_sales_info(filters, cross_filters, drill_state, limit, time_grain)
                    sap_id,
                    sales_area,
                    fiscal_year,
-                   ROUND(SUM("NETWEIGHT (TMT)")::numeric, 4) AS "NETWEIGHT (TMT)"
+                   SUM("NETWEIGHT (TMT)") AS "NETWEIGHT (TMT)"
             FROM base_data
             GROUP BY sbu, sap_id, sales_area, fiscal_year
         '''
+
+        # query = f'''
+        # SELECT
+        #     ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric, 2) AS
+        #     "ACTUAL_TMT_SALES"
+        #     FROM "MOM_DAY_LEVEL_DATA"
+        #     WHERE
+        #     "SBU_Name" != '0'
+        #     AND "SBU_Name" NOT IN ('Common', 'Mumbai Ref', 'Renewable Energy', 'Visakh
+        #     Ref')
+        # '''
 
         if filters:
             query = await widget_actions.WidgetActions.apply_filter_drilldown(query, filters, drill_state)

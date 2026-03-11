@@ -4162,6 +4162,7 @@ async def sick_tts_dashboard(data):
     # VEHICLE WISE SUMMARY (ONLY TOP LOCATIONS)
     vehicle_query = common_cte + """
         SELECT
+            b.sap_id,
             b.location_name,
             b.truck_number,
             STRING_AGG(DISTINCT b.load_number::text, ', ') AS load_number,
@@ -4170,6 +4171,7 @@ async def sick_tts_dashboard(data):
         JOIN location_totals lt
             ON b.location_name = lt.location_name
         GROUP BY
+            b.sap_id,
             b.location_name,
             b.truck_number
         ORDER BY
@@ -4245,7 +4247,7 @@ async def over_loaded_tts_dashboard(data):
     conditions = []
 
     # ALWAYS APPLY LAST 7 DAYS CONDITION
-    conditions.append("created_at >= CURRENT_DATE - INTERVAL '90 days'")
+    conditions.append("created_at >= CURRENT_DATE - INTERVAL '7 days'")
 
     if data.filters:
         for f in data.filters:
