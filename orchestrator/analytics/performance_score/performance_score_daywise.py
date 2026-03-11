@@ -123,7 +123,7 @@ async def performance_score_daywise_action(data):
         if isinstance(category, str):
             category = json.loads(category)
 
-        # Extract ONLY TAS score from category JSON
+        # Extract ONLY TAS score
         tas_entry = next(
             (c for c in category if c.get("name") == "TAS"),
             None
@@ -132,8 +132,15 @@ async def performance_score_daywise_action(data):
         if not tas_entry:
             continue
 
-        score_val = tas_entry.get("score", 0)
+        raw_score = tas_entry.get("score", 0)
 
+        # Convert safely for response display
+        try:
+            score_val = float(raw_score)
+        except (ValueError, TypeError):
+            score_val = 0
+
+        # -------- Always append for response (even if 0) --------
         score_data = {
             "date": score_date,
             "name": "TAS",
@@ -143,48 +150,62 @@ async def performance_score_daywise_action(data):
 
         zones_map.setdefault(zone, {}).setdefault(plant, []).append(score_data)
 
+        # -------- Only use VALID NON-ZERO scores for averages --------
+        if raw_score in (None, "", 0, "0"):
+            continue
+
+        try:
+            valid_score = float(raw_score)
+        except (ValueError, TypeError):
+            continue
+
+        if valid_score == 0:
+            continue
+
         # ---------- overall ----------
-        zone_scores.setdefault(zone, []).append(score_val)
-        plant_scores.setdefault((zone, plant), []).append(score_val)
+        zone_scores.setdefault(zone, []).append(valid_score)
+        plant_scores.setdefault((zone, plant), []).append(valid_score)
 
         # ---------- day-wise ----------
-        date_zone_scores.setdefault(score_date, {}).setdefault(zone, []).append(score_val)
-        date_plant_scores.setdefault(score_date, {}).setdefault(plant, []).append(score_val)
+        date_zone_scores.setdefault(score_date, {}).setdefault(zone, []).append(valid_score)
+        date_plant_scores.setdefault(score_date, {}).setdefault(plant, []).append(valid_score)
+
+    # ================= SAFE AVERAGE FUNCTION =================
+    def safe_avg(values):
+        return round(sum(values) / len(values), 2) if values else 0
 
     # ================= OVERALL AVERAGES =================
-    zone_avg = round(
-        sum(sum(v) / len(v) for v in zone_scores.values()) / len(zone_scores),
-        2
-    ) if zone_scores else 0
+    zone_avg = safe_avg([
+        safe_avg(v) for v in zone_scores.values() if v
+    ])
 
-    plant_avg = round(
-        sum(sum(v) / len(v) for v in plant_scores.values()) / len(plant_scores),
-        2
-    ) if plant_scores else 0
+    plant_avg = safe_avg([
+        safe_avg(v) for v in plant_scores.values() if v
+    ])
 
     # ================= DAY-WISE ZONE AVG =================
-    zone_avg_daywise = [
-        {
+    zone_avg_daywise = []
+
+    for date, zones in sorted(date_zone_scores.items()):
+        zone_level_avgs = [
+            safe_avg(scores) for scores in zones.values() if scores
+        ]
+        zone_avg_daywise.append({
             "date": date,
-            "avg_score": round(
-                sum(sum(scores) / len(scores) for scores in zones.values()) / len(zones),
-                2
-            )
-        }
-        for date, zones in sorted(date_zone_scores.items())
-    ]
+            "avg_score": safe_avg(zone_level_avgs)
+        })
 
     # ================= DAY-WISE PLANT AVG =================
-    plant_avg_daywise = [
-        {
+    plant_avg_daywise = []
+
+    for date, plants in sorted(date_plant_scores.items()):
+        plant_level_avgs = [
+            safe_avg(scores) for scores in plants.values() if scores
+        ]
+        plant_avg_daywise.append({
             "date": date,
-            "avg_score": round(
-                sum(sum(scores) / len(scores) for scores in plants.values()) / len(plants),
-                2
-            )
-        }
-        for date, plants in sorted(date_plant_scores.items())
-    ]
+            "avg_score": safe_avg(plant_level_avgs)
+        })
 
     # ================= RESPONSE =================
     return {
