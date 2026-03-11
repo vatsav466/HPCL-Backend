@@ -165,6 +165,7 @@ Model Ticketing {
     assignee_mail optional list str
     escalation_level optional str
     comment_history optional list CommentHistory
+    employee_id optional list str
 
 
     Action=> get_ticket {
@@ -206,6 +207,7 @@ Model Ticketing {
         reporter optional str
         escalation_level optional str
         comment_history optional list CommentHistory
+        employee_id optional list str
 
 
     }
@@ -246,7 +248,6 @@ Model Ticketing {
         assignee_name optional list str
         assignee_mail optional list str
         reporter optional str
-        escalation_level optional str
         comment_history optional list CommentHistory
 
        
@@ -406,9 +407,10 @@ Model TicketUserMails {
     sap_id index_field optional str
     role index_field str
     location_name index_field optional str
-    zone index_field str
+    zone index_field optional list str
     employee_name optional str
     email_id optional str
+    employee_id optional str
 
     Action=> get_ticket_mails {
         sap_id optional list str
