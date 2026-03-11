@@ -996,50 +996,47 @@ async def get_ro_alerts():
 async def get_bi_hourly_intra_dryout():
     """ Reading Intra Day Dryout details from CRIS DB"""
     intra_dryout_query = """
-    SELECT
-    CASE
-        WHEN status = 0 THEN 'no_stock'
-        WHEN status = 1 THEN 'hr_0_6'
-        WHEN status = 2 THEN 'hr_6_12'
-        WHEN status = 3 THEN 'hr_12_24'
-        WHEN status = 4 THEN 'hr_24_72'
-        ELSE 'Others'
-    END AS stock_status,
-    site_count
-FROM (
-    SELECT
-        status,
-        COUNT(DISTINCT rosapcode) AS site_count
-    FROM (
+        WITH base_data AS (
         SELECT
             site_id,
-            fcc_code,
-            product_grp,
             rosapcode,
-            COUNT(DISTINCT tank_no) AS tank_cnt,
-            STRING_AGG(tank_no::text, ',') AS tank_no,
+            product_grp,
             SUM(GREATEST(pumpable_stock,0)) AS pumpable_stock,
             SUM(avgsales_7days)/7/24 AS hourly_sales,
             CASE
                 WHEN SUM(GREATEST(pumpable_stock,0)) <= 0 THEN 0
-                WHEN SUM(GREATEST(pumpable_stock,0)) > 0 
-                     AND SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*6 THEN 1
-                WHEN SUM(GREATEST(pumpable_stock,0)) >= (SUM(avgsales_7days)/7/24)*6 
-                     AND SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*12 THEN 2
-                WHEN SUM(GREATEST(pumpable_stock,0)) >= (SUM(avgsales_7days)/7/24)*12 
-                     AND SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*24 THEN 3
-                WHEN SUM(GREATEST(pumpable_stock,0)) >= (SUM(avgsales_7days)/7/24)*24 
-                     AND SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*72 THEN 4
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*6 THEN 1
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*12 THEN 2
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*24 THEN 3
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*72 THEN 4
                 ELSE 5
             END AS status
         FROM "HPCL_HOS".sch_inventory_forecast_dashboard sch
-        WHERE sch.volume > 0 
+        WHERE sch.volume > 0
         AND product_grp IN ('MS','HSD','E20')
-        GROUP BY site_id, fcc_code, product_grp, rosapcode
-    ) result1
+        GROUP BY site_id, rosapcode, product_grp
+    ),
+
+    site_status AS (
+        SELECT
+            rosapcode,
+            MIN(status) AS status
+        FROM base_data
+        GROUP BY rosapcode
+    )
+    SELECT
+        CASE
+            WHEN status = 0 THEN 'no_stock'
+            WHEN status = 1 THEN 'hr_0_6'
+            WHEN status = 2 THEN 'hr_6_12'
+            WHEN status = 3 THEN 'hr_12_24'
+            WHEN status = 4 THEN 'hr_24_72'
+            ELSE 'Others'
+        END AS stock_status,
+        COUNT(*) AS site_count
+    FROM site_status
     GROUP BY status
-) result2
-ORDER BY stock_status;
+    ORDER BY status;
     """
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
