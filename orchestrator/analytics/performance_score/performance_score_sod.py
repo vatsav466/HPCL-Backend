@@ -948,6 +948,7 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
         for rule in rules['rules']:
             alert_score = []
+            score = 0
             if rule['model'] == 'vts_interlock':
                 search_values = [rec['search_value'] for rec in rule['rules']]
                 query_clause = " or ".join(
@@ -984,9 +985,12 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
 
                 inactive_vehicles = len(data['data'])
                 active_vehicles = total_vehicles - inactive_vehicles
-                resp = active_vehicles / total_vehicles if total_vehicles else 0
-                resp = round(resp * rule['weightage'], 2)
-                alert_score.append(resp)
+                # Score = (active_vehicles / total_vehicles) * rule weightage (points 0–30)
+                active_ratio = (active_vehicles / total_vehicles) if total_vehicles else 0.0
+                rule_weightage_pts = float(rule.get('weightage', 30))
+                if rule_weightage_pts <= 1:
+                    rule_weightage_pts = 30.0  # guard: weightage must be in points (e.g. 30), not ratio
+                score = round(active_ratio * rule_weightage_pts, 2)
 
                 # Store for insights
                 vts_active_vehicles_count = active_vehicles
@@ -1025,7 +1029,9 @@ class SODPerformanceScore(performance_score_factory.PerformanceIndex):
                 # Store for insights
                 vts_open_alerts_count = sum(open_alerts.values())
                 vts_closed_alerts_count = sum(close_alerts.values())
-            score = round((sum(alert_score) * rule['weightage']) / 100, 2)
+            # For vts_active_vehicles, score already set above (points 0–weightage); do not overwrite
+            if rule['model'] != 'vts_active_vehicles' and alert_score:
+                score = round((sum(alert_score) * rule['weightage']) / 100, 2)
 
             # Build details based on rule model
             details = {}
