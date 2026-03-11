@@ -182,13 +182,13 @@ def enrich_data(pg_conn, df: pl.DataFrame) -> pl.DataFrame:
     if any(c.lower() == "item_no" for c in df.columns):
         item_col = next(c for c in df.columns if c.lower() == "item_no")
 
-        df = df.with_columns([
+        df = df.with_columns(
             pl.col(item_col)
             .cast(pl.Utf8)
             .str.strip_chars()
-            .map_elements(lambda x: ITEM_NAME_MAP.get(x))
+            .replace(ITEM_NAME_MAP)
             .alias("material_group_nm")
-        ])
+        )
         print(" Added 'material_group_nm' column based on item_no mapping")
     else:
         print(" 'item_no' column not found — skipping material_group_nm mapping")
