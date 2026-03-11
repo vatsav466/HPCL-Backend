@@ -1046,11 +1046,15 @@ async def get_bi_hourly_intra_dryout():
     resp['partial_dryout'] = sum([resp[key] for key in ['hr_0_6', 'hr_6_12', 'hr_12_24']])
     resp['online'] = resp['offline'] = 0
     location_status = await get_ro_location_status()
-    for rec in location_status:
-        if rec['ro_status'] == 'Online':
-            resp['online'] = rec['count']
-        elif rec['ro_status'] == 'Offline':
-            resp['offline'] = rec['count']
+
+    if location_status:
+        resp['online'] = location_status[0]['count']
+
+    # for rec in location_status:
+    #     if rec['ro_status'] == 'Online':
+    #         resp['online'] = rec['count']
+    #     elif rec['ro_status'] == 'Offline':
+    #         resp['offline'] = rec['count']
     return resp
 
 
@@ -1060,14 +1064,22 @@ async def get_ro_location_status():
     :return: list of dictionaries containing status
     Ex:- [{'count': 4383, 'ro_status': 'Offline'}, {'count': 20823, 'ro_status': 'Online'}]
     """
-    query = """SELECT COUNT(DISTINCT site_id),
-CASE 
-    WHEN enable THEN 'Online'
-    ELSE 'Offline' 
-    END AS ro_status 
-FROM "HPCL_HOS".ms_site WHERE  "tempclose" IN (NULL, 'false') group by enable"""
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
-        "cris", "2")
+
+    # query = """SELECT COUNT(DISTINCT site_id),
+    #             CASE 
+    #                 WHEN enable THEN 'Online'
+    #                 ELSE 'Offline' 
+    #                 END AS ro_status 
+    #             FROM "HPCL_HOS".ms_site WHERE  "tempclose" IN (NULL, 'false') group by enable"""
+
+    query = f"""select 
+                    count(distinct(rosapcode)) 
+                    from 
+                    "HPCL_HOS".sch_inventory_forecast_dashboard 
+                    where volume>0 and product_grp IN ('MS','HSD','E20')
+                """
+    
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(query=query)
