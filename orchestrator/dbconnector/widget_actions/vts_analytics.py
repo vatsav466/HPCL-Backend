@@ -2167,7 +2167,8 @@ class VTSAnalyticsActions:
             if status_filter == "live":
                 conditions.append("completed_trip = 'open' AND completed_trip_auto_dc = 'open'")
             elif status_filter == "closed":
-                conditions.append("'closed' IN (completed_trip, completed_trip_auto_dc)")
+                # conditions.append("'closed' IN (completed_trip, completed_trip_auto_dc)")
+                conditions.append("completed_trip='closed' OR completed_trip_auto_dc='closed'")
 
             query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
             print("query after applied conditions --->", query)
