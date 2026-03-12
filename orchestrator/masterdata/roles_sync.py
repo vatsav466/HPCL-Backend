@@ -766,6 +766,9 @@ async def sync_user_roles():
                             },
                             {
                                 "title": "TAS Overview"
+                            },
+                            {
+                                "title": "Help Desk Module"
                             }
                         ]
                     },
@@ -854,6 +857,9 @@ async def sync_user_roles():
                             },
                             {
                                 "title": "TAS Overview"
+                            },
+                            {
+                                "title": "Help Desk Module"
                             }
                         ]
                     },
@@ -893,6 +899,9 @@ async def sync_user_roles():
                             },
                             {
                                 "title": "TAS Overview"
+                            },
+                            {
+                                "title": "Help Desk Module"
                             }
                         ]
                     },
@@ -997,6 +1006,9 @@ async def sync_user_roles():
                             },
                             {
                                 "title": "TAS Overview"
+                            },
+                            {
+                                "title": "Help Desk Module"
                             }
                         ]
                     },
@@ -1036,6 +1048,9 @@ async def sync_user_roles():
                             },
                             {
                                 "title": "TAS Overview"
+                            },
+                            {
+                                "title": "Help Desk Module"
                             }
                         ]
                     },
