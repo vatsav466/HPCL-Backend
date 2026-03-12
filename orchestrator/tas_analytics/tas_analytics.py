@@ -4240,6 +4240,196 @@ async def sick_tts_dashboard(data):
             "records": records_result
         }
     }
+
+
+async def repeated_sick_cross_verification(data):
+
+    # ---------------- FILTER BUILD ----------------
+    conditions = []
+
+    if data.filters:
+        for f in data.filters:
+
+            if not f.value:
+                continue
+
+            if f.key == "start_date":
+                start_date = f.value if isinstance(f.value, str) else None
+                end_date = next(
+                    (x.value for x in data.filters if x.key == "end_date"),
+                    None
+                )
+
+                if start_date and end_date:
+                    conditions.append(
+                        f"DATE(created_at) BETWEEN '{start_date}' AND '{end_date}'"
+                    )
+                continue
+
+            if f.key == "end_date":
+                continue
+
+            if isinstance(f.value, str):
+                if "," in f.value:
+                    clean_values = [v.strip() for v in f.value.split(",") if v.strip()]
+                else:
+                    clean_values = [f.value]
+            else:
+                clean_values = []
+
+            if not clean_values:
+                continue
+
+            if f.cond == "=":
+                if len(clean_values) == 1:
+                    conditions.append(f"{f.key} = '{clean_values[0]}'")
+                else:
+                    values = ", ".join(f"'{v}'" for v in clean_values)
+                    conditions.append(f"{f.key} IN ({values})")
+
+            elif f.cond == "!=":
+                if len(clean_values) == 1:
+                    conditions.append(f"{f.key} != '{clean_values[0]}'")
+                else:
+                    values = ", ".join(f"'{v}'" for v in clean_values)
+                    conditions.append(f"{f.key} NOT IN ({values})")
+
+    where_clause = ""
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+    # ---------------- COMMON DATASET ----------------
+    common_cte = f"""
+        WITH combined_data AS (
+
+            SELECT DISTINCT
+                load_number,
+                truck_number,
+                location_name,
+                customer_name,
+                sap_id,
+                zone,
+                created_at,
+                'SICK_TT' AS record_type
+            FROM host_sick_tts
+            {where_clause}
+
+            UNION ALL
+
+            SELECT DISTINCT
+                load_number,
+                truck_number,
+                location_name,
+                customer_name,
+                sap_id,
+                zone,
+                created_at,
+                'CANCELLED_TT' AS record_type
+            FROM host_cancelled_tts
+            {where_clause}
+        )
+    """
+
+    # ---------------- LOCATION WISE (PIVOT) ----------------
+    location_query = common_cte + """
+        SELECT
+            location_name,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'SICK_TT'
+                THEN load_number
+            END) AS sick_tt_count,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'CANCELLED_TT'
+                THEN load_number
+            END) AS cancelled_tt_count
+
+        FROM combined_data
+        GROUP BY location_name
+        ORDER BY cancelled_tt_count DESC, sick_tt_count DESC
+    """
+
+    # ---------------- VEHICLE WISE (PIVOT) ----------------
+    vehicle_query = common_cte + """
+        SELECT
+            truck_number,
+            customer_name,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'SICK_TT'
+                THEN load_number
+            END) AS sick_tt_count,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'CANCELLED_TT'
+                THEN load_number
+            END) AS cancelled_tt_count
+
+        FROM combined_data
+        GROUP BY truck_number, customer_name
+        ORDER BY cancelled_tt_count DESC, sick_tt_count DESC
+    """
+
+    # ---------------- CUSTOMER WISE (PIVOT) ----------------
+    customer_query = common_cte + """
+        SELECT
+            customer_name,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'SICK_TT'
+                THEN load_number
+            END) AS sick_tt_count,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'CANCELLED_TT'
+                THEN load_number
+            END) AS cancelled_tt_count
+
+        FROM combined_data
+        GROUP BY customer_name
+        ORDER BY cancelled_tt_count DESC, sick_tt_count DESC
+    """
+
+    # ---------------- RECORD DETAILS ----------------
+    records_query = common_cte + """
+        SELECT DISTINCT ON (load_number, record_type)
+            load_number,
+            truck_number,
+            location_name,
+            customer_name,
+            sap_id,
+            zone,
+            created_at,
+            record_type
+        FROM combined_data
+        ORDER BY load_number, record_type, created_at DESC
+    """
+
+    # ---------------- EXECUTION ----------------
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
+
+    location_result = await function(query=location_query)
+    vehicle_result = await function(query=vehicle_query)
+    customer_result = await function(query=customer_query)
+    records_result = await function(query=records_query)
+
+    # ---------------- FINAL RESPONSE ----------------
+    return {
+        "status": "success",
+        "message": "Sick & Cancelled TT combined dashboard fetched successfully",
+        "data": {
+            "location_wise_summary": location_result,
+            "vehicle_wise_summary": vehicle_result,
+            "customer_wise_summary": customer_result,
+            "records": records_result
+        }
+    }
     
 async def over_loaded_tts_dashboard(data):
 
@@ -5840,6 +6030,7 @@ AnalyticsModelMapping = {
     "Hostbay Reassignment Alerts":host_bay_reassignment_alert,
     "Cancelled Report tts":cancelled_tts_dashboard,
     "Sick Report tts":sick_tts_dashboard,
+    "Repeated_Sick_Cross":repeated_sick_cross_verification,
     "Over Loaded tts":over_loaded_tts_dashboard,
     "Host Tables Combined Data":host_tables_combined_data,
     "get bay counts":get_bay_counts,
@@ -5851,14 +6042,14 @@ AnalyticsModelMapping = {
 async def tas_analytics_action(data):
     SKIP_KEYS = {"bay"}
     if hasattr(data, "filters") and data.filters:
+        cleaned_filters = []
         for f in data.filters:
             if f.key in SKIP_KEYS:
                 continue
             if f.value:
-                if isinstance(f.value, list) and len(f.value) > 1:
-                    setattr(data, f.key, f.value)   # keep full list
-                else:
-                    setattr(data, f.key, f.value[0] if isinstance(f.value, list) else f.value)
+                cleaned_filters.append(f)
+
+        data.filters = cleaned_filters   # optional cleanup
 
     analytical_model = data.analytical_model
 
