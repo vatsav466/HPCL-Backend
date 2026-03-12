@@ -202,6 +202,35 @@ class Postgresql:
         status, msg = await alert_factory.AlertFactory.create_alert(data)
         return status, msg, data
     
+    
+    async def create_sick_tt_report(self, data):
+        """
+        Create or update sick TT report alerts.
+
+        Parameters:
+        data (dict): A dictionary containing vehicle_number, tt_load_number, and message fields.
+
+        Returns:
+        tuple: A tuple containing a boolean indicating if the alert was created or updated successfully, a string message summarizing the alert status, and the input data.
+        """
+        to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
+        vehicle_number = data.get("vehicle_number")
+        tt_load_number = data.get("tt_load_number")
+        query = f"""
+        select * from alerts
+        where interlock_name = 'Sick TT Reported'
+        and vehicle_number = '{vehicle_number}'
+        and tt_load_number = '{tt_load_number}'
+        and created_at::DATE = '{to_date}'
+        """   
+        resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+        if resp.get("data", []):
+            print(f"Sick TT alert already exists for Truck: {vehicle_number}, Load: {tt_load_number}")
+            return False, "Alert already exists", data
+        # If no alert exists → create new alert
+        status, msg = await alert_factory.AlertFactory.create_alert(data)
+        return status, msg, data
+    
     async def close_created_alert(self, alert_data):
         # Extract alert_id from response (assuming response contains alert_id)
         """
@@ -336,11 +365,11 @@ class Postgresql:
                 
         if not isinstance(sample_records, pl.DataFrame):
             sample_records = pl.DataFrame(sample_records)
-
+               
         # Group data by SAP ID
         data_by_sap_id = {}
         for record in sample_records.to_dicts():
-            sap_id = record.get('sap_id', '1128')
+            sap_id = record.get("sap_id")
             if sap_id not in data_by_sap_id:
                 data_by_sap_id[sap_id] = []
             data_by_sap_id[sap_id].append(record)

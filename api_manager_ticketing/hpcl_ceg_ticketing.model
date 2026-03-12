@@ -15,13 +15,11 @@ Enum Status str {
 }
 
 Enum State str {
-    ToDo='ToDo'
-    InProgress='InProgress'
-    Cancelled='Cancelled'
-    Resolved='Resolved'
-    OnHold='OnHold'
-    ReOpen='ReOpen'
-    OnCompleted='OnCompleted'
+    Open='Open'
+    Escalated ='Escalated'
+    UpdatedByInitiator='Updated By Initiator'
+    ReturnedByOcc='Returned By Occ'
+    ReviewedByOcc ='Reviewed By Occ'
 }
 
 Enum Severity str {
@@ -89,13 +87,11 @@ Model Merge_History internal {
 
 
 Enum TicketType str{
-    ToDo = 'TicketRaised'
-    InProgress = 'TicketInProgress'
-    Cancelled = 'TicketCancelled'
-    Resolved = 'TicketResolved'
-    OnHold = 'TicketOnHold'
-    ReOpen = 'TicketReOpen'
-    OnCompleted = 'TicketOnCompleted'
+    Open = 'TicketRaised'
+    Escalated ='TicketEscalated'
+    UpdatedByInitiator='TicketOnCompleted'
+    ReturnedByOcc='TicketReOpen'
+    ReviewedByOcc ='TicketResolved'
 
 }
 
@@ -114,6 +110,12 @@ Model TruckInfo internal {
     location_name optional str
     zone optional str
     region optional str
+}
+
+Model CommentHistory internal {
+    updated_by optional str
+    updated_time optional str
+    ticket_msg optional str
 }
 
 Model Ticketing {
@@ -161,6 +163,8 @@ Model Ticketing {
     auto_ticket_close optional str
     assignee_name optional list str
     assignee_mail optional list str
+    escalation_level optional str
+    comment_history optional list CommentHistory
 
 
     Action=> get_ticket {
@@ -199,6 +203,9 @@ Model Ticketing {
         auto_ticket_close optional str  //Configure whether a ticket should be automatically closed when the alert is closed, or remain open irrespective of the alert status.
         assignee_name optional list str
         assignee_mail optional list str
+        reporter optional str
+        escalation_level optional str
+        comment_history optional list CommentHistory
 
 
     }
@@ -238,6 +245,9 @@ Model Ticketing {
         auto_ticket_close optional str  //Configure whether a ticket should be automatically closed when the alert is closed, or remain open irrespective of the alert status.
         assignee_name optional list str
         assignee_mail optional list str
+        reporter optional str
+        escalation_level optional str
+        comment_history optional list CommentHistory
 
        
     }
@@ -346,6 +356,65 @@ Model Ticketing {
 
     }
 
+    Action=> process_escalations {
+    }
+
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+
+Model TicketComment {
+    ticket_id index_field str
+    created_by index_field str
+    content str
+    documents optional list str
+    update_history optional list str
+
+    Action=> add_comment_to_ticket {
+        ticket_id str
+        content str
+        documents optional list str
+    }
+
+    Action=> edit_comment {
+        ticket_id str
+        content str
+        comment_id str
+        documents optional list str
+
+    }
+
+    Action=> delete_comment {
+        ticket_id str
+        comment_id str
+
+    }
+
+    Action=> attach_file_to_comment {
+        ticket_id str
+        comment_id str
+        file_path optional str
+
+    }
+}
+
+Model TicketUserMails {
+    level optional str
+    sap_id index_field optional str
+    role index_field str
+    location_name index_field optional str
+    zone index_field str
+    employee_name optional str
+    email_id optional str
+
+    Action=> get_ticket_mails {
+        sap_id optional list str
+        zone str
+        category str
+    }
 
     Config=> {
         crud_operations='read'

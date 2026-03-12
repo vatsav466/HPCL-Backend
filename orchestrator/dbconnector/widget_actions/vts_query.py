@@ -783,6 +783,7 @@ vts_query = {
                                             ha as harsh_acceleration_count,
                                             ht as harsh_turn_count,
                                             hb as harsh_brake_count,
+                                            risk_score,
                                             version_date
                                         FROM public.tt_risk_score
                                         WHERE tt_number = '{}'
@@ -801,6 +802,7 @@ vts_query = {
                                             ha as harsh_acceleration_count,
                                             ht as harsh_turn_count,
                                             hb as harsh_brake_count,
+                                            risk_score,
                                             version_date
                                         FROM public.transporter_risk_score
                                         WHERE transporter_code = '{}'
@@ -823,8 +825,6 @@ vts_query = {
         "harsh_turn_count": "Harsh Turn",
         "harsh_brake_count": "Harsh Brake"
     }
-
-                              
     }
     
 
