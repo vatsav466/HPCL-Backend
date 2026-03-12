@@ -2,6 +2,7 @@ import urdhva_base
 import io
 import os
 import json
+import psycopg2
 import asyncio
 import traceback
 import numpy as np
@@ -2143,7 +2144,49 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
    
-    
+    @staticmethod
+    async def non_reporting_devices(filters, cross_filters, drill_state, payload):
+        try:
+            creds = credential_loader.load_credentials("APP_DB_")
+            print(creds)
+            conn = psycopg2.connect(
+                host=creds['APP_DB_HOST'],
+                database=creds['APP_DB_DB'],
+                user=creds["APP_DB_USER"],
+                password=creds["APP_DB_PASSWORD"]
+            )
+            cur = conn.cursor()
+            
+            print("non reporting devices")
+            query = "SELECT truck_regno FROM non_reporting_devices"
+
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+            print("conditions --->", conditions)
+
+            status_filter = payload.get("status")
+            if status_filter == "live":
+                conditions.append("completed_trip = 'open' AND completed_trip_auto_dc = 'open'")
+            elif status_filter == "closed":
+                conditions.append("'closed' IN (completed_trip, completed_trip_auto_dc)")
+
+            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+            print("query after applied conditions --->", query)
+
+            # get data
+            cur.execute(query)
+            rows = cur.fetchall()
+            columns = [desc[0] for desc in cur.description]
+            df = pl.DataFrame(rows, schema=columns)
+            
+            if payload.get("total_count") == "true":
+                return {"status": True, "total_records":df.height}
+            return {"status": True, "message": "successfull", "data": df.to_dicts() }
+        
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+
+
     @staticmethod
     async def vts_ongoing_trips(filters, cross_filters, drill_state, payload):
         try:
