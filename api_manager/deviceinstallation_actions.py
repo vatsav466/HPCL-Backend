@@ -265,8 +265,15 @@ async def deviceinstallation_action_device_vts(payload :dict):
     """
     try:
         id = payload.get("id")
+        print('iddddddd----->', id)
         status = payload.get("status")
+        print('status', status)
         remarks = payload.get("remarks")
+        print('remarks', remarks)
+        
+        if not status or not remarks:
+            print('entttttttttttt')
+            return {"status": False,"message": "status and remarks are required", "data": {}}
 
         params = urdhva_base.queryparams.QueryParams()
         params.q = f"id='{id}'"
