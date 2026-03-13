@@ -4293,6 +4293,26 @@ class VTSAnalyticsActions:
                     "status": False,
                     "message": "No valid truck-location mapping found","data": {}
                 }
+                
+            # Execute Tibco query
+            conn = await VTSAnalyticsActions.tibco_connection()
+            if not conn:
+                return {"status": False, "message": "Database connection failed", "data": {}}
+            
+            
+            shortage_tibco_query = f"""select ENGINE_NO, CHASSIS_NO, vehicle_no
+            from CONN_ENT.ZSDCV_VEH_BLKLIS_STG 
+            where vehicle_no = '{safe_val}'  """
+            print('shortage_tibco_query------->',shortage_tibco_query)
+            shortage_resp = await VTSAnalyticsActions.execute_tibco_query(conn, shortage_tibco_query)
+            shortage_data = pd.DataFrame(shortage_resp.get("data", []))
+            
+            print('shortage_data',shortage_data)
+            
+            # Merge shortage_data with final_df on TRUCK_REGNNO (final_df) = vehicle_no (shortage_data)
+            if not shortage_data.empty:
+                shortage_data_pl = pl.from_pandas(shortage_data)
+                final_df = final_df.join(shortage_data_pl, left_on='TRUCK_REGNNO', right_on='vehicle_no', how='left')
 
             final_df = final_df.rename(COLUMN_MAPPING)
             # print('fina_df',final_df)
