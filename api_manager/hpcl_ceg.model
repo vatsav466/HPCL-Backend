@@ -878,6 +878,7 @@ Model Alerts {
     image_uploaded optional bool
     tt_type optional str
     ticket_id optional str
+    load_type optional str
 
     Action=> alert_action {
         bu optional str
