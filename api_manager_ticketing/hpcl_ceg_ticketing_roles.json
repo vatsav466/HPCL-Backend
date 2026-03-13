@@ -362,6 +362,93 @@
                     "name": "get_ticket_mails"
                 }
             ]
+        },
+        {
+            "name": "alertcategorymaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "AlertCategoryMaster",
+            "attributes": {},
+            "uris": [
+                "/api/alertcategorymaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "add_category"
+                },
+                {
+                    "name": "add_sub_category"
+                },
+                {
+                    "name": "delete_category"
+                },
+                {
+                    "name": "delete_sub_category"
+                }
+            ]
+        },
+        {
+            "name": "alertcategorymaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "AlertCategoryMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/alertcategorymaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "alertcategorymaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "AlertCategoryMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/alertcategorymaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "add_category"
+                },
+                {
+                    "name": "add_sub_category"
+                },
+                {
+                    "name": "delete_category"
+                },
+                {
+                    "name": "delete_sub_category"
+                }
+            ]
         }
     ],
     "policies": [
@@ -547,6 +634,22 @@
         {
             "name": "get_ticket_mails",
             "displayName": "get_ticket_mails"
+        },
+        {
+            "name": "add_category",
+            "displayName": "add_category"
+        },
+        {
+            "name": "add_sub_category",
+            "displayName": "add_sub_category"
+        },
+        {
+            "name": "delete_category",
+            "displayName": "delete_category"
+        },
+        {
+            "name": "delete_sub_category",
+            "displayName": "delete_sub_category"
         }
     ]
 }
