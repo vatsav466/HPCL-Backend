@@ -243,7 +243,6 @@ async def main_concurrent():
     await urdhva_base.BasePostgresModel.execute_query(reset_id_query)
 
     plants = pd.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
-    plants = plants[plants['erp_id']=='2663']
     print(f"Processing {len(plants)} plants concurrently...")
     
     # Create semaphore to limit concurrent operations (adjust based on your system capacity)
