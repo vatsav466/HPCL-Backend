@@ -41,6 +41,7 @@ Model Ticket_History internal {
     allocated_time optional str
     action_msg optional str
     action_type optional str
+    created_by optional str
 }
     
 Model Merge_History internal {

@@ -22,6 +22,7 @@ class Ticket_HistoryCreate(pydantic.BaseModel):
     allocated_time: typing.Optional[str] = pydantic.Field("", **{})
     action_msg: typing.Optional[str] = pydantic.Field("", **{})
     action_type: typing.Optional[str] = pydantic.Field("", **{})
+    created_by: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class Merge_HistoryCreate(pydantic.BaseModel):

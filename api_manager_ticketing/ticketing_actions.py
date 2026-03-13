@@ -103,10 +103,21 @@ async def _location_incharge_data(sap_ids: list[str]) -> tuple[set[str], set[str
     zones:  set[str] = set()
 
     for rec in records:
-        email = (rec.get("email_id") or "").strip()
-        zone  = (rec.get("zone")     or "").strip()
+        email = rec.get("email_id")
+        zone = rec.get("zone")
+
+        if isinstance(email, list):
+            email = email[0] if email else None
+
+        if isinstance(zone, list):
+            zone = zone[0] if zone else None
+
+        email = (email or "").strip()
+        zone = (zone or "").strip()
+
         if email:
             emails.add(email)
+
         if zone:
             zones.add(zone)
 
@@ -348,7 +359,6 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
     print("rpt", rpt)
     user_name = rpt.get('username') if rpt else None
     employee_id = data.employee_id
-    print("employee_id: ",employee_id)
 
     tdata = data.model_dump()
     frontend_reporter = tdata.get("reporter")
@@ -502,12 +512,12 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         sap_value = ticket_data.get("sap_id")
 
     ticket_data['ticket_id'] = await alert_helper.get_alert_unique_id(
-        ticket_data['bu'],
-        sap_value,
+        'OCC',
         ticket_data.get('sop_id')
     )
 
     ticket_data['ticket_id'] = f"TKT-{ticket_data['ticket_id']}"
+    print("ticket_data['ticket_id']: ",ticket_data['ticket_id'])
 
     # Generate incremental ticket_name
     redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -523,6 +533,28 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         if not ticket_data.get('ticket_name')
         else f"{ticket_data.get('ticket_name')}_{ticket_data['bu']}_{sap_for_name}_{ticket_count}"
     )
+
+    category = ticket_data.get("category")
+    if isinstance(category, list):
+        category = category[0] if category else None
+    functional_area = CATEGORY_FUNCTIONAL_MAP.get(category)
+
+    zones_list = ticket_data.get("zone") or []
+    zones = ",".join([f"'{z}'" for z in zones_list if z])
+    employee_ids = []
+    if functional_area and zones:
+        role_condition = f"role LIKE '%{functional_area}%'"
+        query = f"""
+                SELECT zone, employee_id
+                FROM ticket_user_mails
+                WHERE {role_condition}
+                AND zone IN ({zones})
+                ORDER BY zone DESC
+            """
+        users_rec = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=0)
+        users = users_rec.get("data", [])
+        employee_ids = [u.get("employee_id") for u in users if u.get("employee_id")]
+    ticket_data["employee_id"] = employee_ids
 
     # Linked alerts if provided
     clean_linked_ids = [x for x in (data.linked_alert_id or []) if str(x).strip()]
@@ -615,7 +647,8 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         'truck_no': ticket_data.get('truck_no'),
         'ticket_section': ticket_data.get('ticket_section'),
         'category': ticket_data.get('category'),
-        'sub_category': ticket_data.get('sub_category')
+        'sub_category': ticket_data.get('sub_category'),
+        'employee_id': ticket_data.get('employee_id')
     }.items():
         ticket_data[key] = value
     ticket_data['parent_id'] = tdata.get('parent_id')
@@ -631,10 +664,10 @@ async def ticketing_create_ticket(data: Ticketing_Create_TicketParams):
         "action_msg": f"Ticket is created and is in {ticket_data['ticket_state']} state",
         "action_type": action_type_str,
         "description": ticket_data.get("comment") or "",
-        "employee_id": employee_id
+        "created_by": user_name
 
     })
-    ticket_data['employee_id']= employee_id
+    # ticket_data['employee_id']= employee_id
 
     # Create the ticket
     # print("ticket_data", ticket_data)
