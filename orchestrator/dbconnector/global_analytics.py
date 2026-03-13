@@ -5124,6 +5124,9 @@ class GlobalAnalytics:
 
             sop_ids = {item.get("sop_id") for item in maintenance_interlocks.values()} | \
                     {item.get("sop_id") for item in fault_interlocks.values()}
+            
+            print("SOP IDs being used in filter:", sop_ids)
+
 
             # Build filters (keeping existing code)
             zone_filter = plant_filter = sensor_id_filter = equipment_name_filter = ''
@@ -5209,6 +5212,12 @@ class GlobalAnalytics:
 
             # Filter out rows without alert_category
             df = df.filter(pl.col("alert_category").is_not_null())
+            df = df.sort("created_at", descending=True).unique(
+                subset=["device_name"], 
+                keep="first"
+            )
+            print(f"AFTER DEDUP: {len(df)} rows, {df['device_name'].n_unique()} unique devices")
+
 
             # Apply additional filtering if equipment_name or sensor_id filters are provided
             if equipment_name_filter or sensor_id_filter:
@@ -5261,10 +5270,11 @@ class GlobalAnalytics:
                 date_key = str(date)
                 
                 # Get alerts closed on this date
-                if date == selected_start_date:
-                    closed_today = df.filter(pl.col("created_date") == date)
-                else:
-                    closed_today = pl.DataFrame()
+                # if date == selected_start_date:
+                #     closed_today = df.filter(pl.col("created_date") == date)
+                # else:
+                #     closed_today = pl.DataFrame()
+                closed_today = df.filter(pl.col("closed_date") == date)
                 
                 # Get all alerts that are open on this date:
                 # 1. Created on or before this date AND (status is Open OR closed_date is null OR closed after this date)
@@ -5292,7 +5302,7 @@ class GlobalAnalytics:
                         # Create details for closed alerts
                         details = []
                         for device_name in row["unique_device_names"]:
-                            device_row = closed_today.filter(pl.col("device_name") == device_name).row(0, named=True)
+                            device_row = closed_today.filter(pl.col("device_name") == device_name).sort("created_at", descending=True).row(0, named=True)
                             detail = {
                                 "sap_id": device_row["sap_id"],
                                 "zone": device_row["zone"],
@@ -5458,12 +5468,25 @@ class GlobalAnalytics:
                             result_daily[cat][date_key][alert_type]["open_alerts_current_day"] = open_count
                             result_daily[cat][date_key][alert_type]["details"] = details
 
-            all_months = df.select(pl.col("month_year")).unique().to_series().to_list()
+            # all_months = df.select(pl.col("month_year")).unique().to_series().to_list()
 
             def parse_month(month_str):
                 return datetime.strptime(month_str, "%b-%Y")
 
-            all_months.sort(key=parse_month)
+            # Get earliest created date from dataframe
+            earliest_created = df["created_date"].min()
+
+            # Generate all months from earliest creation to current month
+            all_months = []
+            month_cursor = earliest_created.replace(day=1)
+            current_month_start = current_date.replace(day=1)
+
+            while month_cursor <= current_month_start:
+                all_months.append(month_cursor.strftime("%b-%Y"))
+                if month_cursor.month == 12:
+                    month_cursor = month_cursor.replace(year=month_cursor.year + 1, month=1)
+                else:
+                    month_cursor = month_cursor.replace(month=month_cursor.month + 1)
 
             for month in all_months:
                 month_date = parse_month(month)
