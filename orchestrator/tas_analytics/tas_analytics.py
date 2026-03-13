@@ -5874,7 +5874,7 @@ async def operability_index_health_check(data) -> dict:
     and report whether they are Live or Down based on latest telemetry timestamp
     across ANY telemetry key within the last `window_minutes`.
     """
-    window_minutes = 18  # default window
+    window_minutes = 60  # default window
 
     jwt = await tb_utils.get_thingsboard_jwt()
     base_url = tb_utils.THINGSBOARD_URL.rstrip("/")
@@ -5946,13 +5946,13 @@ async def operability_index_health_check(data) -> dict:
                 status = "Live" if last_ts_ms >= cutoff_ms else "Down"
                 last_ts_str = datetime.fromtimestamp(
                     last_ts_ms / 1000.0, tz=timezone.utc
-                ).strftime("%Y-%m-%d %H:%M:%S UTC")
+                ).astimezone(timezone(timedelta(hours=5, minutes=30))).strftime("%Y-%m-%d %H:%M:%S")
 
             results.append(
                 {
                     "device_name": dev["name"].split("@")[1],
                     # "last_ts_ms": last_ts_ms,
-                    # "last_ts_utc": last_ts_str,
+                    "last_ts_utc": last_ts_str,
                     "status": status,
                 }
             )
