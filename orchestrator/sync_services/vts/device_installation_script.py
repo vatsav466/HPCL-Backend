@@ -140,7 +140,7 @@ async def run_aot_status_job():
                 OR TRIM(aot_status) = ''
                 OR aot_status = 'PENDING' OR  aot_status = 'IN PROGRESS'
             )
-            ORDER BY id
+            ORDER BY id desc
             """
         )
         

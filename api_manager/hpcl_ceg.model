@@ -3924,6 +3924,10 @@ Model DeviceInstallation{
         payload optional dict
     }
 
+    Action=> action_decommissioning_rejected{
+        payload optional dict
+    }
+
     Config=> {
         access_key_mapping='select_business:bu,sap_id'
         search_fields='sap_tt_no,sap_id,location,status,status_decommissioning,AOT_status'

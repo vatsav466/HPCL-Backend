@@ -10721,6 +10721,14 @@ class Deviceinstallation_Action_DecommissioningParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Deviceinstallation_Action_Decommissioning_RejectedParams(pydantic.BaseModel):
+    payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class CreateUserCreate(pydantic.BaseModel):
     username: typing.Optional[str] = pydantic.Field("", **{})
     email: typing.Optional[str] = pydantic.Field("", **{})
