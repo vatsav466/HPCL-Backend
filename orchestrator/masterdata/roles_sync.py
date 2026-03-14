@@ -73,6 +73,45 @@ async def sync_user_roles():
         "name": "SOD",
         "status": True
     },
+    "Zonal Head SOD Ticketing": {
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
+                ]
+            }
+        ],
+        "name": "SOD",
+        "status": True
+    },
     "SOD & LPG Operations":{
         "allowed_pages": [
             {
@@ -747,7 +786,7 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Ticketing2",
+                "menu_name": "Ticketing",
                 "allowed_sub_menus": [
                 ]
             }
@@ -792,7 +831,7 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Ticketing2",
+                "menu_name": "Ticketing",
                 "allowed_sub_menus": [
                 ]
             }
@@ -889,7 +928,7 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Ticketing2",
+                "menu_name": "Ticketing",
                 "allowed_sub_menus": [
                 ]
             }
@@ -941,7 +980,7 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Ticketing2",
+                "menu_name": "Ticketing",
                 "allowed_sub_menus": [
                 ]
             }
@@ -1397,6 +1436,53 @@ async def sync_user_roles():
                     {
                         "title": "VTS ITDG Alert Home"
                     }
+                ]
+            }
+        ],
+        "name": "SOD",
+        "status": True
+    },
+    "Zonal SOD Ticketing": {
+        "allowed_pages": [
+            {
+                "menu_name": "SOD Terminal",
+                "allowed_sub_menus": [
+                    {
+                        "title": "Supply Chain"
+                    },
+                    {
+                        "title": "Terminal Home"
+                    },
+                    {
+                        "title": "Video Analytics"
+                    },
+                    {
+                        "title": "TAS",
+                        "allowed_sub_menus": [
+                            {
+                                "title": "TAS Home"
+                            },
+                            {
+                                "title": "TAS Overview"
+                            },
+                            {
+                                "title": "TAS Dashboard"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "menu_name": "VTS",
+                "allowed_sub_menus": [
+                    {
+                        "title": "VTS ITDG Alert Home"
+                    }
+                ]
+            },
+            {
+                "menu_name": "Ticketing",
+                "allowed_sub_menus": [
                 ]
             }
         ],
@@ -3033,7 +3119,7 @@ async def sync_user_roles():
                 ]
             },
             {
-                "menu_name": "Ticketing2",
+                "menu_name": "Ticketing",
                 "allowed_sub_menus": [
                 ]
             }

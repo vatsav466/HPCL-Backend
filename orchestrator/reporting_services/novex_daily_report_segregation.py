@@ -81,6 +81,7 @@ async def publish_daily_novex_status_email():
     status_data.update(await sod_data.get_fault_and_maintenance())
     status_data.update(await sod_data.get_parameters_summary())
     status_data.update(ro_va_cleanliness.main())
+    status_data.update(await retail_data.nozzle_sales())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data.get_alert_data(alert_section))
@@ -90,7 +91,7 @@ async def publish_daily_novex_status_email():
     # print("-------->status_data",status_data)
     await send_notification(
         template_name="seg1.html",
-        to_recipients=["debeshp@hpcl.in","sanjayk@hpcl.in"],
+        to_recipients=["debeshp@hpcl.in","sanjayk@hpcl.in","georget@hpcl.in"],
         subject="Novex Daily Report",
         cc_recipients=["gargam@hpcl.in","vikas.kaushal@hpcl.in","amitra@hpcl.in","arvindsingh@hpcl.in","garimasingh@hpcl.in"],
         bcc_recipients=["cvmallinath@hpcl.in","amarnathsahu@hpcl.in","adityapandey@hpcl.in"],
@@ -135,7 +136,7 @@ async def publish_daily_novex_status_email():
                        "NFZ.OND.IC@hpcl.in","NWF.OND.IC@hpcl.in","NWZ.OND.IC@hpcl.in","NZ.OND.IC@hpcl.in","SCRZ.OND.IC@hpcl.in",
                        "SWZ.OND.IC@hpcl.in","SZ.OND.IC@hpcl.in","WZ.OND.IC@hpcl.in","raokvj@hpcl.in"],
         subject="Novex Daily Report: SOD",
-        cc_recipients=["subodh@hpcl.in","SOD.OPNS.HQO@hpcl.in","jays@hpcl.in","rvaid@hpcl.in","gauravyadav1@hpcl.in","Diwakar.Kumar@hpcl.in"],
+        cc_recipients=["subodh@hpcl.in","SOD.OPNS.HQO@hpcl.in","jays@hpcl.in","rvaid@hpcl.in","gauravyadav1@hpcl.in","Diwakar.Kumar@hpcl.in","crvkumar@hpcl.in","Tarunghisulal.chauhan@hpcl.in"],
         bcc_recipients=["cvmallinath@hpcl.in","sachinkwarghane@hpcl.in","purushm@hpcl.in","debeshp@hpcl.in","adityapandey@hpcl.in","shrikantsaini@hpcl.in","arpitaKanak.Bara@hpcl.in"],
         notification_data=status_data,
         inline_images={

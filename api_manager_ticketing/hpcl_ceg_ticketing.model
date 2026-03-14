@@ -29,38 +29,6 @@ Enum Severity str {
     Low='Low'
 }
 
-Enum Category str {
-    TransportationDiscipline = 'Transportation Discipline'
-    InventoryManagement = 'Inventory Management'
-    SafetyPerformance = 'Safety Performance'
-    AssetIntegrity = 'Asset Integrity'
-    VTSLiveTracking = 'VTS Live Tracking'
-}
-
-Enum SubCategory str {
-    RouteCorrection = 'Route Correction'
-    CombinationOfAlerts = 'Combination of Alerts'
-    GovernanceITDG = 'Governance – ITDG'
-    EMLockingExceptions = 'EM Locking Exceptions'
-    TTShortages = 'TT Shortages'
-    AutoReco = 'Auto Reco'
-    AIMHold = 'AIM Hold'
-    AbnormalGainLoss = 'Abnormal Gain Loss'
-    NoVTSNoLoad = 'No VTS No Load'
-    PMOrders = 'PM Orders'
-    FireEngine = 'Fire Engine'
-    FireWaterAvailability = 'Fire Water Availability'
-    FoamAvailability = 'Foam Availability'
-    CCTVVAAnalytics = 'CCTV VA Analytics'
-    RouteDeviationWithStoppage = 'Route Deviation with Stoppage'
-    RouteDeviationWithoutStoppage = 'Route Deviation without Stoppage'
-    StoppageWithoutRouteDeviation = 'Stoppage without Route Deviation'
-    NightDriving = 'Night Driving'
-    TASVsReconcileDipMonthend = 'Difference in TAS vs Reconcile Dip - Monthend'
-    PowerDisconnectAnalysis = 'Power Disconnect Analysis'
-    MultipleTTStoppageAtSameSpot = 'Multiple TT Stoppage at Same Spot'
-}
-
 
 Enum Assignee str {
     NovexSupport='NovexSupport'
@@ -73,6 +41,7 @@ Model Ticket_History internal {
     allocated_time optional str
     action_msg optional str
     action_type optional str
+    created_by optional str
 }
     
 Model Merge_History internal {
@@ -116,6 +85,14 @@ Model CommentHistory internal {
     updated_by optional str
     updated_time optional str
     ticket_msg optional str
+}
+
+Model CreatedHistory internal {
+    updated_by optional str
+    updated_time optional str
+    action optional str 
+    category optional str
+    sub_category optional str
 }
 
 Model Ticketing {
@@ -165,6 +142,7 @@ Model Ticketing {
     assignee_mail optional list str
     escalation_level optional str
     comment_history optional list CommentHistory
+    employee_id optional list str
 
 
     Action=> get_ticket {
@@ -206,6 +184,7 @@ Model Ticketing {
         reporter optional str
         escalation_level optional str
         comment_history optional list CommentHistory
+        employee_id optional list str
 
 
     }
@@ -246,7 +225,6 @@ Model Ticketing {
         assignee_name optional list str
         assignee_mail optional list str
         reporter optional str
-        escalation_level optional str
         comment_history optional list CommentHistory
 
        
@@ -406,9 +384,10 @@ Model TicketUserMails {
     sap_id index_field optional str
     role index_field str
     location_name index_field optional str
-    zone index_field str
+    zone index_field optional list str
     employee_name optional str
     email_id optional str
+    employee_id optional str
 
     Action=> get_ticket_mails {
         sap_id optional list str
@@ -419,4 +398,32 @@ Model TicketUserMails {
     Config=> {
         crud_operations='read'
     }
+}
+
+Model AlertCategoryMaster {
+
+    category optional list str
+    sub_category optional list str
+    status optional str
+    created_on optional datetime
+    updated_on optional datetime
+    created_by optional str  
+    created_history optional list CreatedHistory
+
+    Action=> add_category {
+        category str
+    }
+
+    Action=> add_sub_category {
+        sub_category str
+    }
+
+    Action=> delete_category {
+        category str
+    }
+
+    Action=> delete_sub_category {
+        sub_category str
+    }
+
 }

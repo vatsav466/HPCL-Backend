@@ -309,6 +309,8 @@ class WidgetActions:
             elif func_name in ['m60_performance', 'industry_performance', 'retail_tar']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state,
                                  time_grain=time_grain, resp_format=resp_format,resp_level=resp_level)
+            elif func_name in ['lpg_cdcms_booking_vs_sales_vs_pending']:
+                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state,payload=payload)
             elif func_name in ['dry_out_ro_loss']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, resp_level=resp_level)
             elif lp_operation:

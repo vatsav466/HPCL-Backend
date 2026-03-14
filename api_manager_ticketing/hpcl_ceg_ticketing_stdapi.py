@@ -51,3 +51,27 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await TicketUserMails.get_all(params, skip_secrets=True)
 
+
+@router.post('/alertcategorymaster', response_model=AlertCategoryMaster, tags=['AlertCategoryMaster'])
+async def create(inputObj: AlertCategoryMasterCreate):
+    return await inputObj.create()
+
+
+@router.put('/alertcategorymaster', response_model=AlertCategoryMaster, tags=['AlertCategoryMaster'])
+async def update(inputObj: AlertCategoryMaster):
+    return await inputObj.modify()
+
+
+@router.get('/alertcategorymaster/{id}', response_model=AlertCategoryMaster, tags=['AlertCategoryMaster'])
+async def get(id: str):
+    return await AlertCategoryMaster.get(id, skip_secrets=True)
+
+
+@router.get('/alertcategorymaster', response_model=AlertCategoryMasterGetResp, tags=['AlertCategoryMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await AlertCategoryMaster.get_all(params, skip_secrets=True)
+
+
+@router.delete('/alertcategorymaster/{id}', tags=['AlertCategoryMaster'])
+async def delete(id: str):
+    return await AlertCategoryMaster.delete(id)

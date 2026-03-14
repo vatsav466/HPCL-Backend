@@ -181,6 +181,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP019", "interlock_name": "FireEngine_HWOT", "workflow_name": "Fire Pump Alarm"},
                         {"sop_id": "SOP019", "interlock_name": "FireEngine_Tripped", "workflow_name": "Fire Pump Alarm"},
                         {"sop_id": "SOP020", "interlock_name": "Jockeypump_ FailtoStart", "workflow_name": "Fire Pump Alarm"},
+                        {"sop_id": "SOP020", "interlock_name": "JockeyPump_Tripped", "workflow_name": "Fire Pump Alarm"},
                         {"sop_id": "SOP021", "interlock_name": "SafetyPLC_Communication fail", "workflow_name": "CONTROL ROOM"},
                         {"sop_id": "SOP021", "interlock_name": "UPS_Fail", "workflow_name": "CONTROL ROOM"},
                         {"sop_id": "SOP021", "interlock_name": "UPS_Lowbattery", "workflow_name": "CONTROL ROOM"},

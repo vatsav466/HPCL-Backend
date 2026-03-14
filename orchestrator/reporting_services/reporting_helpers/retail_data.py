@@ -3,6 +3,7 @@ import os
 import json
 import psycopg2
 import datetime
+import polars as pl
 import pandas as pd
 import numpy as np
 import hpcl_ceg_model
@@ -996,50 +997,47 @@ async def get_ro_alerts():
 async def get_bi_hourly_intra_dryout():
     """ Reading Intra Day Dryout details from CRIS DB"""
     intra_dryout_query = """
-    SELECT
-    CASE
-        WHEN status = 0 THEN 'no_stock'
-        WHEN status = 1 THEN 'hr_0_6'
-        WHEN status = 2 THEN 'hr_6_12'
-        WHEN status = 3 THEN 'hr_12_24'
-        WHEN status = 4 THEN 'hr_24_72'
-        ELSE 'Others'
-    END AS stock_status,
-    site_count
-FROM (
-    SELECT
-        status,
-        COUNT(DISTINCT rosapcode) AS site_count
-    FROM (
+        WITH base_data AS (
         SELECT
             site_id,
-            fcc_code,
-            product_grp,
             rosapcode,
-            COUNT(DISTINCT tank_no) AS tank_cnt,
-            STRING_AGG(tank_no::text, ',') AS tank_no,
+            product_grp,
             SUM(GREATEST(pumpable_stock,0)) AS pumpable_stock,
             SUM(avgsales_7days)/7/24 AS hourly_sales,
             CASE
                 WHEN SUM(GREATEST(pumpable_stock,0)) <= 0 THEN 0
-                WHEN SUM(GREATEST(pumpable_stock,0)) > 0 
-                     AND SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*6 THEN 1
-                WHEN SUM(GREATEST(pumpable_stock,0)) >= (SUM(avgsales_7days)/7/24)*6 
-                     AND SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*12 THEN 2
-                WHEN SUM(GREATEST(pumpable_stock,0)) >= (SUM(avgsales_7days)/7/24)*12 
-                     AND SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*24 THEN 3
-                WHEN SUM(GREATEST(pumpable_stock,0)) >= (SUM(avgsales_7days)/7/24)*24 
-                     AND SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*72 THEN 4
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*6 THEN 1
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*12 THEN 2
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*24 THEN 3
+                WHEN SUM(GREATEST(pumpable_stock,0)) < (SUM(avgsales_7days)/7/24)*72 THEN 4
                 ELSE 5
             END AS status
         FROM "HPCL_HOS".sch_inventory_forecast_dashboard sch
-        WHERE sch.volume > 0 
+        WHERE sch.volume > 0
         AND product_grp IN ('MS','HSD','E20')
-        GROUP BY site_id, fcc_code, product_grp, rosapcode
-    ) result1
+        GROUP BY site_id, rosapcode, product_grp
+    ),
+
+    site_status AS (
+        SELECT
+            rosapcode,
+            MIN(status) AS status
+        FROM base_data
+        GROUP BY rosapcode
+    )
+    SELECT
+        CASE
+            WHEN status = 0 THEN 'no_stock'
+            WHEN status = 1 THEN 'hr_0_6'
+            WHEN status = 2 THEN 'hr_6_12'
+            WHEN status = 3 THEN 'hr_12_24'
+            WHEN status = 4 THEN 'hr_24_72'
+            ELSE 'Others'
+        END AS stock_status,
+        COUNT(*) AS site_count
+    FROM site_status
     GROUP BY status
-) result2
-ORDER BY stock_status;
+    ORDER BY status;
     """
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1049,11 +1047,15 @@ ORDER BY stock_status;
     resp['partial_dryout'] = sum([resp[key] for key in ['hr_0_6', 'hr_6_12', 'hr_12_24']])
     resp['online'] = resp['offline'] = 0
     location_status = await get_ro_location_status()
-    for rec in location_status:
-        if rec['ro_status'] == 'Online':
-            resp['online'] = rec['count']
-        elif rec['ro_status'] == 'Offline':
-            resp['offline'] = rec['count']
+
+    if location_status:
+        resp['online'] = location_status[0]['count']
+
+    # for rec in location_status:
+    #     if rec['ro_status'] == 'Online':
+    #         resp['online'] = rec['count']
+    #     elif rec['ro_status'] == 'Offline':
+    #         resp['offline'] = rec['count']
     return resp
 
 
@@ -1063,15 +1065,119 @@ async def get_ro_location_status():
     :return: list of dictionaries containing status
     Ex:- [{'count': 4383, 'ro_status': 'Offline'}, {'count': 20823, 'ro_status': 'Online'}]
     """
-    query = """SELECT COUNT(DISTINCT site_id),
-CASE 
-    WHEN enable THEN 'Online'
-    ELSE 'Offline' 
-    END AS ro_status 
-FROM "HPCL_HOS".ms_site WHERE  "tempclose" IN (NULL, 'false') group by enable"""
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
-        "cris", "2")
+
+    # query = """SELECT COUNT(DISTINCT site_id),
+    #             CASE 
+    #                 WHEN enable THEN 'Online'
+    #                 ELSE 'Offline' 
+    #                 END AS ro_status 
+    #             FROM "HPCL_HOS".ms_site WHERE  "tempclose" IN (NULL, 'false') group by enable"""
+
+    query = f"""select 
+                    count(distinct(rosapcode)) 
+                    from 
+                    "HPCL_HOS".sch_inventory_forecast_dashboard 
+                    where volume>0 and product_grp IN ('MS','HSD','E20')
+                """
+    
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(query=query)
     return resp
+
+
+async def get_ro_locations_sch():
+    query = """select distinct rosapcode from "HPCL_HOS".sch_inventory_forecast_dashboard"""
+
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+    resp = pl.DataFrame(resp)
+    print("resp----> \n", resp)
+    return resp
+
+
+async def nozzle_sales():
+    nozzle_sales_query = f"""
+                SELECT
+                    "transaction_date",
+                    "zone",
+                    count(distinct(site_id)) as connected_sites,
+                    ROUND(
+                        ((SUM("sales_volume") FILTER (WHERE product_grp in ('MS','POWER 99','POWER 95','POWER 100'))
+                                / 1411.0
+                            ) / 1000.0
+                        ) / 0.89
+                    , 2) AS "MS_TMT",
+
+                    ROUND(
+                        ((SUM("sales_volume") FILTER (WHERE product_grp in ('HSD','TURBO'))
+                                / 1210.0
+                            ) / 1000.0
+                        ) / 0.89
+                    , 2) AS "HSD_TMT"
+
+                FROM "public".nozzle_sales
+                WHERE "transaction_date" = CURRENT_DATE - INTERVAL '1 day'
+                GROUP BY "transaction_date", "zone"
+                ORDER BY "transaction_date";
+            """
+
+    location_master_query = f""" select sap_id, zone from location_master where bu='RO'  """
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    nozzle_sales= await function(query= nozzle_sales_query)
+    nozzle_sales_df = pl.DataFrame(nozzle_sales)
+    print("nozzle_sales_df ---->\n", nozzle_sales_df)
+    location_master_details = await hpcl_ceg_model.LocationMaster.get_aggr_data(location_master_query)
+    location_master_df = pl.DataFrame(location_master_details['data'])
+
+    rosapcode_sch = await get_ro_locations_sch()
+
+    site_zone_mapping = rosapcode_sch.join(
+        location_master_df,
+        left_on="rosapcode",
+        right_on="sap_id",
+        how="inner"
+    )
+    print("site_zone_mapping---->\n", site_zone_mapping)
+
+    sales_with_zone = (site_zone_mapping
+        .filter(pl.col("zone").is_not_null())
+        .group_by("zone")
+        .agg(pl.count("rosapcode").alias("connected_sites"))
+    )
+
+    print("sales_with_zone---->\n", sales_with_zone)
+
+    daily_zone_product_nozzle_sales = (
+        nozzle_sales_df
+        .join(sales_with_zone, on="zone", how="left")
+        .filter(pl.col("zone").is_not_null())
+        .rename({
+            "MS_TMT": "MS_volume(TMT)",
+            "HSD_TMT": "HSD_volume(TMT)"
+        })
+        .sort(["transaction_date","zone"])
+    )
+    
+    total_row = daily_zone_product_nozzle_sales.select([
+        pl.lit(None).alias("transaction_date"),
+        pl.lit("Total").alias("zone"),
+        pl.sum("connected_sites").alias("connected_sites"),
+        pl.sum("MS_volume(TMT)").alias("MS_volume(TMT)"),
+        pl.sum("HSD_volume(TMT)").alias("HSD_volume(TMT)"),
+        pl.lit(None).alias("connected_sites_right")
+    ])
+
+    daily_zone_product_nozzle_sales = pl.concat([daily_zone_product_nozzle_sales, total_row])
+
+    print("final_df---->\n", daily_zone_product_nozzle_sales)
+
+    return {
+        "daily_zone_product_nozzle_sales" : daily_zone_product_nozzle_sales.to_dicts()
+    }
