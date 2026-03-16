@@ -317,3 +317,52 @@ def process_performance_data(data, limit=3):
     bottom_x = bottom_performers[:limit]
 
     return top_x, bottom_x
+
+
+
+async def get_sales_tmt():
+    sales_tmt_query = f"""SELECT "Zone_Name", "Region_Name", "SalesArea_Name",
+
+    ROUND(SUM(
+        CASE WHEN "ProductName" = 'MS'
+        THEN "NETWEIGHT_TMT" END
+    )::numeric,2) AS "MS_SALES_TMT",
+
+    ROUND(SUM(
+        CASE WHEN "ProductName" = 'HSD'
+        THEN "NETWEIGHT_TMT" END
+    )::numeric,2) AS "HSD_SALES_TMT"
+
+    FROM "MOM_DAY_LEVEL_DATA"
+    WHERE
+        "SBU_Name" = 'Retail'
+        AND "SBU_Name" NOT IN ('Common','Mumbai Ref','Renewable Energy','Visakh Ref')
+        AND "DAY_ID" = CURRENT_DATE - INTERVAL '1 day'
+
+    GROUP BY "Zone_Name", "Region_Name", "SalesArea_Name"
+    ORDER BY "Zone_Name", "Region_Name", "SalesArea_Name"
+    """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+    sales_tmt= await function(query= sales_tmt_query)
+    print("sales TMT values---->\n", sales_tmt)
+    sales_tmt_df = pl.DataFrame(sales_tmt)
+    print("sales tmt data---->\n", sales_tmt_df)
+
+    sales_tmt_df = sales_tmt_df.rename({"SalesArea_Name": "sales_area"})
+
+    total_row = sales_tmt_df.select([
+        pl.lit(None).alias("Zone_Name"),
+        pl.lit(None).alias("Region_Name"),
+        pl.lit("GRAND TOTAL").alias("sales_area"),
+        pl.sum("MS_SALES_TMT").alias("MS_SALES_TMT"),
+        pl.sum("HSD_SALES_TMT").alias("HSD_SALES_TMT")
+    ])
+
+    sales_tmt_df = pl.concat([sales_tmt_df, total_row])
+    print("sales tmt after concat ---->\n", sales_tmt_df)
+    return sales_tmt_df
