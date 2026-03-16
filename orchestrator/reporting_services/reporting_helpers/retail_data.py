@@ -1335,7 +1335,7 @@ async def nozzle_sales(
         group_cols = []
         dim_col = None
         print("*"*20)
-        print("nozzle sales query global ---->\n", nozzle_sale_query)
+        print("nozzle sales query global ---->\n", nozzle_sales_query)
     elif seg == "sap_id":
         dim_col = "sap_id"
         group_cols = ["sap_id", "name"]
