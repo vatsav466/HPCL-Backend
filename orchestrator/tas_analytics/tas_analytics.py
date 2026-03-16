@@ -22,6 +22,7 @@ import orchestrator.tas_analytics.tas_queries as tas_queries
 import orchestrator.alerting.listener.tas_listener as tas_listener
 import utilities.helpers as helpers
 import orchestrator.tas_analytics.tas_host_data as tas_host_data
+import orchestrator.alerting.listener.tas_duplicate_alert_check as tb_utils
 
 
 def unix_ms_to_ist(ts_ms: int) -> datetime:
@@ -5867,6 +5868,104 @@ async def get_bay_counts(data):
         "locations": locations_result
     }
 
+async def operability_index_health_check(data) -> dict:
+    """
+    Check ThingsBoard devices whose name starts with 'Operability Index@'
+    and report whether they are Live or Down based on latest telemetry timestamp
+    across ANY telemetry key within the last `window_minutes`.
+    """
+    window_minutes = 60  # default window
+
+    jwt = await tb_utils.get_thingsboard_jwt()
+    base_url = tb_utils.THINGSBOARD_URL.rstrip("/")
+
+    headers = {"X-Authorization": f"Bearer {jwt}"}
+    page = 0
+    page_size = 100
+    devices: list[dict] = []
+
+    # Fetch devices matching textSearch 'Operability Index'
+    while True:
+        params = {"pageSize": page_size, "page": page, "textSearch": "Operability Index"}
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(f"{base_url}/api/tenant/devices", headers=headers, params=params)
+            resp.raise_for_status()
+            device_data = resp.json()
+        chunk = device_data.get("data", []) if isinstance(device_data, dict) else []
+        if not chunk:
+            break
+        devices.extend(chunk)
+        if len(chunk) < page_size:
+            break
+        page += 1
+
+    # Keep only devices whose name starts with 'Operability Index@'
+    filtered = []
+    for d in devices:
+        name = (d.get("name") or "")
+        dev_id = (d.get("id") or {}).get("id")
+        if name.lower().startswith("operability index") and dev_id:
+            filtered.append({"name": name, "id": dev_id})
+
+    now_utc = datetime.now(timezone.utc)
+    cutoff_ms = int((now_utc - timedelta(minutes=window_minutes)).timestamp() * 1000)
+
+    results: list[dict] = []
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        for dev in sorted(filtered, key=lambda x: x["name"].lower()):
+            dev_id = dev["id"]
+            url = f"{base_url}/api/plugins/telemetry/DEVICE/{dev_id}/values/timeseries"
+
+            last_ts_ms = None
+            try:
+                # No 'keys' param — fetch ALL telemetry keys
+                resp = await client.get(
+                    url,
+                    headers=headers,
+                    params={"limit": 1, "orderBy": "DESC"},
+                )
+                print(resp)
+                if resp.status_code == 200:
+                    telemetry = resp.json()
+                    # Find the most recent timestamp across all keys
+                    latest_ts = None
+                    for key_points in telemetry.values():
+                        if key_points and isinstance(key_points, list):
+                            ts = int(key_points[0].get("ts", 0))
+                            if latest_ts is None or ts > latest_ts:
+                                latest_ts = ts
+                    last_ts_ms = latest_ts
+            except Exception:
+                last_ts_ms = None
+
+            if last_ts_ms is None:
+                status = "Down"
+                last_ts_str = None
+            else:
+                status = "Live" if last_ts_ms >= cutoff_ms else "Down"
+                last_ts_str = datetime.fromtimestamp(
+                    last_ts_ms / 1000.0, tz=timezone.utc
+                ).astimezone(timezone(timedelta(hours=5, minutes=30))).strftime("%Y-%m-%d %H:%M:%S")
+
+            results.append(
+                {
+                    "device_name": dev["name"].split("@")[1],
+                    # "last_ts_ms": last_ts_ms,
+                    "last_ts_utc": last_ts_str,
+                    "status": status,
+                }
+            )
+
+    return {
+        # "now_utc": now_utc.isoformat(),
+        # "window_minutes": window_minutes,
+        "total_devices": len(filtered),
+        "live_devices": sum(1 for r in results if r["status"] == "Live"),
+        "devices": results,
+    }
+
+
 async def gantry_override_analysis(data):
     """
     For each 'Gantry Permissive_Override' alert in the date range,
@@ -6035,6 +6134,7 @@ AnalyticsModelMapping = {
     "Host Tables Combined Data":host_tables_combined_data,
     "get bay counts":get_bay_counts,
     "Gantry Override Analysis": gantry_override_analysis,
+    "Run Daily Data Check": operability_index_health_check
 
 }
 

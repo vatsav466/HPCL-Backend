@@ -420,7 +420,9 @@ class LPGCDCMSActions:
     
     # Bookings vs Sales vs Pendings
     @staticmethod
-    async def lpg_cdcms_booking_vs_sales_vs_pending(filters, cross_filters, drill_state):
+    async def lpg_cdcms_booking_vs_sales_vs_pending(filters, cross_filters, drill_state,payload):
+        type = payload.get("type",'')
+        
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -512,9 +514,13 @@ class LPGCDCMSActions:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
         for each_float_col in ["Bookings", "Sales", "Pending"]:
-            if each_float_col in resp.columns:
+            if each_float_col in resp.columns and type == "cyl":
+                resp.loc[resp["CylType"] == "C142", each_float_col] = resp.loc[resp["CylType"] == "C142", each_float_col] * 14.2
+                resp.loc[resp["CylType"] == "C5", each_float_col] = resp.loc[resp["CylType"] == "C5", each_float_col] * 5
+            else:
                 resp[each_float_col] = resp[each_float_col]/1000
                 resp[each_float_col] = resp[each_float_col].round(2)
+
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
