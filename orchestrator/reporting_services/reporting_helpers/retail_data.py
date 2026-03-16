@@ -3,6 +3,7 @@ import os
 import json
 import psycopg2
 import datetime
+import polars as pl
 import pandas as pd
 import numpy as np
 import hpcl_ceg_model
@@ -1084,3 +1085,99 @@ async def get_ro_location_status():
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(query=query)
     return resp
+
+
+async def get_ro_locations_sch():
+    query = """select distinct rosapcode from "HPCL_HOS".sch_inventory_forecast_dashboard"""
+
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+    resp = pl.DataFrame(resp)
+    print("resp----> \n", resp)
+    return resp
+
+
+async def nozzle_sales():
+    nozzle_sales_query = f"""
+                SELECT
+                    "transaction_date",
+                    "zone",
+                    count(distinct(site_id)) as connected_sites,
+                    ROUND(
+                        ((SUM("sales_volume") FILTER (WHERE product_grp in ('MS','POWER 99','POWER 95','POWER 100'))
+                                / 1411.0
+                            ) / 1000.0
+                        ) / 0.89
+                    , 2) AS "MS_TMT",
+
+                    ROUND(
+                        ((SUM("sales_volume") FILTER (WHERE product_grp in ('HSD','TURBO'))
+                                / 1210.0
+                            ) / 1000.0
+                        ) / 0.89
+                    , 2) AS "HSD_TMT"
+
+                FROM "public".nozzle_sales
+                WHERE "transaction_date" = CURRENT_DATE - INTERVAL '1 day'
+                GROUP BY "transaction_date", "zone"
+                ORDER BY "transaction_date";
+            """
+
+    location_master_query = f""" select sap_id, zone from location_master where bu='RO'  """
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    nozzle_sales= await function(query= nozzle_sales_query)
+    nozzle_sales_df = pl.DataFrame(nozzle_sales)
+    print("nozzle_sales_df ---->\n", nozzle_sales_df)
+    location_master_details = await hpcl_ceg_model.LocationMaster.get_aggr_data(location_master_query)
+    location_master_df = pl.DataFrame(location_master_details['data'])
+
+    rosapcode_sch = await get_ro_locations_sch()
+
+    site_zone_mapping = rosapcode_sch.join(
+        location_master_df,
+        left_on="rosapcode",
+        right_on="sap_id",
+        how="inner"
+    )
+    print("site_zone_mapping---->\n", site_zone_mapping)
+
+    sales_with_zone = (site_zone_mapping
+        .filter(pl.col("zone").is_not_null())
+        .group_by("zone")
+        .agg(pl.count("rosapcode").alias("connected_sites"))
+    )
+
+    print("sales_with_zone---->\n", sales_with_zone)
+
+    daily_zone_product_nozzle_sales = (
+        nozzle_sales_df
+        .join(sales_with_zone, on="zone", how="left")
+        .filter(pl.col("zone").is_not_null())
+        .rename({
+            "MS_TMT": "MS_volume(TMT)",
+            "HSD_TMT": "HSD_volume(TMT)"
+        })
+        .sort(["transaction_date","zone"])
+    )
+    
+    total_row = daily_zone_product_nozzle_sales.select([
+        pl.lit(None).alias("transaction_date"),
+        pl.lit("Total").alias("zone"),
+        pl.sum("connected_sites").alias("connected_sites"),
+        pl.sum("MS_volume(TMT)").alias("MS_volume(TMT)"),
+        pl.sum("HSD_volume(TMT)").alias("HSD_volume(TMT)"),
+        pl.lit(None).alias("connected_sites_right")
+    ])
+
+    daily_zone_product_nozzle_sales = pl.concat([daily_zone_product_nozzle_sales, total_row])
+
+    print("final_df---->\n", daily_zone_product_nozzle_sales)
+
+    return {
+        "daily_zone_product_nozzle_sales" : daily_zone_product_nozzle_sales.to_dicts()
+    }

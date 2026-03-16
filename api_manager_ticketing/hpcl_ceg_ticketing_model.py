@@ -22,6 +22,7 @@ class Ticket_HistoryCreate(pydantic.BaseModel):
     allocated_time: typing.Optional[str] = pydantic.Field("", **{})
     action_msg: typing.Optional[str] = pydantic.Field("", **{})
     action_type: typing.Optional[str] = pydantic.Field("", **{})
+    created_by: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class Merge_HistoryCreate(pydantic.BaseModel):
@@ -47,6 +48,14 @@ class CommentHistoryCreate(pydantic.BaseModel):
     updated_by: typing.Optional[str] = pydantic.Field("", **{})
     updated_time: typing.Optional[str] = pydantic.Field("", **{})
     ticket_msg: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class CreatedHistoryCreate(pydantic.BaseModel):
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+    updated_time: typing.Optional[str] = pydantic.Field("", **{})
+    action: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    sub_category: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class TicketingSchema(UrdhvaPostgresBase):
@@ -654,6 +663,94 @@ class Ticketusermails_Get_Ticket_MailsParams(pydantic.BaseModel):
     sap_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     zone: str
     category: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class AlertCategoryMasterSchema(UrdhvaPostgresBase):
+    __tablename__ = 'alert_category_master'
+    
+    category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    sub_category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("sub_category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    created_on: Mapped[typing.Optional[datetime.datetime]] = mapped_column("created_on", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    updated_on: Mapped[typing.Optional[datetime.datetime]] = mapped_column("updated_on", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    created_by: Mapped[typing.Optional[str]] = mapped_column("created_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    created_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("created_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+
+class AlertCategoryMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'alert_category_master'
+    
+    category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    created_on: typing.Optional[datetime.datetime] | None = None
+    updated_on: typing.Optional[datetime.datetime] | None = None
+    created_by: typing.Optional[str] = pydantic.Field("", **{})
+    created_history: typing.Optional[typing.List[CreatedHistoryCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = AlertCategoryMasterSchema
+        upsert_keys = []
+
+
+class AlertCategoryMaster(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'alert_category_master'
+    
+    category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    created_on: typing.Optional[datetime.datetime] | None = None
+    updated_on: typing.Optional[datetime.datetime] | None = None
+    created_by: typing.Optional[str] = pydantic.Field("", **{})
+    created_history: typing.Optional[typing.List[CreatedHistoryCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = AlertCategoryMasterSchema
+        upsert_keys = []
+
+
+class AlertCategoryMasterGetResp(pydantic.BaseModel):
+    data: typing.List[AlertCategoryMaster]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Alertcategorymaster_Add_CategoryParams(pydantic.BaseModel):
+    category: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alertcategorymaster_Add_Sub_CategoryParams(pydantic.BaseModel):
+    sub_category: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alertcategorymaster_Delete_CategoryParams(pydantic.BaseModel):
+    category: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alertcategorymaster_Delete_Sub_CategoryParams(pydantic.BaseModel):
+    sub_category: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

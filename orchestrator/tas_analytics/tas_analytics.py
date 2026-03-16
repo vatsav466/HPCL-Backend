@@ -22,6 +22,7 @@ import orchestrator.tas_analytics.tas_queries as tas_queries
 import orchestrator.alerting.listener.tas_listener as tas_listener
 import utilities.helpers as helpers
 import orchestrator.tas_analytics.tas_host_data as tas_host_data
+import orchestrator.alerting.listener.tas_duplicate_alert_check as tb_utils
 
 
 def unix_ms_to_ist(ts_ms: int) -> datetime:
@@ -4240,6 +4241,196 @@ async def sick_tts_dashboard(data):
             "records": records_result
         }
     }
+
+
+async def repeated_sick_cross_verification(data):
+
+    # ---------------- FILTER BUILD ----------------
+    conditions = []
+
+    if data.filters:
+        for f in data.filters:
+
+            if not f.value:
+                continue
+
+            if f.key == "start_date":
+                start_date = f.value if isinstance(f.value, str) else None
+                end_date = next(
+                    (x.value for x in data.filters if x.key == "end_date"),
+                    None
+                )
+
+                if start_date and end_date:
+                    conditions.append(
+                        f"DATE(created_at) BETWEEN '{start_date}' AND '{end_date}'"
+                    )
+                continue
+
+            if f.key == "end_date":
+                continue
+
+            if isinstance(f.value, str):
+                if "," in f.value:
+                    clean_values = [v.strip() for v in f.value.split(",") if v.strip()]
+                else:
+                    clean_values = [f.value]
+            else:
+                clean_values = []
+
+            if not clean_values:
+                continue
+
+            if f.cond == "=":
+                if len(clean_values) == 1:
+                    conditions.append(f"{f.key} = '{clean_values[0]}'")
+                else:
+                    values = ", ".join(f"'{v}'" for v in clean_values)
+                    conditions.append(f"{f.key} IN ({values})")
+
+            elif f.cond == "!=":
+                if len(clean_values) == 1:
+                    conditions.append(f"{f.key} != '{clean_values[0]}'")
+                else:
+                    values = ", ".join(f"'{v}'" for v in clean_values)
+                    conditions.append(f"{f.key} NOT IN ({values})")
+
+    where_clause = ""
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+    # ---------------- COMMON DATASET ----------------
+    common_cte = f"""
+        WITH combined_data AS (
+
+            SELECT DISTINCT
+                load_number,
+                truck_number,
+                location_name,
+                customer_name,
+                sap_id,
+                zone,
+                created_at,
+                'SICK_TT' AS record_type
+            FROM host_sick_tts
+            {where_clause}
+
+            UNION ALL
+
+            SELECT DISTINCT
+                load_number,
+                truck_number,
+                location_name,
+                customer_name,
+                sap_id,
+                zone,
+                created_at,
+                'CANCELLED_TT' AS record_type
+            FROM host_cancelled_tts
+            {where_clause}
+        )
+    """
+
+    # ---------------- LOCATION WISE (PIVOT) ----------------
+    location_query = common_cte + """
+        SELECT
+            location_name,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'SICK_TT'
+                THEN load_number
+            END) AS sick_tt_count,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'CANCELLED_TT'
+                THEN load_number
+            END) AS cancelled_tt_count
+
+        FROM combined_data
+        GROUP BY location_name
+        ORDER BY cancelled_tt_count DESC, sick_tt_count DESC
+    """
+
+    # ---------------- VEHICLE WISE (PIVOT) ----------------
+    vehicle_query = common_cte + """
+        SELECT
+            truck_number,
+            customer_name,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'SICK_TT'
+                THEN load_number
+            END) AS sick_tt_count,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'CANCELLED_TT'
+                THEN load_number
+            END) AS cancelled_tt_count
+
+        FROM combined_data
+        GROUP BY truck_number, customer_name
+        ORDER BY cancelled_tt_count DESC, sick_tt_count DESC
+    """
+
+    # ---------------- CUSTOMER WISE (PIVOT) ----------------
+    customer_query = common_cte + """
+        SELECT
+            customer_name,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'SICK_TT'
+                THEN load_number
+            END) AS sick_tt_count,
+
+            COUNT(DISTINCT CASE
+                WHEN record_type = 'CANCELLED_TT'
+                THEN load_number
+            END) AS cancelled_tt_count
+
+        FROM combined_data
+        GROUP BY customer_name
+        ORDER BY cancelled_tt_count DESC, sick_tt_count DESC
+    """
+
+    # ---------------- RECORD DETAILS ----------------
+    records_query = common_cte + """
+        SELECT DISTINCT ON (load_number, record_type)
+            load_number,
+            truck_number,
+            location_name,
+            customer_name,
+            sap_id,
+            zone,
+            created_at,
+            record_type
+        FROM combined_data
+        ORDER BY load_number, record_type, created_at DESC
+    """
+
+    # ---------------- EXECUTION ----------------
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = "execute_query"
+
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams
+    )
+
+    location_result = await function(query=location_query)
+    vehicle_result = await function(query=vehicle_query)
+    customer_result = await function(query=customer_query)
+    records_result = await function(query=records_query)
+
+    # ---------------- FINAL RESPONSE ----------------
+    return {
+        "status": "success",
+        "message": "Sick & Cancelled TT combined dashboard fetched successfully",
+        "data": {
+            "location_wise_summary": location_result,
+            "vehicle_wise_summary": vehicle_result,
+            "customer_wise_summary": customer_result,
+            "records": records_result
+        }
+    }
     
 async def over_loaded_tts_dashboard(data):
 
@@ -5677,6 +5868,104 @@ async def get_bay_counts(data):
         "locations": locations_result
     }
 
+async def operability_index_health_check(data) -> dict:
+    """
+    Check ThingsBoard devices whose name starts with 'Operability Index@'
+    and report whether they are Live or Down based on latest telemetry timestamp
+    across ANY telemetry key within the last `window_minutes`.
+    """
+    window_minutes = 60  # default window
+
+    jwt = await tb_utils.get_thingsboard_jwt()
+    base_url = tb_utils.THINGSBOARD_URL.rstrip("/")
+
+    headers = {"X-Authorization": f"Bearer {jwt}"}
+    page = 0
+    page_size = 100
+    devices: list[dict] = []
+
+    # Fetch devices matching textSearch 'Operability Index'
+    while True:
+        params = {"pageSize": page_size, "page": page, "textSearch": "Operability Index"}
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(f"{base_url}/api/tenant/devices", headers=headers, params=params)
+            resp.raise_for_status()
+            device_data = resp.json()
+        chunk = device_data.get("data", []) if isinstance(device_data, dict) else []
+        if not chunk:
+            break
+        devices.extend(chunk)
+        if len(chunk) < page_size:
+            break
+        page += 1
+
+    # Keep only devices whose name starts with 'Operability Index@'
+    filtered = []
+    for d in devices:
+        name = (d.get("name") or "")
+        dev_id = (d.get("id") or {}).get("id")
+        if name.lower().startswith("operability index") and dev_id:
+            filtered.append({"name": name, "id": dev_id})
+
+    now_utc = datetime.now(timezone.utc)
+    cutoff_ms = int((now_utc - timedelta(minutes=window_minutes)).timestamp() * 1000)
+
+    results: list[dict] = []
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        for dev in sorted(filtered, key=lambda x: x["name"].lower()):
+            dev_id = dev["id"]
+            url = f"{base_url}/api/plugins/telemetry/DEVICE/{dev_id}/values/timeseries"
+
+            last_ts_ms = None
+            try:
+                # No 'keys' param — fetch ALL telemetry keys
+                resp = await client.get(
+                    url,
+                    headers=headers,
+                    params={"limit": 1, "orderBy": "DESC"},
+                )
+                print(resp)
+                if resp.status_code == 200:
+                    telemetry = resp.json()
+                    # Find the most recent timestamp across all keys
+                    latest_ts = None
+                    for key_points in telemetry.values():
+                        if key_points and isinstance(key_points, list):
+                            ts = int(key_points[0].get("ts", 0))
+                            if latest_ts is None or ts > latest_ts:
+                                latest_ts = ts
+                    last_ts_ms = latest_ts
+            except Exception:
+                last_ts_ms = None
+
+            if last_ts_ms is None:
+                status = "Down"
+                last_ts_str = None
+            else:
+                status = "Live" if last_ts_ms >= cutoff_ms else "Down"
+                last_ts_str = datetime.fromtimestamp(
+                    last_ts_ms / 1000.0, tz=timezone.utc
+                ).astimezone(timezone(timedelta(hours=5, minutes=30))).strftime("%Y-%m-%d %H:%M:%S")
+
+            results.append(
+                {
+                    "device_name": dev["name"].split("@")[1],
+                    # "last_ts_ms": last_ts_ms,
+                    "last_ts_utc": last_ts_str,
+                    "status": status,
+                }
+            )
+
+    return {
+        # "now_utc": now_utc.isoformat(),
+        # "window_minutes": window_minutes,
+        "total_devices": len(filtered),
+        "live_devices": sum(1 for r in results if r["status"] == "Live"),
+        "devices": results,
+    }
+
+
 async def gantry_override_analysis(data):
     """
     For each 'Gantry Permissive_Override' alert in the date range,
@@ -5840,10 +6129,12 @@ AnalyticsModelMapping = {
     "Hostbay Reassignment Alerts":host_bay_reassignment_alert,
     "Cancelled Report tts":cancelled_tts_dashboard,
     "Sick Report tts":sick_tts_dashboard,
+    "Repeated_Sick_Cross":repeated_sick_cross_verification,
     "Over Loaded tts":over_loaded_tts_dashboard,
     "Host Tables Combined Data":host_tables_combined_data,
     "get bay counts":get_bay_counts,
     "Gantry Override Analysis": gantry_override_analysis,
+    "Run Daily Data Check": operability_index_health_check
 
 }
 
@@ -5851,14 +6142,14 @@ AnalyticsModelMapping = {
 async def tas_analytics_action(data):
     SKIP_KEYS = {"bay"}
     if hasattr(data, "filters") and data.filters:
+        cleaned_filters = []
         for f in data.filters:
             if f.key in SKIP_KEYS:
                 continue
             if f.value:
-                if isinstance(f.value, list) and len(f.value) > 1:
-                    setattr(data, f.key, f.value)   # keep full list
-                else:
-                    setattr(data, f.key, f.value[0] if isinstance(f.value, list) else f.value)
+                cleaned_filters.append(f)
+
+        data.filters = cleaned_filters   # optional cleanup
 
     analytical_model = data.analytical_model
 
