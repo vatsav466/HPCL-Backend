@@ -2,6 +2,7 @@ import urdhva_base
 import io
 import os
 import json
+import psycopg2
 import asyncio
 import traceback
 import numpy as np
@@ -2143,7 +2144,30 @@ class VTSAnalyticsActions:
             print("traceback:", traceback.format_exc())
             return {"status": False, "message": str(e), "data": []}
    
-    
+    @staticmethod
+    async def non_reporting_devices(filters, cross_filters, drill_state, payload):
+        try:
+            query = "SELECT truck_regno FROM non_reporting_devices"
+            conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
+            
+            status_filter = payload.get("status")
+            if status_filter == "live":
+                conditions.append("completed_trip = 'open' AND completed_trip_auto_dc = 'open'")
+            elif status_filter == "closed":
+                # conditions.append("'closed' IN (completed_trip, completed_trip_auto_dc)")
+                conditions.append("completed_trip='closed' OR completed_trip_auto_dc='closed'")
+
+            query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
+            df = await VTSAnalyticsActions.execute_query(query)
+            if payload.get("total_count") == "true":
+                return {"status": True, "total_records":len(df)}
+            return {"status": True, "message": "successfull", "data": df.to_dict('list') }
+        
+        except Exception as e:
+            print("traceback:", traceback.format_exc())
+            return {"status": False, "message": str(e), "data": []}
+
+
     @staticmethod
     async def vts_ongoing_trips(filters, cross_filters, drill_state, payload):
         try:
