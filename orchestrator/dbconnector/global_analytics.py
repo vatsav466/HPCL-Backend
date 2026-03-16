@@ -6540,9 +6540,7 @@ class GlobalAnalytics:
     @staticmethod
     async def cancelled_tts(filters, cross_filters, drill_state):
         try:
-            # Check date flag once
             date = "date" in drill_state
-            # Extract filter values efficiently in a single pass
             zone_filter = ''
             plant_filter = ''
             load_number = ''
@@ -6554,13 +6552,11 @@ class GlobalAnalytics:
                         plant_filter = filter.value
                     if "load_number" in filter.key:
                         load_number = filter.value
-            
-            # Initialize date filter variables
+
             date_filter_applied = False
             start_date = None
             end_date = None
-            
-            # Process cross filters for date
+
             if cross_filters:
                 for filter in cross_filters:
                     if "DATE" in filter.key:
@@ -6569,7 +6565,6 @@ class GlobalAnalytics:
                         end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                         date_filter_applied = True
                         break
-            
             query = """WITH cancelled_tts AS (
                 SELECT 
                     DATE(created_at) AS created_date,
@@ -6578,87 +6573,76 @@ class GlobalAnalytics:
                     sap_id,
                     truck_number,
                     load_number,
-                    SUM(required_qty) AS total_required_qty
+                    SUM(required_qty) AS total_required_qty,
+                    ARRAY_AGG(CONCAT(required_qty,' ',product_name)) AS indent_breakup
                 FROM 
                     host_cancelled_tts
                 WHERE 1=1
             """
-            
-            # Add zone filter if present
             if zone_filter:
                 query += f" AND zone IN ('{zone_filter}')"
-            
-            # Add plant/location filter if present
             if plant_filter:
                 query += f" AND sap_id IN ('{plant_filter}')"
-            
-            # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
                 query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
-            
-            # Complete the query with JOIN instead of subquery for better performance
             query += f"""
-                            GROUP BY 
-                                DATE(created_at), zone, location_name, sap_id, truck_number, load_number
-                        )
-                        SELECT 
-                            c.created_date,
-                            c.zone,
-                            c.location_name,
-                            c.sap_id,
-                            c.truck_number,
-                            c.load_number,
-                            COALESCE(COUNT(a.id), 0) AS alert_count,
-                            c.total_required_qty
-                        FROM 
-                            cancelled_tts c
-                        LEFT JOIN 
-                            alerts a ON a.tt_load_number = c.load_number::text 
-                            AND a.interlock_name = 'Cancel TT Reported'
-                            AND DATE(a.created_at) = c.created_date
-                        GROUP BY 
-                            c.created_date, c.zone, c.location_name, c.sap_id, c.truck_number, c.load_number, c.total_required_qty
-                        ORDER BY 
-                            c.created_date DESC, alert_count DESC
+                    GROUP BY 
+                        DATE(created_at), zone, location_name, sap_id, truck_number, load_number
+                )
+                SELECT 
+                    c.created_date,
+                    c.zone,
+                    c.location_name,
+                    c.sap_id,
+                    c.truck_number,
+                    c.load_number,
+                    COALESCE(COUNT(a.id), 0) AS alert_count,
+                    c.total_required_qty,
+                    c.indent_breakup
+                FROM 
+                    cancelled_tts c
+                LEFT JOIN 
+                    alerts a ON a.tt_load_number = c.load_number::text 
+                    AND a.interlock_name = 'Cancel TT Reported'
+                    AND DATE(a.created_at) = c.created_date
+                GROUP BY 
+                    c.created_date,
+                    c.zone,
+                    c.location_name,
+                    c.sap_id,
+                    c.truck_number,
+                    c.load_number,
+                    c.total_required_qty,
+                    c.indent_breakup
+                ORDER BY 
+                    c.created_date DESC,
+                    alert_count DESC
             """
-            
-            # Execute query with parameters
+
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query,limit=0)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 data = resp.get('data', '')
                 if not data:
                     return {"status": False, "message": "Data Not found", "data": {}}
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
-            
-            # Process data more efficiently
             resp_df = pl.DataFrame(data)
             if resp_df.is_empty():
                 return {"status": True, "data": {}}
-            
-            # Apply type conversion once
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
-            
-            # Apply load_number filter if needed
             if load_number:
                 resp_df = resp_df.filter(pl.col("load_number") == load_number)
-            
-            # Apply default date filter if needed
             if not date and date_filter_applied:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
-            
-            # Process data according to aggregation type
             if date:
-                # Create graph data once
                 graph_data = resp_df.group_by("created_date").agg([
                     pl.sum("alert_count").alias("total_alerts"),
-                    pl.sum("total_required_qty").alias("total_required_qty")
+                    pl.sum("total_required_qty").alias("total_fan_qty")
                 ]).with_columns(
                     pl.col("created_date").cast(pl.Utf8)
                 )
-                
-                # Create graph_data dictionary
+
                 graph_dict = {
                     str(row["created_date"]): {
                         "total_alerts": row["total_alerts"],
@@ -6666,18 +6650,19 @@ class GlobalAnalytics:
                     }
                     for row in graph_data.iter_rows(named=True)
                 }
-                
-                # Daily aggregation
+
                 group_cols = ["created_date", "zone", "sap_id", "location_name", "truck_number", "load_number"]
                 grouped_df = resp_df.group_by(group_cols).agg([
                     pl.sum("alert_count").alias("total_alerts"),
-                    pl.sum("total_required_qty").alias("total_required_quantity")
+                    pl.sum("total_required_qty").alias("total_required_quantity"),
+                    pl.first("indent_breakup").alias("indent_breakup")
                 ])
-                
-                # Create result dictionary efficiently
+
                 result = {}
+
                 for row in grouped_df.iter_rows(named=True):
                     created_date = str(row["created_date"])
+
                     entry = {
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
@@ -6685,26 +6670,30 @@ class GlobalAnalytics:
                         "truck_number": row["truck_number"],
                         "load_number": row["load_number"],
                         "total_alerts": row["total_alerts"],
-                        "total_required_qty": row["total_required_quantity"]
+                        "total_fan_qty": row["total_required_quantity"],
+                        "indent_breakup": " + ".join(row["indent_breakup"]) if row["indent_breakup"] else ""
                     }
                     result.setdefault(created_date, []).append(entry)
-                
-                return {"status": True, "message": "success", "daily_data": result, "graph_data": graph_dict}
+
+                return {
+                    "status": True,
+                    "message": "success",
+                    "daily_data": result,
+                    "graph_data": graph_dict
+                }
+
             else:
-                # Create month_year column once
-                # resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
-                # resp_df = resp_df.sort("month_year", descending=False)
+
                 resp_df = resp_df.with_columns([
                     pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),
                     pl.col("created_date").dt.truncate("1mo").alias("month_sort")
                 ])
-                # Create graph data for monthly view
+
                 graph_data = resp_df.group_by(["month_year", "month_sort"]).agg([
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_qty")
                 ]).sort("month_sort", descending=False)
 
-                # Create graph_data dictionary
                 graph_dict = {
                     row["month_year"]: {
                         "total_alerts": row["total_alerts"],
@@ -6713,14 +6702,12 @@ class GlobalAnalytics:
                     for row in graph_data.iter_rows(named=True)
                 }
 
-                # Monthly aggregation
                 group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "truck_number", "load_number"]
                 grouped_df = resp_df.group_by(group_cols).agg([
                     pl.sum("alert_count").alias("total_alerts"),
-                    pl.sum("total_required_qty").alias("total_required_quantity")
-                ])
-                grouped_df = grouped_df.sort("month_sort", descending=False)
-                # Create result dictionary efficiently
+                    pl.sum("total_required_qty").alias("total_fan_qty"),
+                    pl.first("indent_breakup").alias("indent_breakup")
+                ]).sort("month_sort", descending=False)
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
                     month = row["month_year"]
@@ -6731,11 +6718,18 @@ class GlobalAnalytics:
                         "truck_number": row["truck_number"],
                         "load_number": row["load_number"],
                         "total_alerts": row["total_alerts"],
-                        "total_required_qty": row["total_required_quantity"]
+                        "total_fan_qty": row["total_required_quantity"],
+                        "indent_breakup": " + ".join(row["indent_breakup"]) if row["indent_breakup"] else ""
                     }
+
                     result.setdefault(month, []).append(entry)
-                
-                return {"status": True, "message": "success", "monthly_data": result, "graph_data": graph_dict}
+
+                return {
+                    "status": True,
+                    "message": "success",
+                    "monthly_data": result,
+                    "graph_data": graph_dict
+                }
 
         except Exception as e:
             return {"status": False, "message": f"Error: {str(e)}", "data": {}}
