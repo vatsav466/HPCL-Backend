@@ -49,6 +49,14 @@ class CommentHistoryCreate(pydantic.BaseModel):
     ticket_msg: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class CreatedHistoryCreate(pydantic.BaseModel):
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+    updated_time: typing.Optional[str] = pydantic.Field("", **{})
+    action: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    sub_category: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class TicketingSchema(UrdhvaPostgresBase):
     __tablename__ = 'ticketing'
     
@@ -98,6 +106,7 @@ class TicketingSchema(UrdhvaPostgresBase):
     assignee_mail: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assignee_mail", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     escalation_level: Mapped[typing.Optional[str]] = mapped_column("escalation_level", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     comment_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("comment_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    employee_id: Mapped[typing.Optional[typing.List[str]]] = mapped_column("employee_id", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(ticket_id, sap_id, name="ticketing_ticket_id_sap_id"),)
 
@@ -151,6 +160,7 @@ class TicketingCreate(urdhva_base.postgresmodel.BasePostgresModel):
     assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     escalation_level: typing.Optional[str] = pydantic.Field("", **{})
     comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
+    employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -209,6 +219,7 @@ class Ticketing(urdhva_base.postgresmodel.PostgresModel):
     assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     escalation_level: typing.Optional[str] = pydantic.Field("", **{})
     comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
+    employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -267,6 +278,7 @@ class Ticketing_Create_TicketParams(pydantic.BaseModel):
     reporter: typing.Optional[str] = pydantic.Field("", **{})
     escalation_level: typing.Optional[str] = pydantic.Field("", **{})
     comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
+    employee_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -313,7 +325,6 @@ class Ticketing_Update_TicketParams(pydantic.BaseModel):
     assignee_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     assignee_mail: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     reporter: typing.Optional[str] = pydantic.Field("", **{})
-    escalation_level: typing.Optional[str] = pydantic.Field("", **{})
     comment_history: typing.Optional[typing.List[CommentHistoryCreate]] | None = None
 
     class Config:
@@ -595,9 +606,10 @@ class TicketUserMailsSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     role: Mapped[str] = mapped_column("role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=True, nullable=True, default="", primary_key=False, unique=False)
-    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[typing.List[str]]] = mapped_column("zone", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
     employee_name: Mapped[typing.Optional[str]] = mapped_column("employee_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     email_id: Mapped[typing.Optional[str]] = mapped_column("email_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    employee_id: Mapped[typing.Optional[str]] = mapped_column("employee_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class TicketUserMailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -607,9 +619,10 @@ class TicketUserMailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     role: str
     location_name: typing.Optional[str] = pydantic.Field("", **{})
-    zone: str
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     employee_name: typing.Optional[str] = pydantic.Field("", **{})
     email_id: typing.Optional[str] = pydantic.Field("", **{})
+    employee_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -626,9 +639,10 @@ class TicketUserMails(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     role: typing.Optional[str] | None = None
     location_name: typing.Optional[str] = pydantic.Field("", **{})
-    zone: typing.Optional[str] | None = None
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     employee_name: typing.Optional[str] = pydantic.Field("", **{})
     email_id: typing.Optional[str] = pydantic.Field("", **{})
+    employee_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -648,6 +662,94 @@ class Ticketusermails_Get_Ticket_MailsParams(pydantic.BaseModel):
     sap_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     zone: str
     category: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class AlertCategoryMasterSchema(UrdhvaPostgresBase):
+    __tablename__ = 'alert_category_master'
+    
+    category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    sub_category: Mapped[typing.Optional[typing.List[str]]] = mapped_column("sub_category", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    created_on: Mapped[typing.Optional[datetime.datetime]] = mapped_column("created_on", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    updated_on: Mapped[typing.Optional[datetime.datetime]] = mapped_column("updated_on", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    created_by: Mapped[typing.Optional[str]] = mapped_column("created_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    created_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("created_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+
+class AlertCategoryMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'alert_category_master'
+    
+    category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    created_on: typing.Optional[datetime.datetime] | None = None
+    updated_on: typing.Optional[datetime.datetime] | None = None
+    created_by: typing.Optional[str] = pydantic.Field("", **{})
+    created_history: typing.Optional[typing.List[CreatedHistoryCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = AlertCategoryMasterSchema
+        upsert_keys = []
+
+
+class AlertCategoryMaster(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'alert_category_master'
+    
+    category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sub_category: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+    created_on: typing.Optional[datetime.datetime] | None = None
+    updated_on: typing.Optional[datetime.datetime] | None = None
+    created_by: typing.Optional[str] = pydantic.Field("", **{})
+    created_history: typing.Optional[typing.List[CreatedHistoryCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = AlertCategoryMasterSchema
+        upsert_keys = []
+
+
+class AlertCategoryMasterGetResp(pydantic.BaseModel):
+    data: typing.List[AlertCategoryMaster]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Alertcategorymaster_Add_CategoryParams(pydantic.BaseModel):
+    category: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alertcategorymaster_Add_Sub_CategoryParams(pydantic.BaseModel):
+    sub_category: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alertcategorymaster_Delete_CategoryParams(pydantic.BaseModel):
+    category: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Alertcategorymaster_Delete_Sub_CategoryParams(pydantic.BaseModel):
+    sub_category: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

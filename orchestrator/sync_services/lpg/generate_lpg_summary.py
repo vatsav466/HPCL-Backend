@@ -212,8 +212,8 @@ async def process_plant_concurrent(plant, semaphore):
 
                 params = {
                     "sap_id": str(plant["erp_id"]),
-                    "from_date": current_date.strftime("%Y-%m-%d"),
-                    "to_date": current_date.strftime("%Y-%m-%d")
+                    "from_date": (current_date - timedelta(days=1) if current_date.weekday() == 6 else current_date).strftime("%Y-%m-%d"),
+                    "to_date": (current_date - timedelta(days=1) if current_date.weekday() == 6 else current_date).strftime("%Y-%m-%d")
                 }
                 
                 ins = GenerateLPGSummary(**params)
