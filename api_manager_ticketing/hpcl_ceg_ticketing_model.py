@@ -661,7 +661,7 @@ class TicketUserMailsGetResp(pydantic.BaseModel):
 
 class Ticketusermails_Get_Ticket_MailsParams(pydantic.BaseModel):
     sap_id: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    zone: str
+    zone: typing.List[str]
     category: str
 
     class Config:
