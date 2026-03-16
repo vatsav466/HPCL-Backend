@@ -2147,22 +2147,9 @@ class VTSAnalyticsActions:
     @staticmethod
     async def non_reporting_devices(filters, cross_filters, drill_state, payload):
         try:
-            creds = credential_loader.load_credentials("APP_DB_")
-            print(creds)
-            conn = psycopg2.connect(
-                host=creds['APP_DB_HOST'],
-                database=creds['APP_DB_DB'],
-                user=creds["APP_DB_USER"],
-                password=creds["APP_DB_PASSWORD"]
-            )
-            cur = conn.cursor()
-            
-            print("non reporting devices")
             query = "SELECT truck_regno FROM non_reporting_devices"
-
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
-            print("conditions --->", conditions)
-
+            
             status_filter = payload.get("status")
             if status_filter == "live":
                 conditions.append("completed_trip = 'open' AND completed_trip_auto_dc = 'open'")
@@ -2171,17 +2158,10 @@ class VTSAnalyticsActions:
                 conditions.append("completed_trip='closed' OR completed_trip_auto_dc='closed'")
 
             query = VTSAnalyticsActions.apply_conditions_to_query(query, conditions)
-            print("query after applied conditions --->", query)
-
-            # get data
-            cur.execute(query)
-            rows = cur.fetchall()
-            columns = [desc[0] for desc in cur.description]
-            df = pl.DataFrame(rows, schema=columns)
-            
+            df = await VTSAnalyticsActions.execute_query(query)
             if payload.get("total_count") == "true":
-                return {"status": True, "total_records":df.height}
-            return {"status": True, "message": "successfull", "data": df.to_dicts() }
+                return {"status": True, "total_records":len(df)}
+            return {"status": True, "message": "successfull", "data": df.to_dict('list') }
         
         except Exception as e:
             print("traceback:", traceback.format_exc())
