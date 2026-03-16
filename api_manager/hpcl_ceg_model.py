@@ -1589,6 +1589,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     image_uploaded: Mapped[typing.Optional[bool]] = mapped_column("image_uploaded", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     ticket_id: Mapped[typing.Optional[str]] = mapped_column("ticket_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    load_type: Mapped[typing.Optional[str]] = mapped_column("load_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1690,6 +1691,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     image_uploaded: typing.Optional[bool] = pydantic.Field(False, )
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     ticket_id: typing.Optional[str] = pydantic.Field("", **{})
+    load_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1800,6 +1802,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     image_uploaded: typing.Optional[bool] = pydantic.Field(False, )
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
     ticket_id: typing.Optional[str] = pydantic.Field("", **{})
+    load_type: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'

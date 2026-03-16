@@ -15,7 +15,7 @@ import orchestrator.analytics.vts_analysis as vts_analysis
 import cache_gateway.cache_api_actions as cache_api_actions
 import asyncio
 import httpx
-
+import orchestrator.alerting.vts_load_type_update as vts_load_type_update
 logger = urdhva_base.logger.Logger.getInstance('alert_factory_log')
 
 
@@ -202,6 +202,16 @@ class AlertFactory:
                                                         'block_status': alert_data.get('block_status',None),
                                                         'tt_type': (alert_data.get('tt_type') or '').lower(),
                                                         'raw_data': {}}).create()
+
+            if alert_data.get("alert_section", '') in ["VTS"]:
+                await vts_load_type_update.enqueue_vts_load_type_processing({
+                    "id": alert_resp.get("id"),
+                    "bu": bu,
+                    "vehicle_number": alert_data.get("vehicle_number"),
+                    "unique_id": unique_id,
+                    "interlock_name": interlock_name,
+                    "sap_id": sap_id
+                })
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
             alert_level = "level - 1"
