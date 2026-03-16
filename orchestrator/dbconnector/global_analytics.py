@@ -7542,7 +7542,9 @@ class GlobalAnalytics:
                         location_name,
                         sap_id,
                         assigned_bay,
-                        load_number
+                        load_number,
+                        truck_number,
+                        reassigned_bay
                     FROM 
                         host_bay_re_assignment
                     WHERE 1=1
@@ -7562,7 +7564,7 @@ class GlobalAnalytics:
             # Complete the CTE and main query
             query += f"""
                 GROUP BY 
-                        DATE(created_at), zone, location_name, sap_id, load_number, assigned_bay
+                        DATE(created_at), zone, location_name, sap_id, load_number, assigned_bay, truck_number, reassigned_bay
                 )
                 SELECT 
                     k.created_date,
@@ -7571,6 +7573,8 @@ class GlobalAnalytics:
                     k.sap_id,
                     k.assigned_bay,
                     k.load_number,
+                    k.truck_number,
+                    k.reassigned_bay,
                     COALESCE(COUNT(a.id), 0) AS alert_count
                 FROM 
                     bay_reassignment k
@@ -7579,7 +7583,7 @@ class GlobalAnalytics:
                     AND a.tt_load_number = k.load_number::VARCHAR
                     AND DATE(a.created_at) = k.created_date
                 GROUP BY
-                    k.created_date, k.zone, k.location_name, k.sap_id, k.load_number, k.assigned_bay
+                    k.created_date, k.zone, k.location_name, k.sap_id, k.load_number, k.assigned_bay, k.truck_number, k.reassigned_bay
                 ORDER BY 
                     k.created_date DESC, alert_count DESC
             """
@@ -7612,7 +7616,7 @@ class GlobalAnalytics:
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name", "load_number", "assigned_bay"]
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "load_number", "assigned_bay", "truck_number", "reassigned_bay"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
@@ -7626,7 +7630,9 @@ class GlobalAnalytics:
                         "location_name": row["location_name"],
                         "assigned_bay": row["assigned_bay"],
                         "load_number": row["load_number"],
-                        "total_alerts": row["total_alerts"]
+                        "total_alerts": row["total_alerts"],
+                        "truck_number": row["truck_number"],
+                        "reassigned_bay": row["reassigned_bay"],
                     }
                     result.setdefault(created_date, []).append(entry)
                 return {"status": True, "message": "success", "daily_data": result}
@@ -7638,7 +7644,7 @@ class GlobalAnalytics:
                     pl.col("created_date").dt.truncate("1mo").alias("month_sort")
                 ])
 
-                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "load_number", "assigned_bay"]
+                group_cols = ["month_year", "month_sort", "zone", "sap_id", "location_name", "load_number", "assigned_bay","truck_number", "reassigned_bay"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
@@ -7654,7 +7660,9 @@ class GlobalAnalytics:
                         "location_name": row["location_name"],
                         "assigned_bay": row["assigned_bay"],
                         "load_number": row["load_number"],
-                        "total_alerts": row["total_alerts"]
+                        "total_alerts": row["total_alerts"],
+                        "truck_number": row["truck_number"],
+                        "reassigned_bay": row["reassigned_bay"],
                     }
                     result.setdefault(month, []).append(entry)
                 return {"status": True, "message": "success", "monthly_data": result}
