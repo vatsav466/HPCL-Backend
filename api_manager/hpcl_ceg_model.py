@@ -228,6 +228,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
         upsert_keys = ['username', 'employee_id']
+        search_fields = ['username', 'email', 'first_name', 'last_name', 'employee_id', 'employee_number', 'contact_number']
 
 
 class Users(urdhva_base.postgresmodel.PostgresModel):
@@ -260,6 +261,7 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
         upsert_keys = ['username', 'employee_id']
+        search_fields = ['username', 'email', 'first_name', 'last_name', 'employee_id', 'employee_number', 'contact_number']
 
 
 class UsersGetResp(pydantic.BaseModel):
