@@ -391,7 +391,7 @@ Model TicketUserMails {
 
     Action=> get_ticket_mails {
         sap_id optional list str
-        zone str
+        zone list str
         category str
     }
 
