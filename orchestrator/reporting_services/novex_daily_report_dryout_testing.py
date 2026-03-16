@@ -85,6 +85,7 @@ async def publish_daily_novex_status_email():
     status_data.update(await sod_data.get_parameters_summary())
     #status_data.update(await retail_data.get_ro_ratings())
     status_data.update(ro_va_cleanliness.main())
+    status_data.update(await retail_data.nozzle_sales())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data.get_alert_data(alert_section))
