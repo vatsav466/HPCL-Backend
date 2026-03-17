@@ -891,6 +891,9 @@ class VTSAnalyticsActions:
         queries = ["vts_device_removed", "vts_harsh_acceleration", "vts_harsh_braking", "vts_panic"]
         if any(q in query.lower() for q in queries):
             return f"event_date BETWEEN '{start}' AND '{end}'"
+
+        if "non_reporting_devices" in query.lower():
+            return f"last_check_date BETWEEN '{start}' AND '{end_date}'"
         
         
         return f"created_at BETWEEN '{start}' AND '{end}'"
@@ -2147,7 +2150,8 @@ class VTSAnalyticsActions:
     @staticmethod
     async def non_reporting_devices(filters, cross_filters, drill_state, payload):
         try:
-            query = "SELECT truck_regno FROM non_reporting_devices"
+            query = """SELECT zone, location, location_name, truck_regno, loaded_on, (last_check_date || ' ' || last_check_time)::timestamp as last_check,
+                       (longitude, latitude) as "longitude/latitude" FROM non_reporting_devices"""
             conditions = VTSAnalyticsActions.build_filter_conditions(filters, cross_filters, query)
             
             status_filter = payload.get("status")
@@ -2161,7 +2165,7 @@ class VTSAnalyticsActions:
             df = await VTSAnalyticsActions.execute_query(query)
             if payload.get("total_count") == "true":
                 return {"status": True, "total_records":len(df)}
-            return {"status": True, "message": "successfull", "data": df.to_dict('list') }
+            return {"status": True, "message": "successfull", "data": df.to_dict(orient="records") }
         
         except Exception as e:
             print("traceback:", traceback.format_exc())
