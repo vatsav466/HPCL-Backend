@@ -1409,7 +1409,6 @@ class SolarCapacity:
                     pass
 
             # Calculate efficiency per plant
-            # Estimated energy is built in a separate helper (same pattern as solar_energy_generated_new)
             # For today-filter, use _calculate_today_estimated_energy() so estimation uses elapsed/window logic.
             if is_today_filter and result_df is not None and not result_df.is_empty():
                 # Meta (names/zones) from solar master
