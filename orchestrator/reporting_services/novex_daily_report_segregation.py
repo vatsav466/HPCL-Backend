@@ -81,8 +81,7 @@ async def publish_daily_novex_status_email():
     status_data.update(await sod_data.get_fault_and_maintenance())
     status_data.update(await sod_data.get_parameters_summary())
     status_data.update(ro_va_cleanliness.main())
-    # status_data.update(await retail_data.nozzle_sales())
-    status_data.update(await retail_data.tmt_zone_wise())
+    status_data.update(await retail_data.nozzle_sales(segregation = "zone"))
     status_data.update(await retail_data.sales_tmt_excel())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:

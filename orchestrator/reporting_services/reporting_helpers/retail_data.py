@@ -1457,12 +1457,19 @@ async def nozzle_sales(
     }
 
 
-async def tmt_zone_wise():
-    result = await nozzle_sales(segregation = "zone")
-    return result
-
-
 async def sales_tmt_excel():
+    """
+    Generate Excel report comparing nozzle sales (TMT) with SAP sales (TMT) by state, including percentage and expected sites.
+    Steps:
+1. Fetch nozzle sales data by state for yesterday (or specified date) using nozzle_sales function.
+2. Fetch location master data for RO to get state and sales area mapping.
+3. Merge nozzle sales with location master to attach state info.
+4. Fetch SAP sales TMT data by state for yesterday (or specified date).
+5. Merge nozzle sales and SAP sales on state.
+6. Aggregate by state to get total nozzle sales and SAP sales.
+7. Calculate percentage of nozzle sales vs SAP sales.
+8. Append total row with overall sums and percentages.
+9. Generate Excel file with formatted table."""
     nozzle_sales_df = await nozzle_sales()
     nozzle_sales_df = pl.DataFrame(nozzle_sales_df["daily_zone_product_nozzle_sales"])
     nozzle_sales_df = nozzle_sales_df.filter(pl.col("sales_area") != "Total")
@@ -1538,10 +1545,11 @@ async def sales_tmt_excel():
     ])
     print("final data ---->\n", final_data)
     
-    excel_path = "/tmp/nozzle_&_sap_sales.xlsx"
+    excel_path = "/tmp/primary_&_secondary_sales.xlsx"
     workbook = xlsxwriter.Workbook(excel_path)
-    worksheet = workbook.add_worksheet("Nozzle And Sap Sales")
+    worksheet = workbook.add_worksheet(" Sales")
 
+    # -------------------- FORMATS --------------------
     header_format = workbook.add_format({
         "bold": True,
         "align": "center",
@@ -1553,6 +1561,7 @@ async def sales_tmt_excel():
         "align": "center"
     })
 
+    # -------------------- HEADERS --------------------
     worksheet.merge_range("A1:A2", "State", header_format)
     worksheet.merge_range("B1:B2", "Connected Sites", header_format)
     worksheet.merge_range("C1:D1", "Nozzle sales (in TMT)", header_format)
@@ -1565,6 +1574,7 @@ async def sales_tmt_excel():
     worksheet.write("G2", "MS (all variants)", header_format)
     worksheet.write("H2", "HSD (all variants)", header_format)
 
+    # -------------------- DATA --------------------
     data_rows = final_data.to_dicts()
 
     row = 2
@@ -1579,13 +1589,53 @@ async def sales_tmt_excel():
         worksheet.write(row, 7, record["HSD_percentage"], cell_format)
         row += 1
 
-
+    # -------------------- COLUMN WIDTH --------------------
     worksheet.set_column("A:A", 18)
     worksheet.set_column("B:B", 18)
     worksheet.set_column("C:D", 20)
     worksheet.set_column("E:F", 20)
     worksheet.set_column("G:H", 20)
 
+    start_row = 2
+    end_row = row - 1
+
+    for col in ["G", "H"]:
+        cell_range = f"{col}{start_row+1}:{col}{end_row+1}"
+
+        # < 70 → Dark Red
+        worksheet.conditional_format(cell_range, {
+            "type": "cell",
+            "criteria": "<",
+            "value": 70,
+            "format": workbook.add_format({"bg_color": "#C00000"})
+        })
+
+        # 70–80 → Orange
+        worksheet.conditional_format(cell_range, {
+            "type": "cell",
+            "criteria": "between",
+            "minimum": 70,
+            "maximum": 80,
+            "format": workbook.add_format({"bg_color": "#F1A470"})
+        })
+
+        # 80–90 → Light Orange
+        worksheet.conditional_format(cell_range, {
+            "type": "cell",
+            "criteria": "between",
+            "minimum": 80,
+            "maximum": 90,
+            "format": workbook.add_format({"bg_color": "#F5BB99"})
+        })
+
+        # > 90 → Dark Orange
+        worksheet.conditional_format(cell_range, {
+            "type": "cell",
+            "criteria": ">",
+            "value": 90,
+            "format": workbook.add_format({"bg_color": "#ED7D31"})
+        })
+        
     workbook.close()
 
     print("Excel created at:", excel_path)
