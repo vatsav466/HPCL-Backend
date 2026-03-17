@@ -81,7 +81,8 @@ async def publish_daily_novex_status_email():
     status_data.update(await sod_data.get_fault_and_maintenance())
     status_data.update(await sod_data.get_parameters_summary())
     status_data.update(ro_va_cleanliness.main())
-    status_data.update(await retail_data.nozzle_sales())
+    status_data.update(await retail_data.nozzle_sales(segregation = "zone"))
+    status_data.update(await retail_data.sales_tmt_excel())
 
     for alert_section in ["VA", "VTS", "EMLock", "TAS"]:
         status_data.update(await get_alert_data.get_alert_data(alert_section))
@@ -115,7 +116,7 @@ async def publish_daily_novex_status_email():
             "last_30_days_dry_out_trends": f"{status_data.get('zone_wise_chart')}",
             "nozzel_sales_chart": f"{status_data.get('nozzel_sales_chart')}"
         },
-        attachments = [status_data.get('zone_wise_pdf_path')]
+        attachments = [status_data.get('zone_wise_pdf_path') ,status_data.get('retail_sales_report')]
     )
     await send_notification(
         template_name="seg3.html",
