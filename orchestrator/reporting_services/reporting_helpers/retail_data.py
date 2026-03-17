@@ -1461,15 +1461,16 @@ async def sales_tmt_excel():
     """
     Generate Excel report comparing nozzle sales (TMT) with SAP sales (TMT) by state, including percentage and expected sites.
     Steps:
-1. Fetch nozzle sales data by state for yesterday (or specified date) using nozzle_sales function.
-2. Fetch location master data for RO to get state and sales area mapping.
-3. Merge nozzle sales with location master to attach state info.
-4. Fetch SAP sales TMT data by state for yesterday (or specified date).
-5. Merge nozzle sales and SAP sales on state.
-6. Aggregate by state to get total nozzle sales and SAP sales.
-7. Calculate percentage of nozzle sales vs SAP sales.
-8. Append total row with overall sums and percentages.
-9. Generate Excel file with formatted table."""
+    1. Fetch nozzle sales data by state for yesterday (or specified date) using nozzle_sales function.
+    2. Fetch location master data for RO to get state and sales area mapping.
+    3. Merge nozzle sales with location master to attach state info.
+    4. Fetch SAP sales TMT data by state for yesterday (or specified date).
+    5. Merge nozzle sales and SAP sales on state.
+    6. Aggregate by state to get total nozzle sales and SAP sales.
+    7. Calculate percentage of nozzle sales vs SAP sales.
+    8. Append total row with overall sums and percentages.
+    9. Generate Excel file with formatted table.
+    """
     nozzle_sales_df = await nozzle_sales()
     nozzle_sales_df = pl.DataFrame(nozzle_sales_df["daily_zone_product_nozzle_sales"])
     nozzle_sales_df = nozzle_sales_df.filter(pl.col("sales_area") != "Total")
