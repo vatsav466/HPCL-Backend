@@ -6646,7 +6646,7 @@ class GlobalAnalytics:
                 graph_dict = {
                     str(row["created_date"]): {
                         "total_alerts": row["total_alerts"],
-                        "total_required_qty": row["total_required_qty"]
+                        "total_fan_qty": row["total_fan_qty"]
                     }
                     for row in graph_data.iter_rows(named=True)
                 }
@@ -6654,7 +6654,7 @@ class GlobalAnalytics:
                 group_cols = ["created_date", "zone", "sap_id", "location_name", "truck_number", "load_number"]
                 grouped_df = resp_df.group_by(group_cols).agg([
                     pl.sum("alert_count").alias("total_alerts"),
-                    pl.sum("total_required_qty").alias("total_required_quantity"),
+                    pl.sum("total_required_qty").alias("total_fan_qty"),
                     pl.first("indent_breakup").alias("indent_breakup")
                 ])
 
@@ -6670,7 +6670,7 @@ class GlobalAnalytics:
                         "truck_number": row["truck_number"],
                         "load_number": row["load_number"],
                         "total_alerts": row["total_alerts"],
-                        "total_fan_qty": row["total_required_quantity"],
+                        "total_fan_qty": row["total_fan_qty"],
                         "indent_breakup": " + ".join(row["indent_breakup"]) if row["indent_breakup"] else ""
                     }
                     result.setdefault(created_date, []).append(entry)
@@ -6691,13 +6691,13 @@ class GlobalAnalytics:
 
                 graph_data = resp_df.group_by(["month_year", "month_sort"]).agg([
                     pl.sum("alert_count").alias("total_alerts"),
-                    pl.sum("total_required_qty").alias("total_required_qty")
+                    pl.sum("total_required_qty").alias("total_fan_qty")
                 ]).sort("month_sort", descending=False)
 
                 graph_dict = {
                     row["month_year"]: {
                         "total_alerts": row["total_alerts"],
-                        "total_required_qty": row["total_required_qty"]
+                        "total_fan_qty": row["total_fan_qty"]
                     }
                     for row in graph_data.iter_rows(named=True)
                 }
@@ -6718,7 +6718,7 @@ class GlobalAnalytics:
                         "truck_number": row["truck_number"],
                         "load_number": row["load_number"],
                         "total_alerts": row["total_alerts"],
-                        "total_fan_qty": row["total_required_quantity"],
+                        "total_fan_qty": row["total_fan_qty"],
                         "indent_breakup": " + ".join(row["indent_breakup"]) if row["indent_breakup"] else ""
                     }
 
