@@ -5,12 +5,14 @@ import hashlib
 import json
 import functools
 import io
+import os
 import pandas as pd
 import urdhva_base
 import polars as pl
 import dashboard_studio_model
 from fastapi.responses import StreamingResponse
 from urdhva_base.ttl_cache import InMemTTLCache
+import datetime ,time
 
 from orchestrator.analytics.solar_helpers import SolarHelpers
 
@@ -20,18 +22,65 @@ def with_solar_cache(key_prefix: str, expiration: int = 900):
     Decorator to cache the result of a function using InMemTTLCache.
     Uses a hash of the 'data' parameter to generate a unique cache instance.
     """
+    def _normalize_filter_obj(f):
+        """
+        Convert filter objects (dicts / pydantic-like) into a stable, sortable dict.
+        We intentionally keep only the commonly used fields so cache keys are stable.
+        """
+        if f is None:
+            return None
+        if isinstance(f, dict):
+            obj = f
+        else:
+            # best-effort for pydantic / attr objects
+            obj = {k: getattr(f, k, None) for k in ("key", "cond", "value", "op")}
+
+        # Normalize to a stable subset + stringified values
+        return {
+            "key": str(obj.get("key") or ""),
+            "cond": str(obj.get("cond") or ""),
+            "value": obj.get("value"),
+            "op": str(obj.get("op") or ""),
+        }
+
+    def _normalize_filters(filters):
+        if not filters:
+            return []
+        norm = [_normalize_filter_obj(f) for f in filters]
+        norm = [x for x in norm if x is not None]
+        # Sort for stability (order of filters in request should not affect cache key)
+        norm.sort(key=lambda x: (x.get("key") or "", x.get("cond") or "", str(x.get("value") or ""), x.get("op") or ""))
+        return norm
+
+    def _norm_scalar(v):
+        # Treat empty strings like None to avoid cache-key churn ("", None)
+        if v is None:
+            return None
+        if isinstance(v, str):
+            s = v.strip()
+            return s if s != "" else None
+        return v
+
     def decorator(func):
         @functools.wraps(func)
         async def wrapper(cls, data, *args, **kwargs):
             try:
+                debug = os.getenv("SOLAR_CACHE_DEBUG", "").strip() in ("1", "true", "True", "yes", "YES")
+                t0 = time.time() if debug else None
                 cache_params = {
-                    "bu": getattr(data, 'bu', None),
-                    "category": getattr(data, 'category', None),
-                    "filters": getattr(data, 'filters', None),
-                    "drill_state": getattr(data, 'drill_state', ''),
-                    "year": getattr(data, 'year', None),
-                    "month": getattr(data, 'month', None),
-                    "action": getattr(data, 'action', None)
+                    "bu": _norm_scalar(getattr(data, 'bu', None)),
+                    "category": _norm_scalar(getattr(data, 'category', None)),
+                    "filters": _normalize_filters(getattr(data, 'filters', None)),
+                    "drill_state": _norm_scalar(getattr(data, 'drill_state', None)),
+                    "year": _norm_scalar(getattr(data, 'year', None)),
+                    "month": _norm_scalar(getattr(data, 'month', None)),
+                    "action": _norm_scalar(getattr(data, 'action', None)),
+                    # download responses differ (StreamingResponse vs JSON)
+                    "is_download": getattr(data, 'is_download', False),
+                    # include cross_filters/limit/time_grain if present, but normalize for stability
+                    "cross_filters": _normalize_filters(getattr(data, 'cross_filters', None)),
+                    "limit": _norm_scalar(getattr(data, 'limit', None)),
+                    "time_grain": _norm_scalar(getattr(data, 'time_grain', None)),
                 }
                 # Serialize params to string
                 cache_string = json.dumps(cache_params, sort_keys=True, default=str)
@@ -43,17 +92,23 @@ def with_solar_cache(key_prefix: str, expiration: int = 900):
                     return await func(cls, data, *args, **kwargs)
 
                 # Get or create cache instance
+                created = False
                 if instance_key not in SOLAR_CACHE_INSTANCES:
                     # Create new cache instance
                     SOLAR_CACHE_INSTANCES[instance_key] = InMemTTLCache(
                         ttl_seconds=expiration,
                         fetch_function=fetch_data
                     )
+                    created = True
 
                 # Retrieve from cache
                 # use a static key "result" because the uniqueness is handled by the instance_key
                 cache = SOLAR_CACHE_INSTANCES[instance_key]
-                return await cache.get("result")
+                result = await cache.get("result")
+                if debug:
+                    dt_ms = int((time.time() - t0) * 1000)
+                    print(f"[SOLAR_CACHE] key={key_prefix} {'MISS(create)' if created else 'HIT'} dt={dt_ms}ms")
+                return result
 
             except Exception as e:
                 print(f"Error in caching wrapper for {key_prefix}: {e}")
@@ -137,6 +192,278 @@ class SolarCapacity:
             )
         """
 
+    @staticmethod
+    def _get_solar_insights_base_query(bu_codes_sql: str, date_filter_sql: str) -> str:
+        """
+        Returns the CTEs (base, w, calc1) based on get_insights logic.
+        Used for get_energy_generated_new.
+        """
+        return f"""
+            WITH base AS (
+                    SELECT
+                        PLANT_CD,
+                        SourceID,
+                        TimestampUTC,
+
+                        -- combine cumulative energy PER SOURCE
+                        SUM(CASE WHEN QuantityID = 129 THEN Value END) AS Energy_Cumulative_kWh,
+                        -- MAX(CASE WHEN QuantityID = 544 THEN Value END) AS Solar_kW,
+                        COALESCE(
+                            MAX(CASE WHEN QuantityID = 544 THEN NULLIF(Value,0) END),
+                            MAX(CASE WHEN QuantityID = 518 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 519 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 520 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 515 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 516 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 517 THEN NULLIF(ABS(Value),0) END)
+                        ) AS Solar_kW,
+
+                        MAX(CASE WHEN QuantityID = 540 THEN Value END) AS Grid_Freq_Hz,
+                        MAX(LocationName) AS LocationName
+
+                    FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
+                    WHERE   PLANT_CD IN ('{bu_codes_sql}')
+                        AND LOWER(SourceName) NOT LIKE '%total%'
+                        AND QuantityID IN (129,540,544,518,519,520,515,516,517)
+                        {date_filter_sql}
+                        AND DATEPART(SECOND, DATEADD(MINUTE, 330, TimestampUTC)) = 0
+                        AND DATEPART(MINUTE, DATEADD(MINUTE, 330, TimestampUTC)) % 15 = 0
+                    GROUP BY
+                        PLANT_CD,
+                        SourceID,
+                        TimestampUTC
+                ),
+
+                w AS (
+                    SELECT
+                        b.*,
+                        DATEADD(MINUTE, 330, b.TimestampUTC) AS TimestampIST,
+                        CAST(DATEADD(MINUTE, 330, b.TimestampUTC) AS DATE) AS DayKey_IST,
+                        CAST(DATEADD(MINUTE,330,b.TimestampUTC) AS TIME) AS TimeIST,
+
+                        LAG(b.Energy_Cumulative_kWh)
+                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                            AS Prev_Energy_Cumulative_kWh,
+
+                        LAG(b.Solar_kW)
+                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                            AS Prev_Solar_kW,
+
+                        LEAD(b.TimestampUTC)
+                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                            AS NextTimestampUTC
+                    FROM base b
+                ),
+
+                calc1 AS (
+                    SELECT
+                        *,
+
+                        CASE
+                            -- IGNORE energy during power outage
+                            WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 0
+
+                            WHEN Energy_Cumulative_kWh IS NULL THEN 0
+                            WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
+                            WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
+
+                            ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
+                        END AS SolarGen_kWh_entry,
+
+                        CASE
+                            WHEN NextTimestampUTC IS NULL THEN 0.0
+                            ELSE DATEDIFF(SECOND, TimestampUTC, NextTimestampUTC) / 3600.0
+                        END AS IntervalHours,
+
+                        CASE
+                            WHEN COUNT(Solar_kW)
+                                 OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) > 0
+                            THEN 1 ELSE 0
+                        END AS SolarKW_Available_Flag
+                    FROM w
+                )
+        """
+
+    @staticmethod
+    def _get_solar_insights_window_query(bu_codes_sql: str, date_filter_sql: str) -> str:
+        """
+        Returns the CTEs (base, w, calc1, calc, calc_window) based on get_insights logic.
+        """
+        return f"""
+            WITH base AS (
+                    SELECT
+                        PLANT_CD,
+                        SourceID,
+                        TimestampUTC,
+
+                        -- combine cumulative energy PER SOURCE
+                        SUM(CASE WHEN QuantityID = 129 THEN Value END) AS Energy_Cumulative_kWh,
+                        COALESCE(
+                            MAX(CASE WHEN QuantityID = 544 THEN NULLIF(Value,0) END),
+                            MAX(CASE WHEN QuantityID = 518 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 519 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 520 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 515 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 516 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 517 THEN NULLIF(ABS(Value),0) END)
+                        ) AS Solar_kW,
+
+                        MAX(CASE WHEN QuantityID = 540 THEN Value END) AS Grid_Freq_Hz,
+                        MAX(LocationName) AS LocationName
+
+                    FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
+                    WHERE   PLANT_CD IN ('{bu_codes_sql}')
+                        AND LOWER(SourceName) NOT LIKE '%total%'
+                        AND QuantityID IN (129,540,544,518,519,520,515,516,517)
+                        {date_filter_sql}
+                        AND DATEPART(SECOND, DATEADD(MINUTE, 330, TimestampUTC)) = 0
+                        AND DATEPART(MINUTE, DATEADD(MINUTE, 330, TimestampUTC)) % 15 = 0
+                    GROUP BY
+                        PLANT_CD,
+                        SourceID,
+                        TimestampUTC
+                ),
+
+                w AS (
+                    SELECT
+                        b.*,
+                        DATEADD(MINUTE, 330, b.TimestampUTC) AS TimestampIST,
+                        CAST(DATEADD(MINUTE, 330, b.TimestampUTC) AS DATE) AS DayKey_IST,
+                        CAST(DATEADD(MINUTE,330,b.TimestampUTC) AS TIME) AS TimeIST,
+
+                        LAG(b.Energy_Cumulative_kWh)
+                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                            AS Prev_Energy_Cumulative_kWh,
+
+                        LAG(b.Solar_kW)
+                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                            AS Prev_Solar_kW,
+
+                        LEAD(b.TimestampUTC)
+                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                            AS NextTimestampUTC
+                    FROM base b
+                ),
+
+                calc1 AS (
+                    SELECT
+                        *,
+
+                        CASE
+                            -- IGNORE energy during power outage
+                            WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 0
+
+                            WHEN Energy_Cumulative_kWh IS NULL THEN 0
+                            WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
+                            WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
+
+                            ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
+                        END AS SolarGen_kWh_entry,
+
+                        CASE
+                            WHEN NextTimestampUTC IS NULL THEN 0.0
+                            ELSE DATEDIFF(SECOND, TimestampUTC, NextTimestampUTC) / 3600.0
+                        END AS IntervalHours,
+
+                        CASE
+                            WHEN COUNT(Solar_kW)
+                                 OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) > 0
+                            THEN 1 ELSE 0
+                        END AS SolarKW_Available_Flag
+                    FROM w
+                ),
+
+                calc AS (
+                    SELECT
+                        *,
+
+                        CASE
+                            WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 1 ELSE 0
+                        END AS PowerOutageFlag,
+
+                        CASE
+                            WHEN SolarKW_Available_Flag = 1 AND Solar_kW > 0.6 THEN 1
+                            WHEN SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0 THEN 1
+                            ELSE 0
+                        END AS SolarWindowFlag,
+
+                        CASE
+                            WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
+                             AND (
+                                    (SolarKW_Available_Flag = 1 AND Solar_kW > 0.6)
+                                 OR (SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0)
+                                 )
+                            THEN 1 ELSE 0
+                        END AS SolarGeneratingFlag,
+
+                        CASE
+                            WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
+                             AND (
+                                    (SolarKW_Available_Flag = 1 AND Solar_kW <= 0.6)
+                                 OR (SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) = 0)
+                                 )
+                            THEN 1 ELSE 0
+                        END AS SolarZeroWhileGridOnFlag,
+
+                        CASE
+                            WHEN SolarKW_Available_Flag = 1
+                                 AND Solar_kW >= 0.5
+                            THEN 1
+
+                            WHEN SolarKW_Available_Flag = 0
+                                 AND ISNULL(SolarGen_kWh_entry, 0) > 0.5                          
+                                 AND LAG(ISNULL(SolarGen_kWh_entry, 0))
+                                     OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) = 0
+                            THEN 1
+
+                            ELSE 0
+                        END AS SolarStartFlag,
+
+                        CASE
+                            WHEN SolarKW_Available_Flag = 1
+                                 AND ISNULL(Prev_Solar_kW, 0) > 0.25
+                                 AND ISNULL(Solar_kW, 0) <= 0.5
+
+                            THEN 1
+
+                            WHEN SolarKW_Available_Flag = 0
+                                 AND ISNULL(SolarGen_kWh_entry, 0) < 0.25
+
+                                 AND LAG(ISNULL(SolarGen_kWh_entry, 0))
+                                     OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) > 0
+                            THEN 1
+
+                            ELSE 0
+                        END AS SolarEndFlag
+                    FROM calc1
+                ),
+
+                calc_window AS (
+                    SELECT
+                        *,
+                        MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampUTC END)
+                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_UTC,
+
+                        MIN(CASE 
+                            WHEN SolarStartFlag = 1 
+                             AND CAST(TimestampIST AS TIME) >= '05:30:00'
+                            THEN TimestampIST 
+                        END)
+                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_IST,
+
+                        MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampUTC END)
+                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_UTC,
+
+                        MAX(CASE 
+                            WHEN SolarGeneratingFlag = 1
+                             AND CAST(TimestampIST AS TIME) >= '05:30:00'
+                            THEN TimestampIST 
+                        END)
+                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_IST
+                    FROM calc
+                )
+        """
+
     @classmethod
     async def route_action(cls, data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
@@ -159,7 +486,8 @@ class SolarCapacity:
             "get_efficiency": cls.get_efficiency,
             "get_efficiency_last_30_days": cls.get_efficiency_last_30_days,
             "get_insights": cls.get_insights,
-            "get_overall_insights": cls.get_overall_insights
+            "get_overall_insights": cls.get_overall_insights,
+            "get_energy_generated_new": cls.get_energy_generated_new
         }
 
         action = data.action if hasattr(data, 'action') and data.action else "get_total_installed_capacity"
@@ -509,6 +837,346 @@ class SolarCapacity:
                 "error": str(e)
             }
 
+    @staticmethod
+    def _calculate_today_estimated_energy(
+            aggregated_df,
+            plant_cap_map,
+            avg_window_map,
+            return_per_plant: bool = False
+    ):
+        total_estimated_energy = 0.0
+        total_actual_energy = 0.0
+        total_plant_capacity_hour = 0.0
+
+        estimated_per_plant = {} if return_per_plant else None
+        actual_per_plant = {} if return_per_plant else None
+
+        # -----------------------------
+        # Current IST time
+        # -----------------------------
+        now = (datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)).time()
+
+        solar_start = datetime.time(5, 30)
+        solar_end = datetime.time(19, 30)
+
+        if now < solar_start:
+            elapsed_hours = 0
+        elif now > solar_end:
+            elapsed_hours = 14
+        else:
+            elapsed_hours = (
+                                    datetime.datetime.combine(datetime.datetime.today(), now) -
+                                    datetime.datetime.combine(datetime.datetime.today(), solar_start)
+                            ).total_seconds() / 3600
+
+        print("DEBUG: elapsed_hours =", elapsed_hours)
+
+        # -----------------------------
+        # Loop per plant
+        # -----------------------------
+        for row in aggregated_df.iter_rows(named=True):
+
+            p_cd = SolarHelpers._clean_plant_code(row["PLANT_CD"])
+            actual_e = float(row["total_actual_day"] or 0.0)
+            window_h = float(row["window_h"] or 0.0)
+            cap = plant_cap_map.get(p_cd, 0.0)
+
+            total_actual_energy += actual_e
+            if return_per_plant:
+                actual_per_plant[p_cd] = actual_per_plant.get(p_cd, 0.0) + actual_e
+
+            if cap > 0 and window_h > 0:
+                total_plant_capacity_hour += cap * window_h
+
+            avg_window = avg_window_map.get(p_cd)
+
+            if not avg_window:
+                avg_window = 14
+
+            if window_h == 0:
+                window_h = elapsed_hours
+
+            if cap > 0:
+                per_hour_energy = cap / avg_window
+                per_slot_energy = per_hour_energy * 0.25
+                slots_elapsed = int(window_h / 0.25)
+
+                estimated_energy = per_slot_energy * slots_elapsed * 4
+                total_estimated_energy += estimated_energy
+                if return_per_plant:
+                    estimated_per_plant[p_cd] = estimated_per_plant.get(p_cd, 0.0) + estimated_energy
+
+        resp = {
+            "total_estimated_energy": total_estimated_energy,
+            "total_actual_energy": total_actual_energy,
+            "total_plant_capacity_hour": total_plant_capacity_hour
+        }
+        if return_per_plant:
+            resp["estimated_per_plant"] = estimated_per_plant
+            resp["actual_per_plant"] = actual_per_plant
+        return resp
+
+    @staticmethod
+    def _build_estimated_energy_per_plant(
+            solar_master,
+            days_count: int
+    ):
+        """
+        Build per-plant estimated energy map from solar master (Excel/location_master enriched).
+
+        Estimated Energy (kWh) = Plant Capacity (kW) * 4 (kWh/kW/day) * days_count
+
+        Returns:
+            tuple:
+                estimated_per_plant (dict[str, float])
+                plant_names (dict[str, Any])
+                plant_zones (dict[str, Any])
+        """
+        plant_capacities = {}
+        plant_names = {}
+        plant_zones = {}
+
+        # Aggregate plant capacity per BU Code / PLANT_CD (normalized)
+        for row in solar_master.iter_rows(named=True):
+            plant_cd = SolarHelpers._clean_plant_code(row.get("BU Code"))
+            if not plant_cd:
+                continue
+
+            plant_names[plant_cd] = row.get("name")
+            plant_zones[plant_cd] = row.get("zone")
+
+            capacity = row.get("Plant Capacity")
+            if capacity is None:
+                continue
+
+            try:
+                capacity_float = float(capacity) if capacity else 0.0
+            except (ValueError, TypeError):
+                continue
+
+            plant_capacities[plant_cd] = plant_capacities.get(plant_cd, 0.0) + capacity_float
+
+        estimated_per_plant = {
+            plant_cd: (capacity * 4 * days_count)
+            for plant_cd, capacity in plant_capacities.items()
+        }
+
+        return estimated_per_plant, plant_names, plant_zones
+
+        # ============================================================
+        # MAIN FUNCTION
+        # ============================================================
+    @classmethod
+    @with_solar_cache("solar_energy_generated_new", 900)
+    async def get_energy_generated_new(cls, data):
+
+        try:
+            bu_code = getattr(data, 'bu', None)
+            if not bu_code:
+                return {
+                    "status": "error",
+                    "message": "BU code is required"
+                }
+
+            filters = getattr(data, 'filters', None)
+            drill_state = getattr(data, 'drill_state', '') or ''
+
+            filter_start_date, filter_end_date = SolarHelpers.extract_date_range_from_filters(filters)
+
+            # Detect today filter
+            is_today_filter = False
+            today_date = datetime.date.today()
+
+            if filters:
+                for f in filters:
+                    f_cond = str((f.get("cond") if isinstance(f, dict) else getattr(f, "cond", "")) or "").lower()
+                    f_val = str((f.get("value") if isinstance(f, dict) else getattr(f, "value", "")) or "").lower()
+
+                    if f_cond == "date_filter" and f_val == "t":
+                        is_today_filter = True
+                        break
+
+            if not is_today_filter and filter_start_date == today_date and filter_end_date == today_date:
+                is_today_filter = True
+
+            if filter_start_date and not filter_end_date:
+                filter_end_date = datetime.date.today()
+
+            # ============================================================
+            # GET SOLAR MASTER
+            # ============================================================
+            solar_master = await SolarHelpers.get_solar_master_data(filters=filters, drill_state=drill_state)
+
+            if filters:
+                solar_master = SolarHelpers.apply_filters_to_dataframe(solar_master, filters)
+
+            solar_master = solar_master.filter(
+                pl.col('Monitoring').cast(pl.Utf8).str.to_lowercase() == 'yes'
+            )
+
+            solar_master = solar_master.filter(pl.col('Plant Capacity').is_not_null())
+
+            if solar_master.is_empty():
+                return {"status": "error", "message": "No valid plant capacity"}
+
+            bu_codes = (
+                solar_master.select(pl.col("BU Code"))
+                .unique()
+                .drop_nulls()
+                .to_series()
+                .cast(pl.Utf8)
+                .map_elements(lambda x: SolarHelpers._clean_plant_code(x))
+                .to_list()
+            )
+
+            total_actual_energy = 0.0
+            total_estimated_energy = 0.0
+            total_plant_capacity_hour = 0.0
+
+            if bu_codes:
+                conn = SolarHelpers.get_db_connection(bu=bu_code)
+                cursor = conn.cursor()
+
+                bu_codes_sql = "', '".join(bu_codes)
+
+                # ============================================================
+                # TODAY LOGIC
+                # ============================================================
+                if is_today_filter:
+
+                    # 7-day avg window
+                    today_date = datetime.date.today()
+                    seven_days_end = today_date - datetime.timedelta(days=1)
+                    seven_days_start = seven_days_end - datetime.timedelta(days=6)
+
+                    date_filter_7d = f"""
+                        AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE)
+                        BETWEEN '{seven_days_start}' AND '{seven_days_end}'
+                    """
+
+                    query_7d = f"""
+                    {cls._get_solar_insights_window_query(bu_codes_sql, date_filter_7d)}
+                    SELECT PLANT_CD, DayKey_IST,
+                    (DATEDIFF(SECOND, SolarStart_IST, SolarEnd_IST)/3600.0)+0.75 AS SolarWindowHours_IST
+                    FROM calc_window
+                    """
+
+                    df_7d = await SolarHelpers.fetch_data(cursor, query_7d, getData=True)
+
+                    avg_window_map = {}
+                    if df_7d is not None and not df_7d.is_empty():
+                        avg_df = df_7d.group_by("PLANT_CD").agg(
+                            pl.col("SolarWindowHours_IST").mean().alias("avg_window")
+                        )
+                        for r in avg_df.iter_rows(named=True):
+                            avg_window_map[str(r["PLANT_CD"]).strip()] = r["avg_window"]
+
+                    # MAIN QUERY
+                    date_filter_sql = (
+                        " AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) "
+                        f"= '{today_date}'"
+                    )
+
+                    query_main = f"""
+                    {cls._get_solar_insights_window_query(bu_codes_sql, date_filter_sql)}
+                    SELECT
+                        PLANT_CD,
+                        DayKey_IST,
+                        SUM(SolarGen_kWh_entry) AS actual_energy_day,
+                        (DATEDIFF(SECOND, SolarStart_IST, SolarEnd_IST)/3600.0)+0.75 AS SolarWindowHours_IST
+                    FROM calc_window
+                    GROUP BY PLANT_CD, DayKey_IST, SolarStart_IST, SolarEnd_IST
+                    """
+
+                    result_df = await SolarHelpers.fetch_data(cursor, query_main, getData=True)
+                    cursor.close()
+                    conn.close()
+
+                    if result_df is not None and not result_df.is_empty():
+
+                        plant_cap_map = {}
+                        for row in solar_master.iter_rows(named=True):
+                            p_cd = SolarHelpers._clean_plant_code(row["BU Code"])
+                            cap = float(row["Plant Capacity"] or 0)
+                            plant_cap_map[p_cd] = plant_cap_map.get(p_cd, 0) + cap
+
+                        aggregated_df = result_df.group_by(["PLANT_CD", "DayKey_IST"]).agg([
+                            pl.col("actual_energy_day").sum().alias("total_actual_day"),
+                            pl.col("SolarWindowHours_IST").first().alias("window_h")
+                        ])
+
+                        # 🔥 CALL NEW FUNCTION
+                        calc = cls._calculate_today_estimated_energy(
+                            aggregated_df,
+                            plant_cap_map,
+                            avg_window_map
+                        )
+
+                        total_estimated_energy = calc["total_estimated_energy"]
+                        total_actual_energy = calc["total_actual_energy"]
+                        total_plant_capacity_hour = calc["total_plant_capacity_hour"]
+
+                # ============================================================
+                # NON-TODAY LOGIC
+                # ============================================================
+                else:
+                    date_filter_sql = ""
+
+                    if filter_start_date:
+                        date_filter_sql += (
+                            " AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) "
+                            f">= '{filter_start_date}'"
+                        )
+
+                    if filter_end_date:
+                        date_filter_sql += (
+                            " AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) "
+                            f"<= '{filter_end_date}'"
+                        )
+
+                    query_main = f"""
+                    {cls._get_solar_generation_base_query(bu_codes_sql, date_filter_sql)}
+                    SELECT PLANT_CD, DayKey_IST,
+                    SUM(SolarGen_kWh_entry) AS generated_solar_value
+                    FROM calc1
+                    GROUP BY DayKey_IST, PLANT_CD
+                    """
+
+                    result_df = await SolarHelpers.fetch_data(cursor, query_main, getData=True)
+                    cursor.close()
+                    conn.close()
+
+                    if result_df is not None and not result_df.is_empty():
+
+                        plant_cap_map = {}
+                        for row in solar_master.iter_rows(named=True):
+                            p_cd = SolarHelpers._clean_plant_code(row["BU Code"])
+                            cap = float(row["Plant Capacity"] or 0)
+                            plant_cap_map[p_cd] = plant_cap_map.get(p_cd, 0) + cap
+
+                        days_count = (
+                                                 filter_end_date - filter_start_date).days + 1 if filter_start_date and filter_end_date else 1
+
+                        for p_cd in result_df["PLANT_CD"].unique():
+                            cap = plant_cap_map.get(SolarHelpers._clean_plant_code(p_cd), 0)
+                            total_estimated_energy += cap * 4 * days_count
+
+                        total_actual_energy = float(result_df["generated_solar_value"].sum())
+
+            efficiency = (total_actual_energy / total_estimated_energy * 100) if total_estimated_energy else 0
+
+            return {
+                "status": "success",
+                "estimated_energy": f"{total_estimated_energy:.2f}",
+                "actual_energy": f"{total_actual_energy:.2f}",
+                "efficiency_percentage": f"{efficiency:.2f}",
+                "cumulative_plant_capacity_hour": f"{total_plant_capacity_hour:.2f}"
+            }
+
+        except Exception as e:
+            traceback.print_exc()
+            return {"status": "error", "error": str(e)}
+
     @classmethod
     @with_solar_cache("solar_efficiency", 900)
     async def get_efficiency(cls, data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
@@ -543,6 +1211,19 @@ class SolarCapacity:
             drill_state = getattr(data, 'drill_state', '') or ''
 
             filter_start_date, filter_end_date = SolarHelpers.extract_date_range_from_filters(filters)
+
+            # Detect today filter (same logic as get_energy_generated_new)
+            is_today_filter = False
+            today_date = datetime.date.today()
+            if filters:
+                for f in filters:
+                    f_cond = str((f.get("cond") if isinstance(f, dict) else getattr(f, "cond", "")) or "").lower()
+                    f_val = str((f.get("value") if isinstance(f, dict) else getattr(f, "value", "")) or "").lower()
+                    if f_cond == "date_filter" and f_val == "t":
+                        is_today_filter = True
+                        break
+            if not is_today_filter and filter_start_date == today_date and filter_end_date == today_date:
+                is_today_filter = True
 
             # If start date is provided but end date is missing, assume up to today
             if filter_start_date and not filter_end_date:
@@ -609,37 +1290,87 @@ class SolarCapacity:
             cursor = conn.cursor()
             bu_codes_sql = "', '".join(bu_codes)
 
-            # Date filtering for SQL query
-            date_filter_sql = ""
-            if query_start_date:
-                date_filter_sql += (
+            # For "today", use the window query so estimation can use solar window/elapsed logic
+            result_df = None
+            if is_today_filter:
+                # 7-day avg window map (exclude today)
+                seven_days_end = today_date - datetime.timedelta(days=1)
+                seven_days_start = seven_days_end - datetime.timedelta(days=6)
+
+                date_filter_7d = f"""
+                    AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE)
+                    BETWEEN '{seven_days_start}' AND '{seven_days_end}'
+                """
+
+                query_7d = f"""
+                {cls._get_solar_insights_window_query(bu_codes_sql, date_filter_7d)}
+                SELECT PLANT_CD, DayKey_IST,
+                (DATEDIFF(SECOND, SolarStart_IST, SolarEnd_IST)/3600.0)+0.75 AS SolarWindowHours_IST
+                FROM calc_window
+                """
+
+                df_7d = await SolarHelpers.fetch_data(cursor, query_7d, getData=True)
+
+                avg_window_map = {}
+                if df_7d is not None and not df_7d.is_empty():
+                    avg_df = df_7d.group_by("PLANT_CD").agg(
+                        pl.col("SolarWindowHours_IST").mean().alias("avg_window")
+                    )
+                    for r in avg_df.iter_rows(named=True):
+                        avg_window_map[str(r["PLANT_CD"]).strip()] = r["avg_window"]
+
+                # Today's window + actual energy
+                date_filter_today = (
                     " AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) "
-                    f">= '{query_start_date}'"
+                    f"= '{today_date}'"
                 )
 
-            if query_end_date:
-                date_filter_sql += (
-                    " AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) "
-                    f"<= '{query_end_date}'"
-                )
-
-            query = f"""
-                {cls._get_solar_generation_base_query(bu_codes_sql, date_filter_sql)}
-
+                query_today = f"""
+                {cls._get_solar_insights_window_query(bu_codes_sql, date_filter_today)}
                 SELECT
-                    YEAR(DayKey_IST) AS year,
-                    MONTH(DayKey_IST) AS month,
                     PLANT_CD,
-                    MAX(LocationName) AS LocationName,
-                    MIN(TimestampUTC) AS TimestampUTC, 
-                    SUM(SolarGen_kWh_entry) AS generated_solar_value
-                FROM calc1
-                GROUP BY
                     DayKey_IST,
-                    PLANT_CD
-            """
+                    SUM(SolarGen_kWh_entry) AS actual_energy_day,
+                    (DATEDIFF(SECOND, SolarStart_IST, SolarEnd_IST)/3600.0)+0.75 AS SolarWindowHours_IST
+                FROM calc_window
+                GROUP BY PLANT_CD, DayKey_IST, SolarStart_IST, SolarEnd_IST
+                """
 
-            result_df = await SolarHelpers.fetch_data(cursor, query, getData=True, enrich_with_location=False)
+                result_df = await SolarHelpers.fetch_data(cursor, query_today, getData=True, enrich_with_location=False)
+
+            else:
+                # Date filtering for SQL query
+                date_filter_sql = ""
+                if query_start_date:
+                    date_filter_sql += (
+                        " AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) "
+                        f">= '{query_start_date}'"
+                    )
+
+                if query_end_date:
+                    date_filter_sql += (
+                        " AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) "
+                        f"<= '{query_end_date}'"
+                    )
+    
+                query = f"""
+                    {cls._get_solar_generation_base_query(bu_codes_sql, date_filter_sql)}
+
+                    SELECT
+                        YEAR(DayKey_IST) AS year,
+                        MONTH(DayKey_IST) AS month,
+                        PLANT_CD,
+                        MAX(LocationName) AS LocationName,
+                        MIN(TimestampUTC) AS TimestampUTC, 
+                        SUM(SolarGen_kWh_entry) AS generated_solar_value
+                    FROM calc1
+                    GROUP BY
+                        DayKey_IST,
+                        PLANT_CD
+                """
+
+                result_df = await SolarHelpers.fetch_data(cursor, query, getData=True, enrich_with_location=False)
+
             cursor.close()
             conn.close()
 
@@ -656,6 +1387,8 @@ class SolarCapacity:
 
             if filter_start_date and filter_end_date:
                 days_count = (filter_end_date - filter_start_date).days + 1
+            elif is_today_filter:
+                days_count = 1
             elif result_df is not None and not result_df.is_empty() and "TimestampUTC" in result_df.columns:
                 try:
                     dates_df = result_df.select(pl.col("TimestampUTC").cast(pl.Date).alias("date")).drop_nulls()
@@ -676,57 +1409,66 @@ class SolarCapacity:
                     pass
 
             # Calculate efficiency per plant
-            # Create a mapping of PLANT_CD to estimated energy from Excel
-            plant_capacities = {}
-            plant_names = {}
-            plant_zones = {}
-            for row in solar_master.iter_rows(named=True):
-                plant_cd = SolarHelpers._clean_plant_code(row.get("BU Code"))
-                capacity = row.get('Plant Capacity')
-                name = row.get('name')
-                zone = row.get('zone')
-                if plant_cd:
-                    plant_names[plant_cd] = name
-                    plant_zones[plant_cd] = zone
-                    if capacity:
-                        try:
-                            capacity_float = float(capacity) if capacity else 0.0
-                            if plant_cd in plant_capacities:
-                                plant_capacities[plant_cd] += capacity_float
-                            else:
-                                plant_capacities[plant_cd] = capacity_float
-                        except (ValueError, TypeError):
-                            pass
+            # Estimated energy is built in a separate helper (same pattern as solar_energy_generated_new)
+            # For today-filter, use _calculate_today_estimated_energy() so estimation uses elapsed/window logic.
+            if is_today_filter and result_df is not None and not result_df.is_empty():
+                # Meta (names/zones) from solar master
+                _, plant_names, plant_zones = cls._build_estimated_energy_per_plant(
+                    solar_master=solar_master,
+                    days_count=days_count
+                )
 
-            estimated_per_plant = {
-                plant_cd: (capacity * 4 * days_count)
-                for plant_cd, capacity in plant_capacities.items()
-            }
-            # Calculate actual energy per plant from database
-            actual_per_plant = {}
-            db_plant_names = {}
-            if result_df is not None and not result_df.is_empty():
-                for row in result_df.iter_rows(named=True):
-                    plant_cd = SolarHelpers._clean_plant_code(row.get("PLANT_CD"))
-                    generated = row.get("generated_solar_value")
-                    db_name = row.get("LocationName")
+                # Plant capacity map for today estimation
+                plant_cap_map = {}
+                for row in solar_master.iter_rows(named=True):
+                    p_cd = SolarHelpers._clean_plant_code(row.get("BU Code"))
+                    cap = float(row.get("Plant Capacity") or 0)
+                    if p_cd:
+                        plant_cap_map[p_cd] = plant_cap_map.get(p_cd, 0.0) + cap
 
-                    if plant_cd:
-                        if db_name:
-                            db_plant_names[plant_cd] = db_name
+                aggregated_df = result_df.group_by(["PLANT_CD", "DayKey_IST"]).agg([
+                    pl.col("actual_energy_day").sum().alias("total_actual_day"),
+                    pl.col("SolarWindowHours_IST").first().alias("window_h")
+                ])
 
-                        if generated:
-                            try:
-                                generated_float = float(generated) if generated else 0.0
-                                # Actual energy per plant in MWh (same logic as get_energy_generated):
-                                # sum of generated_solar_value (kWh) converted to MWh
-                                actual = generated_float
-                                if plant_cd in actual_per_plant:
-                                    actual_per_plant[plant_cd] += actual
-                                else:
-                                    actual_per_plant[plant_cd] = actual
-                            except (ValueError, TypeError):
-                                pass
+                calc = cls._calculate_today_estimated_energy(
+                    aggregated_df,
+                    plant_cap_map,
+                    avg_window_map,
+                    return_per_plant=True
+                )
+
+                estimated_per_plant = calc.get("estimated_per_plant") or {}
+                actual_per_plant = calc.get("actual_per_plant") or {}
+                db_plant_names = {}
+            else:
+                estimated_per_plant, plant_names, plant_zones = cls._build_estimated_energy_per_plant(
+                    solar_master=solar_master,
+                    days_count=days_count
+                )
+                # Calculate actual energy per plant from database
+                actual_per_plant = {}
+                db_plant_names = {}
+                if result_df is not None and not result_df.is_empty():
+                    for row in result_df.iter_rows(named=True):
+                        plant_cd = SolarHelpers._clean_plant_code(row.get("PLANT_CD"))
+                        generated = row.get("generated_solar_value")
+                        db_name = row.get("LocationName")
+
+                        if plant_cd:
+                            if db_name:
+                                db_plant_names[plant_cd] = db_name
+
+                            if generated:
+                                try:
+                                    generated_float = float(generated) if generated else 0.0
+                                    actual = generated_float
+                                    if plant_cd in actual_per_plant:
+                                        actual_per_plant[plant_cd] += actual
+                                    else:
+                                        actual_per_plant[plant_cd] = actual
+                                except (ValueError, TypeError):
+                                    pass
 
             # Calculate efficiency and categorize
             exceptional = 0
@@ -987,11 +1729,11 @@ class SolarCapacity:
                     "data": []
                 }
 
-            # Calculate total capacity for estimated energy calculation
-            total_capacity_kw = (
-                solar_master
-                .select(pl.col('Plant Capacity').cast(pl.Float64, strict=False).sum())
-                .item()
+            # Build per-plant estimated energy for 1 day (kWh) using the shared estimation helper.
+            # We'll sum per-date based on plants that actually have generation that day.
+            estimated_1day_per_plant, _, _ = cls._build_estimated_energy_per_plant(
+                solar_master=solar_master,
+                days_count=1
             )
 
             # Get BU codes for database query
@@ -1016,6 +1758,9 @@ class SolarCapacity:
             conn = SolarHelpers.get_db_connection(bu=bu_code)
             cursor = conn.cursor()
             bu_codes_sql = "', '".join(bu_codes)
+
+            today_date = datetime.date.today()
+            include_today = start_date <= today_date <= end_date
 
             # Date filtering for SQL query
             date_filter_sql = ""
@@ -1048,6 +1793,51 @@ class SolarCapacity:
             """
 
             result_df = await SolarHelpers.fetch_data(cursor, query, getData=True, enrich_with_location=False)
+
+            # ------------------------------------------------------------
+            # If the selected range includes today, fetch today's window-hours
+            # data so estimated energy can use _calculate_today_estimated_energy.
+            # ------------------------------------------------------------
+            avg_window_map = {}
+            today_window_df = None
+            if include_today:
+                seven_days_end = today_date - datetime.timedelta(days=1)
+                seven_days_start = seven_days_end - datetime.timedelta(days=6)
+
+                date_filter_7d = f"""
+                    AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE)
+                    BETWEEN '{seven_days_start}' AND '{seven_days_end}'
+                """
+                query_7d = f"""
+                {cls._get_solar_insights_window_query(bu_codes_sql, date_filter_7d)}
+                SELECT PLANT_CD, DayKey_IST,
+                (DATEDIFF(SECOND, SolarStart_IST, SolarEnd_IST)/3600.0)+0.75 AS SolarWindowHours_IST
+                FROM calc_window
+                """
+                df_7d = await SolarHelpers.fetch_data(cursor, query_7d, getData=True)
+                if df_7d is not None and not df_7d.is_empty():
+                    avg_df = df_7d.group_by("PLANT_CD").agg(
+                        pl.col("SolarWindowHours_IST").mean().alias("avg_window")
+                    )
+                    for r in avg_df.iter_rows(named=True):
+                        avg_window_map[str(r["PLANT_CD"]).strip()] = r["avg_window"]
+
+                date_filter_today = (
+                    " AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) "
+                    f"= '{today_date}'"
+                )
+                query_today = f"""
+                {cls._get_solar_insights_window_query(bu_codes_sql, date_filter_today)}
+                SELECT
+                    PLANT_CD,
+                    DayKey_IST,
+                    SUM(SolarGen_kWh_entry) AS actual_energy_day,
+                    (DATEDIFF(SECOND, SolarStart_IST, SolarEnd_IST)/3600.0)+0.75 AS SolarWindowHours_IST
+                FROM calc_window
+                GROUP BY PLANT_CD, DayKey_IST, SolarStart_IST, SolarEnd_IST
+                """
+                today_window_df = await SolarHelpers.fetch_data(cursor, query_today, getData=True, enrich_with_location=False)
+
             cursor.close()
             conn.close()
 
@@ -1105,31 +1895,47 @@ class SolarCapacity:
             # Create a date range for all days in the selected period
             current_date = start_date
             while current_date <= end_date:
-                # Get generation for this date
+                # Get generation for this date (kWh)
                 generation_kwh = date_to_generation.get(current_date, 0.0)
 
-                # Calculate estimated energy for this day
-                # Estimated = Capacity (KW) * 4 (kWh per KW per day)
+                # Calculate estimated energy for this day:
+                # sum( per-plant estimated for 1 day ) for plants that have generation on that date
+                estimated_kwh = 0.0
+                if include_today and current_date == today_date and today_window_df is not None and not today_window_df.is_empty():
+                    # Today: use window/elapsed estimation
+                    plant_cap_map = {}
+                    for row in solar_master.iter_rows(named=True):
+                        p_cd = SolarHelpers._clean_plant_code(row.get("BU Code"))
+                        cap = float(row.get("Plant Capacity") or 0)
+                        if p_cd:
+                            plant_cap_map[p_cd] = plant_cap_map.get(p_cd, 0.0) + cap
 
-                # Get the list of plants that have generation data for the current date
-                plants_with_generation = generation_df.filter(
-                    pl.col("reading_date") == current_date
-                ).get_column("PLANT_CD").unique().to_list()
+                    aggregated_today = today_window_df.group_by(["PLANT_CD", "DayKey_IST"]).agg([
+                        pl.col("actual_energy_day").sum().alias("total_actual_day"),
+                        pl.col("SolarWindowHours_IST").first().alias("window_h")
+                    ])
 
-                # Filter solar_master to only include plants with generation data for the current date
-                filtered_solar_master = solar_master.filter(
-                    pl.col("BU Code").is_in(plants_with_generation)
-                )
+                    calc = cls._calculate_today_estimated_energy(
+                        aggregated_today,
+                        plant_cap_map,
+                        avg_window_map
+                    )
+                    estimated_kwh = float(calc.get("total_estimated_energy") or 0.0)
+                    # Keep generation aligned with the same data used for estimation
+                    generation_kwh = float(calc.get("total_actual_energy") or generation_kwh or 0.0)
+                else:
+                    if generation_df is not None and not generation_df.is_empty():
+                        plants_with_generation = (
+                            generation_df
+                            .filter(pl.col("reading_date") == current_date)
+                            .get_column("PLANT_CD")
+                            .unique()
+                            .to_list()
+                        )
 
-                # Calculate total capacity for the filtered plants
-                total_capacity_kw = filtered_solar_master.select(
-                    pl.col("Plant Capacity").sum()
-                ).item() or 0.0
-                print("total_capacity_kw: ",total_capacity_kw)
-
-                estimated_kwh = (total_capacity_kw * 4) if total_capacity_kw else 0.0
-                print("generation_kwh: ",generation_kwh)
-                print("estimated_kwh: ",estimated_kwh)
+                        for p in plants_with_generation:
+                            p_cd = SolarHelpers._clean_plant_code(p)
+                            estimated_kwh += float(estimated_1day_per_plant.get(p_cd, 0.0) or 0.0)
 
                 # Calculate efficiency percentage
                 if estimated_kwh > 0:
@@ -1721,13 +2527,16 @@ class SolarCapacity:
                         connected_sap_ids.add(cd)
 
             #  Generation in selected date range (Active)
+            #  NOTE: Keep this endpoint fast: use simple estimated energy = capacity * 4 * days_count.
             date_filter_sql = ""
             if filter_start_date:
-                date_filter_sql += \
+                date_filter_sql += (
                     f" AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) >= '{filter_start_date}'"
+                )
             if filter_end_date:
-                date_filter_sql += \
+                date_filter_sql += (
                     f" AND CAST(DATEADD(MINUTE, 330, TimestampUTC) AS DATE) <= '{filter_end_date}'"
+                )
 
             query_energy = f"""
                 {cls._get_solar_generation_base_query(sap_ids_sql, date_filter_sql)}
@@ -1743,17 +2552,16 @@ class SolarCapacity:
                 cursor, query_energy, getData=True, enrich_with_location=False
             )
 
-            cursor.close()
-            conn.close()
-
             actual_map = {}
-
             if result_df is not None and not result_df.is_empty():
                 for row in result_df.iter_rows(named=True):
                     cd = SolarHelpers._clean_plant_code(row["PLANT_CD"])
                     val = row["generated_solar_value"] or 0.0
                     if cd:
                         actual_map[cd] = val
+
+            cursor.close()
+            conn.close()
 
             active_sap_ids = set(actual_map.keys())
 
@@ -1772,9 +2580,8 @@ class SolarCapacity:
             summary_list = []
 
             for sap_id, capacity_val in plant_capacities.items():
-
                 estimated_val = capacity_val * 4 * days_count
-                actual = actual_map.get(sap_id, 0.0)
+                actual = float(actual_map.get(sap_id, 0.0) or 0.0)
 
                 efficiency = (actual / estimated_val) * 100 if estimated_val > 0 else 0.0
 
@@ -1954,91 +2761,9 @@ class SolarCapacity:
             # query
             # -------------------------------------------------
             query = f"""
-            WITH base AS (
-                    SELECT
-                        PLANT_CD,
-                        SourceID,
-                        TimestampUTC,
+            {cls._get_solar_insights_base_query(bu_codes_sql, date_filter_sql)}
 
-                        -- combine cumulative energy PER SOURCE
-                        SUM(CASE WHEN QuantityID = 129 THEN Value END) AS Energy_Cumulative_kWh,
-                        -- MAX(CASE WHEN QuantityID = 544 THEN Value END) AS Solar_kW,
-                        COALESCE(
-                            MAX(CASE WHEN QuantityID = 544 THEN NULLIF(Value,0) END),
-                            MAX(CASE WHEN QuantityID = 518 THEN NULLIF(ABS(Value),0) END),
-                            MAX(CASE WHEN QuantityID = 519 THEN NULLIF(ABS(Value),0) END),
-                            MAX(CASE WHEN QuantityID = 520 THEN NULLIF(ABS(Value),0) END),
-                            MAX(CASE WHEN QuantityID = 515 THEN NULLIF(ABS(Value),0) END),
-                            MAX(CASE WHEN QuantityID = 516 THEN NULLIF(ABS(Value),0) END),
-                            MAX(CASE WHEN QuantityID = 517 THEN NULLIF(ABS(Value),0) END)
-                        ) AS Solar_kW,
-
-                        MAX(CASE WHEN QuantityID = 540 THEN Value END) AS Grid_Freq_Hz,
-                        MAX(LocationName) AS LocationName
-
-                    FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
-                    WHERE   PLANT_CD IN ('{bu_codes_sql}')
-                        AND LOWER(SourceName) NOT LIKE '%total%'
-                        AND QuantityID IN (129,540,544,518,519,520,515,516,517)
-                        {date_filter_sql}
-                        AND DATEPART(SECOND, DATEADD(MINUTE, 330, TimestampUTC)) = 0
-                        AND DATEPART(MINUTE, DATEADD(MINUTE, 330, TimestampUTC)) % 15 = 0
-                    GROUP BY
-                        PLANT_CD,
-                        SourceID,
-                        TimestampUTC
-                ),
-
-                w AS (
-                    SELECT
-                        b.*,
-                        DATEADD(MINUTE, 330, b.TimestampUTC) AS TimestampIST,
-                        CAST(DATEADD(MINUTE, 330, b.TimestampUTC) AS DATE) AS DayKey_IST,
-                        CAST(DATEADD(MINUTE,330,b.TimestampUTC) AS TIME) AS TimeIST,
-
-                        LAG(b.Energy_Cumulative_kWh)
-                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
-                            AS Prev_Energy_Cumulative_kWh,
-
-                        LAG(b.Solar_kW)
-                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
-                            AS Prev_Solar_kW,
-
-                        LEAD(b.TimestampUTC)
-                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
-                            AS NextTimestampUTC
-                    FROM base b
-                ),
-
-                calc1 AS (
-                    SELECT
-                        *,
-
-                        CASE
-                            -- IGNORE energy during power outage
-                            WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 0
-
-                            WHEN Energy_Cumulative_kWh IS NULL THEN 0
-                            WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
-                            WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
-
-                            ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
-                        END AS SolarGen_kWh_entry,
-
-                        CASE
-                            WHEN NextTimestampUTC IS NULL THEN 0.0
-                            ELSE DATEDIFF(SECOND, TimestampUTC, NextTimestampUTC) / 3600.0
-                        END AS IntervalHours,
-
-                        CASE
-                            WHEN COUNT(Solar_kW)
-                                 OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) > 0
-                            THEN 1 ELSE 0
-                        END AS SolarKW_Available_Flag
-                    FROM w
-                ),
-
-                calc AS (
+            , calc AS (
                     SELECT
                         *,
 
@@ -2054,6 +2779,7 @@ class SolarCapacity:
 
                         CASE
                             WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
+                             AND CAST(TimestampIST AS TIME) >= '05:00:00'
                              AND (
                                     (SolarKW_Available_Flag = 1 AND Solar_kW > 0.6)
                                  OR (SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0)
@@ -2072,12 +2798,11 @@ class SolarCapacity:
 
                         CASE
                             WHEN SolarKW_Available_Flag = 1
-                                 AND ISNULL(Prev_Solar_kW, 0) <= 0.25
-                                 AND Solar_kW > 0.05
+                                 AND Solar_kW >= 0.5
                             THEN 1
 
                             WHEN SolarKW_Available_Flag = 0
-                                 AND ISNULL(SolarGen_kWh_entry, 0) > 0                             
+                                 AND ISNULL(SolarGen_kWh_entry, 0) > 0.5                          
                                  AND LAG(ISNULL(SolarGen_kWh_entry, 0))
                                      OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) = 0
                             THEN 1
@@ -2087,8 +2812,8 @@ class SolarCapacity:
 
                         CASE
                             WHEN SolarKW_Available_Flag = 1
-                                 AND ISNULL(Prev_Solar_kW, 0) > 0.05
-                                 AND ISNULL(Solar_kW, 0) <= 0.25
+                                 AND ISNULL(Prev_Solar_kW, 0) > 0.25
+                                 AND ISNULL(Solar_kW, 0) <= 0.5
 
                             THEN 1
 
@@ -2110,14 +2835,22 @@ class SolarCapacity:
                         MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampUTC END)
                             OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_UTC,
 
-                        MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampIST END)
-                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_IST,
+                        MIN(CASE 
+                                WHEN SolarStartFlag = 1 
+                                 AND CAST(TimestampIST AS TIME) >= '05:30:00'
+                                THEN TimestampIST 
+                            END)
+                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_IST,
 
                         MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampUTC END)
                             OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_UTC,
 
-                        MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampIST END)
-                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_IST
+                        MAX(CASE 
+                                WHEN SolarGeneratingFlag = 1
+                                 AND CAST(TimestampIST AS TIME) >= '05:30:00'
+                                THEN TimestampIST 
+                            END)
+                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_IST
                     FROM calc
                 )
 
@@ -2132,7 +2865,13 @@ class SolarCapacity:
                     Grid_Freq_Hz,
                     SolarGen_kWh_entry,
                     PowerOutageFlag,
-                    (IntervalHours * SolarGeneratingFlag) AS SolarGenHours_entry,
+                    (IntervalHours *
+                    CASE 
+                            WHEN SolarGeneratingFlag = 1 
+                             AND CAST(TimestampIST AS TIME) >= '05:00:00'
+                            THEN 1 ELSE 0
+                        END
+                    ) AS SolarGenHours_entry,
                     CASE
                         WHEN TimestampUTC >= SolarStart_UTC AND TimestampUTC <= SolarEnd_UTC
                         THEN (IntervalHours * PowerOutageFlag)
@@ -2151,11 +2890,16 @@ class SolarCapacity:
                     SolarStart_IST,
                     SolarEnd_UTC,
                     SolarEnd_IST,
-                    DATEDIFF(
-                        SECOND,
-                        SolarStart_IST,
-                        SolarEnd_IST
-                    ) / 3600.0 AS SolarWindowHours_IST
+                    CASE 
+                        WHEN SolarStart_IST IS NOT NULL 
+                         AND SolarEnd_IST IS NOT NULL
+                        THEN (DATEDIFF(
+                                SECOND,
+                                SolarStart_IST,
+                                SolarEnd_IST
+                              ) / 3600.0) + 0.75
+                        ELSE NULL
+                    END AS SolarWindowHours_IST
                 FROM calc_window
                 ORDER BY SourceID, TimestampUTC;
 
@@ -2454,204 +3198,229 @@ class SolarCapacity:
             # -------------------------------------------------
             query = f"""
                         WITH base AS (
-                                SELECT
-                                    PLANT_CD,
-                                    SourceID,
-                                    TimestampUTC,
+                    SELECT
+                        PLANT_CD,
+                        SourceID,
+                        TimestampUTC,
 
-                                    -- combine cumulative energy PER SOURCE
-                                    SUM(CASE WHEN QuantityID = 129 THEN Value END) AS Energy_Cumulative_kWh,
+                        -- combine cumulative energy PER SOURCE
+                        SUM(CASE WHEN QuantityID = 129 THEN Value END) AS Energy_Cumulative_kWh,
+                        -- MAX(CASE WHEN QuantityID = 544 THEN Value END) AS Solar_kW,
+                        COALESCE(
+                            MAX(CASE WHEN QuantityID = 544 THEN NULLIF(Value,0) END),
+                            MAX(CASE WHEN QuantityID = 518 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 519 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 520 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 515 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 516 THEN NULLIF(ABS(Value),0) END),
+                            MAX(CASE WHEN QuantityID = 517 THEN NULLIF(ABS(Value),0) END)
+                        ) AS Solar_kW,
 
-                                    -- instantaneous values
-                                    MAX(CASE WHEN QuantityID = 544 THEN Value END) AS Solar_kW,
-                                    MAX(CASE WHEN QuantityID = 540 THEN Value END) AS Grid_Freq_Hz
+                        MAX(CASE WHEN QuantityID = 540 THEN Value END) AS Grid_Freq_Hz,
+                        MAX(LocationName) AS LocationName
 
-                                FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
-                                WHERE PLANT_CD IN ('{bu_codes_sql}')
-                                    AND LOWER(SourceName) NOT LIKE '%total%'
-                                    AND QuantityID IN (129, 544, 540)
-                                    {date_filter_sql}
-                                    AND DATEPART(SECOND, DATEADD(MINUTE, 330, TimestampUTC)) = 0
-                                    AND DATEPART(MINUTE, DATEADD(MINUTE, 330, TimestampUTC)) % 15 = 0
-                                GROUP BY
-                                    PLANT_CD,
-                                    SourceID,
-                                    TimestampUTC
-                            ),
+                    FROM ION_Data.dbo.vw_PMEAnalyticsConsolidated_SOLAR
+                    WHERE   PLANT_CD IN ('{bu_codes_sql}')
+                        AND LOWER(SourceName) NOT LIKE '%total%'
+                        AND QuantityID IN (129,540,544,518,519,520,515,516,517)
+                         {date_filter_sql}
+                        AND DATEPART(SECOND, DATEADD(MINUTE, 330, TimestampUTC)) = 0
+                        AND DATEPART(MINUTE, DATEADD(MINUTE, 330, TimestampUTC)) % 15 = 0
+                    GROUP BY
+                        PLANT_CD,
+                        SourceID,
+                        TimestampUTC
+                ),
 
-                            w AS (
-                                SELECT
-                                    b.*,
-                                    DATEADD(MINUTE, 330, b.TimestampUTC) AS TimestampIST,
-                                    CAST(DATEADD(MINUTE, 330, b.TimestampUTC) AS DATE) AS DayKey_IST,
+                w AS (
+                    SELECT
+                        b.*,
+                        DATEADD(MINUTE, 330, b.TimestampUTC) AS TimestampIST,
+                        CAST(DATEADD(MINUTE, 330, b.TimestampUTC) AS DATE) AS DayKey_IST,
+                        CAST(DATEADD(MINUTE,330,b.TimestampUTC) AS TIME) AS TimeIST,
 
-                                    LAG(b.Energy_Cumulative_kWh)
-                                        OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
-                                        AS Prev_Energy_Cumulative_kWh,
+                        LAG(b.Energy_Cumulative_kWh)
+                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                            AS Prev_Energy_Cumulative_kWh,
 
-                                    LAG(b.Solar_kW)
-                                        OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
-                                        AS Prev_Solar_kW,
+                        LAG(b.Solar_kW)
+                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                            AS Prev_Solar_kW,
 
-                                    LEAD(b.TimestampUTC)
-                                        OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
-                                        AS NextTimestampUTC
-                                FROM base b
-                            ),
+                        LEAD(b.TimestampUTC)
+                            OVER (PARTITION BY b.PLANT_CD, b.SourceID ORDER BY b.TimestampUTC)
+                            AS NextTimestampUTC
+                    FROM base b
+                ),
 
-                            calc1 AS (
-                                SELECT
-                                    *,
+                calc1 AS (
+                    SELECT
+                        *,
 
-                                    CASE
-                                        -- IGNORE energy during power outage
-                                        WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 0
+                        CASE
+                            -- IGNORE energy during power outage
+                            WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 0
 
-                                        WHEN Energy_Cumulative_kWh IS NULL THEN 0
-                                        WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
-                                        WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
+                            WHEN Energy_Cumulative_kWh IS NULL THEN 0
+                            WHEN Prev_Energy_Cumulative_kWh IS NULL THEN 0
+                            WHEN Energy_Cumulative_kWh < Prev_Energy_Cumulative_kWh THEN 0
 
-                                        ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
-                                    END AS SolarGen_kWh_entry,
+                            ELSE Energy_Cumulative_kWh - Prev_Energy_Cumulative_kWh
+                        END AS SolarGen_kWh_entry,
 
-                                    CASE
-                                        WHEN NextTimestampUTC IS NULL THEN 0.0
-                                        ELSE DATEDIFF(SECOND, TimestampUTC, NextTimestampUTC) / 3600.0
-                                    END AS IntervalHours,
+                        CASE
+                            WHEN NextTimestampUTC IS NULL THEN 0.0
+                            ELSE DATEDIFF(SECOND, TimestampUTC, NextTimestampUTC) / 3600.0
+                        END AS IntervalHours,
 
-                                    CASE
-                                        WHEN COUNT(Solar_kW)
-                                             OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) > 0
-                                        THEN 1 ELSE 0
-                                    END AS SolarKW_Available_Flag
-                                FROM w
-                            ),
+                        CASE
+                            WHEN COUNT(Solar_kW)
+                                 OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) > 0
+                            THEN 1 ELSE 0
+                        END AS SolarKW_Available_Flag
+                    FROM w
+                )
+        
 
-                            calc AS (
-                                SELECT
-                                    *,
+            , calc AS (
+                    SELECT
+                        *,
 
-                                    CASE
-                                        WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 1 ELSE 0
-                                    END AS PowerOutageFlag,
+                        CASE
+                            WHEN ISNULL(Grid_Freq_Hz, 0) <= 0.01 THEN 1 ELSE 0
+                        END AS PowerOutageFlag,
 
-                                    CASE
-                                        WHEN SolarKW_Available_Flag = 1 AND Solar_kW > 0.6 THEN 1
-                                        WHEN SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0 THEN 1
-                                        ELSE 0
-                                    END AS SolarWindowFlag,
+                        CASE
+                            WHEN SolarKW_Available_Flag = 1 AND Solar_kW > 0.6 THEN 1
+                            WHEN SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0 THEN 1
+                            ELSE 0
+                        END AS SolarWindowFlag,
 
-                                    CASE
-                                        WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
-                                         AND (
-                                                (SolarKW_Available_Flag = 1 AND Solar_kW > 0.6)
-                                             OR (SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0)
-                                             )
-                                        THEN 1 ELSE 0
-                                    END AS SolarGeneratingFlag,
+                        CASE
+                            WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
+                             AND CAST(TimestampIST AS TIME) >= '05:00:00'
+                             AND (
+                                    (SolarKW_Available_Flag = 1 AND Solar_kW > 0.6)
+                                 OR (SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) > 0)
+                                 )
+                            THEN 1 ELSE 0
+                        END AS SolarGeneratingFlag,
 
-                                    CASE
-                                        WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
-                                         AND (
-                                                (SolarKW_Available_Flag = 1 AND Solar_kW <= 0.6)
-                                             OR (SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) = 0)
-                                             )
-                                        THEN 1 ELSE 0
-                                    END AS SolarZeroWhileGridOnFlag,
+                        CASE
+                            WHEN ISNULL(Grid_Freq_Hz, 0) > 0.01
+                             AND (
+                                    (SolarKW_Available_Flag = 1 AND Solar_kW <= 0.6)
+                                 OR (SolarKW_Available_Flag = 0 AND ISNULL(SolarGen_kWh_entry, 0) = 0)
+                                 )
+                            THEN 1 ELSE 0
+                        END AS SolarZeroWhileGridOnFlag,
 
-                                    CASE
-                                        WHEN SolarKW_Available_Flag = 1
-                                             AND ISNULL(Prev_Solar_kW, 0) <= 0.25
-                                             AND Solar_kW > 0.05
-                                        THEN 1
+                        CASE
+                            WHEN SolarKW_Available_Flag = 1
+                                 AND Solar_kW >= 0.5
+                            THEN 1
 
-                                        WHEN SolarKW_Available_Flag = 0
-                                             AND ISNULL(SolarGen_kWh_entry, 0) > 0
-                                             AND LAG(ISNULL(SolarGen_kWh_entry, 0))
-                                                 OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) = 0
-                                        THEN 1
+                            WHEN SolarKW_Available_Flag = 0
+                                 AND ISNULL(SolarGen_kWh_entry, 0) > 0.5                          
+                                 AND LAG(ISNULL(SolarGen_kWh_entry, 0))
+                                     OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) = 0
+                            THEN 1
 
-                                        ELSE 0
-                                    END AS SolarStartFlag,
+                            ELSE 0
+                        END AS SolarStartFlag,
 
-                                    CASE
-                                        WHEN SolarKW_Available_Flag = 1
-                                             AND ISNULL(Prev_Solar_kW, 0) > 0.05
-                                             AND ISNULL(Solar_kW, 0) <= 0.25
-                                        THEN 1
+                        CASE
+                            WHEN SolarKW_Available_Flag = 1
+                                 AND ISNULL(Prev_Solar_kW, 0) > 0.25
+                                 AND ISNULL(Solar_kW, 0) <= 0.5
 
-                                        WHEN SolarKW_Available_Flag = 0
-                                             AND ISNULL(SolarGen_kWh_entry, 0) < 0.25
-                                             AND LAG(ISNULL(SolarGen_kWh_entry, 0))
-                                                 OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) > 0
-                                        THEN 1
+                            THEN 1
 
-                                        ELSE 0
-                                    END AS SolarEndFlag
-                                FROM calc1
-                            ),
+                            WHEN SolarKW_Available_Flag = 0
+                                 AND ISNULL(SolarGen_kWh_entry, 0) < 0.25
 
-                            calc_window AS (
-                                SELECT
-                                    *,
-                                    MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampUTC END)
-                                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_UTC,
+                                 AND LAG(ISNULL(SolarGen_kWh_entry, 0))
+                                     OVER (PARTITION BY PLANT_CD, SourceID ORDER BY TimestampUTC) > 0
+                            THEN 1
 
-                                    MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampIST END)
-                                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_IST,
+                            ELSE 0
+                        END AS SolarEndFlag
+                    FROM calc1
+                ),
 
-                                    MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampUTC END)
-                                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_UTC,
+                calc_window AS (
+                    SELECT
+                        *,
+                        MIN(CASE WHEN SolarStartFlag = 1 THEN TimestampUTC END)
+                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_UTC,
 
-                                    MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampIST END)
-                                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_IST
-                                FROM calc
-                            )
+                        MIN(CASE 
+                                WHEN SolarStartFlag = 1 
+                                 AND CAST(TimestampIST AS TIME) >= '05:30:00'
+                                THEN TimestampIST 
+                            END)
+                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarStart_IST,
 
-                            SELECT
-                                PLANT_CD,
-                                SourceID,
-                                TimestampUTC,
-                                TimestampIST,
-                                Energy_Cumulative_kWh,
-                                Solar_kW,
-                                Grid_Freq_Hz,
-                                SolarGen_kWh_entry,
-                                PowerOutageFlag,
+                        MAX(CASE WHEN SolarEndFlag = 1 THEN TimestampUTC END)
+                            OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_UTC,
 
-                                (IntervalHours * SolarGeneratingFlag) AS SolarGenHours_entry,
+                        MAX(CASE 
+                                WHEN SolarGeneratingFlag = 1
+                                 AND CAST(TimestampIST AS TIME) >= '05:30:00'
+                                THEN TimestampIST 
+                            END)
+                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarEnd_IST
+                    FROM calc
+                )
 
-                                CASE
-                                    WHEN TimestampUTC >= SolarStart_UTC AND TimestampUTC <= SolarEnd_UTC
-                                    THEN (IntervalHours * PowerOutageFlag)
-                                    ELSE 0
-                                END AS OutageDuringSolarHours_entry,
-
-                                SUM(ISNULL(SolarGen_kWh_entry, 0))
-                                    OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarGen_kWh_day,
-
-                                SUM(IntervalHours * SolarGeneratingFlag)
-                                    OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarGenHours_day,
-
-                                SUM(CASE
-                                    WHEN TimestampUTC >= SolarStart_UTC AND TimestampUTC <= SolarEnd_UTC
-                                    THEN (IntervalHours * PowerOutageFlag)
-                                    ELSE 0
-                                END) OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS OutageDuringSolarHours_day,
-
-                                SolarStart_UTC,
+                SELECT
+                    PLANT_CD,
+                    SourceID,
+                    TimestampUTC,
+                    TimestampIST,
+                    LocationName,
+                    Energy_Cumulative_kWh,
+                    Solar_kW,
+                    Grid_Freq_Hz,
+                    SolarGen_kWh_entry,
+                    PowerOutageFlag,
+                    (IntervalHours *
+                    CASE 
+                        WHEN SolarGeneratingFlag = 1 
+                         AND CAST(TimestampIST AS TIME) >= '05:00:00'
+                        THEN 1 ELSE 0
+                    END
+                ) AS SolarGenHours_entry,
+                    CASE
+                        WHEN TimestampUTC >= SolarStart_UTC AND TimestampUTC <= SolarEnd_UTC
+                        THEN (IntervalHours * PowerOutageFlag)
+                        ELSE 0
+                    END AS OutageDuringSolarHours_entry,
+                    SUM(ISNULL(SolarGen_kWh_entry, 0))
+                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarGen_kWh_day,
+                    SUM(IntervalHours * SolarGeneratingFlag)
+                        OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS SolarGenHours_day,
+                    SUM(CASE
+                        WHEN TimestampUTC >= SolarStart_UTC AND TimestampUTC <= SolarEnd_UTC
+                        THEN (IntervalHours * PowerOutageFlag)
+                        ELSE 0
+                    END) OVER (PARTITION BY PLANT_CD, SourceID, DayKey_IST) AS OutageDuringSolarHours_day,
+                    SolarStart_UTC,
+                    SolarStart_IST,
+                    SolarEnd_UTC,
+                    SolarEnd_IST,
+                    CASE 
+                        WHEN SolarStart_IST IS NOT NULL 
+                         AND SolarEnd_IST IS NOT NULL
+                        THEN (DATEDIFF(
+                                SECOND,
                                 SolarStart_IST,
-                                SolarEnd_UTC,
-                                SolarEnd_IST,
-
-                                DATEDIFF(
-                                    SECOND,
-                                    SolarStart_IST,
-                                    SolarEnd_IST
-                                ) / 3600.0 AS SolarWindowHours_IST
-
-                            FROM calc_window
-                            ORDER BY SourceID, TimestampUTC;
+                                SolarEnd_IST
+                              ) / 3600.0) + 0.75
+                        ELSE NULL
+                    END AS SolarWindowHours_IST
+                FROM calc_window
+                ORDER BY SourceID, TimestampUTC;
 
                         """
             print("Insight Query: ", query)
