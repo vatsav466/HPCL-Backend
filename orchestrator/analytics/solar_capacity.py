@@ -564,7 +564,7 @@ class SolarCapacity:
 
     @classmethod
     @with_solar_cache("solar_energy_generated", 900)
-    async def get_energy_generated(cls,
+    async def get_energy_generated_new(cls,
                                    data: dashboard_studio_model.Solarpanelcleaning_Get_Solar_Dashboard_SummaryParams):
         """
         Calculate estimated energy from Excel data.
@@ -968,7 +968,7 @@ class SolarCapacity:
         # ============================================================
     @classmethod
     @with_solar_cache("solar_energy_generated_new", 900)
-    async def get_energy_generated_new(cls, data):
+    async def get_energy_generated(cls, data):
 
         try:
             bu_code = getattr(data, 'bu', None)
