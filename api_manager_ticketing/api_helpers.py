@@ -113,7 +113,7 @@ async def download_attachment_common(
 ):
     # ---------------- FETCH RECORD ----------------
     params = urdhva_base.queryparams.QueryParams(
-        q=f"id='{record_id}'",
+        q=f"ticket_id='{record_id}'",
         limit=1
     )
 
