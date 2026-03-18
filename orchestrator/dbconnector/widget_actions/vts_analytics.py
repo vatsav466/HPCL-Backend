@@ -885,6 +885,9 @@ class VTSAnalyticsActions:
         if "completed_trips_risk_score" in query.lower():
             return f"insert_datetime BETWEEN '{start}' AND '{end}'"
         
+        if "merged_shortage_vts" in query.lower():
+            return f"invoice_date BETWEEN '{start}' AND '{end}'"
+        
         if any(term in query.lower() for term in ["cluster_master", "transporter_risk_score", "tt_risk_score","clusterwise_event"]):
             return f"version_date BETWEEN '{start}' AND '{end}'"
                 
