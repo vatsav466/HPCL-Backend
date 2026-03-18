@@ -165,7 +165,8 @@ async def publish_daily_novex_status_email():
         },
         attachments = [status_data.get('zone_wise_pdf_path'),status_data.get('lpg_day_wise_trend_exl_path'), 
                        status_data.get('lpg_va_path'),status_data.get('lpg_pq_path'),status_data.get('tas_day_wise_trend_exl_path'),
-                       status_data.get('tas_va_path'),status_data.get('tas_emlock_path'),status_data.get('tas_tas_path')]
+                       status_data.get('tas_va_path'),status_data.get('tas_emlock_path'),status_data.get('tas_tas_path'),
+                       status_data.get('retail_sales_report')]
     )
     await send_notification(
         template_name="ro_va_cleanliness.html",
