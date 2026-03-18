@@ -360,9 +360,7 @@ async def get_sales_tmt(date_filter: str):
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
     sales_tmt= await function(query= sales_tmt_query)
-    print("sales TMT values---->\n", sales_tmt)
     sales_tmt_df = pl.DataFrame(sales_tmt)
-    print("sales tmt data---->\n", sales_tmt_df)
 
     sales_tmt_df = sales_tmt_df.rename({"SalesArea_Name": "sales_area"})
 
@@ -375,5 +373,4 @@ async def get_sales_tmt(date_filter: str):
     ])
 
     sales_tmt_df = pl.concat([sales_tmt_df, total_row])
-    print("sales tmt after concat ---->\n", sales_tmt_df)
     return sales_tmt_df
