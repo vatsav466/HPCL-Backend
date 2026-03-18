@@ -377,6 +377,12 @@ Model TicketComment {
         file_path optional str
 
     }
+
+    Action=> download_attachment {
+        ticket_id str
+        file_attachment_name optional str
+    }
+
 }
 
 Model TicketUserMails {

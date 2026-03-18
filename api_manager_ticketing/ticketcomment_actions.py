@@ -189,3 +189,17 @@ async def ticketcomment_attach_file_to_comment(
             "status": False,
             "message": f"Error attaching file: {str(e)}"
         }
+
+
+# Action download_attachment
+@router.post('/download_attachment', tags=['TicketComment'])
+async def ticketcomment_download_attachment(data: Ticketcomment_Download_AttachmentParams):
+    try:
+        return await api_helpers.download_attachment_common(
+            model_class=TicketComment,
+            record_id=data.ticket_id,
+            requested_file_name=data.file_attachment_name,
+            attachment_field="file_attachment"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

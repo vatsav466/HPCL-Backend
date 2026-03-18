@@ -237,6 +237,9 @@
                 },
                 {
                     "name": "attach_file_to_comment"
+                },
+                {
+                    "name": "download_attachment"
                 }
             ]
         },
@@ -288,6 +291,9 @@
                 },
                 {
                     "name": "attach_file_to_comment"
+                },
+                {
+                    "name": "download_attachment"
                 }
             ]
         },
@@ -630,6 +636,10 @@
         {
             "name": "attach_file_to_comment",
             "displayName": "attach_file_to_comment"
+        },
+        {
+            "name": "download_attachment",
+            "displayName": "download_attachment"
         },
         {
             "name": "get_ticket_mails",
