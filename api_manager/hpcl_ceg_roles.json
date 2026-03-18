@@ -8093,6 +8093,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "nonreportingdevices",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "NonReportingDevices",
+            "attributes": {},
+            "uris": [
+                "/api/nonreportingdevices/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "nonreportingdevices_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "NonReportingDevices_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/nonreportingdevices/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "nonreportingdevices_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "NonReportingDevices_admin",
+            "attributes": {},
+            "uris": [
+                "/api/nonreportingdevices/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

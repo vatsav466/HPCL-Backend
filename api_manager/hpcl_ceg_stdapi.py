@@ -2186,3 +2186,13 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await TerminalWiseDryoutCounts.get_all(params, skip_secrets=True)
 
+
+@router.get('/nonreportingdevices/{id}', response_model=NonReportingDevices, tags=['NonReportingDevices'])
+async def get(id: str):
+    return await NonReportingDevices.get(id, skip_secrets=True)
+
+
+@router.get('/nonreportingdevices', response_model=NonReportingDevicesGetResp, tags=['NonReportingDevices'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await NonReportingDevices.get_all(params, skip_secrets=True)
+
