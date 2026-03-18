@@ -4120,3 +4120,28 @@ Model TerminalWiseDryoutCounts {
         crud_operations='read'
     }
 }
+
+Model NonReportingDevices {
+    truck_regno	str
+    last_check_date	date
+    last_check_time	str
+    latitude int
+    longitude int
+    location str
+    location_name str
+    device_working str
+    completed_trip	str
+    completed_trip_auto_dc str
+    card_date datetime_no_zone
+    card_time str
+    card_datetime datetime_no_zone
+    reader_id str
+    loaded_on datetime_no_zone
+    bu str
+    zone str
+
+    Config=> {
+        crud_operations='read'
+    }
+
+}
