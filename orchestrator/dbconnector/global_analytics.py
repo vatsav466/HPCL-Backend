@@ -7390,7 +7390,8 @@ class GlobalAnalytics:
                 "        DATE(created_at) AS created_date,",
                 "        zone, location_name, sap_id, bcu_number, mfm_number",
                 "    FROM host_mfm_factor",
-                "    WHERE 1=1"
+                "    WHERE 1=1",
+                "    AND last_k_factor IS NOT NULL"
             ]
             if zone_filter:
                 query_parts.append(f" AND zone = '{zone_filter}'")
@@ -7402,16 +7403,11 @@ class GlobalAnalytics:
 
             query_parts.extend([
                 "SELECT",
-                "    h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number, h.mfm_number,",
-                "    COALESCE(COUNT(a.id), 0) AS alert_count",
-                "FROM mfmfactor h",
-                "LEFT JOIN alerts a ON (a.device_name = h.mfm_number OR a.device_name = h.bcu_number OR a.device_name = CONCAT(h.mfm_number, '_', h.bcu_number))",
-                "    AND a.interlock_name = 'MFM K Factor Change'",
-                "     AND a.sap_id = h.sap_id",
-               # "    AND DATE(a.created_at) = h.created_date",
-                "GROUP BY h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number, h.mfm_number",
-                "HAVING COUNT(a.id) > 0",
-                "ORDER BY h.created_date DESC, alert_count DESC"
+                "    created_date, zone, location_name, sap_id, bcu_number, mfm_number,",
+                "    COUNT(*) AS alert_count",          # ← counts rows in host_mfm_factor
+                "FROM mfmfactor",
+                "GROUP BY created_date, zone, location_name, sap_id, bcu_number, mfm_number",
+                "ORDER BY created_date DESC, alert_count DESC"
             ])
 
             query = "\n".join(query_parts)
