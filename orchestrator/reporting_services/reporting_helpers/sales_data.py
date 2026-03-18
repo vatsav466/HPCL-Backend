@@ -1,6 +1,7 @@
 import urdhva_base
 import decimal
 import datetime
+import polars as pl
 import urdhva_base.utilities
 import utilities.helpers as helpers
 import utilities.fiscal_year as fiscal_year
@@ -320,7 +321,18 @@ def process_performance_data(data, limit=3):
 
 
 
-async def get_sales_tmt():
+async def get_sales_tmt(date_filter: str):
+
+    date_condition = ""
+
+    if date_filter == 'day':
+        date_condition = f""" AND "DAY_ID" = CURRENT_DATE - INTERVAL '1 day'"""
+
+    elif date_filter == 'month':
+        date_condition = f"""AND "DAY_ID" >= date_trunc('month', CURRENT_DATE)
+            AND "DAY_ID" < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'
+        """
+    
     sales_tmt_query = f"""SELECT "Zone_Name", "Region_Name", "SalesArea_Name",
 
     ROUND(SUM(
@@ -337,8 +349,7 @@ async def get_sales_tmt():
     WHERE
         "SBU_Name" = 'Retail'
         AND "SBU_Name" NOT IN ('Common','Mumbai Ref','Renewable Energy','Visakh Ref')
-        AND "DAY_ID" = CURRENT_DATE - INTERVAL '1 day'
-
+        {date_condition}
     GROUP BY "Zone_Name", "Region_Name", "SalesArea_Name"
     ORDER BY "Zone_Name", "Region_Name", "SalesArea_Name"
     """

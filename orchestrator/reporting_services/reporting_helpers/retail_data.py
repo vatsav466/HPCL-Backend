@@ -1486,7 +1486,7 @@ async def sales_tmt_excel():
 
     merged_sales_location = sales_details_df.join(location_master_df, on="sales_area", how="left")
     
-    sap_sales_df = await sales_data.get_sales_tmt()
+    sap_sales_df = await sales_data.get_sales_tmt(date_filter= 'day')
     sap_sales_df = pl.DataFrame(sap_sales_df)
     sap_sales_df = sap_sales_df.filter(pl.col("sales_area") != "GRAND TOTAL")
     sap_sales_df = sap_sales_df.with_columns([
