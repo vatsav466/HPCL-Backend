@@ -106,6 +106,7 @@ async def _location_incharge_data(sap_ids: list[str]) -> tuple[set[str], set[str
         email = rec.get("email_id")
         zone = rec.get("zone")
 
+        # handle list values from postgres array
         if isinstance(email, list):
             email = email[0] if email else None
 
@@ -307,7 +308,7 @@ async def send_ticket_mail(ticket_data: dict) -> None:
         subject=subject,
         body=alert_manager.read_template(template_path, data=template_data),
         html_content=True,
-        force_send=False,
+        force_send=True,
     )
 
     print(

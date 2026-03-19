@@ -199,7 +199,7 @@ async def ticketcomment_download_attachment(data: Ticketcomment_Download_Attachm
             model_class=TicketComment,
             record_id=data.ticket_id,
             requested_file_name=data.file_attachment_name,
-            attachment_field="file_attachment"
+            attachment_field="documents"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
