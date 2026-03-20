@@ -1690,7 +1690,7 @@ async def sales_tmt_excel():
             "type": "cell",
             "criteria": "<",
             "value": 70,
-            "format": workbook.add_format({"bg_color": "#C00000"})
+            "format": workbook.add_format({"bg_color": "#c00000"})
         })
 
         # 70–80 → Orange
@@ -1699,7 +1699,7 @@ async def sales_tmt_excel():
             "criteria": "between",
             "minimum": 70,
             "maximum": 80,
-            "format": workbook.add_format({"bg_color": "#F1A470"})
+            "format": workbook.add_format({"bg_color": "#f1a470"})
         })
 
         # 80–90 → Light Orange
@@ -1708,7 +1708,7 @@ async def sales_tmt_excel():
             "criteria": "between",
             "minimum": 80,
             "maximum": 90,
-            "format": workbook.add_format({"bg_color": "#F5BB99"})
+            "format": workbook.add_format({"bg_color": "#ef7d39"})
         })
 
         # > 90 → Dark Orange
@@ -1716,8 +1716,22 @@ async def sales_tmt_excel():
             "type": "cell",
             "criteria": ">",
             "value": 90,
-            "format": workbook.add_format({"bg_color": "#ED7D31"})
+            "format": workbook.add_format({"bg_color": "#d25704"})
         })
+    
+    legend_start_row = 2
+    legend_col = "M"
+    color_col = "N"
+    legend_items = [
+        ("< 70", "#c00000"),
+        ("70–80", "#f1a470"),
+        ("80–90", "#ef7d39"),
+        ("> 90", "#d25704"),
+    ]
+
+    for i, (label, color) in enumerate(legend_items):
+        worksheet.write(f"{legend_col}{legend_start_row + i}", label, cell_format)
+        worksheet.write_blank(f"{color_col}{legend_start_row + i}", None, workbook.add_format({"bg_color": color}))
         
     workbook.close()
 
