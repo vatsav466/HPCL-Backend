@@ -90,6 +90,9 @@
                 },
                 {
                     "name": "process_escalations"
+                },
+                {
+                    "name": "pm_orders"
                 }
             ]
         },
@@ -201,6 +204,9 @@
                 },
                 {
                     "name": "process_escalations"
+                },
+                {
+                    "name": "pm_orders"
                 }
             ]
         },
@@ -620,6 +626,10 @@
         {
             "name": "process_escalations",
             "displayName": "process_escalations"
+        },
+        {
+            "name": "pm_orders",
+            "displayName": "pm_orders"
         },
         {
             "name": "add_comment_to_ticket",
