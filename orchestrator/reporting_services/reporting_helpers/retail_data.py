@@ -1562,8 +1562,8 @@ async def sales_tmt_excel():
 
     # -------------------- HEADERS --------------------
     worksheet.merge_range("A1:A2", "State", header_format)
-    worksheet.merge_range("B1:B2", "Connected Sites", header_format)
-    worksheet.merge_range("C1:C2", "Connected Sites", header_format)
+    worksheet.merge_range("B1:B2", "Total RO", header_format)
+    worksheet.merge_range("C1:C2", "Connected RO", header_format)
     worksheet.merge_range("D1:E1", "Nozzle sales (in TMT)", header_format)
     worksheet.write("D2", "MS (all variants)", header_format)
     worksheet.write("E2", "HSD (all variants)", header_format)
