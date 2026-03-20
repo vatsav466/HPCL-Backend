@@ -337,6 +337,10 @@ Model Ticketing {
     Action=> process_escalations {
     }
 
+    Action=> pm_orders {
+        start_date optional str
+        end_date optional str
+    }
 
     Config=> {
         crud_operations='read'

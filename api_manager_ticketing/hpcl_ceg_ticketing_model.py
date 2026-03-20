@@ -510,6 +510,15 @@ class Ticketing_Process_EscalationsParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Ticketing_Pm_OrdersParams(pydantic.BaseModel):
+    start_date: typing.Optional[str] = pydantic.Field("", **{})
+    end_date: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class TicketCommentSchema(UrdhvaPostgresBase):
     __tablename__ = 'ticket_comment'
     
